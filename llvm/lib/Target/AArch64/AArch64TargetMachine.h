@@ -16,6 +16,7 @@
 #include "AArch64InstrInfo.h"
 #include "AArch64Subtarget.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Cheri.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
@@ -63,6 +64,15 @@ public:
                                 PerFunctionMIParsingState &PFS,
                                 SMDiagnostic &Error,
                                 SMRange &SourceRange) const override;
+
+  /// Returns true if a cast between SrcAS and DestAS is a noop.
+  bool isNoopAddrSpaceCast(unsigned SrcAS, unsigned DestAS) const override {
+    const bool SrcIsCheri = isCheriPointer(SrcAS, nullptr);
+    const bool DestIsCheri = isCheriPointer(DestAS, nullptr);
+    if ((SrcIsCheri || DestIsCheri) && (SrcIsCheri != DestIsCheri))
+      return false;
+    return true;
+  }
 
 private:
   bool isLittle;

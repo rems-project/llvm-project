@@ -499,15 +499,6 @@ public:
 
   SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const override;
 
-  /// Returns true if a cast between SrcAS and DestAS is a noop.
-  bool isNoopAddrSpaceCast(unsigned SrcAS, unsigned DestAS) const override {
-    // Reserve the first 256 for software use (e.g. OpenCL) and treat casts
-    // between them as noops.
-    if (((SrcAS == 200) || (DestAS == 200)) && (DestAS != SrcAS))
-      return false;
-    return SrcAS < 256 && DestAS < 256;
-  }
-
   /// This method returns a target specific FastISel object, or null if the
   /// target does not support "fast" ISel.
   FastISel *createFastISel(FunctionLoweringInfo &funcInfo,

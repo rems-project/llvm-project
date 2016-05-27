@@ -60,6 +60,7 @@
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Comdat.h"
+#include "llvm/IR/Cheri.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
@@ -2342,6 +2343,16 @@ const MCExpr *AsmPrinter::lowerConstant(const Constant *CV) {
   }
 
   switch (CE->getOpcode()) {
+  case Instruction::AddrSpaceCast: {
+    const Constant *Op = CE->getOperand(0);
+    unsigned DstAS = CE->getType()->getPointerAddressSpace();
+    unsigned SrcAS = Op->getType()->getPointerAddressSpace();
+    if (TM.isNoopAddrSpaceCast(SrcAS, DstAS) || isCheriPointer(DstAS, nullptr))
+      return lowerConstant(Op);
+
+    // Fallthrough to error.
+    LLVM_FALLTHROUGH;
+  }
   default: {
     // If the code isn't optimized, there may be outstanding folding
     // opportunities. Attempt to fold the expression using DataLayout as a
@@ -2357,10 +2368,6 @@ const MCExpr *AsmPrinter::lowerConstant(const Constant *CV) {
     CE->printAsOperand(OS, /*PrintType=*/false,
                    !MF ? nullptr : MF->getFunction().getParent());
     report_fatal_error(OS.str());
-  }
-
-  case Instruction::AddrSpaceCast: {
-    return lowerConstant(CE->getOperand(0));
   }
 
   case Instruction::GetElementPtr: {
