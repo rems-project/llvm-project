@@ -519,7 +519,7 @@ public:
 
         // Remove dead code in order to reduce the number of users of the
         // set bounds instruction. This should allow more options for sinking.
-        SmallVector<Instruction*, 16> DeadInsts;
+        SmallVector<WeakTrackingVH, 16> DeadInsts;
         for (auto *V : OldAddrs)
           if (V->use_empty() && isInstructionTriviallyDead(V))
             DeadInsts.push_back(V);

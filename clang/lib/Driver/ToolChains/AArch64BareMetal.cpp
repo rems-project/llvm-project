@@ -180,9 +180,9 @@ void AArch64BareMetalToolChain::addClangTargetOptions(
   CC1Args.push_back("-isysroot");
   CC1Args.push_back(DriverArgs.MakeArgString(SysRoot));
 
-  if (DriverArgs.hasFlag(options::OPT_fuse_init_array,
+  if (!DriverArgs.hasFlag(options::OPT_fuse_init_array,
                          options::OPT_fno_use_init_array, true))
-    CC1Args.push_back("-fuse-init-array");
+    CC1Args.push_back("-fno-use-init-array");
 }
 
 void Linker::ConstructJob(Compilation &C, const JobAction &JA,
