@@ -30,6 +30,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/ScopedPrinter.h"
 #include <cassert>
 #include <limits>
 #include <vector>
@@ -92,9 +93,7 @@ private:
   std::vector<BaseCommand *> readOverlay();
   std::vector<StringRef> readOutputSectionPhdrs();
   std::pair<uint64_t, uint64_t> readInputSectionFlags();
-  InputSectionDescription *readInputSectionDescription(StringRef tok,
-                                                       uint64_t withFlags,
-                                                       uint64_t withoutFlags);
+  InputSectionDescription *readInputSectionDescription(StringRef tok);
   StringMatcher readFilePatterns();
   std::vector<SectionPattern> readInputSectionsList();
   InputSectionDescription *readInputSectionRules(StringRef filePattern,
@@ -662,7 +661,8 @@ std::vector<SectionPattern> ScriptParser::readInputSectionsList() {
 //
 // <section-list> is parsed by readInputSectionsList().
 InputSectionDescription *
-ScriptParser::readInputSectionRules(StringRef filePattern, uint64_t withFlags, uint64_t withoutFlags) {
+ScriptParser::readInputSectionRules(StringRef filePattern, uint64_t withFlags,
+                                    uint64_t withoutFlags) {
   auto *cmd =
       make<InputSectionDescription>(filePattern, withFlags, withoutFlags);
   expect("(");
@@ -697,22 +697,24 @@ ScriptParser::readInputSectionRules(StringRef filePattern, uint64_t withFlags, u
 }
 
 InputSectionDescription *
-ScriptParser::readInputSectionDescription(StringRef tok, uint64_t withFlags,
-                                          uint64_t withoutFlags) {
+ScriptParser::readInputSectionDescription(StringRef tok) {
   // Input section wildcard can be surrounded by KEEP.
   // https://sourceware.org/binutils/docs/ld/Input-Section-Keep.html#Input-Section-Keep
+  uint64_t withFlags = 0;
+  uint64_t withoutFlags = 0;
   if (tok == "KEEP") {
     expect("(");
-    StringRef tok = next();
-    if (tok == "INPUT_SECTION_FLAGS") {
+    if (consume("INPUT_SECTION_FLAGS"))
       std::tie(withFlags, withoutFlags) = readInputSectionFlags();
-      tok = next();
-    }
     InputSectionDescription *cmd =
-        readInputSectionRules(tok, withFlags, withoutFlags);
+        readInputSectionRules(next(), withFlags, withoutFlags);
     expect(")");
     script->keptSections.push_back(cmd);
     return cmd;
+  }
+  if (tok == "INPUT_SECTION_FLAGS") {
+    std::tie(withFlags, withoutFlags) = readInputSectionFlags();
+    tok = next();
   }
   return readInputSectionRules(tok, withFlags, withoutFlags);
 }
@@ -796,15 +798,11 @@ OutputSection *ScriptParser::readOverlaySectionDescription() {
   while (!errorCount() && !consume("}")) {
     uint64_t withFlags = 0;
     uint64_t withoutFlags = 0;
-    StringRef tok = next();
-    if (tok == "INPUT_SECTION_FLAGS") {
+    if (consume("INPUT_SECTION_FLAGS"))
       std::tie(withFlags, withoutFlags) = readInputSectionFlags();
-      tok = next();
-    }
     cmd->sectionCommands.push_back(
-        readInputSectionRules(tok, withFlags, withoutFlags));
+        readInputSectionRules(next(), withFlags, withoutFlags));
   }
-  cmd->phdrs = readOutputSectionPhdrs();
   return cmd;
 }
 
@@ -833,9 +831,6 @@ OutputSection *ScriptParser::readOutputSectionDescription(StringRef outSec) {
     cmd->constraint = ConstraintKind::ReadWrite;
   expect("{");
 
-  uint64_t withFlags = 0;
-  uint64_t withoutFlags = 0;
-
   while (!errorCount() && !consume("}")) {
     StringRef tok = next();
     if (tok == ";") {
@@ -859,20 +854,18 @@ OutputSection *ScriptParser::readOutputSectionDescription(StringRef outSec) {
       readSort();
     } else if (tok == "INCLUDE") {
       readInclude();
-    } else if (tok == "INPUT_SECTION_FLAGS") {
-        std::tie(withFlags, withoutFlags) = readInputSectionFlags();
     } else if (peek() == "(") {
-      cmd->sectionCommands.push_back(
-          readInputSectionDescription(tok, withFlags, withoutFlags));
-      withFlags = withoutFlags = 0;
+      cmd->sectionCommands.push_back(readInputSectionDescription(tok));
     } else {
       // We have a file name and no input sections description. It is not a
       // commonly used syntax, but still acceptable. In that case, all sections
       // from the file will be included.
-      auto *isd = make<InputSectionDescription>(tok, withFlags, withoutFlags);
+      // FIXME: GNU ld permits INPUT_SECTION_FLAGS to be used here. We do not
+      // handle this case here as it will already have been matched by the
+      // case above.
+      auto *isd = make<InputSectionDescription>(tok);
       isd->sectionPatterns.push_back({{}, StringMatcher({"*"})});
       cmd->sectionCommands.push_back(isd);
-      withFlags = withoutFlags = 0;
     }
   }
 
@@ -1134,35 +1127,23 @@ ByteCommand *ScriptParser::readByteCommand(StringRef tok) {
 static llvm::Optional<uint64_t> parseFlag(StringRef tok) {
   if (llvm::Optional<uint64_t> asInt = parseInt(tok))
     return asInt;
-  return StringSwitch<llvm::Optional<uint64_t>> (tok)
-    .Case("SHF_WRITE", 0x1)
-    .Case("SHF_ALLOC", 0x2)
-    .Case("SHF_EXECINSTR", 0x4)
-    .Case("SHF_MERGE", 0x10)
-    .Case("SHF_STRINGS", 0x20)
-    .Case("SHF_INFO_LINK", 0x40U)
-    .Case("SHF_LINK_ORDER", 0x80U)
-    .Case("SHF_OS_NONCONFORMING", 0x100U)
-    .Case("SHF_GROUP", 0x200U)
-    .Case("SHF_TLS", 0x400U)
-    .Case("SHF_COMPRESSED", 0x800U)
-    .Case("SHF_EXCLUDE", 0x80000000U)
-    .Case("SHF_MASKOS", 0x0ff00000)
-    .Case("SHF_MASKPROC", 0xf0000000)
-    .Case("XCORE_SHF_DP_SECTION", 0x10000000)
-    .Case("XCORE_SHF_CP_SECTION", 0x20000000)
-    .Case("SHF_X86_64_LARGE", 0x10000000)
-    .Case("SHF_HEX_GPREL", 0x10000000)
-    .Case("SHF_MIPS_NODUPES", 0x01000000)
-    .Case("SHF_MIPS_NAMES", 0x02000000)
-    .Case("SHF_MIPS_LOCAL", 0x04000000)
-    .Case("SHF_MIPS_NOSTRIP", 0x08000000)
-    .Case("SHF_MIPS_GPREL", 0x10000000)
-    .Case("SHF_MIPS_MERGE", 0x20000000)
-    .Case("SHF_MIPS_ADDR", 0x40000000)
-    .Case("SHF_MIPS_STRING", 0x80000000)
-    .Case("SHF_ARM_PURECODE", 0x2000000)
-    .Default(None);
+#define CASE_ENT(enum) #enum, ELF::enum
+  return StringSwitch<llvm::Optional<uint64_t>>(tok)
+      .Case(CASE_ENT(SHF_WRITE))
+      .Case(CASE_ENT(SHF_ALLOC))
+      .Case(CASE_ENT(SHF_EXECINSTR))
+      .Case(CASE_ENT(SHF_MERGE))
+      .Case(CASE_ENT(SHF_STRINGS))
+      .Case(CASE_ENT(SHF_INFO_LINK))
+      .Case(CASE_ENT(SHF_LINK_ORDER))
+      .Case(CASE_ENT(SHF_OS_NONCONFORMING))
+      .Case(CASE_ENT(SHF_GROUP))
+      .Case(CASE_ENT(SHF_TLS))
+      .Case(CASE_ENT(SHF_COMPRESSED))
+      .Case(CASE_ENT(SHF_EXCLUDE))
+      .Case(CASE_ENT(SHF_ARM_PURECODE))
+      .Default(None);
+#undef CASE_ENT
 }
 
 // Reads the '(' <flags> ')' list of section flags in
@@ -1176,37 +1157,25 @@ static llvm::Optional<uint64_t> parseFlag(StringRef tok) {
 // Example: SHF_EXECINSTR & !SHF_WRITE means with flag SHF_EXECINSTR and
 // without flag SHF_WRITE.
 std::pair<uint64_t, uint64_t> ScriptParser::readInputSectionFlags() {
-  bool expectName = true;
-  uint64_t withFlags = 0;
-  uint64_t withoutFlags = 0;
-  expect("(");
-  while (!atEOF() && !errorCount()) {
-    if (expectName) {
-      if (consume("&") || consume(")"))
-        setError("expected SectionFlag or !SectionFlag");
-      StringRef tok = unquote(next());
-      bool without = tok.consume_front("!");
-      llvm::Optional<uint64_t> flag = parseFlag(tok);
-      if (!flag)
-        setError("unrecognised flag");
-      else {
-        if (without)
-          withoutFlags |= *flag;
-        else
-          withFlags |= *flag;
-      }
-      expectName = false;
+   uint64_t withFlags = 0;
+   uint64_t withoutFlags = 0;
+   expect("(");
+   while (!errorCount()) {
+    StringRef tok = unquote(next());
+    bool without = tok.consume_front("!");
+    if (llvm::Optional<uint64_t> flag = parseFlag(tok)) {
+      if (without)
+        withoutFlags |= *flag;
+      else
+        withFlags |= *flag;
     } else {
-      if (consume("&")) {
-        expectName = true;
-        continue;
-      }
-      if (consume(")"))
-        break;
-      else {
-        next();
-        setError("expected & or )");
-      }
+      setError("unrecognised flag: " + tok);
+    }
+    if (consume(")"))
+      break;
+    if (!consume("&")) {
+      next();
+      setError("expected & or )");
     }
   }
   return std::make_pair(withFlags, withoutFlags);
