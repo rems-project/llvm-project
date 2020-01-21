@@ -2705,8 +2705,7 @@ Status Target::Install(ProcessLaunchInfo *launch_info) {
             if (local_file) {
               FileSpec remote_file(module_sp->GetRemoteInstallFileSpec());
               if (!remote_file) {
-                if (is_main_executable &&
-                    GetEnableAutoInstallMainExecutable()) {
+                if (is_main_executable && GetAutoInstallMainExecutable()) {
                   // Automatically install the main executable.
                   remote_file = platform_sp->GetRemoteWorkingDirectory();
                   remote_file.AppendPathComponent(
@@ -3975,6 +3974,12 @@ bool TargetProperties::GetRequireHardwareBreakpoints() const {
 void TargetProperties::SetRequireHardwareBreakpoints(bool b) {
   const uint32_t idx = ePropertyRequireHardwareBreakpoints;
   m_collection_sp->SetPropertyAtIndexAsBoolean(nullptr, idx, b);
+}
+
+bool TargetProperties::GetAutoInstallMainExecutable() const {
+  const uint32_t idx = ePropertyAutoInstallMainExecutable;
+  return m_collection_sp->GetPropertyAtIndexAsBoolean(
+      nullptr, idx, g_target_properties[idx].default_uint_value != 0);
 }
 
 void TargetProperties::Arg0ValueChangedCallback() {
