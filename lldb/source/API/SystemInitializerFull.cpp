@@ -57,7 +57,7 @@
 #include "Plugins/Instruction/PPC64/EmulateInstructionPPC64.h"
 #include "Plugins/InstrumentationRuntime/ASan/InstrumentationRuntimeASan.h"
 #include "Plugins/InstrumentationRuntime/MainThreadChecker/MainThreadCheckerRuntime.h"
-#include "Plugins/InstrumentationRuntime/TSan/TSanRuntime.h"
+#include "Plugins/InstrumentationRuntime/TSan/InstrumentationRuntimeTSan.h"
 #include "Plugins/InstrumentationRuntime/UBSan/UBSanRuntime.h"
 #include "Plugins/JITLoader/GDB/JITLoaderGDB.h"
 #include "Plugins/Language/CPlusPlus/CPlusPlusLanguage.h"
@@ -225,7 +225,7 @@ llvm::Error SystemInitializerFull::Initialize() {
   minidump::ProcessMinidump::Initialize();
   MemoryHistoryASan::Initialize();
   InstrumentationRuntimeASan::Initialize();
-  ThreadSanitizerRuntime::Initialize();
+  InstrumentationRuntimeTSan::Initialize();
   UndefinedBehaviorSanitizerRuntime::Initialize();
   MainThreadCheckerRuntime::Initialize();
 
@@ -320,7 +320,7 @@ void SystemInitializerFull::Terminate() {
   minidump::ProcessMinidump::Terminate();
   MemoryHistoryASan::Terminate();
   InstrumentationRuntimeASan::Terminate();
-  ThreadSanitizerRuntime::Terminate();
+  InstrumentationRuntimeTSan::Terminate();
   UndefinedBehaviorSanitizerRuntime::Terminate();
   MainThreadCheckerRuntime::Terminate();
   wasm::SymbolVendorWasm::Terminate();
