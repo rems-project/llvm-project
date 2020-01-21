@@ -823,6 +823,7 @@ private:
   SDValue LowerVectorOR(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFSINCOS(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerVSCALE(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerVECREDUCE(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerAtomic(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerADDRSPACECAST(SDValue Op, SelectionDAG &DAG) const;
