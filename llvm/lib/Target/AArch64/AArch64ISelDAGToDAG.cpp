@@ -334,6 +334,8 @@ public:
   void SelectLoadLane(SDNode *N, unsigned NumVecs);
   void SelectPostLoadLane(SDNode *N, unsigned NumVecs);
 
+  bool SelectAddrModeFrameIndexSVE(SDValue N, SDValue &Base, SDValue &OffImm);
+
   void SelectStore(SDNode *N, unsigned NumVecs);
   void SelectPostStore(SDNode *N, unsigned NumVecs);
   void SelectStoreLane(SDNode *N, unsigned NumVecs);
@@ -2393,6 +2395,23 @@ void AArch64DAGToDAGISel::SelectStore(SDNode *N, unsigned NumVecs) {
   CurDAG->setNodeMemRefs(cast<MachineSDNode>(St), {MemOp});
 
   ReplaceNode(N, St);
+}
+
+bool AArch64DAGToDAGISel::SelectAddrModeFrameIndexSVE(SDValue N, SDValue &Base,
+                                                      SDValue &OffImm) {
+  SDLoc dl(N);
+  const DataLayout &DL = CurDAG->getDataLayout();
+  const TargetLowering *TLI = getTargetLowering();
+
+  // Try to match it for the frame address
+  if (auto FINode = dyn_cast<FrameIndexSDNode>(N)) {
+    int FI = FINode->getIndex();
+    Base = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy(DL));
+    OffImm = CurDAG->getTargetConstant(0, dl, MVT::i64);
+    return true;
+  }
+
+  return false;
 }
 
 void AArch64DAGToDAGISel::SelectPostStore(SDNode *N, unsigned NumVecs) {
