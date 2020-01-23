@@ -1084,7 +1084,7 @@ bool ABISysV_x86_64::RegisterIsCalleeSaved(const RegisterInfo *reg_info) {
 
 CompilerType
 ABISysV_x86_64::GetSigInfoCompilerType(const Target &target,
-                                       ClangASTContext &ast_ctx,
+                                       TypeSystemClang &ast_ctx,
                                        llvm::StringRef type_name) const {
   if (target.GetArchitecture().GetTriple().isOSLinux())
     return GetLinuxSigInfoCompilerType(ast_ctx, type_name);

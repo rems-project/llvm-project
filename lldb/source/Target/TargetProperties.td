@@ -151,9 +151,6 @@ let Definition = "target" in {
   def NonStopModeEnabled: Property<"non-stop-mode", "Boolean">,
     DefaultFalse,
     Desc<"Disable lock-step debugging, instead control threads independently.">;
-  def AutoInstallMainExecutable : Property<"auto-install-main-executable", "Boolean">,
-    DefaultTrue,
-    Desc<"Always install the main executable when connected to a remote platform.">;
   def RequireHardwareBreakpoints: Property<"require-hardware-breakpoint", "Boolean">,
     DefaultFalse,
     Desc<"Require all breakpoints to be hardware breakpoints.">;

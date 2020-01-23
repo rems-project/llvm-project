@@ -324,7 +324,7 @@ protected:
   ///     The siginfo compiler type.
   //------------------------------------------------------------------
   virtual CompilerType GetSigInfoCompilerType(const Target &target,
-                                              ClangASTContext &ast_ctx,
+                                              TypeSystemClang &ast_ctx,
                                               llvm::StringRef type_name) const;
 
 private:

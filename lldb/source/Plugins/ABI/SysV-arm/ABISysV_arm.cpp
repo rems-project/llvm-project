@@ -2141,7 +2141,7 @@ bool ABISysV_arm::RegisterIsVolatile(RegisterContext &reg_ctx,
 
 CompilerType
 ABISysV_arm::GetSigInfoCompilerType(const Target &target,
-                                    ClangASTContext &ast_ctx,
+                                    TypeSystemClang &ast_ctx,
                                     llvm::StringRef type_name) const {
   if (target.GetArchitecture().GetTriple().isOSLinux())
     return GetLinuxSigInfoCompilerType(ast_ctx, type_name);

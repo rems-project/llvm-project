@@ -131,7 +131,7 @@ protected:
 
   lldb_private::CompilerType
   GetSigInfoCompilerType(const lldb_private::Target &target,
-                         lldb_private::ClangASTContext &ast_ctx,
+                         lldb_private::TypeSystemClang &ast_ctx,
                          llvm::StringRef type_name) const override;
 
 private:

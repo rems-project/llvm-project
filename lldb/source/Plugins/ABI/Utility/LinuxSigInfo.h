@@ -32,7 +32,7 @@
 ///     The siginfo compiler type.
 //--------------------------------------------------------------------
 lldb_private::CompilerType
-GetLinuxSigInfoCompilerType(lldb_private::ClangASTContext &ast_ctx,
+GetLinuxSigInfoCompilerType(lldb_private::TypeSystemClang &ast_ctx,
                             llvm::StringRef type_name);
 
 #endif // liblldb_LinuxSigInfo_h_

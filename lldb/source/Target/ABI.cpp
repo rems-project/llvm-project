@@ -12,7 +12,7 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Core/ValueObjectConstResult.h"
-#include "lldb/Symbol/ClangASTContext.h"
+#include "lldb/Symbol/TypeSystemClang.h"
 #include "lldb/Expression/ExpressionVariable.h"
 #include "lldb/Symbol/CompilerType.h"
 #include "lldb/Symbol/TypeSystem.h"
@@ -252,7 +252,7 @@ bool ABI::GetCalleeRegisterToSearch(RegisterContext &reg_ctx,
 ValueObjectSP ABI::CreateSigInfoValueObject(Target &target,
                                             const DataBufferSP &data_sp,
                                             Status &error) const {
-  ClangASTContext *ast_ctx = ClangASTContext::GetScratch(target);
+  TypeSystemClang *ast_ctx = TypeSystemClang::GetScratch(target);
   if (ast_ctx == nullptr) {
     error.SetErrorString(
         "failed to obtain Clang AST context to get hold of the siginfo type");
@@ -282,7 +282,7 @@ ValueObjectSP ABI::CreateSigInfoValueObject(Target &target,
 }
 
 CompilerType ABI::GetSigInfoCompilerType(const Target &target,
-                                         ClangASTContext &ast_ctx,
+                                         TypeSystemClang &ast_ctx,
                                          llvm::StringRef type_name) const {
   return CompilerType();
 }
