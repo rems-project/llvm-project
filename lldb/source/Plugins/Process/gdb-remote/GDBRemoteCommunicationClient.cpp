@@ -598,7 +598,8 @@ StructuredData::ObjectSP GDBRemoteCommunicationClient::GetThreadsInfo() {
       if (response.IsUnsupportedResponse()) {
         m_supports_jThreadsInfo = false;
       } else if (!response.Empty()) {
-        object_sp = StructuredData::ParseJSON(response.GetStringRef());
+        object_sp =
+            StructuredData::ParseJSON(std::string(response.GetStringRef()));
       }
     }
   }
@@ -717,7 +718,7 @@ GDBRemoteCommunicationClient::SendPacketsAndConcatenateResponsesNoLock(
     if (result != PacketResult::Success)
       return result;
 
-    const std::string &this_string = this_response.GetStringRef();
+    const std::string &this_string = std::string(this_response.GetStringRef());
 
     // Check for m or l as first character; l seems to mean this is the last
     // chunk
@@ -814,7 +815,7 @@ bool GDBRemoteCommunicationClient::GetLaunchSuccess(std::string &error_str) {
       return true;
     if (response.GetChar() == 'E') {
       // A string the describes what failed when launching...
-      error_str = response.GetStringRef().substr(1);
+      error_str = std::string(response.GetStringRef().substr(1));
     } else {
       error_str.assign("unknown error occurred launching process");
     }
@@ -1063,7 +1064,7 @@ bool GDBRemoteCommunicationClient::GetGDBServerVersion() {
         while (response.GetNameColonValue(name, value)) {
           if (name.equals("name")) {
             success = true;
-            m_gdb_server_name = value;
+            m_gdb_server_name = std::string(value);
           } else if (name.equals("version")) {
             llvm::StringRef major, minor;
             std::tie(major, minor) = value.split('.');
@@ -1222,7 +1223,7 @@ bool GDBRemoteCommunicationClient::GetHostInfo(bool force) {
             if (!value.getAsInteger(0, sub))
               ++num_keys_decoded;
           } else if (name.equals("arch")) {
-            arch_name = value;
+            arch_name = std::string(value);
             ++num_keys_decoded;
           } else if (name.equals("triple")) {
             StringExtractor extractor(value);
@@ -1253,10 +1254,10 @@ bool GDBRemoteCommunicationClient::GetHostInfo(bool force) {
               os_name = "ios";
               environment = "macabi";
             } else
-              os_name = value;
+              os_name = std::string(value);
             ++num_keys_decoded;
           } else if (name.equals("vendor")) {
-            vendor_name = value;
+            vendor_name = std::string(value);
             ++num_keys_decoded;
           } else if (name.equals("endian")) {
             byte_order = llvm::StringSwitch<lldb::ByteOrder>(value)
@@ -2036,9 +2037,9 @@ bool GDBRemoteCommunicationClient::DecodeProcessInfoResponse(
       } else if (name.equals("cpusubtype")) {
         value.getAsInteger(0, sub);
       } else if (name.equals("vendor")) {
-        vendor = value;
+        vendor = std::string(value);
       } else if (name.equals("ostype")) {
-        os_type = value;
+        os_type = std::string(value);
       }
     }
 
@@ -2129,10 +2130,10 @@ bool GDBRemoteCommunicationClient::GetCurrentProcessInfo(bool allow_lazy) {
             os_name = "ios";
             environment = "macabi";
           } else
-            os_name = value;
+            os_name = std::string(value);
           ++num_keys_decoded;
         } else if (name.equals("vendor")) {
-          vendor_name = value;
+          vendor_name = std::string(value);
           ++num_keys_decoded;
         } else if (name.equals("endian")) {
           byte_order = llvm::StringSwitch<lldb::ByteOrder>(value)
@@ -2149,7 +2150,7 @@ bool GDBRemoteCommunicationClient::GetCurrentProcessInfo(bool allow_lazy) {
           if (!value.getAsInteger(16, pid))
             ++num_keys_decoded;
         } else if (name.equals("elf_abi")) {
-          elf_abi = value;
+          elf_abi = std::string(value);
           ++num_keys_decoded;
         }
       }
@@ -2616,7 +2617,7 @@ size_t GDBRemoteCommunicationClient::QueryGDBServer(
     return 0;
 
   StructuredData::ObjectSP data =
-      StructuredData::ParseJSON(response.GetStringRef());
+      StructuredData::ParseJSON(std::string(response.GetStringRef()));
   if (!data)
     return 0;
 
@@ -2637,7 +2638,7 @@ size_t GDBRemoteCommunicationClient::QueryGDBServer(
     std::string socket_name;
     if (StructuredData::ObjectSP socket_name_osp =
             element->GetValueForKey(llvm::StringRef("socket_name")))
-      socket_name = socket_name_osp->GetStringValue();
+      socket_name = std::string(socket_name_osp->GetStringValue());
 
     if (port != 0 || !socket_name.empty())
       connection_urls.emplace_back(port, socket_name);
@@ -3747,7 +3748,7 @@ GDBRemoteCommunicationClient::GetModulesInfo(
   }
 
   StructuredData::ObjectSP response_object_sp =
-      StructuredData::ParseJSON(response.GetStringRef());
+      StructuredData::ParseJSON(std::string(response.GetStringRef()));
   if (!response_object_sp)
     return llvm::None;
 
@@ -3802,7 +3803,7 @@ bool GDBRemoteCommunicationClient::ReadExtFeature(
       return false;
     }
 
-    const std::string &str = chunk.GetStringRef();
+    const std::string &str = std::string(chunk.GetStringRef());
     if (str.length() == 0) {
       // should have some data in chunk
       err.SetErrorString("Empty response from $qXfer packet");
@@ -4016,7 +4017,7 @@ GDBRemoteCommunicationClient::GetSupportedStructuredDataPlugins() {
     if (SendPacketAndWaitForResponse("qStructuredDataPlugins", response,
                                      send_async) == PacketResult::Success) {
       m_supported_async_json_packets_sp =
-          StructuredData::ParseJSON(response.GetStringRef());
+          StructuredData::ParseJSON(std::string(response.GetStringRef()));
       if (m_supported_async_json_packets_sp &&
           !m_supported_async_json_packets_sp->GetAsArray()) {
         // We were returned something other than a JSON array.  This is

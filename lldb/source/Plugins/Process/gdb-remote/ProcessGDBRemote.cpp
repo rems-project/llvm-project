@@ -366,7 +366,8 @@ bool ProcessGDBRemote::ParsePythonTargetDefinition(
           StructuredData::ObjectSP triple_value =
               host_info_dict->GetValueForKey("triple");
           if (auto triple_string_value = triple_value->GetAsString()) {
-            std::string triple_string = triple_string_value->GetValue();
+            std::string triple_string =
+                std::string(triple_string_value->GetValue());
             ArchSpec host_arch(triple_string.c_str());
             if (!host_arch.IsCompatibleMatch(GetTarget().GetArchitecture())) {
               GetTarget().SetArchitecture(host_arch);
@@ -1609,7 +1610,8 @@ bool ProcessGDBRemote::UpdateThreadIDList() {
       for (int i = 0; i < nItems; i++) {
         // Get the thread stop info
         StringExtractorGDBRemote &stop_info = m_stop_packet_stack[i];
-        const std::string &stop_info_str = stop_info.GetStringRef();
+        const std::string &stop_info_str =
+            std::string(stop_info.GetStringRef());
 
         m_thread_pcs.clear();
         const size_t thread_pcs_pos = stop_info_str.find(";thread-pcs:");
@@ -2073,14 +2075,14 @@ ProcessGDBRemote::SetThreadStopInfo(StructuredData::Dictionary *thread_dict) {
         });
       }
     } else if (key == g_key_name) {
-      thread_name = object->GetStringValue();
+      thread_name = std::string(object->GetStringValue());
     } else if (key == g_key_qaddr) {
       thread_dispatch_qaddr = object->GetIntegerValue(LLDB_INVALID_ADDRESS);
     } else if (key == g_key_queue_name) {
       queue_vars_valid = true;
-      queue_name = object->GetStringValue();
+      queue_name = std::string(object->GetStringValue());
     } else if (key == g_key_queue_kind) {
-      std::string queue_kind_str = object->GetStringValue();
+      std::string queue_kind_str = std::string(object->GetStringValue());
       if (queue_kind_str == "serial") {
         queue_vars_valid = true;
         queue_kind = eQueueKindSerial;
@@ -2104,9 +2106,9 @@ ProcessGDBRemote::SetThreadStopInfo(StructuredData::Dictionary *thread_dict) {
       else
         associated_with_dispatch_queue = eLazyBoolNo;
     } else if (key == g_key_reason) {
-      reason = object->GetStringValue();
+      reason = std::string(object->GetStringValue());
     } else if (key == g_key_description) {
-      description = object->GetStringValue();
+      description = std::string(object->GetStringValue());
     } else if (key == g_key_registers) {
       StructuredData::Dictionary *registers_dict = object->GetAsDictionary();
 
@@ -2117,7 +2119,8 @@ ProcessGDBRemote::SetThreadStopInfo(StructuredData::Dictionary *thread_dict) {
               const uint32_t reg =
                   StringConvert::ToUInt32(key.GetCString(), UINT32_MAX, 10);
               if (reg != UINT32_MAX)
-                expedited_register_map[reg] = object->GetStringValue();
+                expedited_register_map[reg] =
+                    std::string(object->GetStringValue());
               return true; // Keep iterating through all array items
             });
       }
@@ -2260,7 +2263,7 @@ StateType ProcessGDBRemote::SetThreadStopInfo(StringExtractor &stop_packet) {
         // Now convert the HEX bytes into a string value
         name_extractor.GetHexByteString(thread_name);
       } else if (key.compare("name") == 0) {
-        thread_name = value;
+        thread_name = std::string(value);
       } else if (key.compare("qaddr") == 0) {
         value.getAsInteger(16, thread_dispatch_qaddr);
       } else if (key.compare("dispatch_queue_t") == 0) {
@@ -2281,7 +2284,7 @@ StateType ProcessGDBRemote::SetThreadStopInfo(StringExtractor &stop_packet) {
         if (!value.getAsInteger(0, queue_serial_number))
           queue_vars_valid = true;
       } else if (key.compare("reason") == 0) {
-        reason = value;
+        reason = std::string(value);
       } else if (key.compare("description") == 0) {
         StringExtractor desc_extractor(value);
         // Now convert the HEX bytes into a string value
@@ -2330,7 +2333,7 @@ StateType ProcessGDBRemote::SetThreadStopInfo(StringExtractor &stop_packet) {
         reason = "watchpoint";
         StreamString ostr;
         ostr.Printf("%" PRIu64 " %" PRIu32, wp_addr, wp_index);
-        description = ostr.GetString();
+        description = std::string(ostr.GetString());
       } else if (key.compare("library") == 0) {
         auto error = LoadModules();
         if (error) {
@@ -2341,7 +2344,7 @@ StateType ProcessGDBRemote::SetThreadStopInfo(StringExtractor &stop_packet) {
       } else if (key.size() == 2 && ::isxdigit(key[0]) && ::isxdigit(key[1])) {
         uint32_t reg = UINT32_MAX;
         if (!key.getAsInteger(16, reg))
-          expedited_register_map[reg] = std::move(value);
+          expedited_register_map[reg] = std::string(std::move(value));
       }
     }
 
@@ -2618,7 +2621,7 @@ Status ProcessGDBRemote::DoDestroy() {
                     "to k packet: %s",
                     response.GetStringRef().data());
           exit_string.assign("got unexpected response to k packet: ");
-          exit_string.append(response.GetStringRef());
+          exit_string.append(std::string(response.GetStringRef()));
         }
       } else {
         LLDB_LOGF(log, "ProcessGDBRemote::DoDestroy - failed to send k packet");
@@ -3744,7 +3747,7 @@ void ProcessGDBRemote::StopAsyncThread() {
 
 bool ProcessGDBRemote::HandleNotifyPacket(StringExtractorGDBRemote &packet) {
   // get the packet at a string
-  const std::string &pkt = packet.GetStringRef();
+  const std::string &pkt = std::string(packet.GetStringRef());
   // skip %stop:
   StringExtractorGDBRemote stop_info(pkt.c_str() + 5);
 
@@ -4126,7 +4129,8 @@ ProcessGDBRemote::GetExtendedInfoForThread(lldb::tid_t tid) {
           response.GetResponseType();
       if (response_type == StringExtractorGDBRemote::eResponse) {
         if (!response.Empty()) {
-          object_sp = StructuredData::ParseJSON(response.GetStringRef());
+          object_sp =
+              StructuredData::ParseJSON(std::string(response.GetStringRef()));
         }
       }
     }
@@ -4211,7 +4215,8 @@ ProcessGDBRemote::GetLoadedDynamicLibrariesInfos_sender(
           response.GetResponseType();
       if (response_type == StringExtractorGDBRemote::eResponse) {
         if (!response.Empty()) {
-          object_sp = StructuredData::ParseJSON(response.GetStringRef());
+          object_sp =
+              StructuredData::ParseJSON(std::string(response.GetStringRef()));
         }
       }
     }
@@ -4244,7 +4249,8 @@ StructuredData::ObjectSP ProcessGDBRemote::GetSharedCacheInfo() {
           response.GetResponseType();
       if (response_type == StringExtractorGDBRemote::eResponse) {
         if (!response.Empty()) {
-          object_sp = StructuredData::ParseJSON(response.GetStringRef());
+          object_sp =
+              StructuredData::ParseJSON(std::string(response.GetStringRef()));
         }
       }
     }
@@ -5178,7 +5184,8 @@ ParseStructuredDataPacket(llvm::StringRef packet) {
   }
 
   // This is an asynchronous JSON packet, destined for a StructuredDataPlugin.
-  StructuredData::ObjectSP json_sp = StructuredData::ParseJSON(packet);
+  StructuredData::ObjectSP json_sp =
+      StructuredData::ParseJSON(std::string(packet));
   if (log) {
     if (json_sp) {
       StreamString json_str;
@@ -5385,7 +5392,7 @@ public:
         result.SetStatus(eReturnStatusSuccessFinishResult);
         Stream &output_strm = result.GetOutputStream();
         output_strm.Printf("  packet: %s\n", packet_cstr);
-        std::string response_str = response.GetStringRef();
+        std::string response_str = std::string(response.GetStringRef());
 
         if (strstr(packet_cstr, "qGetProfileData") != nullptr) {
           response_str = process->HarmonizeThreadIdsForProfileData(response);
@@ -5438,7 +5445,7 @@ public:
           [&output_strm](llvm::StringRef output) { output_strm << output; });
       result.SetStatus(eReturnStatusSuccessFinishResult);
       output_strm.Printf("  packet: %s\n", packet.GetData());
-      const std::string &response_str = response.GetStringRef();
+      const std::string &response_str = std::string(response.GetStringRef());
 
       if (response_str.empty())
         output_strm.PutCString("response: \nerror: UNIMPLEMENTED\n");
