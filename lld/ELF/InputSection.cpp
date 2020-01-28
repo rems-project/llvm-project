@@ -352,7 +352,7 @@ std::string InputSectionBase::getSrcMsg(const Symbol &sym, uint64_t offset) cons
 // or
 //
 //   path/to/foo.o:(function bar) in archive path/to/bar.a
-std::string InputSectionBase::getObjMsg(uint64_t off) {
+std::string InputSectionBase::getObjMsg(uint64_t off) const {
   // Synthetic sections don't have input files.
   if (!file)
     return ("<internal>:(" + name + "+0x" + utohexstr(off) + ")").str();

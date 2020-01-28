@@ -17,8 +17,8 @@
 # LIMITS:      e3 0f 00 7e     beqz    zero, 4094
 # LIMITS-NEXT: 63 10 00 80     bnez    zero, -4096
 
-# RUN: not ld.lld %t.rv32.o --defsym foo=_start+0x1000 --defsym bar=_start+4-0x1002 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-RANGE %s
-# RUN: not ld.lld %t.rv64.o --defsym foo=_start+0x1000 --defsym bar=_start+4-0x1002 -o /dev/null 2>&1 | FileCheck --check-prefix=ERROR-RANGE %s
+# RUN: not ld.lld %t.rv32.o --defsym foo=_start+0x1000 --defsym bar=_start+4-0x1002 -o %t 2>&1 | FileCheck --check-prefix=ERROR-RANGE %s
+# RUN: not ld.lld %t.rv64.o --defsym foo=_start+0x1000 --defsym bar=_start+4-0x1002 -o %t 2>&1 | FileCheck --check-prefix=ERROR-RANGE %s
 # ERROR-RANGE: relocation R_RISCV_BRANCH out of range: 2048 is not in [-2048, 2047]; references foo
 # ERROR-RANGE: relocation R_RISCV_BRANCH out of range: -2049 is not in [-2048, 2047]; references bar
 

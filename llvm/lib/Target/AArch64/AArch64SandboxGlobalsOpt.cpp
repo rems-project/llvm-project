@@ -78,7 +78,7 @@ public:
   static Comdat *getCapComdat(GlobalValue *GV) {
     Module &M = *GV->getParent();
     std::string CName = "__cap_";
-    CName = CName.append(GV->getComdat()->getName());
+    CName = CName.append(GV->getComdat()->getName().str());
     Comdat *C = M.getOrInsertComdat(CName);
     C->setSelectionKind(GV->getComdat()->getSelectionKind());
     return C;
