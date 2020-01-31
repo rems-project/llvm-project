@@ -133,7 +133,7 @@ define <2 x i32*> @vec_gep_scalar_base(<2 x i64> %offs) {
   ; CHECK:   [[PTR_ADD:%[0-9]+]]:_(<2 x p0>) = G_PTR_ADD [[BUILD_VECTOR]], [[MUL]](<2 x s64>)
   ; CHECK:   [[COPY1:%[0-9]+]]:_(<2 x p0>) = COPY [[PTR_ADD]](<2 x p0>)
   ; CHECK:   $q0 = COPY [[COPY1]](<2 x p0>)
-  ; CHECK:   RET_ReallyLR implicit $q0
+  ; CHECK:   RET_ReallyLR 0, implicit $q0
 entry:
   %0 = getelementptr inbounds [8 x i32], [8 x i32]* @arr, i64 0, <2 x i64> %offs
   ret <2 x i32*> %0

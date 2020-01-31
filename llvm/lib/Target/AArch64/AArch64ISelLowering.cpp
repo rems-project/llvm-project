@@ -10233,14 +10233,12 @@ static bool memOpAlign(unsigned DstAlign, unsigned SrcAlign,
 }
 
 EVT AArch64TargetLowering::getOptimalMemOpType(
-    uint64_t Size, unsigned DstAlign, unsigned SrcAlign, bool IsMemset,
-    bool ZeroMemset, bool MemcpyStrSrc,
-    const AttributeList &FuncAttributes) const {
+    const MemOp &Op, const AttributeList &FuncAttributes) const {
   // The copied area may contain capabilities, so inlining needs to be done
   // wisely, resorting to the memcpy if there is any risk. Don't use capabilities
   // for memset since the resulting tag is always 0.
-  if (Subtarget->hasMorello() && Size >= 16 && !IsMemset) {
-    if (memOpAlign(SrcAlign, DstAlign, 16))
+  if (Subtarget->hasMorello() && Op.Size >= 16 && !Op.IsMemset) {
+    if (memOpAlign(Op.SrcAlign, Op.DstAlign, 16))
       return MVT::iFATPTR128;
   }
 
@@ -10251,9 +10249,9 @@ EVT AArch64TargetLowering::getOptimalMemOpType(
   // Only use AdvSIMD to implement memset of 32-byte and above. It would have
   // taken one instruction to materialize the v2i64 zero and one store (with
   // restrictive addressing mode). Just do i64 stores.
-  bool IsSmallMemset = IsMemset && Size < 32;
+  bool IsSmallMemset = Op.IsMemset && Op.Size < 32;
   auto AlignmentIsAcceptable = [&](EVT VT, unsigned AlignCheck) {
-    if (memOpAlign(SrcAlign, DstAlign, AlignCheck))
+    if (memOpAlign(Op.SrcAlign, Op.DstAlign, AlignCheck))
       return true;
     bool Fast;
     return allowsMisalignedMemoryAccesses(VT, 0, 1, MachineMemOperand::MONone,
@@ -10261,23 +10259,21 @@ EVT AArch64TargetLowering::getOptimalMemOpType(
            Fast;
   };
 
-  if (CanUseNEON && IsMemset && !IsSmallMemset &&
+  if (CanUseNEON && Op.IsMemset && !IsSmallMemset &&
       AlignmentIsAcceptable(MVT::v2i64, 16))
     return MVT::v2i64;
   if (CanUseFP && !IsSmallMemset && AlignmentIsAcceptable(MVT::f128, 16) &&
-      Size >= 16)
+      Op.Size >= 16)
     return MVT::f128;
-  if (Size >= 8 && AlignmentIsAcceptable(MVT::i64, 8))
+  if (Op.Size >= 8 && AlignmentIsAcceptable(MVT::i64, 8))
     return MVT::i64;
-  if (Size >= 4 && AlignmentIsAcceptable(MVT::i32, 4))
+  if (Op.Size >= 4 && AlignmentIsAcceptable(MVT::i32, 4))
     return MVT::i32;
   return MVT::Other;
 }
 
 LLT AArch64TargetLowering::getOptimalMemOpLLT(
-    uint64_t Size, unsigned DstAlign, unsigned SrcAlign, bool IsMemset,
-    bool ZeroMemset, bool MemcpyStrSrc,
-    const AttributeList &FuncAttributes) const {
+    const MemOp &Op, const AttributeList &FuncAttributes) const {
   bool CanImplicitFloat =
       !FuncAttributes.hasFnAttribute(Attribute::NoImplicitFloat);
   bool CanUseNEON = Subtarget->hasNEON() && CanImplicitFloat;
@@ -10285,9 +10281,9 @@ LLT AArch64TargetLowering::getOptimalMemOpLLT(
   // Only use AdvSIMD to implement memset of 32-byte and above. It would have
   // taken one instruction to materialize the v2i64 zero and one store (with
   // restrictive addressing mode). Just do i64 stores.
-  bool IsSmallMemset = IsMemset && Size < 32;
+  bool IsSmallMemset = Op.IsMemset && Op.Size < 32;
   auto AlignmentIsAcceptable = [&](EVT VT, unsigned AlignCheck) {
-    if (memOpAlign(SrcAlign, DstAlign, AlignCheck))
+    if (memOpAlign(Op.SrcAlign, Op.DstAlign, AlignCheck))
       return true;
     bool Fast;
     return allowsMisalignedMemoryAccesses(VT, 0, 1, MachineMemOperand::MONone,
@@ -10295,14 +10291,14 @@ LLT AArch64TargetLowering::getOptimalMemOpLLT(
            Fast;
   };
 
-  if (CanUseNEON && IsMemset && !IsSmallMemset &&
+  if (CanUseNEON && Op.IsMemset && !IsSmallMemset &&
       AlignmentIsAcceptable(MVT::v2i64, 16))
     return LLT::vector(2, 64);
   if (CanUseFP && !IsSmallMemset && AlignmentIsAcceptable(MVT::f128, 16))
     return LLT::scalar(128);
-  if (Size >= 8 && AlignmentIsAcceptable(MVT::i64, 8))
+  if (Op.Size >= 8 && AlignmentIsAcceptable(MVT::i64, 8))
     return LLT::scalar(64);
-  if (Size >= 4 && AlignmentIsAcceptable(MVT::i32, 4))
+  if (Op.Size >= 4 && AlignmentIsAcceptable(MVT::i32, 4))
     return LLT::scalar(32);
   return LLT();
 }
