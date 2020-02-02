@@ -1816,9 +1816,6 @@ static bool despeculateCountZeros(IntrinsicInst *CountZeros,
                                   const TargetLowering *TLI,
                                   const DataLayout *DL,
                                   bool &ModifiedDT) {
-  if (!DL)
-    return false;
-
   // If a zero input is undefined, it doesn't make sense to despeculate that.
   if (match(CountZeros->getOperand(1), m_One()))
     return false;
@@ -6350,9 +6347,6 @@ bool CodeGenPrepare::tryToSinkFreeOperands(Instruction *I) {
 }
 
 bool CodeGenPrepare::optimizeSwitchInst(SwitchInst *SI) {
-  if (!DL)
-    return false;
-
   Value *Cond = SI->getCondition();
   Type *OldType = Cond->getType();
   LLVMContext &Context = Cond->getContext();
