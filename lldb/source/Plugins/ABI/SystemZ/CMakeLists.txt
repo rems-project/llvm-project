@@ -1,5 +1,5 @@
-add_lldb_library(lldbPluginABISysV_ppc PLUGIN
-  ABISysV_ppc.cpp
+add_lldb_library(lldbPluginABISystemZ PLUGIN
+  ABISysV_s390x.cpp
 
   LINK_LIBS
     lldbCore

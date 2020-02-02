@@ -1,5 +1,5 @@
-add_lldb_library(lldbPluginABISysV_mips PLUGIN
-  ABISysV_mips.cpp
+add_lldb_library(lldbPluginABIHexagon PLUGIN
+  ABISysV_hexagon.cpp
 
   LINK_LIBS
     lldbCore
