@@ -56,7 +56,7 @@ const char *ABI::GetFrameStateAsCString(FrameState frame_state) {
 
 ABI::~ABI() = default;
 
-bool ABI::GetRegisterInfoByName(ConstString name, RegisterInfo &info) {
+bool RegInfoBasedABI::GetRegisterInfoByName(ConstString name, RegisterInfo &info) {
   uint32_t count = 0;
   const RegisterInfo *register_info_array = GetRegisterInfoArray(count);
   if (register_info_array) {
@@ -304,7 +304,7 @@ std::unique_ptr<llvm::MCRegisterInfo> ABI::MakeMCRegisterInfo(const ArchSpec &ar
   return info_up;
 }
 
-void ABI::AugmentRegisterInfo(RegisterInfo &info) {
+void RegInfoBasedABI::AugmentRegisterInfo(RegisterInfo &info) {
   if (info.kinds[eRegisterKindEHFrame] != LLDB_INVALID_REGNUM &&
       info.kinds[eRegisterKindDWARF] != LLDB_INVALID_REGNUM)
     return;

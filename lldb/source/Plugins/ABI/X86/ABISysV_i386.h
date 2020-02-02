@@ -12,7 +12,7 @@
 #include "lldb/Target/ABI.h"
 #include "lldb/lldb-private.h"
 
-class ABISysV_i386 : public lldb_private::ABI {
+class ABISysV_i386 : public lldb_private::RegInfoBasedABI {
 public:
   ~ABISysV_i386() override = default;
 
@@ -109,11 +109,7 @@ protected:
                          llvm::StringRef type_name) const override;
 
 private:
-  ABISysV_i386(lldb::ProcessSP process_sp,
-               std::unique_ptr<llvm::MCRegisterInfo> info_up)
-      : lldb_private::ABI(std::move(process_sp), std::move(info_up)) {
-    // Call CreateInstance instead.
-  }
+  using lldb_private::RegInfoBasedABI::RegInfoBasedABI; // Call CreateInstance instead.
 };
 
 #endif // liblldb_ABISysV_i386_h_
