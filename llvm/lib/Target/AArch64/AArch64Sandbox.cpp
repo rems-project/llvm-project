@@ -442,7 +442,7 @@ public:
       if (ConstantInt *CI = dyn_cast<ConstantInt>(AI->getArraySize())) {
         uint64_t TotalSize = CI->getLimitedValue() * ElementSize;
         auto Req = AArch64TargetStreamer::getTargetSizeAlignReq(TotalSize);
-        Align Alignment = Req.second ? Align(1UL << Req.second) : Align::None();
+        Align Alignment = Req.second ? Align(1UL << Req.second) : Align();
         TotalSize = Req.first;
 
         // Determine the required aligment.

@@ -40,7 +40,7 @@ getAlignmentForPreciseBounds(uint64_t Size) const {
   unsigned LogAlign =
       AArch64TargetStreamer::getTargetSizeAlignReq(Size).second;
   if (!LogAlign)
-    return Align::None();
+    return Align();
   return Align(1 << LogAlign);
 }
 

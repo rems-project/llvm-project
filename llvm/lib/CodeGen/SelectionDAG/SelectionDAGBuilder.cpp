@@ -5887,9 +5887,9 @@ void SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I,
     SDValue Op2 = getValue(I.getArgOperand(1));
     SDValue Op3 = getValue(I.getArgOperand(2));
     // @llvm.memcpy defines 0 and 1 to both mean no alignment.
-    unsigned DstAlign = std::max<unsigned>(MCI.getDestAlignment(), 1);
-    unsigned SrcAlign = std::max<unsigned>(MCI.getSourceAlignment(), 1);
-    unsigned Align = MinAlign(DstAlign, SrcAlign);
+    Align DstAlign = MCI.getDestAlign().valueOrOne();
+    Align SrcAlign = MCI.getSourceAlign().valueOrOne();
+    Align Alignment = commonAlignment(DstAlign, SrcAlign);
     bool isVol = MCI.isVolatile();
     bool isTC = I.isTailCall() && isInTailCallPosition(&I, DAG.getTarget());
     const TargetLowering &TLI = DAG.getTargetLoweringInfo();
@@ -5900,8 +5900,8 @@ void SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I,
     Attribute CopyType = I.getAttribute(AttributeList::FunctionIndex,
                                         "frontend-memtransfer-type");
     SDValue Root = isVol ? getRoot() : getMemoryRoot();
-    SDValue MC = DAG.getMemcpy(Root, sdl, Op1, Op2, Op3, Align, isVol, false,
-                               isTC, PreserveTags,
+    SDValue MC = DAG.getMemcpy(Root, sdl, Op1, Op2, Op3, Alignment, isVol,
+                               /* AlwaysInline */ false, isTC, PreserveTags,
                                MachinePointerInfo(I.getArgOperand(0)),
                                MachinePointerInfo(I.getArgOperand(1)),
                                CopyType.getValueAsString());
@@ -5927,10 +5927,10 @@ void SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I,
     Attribute MoveType = I.getAttribute(AttributeList::FunctionIndex,
                                         "frontend-memtransfer-type");
     SDValue MC = DAG.getMemcpy(
-        getRoot(), sdl, Dst, Src, Size, Alignment.value(), isVol,
+        getRoot(), sdl, Dst, Src, Size, Alignment, isVol,
         /* AlwaysInline */ true, isTC, PreserveTags,
         MachinePointerInfo(I.getArgOperand(0)),
-        MachinePointerInfo(I.getArgOperand(1)));
+        MachinePointerInfo(I.getArgOperand(1)), MoveType.getValueAsString());
     updateDAGForMaybeTailCall(MC);
     return;
   }
@@ -5940,12 +5940,12 @@ void SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I,
     SDValue Op2 = getValue(I.getArgOperand(1));
     SDValue Op3 = getValue(I.getArgOperand(2));
     // @llvm.memset defines 0 and 1 to both mean no alignment.
-    unsigned Align = std::max<unsigned>(MSI.getDestAlignment(), 1);
+    Align Alignment = MSI.getDestAlign().valueOrOne();
     bool isVol = MSI.isVolatile();
     bool isTC = I.isTailCall() && isInTailCallPosition(&I, DAG.getTarget());
     SDValue Root = isVol ? getRoot() : getMemoryRoot();
-    SDValue MS = DAG.getMemset(Root, sdl, Op1, Op2, Op3, Align, isVol,
-                               isTC, MachinePointerInfo(I.getArgOperand(0)));
+    SDValue MS = DAG.getMemset(Root, sdl, Op1, Op2, Op3, Alignment, isVol, isTC,
+                               MachinePointerInfo(I.getArgOperand(0)));
     updateDAGForMaybeTailCall(MS);
     return;
   }
@@ -5955,9 +5955,9 @@ void SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I,
     SDValue Op2 = getValue(I.getArgOperand(1));
     SDValue Op3 = getValue(I.getArgOperand(2));
     // @llvm.memmove defines 0 and 1 to both mean no alignment.
-    unsigned DstAlign = std::max<unsigned>(MMI.getDestAlignment(), 1);
-    unsigned SrcAlign = std::max<unsigned>(MMI.getSourceAlignment(), 1);
-    unsigned Align = MinAlign(DstAlign, SrcAlign);
+    Align DstAlign = MMI.getDestAlign().valueOrOne();
+    Align SrcAlign = MMI.getSourceAlign().valueOrOne();
+    Align Alignment = commonAlignment(DstAlign, SrcAlign);
     bool isVol = MMI.isVolatile();
     bool isTC = I.isTailCall() && isInTailCallPosition(&I, DAG.getTarget());
     const TargetLowering &TLI = DAG.getTargetLoweringInfo();
@@ -5968,8 +5968,8 @@ void SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I,
     // FIXME: Support passing different dest/src alignments to the memmove DAG
     // node.
     SDValue Root = isVol ? getRoot() : getMemoryRoot();
-    SDValue MM = DAG.getMemmove(Root, sdl, Op1, Op2, Op3, Align, isVol, isTC,
-                                PreserveTags,
+    SDValue MM = DAG.getMemmove(Root, sdl, Op1, Op2, Op3, Alignment, isVol,
+                                isTC, PreserveTags,
                                 MachinePointerInfo(I.getArgOperand(0)),
                                 MachinePointerInfo(I.getArgOperand(1)),
                                 MoveType.getValueAsString());
@@ -7589,9 +7589,8 @@ bool SelectionDAGBuilder::visitMemPCpyCall(const CallInst &I) {
 
   unsigned DstAlign = DAG.InferPtrAlignment(Dst);
   unsigned SrcAlign = DAG.InferPtrAlignment(Src);
-  unsigned Align = std::min(DstAlign, SrcAlign);
-  if (Align == 0) // Alignment of one or both could not be inferred.
-    Align = 1; // 0 and 1 both specify no alignment, but 0 is reserved.
+  // DAG::getMemcpy needs Alignment to be defined.
+  Align Alignment = assumeAligned(std::min(DstAlign, SrcAlign));
 
   bool isVol = false;
   SDLoc sdl = getCurSDLoc();
@@ -7605,7 +7604,7 @@ bool SelectionDAGBuilder::visitMemPCpyCall(const CallInst &I) {
   // because the return pointer needs to be adjusted by the size of
   // the copied memory.
   SDValue Root = isVol ? getRoot() : getMemoryRoot();
-  SDValue MC = DAG.getMemcpy(Root, sdl, Dst, Src, Size, Align, isVol,
+  SDValue MC = DAG.getMemcpy(Root, sdl, Dst, Src, Size, Alignment, isVol,
                              false, /*isTailCall=*/false, MustPreserveCheriTags,
                              MachinePointerInfo(I.getArgOperand(0)),
                              MachinePointerInfo(I.getArgOperand(1)),
