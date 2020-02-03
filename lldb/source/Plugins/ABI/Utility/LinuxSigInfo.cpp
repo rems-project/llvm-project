@@ -12,7 +12,7 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Symbol/TypeSystemClang.h"
+#include "Plugins/TypeSystem/Clang/TypeSystemClang.h"
 
 using namespace lldb;
 using namespace lldb_private;
