@@ -1,5 +1,5 @@
-if(LLVM_ENABLE_ZLIB)
-  set(system_libs ${ZLIB_LIBRARY})
+if( LLVM_ENABLE_ZLIB AND HAVE_LIBZ )
+  set(system_libs ${system_libs} ${ZLIB_LIBRARIES})
 endif()
 
 if( MSVC OR MINGW )
