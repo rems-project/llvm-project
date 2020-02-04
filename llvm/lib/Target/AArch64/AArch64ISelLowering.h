@@ -104,9 +104,9 @@ enum NodeType : unsigned {
   BICi,
   ORRi,
 
-  // Vector bit select: similar to ISD::VSELECT but not all bits within an
+  // Vector bitwise select: similar to ISD::VSELECT but not all bits within an
   // element must be identical.
-  BSL,
+  BSP,
 
   // Vector arithmetic negation
   NEG,
@@ -180,7 +180,7 @@ enum NodeType : unsigned {
   // Vector bitwise negation
   NOT,
 
-  // Vector bitwise selection
+  // Vector bitwise insertion
   BIT,
 
   // Capability operations
