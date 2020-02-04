@@ -89,6 +89,8 @@ add_llvm_component_library(LLVMSupport
   DeltaAlgorithm.cpp
   DAGDeltaAlgorithm.cpp
   DJB.cpp
+  ELFAttributeParser.cpp
+  ELFAttributes.cpp
   Error.cpp
   ErrorHandling.cpp
   FileCheck.cpp
@@ -124,6 +126,8 @@ add_llvm_component_library(LLVMSupport
   PrettyStackTrace.cpp
   RandomNumberGenerator.cpp
   Regex.cpp
+  RISCVAttributes.cpp
+  RISCVAttributeParser.cpp
   ScaledNumber.cpp
   ScopedPrinter.cpp
   SHA1.cpp
