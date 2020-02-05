@@ -18,6 +18,10 @@
 #include "lldb/Symbol/CompilerType.h"
 #include "lldb/lldb-private.h"
 
+namespace lldb_private {
+class TypeSystemClang;
+}
+
 //--------------------------------------------------------------------
 /// Synthetize a compiler type for the siginfo structure that is
 /// present on Linux.

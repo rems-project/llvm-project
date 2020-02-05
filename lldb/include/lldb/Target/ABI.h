@@ -23,6 +23,8 @@ class Type;
 
 namespace lldb_private {
 
+class TypeSystemClang;
+
 class ABI : public PluginInterface {
 public:
   enum FrameState {

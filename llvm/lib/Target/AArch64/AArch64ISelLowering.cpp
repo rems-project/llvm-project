@@ -10232,8 +10232,8 @@ EVT AArch64TargetLowering::getOptimalMemOpType(
   // The copied area may contain capabilities, so inlining needs to be done
   // wisely, resorting to the memcpy if there is any risk. Don't use capabilities
   // for memset since the resulting tag is always 0.
-  if (Subtarget->hasMorello() && Op.Size >= 16 && !Op.IsMemset) {
-    if (memOpAlign(Op.SrcAlign, Op.DstAlign, 16))
+  if (Subtarget->hasMorello() && Op.size() >= 16 && !Op.isMemset()) {
+    if (memOpAlign(Op.getSrcAlign(), Op.getDstAlign(), 16))
       return MVT::iFATPTR128;
   }
 
@@ -10258,7 +10258,7 @@ EVT AArch64TargetLowering::getOptimalMemOpType(
       AlignmentIsAcceptable(MVT::v2i64, 16))
     return MVT::v2i64;
   if (CanUseFP && !IsSmallMemset && AlignmentIsAcceptable(MVT::f128, 16) &&
-      Op.Size >= 16)
+      Op.size() >= 16)
     return MVT::f128;
   if (Op.size() >= 8 && AlignmentIsAcceptable(MVT::i64, 8))
     return MVT::i64;

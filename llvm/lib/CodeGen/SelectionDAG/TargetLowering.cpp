@@ -198,7 +198,7 @@ bool TargetLowering::findOptimalMemOpLowering(
   }
 
   if (Op.MustPreserveCheriCaps && !VT.isFatPointer() &&
-      Op.Size >= cheriCapabilityType().getSizeInBits() / 8) {
+      Op.size() >= cheriCapabilityType().getSizeInBits() / 8) {
     return false;
   }
 
