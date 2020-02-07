@@ -17,6 +17,8 @@
 using namespace lldb_private;
 using namespace lldb;
 
+LLDB_PLUGIN(ArchitectureArm64);
+
 ConstString ArchitectureArm64::GetPluginNameStatic() {
   return ConstString("arm64");
 }

@@ -36,6 +36,8 @@
 using namespace lldb_private;
 namespace ELF = llvm::ELF;
 
+LLDB_PLUGIN(ProcessElfCore);
+
 ConstString ProcessElfCore::GetPluginNameStatic() {
   static ConstString g_name("elf-core");
   return g_name;
