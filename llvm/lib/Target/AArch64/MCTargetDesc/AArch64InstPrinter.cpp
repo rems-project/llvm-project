@@ -1981,7 +1981,7 @@ void AArch64InstPrinter::printSVERegOp(const MCInst *MI, unsigned OpNum,
 
 template <typename T>
 void AArch64InstPrinter::printImmSVE(T Value, raw_ostream &O) {
-  typename std::make_unsigned<T>::type HexValue = Value;
+  std::make_unsigned_t<T> HexValue = Value;
 
   if (getPrintImmHex())
     O << '#' << formatHex((uint64_t)HexValue);
@@ -2026,8 +2026,8 @@ template <typename T>
 void AArch64InstPrinter::printSVELogicalImm(const MCInst *MI, unsigned OpNum,
                                             const MCSubtargetInfo &STI,
                                             raw_ostream &O) {
-  typedef typename std::make_signed<T>::type SignedT;
-  typedef typename std::make_unsigned<T>::type UnsignedT;
+  typedef std::make_signed_t<T> SignedT;
+  typedef std::make_unsigned_t<T> UnsignedT;
 
   uint64_t Val = MI->getOperand(OpNum).getImm();
   UnsignedT PrintVal = AArch64_AM::decodeLogicalImmediate(Val, 64);
