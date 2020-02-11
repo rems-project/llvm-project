@@ -1440,6 +1440,7 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case AArch64ISD::LASTA:             return "AArch64ISD::LASTA";
   case AArch64ISD::LASTB:             return "AArch64ISD::LASTB";
   case AArch64ISD::REV:               return "AArch64ISD::REV";
+  case AArch64ISD::REINTERPRET_CAST:  return "AArch64ISD::REINTERPRET_CAST";
   case AArch64ISD::TBL:               return "AArch64ISD::TBL";
   case AArch64ISD::NOT:               return "AArch64ISD::NOT";
   case AArch64ISD::BIT:               return "AArch64ISD::BIT";
@@ -3148,6 +3149,12 @@ static SDValue getGOTAccess(SDLoc &DL, EVT PtrVT, SDValue Callee,
   return DAG.getNode(AArch64ISD::LOADgot, DL, PtrVT, Callee);
 }
 
+static inline SDValue getPTrue(SelectionDAG &DAG, SDLoc DL, EVT VT,
+                               int Pattern) {
+  return DAG.getNode(AArch64ISD::PTRUE, DL, VT,
+                     DAG.getTargetConstant(Pattern, DL, MVT::i32));
+}
+
 SDValue AArch64TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                                                      SelectionDAG &DAG) const {
   unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
@@ -3317,6 +3324,24 @@ SDValue AArch64TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                        Op.getOperand(1));
   case Intrinsic::aarch64_sve_dupq_lane:
     return LowerDUPQLane(Op, DAG);
+  case Intrinsic::aarch64_sve_convert_from_svbool:
+    return DAG.getNode(AArch64ISD::REINTERPRET_CAST, dl, Op.getValueType(),
+                       Op.getOperand(1));
+  case Intrinsic::aarch64_sve_convert_to_svbool: {
+    EVT OutVT = Op.getValueType();
+    EVT InVT = Op.getOperand(1).getValueType();
+    // Return the operand if the cast isn't changing type,
+    // i.e. <n x 16 x i1> -> <n x 16 x i1>
+    if (InVT == OutVT)
+      return Op.getOperand(1);
+    // Otherwise, zero the newly introduced lanes.
+    SDValue Reinterpret =
+        DAG.getNode(AArch64ISD::REINTERPRET_CAST, dl, OutVT, Op.getOperand(1));
+    SDValue Mask = getPTrue(DAG, dl, InVT, AArch64SVEPredPattern::all);
+    SDValue MaskReinterpret =
+        DAG.getNode(AArch64ISD::REINTERPRET_CAST, dl, OutVT, Mask);
+    return DAG.getNode(ISD::AND, dl, OutVT, Reinterpret, MaskReinterpret);
+  }
 
   case Intrinsic::aarch64_sve_insr: {
     SDValue Scalar = Op.getOperand(2);
