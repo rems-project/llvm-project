@@ -201,9 +201,9 @@ public:
   void EmitIntValueInHex(uint64_t Value, unsigned Size) override;
   void EmitIntValueInHexWithPadding(uint64_t Value, unsigned Size) override;
 
-  void EmitULEB128Value(const MCExpr *Value) override;
+  void emitULEB128Value(const MCExpr *Value) override;
 
-  void EmitSLEB128Value(const MCExpr *Value) override;
+  void emitSLEB128Value(const MCExpr *Value) override;
 
   void EmitDTPRel32Value(const MCExpr *Value) override;
   void EmitDTPRel64Value(const MCExpr *Value) override;
@@ -242,9 +242,9 @@ public:
                                Optional<MD5::MD5Result> Checksum,
                                Optional<StringRef> Source,
                                unsigned CUID = 0) override;
-  void EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
-                             unsigned Column, unsigned Flags,
-                             unsigned Isa, unsigned Discriminator,
+  void emitDwarfLocDirective(unsigned FileNo, unsigned Line, unsigned Column,
+                             unsigned Flags, unsigned Isa,
+                             unsigned Discriminator,
                              StringRef FileName) override;
   MCSymbol *getDwarfLineTableSymbol(unsigned CUID) override;
 
@@ -1096,10 +1096,10 @@ void MCAsmStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
   }
 }
 
-void MCAsmStreamer::EmitULEB128Value(const MCExpr *Value) {
+void MCAsmStreamer::emitULEB128Value(const MCExpr *Value) {
   int64_t IntValue;
   if (Value->evaluateAsAbsolute(IntValue)) {
-    EmitULEB128IntValue(IntValue);
+    emitULEB128IntValue(IntValue);
     return;
   }
   OS << "\t.uleb128 ";
@@ -1107,10 +1107,10 @@ void MCAsmStreamer::EmitULEB128Value(const MCExpr *Value) {
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitSLEB128Value(const MCExpr *Value) {
+void MCAsmStreamer::emitSLEB128Value(const MCExpr *Value) {
   int64_t IntValue;
   if (Value->evaluateAsAbsolute(IntValue)) {
-    EmitSLEB128IntValue(IntValue);
+    emitSLEB128IntValue(IntValue);
     return;
   }
   OS << "\t.sleb128 ";
@@ -1372,10 +1372,9 @@ void MCAsmStreamer::emitDwarfFile0Directive(StringRef Directory,
     EmitRawText(OS1.str());
 }
 
-void MCAsmStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
+void MCAsmStreamer::emitDwarfLocDirective(unsigned FileNo, unsigned Line,
                                           unsigned Column, unsigned Flags,
-                                          unsigned Isa,
-                                          unsigned Discriminator,
+                                          unsigned Isa, unsigned Discriminator,
                                           StringRef FileName) {
   OS << "\t.loc\t" << FileNo << " " << Line << " " << Column;
   if (MAI->supportsExtendedDwarfLocDirective()) {
@@ -1408,8 +1407,8 @@ void MCAsmStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
        << Line << ':' << Column;
   }
   EmitEOL();
-  this->MCStreamer::EmitDwarfLocDirective(FileNo, Line, Column, Flags,
-                                          Isa, Discriminator, FileName);
+  this->MCStreamer::emitDwarfLocDirective(FileNo, Line, Column, Flags, Isa,
+                                          Discriminator, FileName);
 }
 
 MCSymbol *MCAsmStreamer::getDwarfLineTableSymbol(unsigned CUID) {
