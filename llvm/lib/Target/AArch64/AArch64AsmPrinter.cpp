@@ -85,7 +85,7 @@ public:
     return MCInstLowering.lowerOperand(MO, MCOp);
   }
 
-  void EmitStartOfAsmFile(Module &M) override;
+  void emitStartOfAsmFile(Module &M) override;
   void EmitJumpTableInfo() override;
   void emitJumpTableEntry(const MachineJumpTableInfo *MJTI,
                           const MachineBasicBlock *MBB, unsigned JTI);
@@ -157,7 +157,7 @@ public:
     }
 
     // Emit the rest of the function body.
-    EmitFunctionBody();
+    emitFunctionBody();
 
     // Emit the XRay table for this function.
     emitXRayTable();
@@ -180,10 +180,10 @@ private:
 
   void PrintDebugValueComment(const MachineInstr *MI, raw_ostream &OS);
 
-  void EmitFunctionBodyEnd() override;
+  void emitFunctionBodyEnd() override;
 
   MCSymbol *GetCPISymbol(unsigned CPID) const override;
-  void EmitEndOfAsmFile(Module &M) override;
+  void emitEndOfAsmFile(Module &M) override;
 
   AArch64FunctionInfo *AArch64FI = nullptr;
 
@@ -200,7 +200,7 @@ private:
 
 } // end anonymous namespace
 
-void AArch64AsmPrinter::EmitStartOfAsmFile(Module &M) {
+void AArch64AsmPrinter::emitStartOfAsmFile(Module &M) {
   if (!TM.getTargetTriple().isOSBinFormatELF())
     return;
 
@@ -536,7 +536,7 @@ void AArch64AsmPrinter::EmitHwasanMemaccessSymbols(Module &M) {
   }
 }
 
-void AArch64AsmPrinter::EmitEndOfAsmFile(Module &M) {
+void AArch64AsmPrinter::emitEndOfAsmFile(Module &M) {
   EmitHwasanMemaccessSymbols(M);
 
   const Triple &TT = TM.getTargetTriple();
@@ -566,7 +566,7 @@ void AArch64AsmPrinter::EmitLOHs() {
   }
 }
 
-void AArch64AsmPrinter::EmitFunctionBodyEnd() {
+void AArch64AsmPrinter::emitFunctionBodyEnd() {
   if (!AArch64FI->getLOHRelated().empty())
     EmitLOHs();
 }
