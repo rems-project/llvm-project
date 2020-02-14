@@ -547,6 +547,7 @@ public:
   }
 
   Type *getMemcpyLoopLoweringType(LLVMContext &Context, Value *Length,
+                                  unsigned SrcAddrSpace, unsigned DestAddrSpace,
                                   unsigned SrcAlign, unsigned DestAlign) const {
     return Type::getInt8Ty(Context);
   }
@@ -554,6 +555,8 @@ public:
   void getMemcpyLoopResidualLoweringType(SmallVectorImpl<Type *> &OpsOut,
                                          LLVMContext &Context,
                                          unsigned RemainingBytes,
+                                         unsigned SrcAddrSpace,
+                                         unsigned DestAddrSpace,
                                          unsigned SrcAlign,
                                          unsigned DestAlign) const {
     for (unsigned i = 0; i != RemainingBytes; ++i)
