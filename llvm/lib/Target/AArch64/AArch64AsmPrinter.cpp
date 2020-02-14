@@ -86,7 +86,7 @@ public:
   }
 
   void emitStartOfAsmFile(Module &M) override;
-  void EmitJumpTableInfo() override;
+  void emitJumpTableInfo() override;
   void emitJumpTableEntry(const MachineJumpTableInfo *MJTI,
                           const MachineBasicBlock *MBB, unsigned JTI);
 
@@ -243,7 +243,7 @@ void AArch64AsmPrinter::emitStartOfAsmFile(Module &M) {
   OutStreamer->SwitchSection(Nt);
 
   // Emit the note header.
-  EmitAlignment(Align(8));
+  emitAlignment(Align(8));
   OutStreamer->EmitIntValue(4, 4);     // data size for "GNU\0"
   OutStreamer->EmitIntValue(4 * 4, 4); // Elf_Prop size
   OutStreamer->EmitIntValue(ELF::NT_GNU_PROPERTY_TYPE_0, 4);
@@ -777,7 +777,7 @@ void AArch64AsmPrinter::PrintDebugValueComment(const MachineInstr *MI,
   printOperand(MI, NOps - 2, OS);
 }
 
-void AArch64AsmPrinter::EmitJumpTableInfo() {
+void AArch64AsmPrinter::emitJumpTableInfo() {
   const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
   if (!MJTI) return;
 
@@ -804,7 +804,7 @@ void AArch64AsmPrinter::EmitJumpTableInfo() {
     if (JTBBs.empty()) continue;
 
     unsigned Size = AFI->getJumpTableEntrySize(JTI);
-    EmitAlignment(Align(Size));
+    emitAlignment(Align(Size));
     OutStreamer->EmitLabel(GetJTISymbol(JTI));
 
     for (auto *JTBB : JTBBs)
