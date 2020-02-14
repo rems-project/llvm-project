@@ -373,9 +373,9 @@ static void checkOptions() {
   if (config->emachine != EM_AARCH64) {
     if (config->morelloC64Plt)
       error("--morello-c64-plt only supported on AArch64");
-    if (config->pacPlt)
+    if (config->zPacPlt)
       error("-z pac-plt only supported on AArch64");
-    if (config->forceBTI)
+    if (config->zForceBti)
       error("-z force-bti only supported on AArch64");
   }
 }
@@ -984,7 +984,6 @@ static void readConfigs(opt::InputArgList &args) {
                                      !args.hasArg(OPT_relocatable);
   config->fixCortexA8 =
       args.hasArg(OPT_fix_cortex_a8) && !args.hasArg(OPT_relocatable);
-  config->forceBTI = hasZOption(args, "force-bti");
   config->gcSections = args.hasFlag(OPT_gc_sections, OPT_no_gc_sections, false);
   config->gnuUnique = args.hasFlag(OPT_gnu_unique, OPT_no_gnu_unique, true);
   config->gdbIndex = args.hasFlag(OPT_gdb_index, OPT_no_gdb_index, false);
@@ -1025,7 +1024,6 @@ static void readConfigs(opt::InputArgList &args) {
   config->optimize = args::getInteger(args, OPT_O, 1);
   config->orphanHandling = getOrphanHandling(args);
   config->outputFile = args.getLastArgValue(OPT_o);
-  config->pacPlt = hasZOption(args, "pac-plt");
   config->pie = args.hasFlag(OPT_pie, OPT_no_pie, false);
   config->preemptibleCapRelocsMode = getPreemptibleCapRelocsMode(args);
   config->printIcfSections =
@@ -1087,6 +1085,7 @@ static void readConfigs(opt::InputArgList &args) {
   config->zCapTableDebug = getZFlag(args, "captabledebug", "nocaptabledebug", false);
   config->zCombreloc = getZFlag(args, "combreloc", "nocombreloc", true);
   config->zCopyreloc = getZFlag(args, "copyreloc", "nocopyreloc", true);
+  config->zForceBti = hasZOption(args, "force-bti");
   config->zForceIbt = hasZOption(args, "force-ibt");
   config->zGlobal = hasZOption(args, "global");
   config->zGnustack = getZGnuStack(args);
@@ -1101,6 +1100,7 @@ static void readConfigs(opt::InputArgList &args) {
   config->zNodlopen = hasZOption(args, "nodlopen");
   config->zNow = getZFlag(args, "now", "lazy", false);
   config->zOrigin = hasZOption(args, "origin");
+  config->zPacPlt = hasZOption(args, "pac-plt");
   config->zRelro = getZFlag(args, "relro", "norelro", true);
   config->zRetpolineplt = hasZOption(args, "retpolineplt");
   config->zRodynamic = hasZOption(args, "rodynamic");
@@ -1840,7 +1840,7 @@ template <class ELFT> static uint32_t getAndFeatures() {
   uint32_t ret = -1;
   for (InputFile *f : objectFiles) {
     uint32_t features = cast<ObjFile<ELFT>>(f)->andFeatures;
-    if (config->forceBTI && !(features & GNU_PROPERTY_AARCH64_FEATURE_1_BTI)) {
+    if (config->zForceBti && !(features & GNU_PROPERTY_AARCH64_FEATURE_1_BTI)) {
       warn(toString(f) + ": -z force-bti: file does not have BTI property");
       features |= GNU_PROPERTY_AARCH64_FEATURE_1_BTI;
     } else if (config->zForceIbt &&
@@ -1854,7 +1854,7 @@ template <class ELFT> static uint32_t getAndFeatures() {
 
   // Force enable pointer authentication Plt, we don't warn in this case as
   // this does not require support in the object for correctness.
-  if (config->pacPlt)
+  if (config->zPacPlt)
     ret |= GNU_PROPERTY_AARCH64_FEATURE_1_PAC;
   // Force enable Shadow Stack.
   if (config->zShstk)
