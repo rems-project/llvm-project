@@ -5492,7 +5492,7 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
       return true;
 
     Inst.setLoc(IDLoc);
-    Out.EmitInstruction(Inst, getSTI());
+    Out.emitInstruction(Inst, getSTI());
     return false;
   }
   case Match_MissingFeature: {
@@ -6007,7 +6007,7 @@ bool AArch64AsmParser::parseDirectiveTLSDescCall(SMLoc L) {
   Inst.setOpcode(AArch64::TLSDESCCALL);
   Inst.addOperand(MCOperand::createExpr(Expr));
 
-  getParser().getStreamer().EmitInstruction(Inst, getSTI());
+  getParser().getStreamer().emitInstruction(Inst, getSTI());
   return false;
 }
 
@@ -6151,7 +6151,7 @@ bool AArch64AsmParser::parseDirectiveUnreq(SMLoc L) {
 bool AArch64AsmParser::parseDirectiveCFINegateRAState() {
   if (parseToken(AsmToken::EndOfStatement, "unexpected token in directive"))
     return true;
-  getStreamer().EmitCFINegateRAState();
+  getStreamer().emitCFINegateRAState();
   return false;
 }
 
@@ -6161,7 +6161,7 @@ bool AArch64AsmParser::parseDirectiveCFIBKeyFrame() {
   if (parseToken(AsmToken::EndOfStatement,
                  "unexpected token in '.cfi_b_key_frame'"))
     return true;
-  getStreamer().EmitCFIBKeyFrame();
+  getStreamer().emitCFIBKeyFrame();
   return false;
 }
 

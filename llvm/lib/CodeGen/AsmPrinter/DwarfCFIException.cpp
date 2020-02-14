@@ -50,7 +50,7 @@ void DwarfCFIExceptionBase::markFunctionEnd() {
 
 void DwarfCFIExceptionBase::endFragment() {
   if (shouldEmitCFI)
-    Asm->OutStreamer->EmitCFIEndProc();
+    Asm->OutStreamer->emitCFIEndProc();
 }
 
 DwarfCFIException::DwarfCFIException(AsmPrinter *A)
@@ -135,15 +135,15 @@ void DwarfCFIException::beginFragment(const MachineBasicBlock *MBB,
 
   if (!hasEmittedCFISections) {
     if (Asm->needsOnlyDebugCFIMoves())
-      Asm->OutStreamer->EmitCFISections(false, true);
+      Asm->OutStreamer->emitCFISections(false, true);
     else if (Asm->TM.Options.ForceDwarfFrameSection)
-      Asm->OutStreamer->EmitCFISections(true, true);
+      Asm->OutStreamer->emitCFISections(true, true);
     hasEmittedCFISections = true;
   }
 
   const TargetRegisterInfo *TRI =
       MBB->getParent()->getSubtarget().getRegisterInfo();
-  Asm->OutStreamer->EmitCFIStartProc(TRI->getCFIProcType(*MBB->getParent()));
+  Asm->OutStreamer->emitCFIStartProc(TRI->getCFIProcType(*MBB->getParent()));
 
   // Indicate personality routine, if any.
   if (!shouldEmitPersonality)
@@ -161,11 +161,11 @@ void DwarfCFIException::beginFragment(const MachineBasicBlock *MBB,
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
   unsigned PerEncoding = TLOF.getPersonalityEncoding();
   const MCSymbol *Sym = TLOF.getCFIPersonalitySymbol(P, Asm->TM, MMI);
-  Asm->OutStreamer->EmitCFIPersonality(Sym, PerEncoding);
+  Asm->OutStreamer->emitCFIPersonality(Sym, PerEncoding);
 
   // Provide LSDA information.
   if (shouldEmitLSDA)
-    Asm->OutStreamer->EmitCFILsda(ESP(Asm), TLOF.getLSDAEncoding());
+    Asm->OutStreamer->emitCFILsda(ESP(Asm), TLOF.getLSDAEncoding());
 }
 
 /// endFunction - Gather and emit post-function exception information.
