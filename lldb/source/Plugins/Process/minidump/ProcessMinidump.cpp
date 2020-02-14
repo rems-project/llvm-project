@@ -43,7 +43,7 @@ using namespace lldb;
 using namespace lldb_private;
 using namespace minidump;
 
-LLDB_PLUGIN(ProcessMinidump)
+LLDB_PLUGIN_DEFINE(ProcessMinidump)
 
 namespace {
 
