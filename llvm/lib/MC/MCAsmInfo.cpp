@@ -98,7 +98,7 @@ MCAsmInfo::getExprForFDESymbol(const MCSymbol *Sym,
   MCContext &Context = Streamer.getContext();
   const MCExpr *Res = MCSymbolRefExpr::create(Sym, Context);
   MCSymbol *PCSym = Context.createTempSymbol();
-  Streamer.EmitLabel(PCSym);
+  Streamer.emitLabel(PCSym);
   const MCExpr *PC = MCSymbolRefExpr::create(PCSym, Context);
   return MCBinaryExpr::createSub(Res, PC, Context);
 }
