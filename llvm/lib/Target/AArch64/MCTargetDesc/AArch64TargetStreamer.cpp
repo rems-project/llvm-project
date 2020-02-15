@@ -47,8 +47,8 @@ void AArch64TargetStreamer::emitCurrentConstantPool() {
 void AArch64TargetStreamer::emitCheriIntcap(int64_t Value, unsigned CapSize,
                                             SMLoc Loc) {
   assert(CapSize == 16 && "Unexpected capability size");
-  Streamer.EmitIntValue(Value, 8);
-  Streamer.EmitIntValue(0, 8);
+  Streamer.emitIntValue(Value, 8);
+  Streamer.emitIntValue(0, 8);
 }
 
 void AArch64TargetStreamer::emitCHERICapability(const MCSymbol *Value,
@@ -85,8 +85,8 @@ void AArch64TargetStreamer::emitCHERICapability(const MCExpr *Expr,
                                Streamer.getContext());
 
   Streamer.emitCapInit(Expr);
-  Streamer.EmitIntValue(0, 8);
-  Streamer.EmitIntValue(0, 8);
+  Streamer.emitIntValue(0, 8);
+  Streamer.emitIntValue(0, 8);
 }
 
 
