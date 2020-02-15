@@ -131,16 +131,16 @@ public:
 
     EmitCodeMappingSymbol(STI);
     AdjustCurrentLabels(STI);
-    MCELFStreamer::EmitBytes(StringRef(Buffer, 4));
+    MCELFStreamer::emitBytes(StringRef(Buffer, 4));
   }
 
   /// This is one of the functions used to emit data into an ELF section, so the
   /// AArch64 streamer overrides it to add the appropriate mapping symbol ($d)
   /// if necessary.
-  void EmitBytes(StringRef Data) override {
+  void emitBytes(StringRef Data) override {
     CurrentLabels.clear();
-    EmitDataMappingSymbol();
-    MCELFStreamer::EmitBytes(Data);
+    emitDataMappingSymbol();
+    MCELFStreamer::emitBytes(Data);
   }
 
   /// This is one of the functions used to emit data into an ELF section, so the
@@ -148,7 +148,7 @@ public:
   /// if necessary.
   void EmitValueImpl(const MCExpr *Value, unsigned Size, SMLoc Loc) override {
     CurrentLabels.clear();
-    EmitDataMappingSymbol();
+    emitDataMappingSymbol();
     MCELFStreamer::EmitValueImpl(Value, Size, Loc);
   }
 
@@ -158,7 +158,7 @@ public:
 
   void emitFill(const MCExpr &NumBytes, uint64_t FillValue,
                                   SMLoc Loc) override {
-    EmitDataMappingSymbol();
+    emitDataMappingSymbol();
     MCObjectStreamer::emitFill(NumBytes, FillValue, Loc);
   }
 private:
@@ -169,7 +169,7 @@ private:
     EMS_Data
   };
 
-  void EmitDataMappingSymbol() {
+  void emitDataMappingSymbol() {
     if (LastEMS == EMS_Data)
       return;
     EmitMappingSymbol("$d");
@@ -190,7 +190,7 @@ private:
     LastEMS = EMS_C64;
   }
 
-  void EmitThumbFunc(MCSymbol *Func) override {
+  void emitThumbFunc(MCSymbol *Func) override {
     getAssembler().setIsThumbFunc(Func);
   }
 
@@ -200,7 +200,7 @@ private:
       return;
     }
     for (MCSymbol *Symb : CurrentLabels) {
-      EmitThumbFunc(Symb);
+      emitThumbFunc(Symb);
     }
     CurrentLabels.clear();
   }

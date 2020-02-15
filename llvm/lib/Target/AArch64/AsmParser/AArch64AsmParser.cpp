@@ -5898,7 +5898,7 @@ bool AArch64AsmParser::parseDirectiveCapInit(SMLoc L) {
 
   ExprVal = AArch64MCExpr::create(ExprVal, AArch64MCExpr::VK_CAPINIT, getContext());
 
-  getParser().getStreamer().EmitCapInit(ExprVal);
+  getParser().getStreamer().emitCapInit(ExprVal);
   return false;
 }
 
@@ -6058,7 +6058,7 @@ bool AArch64AsmParser::parseDirectiveLOH(StringRef IDVal, SMLoc Loc) {
                  "unexpected token in '" + Twine(IDVal) + "' directive"))
     return true;
 
-  getStreamer().EmitLOHDirective((MCLOHType)Kind, Args);
+  getStreamer().emitLOHDirective((MCLOHType)Kind, Args);
   return false;
 }
 

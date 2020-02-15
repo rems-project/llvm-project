@@ -84,7 +84,7 @@ void AArch64TargetStreamer::emitCHERICapability(const MCExpr *Expr,
   Expr = AArch64MCExpr::create(Expr, AArch64MCExpr::VK_CAPINIT,
                                Streamer.getContext());
 
-  Streamer.EmitCapInit(Expr);
+  Streamer.emitCapInit(Expr);
   Streamer.EmitIntValue(0, 8);
   Streamer.EmitIntValue(0, 8);
 }
@@ -105,7 +105,7 @@ void AArch64TargetStreamer::emitInst(uint32_t Inst,
     Inst >>= 8;
   }
 
-  getStreamer().EmitBytes(StringRef(Buffer, 4));
+  getStreamer().emitBytes(StringRef(Buffer, 4));
 }
 
 const std::pair<uint64_t, uint64_t>
