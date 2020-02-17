@@ -4,7 +4,7 @@ add_lldb_unittest(AArch64DisassemblerTests
     lldbCore
     lldbSymbol
     lldbTarget
-    lldbPluginDisassemblerLLVM
+    lldbPluginDisassemblerLLVMC
     lldbPluginProcessUtility
   LINK_COMPONENTS
     Support
