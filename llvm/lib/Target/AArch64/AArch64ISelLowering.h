@@ -245,6 +245,7 @@ enum NodeType : unsigned {
   PTRUE,
 
   DUP_PRED,
+  INDEX_VECTOR,
 
   LDNF1,
   LDNF1S,
