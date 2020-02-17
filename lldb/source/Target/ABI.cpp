@@ -20,6 +20,7 @@
 #include "lldb/Utility/Log.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "Plugins/TypeSystem/Clang/TypeSystemClang.h"
+#include <cctype>
 
 using namespace lldb;
 using namespace lldb_private;
