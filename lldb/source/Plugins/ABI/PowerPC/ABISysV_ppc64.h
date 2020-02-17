@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_ABISysV_ppc64_h_
-#define liblldb_ABISysV_ppc64_h_
+#ifndef LLDB_SOURCE_PLUGINS_ABI_POWERPC_ABISYSV_PPC64_H
+#define LLDB_SOURCE_PLUGINS_ABI_POWERPC_ABISYSV_PPC64_H
 
 #include "lldb/Target/ABI.h"
 #include "lldb/lldb-private.h"
@@ -104,4 +104,4 @@ private:
   lldb::ByteOrder GetByteOrder() const;
 };
 
-#endif // liblldb_ABISysV_ppc64_h_
+#endif // LLDB_SOURCE_PLUGINS_ABI_POWERPC_ABISYSV_PPC64_H

@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef lldb_UnwindLLDB_h_
-#define lldb_UnwindLLDB_h_
+#ifndef LLDB_SOURCE_PLUGINS_PROCESS_UTILITY_UNWINDLLDB_H
+#define LLDB_SOURCE_PLUGINS_PROCESS_UTILITY_UNWINDLLDB_H
 
 #include <string>
 #include <vector>
@@ -263,4 +263,4 @@ private:
 
 } // namespace lldb_private
 
-#endif // lldb_UnwindLLDB_h_
+#endif // LLDB_SOURCE_PLUGINS_PROCESS_UTILITY_UNWINDLLDB_H

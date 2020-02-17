@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SymbolFileDWARF_DWARFASTParserClang_h_
-#define SymbolFileDWARF_DWARFASTParserClang_h_
+#ifndef LLDB_SOURCE_PLUGINS_SYMBOLFILE_DWARF_DWARFASTPARSERCLANG_H
+#define LLDB_SOURCE_PLUGINS_SYMBOLFILE_DWARF_DWARFASTPARSERCLANG_H
 
 #include "clang/AST/CharUnits.h"
 #include "llvm/ADT/DenseMap.h"
@@ -253,4 +253,4 @@ struct ParsedDWARFTypeAttributes {
   lldb::AddressSpace address_space = lldb::eAddressSpaceNormal;
 };
 
-#endif // SymbolFileDWARF_DWARFASTParserClang_h_
+#endif // LLDB_SOURCE_PLUGINS_SYMBOLFILE_DWARF_DWARFASTPARSERCLANG_H

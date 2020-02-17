@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLDB_lldb_enumerations_h_
-#define LLDB_lldb_enumerations_h_
+#ifndef LLDB_LLDB_ENUMERATIONS_H
+#define LLDB_LLDB_ENUMERATIONS_H
 
 #include <type_traits>
 
@@ -1119,4 +1119,4 @@ enum MemoryContentType {
 
 } // namespace lldb
 
-#endif // LLDB_lldb_enumerations_h_
+#endif // LLDB_LLDB_ENUMERATIONS_H
