@@ -336,7 +336,8 @@ void MCBasedABI::AugmentRegisterInfo(RegisterInfo &info) {
 std::pair<uint32_t, uint32_t>
 MCBasedABI::GetEHAndDWARFNums(llvm::StringRef name) {
   std::string mc_name = GetMCName(name.str());
-  mc_name = llvm::StringRef(mc_name).upper();
+  for (char &c : mc_name)
+    c = std::toupper(c);
   int eh = -1;
   int dwarf = -1;
   for (unsigned reg = 0; reg < m_mc_register_info_up->getNumRegs(); ++reg) {
