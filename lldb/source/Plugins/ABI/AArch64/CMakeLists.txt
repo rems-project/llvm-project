@@ -7,6 +7,7 @@ add_lldb_library(lldbPluginABIAArch64 PLUGIN
     lldbCore
     lldbSymbol
     lldbTarget
+    lldbPluginABIUtility
   LINK_COMPONENTS
     Support
   )
