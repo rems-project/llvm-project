@@ -4,7 +4,7 @@ add_lldb_unittest(ARMDisassemblerTests
     lldbCore
     lldbSymbol
     lldbTarget
-    lldbPluginDisassemblerLLVMC
+    lldbPluginDisassemblerLLVM
     lldbPluginProcessUtility
   LINK_COMPONENTS
     Support
