@@ -1277,7 +1277,8 @@ bool CodeGenPrepare::combineToUAddWithOverflow(CmpInst *Cmp,
       return false;
 
   if (!TLI->shouldFormOverflowOp(ISD::UADDO,
-                                 TLI->getValueType(*DL, Add->getType())))
+                                 TLI->getValueType(*DL, Add->getType()),
+                                 Add->hasNUsesOrMore(2)))
     return false;
 
   // We don't want to move around uses of condition values this late, so we
@@ -1344,7 +1345,8 @@ bool CodeGenPrepare::combineToUSubWithOverflow(CmpInst *Cmp,
     return false;
 
   if (!TLI->shouldFormOverflowOp(ISD::USUBO,
-                                 TLI->getValueType(*DL, Sub->getType())))
+                                 TLI->getValueType(*DL, Sub->getType()),
+                                 Sub->hasNUsesOrMore(2)))
     return false;
 
   if (!replaceMathCmpWithIntrinsic(Sub, Cmp, Intrinsic::usub_with_overflow))
