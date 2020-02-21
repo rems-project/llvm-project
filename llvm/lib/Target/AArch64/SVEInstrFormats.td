@@ -369,6 +369,17 @@ class SVE_4_Op_Imm_Pat<ValueType vtd, SDPatternOperator op, ValueType vt1,
 : Pat<(vtd (op vt1:$Op1, vt2:$Op2, vt3:$Op3, (vt4 ImmTy:$Op4))),
       (inst $Op1, $Op2, $Op3, ImmTy:$Op4)>;
 
+def SVEDup0_nxv2i64 : ComplexPattern<nxv2i64, 0, "SelectDupZero<128>", []>;
+def SVEDup0_nxv2f16 : ComplexPattern<nxv2f16, 0, "SelectDupZero<32>", []>;
+def SVEDup0_nxv2f32 : ComplexPattern<nxv2f32, 0, "SelectDupZero<64>", []>;
+def SVEDup0_nxv2f64 : ComplexPattern<nxv2f64, 0, "SelectDupZero<128>", []>;
+def SVEDup0_nxv4i32 : ComplexPattern<nxv4i32, 0, "SelectDupZero<128>", []>;
+def SVEDup0_nxv4f16 : ComplexPattern<nxv4f16, 0, "SelectDupZero<64>", []>;
+def SVEDup0_nxv4f32 : ComplexPattern<nxv4f32, 0, "SelectDupZero<128>", []>;
+def SVEDup0_nxv8i16 : ComplexPattern<nxv8i16, 0, "SelectDupZero<128>", []>;
+def SVEDup0_nxv8f16 : ComplexPattern<nxv8f16, 0, "SelectDupZero<128>", []>;
+def SVEDup0_nxv16i8 : ComplexPattern<nxv16i8, 0, "SelectDupZero<128>", []>;
+
 def SVEDup0Undef_nxv2i64 : ComplexPattern<nxv2i64, 0, "SelectDupZeroOrUndef<128>", []>;
 def SVEDup0Undef_nxv2f16 : ComplexPattern<nxv2f16, 0, "SelectDupZeroOrUndef<32>", []>;
 def SVEDup0Undef_nxv2f32 : ComplexPattern<nxv2f32, 0, "SelectDupZeroOrUndef<64>", []>;
@@ -380,6 +391,15 @@ def SVEDup0Undef_nxv8i16 : ComplexPattern<nxv8i16, 0, "SelectDupZeroOrUndef<128>
 def SVEDup0Undef_nxv8f16 : ComplexPattern<nxv8f16, 0, "SelectDupZeroOrUndef<128>", []>;
 def SVEDup0Undef_nxv16i8 : ComplexPattern<nxv16i8, 0, "SelectDupZeroOrUndef<128>", []>;
 
+let AddedComplexity = 1 in {
+class SVE_3_Op_Pat_SelZero<ValueType vtd, SDPatternOperator op, ValueType vt1,
+                   ValueType vt2, ValueType vt3, Instruction inst>
+: Pat<(vtd (vtd (op vt1:$Op1, (vselect vt1:$Op1, vt2:$Op2,
+                                       (!cast<ComplexPattern>("SVEDup0_" # vt2))),
+                                       vt3:$Op3))),
+      (inst $Op1, $Op2, $Op3)>;
+}
+
 //
 // Common but less generic patterns.
 //
@@ -388,6 +408,55 @@ class SVE_1_Op_AllActive_Pat<ValueType vtd, SDPatternOperator op, ValueType vt1,
                              Instruction inst, Instruction ptrue>
 : Pat<(vtd (op vt1:$Op1)),
       (inst (IMPLICIT_DEF), (ptrue 31), $Op1)>;
+
+//
+// Pseudo -> Instruction mappings
+//
+def getSVEPseudoMap : InstrMapping {
+  let FilterClass = "SVEPseudo2Instr";
+  let RowFields = ["PseudoName"];
+  let ColFields = ["IsInstr"];
+  let KeyCol = ["0"];
+  let ValueCols = [["1"]];
+}
+
+class SVEPseudo2Instr<string name, bit instr> {
+  string PseudoName = name;
+  bit IsInstr = instr;
+}
+
+def getSVERevInstr : InstrMapping {
+  let FilterClass = "SVEInstr2Rev";
+  let RowFields = ["InstrName"];
+  let ColFields = ["IsOrig"];
+  let KeyCol = ["1"];
+  let ValueCols = [["0"]];
+}
+
+def getSVEOrigInstr : InstrMapping {
+  let FilterClass = "SVEInstr2Rev";
+  let RowFields = ["InstrName"];
+  let ColFields = ["IsOrig"];
+  let KeyCol = ["0"];
+  let ValueCols = [["1"]];
+}
+
+class SVEInstr2Rev<string name, string revname, bit nameIsOrig> {
+  string InstrName = !if(nameIsOrig, name, revname);
+  bit IsOrig = nameIsOrig;
+}
+
+//
+// Pseudos for destructive operands
+//
+let hasNoSchedulingInfo = 1 in {
+  class PredTwoOpPseudo<string name, ZPRRegOp zprty,
+                        FalseLanesEnum flags = FalseLanesNone>
+  : SVEPseudo2Instr<name, 0>,
+    Pseudo<(outs zprty:$Zd), (ins PPR3bAny:$Pg, zprty:$Zs1, zprty:$Zs2), []> {
+    let FalseLanes = flags;
+  }
+}
 
 //===----------------------------------------------------------------------===//
 // SVE Predicate Misc Group
@@ -1438,11 +1507,17 @@ class sve_fp_2op_p_zds<bits<2> sz, bits<4> opc, string asm,
   let ElementSize = zprty.ElementSize;
 }
 
-multiclass sve_fp_2op_p_zds<bits<4> opc, string asm,
-                            SDPatternOperator op> {
-  def _H : sve_fp_2op_p_zds<0b01, opc, asm, ZPR16>;
-  def _S : sve_fp_2op_p_zds<0b10, opc, asm, ZPR32>;
-  def _D : sve_fp_2op_p_zds<0b11, opc, asm, ZPR64>;
+multiclass sve_fp_2op_p_zds<bits<4> opc, string asm, string Ps,
+                            SDPatternOperator op, DestructiveInstTypeEnum flags,
+                            string revname="", bit isOrig=0> {
+  let DestructiveInstType = flags in {
+  def _H : sve_fp_2op_p_zds<0b01, opc, asm, ZPR16>,
+           SVEPseudo2Instr<Ps # _H, 1>, SVEInstr2Rev<NAME # _H, revname # _H, isOrig>;
+  def _S : sve_fp_2op_p_zds<0b10, opc, asm, ZPR32>,
+           SVEPseudo2Instr<Ps # _S, 1>, SVEInstr2Rev<NAME # _S, revname # _S, isOrig>;
+  def _D : sve_fp_2op_p_zds<0b11, opc, asm, ZPR64>,
+           SVEPseudo2Instr<Ps # _D, 1>, SVEInstr2Rev<NAME # _D, revname # _D, isOrig>;
+  }
 
   def : SVE_3_Op_Pat<nxv8f16, op, nxv8i1, nxv8f16, nxv8f16, !cast<Instruction>(NAME # _H)>;
   def : SVE_3_Op_Pat<nxv4f32, op, nxv4i1, nxv4f32, nxv4f32, !cast<Instruction>(NAME # _S)>;
@@ -1458,6 +1533,16 @@ multiclass sve_fp_2op_p_zds_fscale<bits<4> opc, string asm,
   def : SVE_3_Op_Pat<nxv8f16, op, nxv8i1, nxv8f16, nxv8i16, !cast<Instruction>(NAME # _H)>;
   def : SVE_3_Op_Pat<nxv4f32, op, nxv4i1, nxv4f32, nxv4i32, !cast<Instruction>(NAME # _S)>;
   def : SVE_3_Op_Pat<nxv2f64, op, nxv2i1, nxv2f64, nxv2i64, !cast<Instruction>(NAME # _D)>;
+}
+
+multiclass sve_fp_2op_p_zds_zx<SDPatternOperator op> {
+  def _ZERO_H : PredTwoOpPseudo<NAME # _H, ZPR16, FalseLanesZero>;
+  def _ZERO_S : PredTwoOpPseudo<NAME # _S, ZPR32, FalseLanesZero>;
+  def _ZERO_D : PredTwoOpPseudo<NAME # _D, ZPR64, FalseLanesZero>;
+
+  def : SVE_3_Op_Pat_SelZero<nxv8f16, op, nxv8i1, nxv8f16, nxv8f16, !cast<Pseudo>(NAME # _ZERO_H)>;
+  def : SVE_3_Op_Pat_SelZero<nxv4f32, op, nxv4i1, nxv4f32, nxv4f32, !cast<Pseudo>(NAME # _ZERO_S)>;
+  def : SVE_3_Op_Pat_SelZero<nxv2f64, op, nxv2i1, nxv2f64, nxv2f64, !cast<Pseudo>(NAME # _ZERO_D)>;
 }
 
 class sve_fp_ftmad<bits<2> sz, string asm, ZPRRegOp zprty>
