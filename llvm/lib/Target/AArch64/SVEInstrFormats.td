@@ -7124,6 +7124,12 @@ class sve2_crypto_cons_bin_op<bit opc, string asm, ZPRRegOp zprty>
   let Inst{4-0}   = Zd;
 }
 
+multiclass sve2_crypto_cons_bin_op<bit opc, string asm, ZPRRegOp zprty,
+                                   SDPatternOperator op, ValueType vt> {
+  def NAME : sve2_crypto_cons_bin_op<opc, asm, zprty>;
+  def : SVE_2_Op_Pat<vt, op, vt, vt, !cast<Instruction>(NAME)>;
+}
+
 class sve2_crypto_des_bin_op<bits<2> opc, string asm, ZPRRegOp zprty>
 : I<(outs zprty:$Zdn), (ins zprty:$_Zdn, zprty:$Zm),
   asm, "\t$Zdn, $_Zdn, $Zm",
@@ -7141,8 +7147,14 @@ class sve2_crypto_des_bin_op<bits<2> opc, string asm, ZPRRegOp zprty>
   let Constraints = "$Zdn = $_Zdn";
 }
 
-class sve2_crypto_unary_op<bit opc, string asm>
-: I<(outs ZPR8:$Zdn), (ins ZPR8:$_Zdn),
+multiclass sve2_crypto_des_bin_op<bits<2> opc, string asm, ZPRRegOp zprty,
+                                  SDPatternOperator op, ValueType vt> {
+  def NAME : sve2_crypto_des_bin_op<opc, asm, zprty>;
+  def : SVE_2_Op_Pat<vt, op, vt, vt, !cast<Instruction>(NAME)>;
+}
+
+class sve2_crypto_unary_op<bit opc, string asm, ZPRRegOp zprty>
+: I<(outs zprty:$Zdn), (ins zprty:$_Zdn),
   asm, "\t$Zdn, $_Zdn",
   "",
   []>, Sched<[]> {
@@ -7153,6 +7165,11 @@ class sve2_crypto_unary_op<bit opc, string asm>
   let Inst{4-0}   = Zdn;
 
   let Constraints = "$Zdn = $_Zdn";
+}
+
+multiclass sve2_crypto_unary_op<bit opc, string asm, SDPatternOperator op> {
+  def NAME : sve2_crypto_unary_op<opc, asm, ZPR8>;
+  def : SVE_1_Op_Pat<nxv16i8, op, nxv16i8, !cast<Instruction>(NAME)>;
 }
 
 /// Addressing modes
