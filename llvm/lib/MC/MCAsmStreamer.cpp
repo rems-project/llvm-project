@@ -1749,13 +1749,17 @@ void MCAsmStreamer::emitCFISignalFrame() {
 
 void MCAsmStreamer::emitCFIUndefined(int64_t Register) {
   MCStreamer::emitCFIUndefined(Register);
-  OS << "\t.cfi_undefined " << Register;
+  OS << "\t.cfi_undefined ";
+  EmitRegisterName(Register);
   EmitEOL();
 }
 
 void MCAsmStreamer::emitCFIRegister(int64_t Register1, int64_t Register2) {
   MCStreamer::emitCFIRegister(Register1, Register2);
-  OS << "\t.cfi_register " << Register1 << ", " << Register2;
+  OS << "\t.cfi_register ";
+  EmitRegisterName(Register1);
+  OS << ", ";
+  EmitRegisterName(Register2);
   EmitEOL();
 }
 
@@ -1773,7 +1777,8 @@ void MCAsmStreamer::emitCFINegateRAState() {
 
 void MCAsmStreamer::emitCFIReturnColumn(int64_t Register) {
   MCStreamer::emitCFIReturnColumn(Register);
-  OS << "\t.cfi_return_column " << Register;
+  OS << "\t.cfi_return_column ";
+  EmitRegisterName(Register);
   EmitEOL();
 }
 
