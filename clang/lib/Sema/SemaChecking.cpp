@@ -1462,9 +1462,6 @@ Sema::CheckBuiltinFunctionCall(FunctionDecl *FDecl, unsigned BuiltinID,
   }
 
   switch (BuiltinID) {
-  case Builtin::BI__builtin_return_address:
-    TheCall->setType(Context.VoidPtrTy);
-    break;
   case Builtin::BI__builtin___CFStringMakeConstantString:
     assert(TheCall->getNumArgs() == 1 &&
            "Wrong # arguments to builtin CFStringMakeConstantString");

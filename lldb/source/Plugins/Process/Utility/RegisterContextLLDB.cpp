@@ -356,9 +356,13 @@ void RegisterContextLLDB::InitializeNonZerothFrame() {
 
   // If we don't have a Module for some reason, we're not going to find
   // symbol/function information - just stick in some reasonable defaults and
-  // hope we can unwind past this frame.
+  // hope we can unwind past this frame.  If we're above a trap handler,
+  // we may be at a bogus address because we jumped through a bogus function
+  // pointer and trapped, so don't force the arch default unwind plan in that 
+  // case.
   ModuleSP pc_module_sp(m_current_pc.GetModule());
-  if (!m_current_pc.IsValid() || !pc_module_sp) {
+  if ((!m_current_pc.IsValid() || !pc_module_sp) &&
+      above_trap_handler == false) {
     UnwindLogMsg("using architectural default unwind method");
 
     // Test the pc value to see if we know it's in an unmapped/non-executable
@@ -1257,40 +1261,55 @@ RegisterContextLLDB::SavedLocationForRegister(
       // If we're fetching the saved pc and this UnwindPlan defines a
       // ReturnAddress register (e.g. lr on arm), look for the return address
       // register number in the UnwindPlan's row.
-      if (m_full_unwind_plan_sp->GetReturnAddressRegister() !=
-               LLDB_INVALID_REGNUM &&
-            ((pc_regnum.IsValid() && regnum == pc_regnum) ||
-             (pcc_regnum.IsValid() && regnum == pcc_regnum))) {
+      //if (pc_regnum.IsValid() && pc_regnum == regnum &&
+      //    m_full_unwind_plan_sp->GetReturnAddressRegister() !=
+      //        LLDB_INVALID_REGNUM) {
+      if (((pc_regnum.IsValid() && regnum == pc_regnum) ||
+           (pcc_regnum.IsValid() && regnum == pcc_regnum)) &&
+          m_full_unwind_plan_sp->GetReturnAddressRegister() !=
+              LLDB_INVALID_REGNUM) {
+        // If this is a trap handler frame, we should have access to
+        // the complete register context when the interrupt/async 
+        // signal was received, we should fetch the actual saved $pc
+        // value instead of the Return Address register.
+        // If $pc is not available, fall back to the RA reg.
+        UnwindPlan::Row::RegisterLocation scratch;
+        if (m_frame_type == eTrapHandlerFrame &&
+            active_row->GetRegisterInfo 
+              (pc_regnum.GetAsKind (unwindplan_registerkind), scratch)) {
+          UnwindLogMsg("Providing pc register instead of rewriting to "
+                       "RA reg because this is a trap handler and there is "
+                       "a location for the saved pc register value.");
+        } else {
+          return_address_reg.init(
+              m_thread, m_full_unwind_plan_sp->GetRegisterKind(),
+              m_full_unwind_plan_sp->GetReturnAddressRegister());
 
-        return_address_reg.init(
-            m_thread, m_full_unwind_plan_sp->GetRegisterKind(),
-            m_full_unwind_plan_sp->GetReturnAddressRegister());
-
-        if (abi != nullptr) {
-          // Ask ABI what RA register should be searched to obtain a value of
-          // the given PC register based on what the unwind plan specifies as
-          // the RA register.
-          uint32_t ra_lldb_regnum = abi->GetReturnRegisterForUnwind(
-              *this, regnum.GetAsKind(eRegisterKindLLDB),
-              return_address_reg.GetAsKind(eRegisterKindLLDB));
-          if (ra_lldb_regnum == LLDB_INVALID_REGNUM) {
-            UnwindLogMsg("requested caller's saved %s but this UnwindPlan uses "
-                         "RA register %s (%d) and the ABI object could not "
-                         "determine what register should be searched",
-                         regnum == pcc_regnum ? "PCC" : "PC",
-                         return_address_reg.GetName(),
-                         return_address_reg.GetAsKind(eRegisterKindLLDB));
-            return UnwindLLDB::RegisterSearchResult::eRegisterNotFound;
+          if (abi != nullptr) {
+            // Ask ABI what RA register should be searched to obtain a value of
+            // the given PC register based on what the unwind plan specifies as
+            // the RA register.
+            uint32_t ra_lldb_regnum = abi->GetReturnRegisterForUnwind(
+                *this, regnum.GetAsKind(eRegisterKindLLDB),
+                return_address_reg.GetAsKind(eRegisterKindLLDB));
+            if (ra_lldb_regnum == LLDB_INVALID_REGNUM) {
+              UnwindLogMsg("requested caller's saved %s but this UnwindPlan uses "
+                           "RA register %s (%d) and the ABI object could not "
+                           "determine what register should be searched",
+                           regnum == pcc_regnum ? "PCC" : "PC",
+                           return_address_reg.GetName(),
+                           return_address_reg.GetAsKind(eRegisterKindLLDB));
+              return UnwindLLDB::RegisterSearchResult::eRegisterNotFound;
+            }
+            return_address_reg.init(m_thread, eRegisterKindLLDB, ra_lldb_regnum);
           }
-          return_address_reg.init(m_thread, eRegisterKindLLDB, ra_lldb_regnum);
-        }
 
-        UnwindLogMsg("requested caller's saved %s but this UnwindPlan uses a "
-                     "RA reg; getting %s (%d) instead",
-                     regnum == pcc_regnum ? "PCC" : "PC",
-                     return_address_reg.GetName(),
-                     return_address_reg.GetAsKind(eRegisterKindLLDB));
-        regnum = return_address_reg;
+          regnum = return_address_reg;
+          UnwindLogMsg("requested caller's saved PC but this UnwindPlan uses a "
+                       "RA reg; getting %s (%d) instead",
+                       return_address_reg.GetName(),
+                       return_address_reg.GetAsKind(eRegisterKindLLDB));
+        }
       } else {
         if (regnum.GetAsKind(unwindplan_registerkind) == LLDB_INVALID_REGNUM) {
           if (unwindplan_registerkind == eRegisterKindGeneric) {
