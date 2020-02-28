@@ -9,10 +9,10 @@
 #ifndef LLDB_SOURCE_PLUGINS_ABI_X86_ABISYSV_I386_H
 #define LLDB_SOURCE_PLUGINS_ABI_X86_ABISYSV_I386_H
 
-#include "lldb/Target/ABI.h"
+#include "Plugins/ABI/X86/ABIX86.h"
 #include "lldb/lldb-private.h"
 
-class ABISysV_i386 : public lldb_private::RegInfoBasedABI {
+class ABISysV_i386 : public ABIX86 {
 public:
   ~ABISysV_i386() override = default;
 
@@ -77,9 +77,6 @@ public:
     return (pc <= UINT32_MAX);
   }
 
-  const lldb_private::RegisterInfo *
-  GetRegisterInfoArray(uint32_t &count) override;
-
   // Static Functions
 
   static void Initialize();
@@ -109,7 +106,7 @@ protected:
                          llvm::StringRef type_name) const override;
 
 private:
-  using lldb_private::RegInfoBasedABI::RegInfoBasedABI; // Call CreateInstance instead.
+  using ABIX86::ABIX86; // Call CreateInstance instead.
 };
 
 #endif // LLDB_SOURCE_PLUGINS_ABI_X86_ABISYSV_I386_H
