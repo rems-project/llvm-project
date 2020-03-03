@@ -2392,7 +2392,7 @@ bool AArch64FrameLowering::spillCalleeSavedRegisters(
                       : AArch64::CapStoreImmPre);
 
        Size = 16;
-       Align = 16;
+       Alignment = Align(16);
        break;
     case RegPairInfo::FPR64:
        StrOpc = RPI.isPaired() ?
@@ -2519,7 +2519,7 @@ bool AArch64FrameLowering::restoreCalleeSavedRegisters(
                 (HasC64 ? AArch64::PCapLoadImmPre
                         : AArch64::CapLoadImmPre);
        Size = 16;
-       Align = 16;
+       Alignment = Align(16);
        break;
     case RegPairInfo::FPR64:
        LdrOpc = RPI.isPaired() ?
