@@ -1726,17 +1726,6 @@ template <class ELFT> void Writer<ELFT>::finalizeAddressDependentContent() {
         warn("address (0x" + Twine::utohexstr(os->addr) + ") of section " +
              os->name + " is not a multiple of alignment (" +
              Twine(os->alignment) + ")");
-
-  // If a SECTIONS command is given, addrExpr, if set, is the specified output
-  // section address. Warn if the computed value is different from the actual
-  // address.
-  if (!script->hasSectionsCommand)
-    return;
-  for (auto changed : script->changedSectionAddresses) {
-    const OutputSection *os = changed.first;
-    warn("start of section " + os->name + " changes from 0x" +
-         utohexstr(changed.second) + " to 0x" + utohexstr(os->addr));
-  }
 }
 
 static void finalizeSynthetic(SyntheticSection *sec) {
