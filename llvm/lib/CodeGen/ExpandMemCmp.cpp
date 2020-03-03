@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/InitializePasses.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/SizeOpts.h"
 
 using namespace llvm;
@@ -848,6 +849,9 @@ PreservedAnalyses ExpandMemCmpPass::runImpl(
       ++BBIt;
     }
   }
+  if (MadeChanges)
+    for (BasicBlock &BB : F)
+      SimplifyInstructionsInBlock(&BB);
   return MadeChanges ? PreservedAnalyses::none() : PreservedAnalyses::all();
 }
 
