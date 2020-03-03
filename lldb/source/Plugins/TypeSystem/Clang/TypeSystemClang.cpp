@@ -1436,9 +1436,6 @@ ClassTemplateDecl *TypeSystemClang::CreateClassTemplateDecl(
       class_template_decl->setAccess(
           ConvertAccessTypeToAccessSpecifier(access_type));
 
-    // if (TagDecl *ctx_tag_decl = dyn_cast<TagDecl>(decl_ctx))
-    //    CompleteTagDeclarationDefinition(GetTypeForDecl(ctx_tag_decl));
-
     decl_ctx->addDecl(class_template_decl);
 
     VerifyDecl(class_template_decl);
@@ -2067,15 +2064,12 @@ TypeSystemClang::CreateEnumerationType(const char *name, DeclContext *decl_ctx,
   // like maybe filling in the SourceLocation with it...
   ASTContext &ast = getASTContext();
 
-  // TODO: ask about these...
-  //    const bool IsFixed = false;
-
   EnumDecl *enum_decl = EnumDecl::Create(
       ast, decl_ctx, SourceLocation(), SourceLocation(),
       name && name[0] ? &ast.Idents.get(name) : nullptr, nullptr,
       is_scoped, // IsScoped
       is_scoped, // IsScopedUsingClassTag
-      false);    // IsFixed
+      false);    // TODO: IsFixed
 
   if (enum_decl) {
     if (decl_ctx)
@@ -4846,7 +4840,6 @@ lldb::Format TypeSystemClang::GetFormat(lldb::opaque_compiler_type_t type) {
 
   case clang::Type::Builtin:
     switch (llvm::cast<clang::BuiltinType>(qual_type)->getKind()) {
-    // default: assert(0 && "Unknown builtin type!");
     case clang::BuiltinType::UnknownAny:
     case clang::BuiltinType::Void:
     case clang::BuiltinType::BoundMember:
@@ -6266,11 +6259,6 @@ static uint32_t GetIndexForRecordBase(const clang::RecordDecl *record_decl,
   const clang::CXXRecordDecl *cxx_record_decl =
       llvm::dyn_cast<clang::CXXRecordDecl>(record_decl);
 
-  //    const char *super_name = record_decl->getNameAsCString();
-  //    const char *base_name =
-  //    base_spec->getType()->getAs<clang::RecordType>()->getDecl()->getNameAsCString();
-  //    printf ("GetIndexForRecordChild (%s, %s)\n", super_name, base_name);
-  //
   if (cxx_record_decl) {
     clang::CXXRecordDecl::base_class_const_iterator base_class, base_class_end;
     for (base_class = cxx_record_decl->bases_begin(),
@@ -6281,12 +6269,6 @@ static uint32_t GetIndexForRecordBase(const clang::RecordDecl *record_decl,
           continue;
       }
 
-      //            printf ("GetIndexForRecordChild (%s, %s) base[%u] = %s\n",
-      //            super_name, base_name,
-      //                    child_idx,
-      //                    base_class->getType()->getAs<clang::RecordType>()->getDecl()->getNameAsCString());
-      //
-      //
       if (base_class == base_spec)
         return child_idx;
       ++child_idx;
@@ -6392,9 +6374,6 @@ size_t TypeSystemClang::GetIndexOfChildMemberWithName(
         if (cxx_record_decl) {
           const clang::RecordDecl *parent_record_decl = cxx_record_decl;
 
-          // printf ("parent = %s\n", parent_record_decl->getNameAsCString());
-
-          // const Decl *root_cdecl = cxx_record_decl->getCanonicalDecl();
           // Didn't find things easily, lets let clang do its thang...
           clang::IdentifierInfo &ident_ref =
               getASTContext().Idents.get(name_sref);
@@ -7676,7 +7655,6 @@ clang::ObjCMethodDecl *TypeSystemClang::AddMethodToObjCObjectType(
 
   size_t len = 0;
   const char *start;
-  // printf ("name = '%s'\n", name);
 
   unsigned num_selectors_with_args = 0;
   for (start = selector_start; start && *start != '\0' && *start != ']';
