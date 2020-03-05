@@ -20,7 +20,7 @@
 
 // DISASM: Disassembly of section .text:
 // DISASM-EMPTY:
-// DISASM-NEXT:   0000000000210160 _start:
+// DISASM-NEXT:   0000000000210160 <_start>:
 // DISASM-NEXT:   210160:      ldr     c8, #65568
 // DISASM-NEXT:   210164:      nop
 // DISASM-NEXT:   210168:      nop

@@ -35,7 +35,7 @@ _start:
 /// page(0x220340) - page(0x210274) = 65536
 /// 0x340 = 832
 
-// CHECK:      _start:
+// CHECK:      <_start>:
 // CHECK-NEXT: 210270: nop
 // CHECK-NEXT: 210274: adrp    c0, #65536
 // CHECK-NEXT: 210278: ldr     c1, [c0, #832]

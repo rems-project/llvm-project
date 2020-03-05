@@ -43,7 +43,7 @@ preemptible: .xword 2
         .size hidden, 8
 hidden:  .xword 3
 
-// DIS: 0000000000010390 _start:
+// DIS: 0000000000010390 <_start>:
 // DIS-NEXT:    10390:          adrp    c1, #65536
 // DIS-NEXT:    10394:          ldr     c1, [c1, #1248]
 // DIS-NEXT:    10398:          adrp    c2, #65536
@@ -54,7 +54,7 @@ hidden:  .xword 3
 // DIS-NEXT:    103ac:          ldr     c4, [c4, #1296]
 // DIS-NEXT:    103b0:          bl      #48 <imported+0x103e0>
 
-// DIS: 00000000000103c0 .plt:
+// DIS: 00000000000103c0 <.plt>:
 // DIS-NEXT:    103c0:          stp     c16, c30, [csp, #-32]!
 // DIS-NEXT:    103c4:          adrp    c16, #131072
 // DIS-NEXT:    103c8:          ldr     c17, [c16, #1376]

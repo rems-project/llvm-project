@@ -23,7 +23,7 @@ _start:
 /// page(0x220220) - page(0x210200) = 65536
 /// 0x220 = 544
 
-// CHECK:      _start:
+// CHECK:      <_start>:
 // CHECK-NEXT: 2101c8: mov	x0, #0xfe0000
 // CHECK-NEXT: 2101cc: movk	x0, #0xed10
 // CHECK-NEXT: 2101d0: mov	x1, #0xbe0000

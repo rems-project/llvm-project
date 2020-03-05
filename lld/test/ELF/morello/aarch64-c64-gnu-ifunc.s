@@ -27,19 +27,19 @@ _start:
 // CHECK:      220270 31022100 00000000 04000000 00000004
 // CHECK-NEXT: 220280 35022100 00000000 04000000 00000004
 
-// CHECK: 0000000000210231 foo:
+// CHECK: 0000000000210231 <foo>:
 // CHECK-NEXT:   210231:        <unknown>
 
-// CHECK: 0000000000210235 bar:
+// CHECK: 0000000000210235 <bar>:
 // CHECK-NEXT:   210235:        <unknown>
 
-// CHECK: 0000000000210238 _start:
+// CHECK: 0000000000210238 <_start>:
 // CHECK-NEXT:   210238:        bl      #0x18
 // CHECK-NEXT:   21023c:        bl      #0x24
 // CHECK-NEXT:   210240:        add     x2, x2, #0x200
 // CHECK-NEXT:   210244:        add     x2, x2, #0x230
 
-// CHECK: 0000000000210250 .iplt:
+// CHECK: 0000000000210250 <.iplt>:
 // CHECK-NEXT:   210250:        adrp    c16, #0x10000
 // CHECK-NEXT:   210254:        add     c16, c16, #0x270
 // CHECK-NEXT:   210258:        ldr     c17, [c16, #0x0]

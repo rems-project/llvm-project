@@ -29,22 +29,22 @@ target: ret
         .size target2, 4
 target2: ret
 
-// CHECK: 00000000000000e8 _start:
+// CHECK: 00000000000000e8 <_start>:
 // CHECK-NEXT:       e8:        bl      #8 <__C64ADRPThunk_target>
 // CHECK-NEXT:       ec:        b       #16 <__C64ADRPThunk_target2>
 
-// CHECK: 00000000000000f0 __C64ADRPThunk_target:
+// CHECK: 00000000000000f0 <__C64ADRPThunk_target>:
 // CHECK-NEXT:       f0:        adrp    c16, #251658240
 // CHECK-NEXT:       f4:        add     c16, c16, #1
 // CHECK-NEXT:       f8:        br      c16
 
-// CHECK: 00000000000000fc __C64ADRPThunk_target2:
+// CHECK: 00000000000000fc <__C64ADRPThunk_target2>:
 // CHECK-NEXT:       fc:        adrp    c16, #251658240
 // CHECK-NEXT:      100:        add     c16, c16, #5
 // CHECK-NEXT:      104:        br      c16
 
-// CHECK: 000000000f000000 target:
+// CHECK: 000000000f000000 <target>:
 // CHECK-NEXT:  f000000:        ret
 
-// CHECK: 000000000f000004 target2:
+// CHECK: 000000000f000004 <target2>:
 // CHECK-NEXT:  f000004:        ret

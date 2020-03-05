@@ -38,7 +38,7 @@ bar:
 foo:
  .xword 10
 
-// DIS: 0000000000210208 _start:
+// DIS: 0000000000210208 <_start>:
 // DIS-NEXT:   210208:        adrp    c0, #65536
 // DIS-NEXT:   21020c:        ldr     c0, [c0, #672]
 // DIS-NEXT:   210210:        adrp    c1, #65536

@@ -73,17 +73,21 @@ appdata: .xword 8
 // CHECK-PIE: Contents of section .data:
 // CHECK-PIE-NEXT:  30440 08000000 00000000
 
-// CHECK: 0000000000210328 _start:
+// CHECK: 0000000000210328 <_start>:
 // CHECK-NEXT:   210328:        ret
 
-// CHECK: 000000000021032c from_app:
+// CHECK: 000000000021032c <from_app>:
 // CHECK-NEXT:   21032c:        ret
 
-// CHECK-PIE: 0000000000010328 _start:
+// CHECK-PIE: 0000000000010328 <_start>:
 // CHECK-PIE-NEXT:    10328:            ret
 
-// CHECK-PIE: 000000000001032c from_app:
+// CHECK-PIE: 000000000001032c <from_app>:
 // CHECK-PIE-NEXT:    1032c:            ret
+
+/// Check that the dynamic table holds the correct number of RELATIVE relocs
+// RELS: DynamicSection [
+// RELS: 0x000000006FFFFFF9 RELACOUNT 2
 
 // RELS: Relocations [
 // RELS-NEXT:   Section (5) .rela.dyn {
@@ -98,9 +102,8 @@ appdata: .xword 8
 // RELS-NEXT:   }
 
 /// Check that the dynamic table holds the correct number of RELATIVE relocs
-// RELS: DynamicSection [
-// RELS: 0x000000006FFFFFF9 RELACOUNT 2
-
+// RELS-PIE: DynamicSection [
+// RELS-PIE: 0x000000006FFFFFF9 RELACOUNT 2
 
 // RELS-PIE: Relocations [
 // RELS-PIE-NEXT:   Section (5) .rela.dyn {
@@ -113,7 +116,3 @@ appdata: .xword 8
 /// .capinit from_app (strictly speaking don't need symbol here)
 // RELS-PIE-NEXT:     0x20360 R_MORELLO_RELATIVE from_app 0x0
 // RELS-PIE-NEXT:   }
-
-/// Check that the dynamic table holds the correct number of RELATIVE relocs
-// RELS-PIE: DynamicSection [
-// RELS-PIE: 0x000000006FFFFFF9 RELACOUNT 2

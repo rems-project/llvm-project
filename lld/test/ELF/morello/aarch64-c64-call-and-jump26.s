@@ -30,13 +30,13 @@ high2: b _start
  bl low
 
 // CHECK: Disassembly of section .text_low:
-// CHECK: 0000000000002004 _start:
+// CHECK: 0000000000002004 <_start>:
 // CHECK-NEXT:        2004:        b       #134217724
-// CHECK: 0000000000002008 low:
+// CHECK: 0000000000002008 <low>:
 // CHECK-NEXT:        2008:        bl      #134217724
 // CHECK: Disassembly of section .text_high:
-// CHECK: 0000000008002000 high:
+// CHECK: 0000000008002000 <high>:
 // CHECK-NEXT:     8002000:        nop
-// CHECK: 0000000008002004 high2:
+// CHECK: 0000000008002004 <high2>:
 // CHECK-NEXT:     8002004:        b       #-134217728
 // CHECK-NEXT:     8002008:        bl      #-134217728

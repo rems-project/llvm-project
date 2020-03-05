@@ -5,22 +5,22 @@
 ; for other code.
 
 define void @c64_fn() #0 {
-; CHECK: 0000000000000000         .text.c64_fn            00000000 $c.0
+; CHECK: 0000000000000000 l        .text.c64_fn            0000000000000000 $c.0
   ret void
 }
 
 define void @c64_fn2() #1 {
-; CHECK: 0000000000000000         .text.c64_fn2           00000000 $c.1
+; CHECK: 0000000000000000 l        .text.c64_fn2           0000000000000000 $c.1
   ret void
 }
 
 define void @a64_fn() #2 {
-; CHECK: 0000000000000000         .text.a64_fn            00000000 $x.2
+; CHECK: 0000000000000000 l        .text.a64_fn            0000000000000000 $x.2
   ret void
 }
 
 define void @a64c_fn() #3 {
-; CHECK: 0000000000000000         .text.a64c_fn           00000000 $x.3
+; CHECK: 0000000000000000 l        .text.a64c_fn           0000000000000000 $x.3
   ret void
 }
 

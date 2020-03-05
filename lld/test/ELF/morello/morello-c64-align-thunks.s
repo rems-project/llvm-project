@@ -44,7 +44,7 @@ target2:
 // WARN: address (0xff0000) of section .text is not a multiple of alignment (262144)
 
 /// Without additional alignment for PCC there are no Thunks needed.
-// CHECK: 0000000000ff0000 _start:
+// CHECK: 0000000000ff0000 <_start>:
 // CHECK-NEXT:   ff0000:        bl      #133234688
 // CHECK-NEXT:   ff0004:        b       #133234688
 
@@ -63,16 +63,16 @@ target2:
 
 /// When we align the PCC we incur additional alignment for .text.2 which
 /// forces the creation of range extension thunks.
-// ALIGN: 0000000001000000 __C64ADRPThunk_target:
+// ALIGN: 0000000001000000 <__C64ADRPThunk_target>:
 // ALIGN-NEXT:  1000000:        adrp    c16, #134217728
 // ALIGN-NEXT:  1000004:        add     c16, c16, #1
 // ALIGN-NEXT:  1000008:        br      c16
 
-// ALIGN: 000000000100000c __C64ADRPThunk_target2:
+// ALIGN: 000000000100000c <__C64ADRPThunk_target2>:
 // ALIGN-NEXT:  100000c:        adrp    c16, #134217728
 // ALIGN-NEXT:  1000010:        add     c16, c16, #5
 // ALIGN-NEXT:  1000014:        br      c16
 
-// ALIGN: 0000000001000018 _start:
+// ALIGN: 0000000001000018 <_start>:
 // ALIGN-NEXT:  1000018:        bl      #-24 <__C64ADRPThunk_target>
 // ALIGN-NEXT:  100001c:        b       #-16 <__C64ADRPThunk_target2>

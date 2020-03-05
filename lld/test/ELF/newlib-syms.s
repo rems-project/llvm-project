@@ -15,16 +15,16 @@
 # CHECK-NEXT:   2 .data         00000002 0000000000202159 DATA
 # CHECK-NEXT:   3 .bss          00000006 000000000020215c BSS
 # CHECK: SYMBOL TABLE:
-# CHECK-NEXT: 0000000000202162         .bss     00000000 __bss_end__
-# CHECK-NEXT: 000000000020215c         .bss     00000000 __bss_start__
-# CHECK-NEXT: 0000000000202162         .bss     00000000 __end__
-# CHECK-NEXT: 0000000000201158         .text    00000000 _start
+# CHECK-NEXT: 0000000000202162 g       .bss     0000000000000000 __bss_end__
+# CHECK-NEXT: 000000000020215c g       .bss     0000000000000000 __bss_start__
+# CHECK-NEXT: 0000000000202162 g       .bss     0000000000000000 __end__
+# CHECK-NEXT: 0000000000201158 g       .text    0000000000000000 _start
 
 # RUN: ld.lld -r %t.o -o %t2
 # RUN: llvm-objdump -t %t2 | FileCheck --check-prefix=RELOCATABLE %s
-# RELOCATABLE:      0000000000000000         *UND*      00000000 __bss_end__
-# RELOCATABLE-NEXT: 0000000000000000         *UND*      00000000 __bss_start__
-# RELOCATABLE-NEXT: 0000000000000000         *UND*      00000000 __end__
+# RELOCATABLE:      0000000000000000         *UND*      0000000000000000 __bss_end__
+# RELOCATABLE-NEXT: 0000000000000000         *UND*      0000000000000000 __bss_start__
+# RELOCATABLE-NEXT: 0000000000000000         *UND*      0000000000000000 __end__
 
 .global __bss_start__,__bss_end__,__end__,_start
 .text

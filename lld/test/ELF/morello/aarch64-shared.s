@@ -165,25 +165,25 @@ caller:
 // CHECK-NEXT:  308f0 01060100 00000000 00000000 00000000
 // CHECK-NEXT:  30900 01060100 00000000 00000000 00000000
 
-// CHECK: 0000000000010578 globalfunc:
+// CHECK: 0000000000010578 <globalfunc>:
 // CHECK-NEXT:    10578:        nop
 // CHECK-NEXT:    1057c:        nop
 // CHECK-NEXT:    10580:        nop
 // CHECK-NEXT:    10584:        ret
 
-// CHECK: 0000000000010588 hiddenfunc:
+// CHECK: 0000000000010588 <hiddenfunc>:
 // CHECK-NEXT:    10588:        nop
 // CHECK-NEXT:    1058c:        nop
 // CHECK-NEXT:    10590:        nop
 // CHECK-NEXT:    10594:        ret
 
-// CHECK: 0000000000010598 localfunc:
+// CHECK: 0000000000010598 <localfunc>:
 // CHECK-NEXT:    10598:        nop
 // CHECK-NEXT:    1059c:        nop
 // CHECK-NEXT:    105a0:        nop
 // CHECK-NEXT:    105a4:        ret
 
-// CHECK: 00000000000105a8 caller:
+// CHECK: 00000000000105a8 <caller>:
 // CHECK-NEXT:    105a8:        bl      #0x78 <importfunc+0x10620>
 // CHECK-NEXT:    105ac:        bl      #-0x24 <hiddenfunc>
 // CHECK-NEXT:    105b0:        bl      #-0x18 <localfunc>
@@ -204,7 +204,7 @@ caller:
 // CHECK-NEXT:    105ec:        adrp    c17, #0x10000
 // CHECK-NEXT:    105f0:        ldr     c17, [c17, #0x890]
 
-// CHECK: 0000000000010600 .plt:
+// CHECK: 0000000000010600 <.plt>:
 // CHECK-NEXT:    10600:        stp     c16, c30, [csp, #-0x20]!
 // CHECK-NEXT:    10604:        adrp    c16, #0x20000
 // CHECK-NEXT:    10608:        ldr     c17, [c16, #0x8e0]

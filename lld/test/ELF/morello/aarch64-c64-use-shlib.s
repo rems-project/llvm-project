@@ -135,7 +135,7 @@ appdata: .xword 8
 /// .got.plt[3] should be initialized to point to the PLT Header (00010470)
 // CHECK-PIE-NEXT:  306a0 71040100 00000000 00000000 00000000
 
-// CHECK: 0000000000210430 _start:
+// CHECK: 0000000000210430 <_start>:
 // CHECK-NEXT:   210430:        bl      #0x60 <rodata+0x210490>
 // CHECK-NEXT:   210434:        adrp    c0, #0x10000
 // CHECK-NEXT:   210438:        ldr     c0, [c0, #0x600]
@@ -151,11 +151,11 @@ appdata: .xword 8
 // CHECK-NEXT:   210460:        ldr     c5, [c5, #0x650]
 // CHECK-NEXT:   210464:        ret
 
-// CHECK: 0000000000210468 from_app:
+// CHECK: 0000000000210468 <from_app>:
 // CHECK-NEXT:   210468:        ret
 
 /// Check that the PLT header points to .got.plt[2] (230690)
-// CHECK: 0000000000210470 .plt:
+// CHECK: 0000000000210470 <.plt>:
 // CHECK-NEXT:   210470:        stp     c16, c30, [csp, #-0x20]!
 // CHECK-NEXT:   210474:        adrp    c16, #0x20000
 // CHECK-NEXT:   210478:        ldr     c17, [c16, #0x690]
@@ -171,7 +171,7 @@ appdata: .xword 8
 // CHECK-NEXT:   210498:        ldr     c17, [c16, #0x0]
 // CHECK-NEXT:   21049c:        br      c17
 
-// CHECK-PIE: 0000000000010430 _start:
+// CHECK-PIE: 0000000000010430 <_start>:
 // CHECK-PIE-NEXT:    10430:            bl      #0x60 <rodata+0x10490>
 // CHECK-PIE-NEXT:    10434:            adrp    c0, #0x10000
 // CHECK-PIE-NEXT:    10438:            ldr     c0, [c0, #0x600]
@@ -187,11 +187,11 @@ appdata: .xword 8
 // CHECK-PIE-NEXT:    10460:            ldr     c5, [c5, #0x650]
 // CHECK-PIE-NEXT:    10464:            ret
 
-// CHECK-PIE: 0000000000010468 from_app:
+// CHECK-PIE: 0000000000010468 <from_app>:
 // CHECK-PIE-NEXT:    10468:            ret
 
 /// Check that the PLT header points to .got.plt[2] (30690)
-// CHECK-PIE: 0000000000010470 .plt:
+// CHECK-PIE: 0000000000010470 <.plt>:
 // CHECK-PIE-NEXT:    10470:            stp     c16, c30, [csp, #-0x20]!
 // CHECK-PIE-NEXT:    10474:            adrp    c16, #0x20000
 // CHECK-PIE-NEXT:    10478:            ldr     c17, [c16, #0x690]

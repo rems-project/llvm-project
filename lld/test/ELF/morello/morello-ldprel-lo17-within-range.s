@@ -19,10 +19,10 @@
 // RUN: ld.lld --script=%t.script %t.o -o %t_min
 // RUN: llvm-objdump %t_min -d -mattr=+morello --no-show-raw-insn | FileCheck %s --check-prefix=MIN_DISASM
 
-// MAX_DISASM:   0000000000010000 _start:
+// MAX_DISASM:   0000000000010000 <_start>:
 // MAX_DISASM-NEXT:   10000:      ldr      c8, #1048560
 
-// MIN_DISASM:   0000000000102000 _start:
+// MIN_DISASM:   0000000000102000 <_start>:
 // MIN_DISASM-NEXT:   102000:      ldr      c8, #-1048576
 
   .text
