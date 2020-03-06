@@ -104,7 +104,7 @@ private:
   Expr readConstant();
   Expr getPageSize();
 
-  uint64_t readMemoryAssignment(StringRef, StringRef, StringRef);
+  Expr readMemoryAssignment(StringRef, StringRef, StringRef);
   std::pair<uint32_t, uint32_t> readMemoryAttributes();
 
   Expr combine(StringRef op, Expr l, Expr r);
@@ -1222,7 +1222,7 @@ Expr ScriptParser::readPrimary() {
       setError("memory region not defined: " + name);
       return [] { return 0; };
     }
-    return [=] { return script->memoryRegions[name]->length; };
+    return script->memoryRegions[name]->length;
   }
   if (tok == "LOADADDR") {
     StringRef name = readParenLiteral();
@@ -1249,7 +1249,7 @@ Expr ScriptParser::readPrimary() {
       setError("memory region not defined: " + name);
       return [] { return 0; };
     }
-    return [=] { return script->memoryRegions[name]->origin; };
+    return script->memoryRegions[name]->origin;
   }
   if (tok == "SEGMENT_START") {
     expect("(");
@@ -1440,14 +1440,14 @@ std::vector<SymbolVersion> ScriptParser::readVersionExtern() {
   return ret;
 }
 
-uint64_t ScriptParser::readMemoryAssignment(StringRef s1, StringRef s2,
-                                            StringRef s3) {
+Expr ScriptParser::readMemoryAssignment(StringRef s1, StringRef s2,
+                                        StringRef s3) {
   if (!consume(s1) && !consume(s2) && !consume(s3)) {
     setError("expected one of: " + s1 + ", " + s2 + ", or " + s3);
-    return 0;
+    return [] { return 0; };
   }
   expect("=");
-  return readExpr()().getValue();
+  return readExpr();
 }
 
 // Parse the MEMORY command as specified in:
@@ -1471,9 +1471,9 @@ void ScriptParser::readMemory() {
     }
     expect(":");
 
-    uint64_t origin = readMemoryAssignment("ORIGIN", "org", "o");
+    Expr origin = readMemoryAssignment("ORIGIN", "org", "o");
     expect(",");
-    uint64_t length = readMemoryAssignment("LENGTH", "len", "l");
+    Expr length = readMemoryAssignment("LENGTH", "len", "l");
 
     // Add the memory region to the region map.
     MemoryRegion *mr = make<MemoryRegion>(tok, origin, length, flags, negFlags);
