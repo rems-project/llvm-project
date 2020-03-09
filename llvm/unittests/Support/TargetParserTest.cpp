@@ -979,7 +979,7 @@ TEST(TargetParserTest, testAArch64CPU) {
       "8.2-A"));
 }
 
-static constexpr unsigned NumAArch64CPUArchs = 37;
+static constexpr unsigned NumAArch64CPUArchs = 38;
 
 TEST(TargetParserTest, testAArch64CPUArchList) {
   SmallVector<StringRef, NumAArch64CPUArchs> List;

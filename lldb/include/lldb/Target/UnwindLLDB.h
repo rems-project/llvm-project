@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLDB_SOURCE_PLUGINS_PROCESS_UTILITY_UNWINDLLDB_H
-#define LLDB_SOURCE_PLUGINS_PROCESS_UTILITY_UNWINDLLDB_H
+#ifndef LLDB_TARGET_UNWINDLLDB_H
+#define LLDB_TARGET_UNWINDLLDB_H
 
 #include <string>
 #include <vector>
@@ -26,7 +26,7 @@
 
 namespace lldb_private {
 
-class RegisterContextLLDB;
+class RegisterContextUnwind;
 
 // Canonical frame address. Its type can be either a plain linear address or an
 // address capability, for example, on AArch64.
@@ -169,7 +169,7 @@ public:
   };
 
 protected:
-  friend class lldb_private::RegisterContextLLDB;
+  friend class lldb_private::RegisterContextUnwind;
 
   void DoClear() override {
     m_frames.clear();
@@ -186,17 +186,16 @@ protected:
   lldb::RegisterContextSP
   DoCreateRegisterContextForFrame(lldb_private::StackFrame *frame) override;
 
-  typedef std::shared_ptr<RegisterContextLLDB> RegisterContextLLDBSP;
+  typedef std::shared_ptr<RegisterContextUnwind> RegisterContextLLDBSP;
 
   // Needed to retrieve the "next" frame (e.g. frame 2 needs to retrieve frame
-  // 1's RegisterContextLLDB)
+  // 1's RegisterContextUnwind)
   // The RegisterContext for frame_num must already exist or this returns an
   // empty shared pointer.
   RegisterContextLLDBSP GetRegisterContextForFrameNum(uint32_t frame_num);
 
-  // Iterate over the RegisterContextLLDB's in our m_frames vector, look for the
-  // first one that
-  // has a saved location for this reg.
+  // Iterate over the RegisterContextUnwind's in our m_frames vector, look for
+  // the first one that has a saved location for this reg.
   bool SearchForSavedLocationForRegister(uint32_t lldb_regnum,
                                          ABI::FrameState caller_frame_state,
                                          RegisterLocationLLDB &regloc,
@@ -225,7 +224,7 @@ private:
     lldb_private::SymbolContext sctx; // A symbol context we'll contribute to &
                                       // provide to the StackFrame creation
     RegisterContextLLDBSP
-        reg_ctx_lldb_sp; // These are all RegisterContextLLDB's
+        reg_ctx_lldb_sp; // These are all RegisterContextUnwind's
 
     Cursor()
         : start_pc(LLDB_INVALID_ADDRESS), cfa(), sctx(), reg_ctx_lldb_sp() {}
@@ -263,4 +262,4 @@ private:
 
 } // namespace lldb_private
 
-#endif // LLDB_SOURCE_PLUGINS_PROCESS_UTILITY_UNWINDLLDB_H
+#endif // LLDB_TARGET_UNWINDLLDB_H

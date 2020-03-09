@@ -5665,7 +5665,9 @@ static CGCallee EmitDirectCallee(CodeGenFunction &CGF, GlobalDecl GD) {
 
   llvm::Value *calleePtr =
       EmitFunctionDeclPointer(CGF, GD, /*IsDirectCall=*/true);
-  return CGCallee::forDirect(cast<llvm::Constant>(calleePtr), GD);
+  auto *calleeType =
+      cast<llvm::FunctionType>(calleePtr->getType()->getPointerElementType());
+  return CGCallee::forDirect(llvm::FunctionCallee(calleeType, calleePtr), GD);
 }
 
 CGCallee CodeGenFunction::EmitCallee(const Expr *E) {

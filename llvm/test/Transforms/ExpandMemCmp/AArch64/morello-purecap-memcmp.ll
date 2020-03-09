@@ -24,9 +24,7 @@ define i32 @cmp3(i8 addrspace(200) * nocapture readonly %x, i8 addrspace(200) * 
 ; CHECK-LABEL: @cmp3(
 ; CHECK-NEXT:    br label [[LOADBB:%.*]]
 ; CHECK:       res_block:
-; CHECK-NEXT:    [[PHI_SRC1:%.*]] = phi i16 [ [[TMP7:%.*]], [[LOADBB]] ]
-; CHECK-NEXT:    [[PHI_SRC2:%.*]] = phi i16 [ [[TMP8:%.*]], [[LOADBB]] ]
-; CHECK-NEXT:    [[TMP1:%.*]] = icmp ult i16 [[PHI_SRC1]], [[PHI_SRC2]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp ult i16 [[TMP7:%.*]], [[TMP8:%.*]]
 ; CHECK-NEXT:    [[TMP2:%.*]] = select i1 [[TMP1]], i32 -1, i32 1
 ; CHECK-NEXT:    br label [[ENDBLOCK:%.*]]
 ; CHECK:       loadbb:
@@ -78,9 +76,7 @@ define i32 @cmp5(i8 addrspace(200) * nocapture readonly %x, i8 addrspace(200) * 
 ; CHECK-LABEL: @cmp5(
 ; CHECK-NEXT:    br label [[LOADBB:%.*]]
 ; CHECK:       res_block:
-; CHECK-NEXT:    [[PHI_SRC1:%.*]] = phi i32 [ [[TMP7:%.*]], [[LOADBB]] ]
-; CHECK-NEXT:    [[PHI_SRC2:%.*]] = phi i32 [ [[TMP8:%.*]], [[LOADBB]] ]
-; CHECK-NEXT:    [[TMP1:%.*]] = icmp ult i32 [[PHI_SRC1]], [[PHI_SRC2]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp ult i32 [[TMP7:%.*]], [[TMP8:%.*]]
 ; CHECK-NEXT:    [[TMP2:%.*]] = select i1 [[TMP1]], i32 -1, i32 1
 ; CHECK-NEXT:    br label [[ENDBLOCK:%.*]]
 ; CHECK:       loadbb:
@@ -208,9 +204,7 @@ define i32 @cmp9(i8 addrspace(200) * nocapture readonly %x, i8 addrspace(200) * 
 ; CHECK-LABEL: @cmp9(
 ; CHECK-NEXT:    br label [[LOADBB:%.*]]
 ; CHECK:       res_block:
-; CHECK-NEXT:    [[PHI_SRC1:%.*]] = phi i64 [ [[TMP7:%.*]], [[LOADBB]] ]
-; CHECK-NEXT:    [[PHI_SRC2:%.*]] = phi i64 [ [[TMP8:%.*]], [[LOADBB]] ]
-; CHECK-NEXT:    [[TMP1:%.*]] = icmp ult i64 [[PHI_SRC1]], [[PHI_SRC2]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp ult i64 [[TMP7:%.*]], [[TMP8:%.*]]
 ; CHECK-NEXT:    [[TMP2:%.*]] = select i1 [[TMP1]], i32 -1, i32 1
 ; CHECK-NEXT:    br label [[ENDBLOCK:%.*]]
 ; CHECK:       loadbb:
