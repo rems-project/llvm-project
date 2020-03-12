@@ -2234,7 +2234,7 @@ bool GDBRemoteCommunicationClient::GetCurrentProcessInfo(bool allow_lazy) {
 uint32_t GDBRemoteCommunicationClient::FindProcesses(
     const ProcessInstanceInfoMatch &match_info,
     ProcessInstanceInfoList &process_infos) {
-  process_infos.Clear();
+  process_infos.clear();
 
   if (m_supports_qfProcessInfo) {
     StreamString packet;
@@ -2314,7 +2314,7 @@ uint32_t GDBRemoteCommunicationClient::FindProcesses(
         ProcessInstanceInfo process_info;
         if (!DecodeProcessInfoResponse(response, process_info))
           break;
-        process_infos.Append(process_info);
+        process_infos.push_back(process_info);
         response = StringExtractorGDBRemote();
       } while (SendPacketAndWaitForResponse("qsProcessInfo", response, false) ==
                PacketResult::Success);
@@ -2323,7 +2323,7 @@ uint32_t GDBRemoteCommunicationClient::FindProcesses(
       return 0;
     }
   }
-  return process_infos.GetSize();
+  return process_infos.size();
 }
 
 bool GDBRemoteCommunicationClient::GetUserName(uint32_t uid,
