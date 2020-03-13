@@ -1,6 +1,7 @@
 #include "llvm/Support/Endian.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Object/ELFObjectFile.h"
+#include "llvm/ADT/StringMap.h"
 #include <unordered_map>
 #include <stdio.h>
 
