@@ -2456,6 +2456,11 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
   if (Depth > MaxArithDepth || hasHugeExpression(Ops))
     return getOrCreateAddExpr(Ops, Flags);
 
+  if (SCEV *S = std::get<0>(findExistingSCEVInCache(scAddExpr, Ops))) {
+    static_cast<SCEVAddExpr *>(S)->setNoWrapFlags(Flags);
+    return S;
+  }
+
   // Okay, check to see if the same value occurs in the operand list more than
   // once.  If so, merge them together into an multiply expression.  Since we
   // sorted the list, these values are required to be adjacent.
@@ -2935,6 +2940,11 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
   if (Depth > MaxArithDepth || hasHugeExpression(Ops))
     return getOrCreateMulExpr(Ops, Flags);
 
+  if (SCEV *S = std::get<0>(findExistingSCEVInCache(scMulExpr, Ops))) {
+    static_cast<SCEVMulExpr *>(S)->setNoWrapFlags(Flags);
+    return S;
+  }
+
   // If there are any constants, fold them together.
   unsigned Idx = 0;
   if (const SCEVConstant *LHSC = dyn_cast<SCEVConstant>(Ops[0])) {
@@ -3197,6 +3207,14 @@ const SCEV *ScalarEvolution::getUDivExpr(const SCEV *LHS,
          getEffectiveSCEVType(RHS->getType()) &&
          "SCEVUDivExpr operand types don't match!");
 
+  FoldingSetNodeID ID;
+  ID.AddInteger(scUDivExpr);
+  ID.AddPointer(LHS);
+  ID.AddPointer(RHS);
+  void *IP = nullptr;
+  if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP))
+    return S;
+
   if (const SCEVConstant *RHSC = dyn_cast<SCEVConstant>(RHS)) {
     if (RHSC->getValue()->isOne())
       return LHS;                               // X udiv 1 --> x
@@ -3243,9 +3261,24 @@ const SCEV *ScalarEvolution::getUDivExpr(const SCEV *LHS,
                             AR->getLoop(), SCEV::FlagAnyWrap)) {
             const APInt &StartInt = StartC->getAPInt();
             const APInt &StartRem = StartInt.urem(StepInt);
-            if (StartRem != 0)
-              LHS = getAddRecExpr(getConstant(StartInt - StartRem), Step,
-                                  AR->getLoop(), SCEV::FlagNW);
+            if (StartRem != 0) {
+              const SCEV *NewLHS =
+                  getAddRecExpr(getConstant(StartInt - StartRem), Step,
+                                AR->getLoop(), SCEV::FlagNW);
+              if (LHS != NewLHS) {
+                LHS = NewLHS;
+
+                // Reset the ID to include the new LHS, and check if it is
+                // already cached.
+                ID.clear();
+                ID.AddInteger(scUDivExpr);
+                ID.AddPointer(LHS);
+                ID.AddPointer(RHS);
+                IP = nullptr;
+                if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP))
+                  return S;
+              }
+            }
           }
         }
       // (A*B)/C --> A*(B/C) if safe and B/C can be folded.
@@ -3310,12 +3343,6 @@ const SCEV *ScalarEvolution::getUDivExpr(const SCEV *LHS,
     }
   }
 
-  FoldingSetNodeID ID;
-  ID.AddInteger(scUDivExpr);
-  ID.AddPointer(LHS);
-  ID.AddPointer(RHS);
-  void *IP = nullptr;
-  if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
   SCEV *S = new (SCEVAllocator) SCEVUDivExpr(ID.Intern(SCEVAllocator),
                                              LHS, RHS);
   UniqueSCEVs.InsertNode(S, IP);
@@ -3977,7 +4004,7 @@ const SCEV *ScalarEvolution::getFatAddExpr(SmallVectorImpl<const SCEV *> &Ops,
   return getOrCreateAddExpr(Ops, Flags);
 }
 
-std::tuple<const SCEV *, FoldingSetNodeID, void *>
+std::tuple<SCEV *, FoldingSetNodeID, void *>
 ScalarEvolution::findExistingSCEVInCache(int SCEVType,
                                          ArrayRef<const SCEV *> Ops) {
   FoldingSetNodeID ID;
@@ -3985,7 +4012,7 @@ ScalarEvolution::findExistingSCEVInCache(int SCEVType,
   ID.AddInteger(SCEVType);
   for (unsigned i = 0, e = Ops.size(); i != e; ++i)
     ID.AddPointer(Ops[i]);
-  return std::tuple<const SCEV *, FoldingSetNodeID, void *>(
+  return std::tuple<SCEV *, FoldingSetNodeID, void *>(
       UniqueSCEVs.FindNodeOrInsertPos(ID, IP), std::move(ID), IP);
 }
 
