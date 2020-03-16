@@ -1,7 +1,7 @@
 // REQUIRES: aarch64
 // RUN: llvm-mc --triple=aarch64-none-elf -mattr=+c64,+morello -filetype=obj %s -o %t.o
 // RUN: ld.lld --shared --morello-c64-plt %t.o -o %t.so
-// RUN: llvm-objdump --print-imm-hex --no-show-raw-insn -d --triple=aarch64-none-elf -mattr=+morello -s %t.so | FileCheck %s
+// RUN: llvm-objdump --print-imm-hex --no-show-raw-insn -d --triple=aarch64-none-elf --mattr=+morello -s %t.so | FileCheck %s
 // RUN: llvm-readobj --relocations %t.so | FileCheck %s --check-prefix=RELS
 /// code for a shared library, using global, hidden, local, imported, .got,
 /// .got.plt and .capinit

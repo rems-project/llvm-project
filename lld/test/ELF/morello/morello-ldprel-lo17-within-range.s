@@ -10,14 +10,14 @@
 // RUN:       .text 0x010000: { *(.text) } \
 // RUN: }" > %t.script
 // RUN: ld.lld --script=%t.script %t.o -o %t_max
-// RUN: llvm-objdump %t_max -d -mattr=+morello --no-show-raw-insn | FileCheck %s --check-prefix=MAX_DISASM
+// RUN: llvm-objdump %t_max -d --mattr=+morello --no-show-raw-insn | FileCheck %s --check-prefix=MAX_DISASM
 
 // RUN: echo "SECTIONS { \
 // RUN:       .data 0x002000: { *(.data) } \
 // RUN:       .text 0x102000: { *(.text) } \
 // RUN: }" > %t.script
 // RUN: ld.lld --script=%t.script %t.o -o %t_min
-// RUN: llvm-objdump %t_min -d -mattr=+morello --no-show-raw-insn | FileCheck %s --check-prefix=MIN_DISASM
+// RUN: llvm-objdump %t_min -d --mattr=+morello --no-show-raw-insn | FileCheck %s --check-prefix=MIN_DISASM
 
 // MAX_DISASM:   0000000000010000 <_start>:
 // MAX_DISASM-NEXT:   10000:      ldr      c8, #1048560

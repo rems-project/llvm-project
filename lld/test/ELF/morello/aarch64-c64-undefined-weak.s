@@ -1,7 +1,7 @@
 // REQUIRES: aarch64
 // RUN: llvm-mc -filetype=obj -triple=aarch64-none-linux -mattr=+c64 %s -o %t.o
 // RUN: ld.lld %t.o -o %t
-// RUN: llvm-objdump -d --no-show-raw-insn -mattr=+morello %t | FileCheck %s
+// RUN: llvm-objdump -d --no-show-raw-insn --mattr=+morello %t | FileCheck %s
 
 /// Check that the ARM 64-bit ABI rules for undefined weak symbols are applied.
 /// Branch instructions are resolved to the next instruction. Undefined

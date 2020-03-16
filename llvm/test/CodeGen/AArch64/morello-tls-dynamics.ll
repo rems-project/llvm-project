@@ -1,5 +1,5 @@
 ; RUN: llc -mtriple=arm64-none-linux-gnu -mattr=+c64 -target-abi purecap -relocation-model=pic -verify-machineinstrs < %s | FileCheck %s
-; RUN: llc -mtriple=arm64-none-linux-gnu -mattr=+c64 -target-abi purecap -relocation-model=pic -filetype=obj < %s | llvm-objdump -mattr=+morello -r - | FileCheck --check-prefix=CHECK-RELOC %s
+; RUN: llc -mtriple=arm64-none-linux-gnu -mattr=+c64 -target-abi purecap -relocation-model=pic -filetype=obj < %s | llvm-objdump --mattr=+morello -r - | FileCheck --check-prefix=CHECK-RELOC %s
 ; RUN: llc -mtriple=arm64-none-linux-gnu -mattr=+c64 -target-abi purecap -verify-machineinstrs < %s | FileCheck %s
 ; RUN: llc -mtriple=arm64-none-linux-gnu -mattr=+c64 -target-abi purecap -filetype=obj < %s | llvm-objdump -r - | FileCheck --check-prefix=CHECK-RELOC %s
 

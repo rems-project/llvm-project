@@ -1,10 +1,10 @@
 // REQUIRES: aarch64
 // RUN: llvm-mc --triple=aarch64-none-elf -mattr=+c64 -filetype=obj %s -o %t.o
 // RUN: ld.lld %t.o -o %t --morello-c64-plt --shared
-// RUN: llvm-objdump --triple=aarch64-none-elf -mattr=+morello --no-show-raw-insn -d %t | FileCheck %s --check-prefix=DIS
+// RUN: llvm-objdump --triple=aarch64-none-elf --mattr=+morello --no-show-raw-insn -d %t | FileCheck %s --check-prefix=DIS
 // RUN: llvm-objdump -s %t | FileCheck %s --check-prefix=GOTPLT
 // RUN: llvm-readobj --sections --relocs %t | FileCheck %s
-// RUN: llvm-objdump -s --triple=aarch64-none-elf -mattr=+morello %t | FileCheck %s --check-prefix=GOT
+// RUN: llvm-objdump -s --triple=aarch64-none-elf --mattr=+morello %t | FileCheck %s --check-prefix=GOT
 
 /// Test that GOT slots are 16-bytes when we use --morello-c64-plt.
 /// Test that the Morello dynamic relocations are generated.

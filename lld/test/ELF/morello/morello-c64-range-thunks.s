@@ -6,7 +6,7 @@
 // RUN:       .text_high 0xf000000 : { *(.text.2) *(.text.3) } \
 // RUN:       } " > %t.script
 // RUN: ld.lld %t.o -o %t --script=%t.script
-// RUN: llvm-objdump -d --no-show-raw-insn --triple=aarch64-none-elf -mattr=+morello %t | FileCheck %s
+// RUN: llvm-objdump -d --no-show-raw-insn --triple=aarch64-none-elf --mattr=+morello %t | FileCheck %s
 
         .section .text.1, "ax", %progbits
         .balign 4

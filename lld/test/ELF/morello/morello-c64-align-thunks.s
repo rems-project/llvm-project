@@ -6,9 +6,9 @@
 // RUN:       .text_targets : { *(.text.3) *(.text.4) } \
 // RUN:       } " > %t.script
 // RUN: ld.lld %t.o -o %t --script=%t.script --morello-c64-plt -zmax-page-size=4096 2>&1 | FileCheck --check-prefix=WARN %s
-// RUN: llvm-objdump --no-show-raw-insn -d --triple=aarch64-none-elf -mattr=+morello --start-address=0xff0000 --stop-address=0xff0008 %t | FileCheck %s
+// RUN: llvm-objdump --no-show-raw-insn -d --triple=aarch64-none-elf --mattr=+morello --start-address=0xff0000 --stop-address=0xff0008 %t | FileCheck %s
 // RUN: ld.lld %t.o -o %t2 --script=%t.script -zmax-page-size=4096
-// RUN: llvm-objdump --no-show-raw-insn -d --triple=aarch64-none-elf -mattr=+morello --start-address=0xff0000 --stop-address=0xff0008 %t2 | FileCheck %s
+// RUN: llvm-objdump --no-show-raw-insn -d --triple=aarch64-none-elf --mattr=+morello --start-address=0xff0000 --stop-address=0xff0008 %t2 | FileCheck %s
 
 /// Check that the alignment of the PCC is not done when explicit addresses are specified
 /// by the linker script.
@@ -59,7 +59,7 @@ target2:
 // RUN:       .text_targets : { *(.text.3) *(.text.4) } \
 // RUN:       } " > %t.script3
 // RUN: ld.lld %t.o -o %t3 --script=%t.script3 --morello-c64-plt -zmax-page-size=4096
-// RUN: llvm-objdump --no-show-raw-insn -d --triple=aarch64-none-elf -mattr=+morello --start-address=0x1000000 --stop-address=0x1000020 %t3 | FileCheck %s --check-prefix=ALIGN
+// RUN: llvm-objdump --no-show-raw-insn -d --triple=aarch64-none-elf --mattr=+morello --start-address=0x1000000 --stop-address=0x1000020 %t3 | FileCheck %s --check-prefix=ALIGN
 
 /// When we align the PCC we incur additional alignment for .text.2 which
 /// forces the creation of range extension thunks.

@@ -1,6 +1,6 @@
 // RUN: llvm-mc --triple=aarch64-none-elf %s -mattr=+c64 --filetype=obj -o %t.o
 // RUN: ld.lld %t.o -o %t
-// RUN: llvm-objdump --no-show-raw-insn -d --triple=aarch64-none-elf -mattr=+morello %t | FileCheck %s
+// RUN: llvm-objdump --no-show-raw-insn -d --triple=aarch64-none-elf --mattr=+morello %t | FileCheck %s
 // RUN: llvm-readobj --symbols %t | FileCheck %s --check-prefix=SYMS
 
 /// Interworking should only be done when symbols are of type STT_FUNC. In

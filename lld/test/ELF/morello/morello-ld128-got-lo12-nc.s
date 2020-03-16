@@ -1,7 +1,7 @@
 // REQUIRES: aarch64
 // RUN: llvm-mc --triple=aarch64-none-elf -mattr=+c64,+morello -filetype=obj %s -o %t.o
 // RUN: ld.lld %t.o -o %t --morello-c64-plt
-// RUN: llvm-objdump -d --no-show-raw-insn --triple=aarch64-none-elf -mattr=+morello %t | FileCheck %s --check-prefix=DIS
+// RUN: llvm-objdump -d --no-show-raw-insn --triple=aarch64-none-elf --mattr=+morello %t | FileCheck %s --check-prefix=DIS
 // RUN: llvm-readobj --sections --cap-relocs --expand-relocs %t | FileCheck %s
 
 /// The R_MORELLO_LD128_GOT_LO12_NC relocation causes the linker to create a

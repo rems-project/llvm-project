@@ -3,11 +3,11 @@
 // RUN: llvm-mc --triple=aarch64-none-elf -mattr=+c64,+morello -filetype=obj %s -o %t.o
 
 // RUN: ld.lld %t.so %t.o -o %t
-// RUN: llvm-objdump --print-imm-hex --no-show-raw-insn -s -d --triple=aarch64-none-elf -mattr=+morello %t | FileCheck %s
+// RUN: llvm-objdump --print-imm-hex --no-show-raw-insn -s -d --triple=aarch64-none-elf --mattr=+morello %t | FileCheck %s
 // RUN: llvm-readobj --dynamic --relocations %t | FileCheck %s --check-prefix=RELS
 
 // RUN: ld.lld --pie %t.so %t.o -o %tpie
-// RUN: llvm-objdump --print-imm-hex --no-show-raw-insn -s -d --triple=aarch64-none-elf -mattr=+morello %tpie | FileCheck %s --check-prefix=CHECK-PIE
+// RUN: llvm-objdump --print-imm-hex --no-show-raw-insn -s -d --triple=aarch64-none-elf --mattr=+morello %tpie | FileCheck %s --check-prefix=CHECK-PIE
 // RUN: llvm-readobj --dynamic --relocations %tpie | FileCheck %s --check-prefix=RELS-PIE
 
 /// Application using a shared data only library. Expect to see dynamic

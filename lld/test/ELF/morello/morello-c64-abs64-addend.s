@@ -1,7 +1,7 @@
 // REQUIRES: aarch64
 // RUN: llvm-mc --triple=aarch64-none-elf -mattr=+c64 -filetype=obj %s -o %t.o
 // RUN: ld.lld %t.o -o %t
-// RUN: llvm-objdump --no-show-raw-insn -d %t --triple=aarch64-none-elf -mattr=+morello | FileCheck %s
+// RUN: llvm-objdump --no-show-raw-insn -d %t --triple=aarch64-none-elf --mattr=+morello | FileCheck %s
 
 /// Strictly speaking the definition of R_AARCH64_ABS64 to a C64 symbol is:
 /// ((S & ~1) + A) | C

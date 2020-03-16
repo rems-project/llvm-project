@@ -6,12 +6,12 @@
 // RUN: llvm-mc --triple=aarch64-none-elf %s -mattr=+c64,+morello --filetype=obj -o %t1.o
 // RUN: llvm-mc --triple=aarch64-none-elf %S/Inputs/aarch64-faraway-func.s --filetype=obj -o %t2.o
 // RUN: ld.lld %t1.o %t2.o --script=%t.script -o %t
-// RUN: llvm-objdump -d --no-show-raw-insn --triple=aarch64-none-elf -mattr=+morello %t | FileCheck %s --check-prefix=CHECK --check-prefix=A64_LAST
+// RUN: llvm-objdump -d --no-show-raw-insn --triple=aarch64-none-elf --mattr=+morello %t | FileCheck %s --check-prefix=CHECK --check-prefix=A64_LAST
 
 // RUN: llvm-mc --triple=aarch64-none-elf %s --filetype=obj -o %t1.o
 // RUN: llvm-mc --triple=aarch64-none-elf %S/Inputs/aarch64-faraway-func.s -mattr=+c64,+morello --filetype=obj -o %t2.o
 // RUN: ld.lld %t1.o %t2.o --script=%t.script -o %t
-// RUN: llvm-objdump -d --no-show-raw-insn --triple=aarch64-none-elf -mattr=+morello %t | FileCheck %s --check-prefix=CHECK --check-prefix=C64_LAST
+// RUN: llvm-objdump -d --no-show-raw-insn --triple=aarch64-none-elf --mattr=+morello %t | FileCheck %s --check-prefix=CHECK --check-prefix=C64_LAST
 
 
   .section .text.1, "ax", %progbits

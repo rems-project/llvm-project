@@ -3,7 +3,7 @@
 
 // RUN: llvm-mc -triple aarch64-none-linux-gnu -show-encoding \
 // RUN:     -filetype=obj -mattr=+morello < %s -o - | \
-// RUN:  llvm-objdump -mattr=+morello -d -r - | FileCheck --check-prefix=OBJ %s
+// RUN:  llvm-objdump --mattr=+morello -d -r - | FileCheck --check-prefix=OBJ %s
 
 somewhere:
   nop

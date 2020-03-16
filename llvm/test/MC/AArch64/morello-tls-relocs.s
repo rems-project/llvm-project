@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple=aarch64-none-elf -mattr=+morello,+c64  %s -filetype=obj -o - | llvm-objdump -mattr=+morello -d - -r | FileCheck %s
+// RUN: llvm-mc -triple=aarch64-none-elf -mattr=+morello,+c64  %s -filetype=obj -o - | llvm-objdump --mattr=+morello -d - -r | FileCheck %s
 
     .globl var
     .text

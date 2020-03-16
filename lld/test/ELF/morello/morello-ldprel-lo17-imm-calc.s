@@ -15,7 +15,7 @@
 
 // RUN: llvm-mc -filetype=obj -triple=aarch64-none-elf -mattr=+morello %s -o %t.o
 // RUN: ld.lld %t.o -o %t
-// RUN: llvm-objdump %t -d -mattr=+morello --no-show-raw-insn | FileCheck %s --check-prefix=DISASM
+// RUN: llvm-objdump %t -d --mattr=+morello --no-show-raw-insn | FileCheck %s --check-prefix=DISASM
 // RUN: llvm-readobj %t --symbols | FileCheck %s --check-prefix=SYM
 
 // DISASM: Disassembly of section .text:

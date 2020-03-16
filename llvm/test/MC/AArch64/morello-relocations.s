@@ -1,5 +1,5 @@
 // RUN: llvm-mc -triple=aarch64-linux-gnu -mattr=+morello,+c64 \
-// RUN:         -filetype=obj -o - %s| llvm-objdump -mattr=+morello -r - -S | \
+// RUN:         -filetype=obj -o - %s| llvm-objdump --mattr=+morello -r - -S | \
 // RUN: FileCheck %s
 
 somewhere:

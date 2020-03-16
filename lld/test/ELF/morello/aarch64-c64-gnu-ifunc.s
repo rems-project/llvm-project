@@ -1,7 +1,7 @@
 // REQUIRES: aarch64
 // RUN: llvm-mc -filetype=obj -triple=aarch64-none-elf -mattr=+c64,+morello %s -o %t.o
 // RUN: ld.lld --morello-c64-plt -static %t.o -o %tout
-// RUN: llvm-objdump -s -d --print-imm-hex --no-show-raw-insn -triple=aarch64-none-elf -mattr=+morello %tout | FileCheck %s
+// RUN: llvm-objdump -s -d --print-imm-hex --no-show-raw-insn --triple=aarch64-none-elf --mattr=+morello %tout | FileCheck %s
 // RUN: llvm-readobj -r --symbols %tout | FileCheck %s --check-prefix=RELANDSYM
 .text
 .type foo STT_GNU_IFUNC

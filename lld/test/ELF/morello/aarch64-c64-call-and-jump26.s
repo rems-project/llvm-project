@@ -5,7 +5,7 @@
 // RUN:       .text_high 0x8002000 : { *(.text.2) } \
 // RUN:       } " > %t.script
 // RUN: ld.lld %t.o -o %t --script=%t.script
-// RUN: llvm-objdump --no-show-raw-insn -d %t --triple=aarch64-none-elf -mattr=+c64 | FileCheck %s
+// RUN: llvm-objdump --no-show-raw-insn -d %t --triple=aarch64-none-elf --mattr=+c64 | FileCheck %s
 
 /// Test that we can handle the R_MORELLO_JUMP26 and R_MORELLO_CALL26 relocations.
 /// These are essentially the same as R_AARCH64_JUMP26 and R_AARCH_CALL26

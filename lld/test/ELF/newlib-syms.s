@@ -1,7 +1,7 @@
 # REQUIRES: x86
 # RUN: llvm-mc -filetype=obj -triple=x86_64-pc-linux %s -o %t.o
 # RUN: ld.lld %t.o -o %t
-# RUN: llvm-objdump -t -section-headers %t | FileCheck %s
+# RUN: llvm-objdump -t --section-headers %t | FileCheck %s
 
 ## Check the linker defined symbols added for newlib.
 ## __bss_start__ is the start of the .bss section

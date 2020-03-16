@@ -2,10 +2,10 @@
 // RUN: ld.lld --shared --soname=t.so --morello-c64-plt %t.o -o %t.so
 // RUN: llvm-mc --triple=aarch64-none-elf -mattr=+c64,+morello -filetype=obj %s -o %t.o
 // RUN: ld.lld --morello-c64-plt %t.so %t.o -o %t
-// RUN: llvm-objdump --print-imm-hex --no-show-raw-insn -s -d --triple=aarch64-none-elf -mattr=+morello %t | FileCheck %s
+// RUN: llvm-objdump --print-imm-hex --no-show-raw-insn -s -d --triple=aarch64-none-elf --mattr=+morello %t | FileCheck %s
 // RUN: llvm-readobj --relocations %t | FileCheck %s --check-prefix=RELS
 // RUN: ld.lld --pie --morello-c64-plt %t.so %t.o -o %tpie
-// RUN: llvm-objdump --print-imm-hex --no-show-raw-insn -s -d --triple=aarch64-none-elf -mattr=+morello %tpie | FileCheck %s --check-prefix=CHECK-PIE
+// RUN: llvm-objdump --print-imm-hex --no-show-raw-insn -s -d --triple=aarch64-none-elf --mattr=+morello %tpie | FileCheck %s --check-prefix=CHECK-PIE
 // RUN: llvm-readobj --relocations %tpie | FileCheck %s --check-prefix=RELS-PIE
 
 /// Application using a shared library. Expect to see dynamic

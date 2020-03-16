@@ -1,7 +1,7 @@
 // REQUIRES: aarch64
 // RUN: llvm-mc --triple=aarch64-none-elf -mattr=+c64 -filetype=obj %s -o %t.o
 // RUN: ld.lld %t.o -o %t
-// RUN: llvm-objdump --no-show-raw-insn -d %t --triple=aarch64-none-elf -mattr=+c64
+// RUN: llvm-objdump --no-show-raw-insn -d %t --triple=aarch64-none-elf --mattr=+c64
 
 /// Test that we can handle the R_AARCH64_CONDBR19 reloc when the target is a
 /// capability.

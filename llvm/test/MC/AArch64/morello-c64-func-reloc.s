@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple=aarch64-none-elf -mattr=+morello %s -filetype=obj -o - | llvm-objdump -mattr=+morello -d - -r | FileCheck %s
+// RUN: llvm-mc -triple=aarch64-none-elf -mattr=+morello %s -filetype=obj -o - | llvm-objdump --mattr=+morello -d - -r | FileCheck %s
 
 .arch armv8a+c64
 

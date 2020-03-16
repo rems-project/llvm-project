@@ -6,7 +6,7 @@
 // RUN: llvm-mc -filetype=obj -triple=aarch64-unknown-linux %p/Inputs/aarch64-c64-tls-gdie.s -o %t2.o -mattr=+c64,+morello
 // RUN: ld.lld --morello-c64-plt %t2.o -o %t2.so -shared -soname=t2.so
 // RUN: ld.lld --morello-c64-plt --hash-style=sysv %tmain.o %t2.so -o %tout
-// RUN: llvm-objdump -d -mattr=+morello --no-show-raw-insn %tout | FileCheck %s
+// RUN: llvm-objdump -d --mattr=+morello --no-show-raw-insn %tout | FileCheck %s
 // RUN: llvm-readobj -rS %tout | FileCheck --check-prefix=SEC --check-prefix=REL %s
 
   .globl  _start

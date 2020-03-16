@@ -1,7 +1,7 @@
 // REQUIRES: aarch64
 // RUN: llvm-mc -filetype=obj -triple=aarch64-pc-linux %s -mattr=+c64,+morello -o %t.o
 // RUN: ld.lld --morello-c64-plt --hash-style=sysv -shared %t.o -o %t.so
-// RUN: llvm-objdump -d -mattr=+morello --no-show-raw-insn %t.so | FileCheck %s
+// RUN: llvm-objdump -d --mattr=+morello --no-show-raw-insn %t.so | FileCheck %s
 // RUN: llvm-readobj -r %t.so | FileCheck --check-prefix=REL %s
 
 .text

@@ -3,7 +3,7 @@
 // RUN: ld.lld %t.o -o %t --morello-c64-plt
 // RUN: llvm-readobj -s %t  | FileCheck %s
 // RUN: llvm-readobj -r %t.o  | FileCheck %s --check-prefix=RELOCS
-// RUN: llvm-objdump -mattr=+morello -d %t --no-show-raw-insn | FileCheck %s --check-prefix=DISASM
+// RUN: llvm-objdump --mattr=+morello -d %t --no-show-raw-insn | FileCheck %s --check-prefix=DISASM
 
 // CHECK:      Name: .got
 // CHECK-NEXT: Type: SHT_PROGBITS
