@@ -512,6 +512,7 @@ bool AArch64ExpandPseudo::expand_DestructiveOp(
     }
     LLVM_FALLTHROUGH;
   case AArch64::DestructiveBinary:
+  case AArch64::DestructiveBinaryImm:
     std::tie(PredIdx, DOPIdx, SrcIdx) = std::make_tuple(1, 2, 3);
    break;
   default:
@@ -529,6 +530,9 @@ bool AArch64ExpandPseudo::expand_DestructiveOp(
     DOPRegIsUnique =
       DstReg != MI.getOperand(DOPIdx).getReg() ||
       MI.getOperand(DOPIdx).getReg() != MI.getOperand(SrcIdx).getReg();
+    break;
+  case AArch64::DestructiveBinaryImm:
+    DOPRegIsUnique = true;
     break;
   }
 
@@ -598,6 +602,7 @@ bool AArch64ExpandPseudo::expand_DestructiveOp(
     .addReg(DstReg, RegState::Define | getDeadRegState(DstIsDead));
 
   switch (DType) {
+  case AArch64::DestructiveBinaryImm:
   case AArch64::DestructiveBinaryComm:
   case AArch64::DestructiveBinaryCommWithRev:
     DOP.add(MI.getOperand(PredIdx))
