@@ -117,6 +117,7 @@ add_llvm_component_library(LLVMSupport
   MemoryBuffer.cpp
   MD5.cpp
   NativeFormatting.cpp
+  OptimalLayout.cpp
   Optional.cpp
   Parallel.cpp
   PluginLoader.cpp
