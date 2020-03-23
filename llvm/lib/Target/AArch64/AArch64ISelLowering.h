@@ -940,6 +940,9 @@ private:
                                  SelectionDAG &DAG, SDLoc DL) const;
 
   void finalizeLowering(MachineFunction &MF) const override;
+
+  bool shouldLocalize(const MachineInstr &MI,
+                      const TargetTransformInfo *TTI) const override;
 };
 
 namespace AArch64 {
