@@ -402,7 +402,9 @@ class SVE_3_Op_Pat_SelZero<ValueType vtd, SDPatternOperator op, ValueType vt1,
 class SVE_3_Op_Pat_Shift_Imm_SelZero<ValueType vtd, SDPatternOperator op,
                                      ValueType vt1, ValueType vt2,
                                      Operand vt3, Instruction inst>
-: Pat<(vtd (op vt1:$Op1, (vselect vt1:$Op1, vt2:$Op2, (SVEDup0)), (i32 (vt3:$Op3)))),
+: Pat<(vtd (op vt1:$Op1, (vselect vt1:$Op1, vt2:$Op2,
+                                  (!cast<ComplexPattern>("SVEDup0_" # vt2))),
+               (i32 (vt3:$Op3)))),
       (inst $Op1, $Op2, vt3:$Op3)>;
 }
 
