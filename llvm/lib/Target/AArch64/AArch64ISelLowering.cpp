@@ -9782,6 +9782,7 @@ bool AArch64TargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
     Info.align = Align(16);
     Info.flags = MachineMemOperand::MOStore | MachineMemOperand::MOVolatile;
     return true;
+  case Intrinsic::aarch64_sve_ld1:
   case Intrinsic::aarch64_sve_ldnt1: {
     PointerType *PtrTy = cast<PointerType>(I.getArgOperand(1)->getType());
     Info.opc = ISD::INTRINSIC_W_CHAIN;
@@ -9789,9 +9790,12 @@ bool AArch64TargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
     Info.ptrVal = I.getArgOperand(1);
     Info.offset = 0;
     Info.align = MaybeAlign(DL.getABITypeAlignment(PtrTy->getElementType()));
-    Info.flags = MachineMemOperand::MOLoad | MachineMemOperand::MONonTemporal;
+    Info.flags = MachineMemOperand::MOLoad;
+    if (Intrinsic == Intrinsic::aarch64_sve_ldnt1)
+      Info.flags |= MachineMemOperand::MONonTemporal;
     return true;
   }
+  case Intrinsic::aarch64_sve_st1:
   case Intrinsic::aarch64_sve_stnt1: {
     PointerType *PtrTy = cast<PointerType>(I.getArgOperand(2)->getType());
     Info.opc = ISD::INTRINSIC_W_CHAIN;
@@ -9799,7 +9803,9 @@ bool AArch64TargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
     Info.ptrVal = I.getArgOperand(2);
     Info.offset = 0;
     Info.align = MaybeAlign(DL.getABITypeAlignment(PtrTy->getElementType()));
-    Info.flags = MachineMemOperand::MOStore | MachineMemOperand::MONonTemporal;
+    Info.flags = MachineMemOperand::MOStore;
+    if (Intrinsic == Intrinsic::aarch64_sve_stnt1)
+      Info.flags |= MachineMemOperand::MONonTemporal;
     return true;
   }
   default:
@@ -12528,7 +12534,7 @@ static MVT getSVEContainerType(EVT ContentTy) {
   }
 }
 
-static SDValue performLDNT1Combine(SDNode *N, SelectionDAG &DAG) {
+static SDValue performLD1Combine(SDNode *N, SelectionDAG &DAG) {
   SDLoc DL(N);
   EVT VT = N->getValueType(0);
   EVT PtrTy = N->getOperand(3).getValueType();
@@ -12553,7 +12559,7 @@ static SDValue performLDNT1Combine(SDNode *N, SelectionDAG &DAG) {
   return L;
 }
 
-static SDValue performSTNT1Combine(SDNode *N, SelectionDAG &DAG) {
+static SDValue performST1Combine(SDNode *N, SelectionDAG &DAG) {
   SDLoc DL(N);
 
   SDValue Data = N->getOperand(2);
@@ -14153,8 +14159,9 @@ SDValue AArch64TargetLowering::PerformDAGCombine(SDNode *N,
     case Intrinsic::aarch64_neon_st3lane:
     case Intrinsic::aarch64_neon_st4lane:
       return performNEONPostLDSTCombine(N, DCI, DAG);
+    case Intrinsic::aarch64_sve_ld1:
     case Intrinsic::aarch64_sve_ldnt1:
-      return performLDNT1Combine(N, DAG);
+      return performLD1Combine(N, DAG);
     case Intrinsic::aarch64_sve_ldnt1_gather_scalar_offset:
       return performGatherLoadCombine(N, DAG, AArch64ISD::GLDNT1);
     case Intrinsic::aarch64_sve_ldnt1_gather:
@@ -14167,8 +14174,9 @@ SDValue AArch64TargetLowering::PerformDAGCombine(SDNode *N,
       return performLDNF1Combine(N, DAG, AArch64ISD::LDNF1);
     case Intrinsic::aarch64_sve_ldff1:
       return performLDNF1Combine(N, DAG, AArch64ISD::LDFF1);
+    case Intrinsic::aarch64_sve_st1:
     case Intrinsic::aarch64_sve_stnt1:
-      return performSTNT1Combine(N, DAG);
+      return performST1Combine(N, DAG);
     case Intrinsic::aarch64_sve_stnt1_scatter_scalar_offset:
       return performScatterStoreCombine(N, DAG, AArch64ISD::SSTNT1);
     case Intrinsic::aarch64_sve_stnt1_scatter_uxtw:
