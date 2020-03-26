@@ -11,13 +11,13 @@ body:             |
     ; CHECK: liveins: $w0, $w1
     ; CHECK: %a:_(s32) = COPY $w0
     ; CHECK: $w0 = COPY %a(s32)
-    ; CHECK: RET_ReallyLR implicit $w0
+    ; CHECK: RET_ReallyLR 0, implicit $w0
     %a:_(s32) = COPY $w0
     %cond_wide:gpr(s32) = COPY $w1
     %cond:gpr(s1) = G_TRUNC %cond_wide(s32)
     %select:_(s32) = G_SELECT %cond(s1), %a, %a
     $w0 = COPY %select(s32)
-    RET_ReallyLR implicit $w0
+    RET_ReallyLR 0, implicit $w0
 
 ...
 ---
@@ -35,14 +35,14 @@ body:             |
     ; CHECK: liveins: $w0, $w1
     ; CHECK: %a:_(s32) = COPY $w0
     ; CHECK: $w0 = COPY %a(s32)
-    ; CHECK: RET_ReallyLR implicit $w0
+    ; CHECK: RET_ReallyLR 0, implicit $w0
     %a:_(s32) = COPY $w0
     %b:_(s32) = COPY %a
     %cond_wide:gpr(s32) = COPY $w1
     %cond:gpr(s1) = G_TRUNC %cond_wide(s32)
     %select:_(s32) = G_SELECT %cond(s1), %a, %b
     $w0 = COPY %select(s32)
-    RET_ReallyLR implicit $w0
+    RET_ReallyLR 0, implicit $w0
 
 ...
 ---
@@ -60,14 +60,14 @@ body:             |
     ; CHECK: liveins: $w0, $w1
     ; CHECK: %a:_(s32) = COPY $w0
     ; CHECK: $w0 = COPY %a(s32)
-    ; CHECK: RET_ReallyLR implicit $w0
+    ; CHECK: RET_ReallyLR 0, implicit $w0
     %a:_(s32) = COPY $w0
     %b:_(s32) = COPY $w0
     %cond_wide:gpr(s32) = COPY $w1
     %cond:gpr(s1) = G_TRUNC %cond_wide(s32)
     %select:_(s32) = G_SELECT %cond(s1), %a, %b
     $w0 = COPY %select(s32)
-    RET_ReallyLR implicit $w0
+    RET_ReallyLR 0, implicit $w0
 
 ...
 ---
@@ -85,11 +85,11 @@ body:             |
     ; CHECK: %cond:gpr(s1) = G_TRUNC %cond_wide(s32)
     ; CHECK: %select:_(s32) = G_SELECT %cond(s1), %a, %b
     ; CHECK: $w0 = COPY %select(s32)
-    ; CHECK: RET_ReallyLR implicit $w0
+    ; CHECK: RET_ReallyLR 0, implicit $w0
     %a:_(s32) = COPY $w0
     %b:_(s32) = COPY $w1
     %cond_wide:gpr(s32) = COPY $w1
     %cond:gpr(s1) = G_TRUNC %cond_wide(s32)
     %select:_(s32) = G_SELECT %cond(s1), %a, %b
     $w0 = COPY %select(s32)
-    RET_ReallyLR implicit $w0
+    RET_ReallyLR 0, implicit $w0

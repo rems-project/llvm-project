@@ -139,6 +139,8 @@ bool AArch64::getArchFeatures(AArch64::ArchKind AK,
     Features.push_back("+rcpc");
     Features.push_back("+morello");
   }
+  if (AK == AArch64::ArchKind::ARMV8_6A)
+    Features.push_back("+v8.6a");
 
   return AK != ArchKind::INVALID;
 }

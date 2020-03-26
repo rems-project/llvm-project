@@ -24,7 +24,7 @@ namespace llvm {
 namespace AArch64 {
 
 // Arch extension modifiers for CPUs.
-enum ArchExtKind : unsigned {
+enum ArchExtKind : unsigned long long {
   AEK_INVALID =     0,
   AEK_NONE =        1,
   AEK_CRC =         1 << 1,
@@ -55,9 +55,11 @@ enum ArchExtKind : unsigned {
   AEK_SVE2SHA3 =    1 << 26,
   AEK_SVE2BITPERM = 1 << 27,
   AEK_TME =         1 << 28,
+  AEK_BF16 =        1 << 29,
+  AEK_I8MM =        1 << 30,
   // Morello extensions
-  AEK_A64C =        1 << 29,
-  AEK_C64 =         1 << 30
+  AEK_A64C =        1ULL << 31,
+  AEK_C64 =         1ULL << 32
 };
 
 enum class ArchKind {
