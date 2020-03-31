@@ -3440,13 +3440,13 @@ void AArch64InstrInfo::storeRegToStackSlot(
     const TargetRegisterInfo *TRI) const {
   MachineFunction &MF = *MBB.getParent();
   MachineFrameInfo &MFI = MF.getFrameInfo();
-  unsigned Align = MFI.getObjectAlignment(FI);
   const bool HasC64 = Subtarget.hasC64();
   const bool HasPureCap = Subtarget.hasPureCap();
 
   MachinePointerInfo PtrInfo = MachinePointerInfo::getFixedStack(MF, FI);
-  MachineMemOperand *MMO = MF.getMachineMemOperand(
-      PtrInfo, MachineMemOperand::MOStore, MFI.getObjectSize(FI), Align);
+  MachineMemOperand *MMO =
+      MF.getMachineMemOperand(PtrInfo, MachineMemOperand::MOStore,
+                              MFI.getObjectSize(FI), MFI.getObjectAlign(FI));
   unsigned Opc = 0;
   bool Offset = true;
   switch (TRI->getSpillSize(*RC)) {
@@ -3596,12 +3596,12 @@ void AArch64InstrInfo::loadRegFromStackSlot(
     const TargetRegisterInfo *TRI) const {
   MachineFunction &MF = *MBB.getParent();
   MachineFrameInfo &MFI = MF.getFrameInfo();
-  unsigned Align = MFI.getObjectAlignment(FI);
   const bool HasPureCap = Subtarget.hasPureCap();
   const bool HasC64 = Subtarget.hasC64();
   MachinePointerInfo PtrInfo = MachinePointerInfo::getFixedStack(MF, FI);
-  MachineMemOperand *MMO = MF.getMachineMemOperand(
-      PtrInfo, MachineMemOperand::MOLoad, MFI.getObjectSize(FI), Align);
+  MachineMemOperand *MMO =
+      MF.getMachineMemOperand(PtrInfo, MachineMemOperand::MOLoad,
+                              MFI.getObjectSize(FI), MFI.getObjectAlign(FI));
 
   unsigned Opc = 0;
   bool Offset = true;
