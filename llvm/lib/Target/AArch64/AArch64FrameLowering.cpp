@@ -2371,7 +2371,8 @@ bool AArch64FrameLowering::spillCalleeSavedRegisters(
     // Rationale: This sequence saves uop updates compared to a sequence of
     // pre-increment spills like stp xi,xj,[sp,#-16]!
     // Note: Similar rationale and sequence for restores in epilog.
-    unsigned Size, Align;
+    unsigned Size;
+    Align Alignment;
     switch (RPI.Type) {
     case RegPairInfo::GPR:
        XRegsSpills += (RPI.isPaired() ? 2 : 1);
@@ -2380,7 +2381,7 @@ bool AArch64FrameLowering::spillCalleeSavedRegisters(
                  (HasC64 ? AArch64::ASTRXui : AArch64::STRXui);
 
        Size = 8;
-       Align = 8;
+       Alignment = Align(8);
        break;
     case RegPairInfo::Cap:
        CapabilitySpills += (RPI.isPaired() ? 2 : 1);
@@ -2398,24 +2399,24 @@ bool AArch64FrameLowering::spillCalleeSavedRegisters(
                  (HasC64 ? AArch64::ASTPDi : AArch64::STPDi) :
                  (HasC64 ? AArch64::ASTRDui : AArch64::STRDui);
        Size = 8;
-       Align = 8;
+       Alignment = Align(8);
        break;
     case RegPairInfo::FPR128:
        StrOpc = RPI.isPaired() ? AArch64::STPQi : AArch64::STRQui;
        assert(!MF.getSubtarget<AArch64Subtarget>().hasMorello() &&
               "Vector ABI not suppprted with capabilities");
        Size = 16;
-       Align = 16;
+       Alignment = Align(16);
        break;
     case RegPairInfo::ZPR:
        StrOpc = AArch64::STR_ZXI;
        Size = 16;
-       Align = 16;
+       Alignment = Align(16);
        break;
     case RegPairInfo::PPR:
        StrOpc = AArch64::STR_PXI;
        Size = 2;
-       Align = 2;
+       Alignment = Align(2);
        break;
     }
     LLVM_DEBUG(dbgs() << "CSR spill: (" << printReg(Reg1, TRI);
@@ -2444,7 +2445,7 @@ bool AArch64FrameLowering::spillCalleeSavedRegisters(
       MIB.addReg(Reg2, getPrologueDeath(MF, Reg2));
       MIB.addMemOperand(MF.getMachineMemOperand(
           MachinePointerInfo::getFixedStack(MF, FrameIdxReg2),
-          MachineMemOperand::MOStore, Size, Align));
+          MachineMemOperand::MOStore, Size, Alignment));
     }
 
     MIB.addReg(Reg1, getPrologueDeath(MF, Reg1))
@@ -2453,8 +2454,8 @@ bool AArch64FrameLowering::spillCalleeSavedRegisters(
                             // where factor*scale is implicit
         .setMIFlag(MachineInstr::FrameSetup);
     MIB.addMemOperand(MF.getMachineMemOperand(
-        MachinePointerInfo::getFixedStack(MF,FrameIdxReg1),
-        MachineMemOperand::MOStore, Size, Align));
+        MachinePointerInfo::getFixedStack(MF, FrameIdxReg1),
+        MachineMemOperand::MOStore, Size, Alignment));
     if (NeedsWinCFI)
       InsertSEH(MIB, TII, MachineInstr::FrameSetup);
 
@@ -2501,14 +2502,15 @@ bool AArch64FrameLowering::restoreCalleeSavedRegisters(
     //    ldp     x22, x21, [sp, #0]      // addImm(+0)
     // Note: see comment in spillCalleeSavedRegisters()
     unsigned LdrOpc;
-    unsigned Size, Align;
+    unsigned Size;
+    Align Alignment;
     switch (RPI.Type) {
     case RegPairInfo::GPR:
        LdrOpc = RPI.isPaired() ?
                 (HasC64 ? AArch64::ALDPXi : AArch64::LDPXi) :
                 (HasC64 ? AArch64::ALDRXui : AArch64::LDRXui);
        Size = 8;
-       Align = 8;
+       Alignment = Align(8);
        break;
     case RegPairInfo::Cap:
        LdrOpc = RPI.isPaired() ?
@@ -2524,24 +2526,24 @@ bool AArch64FrameLowering::restoreCalleeSavedRegisters(
                 (HasC64 ? AArch64::ALDPDi : AArch64::LDPDi) :
                 (HasC64 ? AArch64::ALDRDui :AArch64::LDRDui);
        Size = 8;
-       Align = 8;
+       Alignment = Align(8);
        break;
     case RegPairInfo::FPR128:
        LdrOpc = RPI.isPaired() ? AArch64::LDPQi : AArch64::LDRQui;
        assert(!MF.getSubtarget<AArch64Subtarget>().hasMorello() &&
               "Vector ABI not suppprted with Morello");
        Size = 16;
-       Align = 16;
+       Alignment = Align(16);
        break;
     case RegPairInfo::ZPR:
        LdrOpc = AArch64::LDR_ZXI;
        Size = 16;
-       Align = 16;
+       Alignment = Align(16);
        break;
     case RegPairInfo::PPR:
        LdrOpc = AArch64::LDR_PXI;
        Size = 2;
-       Align = 2;
+       Alignment = Align(2);
        break;
     }
     LLVM_DEBUG(dbgs() << "CSR restore: (" << printReg(Reg1, TRI);
@@ -2564,7 +2566,7 @@ bool AArch64FrameLowering::restoreCalleeSavedRegisters(
       MIB.addReg(Reg2, getDefRegState(true));
       MIB.addMemOperand(MF.getMachineMemOperand(
           MachinePointerInfo::getFixedStack(MF, FrameIdxReg2),
-          MachineMemOperand::MOLoad, Size, Align));
+          MachineMemOperand::MOLoad, Size, Alignment));
     }
     int64_t Imm = RPI.Offset;
 
@@ -2575,7 +2577,7 @@ bool AArch64FrameLowering::restoreCalleeSavedRegisters(
         .setMIFlag(MachineInstr::FrameDestroy);
     MIB.addMemOperand(MF.getMachineMemOperand(
         MachinePointerInfo::getFixedStack(MF, FrameIdxReg1),
-        MachineMemOperand::MOLoad, Size, Align));
+        MachineMemOperand::MOLoad, Size, Alignment));
     if (NeedsWinCFI)
       InsertSEH(MIB, TII, MachineInstr::FrameDestroy);
   };
