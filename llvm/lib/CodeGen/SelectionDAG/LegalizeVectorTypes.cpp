@@ -1582,13 +1582,14 @@ void DAGTypeLegalizer::SplitVecRes_LOAD(LoadSDNode *LD, SDValue &Lo,
   }
 
   Lo = DAG.getLoad(ISD::UNINDEXED, ExtType, LoVT, dl, Ch, Ptr, Offset,
-                   LD->getPointerInfo(), LoMemVT, Alignment, MMOFlags, AAInfo);
+                   LD->getPointerInfo(), LoMemVT, Alignment.value(), MMOFlags,
+                   AAInfo);
 
   unsigned IncrementSize = LoMemVT.getSizeInBits()/8;
   Ptr = DAG.getObjectPtrOffset(dl, Ptr, IncrementSize);
   Hi = DAG.getLoad(ISD::UNINDEXED, ExtType, HiVT, dl, Ch, Ptr, Offset,
                    LD->getPointerInfo().getWithOffset(IncrementSize), HiMemVT,
-                   Alignment, MMOFlags, AAInfo);
+                   Alignment.value(), MMOFlags, AAInfo);
 
   // Build a factor node to remember that this load is independent of the
   // other one.
@@ -1707,7 +1708,7 @@ void DAGTypeLegalizer::SplitVecRes_MGATHER(MaskedGatherSDNode *MGT,
 
   MachineMemOperand *MMO = DAG.getMachineFunction().getMachineMemOperand(
       MGT->getPointerInfo(), MachineMemOperand::MOLoad,
-      MemoryLocation::UnknownSize, Alignment, MGT->getAAInfo(),
+      MemoryLocation::UnknownSize, Alignment.value(), MGT->getAAInfo(),
       MGT->getRanges());
 
   SDValue OpsLo[] = {Ch, PassThruLo, MaskLo, Ptr, IndexLo, Scale};
@@ -2466,7 +2467,8 @@ SDValue DAGTypeLegalizer::SplitVecOp_MSCATTER(MaskedScatterSDNode *N,
   SDValue Lo;
   MachineMemOperand *MMO = DAG.getMachineFunction().getMachineMemOperand(
       N->getPointerInfo(), MachineMemOperand::MOStore,
-      MemoryLocation::UnknownSize, Alignment, N->getAAInfo(), N->getRanges());
+      MemoryLocation::UnknownSize, Alignment.value(), N->getAAInfo(),
+      N->getRanges());
 
   SDValue OpsLo[] = {Ch, DataLo, MaskLo, Ptr, IndexLo, Scale};
   Lo = DAG.getMaskedScatter(DAG.getVTList(MVT::Other), DataLo.getValueType(),
@@ -2506,10 +2508,10 @@ SDValue DAGTypeLegalizer::SplitVecOp_STORE(StoreSDNode *N, unsigned OpNo) {
 
   if (isTruncating)
     Lo = DAG.getTruncStore(Ch, DL, Lo, Ptr, N->getPointerInfo(), LoMemVT,
-                           Alignment, MMOFlags, AAInfo);
+                           Alignment.value(), MMOFlags, AAInfo);
   else
-    Lo = DAG.getStore(Ch, DL, Lo, Ptr, N->getPointerInfo(), Alignment, MMOFlags,
-                      AAInfo);
+    Lo = DAG.getStore(Ch, DL, Lo, Ptr, N->getPointerInfo(), Alignment.value(),
+                      MMOFlags, AAInfo);
 
   // Increment the pointer to the other half.
   Ptr = DAG.getObjectPtrOffset(DL, Ptr, IncrementSize);
@@ -2517,11 +2519,11 @@ SDValue DAGTypeLegalizer::SplitVecOp_STORE(StoreSDNode *N, unsigned OpNo) {
   if (isTruncating)
     Hi = DAG.getTruncStore(Ch, DL, Hi, Ptr,
                            N->getPointerInfo().getWithOffset(IncrementSize),
-                           HiMemVT, Alignment, MMOFlags, AAInfo);
+                           HiMemVT, Alignment.value(), MMOFlags, AAInfo);
   else
     Hi = DAG.getStore(Ch, DL, Hi, Ptr,
                       N->getPointerInfo().getWithOffset(IncrementSize),
-                      Alignment, MMOFlags, AAInfo);
+                      Alignment.value(), MMOFlags, AAInfo);
 
   return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, Lo, Hi);
 }
