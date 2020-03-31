@@ -1996,10 +1996,22 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(InsertElementInst, Value)
 //                           ShuffleVectorInst Class
 //===----------------------------------------------------------------------===//
 
+constexpr int UndefMaskElem = -1;
+
 /// This instruction constructs a fixed permutation of two
 /// input vectors.
 ///
+/// For each element of the result vector, the shuffle mask selects an element
+/// from one of the input vectors to copy to the result. Non-negative elements
+/// in the mask represent an index into the concatenated pair of input vectors.
+/// UndefMaskElem (-1) specifies that the result element is undefined.
+///
+/// For scalable vectors, all the elements of the mask must be 0 or -1. This
+/// requirement may be relaxed in the future.
 class ShuffleVectorInst : public Instruction {
+  SmallVector<int, 4> ShuffleMask;
+  Constant *ShuffleMaskForBitcode;
+
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
   friend class Instruction;
@@ -2012,13 +2024,15 @@ public:
                     Instruction *InsertBefor = nullptr);
   ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
                     const Twine &NameStr, BasicBlock *InsertAtEnd);
+  ShuffleVectorInst(Value *V1, Value *V2, ArrayRef<int> Mask,
+                    const Twine &NameStr = "",
+                    Instruction *InsertBefor = nullptr);
+  ShuffleVectorInst(Value *V1, Value *V2, ArrayRef<int> Mask,
+                    const Twine &NameStr, BasicBlock *InsertAtEnd);
 
-  // allocate space for exactly three operands
-  void *operator new(size_t s) {
-    return User::operator new(s, 3);
-  }
+  void *operator new(size_t s) { return User::operator new(s, 2); }
 
-  /// Swap the first 2 operands and adjust the mask to preserve the semantics
+  /// Swap the operands and adjust the mask to preserve the semantics
   /// of the instruction.
   void commute();
 
@@ -2026,6 +2040,8 @@ public:
   /// formed with the specified operands.
   static bool isValidOperands(const Value *V1, const Value *V2,
                               const Value *Mask);
+  static bool isValidOperands(const Value *V1, const Value *V2,
+                              ArrayRef<int> Mask);
 
   /// Overload to return most specific vector type.
   ///
@@ -2036,36 +2052,33 @@ public:
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 
-  Constant *getMask() const {
-    return cast<Constant>(getOperand(2));
-  }
-
-  /// Return the shuffle mask value for the specified element of the mask.
-  /// Return -1 if the element is undef.
-  static int getMaskValue(const Constant *Mask, unsigned Elt);
-
   /// Return the shuffle mask value of this instruction for the given element
-  /// index. Return -1 if the element is undef.
-  int getMaskValue(unsigned Elt) const {
-    return getMaskValue(getMask(), Elt);
-  }
+  /// index. Return UndefMaskElem if the element is undef.
+  int getMaskValue(unsigned Elt) const { return ShuffleMask[Elt]; }
 
   /// Convert the input shuffle mask operand to a vector of integers. Undefined
-  /// elements of the mask are returned as -1.
+  /// elements of the mask are returned as UndefMaskElem.
   static void getShuffleMask(const Constant *Mask,
                              SmallVectorImpl<int> &Result);
 
   /// Return the mask for this instruction as a vector of integers. Undefined
-  /// elements of the mask are returned as -1.
+  /// elements of the mask are returned as UndefMaskElem.
   void getShuffleMask(SmallVectorImpl<int> &Result) const {
-    return getShuffleMask(getMask(), Result);
+    Result.assign(ShuffleMask.begin(), ShuffleMask.end());
   }
 
-  SmallVector<int, 16> getShuffleMask() const {
-    SmallVector<int, 16> Mask;
-    getShuffleMask(Mask);
-    return Mask;
-  }
+  /// Return the mask for this instruction, for use in bitcode.
+  ///
+  /// TODO: This is temporary until we decide a new bitcode encoding for
+  /// shufflevector.
+  Constant *getShuffleMaskForBitcode() const { return ShuffleMaskForBitcode; }
+
+  static Constant *convertShuffleMaskForBitcode(ArrayRef<int> Mask,
+                                                Type *ResultTy);
+
+  void setShuffleMask(ArrayRef<int> Mask);
+
+  ArrayRef<int> getShuffleMask() const { return ShuffleMask; }
 
   /// Return true if this shuffle returns a vector with a different number of
   /// elements than its source vectors.
@@ -2073,7 +2086,7 @@ public:
   ///           shufflevector <4 x n> A, <4 x n> B, <1,2,3,4,5>
   bool changesLength() const {
     unsigned NumSourceElts = Op<0>()->getType()->getVectorNumElements();
-    unsigned NumMaskElts = getMask()->getType()->getVectorNumElements();
+    unsigned NumMaskElts = ShuffleMask.size();
     return NumSourceElts != NumMaskElts;
   }
 
@@ -2082,7 +2095,7 @@ public:
   /// Example: shufflevector <2 x n> A, <2 x n> B, <1,2,3>
   bool increasesLength() const {
     unsigned NumSourceElts = Op<0>()->getType()->getVectorNumElements();
-    unsigned NumMaskElts = getMask()->getType()->getVectorNumElements();
+    unsigned NumMaskElts = ShuffleMask.size();
     return NumSourceElts < NumMaskElts;
   }
 
@@ -2103,7 +2116,7 @@ public:
   /// Example: shufflevector <4 x n> A, <4 x n> B, <3,0,undef,3>
   /// TODO: Optionally allow length-changing shuffles.
   bool isSingleSource() const {
-    return !changesLength() && isSingleSourceMask(getMask());
+    return !changesLength() && isSingleSourceMask(ShuffleMask);
   }
 
   /// Return true if this shuffle mask chooses elements from exactly one source
@@ -2124,7 +2137,7 @@ public:
   /// from its input vectors.
   /// Example: shufflevector <4 x n> A, <4 x n> B, <4,undef,6,undef>
   bool isIdentity() const {
-    return !changesLength() && isIdentityMask(getShuffleMask());
+    return !changesLength() && isIdentityMask(ShuffleMask);
   }
 
   /// Return true if this shuffle lengthens exactly one source vector with
@@ -2165,7 +2178,7 @@ public:
   /// In that case, the shuffle is better classified as an identity shuffle.
   /// TODO: Optionally allow length-changing shuffles.
   bool isSelect() const {
-    return !changesLength() && isSelectMask(getMask());
+    return !changesLength() && isSelectMask(ShuffleMask);
   }
 
   /// Return true if this shuffle mask swaps the order of elements from exactly
@@ -2185,7 +2198,7 @@ public:
   /// Example: shufflevector <4 x n> A, <4 x n> B, <3,undef,1,undef>
   /// TODO: Optionally allow length-changing shuffles.
   bool isReverse() const {
-    return !changesLength() && isReverseMask(getMask());
+    return !changesLength() && isReverseMask(ShuffleMask);
   }
 
   /// Return true if this shuffle mask chooses all elements with the same value
@@ -2207,7 +2220,7 @@ public:
   /// TODO: Optionally allow length-changing shuffles.
   /// TODO: Optionally allow splats from other elements.
   bool isZeroEltSplat() const {
-    return !changesLength() && isZeroEltSplatMask(getMask());
+    return !changesLength() && isZeroEltSplatMask(ShuffleMask);
   }
 
   /// Return true if this shuffle mask is a transpose mask.
@@ -2256,7 +2269,7 @@ public:
   /// exact specification.
   /// Example: shufflevector <4 x n> A, <4 x n> B, <0,4,2,6>
   bool isTranspose() const {
-    return !changesLength() && isTransposeMask(getMask());
+    return !changesLength() && isTransposeMask(ShuffleMask);
   }
 
   /// Return true if this shuffle mask is an extract subvector mask.
@@ -2275,7 +2288,7 @@ public:
   /// Return true if this shuffle mask is an extract subvector mask.
   bool isExtractSubvectorMask(int &Index) const {
     int NumSrcElts = Op<0>()->getType()->getVectorNumElements();
-    return isExtractSubvectorMask(getMask(), NumSrcElts, Index);
+    return isExtractSubvectorMask(ShuffleMask, NumSrcElts, Index);
   }
 
   /// Change values in a shuffle permute mask assuming the two vector operands
@@ -2301,9 +2314,8 @@ public:
 };
 
 template <>
-struct OperandTraits<ShuffleVectorInst> :
-  public FixedNumOperandTraits<ShuffleVectorInst, 3> {
-};
+struct OperandTraits<ShuffleVectorInst>
+    : public FixedNumOperandTraits<ShuffleVectorInst, 2> {};
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ShuffleVectorInst, Value)
 
