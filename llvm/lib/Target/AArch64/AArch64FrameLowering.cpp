@@ -1161,32 +1161,8 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
     ++MBBI;
   }
 
-  // The code below is not applicable to funclets. We have emitted all the SEH
-  // opcodes that we needed to emit.  The FP and BP belong to the containing
-  // function.
-  if (IsFunclet) {
-    if (NeedsWinCFI) {
-      HasWinCFI = true;
-      BuildMI(MBB, MBBI, DL, TII->get(AArch64::SEH_PrologEnd))
-          .setMIFlag(MachineInstr::FrameSetup);
-    }
-
-    // SEH funclets are passed the frame pointer in X1.  If the parent
-    // function uses the base register, then the base register is used
-    // directly, and is not retrieved from X1.
-    if (F.hasPersonalityFn()) {
-      EHPersonality Per = classifyEHPersonality(F.getPersonalityFn());
-      if (isAsynchronousEHPersonality(Per)) {
-        BuildMI(MBB, MBBI, DL, TII->get(TargetOpcode::COPY), AArch64::FP)
-            .addReg(AArch64::X1).setMIFlag(MachineInstr::FrameSetup);
-        MBB.addLiveIn(AArch64::X1);
-      }
-    }
-
-    return;
-  }
-
-  if (HasFP) {
+  // For funclets the FP belongs to the containing function.
+  if (!IsFunclet && HasFP) {
     // Only set up FP if we actually need to.
     bool HasTopFrameRecord = hasTopFrameRecord(MF);
     int64_t FPOffset = HasTopFrameRecord ? (AFI->getCalleeSavedStackSize() -
@@ -1332,7 +1308,9 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
 
   // Allocate space for the rest of the frame.
   if (NumBytes) {
-    const bool NeedsRealignment = RegInfo->needsStackRealignment(MF);
+    // Alignment is required for the parent frame, not the funclet
+    const bool NeedsRealignment =
+        !IsFunclet && RegInfo->needsStackRealignment(MF);
     unsigned scratchSPReg = SP;
 
     if (NeedsRealignment) {
@@ -1390,7 +1368,8 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
   // FIXME: Clarify FrameSetup flags here.
   // Note: Use emitFrameOffset() like above for FP if the FrameSetup flag is
   // needed.
-  if (RegInfo->hasBasePointer(MF)) {
+  // For funclets the BP belongs to the containing function.
+  if (!IsFunclet && RegInfo->hasBasePointer(MF)) {
     TII->copyPhysReg(MBB, MBBI, DL, RegInfo->getBaseRegister(MF), SP, false);
     if (NeedsWinCFI) {
       HasWinCFI = true;
@@ -1404,6 +1383,19 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
   if (NeedsWinCFI && HasWinCFI) {
     BuildMI(MBB, MBBI, DL, TII->get(AArch64::SEH_PrologEnd))
         .setMIFlag(MachineInstr::FrameSetup);
+  }
+
+  // SEH funclets are passed the frame pointer in X1.  If the parent
+  // function uses the base register, then the base register is used
+  // directly, and is not retrieved from X1.
+  if (IsFunclet && F.hasPersonalityFn()) {
+    EHPersonality Per = classifyEHPersonality(F.getPersonalityFn());
+    if (isAsynchronousEHPersonality(Per)) {
+      BuildMI(MBB, MBBI, DL, TII->get(TargetOpcode::COPY), AArch64::FP)
+          .addReg(AArch64::X1)
+          .setMIFlag(MachineInstr::FrameSetup);
+      MBB.addLiveIn(AArch64::X1);
+    }
   }
 
   if (needsFrameMoves) {
