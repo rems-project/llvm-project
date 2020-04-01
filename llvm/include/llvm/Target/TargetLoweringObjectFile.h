@@ -41,6 +41,7 @@ class SectionKind;
 class StringRef;
 class TargetMachine;
 class AsmPrinter;
+class DSOLocalEquivalent;
 
 class TargetLoweringObjectFile : public MCObjectFileInfo {
   /// Name-mangler for global names.
@@ -50,6 +51,7 @@ protected:
   bool SupportIndirectSymViaGOTPCRel = false;
   bool SupportGOTPCRelWithOffset = true;
   bool SupportDebugThreadLocalLocation = true;
+  bool SupportDSOLocalEquivalentLowering = false;
 
   /// PersonalityEncoding, LSDAEncoding, TTypeEncoding - Some encoding values
   /// for EH.
@@ -189,6 +191,16 @@ public:
     return nullptr;
   }
 
+  /// Target supports a native lowering of a dso_local_equivalent constant
+  /// without needing to replace it with equivalent IR.
+  bool supportDSOLocalEquivalentLowering() const {
+    return SupportDSOLocalEquivalentLowering;
+  }
+
+  virtual const MCExpr *lowerDSOLocalEquivalent(const DSOLocalEquivalent *Equiv,
+                                                const TargetMachine &TM) const {
+    return nullptr;
+  }
 
   /// Target supports replacing a data "PC"-relative access to a symbol
   /// through another symbol, by accessing the later via a GOT entry instead?
