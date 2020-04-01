@@ -5919,6 +5919,8 @@ void SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I,
                         TLI.cheriCapabilityType().isValid();
     // FIXME: Support passing different dest/src alignments to the memcpy DAG
     // node.
+    Attribute MoveType = I.getAttribute(AttributeList::FunctionIndex,
+                                        "frontend-memtransfer-type");
     SDValue MC = DAG.getMemcpy(
         getRoot(), sdl, Dst, Src, Size, Alignment.value(), isVol,
         /* AlwaysInline */ true, isTC, PreserveTags,

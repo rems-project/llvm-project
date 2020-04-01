@@ -1104,7 +1104,9 @@ void InputSectionBase::relocateAlloc(uint8_t *buf, uint8_t *bufEnd) {
     }
     uint8_t *bufLoc = buf + offset;
     auto oldAddend = target->getImplicitAddend(bufLoc, reloc.type);
-    target->relocateNoSym(bufLoc, reloc.type, /*targetVA=*/addend);
+    target->relocate(bufLoc,
+                     {R_ADDEND, reloc.type, reloc.getOffset(), 0, reloc.sym},
+                     /*targetVA=*/addend);
     auto newAddend = target->getImplicitAddend(bufLoc, reloc.type);
     assert(oldAddend == newAddend && "freeBSDMipsRelocationsHack still required?");
   }

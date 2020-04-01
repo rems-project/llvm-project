@@ -307,7 +307,7 @@ GDBRemoteCommunicationServerCommon::Handle_qHostInfo(
   }
 #endif // #if defined(__APPLE__)
 
-  s = HostInfo::GetTargetFeatures();
+  s = std::string(HostInfo::GetTargetFeatures());
   if (!s.empty()) {
     response.PutCString("features:");
     response.PutStringAsRawHex8(s);

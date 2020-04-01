@@ -799,7 +799,7 @@ std::string RegisterValue::GetAsHexValueString() const {
     llvm::SmallString<64> str_value;
     value.toString(str_value, 16, /*Signed=*/false,
                    /*formatAsCLiteral=*/true);
-    return str_value.str();
+    return std::string(str_value.str());
   }
   case eTypeInvalid:
   case eTypeBytes:

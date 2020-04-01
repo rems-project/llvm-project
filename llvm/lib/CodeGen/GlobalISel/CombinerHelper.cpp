@@ -1150,7 +1150,7 @@ bool CombinerHelper::optimizeMemcpy(MachineInstr &MI, Register Dst,
     // Construct MMOs for the accesses.
     auto *LoadMMO =
         MF.getMachineMemOperand(&SrcMMO, CurrOffset, CopyTy.getSizeInBytes());
-    auto *StoreMMO = 
+    auto *StoreMMO =
         MF.getMachineMemOperand(&DstMMO, CurrOffset, CopyTy.getSizeInBytes());
 
     // Create the load.
