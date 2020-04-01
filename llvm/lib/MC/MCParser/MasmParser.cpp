@@ -3674,12 +3674,19 @@ bool MasmParser::parseDirectiveCFISections() {
 /// parseDirectiveCFIStartProc
 /// ::= .cfi_startproc [simple]
 bool MasmParser::parseDirectiveCFIStartProc() {
-  StringRef Simple;
+  MCCFIProcType Type = MCCFIProcType::Normal;
   if (!parseOptionalToken(AsmToken::EndOfStatement)) {
-    if (check(parseIdentifier(Simple) || Simple != "simple",
+    StringRef TypeString;
+    if (check(parseIdentifier(TypeString) ||
+                  (TypeString != "simple" && TypeString != "purecap"),
               "unexpected token") ||
         parseToken(AsmToken::EndOfStatement))
       return addErrorSuffix(" in '.cfi_startproc' directive");
+
+    if (TypeString == "purecap")
+      Type = MCCFIProcType::PureCap;
+    else
+      Type = MCCFIProcType::Simple;
   }
 
   // TODO(kristina): Deal with a corner case of incorrect diagnostic context
@@ -3687,7 +3694,7 @@ bool MasmParser::parseDirectiveCFIStartProc() {
   // expansion which can *ONLY* happen if Clang's cc1as is the API consumer.
   // Tools like llvm-mc on the other hand are not affected by it, and report
   // correct context information.
-  getStreamer().emitCFIStartProc(!Simple.empty(), Lexer.getLoc());
+  getStreamer().emitCFIStartProc(Type, Lexer.getLoc());
   return false;
 }
 
@@ -4352,11 +4359,13 @@ bool MasmParser::parseDirectiveComm(bool IsLocal) {
 
   // Create the Symbol as a common or local common with Size and Pow2Alignment
   if (IsLocal) {
-    getStreamer().emitLocalCommonSymbol(Sym, Size, 1 << Pow2Alignment);
+    getStreamer().emitLocalCommonSymbol(Sym, Size, 1 << Pow2Alignment,
+                                        TailPaddingAmount::None);
     return false;
   }
 
-  getStreamer().emitCommonSymbol(Sym, Size, 1 << Pow2Alignment);
+  getStreamer().emitCommonSymbol(Sym, Size, 1 << Pow2Alignment,
+                                 TailPaddingAmount::None);
   return false;
 }
 

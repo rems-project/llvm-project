@@ -2931,7 +2931,7 @@ void AsmPrinter::emitGlobalConstant(const DataLayout &DL, const Constant *CV,
   }
   if (TailPadding != 0) {
     OutStreamer->AddComment("Tail padding to ensure precise bounds");
-    OutStreamer->EmitZeros(TailPadding);
+    OutStreamer->emitZeros(TailPadding);
   }
 }
 
