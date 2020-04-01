@@ -1184,7 +1184,7 @@ static void disassembleObject(const Target *TheTarget, const ObjectFile *Obj,
         continue;
     }
 
-    // Don't ask a Mach-O STAB symbol for its section unless you know that 
+    // Don't ask a Mach-O STAB symbol for its section unless you know that
     // STAB symbol's section field refers to a valid section index. Otherwise
     // the symbol may error trying to load a section that does not exist.
     if (MachO) {
@@ -2037,7 +2037,7 @@ void printSymbolTable(const ObjectFile *O, StringRef ArchiveName,
                                          ArchiveName, ArchitectureName);
     uint32_t Flags = Symbol.getFlags();
 
-    // Don't ask a Mach-O STAB symbol for its section unless you know that 
+    // Don't ask a Mach-O STAB symbol for its section unless you know that
     // STAB symbol's section field refers to a valid section index. Otherwise
     // the symbol may error trying to load a section that does not exist.
     bool isSTAB = false;
