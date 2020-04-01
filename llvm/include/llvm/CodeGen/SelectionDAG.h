@@ -1017,8 +1017,9 @@ public:
   }
 
   SDValue getMemcpy(SDValue Chain, const SDLoc &dl, SDValue Dst, SDValue Src,
-                    SDValue Size, Align Alignment, bool isVol, bool AlwaysInline,
-                    bool isTailCall, bool MustPreserveCheriCapabilities,
+                    SDValue Size, Align Alignment, bool isVol,
+                    bool AlwaysInline, bool isTailCall,
+                    bool MustPreserveCheriCapabilities,
                     MachinePointerInfo DstPtrInfo,
                     MachinePointerInfo SrcPtrInfo,
                     StringRef CopyType = StringRef());
