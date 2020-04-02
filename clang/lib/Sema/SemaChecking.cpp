@@ -2111,8 +2111,10 @@ Sema::CheckBuiltinFunctionCall(FunctionDecl *FDecl, unsigned BuiltinID,
     break;
   case Builtin::BI__builtin_frame_address:
   case Builtin::BI__builtin_return_address:
+    // Custom types to make it work for purecap
     if (SemaBuiltinConstantArgRange(TheCall, 0, 0, 0xFFFF))
       return ExprError();
+    TheCall->setType(Context.VoidPtrTy);
     break;
   }
 
