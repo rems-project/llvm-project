@@ -68,7 +68,7 @@ public:
 
   void DidExec(NativeProcessProtocol *process) override;
 
-  Status InitializeConnection(std::unique_ptr<Connection> &&connection);
+  Status InitializeConnection(std::unique_ptr<Connection> connection);
 
 protected:
   MainLoop &m_mainloop;
