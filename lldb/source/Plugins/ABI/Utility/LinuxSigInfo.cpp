@@ -34,16 +34,15 @@ CompilerType GetLinuxSigInfoCompilerType(TypeSystemClang &ast_ctx,
   CompilerType void_ptr_type = void_type.GetPointerType();
 
   CompilerType pid_t_type =
-      ast_ctx.CreateTypedefType(s32_type, "__pid_t", CompilerDeclContext(), 0);
+      ast_ctx.CreateTypedefType(s32_type, "__pid_t", CompilerDeclContext());
   CompilerType uid_t_type =
-      ast_ctx.CreateTypedefType(u32_type, "__uid_t", CompilerDeclContext(), 0);
+      ast_ctx.CreateTypedefType(u32_type, "__uid_t", CompilerDeclContext());
   CompilerType clock_t_type =
-      ast_ctx.CreateTypedefType(long_type, "__clock_t", CompilerDeclContext(), 0);
+      ast_ctx.CreateTypedefType(long_type, "__clock_t", CompilerDeclContext());
 
   // Anonymous kill struct.
   CompilerType kill_type = ast_ctx.CreateRecordType(
-      nullptr, OptionalClangModuleID(), eAccessPublic, llvm::StringRef(),
-      clang::TTK_Struct, eLanguageTypeC);
+      nullptr, eAccessPublic, llvm::StringRef(), clang::TTK_Struct, eLanguageTypeC);
   TypeSystemClang::StartTagDeclarationDefinition(kill_type);
   TypeSystemClang::AddFieldToRecordType(kill_type, "pid", pid_t_type,
                                         eAccessPublic, 0);
@@ -53,8 +52,7 @@ CompilerType GetLinuxSigInfoCompilerType(TypeSystemClang &ast_ctx,
 
   // Sigval union and sigval_t typedef.
   CompilerType sigval_type = ast_ctx.CreateRecordType(
-      nullptr, OptionalClangModuleID(),  eAccessPublic, "sigval",
-      clang::TTK_Union, eLanguageTypeC);
+      nullptr, eAccessPublic, "sigval", clang::TTK_Union, eLanguageTypeC);
   TypeSystemClang::StartTagDeclarationDefinition(sigval_type);
   TypeSystemClang::AddFieldToRecordType(sigval_type, "sival_int", int_type,
                                         eAccessPublic, 0);
@@ -63,12 +61,11 @@ CompilerType GetLinuxSigInfoCompilerType(TypeSystemClang &ast_ctx,
   TypeSystemClang::CompleteTagDeclarationDefinition(sigval_type);
 
   CompilerType sigval_t_type =
-      ast_ctx.CreateTypedefType(sigval_type, "sigval_t", CompilerDeclContext(), 0);
+      ast_ctx.CreateTypedefType(sigval_type, "sigval_t", CompilerDeclContext());
 
   // Anonymous timer struct.
   CompilerType timer_type = ast_ctx.CreateRecordType(
-      nullptr, OptionalClangModuleID(),  eAccessPublic, llvm::StringRef(),
-      clang::TTK_Struct, eLanguageTypeC);
+      nullptr, eAccessPublic, llvm::StringRef(), clang::TTK_Struct, eLanguageTypeC);
   TypeSystemClang::StartTagDeclarationDefinition(timer_type);
   TypeSystemClang::AddFieldToRecordType(timer_type, "tid", int_type,
                                         eAccessPublic, 0);
@@ -80,8 +77,7 @@ CompilerType GetLinuxSigInfoCompilerType(TypeSystemClang &ast_ctx,
 
   // Anonymous rt struct.
   CompilerType rt_type = ast_ctx.CreateRecordType(
-      nullptr, OptionalClangModuleID(), eAccessPublic, llvm::StringRef(),
-      clang::TTK_Struct, eLanguageTypeC);
+      nullptr, eAccessPublic, llvm::StringRef(), clang::TTK_Struct, eLanguageTypeC);
   TypeSystemClang::StartTagDeclarationDefinition(rt_type);
   TypeSystemClang::AddFieldToRecordType(rt_type, "pid", pid_t_type,
                                         eAccessPublic, 0);
@@ -93,8 +89,7 @@ CompilerType GetLinuxSigInfoCompilerType(TypeSystemClang &ast_ctx,
 
   // Anonymous sigchld struct.
   CompilerType sigchld_type = ast_ctx.CreateRecordType(
-      nullptr, OptionalClangModuleID(), eAccessPublic, llvm::StringRef(),
-      clang::TTK_Struct, eLanguageTypeC);
+      nullptr, eAccessPublic, llvm::StringRef(), clang::TTK_Struct, eLanguageTypeC);
   TypeSystemClang::StartTagDeclarationDefinition(sigchld_type);
   TypeSystemClang::AddFieldToRecordType(sigchld_type, "pid", pid_t_type,
                                         eAccessPublic, 0);
@@ -110,8 +105,7 @@ CompilerType GetLinuxSigInfoCompilerType(TypeSystemClang &ast_ctx,
 
   // Anonymous addr_bnd struct.
   CompilerType addr_bnd_type = ast_ctx.CreateRecordType(
-      nullptr, OptionalClangModuleID(), eAccessPublic, llvm::StringRef(),
-      clang::TTK_Struct, eLanguageTypeC);
+      nullptr, eAccessPublic, llvm::StringRef(), clang::TTK_Struct, eLanguageTypeC);
   TypeSystemClang::StartTagDeclarationDefinition(addr_bnd_type);
   TypeSystemClang::AddFieldToRecordType(addr_bnd_type, "lower", void_ptr_type,
                                         eAccessPublic, 0);
@@ -121,8 +115,7 @@ CompilerType GetLinuxSigInfoCompilerType(TypeSystemClang &ast_ctx,
 
   // Anonymous sigfault_extra union.
   CompilerType sigfault_extra_type = ast_ctx.CreateRecordType(
-      nullptr, OptionalClangModuleID(), eAccessPublic, llvm::StringRef(),
-      clang::TTK_Union, eLanguageTypeC);
+      nullptr, eAccessPublic, llvm::StringRef(), clang::TTK_Union, eLanguageTypeC);
   TypeSystemClang::StartTagDeclarationDefinition(sigfault_extra_type);
   TypeSystemClang::AddFieldToRecordType(sigfault_extra_type, "addr_bnd",
                                         addr_bnd_type, eAccessPublic, 0);
@@ -132,8 +125,7 @@ CompilerType GetLinuxSigInfoCompilerType(TypeSystemClang &ast_ctx,
 
   // Anonymous sigfault struct.
   CompilerType sigfault_type = ast_ctx.CreateRecordType(
-      nullptr, OptionalClangModuleID(), eAccessPublic, llvm::StringRef(),
-      clang::TTK_Struct, eLanguageTypeC);
+      nullptr, eAccessPublic, llvm::StringRef(), clang::TTK_Struct, eLanguageTypeC);
   TypeSystemClang::StartTagDeclarationDefinition(sigfault_type);
   TypeSystemClang::AddFieldToRecordType(sigfault_type, "addr", void_ptr_type,
                                         eAccessPublic, 0);
@@ -145,8 +137,7 @@ CompilerType GetLinuxSigInfoCompilerType(TypeSystemClang &ast_ctx,
 
   // Anonymous sigpoll struct.
   CompilerType sigpoll_type = ast_ctx.CreateRecordType(
-      nullptr, OptionalClangModuleID(), eAccessPublic, llvm::StringRef(),
-      clang::TTK_Struct, eLanguageTypeC);
+      nullptr, eAccessPublic, llvm::StringRef(), clang::TTK_Struct, eLanguageTypeC);
   TypeSystemClang::StartTagDeclarationDefinition(sigpoll_type);
   TypeSystemClang::AddFieldToRecordType(sigpoll_type, "band", long_type,
                                         eAccessPublic, 0);
@@ -156,8 +147,7 @@ CompilerType GetLinuxSigInfoCompilerType(TypeSystemClang &ast_ctx,
 
   // Anonymous sigsys struct.
   CompilerType sigsys_type = ast_ctx.CreateRecordType(
-      nullptr, OptionalClangModuleID(), eAccessPublic, llvm::StringRef(),
-      clang::TTK_Struct, eLanguageTypeC);
+      nullptr, eAccessPublic, llvm::StringRef(), clang::TTK_Struct, eLanguageTypeC);
   TypeSystemClang::StartTagDeclarationDefinition(sigsys_type);
   TypeSystemClang::AddFieldToRecordType(sigsys_type, "call_addr",
                                         void_ptr_type, eAccessPublic, 0);
@@ -169,8 +159,7 @@ CompilerType GetLinuxSigInfoCompilerType(TypeSystemClang &ast_ctx,
 
   // Anonymous sifields union.
   CompilerType sifields_type = ast_ctx.CreateRecordType(
-      nullptr, OptionalClangModuleID(), eAccessPublic, llvm::StringRef(),
-      clang::TTK_Union, eLanguageTypeC);
+      nullptr, eAccessPublic, llvm::StringRef(), clang::TTK_Union, eLanguageTypeC);
   TypeSystemClang::StartTagDeclarationDefinition(sifields_type);
   TypeSystemClang::AddFieldToRecordType(sifields_type, "kill", kill_type,
                                         eAccessPublic, 0);
@@ -190,8 +179,8 @@ CompilerType GetLinuxSigInfoCompilerType(TypeSystemClang &ast_ctx,
 
   // Siginfo struct.
   CompilerType siginfo_type =
-      ast_ctx.CreateRecordType(nullptr, OptionalClangModuleID(), eAccessPublic,
-      type_name.str().c_str(), clang::TTK_Struct, eLanguageTypeC);
+      ast_ctx.CreateRecordType(nullptr, eAccessPublic, type_name.str().c_str(),
+                               clang::TTK_Struct, eLanguageTypeC);
   TypeSystemClang::StartTagDeclarationDefinition(siginfo_type);
   TypeSystemClang::AddFieldToRecordType(siginfo_type, "si_signo", int_type,
                                         eAccessPublic, 0);
