@@ -56,6 +56,6 @@ body:             |
     G_BR %bb.4
 
   bb.4:
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
