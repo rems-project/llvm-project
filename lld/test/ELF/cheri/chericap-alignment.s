@@ -21,9 +21,9 @@ cap:
 .endif
 
 # CHECK-LABEL: SYMBOL TABLE:
-# CHECK: 0000000000020400         .data		 00000000 cap
+# CHECK: 0000000000020400 g       .data		 0000000000000000 cap
 #                   ^----- Ensure that this is aligned to 0x20
-# CHECK: 0000000000000000         *UND*		 00000000 foo
+# CHECK: 0000000000000000         *UND*		 0000000000000000 foo
 
 # CHECK-LABEL: Contents of section .data:
 # CHECK-NEXT:  203e0 00000000 00001234 00000000 00000000
