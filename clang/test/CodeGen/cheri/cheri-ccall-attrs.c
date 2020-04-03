@@ -1,5 +1,5 @@
-// RUN: %cheri_cc1 -o - %s -S -emit-llvm | FileCheck %s --check-prefix=ALL --check-prefix=CHERI
-// RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +morello -o - %s -S -emit-llvm | FileCheck %s --check-prefix=ALL --check-prefix=AARCH64
+// RUN: %cheri_cc1 -o - %s -emit-llvm | %cheri_FileCheck %s --check-prefix=CHECK --check-prefix=CHERI
+// RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +morello -o - %s -S -emit-llvm | FileCheck %s --check-prefix=CHECK --check-prefix=AARCH6 -D\#CAP_SIZE=16
 #define CHERI_CCALL(suffix, cls) \
 	__attribute__((cheri_ccall))\
 	__attribute__((cheri_method_suffix(suffix)))\
@@ -18,22 +18,24 @@ struct cheri_object other;
 CHERI_CCALL("_cap", cls)
 void foo(int, int);
 
-// ALL: @__cheri_method.cls.foo = linkonce_odr global i64 0, section ".CHERI_CALLER"
-// ALL-DAG: = private unnamed_addr constant [4 x i8] c"foo\00"
-// ALL-DAG: = private unnamed_addr constant [4 x i8] c"cls\00"
-// ALL-DAG: @.sandbox_required_method.cls.foo = global { i64, [4 x i8]*, [4 x i8]*, i64*, i64 } { i64 0, [4 x i8]* @0, [4 x i8]* @1, i64* @__cheri_method.cls.foo, i64 0 }, section "__cheri_sandbox_required_methods", comdat
-// ALL-DAG: @cls = common global %struct.cheri_object zeroinitializer, align [[$CAP_ALIGN:16|32]]
-// ALL-DAG: @__cheri_callee_method.cls.fish = global void ()* @fish, section ".CHERI_CALLEE"
-// ALL-DAG: = private unnamed_addr constant [5 x i8] c"fish\00"
-// ALL-DAG: @.sandbox_provided_method.cls.fish = global { i64, [4 x i8]*, [5 x i8]*, void ()** } { i64 0, [4 x i8]* @2, [5 x i8]* @3, void ()** @__cheri_callee_method.cls.fish }, section "__cheri_sandbox_provided_methods", comdat
-// ALL-DAG: @__cheri_method.cls.fish = linkonce_odr global i64 0, section ".CHERI_CALLER"
+// CHECK: @__cheri_method.cls.foo = linkonce_odr global i64 0, section ".CHERI_CALLER"
+// CHECK: = private unnamed_addr constant [4 x i8] c"cls\00"
+// CHECK: = private unnamed_addr constant [4 x i8] c"foo\00"
+// CHECK: @.sandbox_required_method.cls.foo = global { i64, [4 x i8]*, [4 x i8]*, i64*, i64 } { i64 0, [4 x i8]* 
+// CHECK: , [4 x i8]* @1, i64* @__cheri_method.cls.foo, i64 0 }, section "__cheri_sandbox_required_methods", comdat
+// CHECK: @cls = global %struct.cheri_object zeroinitializer, align [[#CAP_SIZE]]
+// CHECK: @__cheri_callee_method.cls.fish = global void ()* @fish, section ".CHERI_CALLEE"
+// CHECK: = private unnamed_addr constant [5 x i8] c"fish\00"
+// CHECK: @.sandbox_provided_method.cls.fish = global { i64, [4 x i8]*, [5 x i8]*, void ()** } { i64 0, [4 x i8]* @
+// CHECK: , [5 x i8]* @
+// CHECK: , void ()** @__cheri_callee_method.cls.fish }, section "__cheri_sandbox_provided_methods", comdat
+// CHECK: @__cheri_method.cls.fish = linkonce_odr global i64 0, section ".CHERI_CALLER"
 
 void bar(int a, int b)
 {
     // CHECK-LABEL: define void @bar(i32
-	// CHERI: load i64, i64* @__cheri_method.cls.foo, align 8, [[$INVARIANT_LOAD:!invariant.load ![0-9]+]]
+	// CHECK: load i64, i64* @__cheri_method.cls.foo, align 8, [[$INVARIANT_LOAD:!invariant.load ![0-9]+]]
 	// CHERI: call chericcallcc void @cheri_invoke(i8 addrspace(200)* inreg %{{.*}}, i8 addrspace(200)* {{[a-z]*}} %{{.*}}, i64 zeroext %{{.*}}, i32 signext %{{.*}}, i32 signext %{{.*}})
-	// AARCH64: load i64, i64* @__cheri_method.cls.foo, align 8, [[$INVARIANT_LOAD:!invariant.load ![0-9]+]]
 	// AARCH64: call chericcallcc void @cheri_invoke({ i8 addrspace(200)*, i8 addrspace(200)* } %{{.*}},
 	foo_cap(other, a, b);
 	// CHERI: call chericcallcc void @cheri_invoke(i8 addrspace(200)* %{{.*}}, i8 addrspace(200)* %{{.*}}, i64 zeroext %{{.*}}, i32 signext %{{.*}}, i32 signext %{{.*}})
@@ -60,21 +62,14 @@ void call(void)
 	// ALL: call chericcallcce void @fish()
 	fish();
 	// Check that we get a ccall to cheri_invoke with the correct method number
-	// CHERI: load i64, i64* @__cheri_method.cls.fish, align 8, [[$INVARIANT_LOAD]]
-	// CHERI: call chericcallcc void
-	// CHERI: @cheri_invoke
-	// AARCH64: load i64, i64* @__cheri_method.cls.fish, align 8, [[$INVARIANT_LOAD]]
-	// AARCH64: call chericcallcc void
-	// AARCH64: @cheri_invoke
+	// CHECK: load i64, i64* @__cheri_method.cls.fish, align 8, [[$INVARIANT_LOAD]]
+	// CHECK: call chericcallcc void
+	// CHECK: @cheri_invoke
 	fish_cap(other);
-	// ALL: call void @flibble()
+	// CHECK: call void @flibble()
 	flibble();
-	// CHERI: load i64, i64* @__cheri_method.cls.flibble, align 8, [[$INVARIANT_LOAD]]
-	// CHERI: call chericcallcc void
-	// CHERI: @cheri_invoke
-	// AARCH64: load i64, i64* @__cheri_method.cls.flibble, align 8, [[$INVARIANT_LOAD]]
-	// AARCH64: call chericcallcc void
-	// AARCH64: @cheri_invoke
-
+	// CHECK: load i64, i64* @__cheri_method.cls.flibble, align 8, [[$INVARIANT_LOAD]]
+	// CHECK: call chericcallcc void
+	// CHECK: @cheri_invoke
 	flibble_cap(other);
 }
