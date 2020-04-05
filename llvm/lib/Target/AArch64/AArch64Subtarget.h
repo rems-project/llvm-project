@@ -154,6 +154,7 @@ protected:
 
   // Armv8.6-A Extensions
   bool HasBF16 = false;
+  bool HasAMVS = false;
 
   // Arm SVE2 extensions
   bool HasSVE2AES = false;
@@ -468,6 +469,7 @@ public:
   bool hasDIT() const { return HasDIT; }
   bool hasTRACEV8_4() const { return HasTRACEV8_4; }
   bool hasAM() const { return HasAM; }
+  bool hasAMVS() const { return HasAMVS; }
   bool hasSEL2() const { return HasSEL2; }
   bool hasPMU() const { return HasPMU; }
   bool hasTLB_RMI() const { return HasTLB_RMI; }
