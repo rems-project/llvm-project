@@ -394,15 +394,14 @@ template <class ELFT> void createSyntheticSections() {
       make<BssSection>(hasDataRelRo ? ".data.rel.ro.bss" : ".bss.rel.ro", 0, 1);
   add(in.bssRelRo);
 
-  if (config->processCapRelocs) {
-    if (config->emachine == EM_AARCH64) {
-      in.capRelocs = make<MorelloCapRelocsSection>();
-      add(in.capRelocs);
-    } else
-      InX<ELFT>::capRelocs = make<CheriCapRelocsSection<ELFT>>();
-  }
-
   if (config->capabilitySize > 0) {
+    if (config->processCapRelocs) {
+      if (config->emachine == EM_AARCH64) {
+        in.capRelocs = make<MorelloCapRelocsSection>();
+        add(in.capRelocs);
+      } else
+        InX<ELFT>::capRelocs = make<CheriCapRelocsSection<ELFT>>();
+    }
     in.cheriCapTable = make<CheriCapTableSection>();
     add(in.cheriCapTable);
     if (config->capTableScope != CapTableScopePolicy::All) {
