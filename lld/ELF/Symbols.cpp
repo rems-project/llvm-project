@@ -136,6 +136,7 @@ Defined *ElfSym::relaIpltStart;
 Defined *ElfSym::relaIpltEnd;
 Defined *ElfSym::riscvGlobalPointer;
 Defined *ElfSym::tlsModuleBase;
+DenseMap<const Symbol *, const InputFile *> backwardReferences;
 
 Defined *ElfSym::newLibBss1;
 Defined *ElfSym::newLibBss2;
@@ -493,6 +494,14 @@ bool computeIsPreemptible(const Symbol &sym) {
   return true;
 }
 
+void reportBackrefs() {
+  for (auto &it : backwardReferences) {
+    const Symbol &sym = *it.first;
+    warn("backward reference detected: " + sym.getName() + " in " +
+         toString(it.second) + " refers to " + toString(sym.file));
+  }
+}
+
 static uint8_t getMinVisibility(uint8_t va, uint8_t vb) {
   if (va == STV_DEFAULT)
     return vb;
@@ -629,9 +638,13 @@ void Symbol::resolveUndefined(const Undefined &other) {
 
     // We don't report backward references to weak symbols as they can be
     // overridden later.
+    //
+    // A traditional linker does not error for -ldef1 -lref -ldef2 (linking
+    // sandwich), where def2 may or may not be the same as def1. We don't want
+    // to warn for this case, so dismiss the warning if we see a subsequent lazy
+    // definition.
     if (backref && !isWeak())
-      warn("backward reference detected: " + other.getName() + " in " +
-           toString(other.file) + " refers to " + toString(file));
+      backwardReferences.try_emplace(this, other.file);
     return;
   }
 
@@ -788,8 +801,12 @@ void Symbol::resolveDefined(const Defined &other) {
 }
 
 template <class LazyT> void Symbol::resolveLazy(const LazyT &other) {
-  if (!isUndefined())
+  if (!isUndefined()) {
+    // See the comment in resolveUndefined().
+    if (isDefined())
+      backwardReferences.erase(this);
     return;
+  }
 
   // An undefined weak will not fetch archive members. See comment on Lazy in
   // Symbols.h for the details.
