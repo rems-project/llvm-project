@@ -655,7 +655,7 @@ Status NativeProcessProtocol::ReadMemoryWithoutTrap(lldb::addr_t addr, void *buf
       auto saved_opcodes = makeArrayRef(pair.second.saved_opcodes);
  
       if (bp_addr + saved_opcodes.size() < addr || addr + size <= bp_addr)
-        continue; // Breapoint not in range, ignore
+        continue; // Breakpoint not in range, ignore
  
       if (bp_addr < addr) {
         saved_opcodes = saved_opcodes.drop_front(addr - bp_addr);

@@ -757,7 +757,7 @@ static uint32_t g_rddc_el0_invalidates[] = {cap_ddc, LLDB_INVALID_REGNUM};
         0                                                                      \
   }
 
-// Defines S and D pseudo registers mapping over correspondig vector register
+// Defines S and D pseudo registers mapping over corresponding vector register
 #define DEFINE_FPU_PSEUDO(reg, size, offset, vreg)                             \
   {                                                                            \
     #reg, nullptr, size, FPU_OFFSET(fpu_##vreg - fpu_v0) + offset,             \
