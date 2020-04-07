@@ -10,14 +10,13 @@
 // UNSUPPORTED: windows
 // UNSUPPORTED: libcpp-no-if-constexpr
 // UNSUPPORTED: libcpp-has-newlib
-// MODULES_DEFINES: _LIBCPP_DEBUG=1
+// ADDITIONAL_COMPILE_FLAGS: -D_LIBCPP_DEBUG=1
 
 // Can't test the system lib because this test enables debug mode
 // UNSUPPORTED: with_system_cxx_lib
 
 // test container debugging
 
-#define _LIBCPP_DEBUG 1
 #include <string>
 #include <vector>
 
