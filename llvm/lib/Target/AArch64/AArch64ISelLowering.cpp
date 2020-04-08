@@ -1064,7 +1064,7 @@ uint32_t AArch64TargetLowering::getExceptionPointerAS() const {
   return Subtarget->hasPureCap() ? 200 : 0;
 }
 
-unsigned AArch64TargetLowering::
+Register AArch64TargetLowering::
 getExceptionPointerRegister(const Constant *PersonalityFn) const {
   // FIXME: This is a guess. Has this been defined yet?
   if (Subtarget->hasPureCap())
