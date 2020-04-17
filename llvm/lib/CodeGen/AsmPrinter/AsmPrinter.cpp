@@ -2144,8 +2144,7 @@ void AsmPrinter::emitXXStructorList(const DataLayout &DL, const Constant *List,
   llvm::stable_sort(Structors, [](const Structor &L, const Structor &R) {
     return L.Priority < R.Priority;
   });
-  const Align Align =
-      DL.getPointerPrefAlignment(DL.getAllocaAddrSpace());
+  const Align Align = DL.getPointerPrefAlignment(DL.getProgramAddressSpace());
   for (Structor &S : Structors) {
     const TargetLoweringObjectFile &Obj = getObjFileLowering();
     const MCSymbol *KeySym = nullptr;

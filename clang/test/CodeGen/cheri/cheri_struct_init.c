@@ -2,9 +2,9 @@
 // RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +c64 -target-abi purecap -emit-llvm -o - %s -no-cheri-linker | FileCheck %s --check-prefix=AARCH64
 // RXUN: %cheri_purecap_cc1 -S -o - -no-cheri-linker %s | FileCheck %s -check-prefix ASM
 
-// CHECK: @llvm.global_ctors = appending addrspace(200) global [1 x { i32, void ()*, i8 addrspace(200)* }] [
-// CHECK-SAME: { i32, void ()*, i8 addrspace(200)* }
-// CHECK-SAME: { i32 65535, void ()* addrspacecast (void () addrspace(200)* @_GLOBAL__sub_I_cheri_struct_init.c to void ()*), i8 addrspace(200)* null }]
+// CHECK: @llvm.global_ctors = appending addrspace(200) global [1 x { i32, void () addrspace(200)*, i8 addrspace(200)* }] [
+// CHECK-SAME: { i32, void () addrspace(200)*, i8 addrspace(200)* }
+// CHECK-SAME: { i32 65535, void () addrspace(200)* @_GLOBAL__sub_I_cheri_struct_init.c, i8 addrspace(200)* null }]
 // CHECK: __cxx_global_var_init
 
 // AARCH64: @llvm.global_ctors = appending addrspace(200) global [1 x { i32, void () addrspace(200)*, i8 addrspace(200)* }] [
@@ -24,8 +24,7 @@ const struct {
 	{ "\037\235", 2, { "gzip", "-cdq", NULL }, 1 },		/* compressed */
 };
 
-
 // Check that we emit the correct init_array loayout (a single .8byte value)
 // ASM:     .section	.init_array,"aw",@init_array
-// ASM-NEXT: .p2align	3
-// ASM-NEXT: .8byte	_GLOBAL__sub_I_cheri_struct_init.c
+// ASM-NEXT: .p2align	4
+// ASM-NEXT: .chericap	_GLOBAL__sub_I_cheri_struct_init.c

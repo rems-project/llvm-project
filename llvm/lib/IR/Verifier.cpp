@@ -650,15 +650,21 @@ void Verifier::visitGlobalVariable(const GlobalVariable &GV) {
     // visitGlobalValue will complain on appending non-array.
     if (ArrayType *ATy = dyn_cast<ArrayType>(GV.getValueType())) {
       StructType *STy = dyn_cast<StructType>(ATy->getElementType());
+      // For initializers/destructors the code pointer is in the program address space
+      auto CtorPointerAS = DL.getProgramAddressSpace();
+      PointerType *FuncPtrTy =
+          FunctionType::get(Type::getVoidTy(Context), false)->
+          getPointerTo(CtorPointerAS);
       Assert(STy &&
                  (STy->getNumElements() == 2 || STy->getNumElements() == 3) &&
                  STy->getTypeAtIndex(0u)->isIntegerTy(32),
              "wrong type for intrinsic global variable", &GV);
-      PointerType *Ty = dyn_cast<PointerType>(STy->getTypeAtIndex(1));
-      Assert(Ty, "Expected pointer type at element 1", &GV);
-      unsigned AS = Ty->getAddressSpace();
-      PointerType *FuncPtrTy =
-          FunctionType::get(Type::getVoidTy(Context), false)->getPointerTo(AS);
+      Assert(STy->getTypeAtIndex(1)->isPointerTy() &&
+                 STy->getTypeAtIndex(1)->getPointerAddressSpace() ==
+                     CtorPointerAS,
+             "llvm.global_ctors/llvm.global_dtors second parameter must be a "
+             "pointer in the program addres space",
+             &GV);
       Assert(STy->getTypeAtIndex(1) == FuncPtrTy,
              "wrong type for llvm.global_ctors/llvm.global_dtors parameter 2",
              STy->getTypeAtIndex(1));
