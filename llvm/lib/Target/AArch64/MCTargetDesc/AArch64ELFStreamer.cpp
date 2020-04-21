@@ -252,7 +252,6 @@ void AArch64TargetELFStreamer::emitLabel(MCSymbol *Symbol) {
 
 MCTargetStreamer *createAArch64AsmTargetStreamer(MCStreamer &S,
                                                  formatted_raw_ostream &OS,
-                                                 const MCAsmBackend &MAB,
                                                  MCInstPrinter *InstPrint,
                                                  bool isVerboseAsm) {
   return new AArch64TargetAsmStreamer(S, OS);
