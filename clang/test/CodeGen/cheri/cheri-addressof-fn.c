@@ -1,15 +1,16 @@
-// RUN: %cheri_cc1 %s "-target-abi" "purecap" -emit-llvm -cheri-linker  -o -
+// RUN: %cheri_purecap_cc1 %s -emit-llvm -o - | FileCheck %s
+// RXUN: %cheri_purecap_cc1 %s -S -o - | FileCheck %s -check-prefix ASM
 typedef void (*foo)(void);
 void fn(void);
 
 foo f = fn;
 foo g = &fn;
-// CHECK: __cxx_global_var_init
-// CHECK: llvm.cheri.pcc.get
-// CHECK: store
-// CHECK: @f, align 32
-// CHECK: __cxx_global_var_init
-// CHECK: llvm.cheri.pcc.get
-// CHECK: store
-// CHECK: @g, align 32
+// CHECK: @f = addrspace(200) global void () addrspace(200)* @fn, align 16
+// CHECK: @g = addrspace(200) global void () addrspace(200)* @fn, align 16
 
+// ASM-LABEL: f:
+// ASM-NEXT: .chericap	fn
+// ASM-NEXT: .size	f, 16
+// ASM-LABEL: g:
+// ASM-NEXT: .chericap	fn
+// ASM-NEXT: .size	g, 16

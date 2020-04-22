@@ -1,8 +1,3 @@
-// RUN: %clang -### -target aarch64-none-elf -march=morello -mabi=purecap -cheri-linker -O2 -S %s 2>&1 | FileCheck -check-prefix=CHECK-CHERI-LINKER %s
-// RUN: %clang -### -target aarch64-none-elf -march=morello+c64 -mabi=purecap -O2 -S %s 2>&1 | FileCheck -check-prefix=CHECK-CHERI-LINKER %s
-
-// CHECK-CHERI-LINKER: "-cheri-linker"
-
 // RUN: %clang -### -target aarch64-none-elf -nodefaultlibs -O1 %s 2>&1 | FileCheck -check-prefix=CHECK-NODEFAULTLIB %s
 // CHECK-NODEFAULTLIB-NOT: "-lclang_rt.builtins-aarch64"
 // CHECK-NODEFAULTLIB-NOT: "-lc"
@@ -34,15 +29,6 @@
 // CHECK-IMAGEBASE: "--image-base" "0x80000000"
 // CHECK-SEARCHPATH: "-L" "{{.*}}/aarch64-none-elf+morello+c64+purecap/lib"
 // CHECK-SEARCHPATH-NOT: "-T" "{{.*}}/ldscripts/aarch64elf-lld.x"
-
-// RUN: %clang -### -target aarch64-none-elf -march=morello+c64 -mabi=purecap -capsizefix %s 2>&1 | FileCheck -check-prefix=CHECK-CAPSIZEFIX %s
-// RUN: %clang -### -target aarch64-none-elf -march=morello -capsizefix %s 2>&1 | FileCheck -check-prefix=CHECK-CAPSIZEFIX %s
-// RUN: %clang -### -target aarch64-none-elf -march=morello+c64 -mabi=purecap  %s 2>&1 | FileCheck -check-prefix=CHECK-NOCAPSIZEFIX %s
-// RUN: %clang -### -target aarch64-none-elf -march=morello %s 2>&1 | FileCheck -check-prefix=CHECK-NOCAPSIZEFIX %s
-
-// CHECK-CAPSIZEFIX: "-emit-no-morello-relocations"
-// CHECK-CAPSIZEFIX: "{{.*}}capsizefix" "{{.*}}"
-// CHECK-NOCAPSIZEFIX-NOT: "{{.*}}capsizefix" "{{.*}}"
 
 // RUN: %clang -### -target aarch64-none-elf %s 2>&1 | FileCheck -check-prefix=CHECK-DEFAULT-LINKER %s
 // CHECK-DEFAULT-LINKER: "{{.*}}ld.lld"
