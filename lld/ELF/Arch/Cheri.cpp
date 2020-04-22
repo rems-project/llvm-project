@@ -1614,7 +1614,6 @@ void addCapabilityRelocation(Symbol *sym, RelType type, InputSectionBase *sec,
   // Emit either the legacy __cap_relocs section or a R_CHERI_CAPABILITY reloc
   // For local symbols we can also emit the untagged capability bits and
   // instruct csu/rtld to run CBuildCap
-  assert(config->processCapRelocs);
   CapRelocsMode capRelocMode = sym->isPreemptible
                                    ? config->preemptibleCapRelocsMode
                                    : config->localCapRelocsMode;

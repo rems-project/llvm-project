@@ -398,13 +398,11 @@ template <class ELFT> void createSyntheticSections() {
   add(in.bssRelRo);
 
   if (config->capabilitySize > 0) {
-    if (config->processCapRelocs) {
-      if (config->emachine == EM_AARCH64) {
-        in.capRelocs = make<MorelloCapRelocsSection>();
-        add(in.capRelocs);
-      } else
-        InX<ELFT>::capRelocs = make<CheriCapRelocsSection<ELFT>>();
-    }
+    if (config->emachine == EM_AARCH64) {
+      in.capRelocs = make<MorelloCapRelocsSection>();
+      add(in.capRelocs);
+    } else
+      InX<ELFT>::capRelocs = make<CheriCapRelocsSection<ELFT>>();
     in.cheriCapTable = make<CheriCapTableSection>();
     add(in.cheriCapTable);
     if (config->capTableScope != CapTableScopePolicy::All) {
@@ -2012,7 +2010,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
 
   // Now handle __cap_relocs (must be before RelaDyn because it might
   // result in new dynamic relocations being added)
-  if (config->processCapRelocs) {
+  if (true) {
     finalizeSynthetic(InX<ELFT>::capRelocs);
 
     if (OutputSection *gs = findSection(".global_sizes"))

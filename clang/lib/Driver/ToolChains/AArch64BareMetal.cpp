@@ -300,19 +300,6 @@ void Linker::ConstructJob(Compilation &C, const JobAction &JA,
   if (Linker == nullptr)
     Linker = Args.MakeArgString(TC.GetProgramPath(LinkerName.c_str()));
   C.addCommand(std::make_unique<Command>(JA, *this, Linker, CmdArgs, Inputs));
-
-  // If the user explicitely asked for capsizefix, then invoke it.
-  if (Args.hasArg(options::OPT_external_capsizefix, options::OPT_no_capsizefix,
-                  false)) {
-    const char *CapSizeFix =
-        Args.MakeArgString(TC.GetProgramPath("capsizefix"));
-    ArgStringList CapSizeFixArgs;
-    CapSizeFixArgs.push_back(Output.getFilename());
-    InputInfoList In = {InputInfo(types::TY_Object, Output.getFilename(),
-                                  Output.getBaseInput())};
-    C.addCommand(
-        std::make_unique<Command>(JA, *this, CapSizeFix, CapSizeFixArgs, In));
-  }
 }
 
 void Assembler::ConstructJob(Compilation &C, const JobAction &JA,
