@@ -294,12 +294,7 @@ void AArch64TargetInfo::getTargetDefines(const LangOptions &Opts,
       if (CapTableABI != llvm::CheriCapabilityTableABI::Legacy)
         Builder.defineMacro("__CHERI_CAPABILITY_TABLE__",
                             Twine(((int)CapTableABI) + 1));
-
-      auto CapTlsABI = llvm::MCTargetOptions::cheriCapabilityTlsABI();
-      if (CapTlsABI != llvm::CheriCapabilityTlsABI::Legacy) {
-        Builder.defineMacro("__CHERI_CAPABILITY_TLS__",
-                            Twine((int)CapTlsABI));
-      }
+      Builder.defineMacro("__CHERI_CAPABILITY_TLS__", Twine(1));
     }
 
     Builder.defineMacro("__CHERI_CAP_PERMISSION_GLOBAL__", Twine(1 << 0));
