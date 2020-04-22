@@ -1,6 +1,3 @@
-// RUN: %cheri_purecap_cc1 -mllvm -cheri-cap-table-abi=legacy -std=gnu99 -o - -O0 -emit-llvm %s | FileCheck %s -check-prefixes CHECK,LEGACY
-// RUN: %cheri_purecap_cc1 -mllvm -cheri-cap-table-abi=pcrel -std=gnu99 -o - -O0 -emit-llvm %s | FileCheck %s -check-prefixes CHECK,NEWABI
-
 // RUN: %cheri_purecap_cc1 -std=gnu99 -o - -O0 -emit-llvm %s | FileCheck %s -check-prefixes CHECK
 // RXUN: %cheri_purecap_cc1 -std=gnu99 -o - -O0 -S %s | FileCheck %s -check-prefix ASM
 // RXUN: %cheri_purecap_cc1 -std=gnu99 -o - -O0 -emit-obj %s | llvm-objdump -t -d - | FileCheck %s -check-prefix DUMP

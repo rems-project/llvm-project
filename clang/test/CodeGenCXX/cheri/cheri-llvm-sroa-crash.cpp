@@ -1,5 +1,4 @@
 // REQUIRES: mips-registered-target
-// RUN: %cheri_purecap_cc1 -mllvm -cheri-cap-table-abi=legacy -S -target-cpu mips4 -Os -std=c++1z -pthread -fcolor-diagnostics -vectorize-loops -vectorize-slp -o /dev/null %s
 // RUN: %cheri_purecap_cc1 -mllvm -cheri-cap-table-abi=pcrel -emit-obj -target-cpu mips4 -Os -std=c++1z \
 // RUN:   -pthread -fcolor-diagnostics -vectorize-loops -vectorize-slp -o /dev/null %s -S
 // RUN: %cheri_purecap_cc1 -mllvm -cheri-cap-table-abi=pcrel -S -target-cpu mips4 -Os -std=c++1z \
