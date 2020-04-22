@@ -1,6 +1,5 @@
 add_llvm_component_library(LLVMCHERICapOpts
   FoldCapIntrinsics.cpp
-  PureCapABICalls.cpp
   ExpandCapIntrinsics.cpp
 
   ADDITIONAL_HEADER_DIRS

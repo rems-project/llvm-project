@@ -1,9 +1,6 @@
 // RUN: %cheri_purecap_cc1 -std=c11 %s -emit-llvm -o - -O2 -verify | FileCheck %s -implicit-check-not llvm.memcpy
 // Check that we can generate assembly without crashing
-// RXUN: %cheri_purecap_cc1 -mllvm -cheri-cap-table-abi=legacy -std=c11 %s -S -o /dev/null -verify
 // RXUN: %cheri_purecap_cc1 -mllvm -cheri-cap-table-abi=pcrel -std=c11 %s -S -o /dev/null -verify
-// XFAIL: cheri_is_256
-// CHERI256 doesn't support the __sync_* builtins yet
 
 // CHECK-LABEL: @main(
 int main(void) {
