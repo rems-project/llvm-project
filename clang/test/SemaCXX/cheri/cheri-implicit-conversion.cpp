@@ -83,13 +83,8 @@ int foo(int* __capability cap_arg_int, void* __capability cap_arg_void, int* ptr
   struct test_struct s;
   s.ptr = ptr_arg_int; // okay
   s.cap = ptr_arg_int; // expected-warning  {{converting non-capability type 'int *' to capability type 'int * __capability' without an explicit cast; if this is intended use __cheri_tocap}}
-  s.ptr = cap_arg_int;
+  s.ptr = cap_arg_int; // expected-error {{converting capability type 'int * __capability' to non-capability type 'int *' without an explicit cast; if this is intended use __cheri_fromcap}}
   s.cap = cap_arg_int; // okay
-#ifdef __cplusplus
-  // expected-error@-3  {{assigning to 'int *' from incompatible type 'int * __capability'}}
-#else
-  // expected-error@-5  {{converting capability type 'int * __capability' to non-capability type 'int *' without an explicit cast; if this is intended use __cheri_fromcap}}
-#endif
 
   return 0;
 }

@@ -12,13 +12,13 @@ __attribute__((__require_constant_initialization__)) static handler __handler;
 handler set_handler_sync(handler func) noexcept {
   return __sync_lock_test_and_set(&__handler, func);
   // CHECK: atomicrmw xchg void () addrspace(200)* addrspace(200)* @_ZL9__handler, void () addrspace(200)* %0 seq_cst
-  // AST: DeclRefExpr {{.*}} '__sync_lock_test_and_set_16' '__int128 (volatile __int128 * __capability, __int128, ...) noexcept'
+  // AST: DeclRefExpr {{.*}} '__sync_lock_test_and_set_16' '__int128 (volatile __int128 *, __int128, ...) noexcept'
 }
 
 handler get_handler_sync() noexcept {
   // CHECK: atomicrmw add void () addrspace(200)* addrspace(200)* @_ZL9__handler, void () addrspace(200)* null seq_cst
   return __sync_fetch_and_add(&__handler, (handler)0);
-  // AST: DeclRefExpr {{.*}} '__sync_fetch_and_add_16' '__int128 (volatile __int128 * __capability, __int128, ...) noexcept'
+  // AST: DeclRefExpr {{.*}} '__sync_fetch_and_add_16' '__int128 (volatile __int128 *, __int128, ...) noexcept'
 }
 
 handler set_handler_atomic(handler func) noexcept {

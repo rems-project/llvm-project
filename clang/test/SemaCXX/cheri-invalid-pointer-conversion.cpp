@@ -12,7 +12,7 @@ int *v;
 int * __capability vc;
 
 void testAssignments(int * __capability i, int * j) {
-    v = i; // expected-error{{ssigning to 'int *' from incompatible type 'int * __capability'}}
+    v = i; // expected-error{{converting capability type 'int * __capability' to non-capability type 'int *' without an explicit cast; if this is intended use __cheri_fromcap}}
     vc = j; // expected-warning{{converting non-capability type 'int *' to capability type 'int * __capability' without an explicit cast; if this is intended use __cheri_tocap}}
 }
 
