@@ -1,7 +1,8 @@
-// RUN: %cheri256_cc1 "-target-abi" "purecap" -fsyntax-only -triple cheri-unknown-freebsd %s -std=c++11 -verify
+// RUN: %cheri_purecap_cc1 -fsyntax-only %s -std=c++11 -verify -ast-dump | FileCheck %s
 // RUN: %clang_cc1 -fsyntax-only -triple aarch64-none-elf -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel %s -std=c++11 -verify
 
-struct foo_cap { // expected-note {{Add __attribute__((aligned}}
+
+struct foo_cap { // expected-note {{Add __attribute__((aligned(16))) to ensure sufficient alignment}}
 	void *a; // expected-warning {{Capability field at offset 0 in packed structure will trap if structure is used in an array}}
 	long d;
 	int e;
@@ -12,35 +13,21 @@ _Pragma("pointer_interpretation integer")
 struct foo_int {
 	void *a;
 	long d;
-	long e;
+	int e;
 };
 _Static_assert(sizeof(void*) == 8, "Pointer size incorrect");
 _Static_assert(sizeof(foo_int) == 24, "Pointer size incorrect");
-#if defined(__aarch64__)
 _Static_assert(sizeof(foo_cap) == 28, "Pointer size incorrect");
-#else
-_Static_assert(sizeof(foo_cap) == 44, "Pointer size incorrect");
-#endif
 // Check that we don't accidentally break sizeof() for references:
 // When applied to a reference or a reference type, the result is the size of the referenced type.
 _Static_assert(sizeof(int&) == 4, "Reference size incorrect");
 _Static_assert(sizeof(int&&) == 4, "Reference size incorrect");
 _Pragma("pointer_interpretation pop")
-#if defined(__aarch64__)
 _Static_assert(sizeof(void*) == 16, "Pointer size incorrect");
-#else
-_Static_assert(sizeof(void*) == 32, "Pointer size incorrect");
-#endif
 _Static_assert(sizeof(foo_int) == 24, "Pointer size incorrect");
-#if defined(__aarch64__)
 _Static_assert(sizeof(foo_cap) == 28, "Pointer size incorrect");
-#else
-_Static_assert(sizeof(foo_cap) == 44, "Pointer size incorrect");
-#endif
 _Static_assert(sizeof(int&) == 4, "Reference size incorrect");
 _Static_assert(sizeof(int&&) == 4, "Reference size incorrect");
-
-// RUN: %cheri256_cc1 "-target-abi" "purecap" -fsyntax-only -triple cheri-unknown-freebsd %s -std=c++11 -ast-dump | FileCheck %s
 
 // CHECK:     |-CXXRecordDecl {{.*}} <{{.*}}/cheri-pointer-interpretation.cpp:4:1, line:8:1> line:4:8 referenced struct foo_cap definition
 // CHECK:     | |-PackedAttr {{.*}} <line:8:18>
@@ -53,6 +40,6 @@ _Static_assert(sizeof(int&&) == 4, "Reference size incorrect");
 // CHECK:     | |-CXXRecordDecl {{.*}} <col:1, col:8> col:8 implicit struct foo_int
 // CHECK-NEXT:| |-FieldDecl {{.*}} <line:13:2, col:8> col:8 a 'long'
 // CHECK-NEXT:| |-FieldDecl {{.*}} <line:14:2, col:7> col:7 d 'long'
-// CHECK-NEXT:| `-FieldDecl {{.*}} <line:15:2, col:7> col:7 e 'long'
+// CHECK-NEXT:| `-FieldDecl {{.*}} <line:15:2, col:6> col:6 e 'int'
 
 
