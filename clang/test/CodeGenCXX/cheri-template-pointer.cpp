@@ -4,7 +4,7 @@ template <typename T> static inline T loadFromCap(T*  __capability address) {
   return *address;
 }
 
-// CHECK-LABEL: _Z3funU3capPi
+// CHECK-LABEL: _Z3funU12__capabilityPi
 // CHECK: call signext i32 @{{.*}}loadFromCap{{.*}}(i32 addrspace(200)*
 int fun(int * __capability t) {
   return loadFromCap<int>(t);

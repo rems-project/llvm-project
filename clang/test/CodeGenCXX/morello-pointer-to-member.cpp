@@ -114,7 +114,7 @@ bool data_ptr_not_equal(int A::* ptr1, int A::* ptr2) {
 
 int data_ptr_dereferece(A* a, int A::* ptr) {
   return a->*ptr;
-  // CHECK: define i32 @_Z19data_ptr_derefereceU3capP1AMS_i(%class.A addrspace(200)* %a, i64 %ptr)
+  // CHECK: define i32 @_Z19data_ptr_derefereceP1AMS_i(%class.A addrspace(200)* %a, i64 %ptr)
   // CHECK: %0 = load %class.A addrspace(200)*, %class.A addrspace(200)* addrspace(200)* %a.addr, align 16
   // CHECK: %1 = load i64, i64 addrspace(200)* %ptr.addr, align 8
   // CHECK: %2 = bitcast %class.A addrspace(200)* %0 to i8 addrspace(200)*
@@ -192,7 +192,7 @@ bool func_ptr_not_equal(AMemberFuncPtr ptr1, AMemberFuncPtr ptr2) {
 
 int func_ptr_dereference(A* a, AMemberFuncPtr ptr) {
   return (a->*ptr)();
-  // CHECK: define i32 @_Z20func_ptr_dereferenceU3capP1AMS_FivE(%class.A addrspace(200)* %a, { i8 addrspace(200)*, i64 } %ptr.coerce)
+  // CHECK: define i32 @_Z20func_ptr_dereferenceP1AMS_FivE(%class.A addrspace(200)* %a, { i8 addrspace(200)*, i64 } %ptr.coerce)
   // CHECK: %0 = load %class.A addrspace(200)*, %class.A addrspace(200)* addrspace(200)* %a.addr, align 16
   // CHECK: %1 = load { i8 addrspace(200)*, i64 }, { i8 addrspace(200)*, i64 } addrspace(200)* %ptr.addr, align 16
   // CHECK: %memptr.adj = extractvalue { i8 addrspace(200)*, i64 } %1, 1

@@ -10,8 +10,8 @@ long long bar(const void *p) {
 
 // Make sure that we pick the overload which doesn't change the
 // __capability qualifier.
-// CHECK-LABEL: _Z3fooU3capPv
-// CHECK: call i64 @_Z3barIu10__intcap_tExU3capPKv
+// CHECK-LABEL: _Z3fooU12__capabilityPv
+// CHECK: call i64 @_Z3barIu10__intcap_tExU12__capabilityPKv
 long long foo(void *__capability dst0) {
  long long call = bar<__intcap_t>(dst0);
  return call;
