@@ -4005,6 +4005,9 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
         ConvertType(E->getType())));
   }
   case Builtin::BI__builtin_cheri_cap_to_pointer: {
+    assert(!getContext().getTargetInfo().areAllPointersCapabilities() &&
+           "__builtin_cheri_cap_to_pointer should not be available in purecap "
+           "mode");
     Value *GlobalCap = EmitScalarExpr(E->getArg(0));
     Value *Cap = EmitScalarExpr(E->getArg(1));
     Value *Ptr = Builder.CreateIntrinsic(
