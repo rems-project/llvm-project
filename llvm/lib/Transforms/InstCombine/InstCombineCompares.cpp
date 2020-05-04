@@ -4969,25 +4969,27 @@ Instruction *InstCombiner::foldICmpUsingKnownBits(ICmpInst &I) {
   }
 
   if (isCheriPointer(Ty, &DL)) {
-    if (!(cheri::isKnownUntaggedCapability(I.getOperand(0), &DL) &&
-        cheri::isKnownUntaggedCapability(I.getOperand(1), &DL))) {
+    if (!cheri::isKnownUntaggedCapability(I.getOperand(0), &DL) ||
+        !cheri::isKnownUntaggedCapability(I.getOperand(1), &DL)) {
       // At least one operand might be tagged -> we can't simplify this yet!
       return nullptr;
     } else {
       // convert the capability icmp to a vaddr icmp. The cheri_cap_address_get
       // Intrinsics will be removed if they refer to a constant value
       Builder.SetInsertPoint(&I);
-      PointerType *VoidTy = PointerType::get(
-          IntegerType::get(I.getContext(), 8),
-          cast<PointerType>(I.getOperand(0)->getType())->getAddressSpace());
-      auto Addr1 = Builder.CreateBitCast(I.getOperand(0), VoidTy);
-      Addr1 = Builder.CreateIntrinsic(Intrinsic::cheri_cap_address_get,
-              DL.getIntPtrType(I.getOperand(0)->getType()), Addr1, nullptr, "op0_addr");
-      auto Addr2 = Builder.CreateBitCast(I.getOperand(1), VoidTy);
-      Addr2 = Builder.CreateIntrinsic(Intrinsic::cheri_cap_address_get,
-              DL.getIntPtrType(I.getOperand(1)->getType()), Addr2, nullptr, "op1_addr");
-      I.setOperand(0, Addr1);
-      I.setOperand(1, Addr2);
+      auto CapAS = I.getOperand(0)->getType()->getPointerAddressSpace();
+      auto I8CapTy =
+          IntegerType::getInt8Ty(I.getContext())->getPointerTo(CapAS);
+      auto Addr1 = Builder.CreateIntrinsic(
+          Intrinsic::cheri_cap_address_get,
+          DL.getIntPtrType(I.getOperand(0)->getType()),
+          Builder.CreateBitCast(I.getOperand(0), I8CapTy), nullptr, "op0_addr");
+      auto Addr2 = Builder.CreateIntrinsic(
+          Intrinsic::cheri_cap_address_get,
+          DL.getIntPtrType(I.getOperand(0)->getType()),
+          Builder.CreateBitCast(I.getOperand(1), I8CapTy), nullptr, "op1_addr");
+      replaceOperand(I, 0, Addr1);
+      replaceOperand(I, 1, Addr2);
       return &I;
     }
     BitWidth = DL.getPointerAddrSizeInBits(Ty);
