@@ -776,7 +776,12 @@ public:
                            unsigned CapSize, SMLoc Loc = SMLoc());
 
   // Emit \p Value as an untagged capability-size value
-  virtual void EmitCheriIntcap(int64_t Value, unsigned CapSize,
+  virtual void emitCheriIntcap(int64_t Value, unsigned CapSize,
+                               SMLoc Loc = SMLoc()) {
+    emitCheriIntcap(MCConstantExpr::create(Value, Context), CapSize, Loc);
+  }
+  // Emit \p Expr as an untagged capability-size value
+  virtual void emitCheriIntcap(const MCExpr *Expr, unsigned CapSize,
                                SMLoc Loc = SMLoc());
 
   /// Emit NumBytes bytes worth of the value specified by FillValue.
@@ -1089,6 +1094,10 @@ protected:
   virtual void EmitCheriCapabilityImpl(const MCSymbol *Value,
                                        const MCExpr *Addend, unsigned CapSize,
                                        SMLoc Loc = SMLoc());
+
+  /// Target-independent untagged CHERI capability
+  virtual void emitCheriIntcapGeneric(const MCExpr *Expr, unsigned CapSize,
+                                      SMLoc Loc);
 };
 
 /// Create a dummy machine code streamer, which does nothing. This is useful for
