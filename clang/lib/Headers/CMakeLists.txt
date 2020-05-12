@@ -46,6 +46,7 @@ set(files
   __clang_cuda_runtime_wrapper.h
   cetintrin.h
   cheri.h
+  cheriintrin.h
   cheri_init_globals.h
   cldemoteintrin.h
   clzerointrin.h
