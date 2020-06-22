@@ -857,13 +857,15 @@ static Value *emitLibCall(LibFunc TheLibFunc, Type *ReturnType,
 Value *llvm::emitStrLen(Value *Ptr, IRBuilderBase &B, const DataLayout &DL,
                         const TargetLibraryInfo *TLI) {
   LLVMContext &Context = B.GetInsertBlock()->getContext();
-  return emitLibCall(LibFunc_strlen, DL.getIntPtrType(Context),
-                     getInt8PtrTy(Ptr), castToCStr(Ptr, B), B, TLI);
+  return emitLibCall(
+      LibFunc_strlen,
+      DL.getIntPtrType(Context, Ptr->getType()->getPointerAddressSpace()),
+      getInt8PtrTy(Ptr), castToCStr(Ptr, B), B, TLI);
 }
 
 Value *llvm::emitStrDup(Value *Ptr, IRBuilderBase &B,
                         const TargetLibraryInfo *TLI) {
-  return emitLibCall(LibFunc_strdup, B.getInt8PtrTy(), B.getInt8PtrTy(),
+  return emitLibCall(LibFunc_strdup, getInt8PtrTy(Ptr), getInt8PtrTy(Ptr),
                      castToCStr(Ptr, B), B, TLI);
 }
 
@@ -880,7 +882,8 @@ Value *llvm::emitStrNCmp(Value *Ptr1, Value *Ptr2, Value *Len, IRBuilderBase &B,
   LLVMContext &Context = B.GetInsertBlock()->getContext();
   return emitLibCall(
       LibFunc_strncmp, B.getInt32Ty(),
-      {getInt8PtrTy(Ptr1), getInt8PtrTy(Ptr2), DL.getIntPtrType(Context)},
+      {getInt8PtrTy(Ptr1), getInt8PtrTy(Ptr2),
+       DL.getIntPtrType(Context, Ptr1->getType()->getPointerAddressSpace())},
       {castToCStr(Ptr1, B), castToCStr(Ptr2, B), Len}, B, TLI);
 }
 
@@ -927,9 +930,9 @@ Value *llvm::emitMemCpyChk(Value *Dst, Value *Src, Value *Len, Value *ObjSize,
   Src = castToCStr(Src, B);
   Type *I8Ptr = Dst->getType();
   FunctionCallee MemCpy = M->getOrInsertFunction(
-      "__memcpy_chk", AttributeList::get(M->getContext(), AS), I8Ptr,
-      I8Ptr, I8Ptr, DL.getIntPtrType(Context),
-      DL.getIntPtrType(Context));
+      "__memcpy_chk", AttributeList::get(M->getContext(), AS), I8Ptr, I8Ptr,
+      I8Ptr, DL.getIntPtrType(Context, I8Ptr->getPointerAddressSpace()),
+      DL.getIntPtrType(Context, I8Ptr->getPointerAddressSpace()));
   CallInst *CI = B.CreateCall(MemCpy, {Dst, Src, Len, ObjSize});
   if (HasCap)
     CI->setPreservesTags();
@@ -944,7 +947,8 @@ Value *llvm::emitMemChr(Value *Ptr, Value *Val, Value *Len, IRBuilderBase &B,
   LLVMContext &Context = B.GetInsertBlock()->getContext();
   return emitLibCall(
       LibFunc_memchr, getInt8PtrTy(Ptr),
-      {getInt8PtrTy(Ptr), B.getInt32Ty(), DL.getIntPtrType(Context)},
+      {getInt8PtrTy(Ptr), B.getInt32Ty(),
+       DL.getIntPtrType(Context, Ptr->getType()->getPointerAddressSpace())},
       {castToCStr(Ptr, B), Val, Len}, B, TLI);
 }
 
@@ -953,7 +957,8 @@ Value *llvm::emitMemCmp(Value *Ptr1, Value *Ptr2, Value *Len, IRBuilderBase &B,
   LLVMContext &Context = B.GetInsertBlock()->getContext();
   return emitLibCall(
       LibFunc_memcmp, B.getInt32Ty(),
-      {getInt8PtrTy(Ptr1), getInt8PtrTy(Ptr2), DL.getIntPtrType(Context)},
+      {getInt8PtrTy(Ptr1), getInt8PtrTy(Ptr2),
+       DL.getIntPtrType(Context, Ptr1->getType()->getPointerAddressSpace())},
       {castToCStr(Ptr1, B), castToCStr(Ptr2, B), Len}, B, TLI);
 }
 
@@ -962,7 +967,8 @@ Value *llvm::emitBCmp(Value *Ptr1, Value *Ptr2, Value *Len, IRBuilderBase &B,
   LLVMContext &Context = B.GetInsertBlock()->getContext();
   return emitLibCall(
       LibFunc_bcmp, B.getInt32Ty(),
-      {getInt8PtrTy(Ptr1), getInt8PtrTy(Ptr2), DL.getIntPtrType(Context)},
+      {getInt8PtrTy(Ptr1), getInt8PtrTy(Ptr2),
+       DL.getIntPtrType(Context, Ptr1->getType()->getPointerAddressSpace())},
       {castToCStr(Ptr1, B), castToCStr(Ptr2, B), Len}, B, TLI);
 }
 
@@ -1229,15 +1235,16 @@ Value *llvm::emitFWrite(Value *Ptr, Value *Size, Value *File, IRBuilderBase &B,
   Module *M = B.GetInsertBlock()->getModule();
   LLVMContext &Context = B.GetInsertBlock()->getContext();
   StringRef FWriteName = TLI->getName(LibFunc_fwrite);
-  FunctionCallee F = M->getOrInsertFunction(
-      FWriteName, DL.getIntPtrType(Context), Ptr->getType(),
-      DL.getIntPtrType(Context), DL.getIntPtrType(Context), File->getType());
+  auto SizeType =
+      DL.getIntPtrType(Context, Ptr->getType()->getPointerAddressSpace());
+  FunctionCallee F =
+      M->getOrInsertFunction(FWriteName, SizeType, Ptr->getType(), SizeType,
+                             SizeType, File->getType());
 
   if (File->getType()->isPointerTy())
     inferLibFuncAttributes(M, FWriteName, *TLI);
-  CallInst *CI =
-      B.CreateCall(F, {castToCStr(Ptr, B), Size,
-                       ConstantInt::get(DL.getIntPtrType(Context), 1), File});
+  CallInst *CI = B.CreateCall(
+      F, {castToCStr(Ptr, B), Size, ConstantInt::get(SizeType, 1), File});
 
   if (const Function *Fn =
           dyn_cast<Function>(F.getCallee()->stripPointerCasts()))
@@ -1253,11 +1260,9 @@ Value *llvm::emitMalloc(Value *Num, IRBuilderBase &B, const DataLayout &DL,
   Module *M = B.GetInsertBlock()->getModule();
   StringRef MallocName = TLI->getName(LibFunc_malloc);
   LLVMContext &Context = B.GetInsertBlock()->getContext();
-  // FIXME: We need the heap address space here, but for now use use the alloca
-  // address space which covers the same use cases.
-  unsigned AS = DL.getAllocaAddrSpace();
-  FunctionCallee Malloc = M->getOrInsertFunction(MallocName, B.getInt8PtrTy(AS),
-                                                 DL.getIntPtrType(Context));
+  FunctionCallee Malloc = M->getOrInsertFunction(
+      MallocName, B.getInt8PtrTy(DL.getGlobalsAddressSpace()),
+      DL.getIntPtrType(Context, DL.getGlobalsAddressSpace()));
   inferLibFuncAttributes(M, MallocName, *TLI);
   CallInst *CI = B.CreateCall(Malloc, Num, MallocName);
 
@@ -1276,12 +1281,11 @@ Value *llvm::emitCalloc(Value *Num, Value *Size, const AttributeList &Attrs,
   Module *M = B.GetInsertBlock()->getModule();
   StringRef CallocName = TLI.getName(LibFunc_calloc);
   const DataLayout &DL = M->getDataLayout();
-  // We need the heap address space here, but for now use use the alloca
-  // address space which covers the same use cases.
-  unsigned AS = DL.getAllocaAddrSpace();
-  IntegerType *PtrType = DL.getIntPtrType((B.GetInsertBlock()->getContext()));
+  IntegerType *PtrType = DL.getIntPtrType(B.GetInsertBlock()->getContext(),
+                                          DL.getGlobalsAddressSpace());
   FunctionCallee Calloc = M->getOrInsertFunction(
-      CallocName, Attrs, B.getInt8PtrTy(AS), PtrType, PtrType);
+      CallocName, Attrs, B.getInt8PtrTy(DL.getGlobalsAddressSpace()), PtrType,
+      PtrType);
   inferLibFuncAttributes(M, CallocName, TLI);
   CallInst *CI = B.CreateCall(Calloc, {Num, Size}, CallocName);
 
