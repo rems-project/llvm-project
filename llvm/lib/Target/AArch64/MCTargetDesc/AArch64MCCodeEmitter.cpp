@@ -658,6 +658,8 @@ void AArch64MCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
     // following (BLR) instruction. It doesn't emit any code itself so it
     // doesn't go through the normal TableGenerated channels.
     MCFixupKind Fixup = MCFixupKind(AArch64::fixup_aarch64_tlsdesc_call);
+    if (STI.hasFeature(AArch64::FeatureC64))
+      Fixup = MCFixupKind(AArch64::fixup_morello_tlsdesc_call);
     Fixups.push_back(MCFixup::create(0, MI.getOperand(0).getExpr(), Fixup));
     return;
   }

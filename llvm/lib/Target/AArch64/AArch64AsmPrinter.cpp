@@ -1137,6 +1137,65 @@ void AArch64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     EmitToStreamer(*OutStreamer, TmpInst);
     return;
   }
+  case AArch64::TLSDESC_C64_CALLSEQ: {
+    /// lower this to:
+    ///    nop
+    ///    adrp  c0, :tlsdesc:var
+    ///    ldr   c1, [c0, #:tlsdesc_lo12:var]
+    ///    add   c0, c0, #:tlsdesc_lo12:var
+    ///    .tlsdesccall var
+    ///    blr   c1
+    const MachineOperand &MO_Sym = MI->getOperand(0);
+    MachineOperand MO_TLSDESC_LO12(MO_Sym), MO_TLSDESC(MO_Sym);
+    MCOperand Sym, SymTLSDescLo12, SymTLSDesc;
+    MO_TLSDESC_LO12.setTargetFlags(AArch64II::MO_TLS | AArch64II::MO_PAGEOFF);
+    MO_TLSDESC.setTargetFlags(AArch64II::MO_TLS | AArch64II::MO_PAGE);
+    MCInstLowering.lowerOperand(MO_Sym, Sym);
+    MCInstLowering.lowerOperand(MO_TLSDESC_LO12, SymTLSDescLo12);
+    MCInstLowering.lowerOperand(MO_TLSDESC, SymTLSDesc);
+
+    MCInst Nop;
+    Nop.setOpcode(AArch64::HINT);
+    Nop.addOperand(MCOperand::createImm(0));
+    EmitToStreamer(*OutStreamer, Nop);
+
+    MCInst Adrp;
+    Adrp.setOpcode(AArch64::PADRP);
+    Adrp.addOperand(MCOperand::createReg(AArch64::C0));
+    Adrp.addOperand(SymTLSDesc);
+    EmitToStreamer(*OutStreamer, Adrp);
+
+    MCInst Ldr;
+    Ldr.setOpcode(AArch64::PCapLoadImmPre);
+    Ldr.addOperand(MCOperand::createReg(AArch64::C1));
+    Ldr.addOperand(MCOperand::createReg(AArch64::C0));
+    Ldr.addOperand(SymTLSDescLo12);
+    Ldr.addOperand(MCOperand::createImm(0));
+    EmitToStreamer(*OutStreamer, Ldr);
+
+    MCInst Add;
+    Add.setOpcode(AArch64::CapAddImm);
+    Add.addOperand(MCOperand::createReg(AArch64::C0));
+    Add.addOperand(MCOperand::createReg(AArch64::C0));
+    Add.addOperand(SymTLSDescLo12);
+    Add.addOperand(MCOperand::createImm(AArch64_AM::getShiftValue(0)));
+    EmitToStreamer(*OutStreamer, Add);
+
+    // Emit a relocation-annotation. This expands to no code, but requests
+    // the following instruction gets an R_AARCH64_TLSDESC_CALL.
+    MCInst TLSDescCall;
+    TLSDescCall.setOpcode(AArch64::TLSDESCCALL);
+    TLSDescCall.addOperand(Sym);
+    EmitToStreamer(*OutStreamer, TLSDescCall);
+
+    MCInst Blr;
+    Blr.setOpcode(AArch64::BLR);
+    Blr.addOperand(MCOperand::createReg(AArch64::C1));
+    EmitToStreamer(*OutStreamer, Blr);
+
+    return;
+  }
+
   case AArch64::TLSDESC_CALLSEQ: {
     /// lower this to:
     ///    adrp  x0, :tlsdesc:var

@@ -774,6 +774,9 @@ private:
                                const SDLoc &DL, SelectionDAG &DAG) const;
   SDValue LowerELFTLSDescCallSeq(SDValue SymAddr, const SDLoc &DL,
                                  SelectionDAG &DAG) const;
+  SDValue LowerC64ELFTLSDescCallSeq(SDValue SymAddr, SDValue TP,
+                                    const SDLoc &DL,
+                                    SelectionDAG &DAG) const;
   SDValue LowerWindowsGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) const;

@@ -166,6 +166,8 @@ unsigned AArch64ELFObjectWriter::getRelocType(MCContext &Ctx,
         return ELF::R_MORELLO_ADR_PREL_PG_HI20_NC;
       if (SymLoc == AArch64MCExpr::VK_GOT && !IsNC)
         return ELF::R_MORELLO_ADR_GOT_PAGE;
+      if (SymLoc == AArch64MCExpr::VK_TLSDESC && !IsNC)
+        return ELF::R_MORELLO_TLSDESC_ADR_PAGE20;
       Ctx.reportError(Fixup.getLoc(),
                       "invalid symbol kind for ADRP relocation");
       return ELF::R_AARCH64_NONE;
@@ -413,6 +415,8 @@ unsigned AArch64ELFObjectWriter::getRelocType(MCContext &Ctx,
         return R_CLS(TLSLE_LDST128_TPREL_LO12_NC);
       if (SymLoc == AArch64MCExpr::VK_GOT && IsNC)
         return ELF::R_MORELLO_LD128_GOT_LO12_NC;
+      if (SymLoc == AArch64MCExpr::VK_TLSDESC)
+        return ELF::R_MORELLO_TLSDESC_LD128_LO12;
 
       Ctx.reportError(Fixup.getLoc(),
                       "invalid fixup for 128-bit load/store instruction");
@@ -482,6 +486,8 @@ unsigned AArch64ELFObjectWriter::getRelocType(MCContext &Ctx,
       return ELF::R_AARCH64_NONE;
     case AArch64::fixup_aarch64_tlsdesc_call:
       return R_CLS(TLSDESC_CALL);
+    case AArch64::fixup_morello_tlsdesc_call:
+      return ELF::R_MORELLO_TLSDESC_CALL;
     default:
       Ctx.reportError(Fixup.getLoc(), "Unknown ELF relocation type");
       return ELF::R_AARCH64_NONE;

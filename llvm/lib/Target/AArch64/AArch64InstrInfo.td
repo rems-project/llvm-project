@@ -1052,6 +1052,7 @@ def MSRpstateImm4 : MSRpstateImm0_15;
 
 // The thread pointer (on Linux, at least, where this has been implemented) is
 // TPIDR_EL0.
+let Predicates = [HasNotC64] in
 def MOVbaseTLS : Pseudo<(outs GPR64:$dst), (ins),
                        [(set GPR64:$dst, AArch64threadpointer)]>, Sched<[WriteSys]>;
 
@@ -2029,6 +2030,7 @@ def EMITBKEY : Pseudo<(outs), (ins), []>, Sched<[]> {}
 
 // FIXME: maybe the scratch register used shouldn't be fixed to X1?
 // FIXME: can "hasSideEffects be dropped?
+let Predicates = [HasNotC64] in {
 let isCall = 1, Defs = [LR, X0, X1], hasSideEffects = 1,
     isCodeGenOnly = 1 in
 def TLSDESC_CALLSEQ
@@ -2037,6 +2039,7 @@ def TLSDESC_CALLSEQ
       Sched<[WriteI, WriteLD, WriteI, WriteBrReg]>;
 def : Pat<(AArch64tlsdesc_callseq texternalsym:$sym),
           (TLSDESC_CALLSEQ texternalsym:$sym)>;
+}
 
 //===----------------------------------------------------------------------===//
 // Conditional branch (immediate) instruction.

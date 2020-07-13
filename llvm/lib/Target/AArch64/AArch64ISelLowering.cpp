@@ -3091,7 +3091,8 @@ SDValue AArch64TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
   switch (IntNo) {
   default: return SDValue();    // Don't custom lower most intrinsics.
   case Intrinsic::thread_pointer: {
-    EVT PtrVT = getPointerTy(DAG.getDataLayout());
+    unsigned AS = DAG.getDataLayout().getGlobalsAddressSpace();
+    EVT PtrVT = getPointerTy(DAG.getDataLayout(), AS);
     return DAG.getNode(AArch64ISD::THREAD_POINTER, dl, PtrVT);
   }
   case Intrinsic::aarch64_neon_abs: {
@@ -5348,18 +5349,49 @@ SDValue AArch64TargetLowering::LowerELFTLSDescCallSeq(SDValue SymAddr,
 }
 
 SDValue
+AArch64TargetLowering::LowerC64ELFTLSDescCallSeq(SDValue SymAddr,
+                                                 SDValue TP,
+                                                 const SDLoc &DL,
+                                                 SelectionDAG &DAG) const {
+  SDValue Chain = DAG.getEntryNode();
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
+
+  // Copy TP in C2
+  Chain = DAG.getCopyToReg(Chain, DL, AArch64::C2, TP, SDValue());
+  Chain =
+      DAG.getNode(AArch64ISD::TLSDESC_CALLSEQ, DL, NodeTys,
+                  {Chain, SymAddr});
+  SDValue Glue = Chain.getValue(1);
+
+  SDValue Addr = DAG.getCopyFromReg(Chain, DL, AArch64::C0, MVT::iFATPTR128,
+                                    Glue);
+  SDValue Size = DAG.getCopyFromReg(Chain, DL, AArch64::X1, MVT::i64,
+                                    Addr.getValue(2));
+
+  return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, MVT::iFATPTR128,
+                     DAG.getConstant(Intrinsic::cheri_cap_bounds_set, DL,
+                                     MVT::i32),
+                     Addr, Size);
+}
+
+SDValue
 AArch64TargetLowering::LowerELFGlobalTLSAddress(SDValue Op,
                                                 SelectionDAG &DAG) const {
   assert(Subtarget->isTargetELF() && "This function expects an ELF target");
+  bool HasC64 = Subtarget->hasC64();
 
   const GlobalAddressSDNode *GA = cast<GlobalAddressSDNode>(Op);
 
   TLSModel::Model Model = getTargetMachine().getTLSModel(GA->getGlobal());
 
-  if (!EnableAArch64ELFLocalDynamicTLSGeneration) {
+  if (HasC64 || !EnableAArch64ELFLocalDynamicTLSGeneration) {
     if (Model == TLSModel::LocalDynamic)
       Model = TLSModel::GeneralDynamic;
   }
+
+  // C64 doesn't yet support anything except GeneralDynamic.
+  if (HasC64)
+    Model = TLSModel::GeneralDynamic;
 
   if (getTargetMachine().getCodeModel() == CodeModel::Large &&
       Model != TLSModel::LocalExec)
@@ -5373,7 +5405,8 @@ AArch64TargetLowering::LowerELFGlobalTLSAddress(SDValue Op,
   // which may be larger than needed.
 
   SDValue TPOff;
-  EVT PtrVT = getPointerTy(DAG.getDataLayout());
+  unsigned AS = DAG.getDataLayout().getGlobalsAddressSpace();
+  EVT PtrVT = getPointerTy(DAG.getDataLayout(), AS);
   SDLoc DL(Op);
   const GlobalValue *GV = GA->getGlobal();
 
@@ -5432,6 +5465,11 @@ AArch64TargetLowering::LowerELFGlobalTLSAddress(SDValue Op,
     // the address.
     SDValue SymAddr =
         DAG.getTargetGlobalAddress(GV, DL, PtrVT, 0, AArch64II::MO_TLS);
+
+    if (HasC64)
+      // In C64 we get a capability back insted of the offset from the thread
+      // pointer.
+      return LowerC64ELFTLSDescCallSeq(SymAddr, ThreadBase, DL, DAG);
 
     // Finally we can make a call to calculate the offset from tpidr_el0.
     TPOff = LowerELFTLSDescCallSeq(SymAddr, DL, DAG);

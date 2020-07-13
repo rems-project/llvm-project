@@ -145,6 +145,11 @@ ELF_RELOC(R_MORELLO_ADR_PREL_PG_HI20_NC,             0xe006)
 ELF_RELOC(R_MORELLO_ADR_GOT_PAGE,                    0xe007)
 ELF_RELOC(R_MORELLO_LD128_GOT_LO12_NC,               0xe008)
 
+// TLS relocations
+ELF_RELOC(R_MORELLO_TLSDESC_ADR_PAGE20,              0xe100)
+ELF_RELOC(R_MORELLO_TLSDESC_LD128_LO12,              0xe101)
+ELF_RELOC(R_MORELLO_TLSDESC_CALL,                    0xe102)
+
 // Dynamic Relocations
 ELF_RELOC(R_MORELLO_CAPINIT,                         0xe800)
 ELF_RELOC(R_MORELLO_GLOB_DAT,                        0xe801)
