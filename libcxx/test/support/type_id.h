@@ -9,13 +9,11 @@
 #define SUPPORT_TYPE_ID_H
 
 #include <functional>
-#include <typeinfo>
 #include <string>
 #include <cstdio>
 #include <cassert>
 
 #include "test_macros.h"
-#include "demangle.h"
 
 #if TEST_STD_VER < 11
 #error This header requires C++11 or greater
@@ -59,12 +57,7 @@ struct TypeID {
   {return LHS.m_id != RHS.m_id; }
 
   std::string name() const {
-    return demangle(m_id);
-  }
-
-  void dump() const {
-    std::string s = name();
-    std::printf("TypeID: %s\n", s.c_str());
+    return m_id;
   }
 
 private:
@@ -84,7 +77,7 @@ private:
 #endif // _MSC_VER
 template <class T>
 inline TypeID const& makeTypeIDImp() {
-  static const TypeID id(getTypeName<T>());
+  static const TypeID id(__PRETTY_FUNCTION__);
   return id;
 }
 #ifdef _MSC_VER
