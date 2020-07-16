@@ -129,6 +129,8 @@ void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::UADDSAT:
   case ISD::SSUBSAT:
   case ISD::USUBSAT:
+  case ISD::SSHLSAT:
+  case ISD::USHLSAT:
 
   case ISD::FPOW:
   case ISD::FREM:
@@ -967,6 +969,8 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::UADDSAT:
   case ISD::SSUBSAT:
   case ISD::USUBSAT:
+  case ISD::SSHLSAT:
+  case ISD::USHLSAT:
     SplitVecRes_BinOp(N, Lo, Hi);
     break;
 
@@ -2855,6 +2859,8 @@ void DAGTypeLegalizer::WidenVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::SADDSAT:
   case ISD::USUBSAT:
   case ISD::SSUBSAT:
+  case ISD::SSHLSAT:
+  case ISD::USHLSAT:
     Res = WidenVecRes_Binary(N);
     break;
 
