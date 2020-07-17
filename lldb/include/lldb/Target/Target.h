@@ -1261,6 +1261,10 @@ public:
 
   void SetREPL(lldb::LanguageType language, lldb::REPLSP repl_sp);
 
+  StackFrameRecognizerManager &GetFrameRecognizerManager() {
+    return *m_frame_recognizer_manager_up;
+  }
+
 protected:
   /// Implementing of ModuleList::Notifier.
 
@@ -1341,6 +1345,8 @@ protected:
   bool m_suppress_stop_hooks;
   bool m_is_dummy_target;
   unsigned m_next_persistent_variable_index = 0;
+  /// Stores the frame recognizers of this target.
+  lldb::StackFrameRecognizerManagerUP m_frame_recognizer_manager_up;
 
   static void ImageSearchPathsChanged(const PathMappingList &path_list,
                                       void *baton);
