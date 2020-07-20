@@ -246,8 +246,6 @@ public:
     Options.SupportsDebugEntryValues = Enable;
   }
 
-  bool shouldPrintMachineCode() const { return Options.PrintMachineCode; }
-
   bool getUniqueSectionNames() const { return Options.UniqueSectionNames; }
 
   /// Return true if unique basic block section names must be generated.
