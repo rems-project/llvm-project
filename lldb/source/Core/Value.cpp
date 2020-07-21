@@ -354,7 +354,7 @@ Status Value::GetValueAsData(ExecutionContext *exe_ctx, DataExtractor &data,
         return error; // Success;
     }
 
-    error.SetErrorStringWithFormat("extracting data from value failed");
+    error.SetErrorString("extracting data from value failed");
     break;
   }
   case eValueTypeLoadAddress:
@@ -539,8 +539,7 @@ Status Value::GetValueAsData(ExecutionContext *exe_ctx, DataExtractor &data,
     if (address_type == eAddressTypeHost) {
       // The address is an address in this process, so just copy it.
       if (address == 0) {
-        error.SetErrorStringWithFormat(
-            "trying to read from host address of 0.");
+        error.SetErrorString("trying to read from host address of 0.");
         return error;
       }
       if (content_type != eMemoryContentNormal) {
@@ -602,7 +601,7 @@ Status Value::GetValueAsData(ExecutionContext *exe_ctx, DataExtractor &data,
                                      address_type);
     }
   } else {
-    error.SetErrorStringWithFormat("out of memory");
+    error.SetErrorString("out of memory");
   }
 
   return error;
