@@ -20,6 +20,7 @@
 #include <string>
 #include <cstdint>
 #include <cstring>
+#include <utility>
 
 namespace lldb_private {
 class DataExtractor;
@@ -67,7 +68,7 @@ public:
   }
 
   explicit RegisterValue(llvm::APInt inst) : m_type(eTypeUInt256) {
-    m_scalar = llvm::APInt(inst);
+    m_scalar = llvm::APInt(std::move(inst));
   }
 
   explicit RegisterValue(float value) : m_type(eTypeFloat) { m_scalar = value; }
@@ -192,7 +193,7 @@ public:
 
   void operator=(llvm::APInt uint) {
     m_type = eTypeUInt256;
-    m_scalar = llvm::APInt(uint);
+    m_scalar = llvm::APInt(std::move(uint));
   }
 
   void operator=(float f) {
@@ -232,7 +233,7 @@ public:
 
   void SetUInt128(llvm::APInt uint) {
     m_type = eTypeUInt128;
-    m_scalar = uint;
+    m_scalar = std::move(uint);
   }
 
   void SetUInt256(llvm::APInt uint) {
