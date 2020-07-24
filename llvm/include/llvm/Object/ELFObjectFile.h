@@ -88,6 +88,10 @@ public:
 
   SubtargetFeatures getRISCVFeatures() const;
 
+  Optional<StringRef> tryGetCPUName() const override;
+
+  StringRef getAMDGPUCPUName() const;
+
   void setARMSubArch(Triple &TheTriple) const override;
 
   virtual uint16_t getEType() const = 0;
