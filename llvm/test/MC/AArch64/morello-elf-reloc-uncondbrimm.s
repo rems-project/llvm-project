@@ -1,12 +1,12 @@
 // RUN: llvm-mc -triple=aarch64-none-linux-gnu -mattr=+morello -filetype=obj %s -o - | \
-// RUN:   llvm-readobj -r | FileCheck -check-prefix=OBJ %s
+// RUN:   llvm-readobj -r - | FileCheck -check-prefix=OBJ %s
 
 // RUN: llvm-mc -mattr=+c64 -triple=aarch64-none-linux-gnu \
 // RUN:   -filetype=obj %s -o - | \
-// RUN:   llvm-readobj -r | FileCheck -check-prefix=OBJ-C64 %s
+// RUN:   llvm-readobj -r - | FileCheck -check-prefix=OBJ-C64 %s
 // RUN: llvm-mc -mattr=+c64,+morello -triple=aarch64-none-linux-gnu \
 // RUN:   -filetype=obj %s -o - | \
-// RUN:   llvm-readobj -r | FileCheck -check-prefix=OBJ-C64 %s
+// RUN:   llvm-readobj -r - | FileCheck -check-prefix=OBJ-C64 %s
 
 
         b somewhere

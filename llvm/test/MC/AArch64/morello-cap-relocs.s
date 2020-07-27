@@ -1,7 +1,7 @@
 // RUN: llvm-mc -triple=arm64 -mattr=+morello %s -o - -filetype=obj | \
-// RUN:     llvm-readelf -r | FileCheck %s --check-prefix=RELOCS
+// RUN:     llvm-readelf -r - | FileCheck %s --check-prefix=RELOCS
 // RUN: llvm-mc -triple=arm64 -mattr=+morello %s -o - -filetype=obj | \
-// RUN:     llvm-readelf -s | FileCheck %s --check-prefix=SYMS
+// RUN:     llvm-readelf -s - | FileCheck %s --check-prefix=SYMS
 // RUN: llvm-mc -triple=arm64 -mattr=+morello %s -o - -filetype=obj | \
 // RUN:     llvm-objdump -s -j .data - | FileCheck %s --check-prefix=DATA
 

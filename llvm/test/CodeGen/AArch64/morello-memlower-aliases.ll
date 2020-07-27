@@ -1,5 +1,5 @@
 ; RUN: llc -march=arm64 -mattr=+c64,+morello -target-abi purecap -o - %s | FileCheck %s
-; RUN: llc -march=arm64 -mattr=+c64,+morello -target-abi purecap -filetype=obj -function-sections -o - %s | llvm-readobj --symbols | FileCheck %s --check-prefix=SYMS
+; RUN: llc -march=arm64 -mattr=+c64,+morello -target-abi purecap -filetype=obj -function-sections -o - %s | llvm-readobj --symbols - | FileCheck %s --check-prefix=SYMS
 
 target datalayout = "e-m:e-pf200:128:128:128:64-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"
 target triple = "aarch64-none--elf"

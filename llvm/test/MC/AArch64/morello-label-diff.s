@@ -1,5 +1,5 @@
 // RUN: llvm-mc -triple=aarch64-linux-gnu -mattr=+morello,+c64 \
-// RUN:         -filetype=obj -o - %s| llvm-readobj -r  | \
+// RUN:         -filetype=obj -o - %s| llvm-readobj -r - | \
 // RUN: FileCheck %s
 
 .type	foo,@function

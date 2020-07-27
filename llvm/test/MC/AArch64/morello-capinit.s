@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple=arm64 -mattr=+morello %s -o - -filetype=obj | llvm-readobj -r | FileCheck %s
+// RUN: llvm-mc -triple=arm64 -mattr=+morello %s -o - -filetype=obj | llvm-readobj -r - | FileCheck %s
 
 // CHECK: Relocations [
 // CHECK:  Section (4) .rela.data {

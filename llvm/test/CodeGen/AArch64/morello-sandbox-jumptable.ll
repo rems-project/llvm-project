@@ -2,7 +2,7 @@
 ; RUN: llc -mtriple=arm64 -mattr=+c64,+morello -target-abi purecap  -o - %s | FileCheck %s
 
 ; RUN: llc -mtriple=arm64 -mattr=+c64,+morello -o - -relocation-model=pic -filetype=obj -target-abi purecap %s | \
-; RUN: llvm-readobj -r | FileCheck %s --check-prefix=c64-relocs
+; RUN: llvm-readobj -r - | FileCheck %s --check-prefix=c64-relocs
 
 ; CHECK-LABEL: jumpfun
 ; CHECK: adrp c[[JT:[0-9]+]], .LJT

@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple=arm64 -mattr=+morello,+c64 -target-abi purecap -cheri-cap-table-abi=fn-desc %s -o - -filetype=obj | llvm-readobj -r | FileCheck %s --check-prefix=RELOCS
+// RUN: llvm-mc -triple=arm64 -mattr=+morello,+c64 -target-abi purecap -cheri-cap-table-abi=fn-desc %s -o - -filetype=obj | llvm-readobj -r - | FileCheck %s --check-prefix=RELOCS
 // RUN: llvm-mc -triple=arm64 -mattr=+morello,+c64 -target-abi purecap -cheri-cap-table-abi=fn-desc %s -show-encoding -o - | FileCheck %s --check-prefix=ASM
 
 // RELOCS:  Section (3) .rela.text {
