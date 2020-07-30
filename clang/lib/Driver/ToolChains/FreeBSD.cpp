@@ -454,14 +454,6 @@ FreeBSD::FreeBSD(const Driver &D, const llvm::Triple &Triple,
     else
       getFilePaths().push_back(getDriver().SysRoot + "/usr/lib");
   }
-
-  if (Triple.getArch() == llvm::Triple::aarch64) {
-    bool A64, C64, PureCap, ReducedCaps;
-    tools::aarch64::getMorelloMode(D, Triple, Args, A64, C64, PureCap,
-                                 ReducedCaps);
-    if (PureCap)
-      getFilePaths().push_back(getDriver().SysRoot + "/usr/libcheri");
-  }
 }
 
 ToolChain::CXXStdlibType FreeBSD::GetDefaultCXXStdlibType() const {

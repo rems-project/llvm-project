@@ -197,6 +197,12 @@ getAArch64MicroArchFeaturesFromMcpu(const Driver &D, StringRef Mcpu,
   return getAArch64MicroArchFeaturesFromMtune(D, CPU, Args, Features);
 }
 
+bool aarch64::isPurecap(const llvm::opt::ArgList &Args) {
+  if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ))
+    return strcmp(A->getValue(), "purecap") == 0;
+  return false;
+}
+
 void aarch64::getMorelloMode(const Driver &D, const llvm::Triple &Triple,
                              const ArgList &Args, bool &A64C,
                              bool &C64, bool &PureCap,

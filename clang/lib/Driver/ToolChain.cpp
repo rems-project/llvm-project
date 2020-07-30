@@ -9,6 +9,7 @@
 #include "clang/Driver/ToolChain.h"
 #include "InputInfo.h"
 #include "ToolChains/Arch/ARM.h"
+#include "ToolChains/Arch/AArch64.h"
 #include "ToolChains/Arch/Mips.h"
 #include "ToolChains/Arch/RISCV.h"
 #include "ToolChains/Clang.h"
@@ -93,6 +94,8 @@ ToolChain::ToolChain(const Driver &D, const llvm::Triple &T,
   if (Triple.isMIPS() && tools::mips::hasMipsAbiArg(Args, "purecap"))
     IsCheriPurecap = true;
   if (Triple.isRISCV() && tools::riscv::isCheriPurecap(Args, Triple))
+    IsCheriPurecap = true;
+  if (Triple.isAArch64() && tools::aarch64::isPurecap(Args))
     IsCheriPurecap = true;
 
   // FIXME: Should we update triple enviroment to purecap? Or will that break RISCV?

@@ -63,6 +63,6 @@
 
 // NOC64-PLT-NOT: --morello-c64-plt
 
-// RUN: %clang -### -target aarch64-unknown-freebsd12.0  -march=morello+c64 -mabi=purecap %s --sysroot=%S/Inputs/basic_cheribsd_libcheri_tree 2>&1| FileCheck --check-prefix=LIBCHERI %s
+// RUN: %clang -### -target aarch64-unknown-freebsd12.0  -march=morello+c64 -mabi=purecap %s --sysroot=%S/cheri/Inputs/basic_cheribsd_libcheri_tree 2>&1| FileCheck --check-prefix=LIBCHERI %s
 // LIBCHERI: --sysroot=[[SYSROOT:[^"]+]]
 // LIBCHERI: "-L[[SYSROOT]]/usr/libcheri"
