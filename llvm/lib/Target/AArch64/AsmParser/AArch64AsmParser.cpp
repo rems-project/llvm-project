@@ -5794,12 +5794,8 @@ static SMLoc incrementLoc(SMLoc L, int Offset) {
 
 static void ExpandCryptoAEK(AArch64::ArchKind ArchKind,
                             SmallVector<StringRef, 4> &RequestedExtensions) {
-  const bool NoCrypto =
-      (std::find(RequestedExtensions.begin(), RequestedExtensions.end(),
-                 "nocrypto") != std::end(RequestedExtensions));
-  const bool Crypto =
-      (std::find(RequestedExtensions.begin(), RequestedExtensions.end(),
-                 "crypto") != std::end(RequestedExtensions));
+  const bool NoCrypto = llvm::is_contained(RequestedExtensions, "nocrypto");
+  const bool Crypto = llvm::is_contained(RequestedExtensions, "crypto");
 
   if (!NoCrypto && Crypto) {
     switch (ArchKind) {
