@@ -1,0 +1,61 @@
+; RUN: llc -march=arm64 -mattr=+morello,+c64 -frame-pointer=all -target-abi purecap -o - %s | FileCheck %s
+target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128-pf200:128:128-A200-P200-G200"
+target triple = "aarch64-none--elf"
+
+declare i32 @bar(i8 addrspace(200)*, ...) addrspace(200)
+
+; CHECK-LABEL: testSetFPVarArgs
+define i32 @testSetFPVarArgs(i8 addrspace(200)* %fmt, double %d, float %f) addrspace(200) {
+entry:
+  %conv = fpext float %f to double
+  %call = tail call i32 (i8 addrspace(200)*, ...) @bar(i8 addrspace(200)* %fmt, double %d, double %conv, double 1.000000e+00, double 2.000000e+00, double 2.000000e+00, double 4.000000e+00, double 5.000000e+00, double 6.000000e+00, double %d, double %conv) #3
+  ret i32 %call
+; CHECK: fcvt	d1, s1
+; CHECK: stp	d0, d1, [csp]
+}
+
+; CHECK-LABEL: testSetGPVarArgs
+define i32 @testSetGPVarArgs(i8 addrspace(200)* %fmt, i64 %n, i32 %w, i16 %s, i8 %c) addrspace(200) {
+entry:
+  %conv = sext i16 %s to i32
+  %conv1 = zext i8 %c to i32
+  %call = tail call i32 (i8 addrspace(200)*, ...) @bar(i8 addrspace(200)* %fmt, i8 addrspace(200)* %fmt, i64 %n, i32 %w, i32 %conv, i32 %conv1, i32 1, i32 2, i8 addrspace(200)* %fmt, i64 %n, i32 %w, i32 %conv, i32 %conv1, i8 addrspace(200)* %fmt)
+  ret i32 %call
+
+; The following arguments get spilled to stack with the following offsets in the pure capability ABI from CSP:
+; i8 addrspace(200) %fmt   #0
+; i64 n                    #16
+; i32 w                    #24
+; i32 conv                 #32
+; i32 conv1                #40
+; i8 addrspace(200) %fmt   #48
+
+; CHECK-DAG: str	c{{.*}}, [csp, #48]
+; CHECK-DAG: str	w{{.*}}, [csp, #40]
+; CHECK-DAG: str	w{{.*}}, [csp, #32]
+; CHECK-DAG: str	w{{.*}}, [csp, #24]
+; CHECK-DAG: str	x{{.*}}, [csp, #16]
+; CHECK-DAG: str	c{{.*}}, [csp, #0]
+}
+
+declare void @llvm.lifetime.start.p200i8(i64, i8 addrspace(200)* nocapture) addrspace(200)
+declare void @llvm.lifetime.end.p200i8(i64, i8 addrspace(200)* nocapture) addrspace(200)
+declare void @llvm.va_start.p200i8(i8 addrspace(200)*) addrspace(200)
+declare void @llvm.va_end.p200i8(i8 addrspace(200)*) addrspace(200)
+declare i32 @foo(i8 addrspace(200)*, %struct.__va_list addrspace(200)*) addrspace(200)
+
+%struct.__va_list = type { i8 addrspace(200)*, i8 addrspace(200)*, i8 addrspace(200)*, i32, i32 }
+
+; CHECK-LABEL: testVAListAddress
+define i32 @testVAListAddress(i8 addrspace(200)* %fmt, ...) addrspace(200) {
+entry:
+  %vl = alloca %struct.__va_list, align 16, addrspace(200)
+  %0 = bitcast %struct.__va_list addrspace(200)* %vl to i8 addrspace(200)*
+  call void @llvm.lifetime.start.p200i8(i64 64, i8 addrspace(200)* %0)
+  call void @llvm.va_start.p200i8(i8 addrspace(200)* %0)
+  %call = call i32 @foo(i8 addrspace(200)* %fmt, %struct.__va_list addrspace(200)* nonnull %vl)
+  call void @llvm.va_end.p200i8(i8 addrspace(200)* %0)
+  call void @llvm.lifetime.end.p200i8(i64 64, i8 addrspace(200)* %0)
+  ret i32 %call
+; CHECK-NOT: str c{{[0-9]+}}, [x{{[0-9]+}}
+}

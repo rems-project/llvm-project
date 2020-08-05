@@ -8,6 +8,7 @@
 
 #include "lldb/Core/DumpRegisterValue.h"
 #include "lldb/Core/DumpDataExtractor.h"
+#include "lldb/Target/ExecutionContext.h"
 #include "lldb/Utility/DataExtractor.h"
 #include "lldb/Utility/RegisterValue.h"
 #include "lldb/Utility/StreamString.h"
@@ -19,7 +20,8 @@ bool lldb_private::DumpRegisterValue(const RegisterValue &reg_val, Stream *s,
                                      const RegisterInfo *reg_info,
                                      bool prefix_with_name,
                                      bool prefix_with_alt_name, Format format,
-                                     uint32_t reg_name_right_align_at) {
+                                     uint32_t reg_name_right_align_at,
+                                     const ExecutionContext *exe_ctx) {
   DataExtractor data;
   if (reg_val.GetData(data)) {
     bool name_printed = false;
@@ -63,6 +65,8 @@ bool lldb_private::DumpRegisterValue(const RegisterValue &reg_val, Stream *s,
     if (format == eFormatDefault)
       format = reg_info->format;
 
+    ExecutionContextScope *exe_scope =
+        exe_ctx ? exe_ctx->GetBestExecutionContextScope() : nullptr;
     DumpDataExtractor(data, s,
                       0,                    // Offset in "data"
                       format,               // Format to use when dumping
@@ -71,7 +75,10 @@ bool lldb_private::DumpRegisterValue(const RegisterValue &reg_val, Stream *s,
                       UINT32_MAX,           // num_per_line
                       LLDB_INVALID_ADDRESS, // base_addr
                       0,                    // item_bit_size
-                      0);                   // item_bit_offset
+                      0,                    // item_bit_offset
+                      0,                    // tag_byte_size
+                      0,                    // tagged_byte_size
+                      exe_scope);
     return true;
   }
   return false;

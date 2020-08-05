@@ -1458,15 +1458,8 @@ Status NativeProcessDarwin::GetMemoryRegionInfo(lldb::addr_t load_addr,
 }
 
 Status NativeProcessDarwin::ReadMemory(lldb::addr_t addr, void *buf,
-                                       size_t size, size_t &bytes_read) {
-  Status error;
-  error.SetErrorString("TODO: implement");
-  return error;
-}
-
-Status NativeProcessDarwin::ReadMemoryWithoutTrap(lldb::addr_t addr, void *buf,
-                                                  size_t size,
-                                                  size_t &bytes_read) {
+                                       size_t size, size_t &bytes_read,
+                                       MemoryContentType type) {
   Status error;
   error.SetErrorString("TODO: implement");
   return error;

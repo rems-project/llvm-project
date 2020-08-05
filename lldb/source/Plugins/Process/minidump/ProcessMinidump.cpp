@@ -15,6 +15,8 @@
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Section.h"
+#include "lldb/Target/DynamicLoader.h"
+#include "lldb/Target/Memory.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandObject.h"
 #include "lldb/Interpreter/CommandObjectMultiword.h"
@@ -305,9 +307,15 @@ bool ProcessMinidump::IsAlive() { return true; }
 bool ProcessMinidump::WarnBeforeDetach() const { return false; }
 
 size_t ProcessMinidump::ReadMemory(lldb::addr_t addr, void *buf, size_t size,
-                                   Status &error) {
+                                   Status &error,
+                                   lldb::MemoryContentType type) {
   // Don't allow the caching that lldb_private::Process::ReadMemory does since
   // we have it all cached in our dump file anyway.
+  if (type != lldb::eMemoryContentNormal) {
+    error.SetErrorStringWithFormat("reading %s cannot be done from minidump",
+                                   GetMemoryContentTypeAsCString(type));
+    return 0;
+  }
   return DoReadMemory(addr, buf, size, error);
 }
 

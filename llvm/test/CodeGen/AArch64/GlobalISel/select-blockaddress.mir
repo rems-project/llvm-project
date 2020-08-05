@@ -59,6 +59,6 @@ body:             |
     G_BRINDIRECT %0(p0)
 
   bb.2.block (address-taken):
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...

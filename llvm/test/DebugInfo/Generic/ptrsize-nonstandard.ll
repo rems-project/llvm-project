@@ -1,19 +1,19 @@
 ; REQUIRES: object-emission
 
 ; RUN: %llc_dwarf -O0 -filetype=obj < %s > %t
-; RUN: llvm-dwarfdump %t | FileCheck %s
+; RUN: llvm-dwarfdump -v --debug-info %t | FileCheck %s
 
 ; Check that pointers and references with size different to the target's pointer
 ; size are emitted with size information in DWARF.
 
 ; CHECK: 0x{{[0-9a-f]+}}:   DW_TAG_pointer_type
-; CHECK-NEXT: DW_AT_type (0x{{[0-9a-f]+}} "int")
-; CHECK-NEXT: DW_AT_byte_size (0x10)
+; CHECK-NEXT: DW_AT_type [DW_FORM_ref4] (cu + 0x{{[0-9a-f]+}} => {{.*}} "int")
+; CHECK-NEXT: DW_AT_byte_size [DW_FORM_data1] (0x10)
 ; CHECK-NOT: DW_TAG_pointer_type
 
 ; CHECK: 0x{{[0-9a-f]+}}:   DW_TAG_reference_type
-; CHECK-NEXT: DW_AT_type (0x{{[0-9a-f]+}} "int")
-; CHECK-NEXT: DW_AT_byte_size (0x10)
+; CHECK-NEXT: DW_AT_type [DW_FORM_ref4] (cu + 0x{{[0-9a-f]+}} => {{.*}} "int")
+; CHECK-NEXT: DW_AT_byte_size [DW_FORM_data1] (0x10)
 ; CHECK-NOT: DW_TAG_reference_type
 
 define i32 @foo() !dbg !4 {

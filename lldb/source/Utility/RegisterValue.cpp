@@ -8,6 +8,7 @@
 
 #include "lldb/Utility/RegisterValue.h"
 
+#include "lldb/Target/Memory.h"
 #include "lldb/Utility/DataExtractor.h"
 #include "lldb/Utility/Scalar.h"
 #include "lldb/Utility/Status.h"
@@ -83,6 +84,7 @@ uint32_t RegisterValue::GetAsMemoryData(const RegisterInfo *reg_info, void *dst,
 
 uint32_t RegisterValue::SetFromMemoryData(const RegisterInfo *reg_info,
                                           const void *src, uint32_t src_len,
+                                          MemoryContentType src_content_type,
                                           lldb::ByteOrder src_byte_order,
                                           Status &error) {
   if (reg_info == nullptr) {
@@ -124,6 +126,12 @@ uint32_t RegisterValue::SetFromMemoryData(const RegisterInfo *reg_info,
   // Use a data extractor to correctly copy and pad the bytes read into the
   // register value
   DataExtractor src_data(src, src_len, src_byte_order, 4);
+
+  // Convert tagged memory data into an actual value.
+  if (IsTaggedMemoryContentType(src_content_type))
+    if (!TaggedMemory::TransformDataToValue(src_data, src_content_type,
+                                            src_byte_order, error))
+      return 0;
 
   error = SetValueFromData(reg_info, src_data, 0, true);
   if (error.Fail())
@@ -174,9 +182,11 @@ bool RegisterValue::GetScalarValue(Scalar &scalar) const {
   case eTypeUInt32:
   case eTypeUInt64:
   case eTypeUInt128:
+  case eTypeUInt256:
   case eTypeFloat:
   case eTypeDouble:
   case eTypeLongDouble:
+  case eTypeCapability128:
     scalar = m_scalar;
     return true;
   }
@@ -226,35 +236,23 @@ Status RegisterValue::SetValueFromData(const RegisterInfo *reg_info,
   // Zero out the value in case we get partial data...
   memset(buffer.bytes, 0, sizeof(buffer.bytes));
 
-  type128 int128;
-
   m_type = eTypeInvalid;
   switch (reg_info->encoding) {
   case eEncodingInvalid:
     break;
   case eEncodingUint:
-  case eEncodingSint:
-    if (reg_info->byte_size == 1)
-      SetUInt8(src.GetMaxU32(&src_offset, src_len));
-    else if (reg_info->byte_size <= 2)
-      SetUInt16(src.GetMaxU32(&src_offset, src_len));
-    else if (reg_info->byte_size <= 4)
-      SetUInt32(src.GetMaxU32(&src_offset, src_len));
-    else if (reg_info->byte_size <= 8)
-      SetUInt64(src.GetMaxU64(&src_offset, src_len));
-    else if (reg_info->byte_size <= 16) {
-      uint64_t data1 = src.GetU64(&src_offset);
-      uint64_t data2 = src.GetU64(&src_offset);
-      if (src.GetByteSize() == eByteOrderBig) {
-        int128.x[0] = data1;
-        int128.x[1] = data2;
-      } else {
-        int128.x[0] = data2;
-        int128.x[1] = data1;
-      }
-      SetUInt128(llvm::APInt(128, 2, int128.x));
-    }
+  case eEncodingSint: {
+    llvm::APInt uint = src.GetAPInt(&src_offset, src_len);
+    if (!SetUInt(uint, reg_info->byte_size, error))
+      return error;
     break;
+  }
+  case eEncodingCapability: {
+    llvm::APInt uint = src.GetAPInt(&src_offset, src_len);
+    if (!SetCapability(uint, reg_info->byte_size, error))
+      return error;
+    break;
+  }
   case eEncodingIEEE754:
     if (reg_info->byte_size == sizeof(float))
       SetFloat(src.GetFloat(&src_offset));
@@ -373,7 +371,6 @@ Status RegisterValue::SetValueFromString(const RegisterInfo *reg_info,
   }
   const uint32_t byte_size = reg_info->byte_size;
 
-  uint64_t uval64;
   int64_t ival64;
   float flt_val;
   double dbl_val;
@@ -383,33 +380,22 @@ Status RegisterValue::SetValueFromString(const RegisterInfo *reg_info,
     error.SetErrorString("Invalid encoding.");
     break;
 
-  case eEncodingUint:
-    if (byte_size > sizeof(uint64_t)) {
-      error.SetErrorStringWithFormat(
-          "unsupported unsigned integer byte size: %u", byte_size);
-      break;
-    }
-    if (value_str.getAsInteger(0, uval64)) {
+  case eEncodingUint: {
+    llvm::APInt uint;
+    if (value_str.getAsInteger(0, uint)) {
       error.SetErrorStringWithFormat(
           "'%s' is not a valid unsigned integer string value",
           value_str.str().c_str());
-      break;
+      return error;
     }
 
-    if (!UInt64ValueIsValidForByteSize(uval64, byte_size)) {
-      error.SetErrorStringWithFormat(
-          "value 0x%" PRIx64
-          " is too large to fit in a %u byte unsigned integer value",
-          uval64, byte_size);
-      break;
-    }
-
-    if (!SetUInt(uval64, reg_info->byte_size)) {
+    if (!SetUInt(uint, reg_info->byte_size, error)) {
       error.SetErrorStringWithFormat(
           "unsupported unsigned integer byte size: %u", byte_size);
       break;
     }
     break;
+  }
 
   case eEncodingSint:
     if (byte_size > sizeof(long long)) {
@@ -477,9 +463,59 @@ Status RegisterValue::SetValueFromString(const RegisterInfo *reg_info,
     if (!ParseVectorEncoding(reg_info, value_str, byte_size, this))
       error.SetErrorString("unrecognized vector encoding string value.");
     break;
+
+  case eEncodingCapability: {
+    llvm::APInt uint;
+    if (value_str.getAsInteger(0, uint)) {
+      error.SetErrorStringWithFormat(
+          "'%s' is not a valid capability string value",
+          value_str.str().c_str());
+      return error;
+    }
+
+    if (!SetCapability(uint, reg_info->byte_size, error))
+      return error;
+    break;
+  }
   }
 
   return error;
+}
+
+bool RegisterValue::Overlay(const RegisterValue &overlay_value) {
+  switch (m_type) {
+  case eTypeInvalid:
+    break;
+
+  case eTypeUInt8:
+  case eTypeUInt16:
+  case eTypeUInt32:
+  case eTypeUInt64:
+  case eTypeUInt128:
+  case eTypeUInt256:
+  case eTypeCapability128: {
+    uint32_t bit_size = GetBitSize();
+    uint32_t overlay_bit_size = overlay_value.GetBitSize();
+    assert(bit_size >= overlay_bit_size);
+
+    // If the underlying Scalar value has more bits than the actual register
+    // value then make a sanity check that these bits are zero, else they would
+    // get incorrectly propagated in the non-overlayed part of the result.
+    assert(overlay_value.m_scalar >> overlay_bit_size == 0);
+
+    m_scalar >>= overlay_bit_size;
+    m_scalar <<= overlay_bit_size;
+    m_scalar += overlay_value.m_scalar;
+    return true;
+  }
+
+  case eTypeFloat:
+  case eTypeDouble:
+  case eTypeLongDouble:
+  case eTypeBytes:
+    break;
+  }
+  return false;
 }
 
 bool RegisterValue::SignExtend(uint32_t sign_bitpos) {
@@ -492,11 +528,13 @@ bool RegisterValue::SignExtend(uint32_t sign_bitpos) {
   case eTypeUInt32:
   case eTypeUInt64:
   case eTypeUInt128:
+  case eTypeUInt256:
     return m_scalar.SignExtend(sign_bitpos);
   case eTypeFloat:
   case eTypeDouble:
   case eTypeLongDouble:
   case eTypeBytes:
+  case eTypeCapability128:
     break;
   }
   return false;
@@ -515,9 +553,11 @@ bool RegisterValue::CopyValue(const RegisterValue &rhs) {
   case eTypeUInt32:
   case eTypeUInt64:
   case eTypeUInt128:
+  case eTypeUInt256:
   case eTypeFloat:
   case eTypeDouble:
   case eTypeLongDouble:
+  case eTypeCapability128:
     m_scalar = rhs.m_scalar;
     break;
   case eTypeBytes:
@@ -633,9 +673,11 @@ llvm::APInt RegisterValue::GetAsUInt128(const llvm::APInt &fail_value,
   case eTypeUInt32:
   case eTypeUInt64:
   case eTypeUInt128:
+  case eTypeUInt256:
   case eTypeFloat:
   case eTypeDouble:
   case eTypeLongDouble:
+  case eTypeCapability128:
     return m_scalar.UInt128(fail_value);
   case eTypeBytes: {
     switch (buffer.length) {
@@ -665,6 +707,7 @@ float RegisterValue::GetAsFloat(float fail_value, bool *success_ptr) const {
   case eTypeUInt32:
   case eTypeUInt64:
   case eTypeUInt128:
+  case eTypeUInt256:
   case eTypeFloat:
   case eTypeDouble:
   case eTypeLongDouble:
@@ -685,6 +728,7 @@ double RegisterValue::GetAsDouble(double fail_value, bool *success_ptr) const {
   case eTypeUInt32:
   case eTypeUInt64:
   case eTypeUInt128:
+  case eTypeUInt256:
   case eTypeFloat:
   case eTypeDouble:
   case eTypeLongDouble:
@@ -706,6 +750,7 @@ long double RegisterValue::GetAsLongDouble(long double fail_value,
   case eTypeUInt32:
   case eTypeUInt64:
   case eTypeUInt128:
+  case eTypeUInt256:
   case eTypeFloat:
   case eTypeDouble:
   case eTypeLongDouble:
@@ -714,6 +759,53 @@ long double RegisterValue::GetAsLongDouble(long double fail_value,
   if (success_ptr)
     *success_ptr = false;
   return fail_value;
+}
+
+Capability RegisterValue::GetAsCapability(CapabilityType type,
+                                          Capability fail_value,
+                                          bool *success_ptr) const {
+  switch (m_type) {
+  case eTypeCapability128: {
+    // Get APInt from the underlying Scalar and check that the value (tag +
+    // data) does not exceed 129 bits in size.
+    llvm::APInt value(m_scalar.UInt256(llvm::APInt::getMaxValue(256)));
+    assert(value.getActiveBits() <= 129);
+
+    if (success_ptr)
+      *success_ptr = true;
+    return Capability(type, value.trunc(129));
+  }
+  default:
+    break;
+  }
+  if (success_ptr)
+    *success_ptr = false;
+  return fail_value;
+}
+
+std::string RegisterValue::GetAsHexValueString() const {
+  switch (m_type) {
+  case eTypeUInt8:
+  case eTypeUInt16:
+  case eTypeUInt32:
+  case eTypeUInt64:
+  case eTypeUInt128:
+  case eTypeUInt256:
+  case eTypeFloat:
+  case eTypeDouble:
+  case eTypeLongDouble:
+  case eTypeCapability128: {
+    llvm::APInt value(m_scalar.UInt256(llvm::APInt::getMaxValue(256)));
+    llvm::SmallString<64> str_value;
+    value.toString(str_value, 16, /*Signed=*/false,
+                   /*formatAsCLiteral=*/true);
+    return str_value.str();
+  }
+  case eTypeInvalid:
+  case eTypeBytes:
+    break;
+  }
+  return "hexadecimal representation of the register value is not available";
 }
 
 const void *RegisterValue::GetBytes() const {
@@ -725,14 +817,37 @@ const void *RegisterValue::GetBytes() const {
   case eTypeUInt32:
   case eTypeUInt64:
   case eTypeUInt128:
+  case eTypeUInt256:
   case eTypeFloat:
   case eTypeDouble:
   case eTypeLongDouble:
+  case eTypeCapability128:
     return m_scalar.GetBytes();
   case eTypeBytes:
     return buffer.bytes;
   }
   return nullptr;
+}
+
+uint32_t RegisterValue::GetBitSize() const {
+  switch (m_type) {
+  case eTypeInvalid:
+    break;
+  case eTypeUInt8:
+  case eTypeUInt16:
+  case eTypeUInt32:
+  case eTypeUInt64:
+  case eTypeUInt128:
+  case eTypeUInt256:
+  case eTypeFloat:
+  case eTypeDouble:
+  case eTypeLongDouble:
+  case eTypeBytes:
+    return 8 * GetByteSize();
+  case eTypeCapability128:
+    return 129;
+  }
+  return 0;
 }
 
 uint32_t RegisterValue::GetByteSize() const {
@@ -746,10 +861,13 @@ uint32_t RegisterValue::GetByteSize() const {
   case eTypeUInt32:
   case eTypeUInt64:
   case eTypeUInt128:
+  case eTypeUInt256:
   case eTypeFloat:
   case eTypeDouble:
   case eTypeLongDouble:
     return m_scalar.GetByteSize();
+  case eTypeCapability128:
+    return 17;
   case eTypeBytes:
     return buffer.length;
   }
@@ -769,8 +887,63 @@ bool RegisterValue::SetUInt(uint64_t uint, uint32_t byte_size) {
     SetUInt64(uint);
   } else if (byte_size <= 16) {
     SetUInt128(llvm::APInt(128, uint));
+  } else if (byte_size <= 32) {
+    SetUInt256(llvm::APInt(256, uint));
   } else
     return false;
+  return true;
+}
+
+static bool CheckBitSize(llvm::APInt uint, uint32_t bit_size, Status &error,
+                         const char *type) {
+  if (uint.getActiveBits() <= bit_size)
+    return true;
+
+  llvm::SmallString<32> value_str;
+  uint.toString(value_str, 16, /*Signed=*/false, /*formatAsCLiteral=*/true);
+  error.SetErrorStringWithFormat(
+      "value %s is too large to fit in a %u bit %s value",
+      llvm::StringRef(value_str).lower().c_str(), bit_size, type);
+  return false;
+}
+
+bool RegisterValue::SetUInt(llvm::APInt uint, uint32_t byte_size,
+                            Status &error) {
+  if (!CheckBitSize(uint, 8 * byte_size, error, "unsigned integer"))
+    return false;
+
+  if (byte_size <= 1)
+    SetUInt8(static_cast<uint8_t>(uint.getZExtValue()));
+  else if (byte_size <= 2)
+    SetUInt16(static_cast<uint16_t>(uint.getZExtValue()));
+  else if (byte_size <= 4)
+    SetUInt32(static_cast<uint32_t>(uint.getZExtValue()));
+  else if (byte_size <= 8)
+    SetUInt64(uint.getZExtValue());
+  else if (byte_size <= 16)
+    SetUInt128(uint.zextOrTrunc(128));
+  else if (byte_size <= 32)
+    SetUInt256(uint.zextOrTrunc(256));
+  else {
+    error.SetErrorStringWithFormat("unsupported unsigned integer byte size: %u",
+                                   byte_size);
+    return false;
+  }
+  return true;
+}
+
+bool RegisterValue::SetCapability(llvm::APInt uint, uint32_t byte_size,
+                                  Status &error) {
+  if (!CheckBitSize(uint, 129, error, "capability"))
+    return false;
+
+  if (byte_size == 17)
+    SetCapability128(uint.zextOrTrunc(129));
+  else {
+    error.SetErrorStringWithFormat("unsupported capability byte size: %u",
+                                   byte_size);
+    return false;
+  }
   return true;
 }
 
@@ -802,9 +975,11 @@ bool RegisterValue::operator==(const RegisterValue &rhs) const {
     case eTypeUInt32:
     case eTypeUInt64:
     case eTypeUInt128:
+    case eTypeUInt256:
     case eTypeFloat:
     case eTypeDouble:
     case eTypeLongDouble:
+    case eTypeCapability128:
       return m_scalar == rhs.m_scalar;
     case eTypeBytes:
       if (buffer.length != rhs.buffer.length)
@@ -835,7 +1010,9 @@ bool RegisterValue::ClearBit(uint32_t bit) {
   case eTypeUInt32:
   case eTypeUInt64:
   case eTypeUInt128:
-    if (bit < (GetByteSize() * 8)) {
+  case eTypeUInt256:
+  case eTypeCapability128:
+    if (bit < GetBitSize()) {
       return m_scalar.ClearBit(bit);
     }
     break;
@@ -875,7 +1052,9 @@ bool RegisterValue::SetBit(uint32_t bit) {
   case eTypeUInt32:
   case eTypeUInt64:
   case eTypeUInt128:
-    if (bit < (GetByteSize() * 8)) {
+  case eTypeUInt256:
+  case eTypeCapability128:
+    if (bit < GetBitSize()) {
       return m_scalar.SetBit(bit);
     }
     break;
@@ -900,6 +1079,31 @@ bool RegisterValue::SetBit(uint32_t bit) {
         return true;
       }
     }
+    break;
+  }
+  return false;
+}
+
+bool RegisterValue::IsBitSet(uint32_t bit, bool &is_set) {
+  switch (m_type) {
+  case eTypeInvalid:
+    break;
+
+  case eTypeUInt8:
+  case eTypeUInt16:
+  case eTypeUInt32:
+  case eTypeUInt64:
+  case eTypeUInt128:
+  case eTypeUInt256:
+  case eTypeCapability128:
+    if (bit < GetBitSize())
+      return m_scalar.IsBitSet(bit, is_set);
+    break;
+
+  case eTypeFloat:
+  case eTypeDouble:
+  case eTypeLongDouble:
+  case eTypeBytes:
     break;
   }
   return false;

@@ -1588,9 +1588,10 @@ SDValue SelectionDAGBuilder::getValueImpl(const Value *V) {
   if (const AllocaInst *AI = dyn_cast<AllocaInst>(V)) {
     DenseMap<const AllocaInst*, int>::iterator SI =
       FuncInfo.StaticAllocaMap.find(AI);
-    if (SI != FuncInfo.StaticAllocaMap.end())
+    if (SI != FuncInfo.StaticAllocaMap.end()) {
       return DAG.getFrameIndex(SI->second,
                                TLI.getFrameIndexTy(DAG.getDataLayout()));
+    }
   }
 
   // If this is an instruction which fast-isel has deferred, select it now.
@@ -2438,8 +2439,10 @@ void SelectionDAGBuilder::visitJumpTable(SwitchCG::JumpTable &JT) {
   assert(JT.Reg != -1U && "Should lower JT Header first!");
   const DataLayout &TD = DAG.getDataLayout();
   const auto &TLI = DAG.getTargetLoweringInfo();
-  EVT PTy = TLI.getPointerTy(TD, TD.getGlobalsAddressSpace());
-  EVT IndexTy = TLI.getPointerRangeTy(TD , TD.getProgramAddressSpace());
+  bool AddrSpace = TLI.useDefaultAddrSpaceForJT() ?
+    0 : TD.getGlobalsAddressSpace();
+  EVT PTy = TLI.getPointerTy(TD,  AddrSpace);
+  EVT IndexTy = TLI.getPointerRangeTy(TD, AddrSpace);
   SDValue Index =
       DAG.getCopyFromReg(getControlRoot(), getCurSDLoc(), JT.Reg, IndexTy);
   SDValue Table = DAG.getJumpTable(JT.JTI, PTy);
@@ -3891,19 +3894,23 @@ void SelectionDAGBuilder::visitGetElementPtr(const User &I) {
   MVT PtrTy = TLI.getPointerTy(DAG.getDataLayout(), AS);
   MVT PtrMemTy = TLI.getPointerMemTy(DAG.getDataLayout(), AS);
 
-  // FIXME: This does not work on GEPs with vectors and fat pointers, but CHERI
-  // currently doesn't have a vector unit so that is probably not a problem.
   bool FatPointer = N.getValueType().isFatPointer();
   SDValue OrigN = N;
-
-  if (FatPointer) {
-    N = DAG.getIntPtrConstant(0, dl);
-  }
 
   // Normalize Vector GEP - all scalar operands should be converted to the
   // splat vector.
   unsigned VectorWidth = I.getType()->isVectorTy() ?
     I.getType()->getVectorNumElements() : 0;
+
+  if (FatPointer) {
+    N = DAG.getIntPtrConstant(0, dl);
+    // Do a splat of the base as well for vector GEPs.
+    if (!OrigN.getValueType().isVector() && VectorWidth > 0) {
+      LLVMContext &Context = *DAG.getContext();
+      EVT VT = EVT::getVectorVT(Context, OrigN.getValueType(), VectorWidth);
+      OrigN = DAG.getSplatBuildVector(VT, dl, OrigN);
+    }
+  }
 
   if (VectorWidth && !N.getValueType().isVector()) {
     LLVMContext &Context = *DAG.getContext();
@@ -3925,9 +3932,10 @@ void SelectionDAGBuilder::visitGetElementPtr(const User &I) {
         SDNodeFlags Flags;
         if (int64_t(Offset) >= 0 && cast<GEPOperator>(I).isInBounds())
           Flags.setNoUnsignedWrap(true);
-
-        N = DAG.getNode(ISD::ADD, dl, N.getValueType(), N,
-                        DAG.getConstant(Offset, dl, N.getValueType()), Flags);
+        if (cast<GEPOperator>(I).isInBounds() && FatPointer)
+          OrigN = DAG.getPointerAdd(dl, OrigN, Offset, Flags);
+        else
+          N = DAG.getPointerAdd(dl, N, Offset, Flags);
       }
     } else {
       unsigned IdxSize = DAG.getDataLayout().getIndexSizeInBits(AS);
@@ -3957,7 +3965,10 @@ void SelectionDAGBuilder::visitGetElementPtr(const User &I) {
 
         OffsVal = DAG.getSExtOrTrunc(OffsVal, dl, N.getValueType());
 
-        N = DAG.getNode(ISD::ADD, dl, N.getValueType(), N, OffsVal, Flags);
+        if (cast<GEPOperator>(I).isInBounds() && FatPointer)
+          OrigN = DAG.getPointerAdd(dl, OrigN, OffsVal, Flags);
+        else
+          N = DAG.getPointerAdd(dl, N, OffsVal, Flags);
         continue;
       }
 
@@ -3989,8 +4000,11 @@ void SelectionDAGBuilder::visitGetElementPtr(const User &I) {
         }
       }
 
-      N = DAG.getNode(ISD::ADD, dl,
-                      N.getValueType(), N, IdxN);
+      if (cast<GEPOperator>(I).isInBounds() && FatPointer)
+        OrigN = DAG.getPointerAdd(dl, OrigN, IdxN);
+      else
+        N = DAG.getNode(ISD::ADD, dl,
+                        N.getValueType(), N, IdxN);
     }
   }
 
@@ -5863,13 +5877,16 @@ void SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I,
     unsigned Align = MinAlign(DstAlign, SrcAlign);
     bool isVol = MCI.isVolatile();
     bool isTC = I.isTailCall() && isInTailCallPosition(&I, DAG.getTarget());
+    const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+    bool PreserveTags = I.preservesTags() &&
+                        TLI.cheriCapabilityType().isValid();
     // FIXME: Support passing different dest/src alignments to the memcpy DAG
     // node.
     Attribute CopyType = I.getAttribute(AttributeList::FunctionIndex,
                                         "frontend-memtransfer-type");
     SDValue Root = isVol ? getRoot() : getMemoryRoot();
     SDValue MC = DAG.getMemcpy(Root, sdl, Op1, Op2, Op3, Align, isVol, false,
-                               isTC, I.hasFnAttr("must-preserve-cheri-tags"),
+                               isTC, PreserveTags,
                                MachinePointerInfo(I.getArgOperand(0)),
                                MachinePointerInfo(I.getArgOperand(1)),
                                CopyType.getValueAsString());
@@ -5902,13 +5919,16 @@ void SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I,
     unsigned Align = MinAlign(DstAlign, SrcAlign);
     bool isVol = MMI.isVolatile();
     bool isTC = I.isTailCall() && isInTailCallPosition(&I, DAG.getTarget());
+    const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+    bool PreserveTags = I.preservesTags() &&
+                        TLI.cheriCapabilityType().isValid();
     Attribute MoveType = I.getAttribute(AttributeList::FunctionIndex,
                                               "frontend-memtransfer-type");
     // FIXME: Support passing different dest/src alignments to the memmove DAG
     // node.
     SDValue Root = isVol ? getRoot() : getMemoryRoot();
     SDValue MM = DAG.getMemmove(Root, sdl, Op1, Op2, Op3, Align, isVol, isTC,
-                                I.hasFnAttr("must-preserve-cheri-tags"),
+                                PreserveTags,
                                 MachinePointerInfo(I.getArgOperand(0)),
                                 MachinePointerInfo(I.getArgOperand(1)),
                                 MoveType.getValueAsString());
@@ -7513,7 +7533,9 @@ bool SelectionDAGBuilder::visitMemPCpyCall(const CallInst &I) {
   bool isVol = false;
   SDLoc sdl = getCurSDLoc();
 
-  const bool MustPreserveCheriTags = I.hasFnAttr("must-preserve-cheri-tags");
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  const bool MustPreserveCheriTags =
+      I.preservesTags() && TLI.cheriCapabilityType().isValid();
   Attribute CopyType =
       I.getAttribute(AttributeList::FunctionIndex, "frontend-memtransfer-type");
   // In the mempcpy context we need to pass in a false value for isTailCall

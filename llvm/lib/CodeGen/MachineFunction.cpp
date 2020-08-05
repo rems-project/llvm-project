@@ -921,6 +921,8 @@ unsigned MachineJumpTableInfo::getEntrySize(const DataLayout &TD) const {
   case MachineJumpTableInfo::EK_LabelDifference32:
   case MachineJumpTableInfo::EK_Custom32:
     return 4;
+  case MachineJumpTableInfo::EK_Custom64:
+    return 8;
   case MachineJumpTableInfo::EK_Inline:
     return 0;
   }
@@ -934,6 +936,7 @@ unsigned MachineJumpTableInfo::getEntryAlignment(const DataLayout &TD) const {
   // alignment.
   switch (getEntryKind()) {
   case MachineJumpTableInfo::EK_BlockAddress:
+  case MachineJumpTableInfo::EK_Custom64:
     return TD.getPointerABIAlignment(0).value();
   case MachineJumpTableInfo::EK_GPRel64BlockAddress:
     return TD.getABIIntegerTypeAlignment(64).value();
@@ -1073,6 +1076,9 @@ static bool CanShareConstantPoolEntry(const Constant *A, const Constant *B,
   // We can't handle structs or arrays.
   if (isa<StructType>(A->getType()) || isa<ArrayType>(A->getType()) ||
       isa<StructType>(B->getType()) || isa<ArrayType>(B->getType()))
+    return false;
+
+  if (DL.isFatPointer(A->getType()) || DL.isFatPointer(B->getType()))
     return false;
 
   // For now, only support constants with the same size.

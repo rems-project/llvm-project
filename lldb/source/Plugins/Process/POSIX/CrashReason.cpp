@@ -58,6 +58,11 @@ CrashReason GetCrashReasonForSIGSEGV(const siginfo_t &info) {
 #endif
   case SEGV_BNDERR:
     return CrashReason::eBoundViolation;
+#ifndef SEGV_CAPERR
+#define SEGV_CAPERR 5
+#endif
+  case SEGV_CAPERR:
+    return CrashReason::eCapabilityError;
   }
 
   return CrashReason::eInvalidCrashReason;
@@ -166,6 +171,9 @@ std::string GetCrashReasonString(CrashReason reason, lldb::addr_t fault_addr) {
   case CrashReason::eBoundViolation:
     str = "signal SIGSEGV: bound violation";
     break;
+  case CrashReason::eCapabilityError:
+    str = "signal SIGSEGV: capability error";
+    break;
   case CrashReason::eIllegalOpcode:
     str = "signal SIGILL: illegal instruction";
     break;
@@ -245,6 +253,9 @@ const char *CrashReasonAsString(CrashReason reason) {
     break;
   case CrashReason::eBoundViolation:
     str = "eBoundViolation";
+    break;
+  case CrashReason::eCapabilityError:
+    str = "eCapabilityError";
     break;
 
   // SIGILL crash reasons.

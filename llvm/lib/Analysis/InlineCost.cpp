@@ -1259,6 +1259,17 @@ bool CallAnalyzer::visitCmpInst(CmpInst &I) {
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
   // First try to handle simplified comparisons.
   if (simplifyInstruction(I, [&](SmallVectorImpl<Constant *> &COps) {
+        // In case we are promoting indirect to direct calls in Cheri, the RHS
+        // type needs to be adapted as it is often used for comparing against
+        // the null pointer.
+        if (const PointerType *Ty0 = dyn_cast<PointerType>(COps[0]->getType()))
+          if (const PointerType *Ty1 =
+                  dyn_cast<PointerType>(COps[1]->getType()))
+            if (Ty0->getAddressSpace() == 0 && Ty1->getAddressSpace() == 200 &&
+                isa<ConstantPointerNull>(COps[1]))
+              return ConstantExpr::getCompare(
+                  I.getPredicate(), COps[0],
+                  Constant::getNullValue(COps[0]->getType()));
         return ConstantExpr::getCompare(I.getPredicate(), COps[0], COps[1]);
       }))
     return true;

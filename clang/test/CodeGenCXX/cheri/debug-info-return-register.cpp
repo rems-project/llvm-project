@@ -5,6 +5,8 @@
 // RUN: %cheri_purecap_clang -c %t.s -o - | llvm-dwarfdump -debug-frame - | FileCheck %s -check-prefixes CHECK,DWARF2
 // RUN: %cheri_purecap_llvm-mc %t.s -o - -filetype=obj | llvm-dwarfdump -debug-frame - | FileCheck %s -check-prefixes CHECK,DWARF4
 
+// REQUIRES: mips-registered-target
+
 int test(int arg1, int arg2) {
   return arg1 + arg2;
 }

@@ -199,6 +199,7 @@ void StandardConversionSequence::setAsIdentityConversion() {
   BindsImplicitObjectArgumentWithoutRefQualifier = false;
   ObjCLifetimeConversionBinding = false;
   IncompatibleCHERIConversion = false;
+  IsCHERIConversion = false;
   CopyConstructor = nullptr;
 }
 
@@ -1964,6 +1965,7 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
     // Check for CHERI type conversion
     if (FromType->isCHERICapabilityType(S.getASTContext())
         != ToType->isCHERICapabilityType(S.getASTContext())) {
+      SCS.setCHERIConversion(true);
       // Check implicit pointer-to-capability conversion.
       // Don't output warnings at this point as they will be output later.
       bool validCHERIConversion = false;
@@ -1971,6 +1973,8 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
         validCHERIConversion = S.ImpCastPointerToCHERICapability(FromType, ToType, From, false);
 
       SCS.setInvalidCHERIConversion(!validCHERIConversion);
+      if (!validCHERIConversion)
+        return false;
     }
     FromType = ToType;
   } else {
@@ -3906,6 +3910,15 @@ CompareStandardConversionSequences(Sema &S, SourceLocation Loc,
                                    const StandardConversionSequence& SCS1,
                                    const StandardConversionSequence& SCS2)
 {
+
+  // Conversions which modify the __capability qualifier are always worse
+  // than conversion that don't.
+  if (SCS1.isCHERIConversion() != SCS2.isCHERIConversion()) {
+    if (SCS1.isCHERIConversion())
+      return ImplicitConversionSequence::Worse;
+    return ImplicitConversionSequence::Better;
+  }
+
   // Standard conversion sequence S1 is a better conversion sequence
   // than standard conversion sequence S2 if (C++ 13.3.3.2p3):
 
@@ -4752,6 +4765,14 @@ TryReferenceInit(Sema &S, Expr *Init, QualType DeclType,
       //   derived-to-base Conversion (13.3.3.1).
       SetAsReferenceBinding(/*BindsDirectly=*/true);
 
+      QualType RType = Init->getRealReferenceType(S.getASTContext(), true);
+      if (RType->isReferenceType() &&
+          DeclType->isCHERICapabilityType(S.getASTContext()) !=
+          RType->isCHERICapabilityType(S.getASTContext())) {
+        ICS.Standard.setInvalidCHERIConversion(true);
+        ICS.setBad(BadConversionSequence::no_conversion, Init, DeclType);
+      }
+
       // Nothing more to do: the inaccessibility/ambiguity check for
       // derived-to-base conversions is suppressed when we're
       // computing the implicit conversion sequence (C++
@@ -4798,6 +4819,15 @@ TryReferenceInit(Sema &S, Expr *Init, QualType DeclType,
     // standard library implementors; therefore, we need the xvalue check here.
     SetAsReferenceBinding(/*BindsDirectly=*/S.getLangOpts().CPlusPlus11 ||
                           !(InitCategory.isPRValue() || T2->isRecordType()));
+
+    if ((InitCategory.isXValue() || InitCategory.isPRValue()))
+      if (DeclType->isCHERICapabilityType(S.getASTContext()) &&
+          DeclType->isReferenceType() &&
+          !S.getASTContext().getTargetInfo().areAllPointersCapabilities()) {
+        ICS.Standard.setInvalidCHERIConversion(true);
+        ICS.setBad(BadConversionSequence::no_conversion, Init, DeclType);
+      }
+
     return ICS;
   }
 

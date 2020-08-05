@@ -13,6 +13,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Triple.h"
 
+#include "Plugins/ABI/Utility/LinuxSigInfo.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Value.h"
@@ -1982,7 +1983,10 @@ bool ABISysV_arm::CreateDefaultUnwindPlan(UnwindPlan &unwind_plan) {
 //    d8-d15  preserved       (aka s16-s31, q4-q7)
 //    d16-d31 not preserved   (aka q8-q15)
 
-bool ABISysV_arm::RegisterIsVolatile(const RegisterInfo *reg_info) {
+bool ABISysV_arm::RegisterIsVolatile(RegisterContext &reg_ctx,
+                                     const RegisterInfo *reg_info,
+                                     FrameState frame_state,
+                                     const UnwindPlan *unwind_plan) {
   if (reg_info) {
     // Volatile registers are: r0, r1, r2, r3, r9, r12, r13 (aka sp)
     const char *name = reg_info->name;
@@ -2133,6 +2137,15 @@ bool ABISysV_arm::RegisterIsVolatile(const RegisterInfo *reg_info) {
       return true;
   }
   return false;
+}
+
+CompilerType
+ABISysV_arm::GetSigInfoCompilerType(const Target &target,
+                                    ClangASTContext &ast_ctx,
+                                    llvm::StringRef type_name) const {
+  if (target.GetArchitecture().GetTriple().isOSLinux())
+    return GetLinuxSigInfoCompilerType(ast_ctx, type_name);
+  return CompilerType();
 }
 
 void ABISysV_arm::Initialize() {

@@ -12,6 +12,7 @@
 #include "lldb/lldb-forward.h"
 
 #include "lldb/Core/Address.h"
+#include "lldb/Core/Capability.h"
 #include "lldb/Core/Disassembler.h"
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Target/ExecutionContext.h"
@@ -128,14 +129,108 @@ static lldb::offset_t DumpAPInt(Stream *s, const DataExtractor &data,
   return offset;
 }
 
+static void GetCapabilityData(const DataExtractor &data, offset_t *offset_ptr,
+                              uint64_t &attributes, uint64_t &address) {
+  if (data.GetByteOrder() == eByteOrderBig) {
+    attributes = data.GetU64(offset_ptr);
+    address = data.GetU64(offset_ptr);
+  } else {
+    address = data.GetU64(offset_ptr);
+    attributes = data.GetU64(offset_ptr);
+  }
+}
+
+static bool DumpCapability(const DataExtractor &data, Stream &s,
+                           offset_t *offset_ptr, size_t byte_size,
+                           uint32_t tag_byte_size, uint32_t tagged_byte_size) {
+  // Dump a capability. It can be encoded in data as follows:
+  // * True capability
+  //   Capability is stored as the tag byte, attributes and address that are all
+  //   together in the DataExtractor byte order. This is the main capability
+  //   encoding. It is used for capabilities stores in registers and for
+  //   capability values in the debugger in general.
+  // * Explicitly tagged capability (tag_byte_size != 0)
+  //   Capability is stored as the tag byte (always first), followed by
+  //   capability data (attributes and address) in the DataExtractor byte order.
+  //   This encoding is used when the capability was obtained by tagged read
+  //   from memory.
+  // * Capability without tag information
+  //   Only capability data are available and they are stored in the
+  //   DataExtractor byte order. This encoding is used when the capability was
+  //   obtained by untagged read from memory.
+  //
+  // TODO Morello: Make this code more generic. Architecture information should
+  // be wired to this function so it can handle other capabilities than the ones
+  // available on AArch64.
+
+  // Check that the tag_byte_size and tagged_byte_size are sensible.
+  if (tag_byte_size != 0 && !(tag_byte_size == 1 && byte_size == 17)) {
+    s.Printf("error: invalid tag byte size (%" PRIu32 ") for byte size %" PRIu64
+             " and capability format",
+             tag_byte_size, static_cast<uint64_t>(byte_size));
+    return false;
+  }
+  if (tag_byte_size != 0 && tagged_byte_size != byte_size) {
+    s.Printf("error: invalid tagged byte size (%" PRIu32
+             ") for byte size %" PRIu64 " and capability format",
+             tagged_byte_size, static_cast<uint64_t>(byte_size));
+    return false;
+  }
+
+  offset_t offset = *offset_ptr;
+  CapabilityType type;
+  size_t size;
+  uint8_t tag = 0;
+  uint64_t attributes;
+  uint64_t address;
+
+  if (byte_size == 17) {
+    // Tagged capability.
+    type = eCapabilityMorello_128;
+    size = 129;
+    bool tag_is_first =
+        tag_byte_size == 1 ||
+        (tag_byte_size == 0 && data.GetByteOrder() == eByteOrderBig);
+
+    if (tag_is_first)
+      tag = data.GetU8(&offset);
+    GetCapabilityData(data, &offset, attributes, address);
+    if (!tag_is_first)
+      tag = data.GetU8(&offset);
+  } else if (byte_size == 16) {
+    // Capability without tag information.
+    type = eCapabilityMorello_128_untagged;
+    size = 128;
+    GetCapabilityData(data, &offset, attributes, address);
+  }
+  else {
+    s.Printf("error: unsupported byte size (%" PRIu64 ") for capability format",
+             static_cast<uint64_t>(byte_size));
+    return false;
+  }
+
+  llvm::APInt value(size, tag & 1);
+  value = (value << 64) | attributes;
+  value = (value << 64) | address;
+  Capability cap(type, value);
+  cap.Dump(s);
+
+  *offset_ptr = offset;
+  return true;
+}
+
 lldb::offset_t lldb_private::DumpDataExtractor(
     const DataExtractor &DE, Stream *s, offset_t start_offset,
     lldb::Format item_format, size_t item_byte_size, size_t item_count,
     size_t num_per_line, uint64_t base_addr,
-    uint32_t item_bit_size,   // If zero, this is not a bitfield value, if
-                              // non-zero, the value is a bitfield
-    uint32_t item_bit_offset, // If "item_bit_size" is non-zero, this is the
-                              // shift amount to apply to a bitfield
+    uint32_t item_bit_size,    // If zero, this is not a bitfield value, if
+                               // non-zero, the value is a bitfield
+    uint32_t item_bit_offset,  // If "item_bit_size" is non-zero, this is the
+                               // shift amount to apply to a bitfield
+    uint32_t tag_byte_size,    // If zero, this is not a tagged value, if
+                               // non-zero, the size of the tag prefix.
+    uint32_t tagged_byte_size, // If "tag_byte_size" is non-zero, this is the
+                               // size of the tagged value.
     ExecutionContextScope *exe_scope) {
   if (s == nullptr)
     return start_offset;
@@ -207,10 +302,18 @@ lldb::offset_t lldb_private::DumpDataExtractor(
         }
         s->EOL();
       }
-      if (base_addr != LLDB_INVALID_ADDRESS)
+      if (base_addr != LLDB_INVALID_ADDRESS) {
+        // Get address byte offset. This is a number of bytes processed minus
+        // any tag bytes if they are present.
+        uint64_t addr_offset = offset - start_offset;
+        if (tag_byte_size != 0)
+          addr_offset -=
+              addr_offset / tagged_byte_size * tag_byte_size +
+              std::min<uint64_t>(addr_offset % tagged_byte_size, tag_byte_size);
+
         s->Printf("0x%8.8" PRIx64 ": ",
-                  (uint64_t)(base_addr +
-                             (offset - start_offset) / DE.getTargetByteSize()));
+                  (uint64_t)(base_addr + addr_offset / DE.getTargetByteSize()));
+      }
 
       line_start_offset = offset;
     } else if (item_format != eFormatChar &&
@@ -259,7 +362,12 @@ lldb::offset_t lldb_private::DumpDataExtractor(
     case eFormatBytes:
     case eFormatBytesWithASCII:
       for (uint32_t i = 0; i < item_byte_size; ++i) {
-        s->Printf("%2.2x", DE.GetU8(&offset));
+        // Output the byte. If it is a tag then enclose it in square brackets.
+        if (tag_byte_size != 0 &&
+            (offset - start_offset) % tagged_byte_size < tag_byte_size)
+          s->Printf("[%2.2x]", DE.GetU8(&offset));
+        else
+          s->Printf("%2.2x", DE.GetU8(&offset));
       }
 
       // Put an extra space between the groups of bytes if more than one is
@@ -784,6 +892,18 @@ lldb::offset_t lldb_private::DumpDataExtractor(
           DumpDataExtractor(DE, s, offset, eFormatHex, 16, item_byte_size / 16,
                             item_byte_size / 16, LLDB_INVALID_ADDRESS, 0, 0);
       s->PutChar('}');
+      break;
+
+    case eFormatCapability:
+      TargetSP target_sp;
+      if (exe_scope)
+        target_sp = exe_scope->CalculateTarget();
+      if (target_sp) {
+        if (!DumpCapability(DE, *s, &offset, item_byte_size, tag_byte_size,
+                            tagged_byte_size))
+          return offset;
+      } else
+        s->Printf("invalid target");
       break;
     }
   }

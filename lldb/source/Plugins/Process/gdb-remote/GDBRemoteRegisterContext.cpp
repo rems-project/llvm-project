@@ -212,8 +212,8 @@ bool GDBRemoteRegisterContext::ReadRegisterBytes(const RegisterInfo *reg_info,
           const int regcount = m_reg_info.GetNumRegisters();
           for (int i = 0; i < regcount; i++) {
             struct RegisterInfo *reginfo = m_reg_info.GetRegisterInfoAtIndex(i);
-            if (reginfo->byte_offset + reginfo->byte_size 
-                   <= buffer_sp->GetByteSize()) {
+            if (reginfo->byte_offset + reginfo->byte_size <=
+                buffer_sp->GetByteSize()) {
               m_reg_valid[i] = true;
             } else {
               m_reg_valid[i] = false;
@@ -654,7 +654,7 @@ bool GDBRemoteRegisterContext::WriteAllRegisterValues(
       if (m_thread.GetProcess().get()) {
         const ArchSpec &arch =
             m_thread.GetProcess()->GetTarget().GetArchitecture();
-        if (arch.IsValid() && 
+        if (arch.IsValid() &&
             (arch.GetMachine() == llvm::Triple::aarch64 ||
              arch.GetMachine() == llvm::Triple::aarch64_32) &&
             arch.GetTriple().getVendor() == llvm::Triple::Apple &&
@@ -981,6 +981,93 @@ void GDBRemoteDynamicRegisterInfo::HardcodeARMRegisters(bool from_scratch) {
           }
         }
       }
+    }
+  }
+}
+
+#include "Plugins/Process/Utility/RegisterInfoPOSIX_arm64.h"
+#include "Plugins/Process/Utility/lldb-arm64-register-enums.h"
+#include "Utility/ARM64_DWARF_Registers.h"
+#include "Utility/ARM64_ehframe_Registers.h"
+
+void GDBRemoteDynamicRegisterInfo::HardcodeAArch64MorelloRegisters() {
+#define GPR_OFFSET(idx) ((idx)*8)
+#define GPR_OFFSET_NAME(reg)                                                   \
+  (LLVM_EXTENSION offsetof(RegisterInfoPOSIX_arm64::GPR, reg))
+
+#define FPU_OFFSET(idx) ((idx)*16 + sizeof(RegisterInfoPOSIX_arm64::GPR))
+#define FPU_OFFSET_NAME(reg)                                                   \
+  (LLVM_EXTENSION offsetof(RegisterInfoPOSIX_arm64::FPU, reg) +                \
+   sizeof(RegisterInfoPOSIX_arm64::GPR))
+
+#define CAP_OFFSET(idx)                                                        \
+  ((idx)*17 + sizeof(RegisterInfoPOSIX_arm64::GPR) +                           \
+   sizeof(RegisterInfoPOSIX_arm64::FPU))
+
+#define STATE_OFFSET_NAME(reg)                                                 \
+  (LLVM_EXTENSION offsetof(RegisterInfoPOSIX_arm64::STATE, reg) +              \
+   sizeof(RegisterInfoPOSIX_arm64::GPR) +                                      \
+   sizeof(RegisterInfoPOSIX_arm64::FPU) +                                      \
+   sizeof(RegisterInfoPOSIX_arm64::CAP))
+
+#define THREAD_OFFSET_NAME(reg)                                                \
+  (LLVM_EXTENSION offsetof(RegisterInfoPOSIX_arm64::THREAD, reg) +             \
+   sizeof(RegisterInfoPOSIX_arm64::GPR) +                                      \
+   sizeof(RegisterInfoPOSIX_arm64::FPU) +                                      \
+   sizeof(RegisterInfoPOSIX_arm64::CAP) +                                      \
+   sizeof(RegisterInfoPOSIX_arm64::STATE))
+
+#define EXC_OFFSET_NAME(reg)                                                   \
+  (LLVM_EXTENSION offsetof(RegisterInfoPOSIX_arm64::EXC, reg) +                \
+   sizeof(RegisterInfoPOSIX_arm64::GPR) +                                      \
+   sizeof(RegisterInfoPOSIX_arm64::FPU) +                                      \
+   sizeof(RegisterInfoPOSIX_arm64::CAP) +                                      \
+   sizeof(RegisterInfoPOSIX_arm64::STATE) +                                    \
+   sizeof(RegisterInfoPOSIX_arm64::THREAD))
+
+#define DBG_OFFSET_NAME(reg)                                                   \
+  (LLVM_EXTENSION offsetof(RegisterInfoPOSIX_arm64::DBG, reg) +                \
+   sizeof(RegisterInfoPOSIX_arm64::GPR) +                                      \
+   sizeof(RegisterInfoPOSIX_arm64::FPU) +                                      \
+   sizeof(RegisterInfoPOSIX_arm64::CAP) +                                      \
+   sizeof(RegisterInfoPOSIX_arm64::STATE) +                                    \
+   sizeof(RegisterInfoPOSIX_arm64::THREAD) +                                   \
+   sizeof(RegisterInfoPOSIX_arm64::EXC))
+
+#define DEFINE_DBG(reg, i)                                                     \
+  #reg, NULL,                                                                  \
+      sizeof(((RegisterInfoPOSIX_arm64::DBG *) NULL)->reg[i]),                 \
+              DBG_OFFSET_NAME(reg[i]), lldb::eEncodingUint, lldb::eFormatHex,  \
+                              {LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM,       \
+                               LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM,       \
+                               dbg_##reg##i },                                 \
+                               NULL, NULL, NULL, 0
+
+#define DECLARE_REGISTER_INFOS_ARM64_STRUCT
+#define DECLARE_CAPABILITY_REGISTER_INFOS
+#include "Plugins/Process/Utility/RegisterInfos_arm64.h"
+#undef DECLARE_REGISTER_INFOS_ARM64_STRUCT
+#undef DECLARE_CAPABILITY_REGISTER_INFOS
+
+  struct RegisterSet reg_sets_arm64[] = {
+      {"General Purpose Registers", "gpr", k_num_gpr_registers_arm64, nullptr},
+      {"Floating Point Registers", "fpu", k_num_fpr_registers_arm64, nullptr},
+      {"Capability Registers", "cap", k_num_cap_registers_arm64, nullptr},
+      {"State Registers", "state", k_num_state_registers_arm64, nullptr},
+      {"Thread Pointer Registers", "thread", k_num_thread_registers_arm64,
+       nullptr}};
+
+  size_t i = 0;
+  for (const RegisterSet &reg_set : reg_sets_arm64) {
+    for (size_t j = 0; j < reg_set.num_registers; ++j, ++i) {
+      RegisterInfo reg_info = g_register_infos_arm64_le[i];
+      reg_info.kinds[eRegisterKindProcessPlugin] = i;
+      reg_info.kinds[eRegisterKindLLDB] = i;
+
+      ConstString name(reg_info.name);
+      ConstString alt_name(reg_info.alt_name);
+      ConstString set_name(reg_set.name);
+      AddRegister(reg_info, name, alt_name, set_name);
     }
   }
 }

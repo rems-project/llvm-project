@@ -84,7 +84,8 @@ bool LowerEmuTLS::runOnModule(Module &M) {
 
 bool LowerEmuTLS::addEmuTlsVar(Module &M, const GlobalVariable *GV) {
   LLVMContext &C = M.getContext();
-  PointerType *VoidPtrType = Type::getInt8PtrTy(C);
+  PointerType *VoidPtrType =
+      Type::getInt8PtrTy(C, GV->getType()->getAddressSpace());
 
   std::string EmuTlsVarName = ("__emutls_v." + GV->getName()).str();
   GlobalVariable *EmuTlsVar = M.getNamedGlobal(EmuTlsVarName);
@@ -113,13 +114,17 @@ bool LowerEmuTLS::addEmuTlsVar(Module &M, const GlobalVariable *GV) {
   //     void *templ; // 0 or point to __emutls_t.*
   // sizeof(word) should be the same as sizeof(void*) on target.
   IntegerType *WordType = DL.getIntPtrType(C);
-  PointerType *InitPtrType = InitValue ?
-      PointerType::getUnqual(InitValue->getType()) : VoidPtrType;
+  PointerType *InitPtrType =
+      InitValue ? PointerType::get(InitValue->getType(),
+                                   VoidPtrType->getAddressSpace())
+                : VoidPtrType;
   Type *ElementTypes[4] = {WordType, WordType, VoidPtrType, InitPtrType};
   ArrayRef<Type*> ElementTypeArray(ElementTypes, 4);
   StructType *EmuTlsVarType = StructType::create(ElementTypeArray);
-  EmuTlsVar = cast<GlobalVariable>(
-      M.getOrInsertGlobal(EmuTlsVarName, EmuTlsVarType));
+  EmuTlsVar = new GlobalVariable(
+      M, EmuTlsVarType, false, GlobalVariable::ExternalLinkage, nullptr,
+      EmuTlsVarName, nullptr, GlobalVariable::NotThreadLocal,
+      GV->getType()->getAddressSpace());
   copyLinkageVisibility(M, GV, EmuTlsVar);
 
   // Define "__emutls_t.*" and "__emutls_v.*" only if GV is defined.
@@ -138,8 +143,10 @@ bool LowerEmuTLS::addEmuTlsVar(Module &M, const GlobalVariable *GV) {
   GlobalVariable *EmuTlsTmplVar = nullptr;
   if (InitValue) {
     std::string EmuTlsTmplName = ("__emutls_t." + GV->getName()).str();
-    EmuTlsTmplVar = dyn_cast_or_null<GlobalVariable>(
-        M.getOrInsertGlobal(EmuTlsTmplName, GVType));
+    EmuTlsTmplVar = new GlobalVariable(
+        M, GVType, false, GlobalVariable::ExternalLinkage, nullptr,
+        EmuTlsTmplName, nullptr, GlobalVariable::NotThreadLocal,
+        GV->getType()->getAddressSpace());
     assert(EmuTlsTmplVar && "Failed to create emualted TLS initializer");
     EmuTlsTmplVar->setConstant(true);
     EmuTlsTmplVar->setInitializer(const_cast<Constant*>(InitValue));

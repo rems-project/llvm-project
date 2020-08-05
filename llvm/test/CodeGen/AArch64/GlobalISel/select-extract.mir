@@ -17,12 +17,12 @@ body:             |
     ; CHECK: [[CPYi64_:%[0-9]+]]:fpr64 = CPYi64 [[COPY]], 1
     ; CHECK: $d3 = COPY [[COPY1]]
     ; CHECK: $d4 = COPY [[CPYi64_]]
-    ; CHECK: RET_ReallyLR implicit $d3
+    ; CHECK: RET_ReallyLR 0, implicit $d3
     %0:fpr(s128) = COPY $q0
     %2:fpr(s64) = G_EXTRACT %0(s128), 0
     %3:fpr(s64) = G_EXTRACT %0(s128), 64
     $d3 = COPY %2(s64)
     $d4 = COPY %3(s64)
-    RET_ReallyLR implicit $d3
+    RET_ReallyLR 0, implicit $d3
 
 ...

@@ -1,4 +1,5 @@
 // RUN: %cheri_cc1 -o - %s -fsyntax-only -verify
+// RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +morello -o - %s -fsyntax-only -verify
 void * __capability b;
 void * __capability c;
 void a(int x, long long y)

@@ -44,6 +44,7 @@
 #include "lldb/Target/JITLoaderList.h"
 #include "lldb/Target/Language.h"
 #include "lldb/Target/LanguageRuntime.h"
+#include "lldb/Target/Memory.h"
 #include "lldb/Target/MemoryHistory.h"
 #include "lldb/Target/MemoryRegionInfo.h"
 #include "lldb/Target/OperatingSystem.h"
@@ -1908,12 +1909,27 @@ Status Process::DisableSoftwareBreakpoint(BreakpointSite *bp_site) {
   return error;
 }
 
+size_t Process::DoReadTaggedMemory(lldb::addr_t vm_addr, void *buf, size_t size,
+                                   MemoryContentType type, Status &error) {
+  // If DoReadTaggedMemory() is not overridden in a Process-derived class then
+  // report that the target process does not support reading tagged memory.
+  error.SetErrorString(
+      "reading tagged memory is not supported by the target process");
+  return 0;
+}
+
 // Uncomment to verify memory caching works after making changes to caching
 // code
 //#define VERIFY_MEMORY_READS
 
-size_t Process::ReadMemory(addr_t addr, void *buf, size_t size, Status &error) {
+size_t Process::ReadMemory(addr_t addr, void *buf, size_t size, Status &error,
+                           MemoryContentType type) {
   error.Clear();
+
+  // Special memory reads are performed directly, without caching.
+  if (type != eMemoryContentNormal)
+    return ReadMemoryFromInferior(addr, buf, size, error, type);
+
   if (!GetDisableMemoryCache()) {
 #if defined(VERIFY_MEMORY_READS)
     // Memory caching is enabled, with debug verification
@@ -2073,26 +2089,83 @@ size_t Process::ReadCStringFromMemory(addr_t addr, char *dst,
 }
 
 size_t Process::ReadMemoryFromInferior(addr_t addr, void *buf, size_t size,
-                                       Status &error) {
+                                       Status &error,
+                                       lldb::MemoryContentType type) {
   if (buf == nullptr || size == 0)
     return 0;
 
-  size_t bytes_read = 0;
-  uint8_t *bytes = (uint8_t *)buf;
+  // Get byte sizes for normal or tagged reads.
+  bool is_tagged;
+  uint32_t base_byte_size;
+  uint32_t tag_byte_size;
+  uint32_t tagged_byte_size;
+  if (type == eMemoryContentNormal) {
+    is_tagged = false;
+    base_byte_size = 1;
+    tag_byte_size = 0;
+    tagged_byte_size = 1;
+  } else if (IsTaggedMemoryContentType(type)) {
+    is_tagged = true;
+    base_byte_size = TaggedMemory::GetBaseByteSize(type);
+    tag_byte_size = TaggedMemory::GetTagByteSize(type);
+    tagged_byte_size = TaggedMemory::GetTaggedByteSize(type);
 
-  while (bytes_read < size) {
-    const size_t curr_size = size - bytes_read;
-    const size_t curr_bytes_read =
-        DoReadMemory(addr + bytes_read, bytes + bytes_read, curr_size, error);
-    bytes_read += curr_bytes_read;
-    if (curr_bytes_read == curr_size || curr_bytes_read == 0)
-      break;
+    // Allow only correctly aligned reads.
+    if (addr % base_byte_size != 0) {
+      error.SetErrorStringWithFormat("address 0x%" PRIx64 " must be %" PRId32
+                                     "-byte aligned for reading %s",
+                                     addr, base_byte_size,
+                                     GetMemoryContentTypeAsCString(type));
+      return 0;
+    }
+  }
+  else {
+    error.SetErrorStringWithFormat(
+        "reading %s is not supported by the target process",
+        GetMemoryContentTypeAsCString(type));
+    return 0;
   }
 
-  // Replace any software breakpoint opcodes that fall into this range back
-  // into "buf" before we return
-  if (bytes_read > 0)
-    RemoveBreakpointOpcodesFromBuffer(addr, bytes_read, (uint8_t *)buf);
+  // Perform the actual read.
+  size_t bytes_read = 0;
+  uint8_t *bytes = static_cast<uint8_t *>(buf);
+
+  while (bytes_read < size) {
+    addr_t next_addr = addr + (bytes_read / tagged_byte_size) * base_byte_size;
+    size_t curr_size = size - bytes_read;
+    size_t curr_bytes_read;
+    if (is_tagged)
+      curr_bytes_read = DoReadTaggedMemory(next_addr, bytes + bytes_read,
+                                           curr_size, type, error);
+    else
+      curr_bytes_read =
+          DoReadMemory(next_addr, bytes + bytes_read, curr_size, error);
+    bytes_read += curr_bytes_read;
+
+    if (curr_bytes_read == 0)
+      break;
+    else if (is_tagged && curr_bytes_read % tagged_byte_size != 0) {
+      error.SetErrorStringWithFormat(
+          "reading %s at address 0x%" PRIx64 " returned incomplete data",
+          GetMemoryContentTypeAsCString(type), next_addr);
+      break;
+    }
+  }
+
+  // Report only fully complete data.
+  bytes_read = bytes_read / tagged_byte_size * tagged_byte_size;
+
+  // Replace any software breakpoint opcodes that fall into this range back into
+  // "buf" before we return.
+  if (is_tagged)
+    for (size_t bytes_offset = tag_byte_size, addr_offset = 0;
+         bytes_offset < bytes_read;
+         bytes_offset += tagged_byte_size, addr_offset += base_byte_size)
+      RemoveBreakpointOpcodesFromBuffer(addr + addr_offset, base_byte_size,
+                                        bytes + bytes_offset);
+  else
+    RemoveBreakpointOpcodesFromBuffer(addr, bytes_read, bytes);
+
   return bytes_read;
 }
 
@@ -3321,6 +3394,21 @@ lldb::ByteOrder Process::GetByteOrder() const {
 
 uint32_t Process::GetAddressByteSize() const {
   return GetTarget().GetArchitecture().GetAddressByteSize();
+}
+
+bool Process::GetRegisterSaveInformation(const RegisterInfo &reg_info,
+                                         MemoryContentType &content_type,
+                                         ByteOrder &byte_order, Status &error) {
+  if (reg_info.encoding != eEncodingCapability) {
+    content_type = eMemoryContentNormal;
+    byte_order = GetByteOrder();
+    return true;
+  }
+
+  if (!TaggedMemory::GetCapabilityType(reg_info.byte_size, content_type, error))
+    return false;
+  byte_order = GetTarget().GetArchitecture().GetCapabilityByteOrder();
+  return true;
 }
 
 bool Process::ShouldBroadcastEvent(Event *event_ptr) {

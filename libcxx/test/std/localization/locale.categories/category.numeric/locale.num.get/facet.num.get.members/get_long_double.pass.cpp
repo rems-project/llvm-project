@@ -40,6 +40,7 @@ int main(int, char**)
 {
     const my_facet f(1);
     std::ios ios(0);
+#ifndef _LIBCPP_HAS_NEWLIB
     long double v = -1;
     {
         const char str[] = "123";
@@ -268,6 +269,7 @@ int main(int, char**)
         assert(err == ios.goodbit);
         assert(v == 2);
     }
+#endif // ! _LIBCPP_HAS_NEWLIB
 
   return 0;
 }

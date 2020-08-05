@@ -64,6 +64,12 @@ def FeatureLSE : SubtargetFeature<"lse", "HasLSE", "true",
 def FeatureRDM : SubtargetFeature<"rdm", "HasRDM", "true",
   "Enable ARMv8.1 Rounding Double Multiply Add/Subtract instructions">;
 
+def FeatureMorello : SubtargetFeature<"morello", "HasMorello", "true",
+  "Enable Morello instructions">;
+
+def FeatureC64 : SubtargetFeature<"c64", "HasC64", "true",
+  "Enable C64 mode", [FeatureMorello]>;
+
 def FeaturePAN : SubtargetFeature<
     "pan", "HasPAN", "true",
     "Enables ARM v8.1 Privileged Access-Never extension">;
@@ -146,6 +152,30 @@ foreach i = {1-7,9-15,18,20-28} in
     def FeatureReserveX#i : SubtargetFeature<"reserve-x"#i, "ReserveXRegister["#i#"]", "true",
                                              "Reserve X"#i#", making it unavailable "
                                              "as a GPR">;
+
+foreach i = {8-23} in
+    def FeatureReserveC#i : SubtargetFeature<"reserve-c"#i, "ReserveCRegister["#i#"]", "true",
+                                             "Reserve C"#i#", making it unavailable "
+                                             "as a capability reg">;
+
+def FeatureUse16CapRegs : SubtargetFeature<"use-16-cap-regs", "Use16CapRegs", "true",
+                                           "Reserve the capability regs in range C8-C23",
+                                           [FeatureReserveC8,
+                                            FeatureReserveC9,
+                                            FeatureReserveC10,
+                                            FeatureReserveC11,
+                                            FeatureReserveC12,
+                                            FeatureReserveC13,
+                                            FeatureReserveC14,
+                                            FeatureReserveC15,
+                                            FeatureReserveC16,
+                                            FeatureReserveC17,
+                                            FeatureReserveC18,
+                                            FeatureReserveC19,
+                                            FeatureReserveC20,
+                                            FeatureReserveC21,
+                                            FeatureReserveC22,
+                                            FeatureReserveC23]>;
 
 foreach i = {8-15,18} in
     def FeatureCallSavedX#i : SubtargetFeature<"call-saved-x"#i,

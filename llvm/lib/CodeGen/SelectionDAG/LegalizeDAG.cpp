@@ -2258,10 +2258,11 @@ SelectionDAGLegalize::ExpandDivRemLibCall(SDNode *Node,
     Args.push_back(Entry);
   }
 
+  unsigned AddrSpace = DAG.getDataLayout().getAllocaAddrSpace();
   // Also pass the return address of the remainder.
   SDValue FIPtr = DAG.CreateStackTemporary(RetVT);
   Entry.Node = FIPtr;
-  Entry.Ty = RetTy->getPointerTo();
+  Entry.Ty = RetTy->getPointerTo(AddrSpace);
   Entry.IsSExt = isSigned;
   Entry.IsZExt = !isSigned;
   Args.push_back(Entry);
@@ -2350,10 +2351,11 @@ SelectionDAGLegalize::ExpandSinCosLibCall(SDNode *Node,
   Entry.IsZExt = false;
   Args.push_back(Entry);
 
+  unsigned AddrSpace = DAG.getDataLayout().getAllocaAddrSpace();
   // Pass the return address of sin.
   SDValue SinPtr = DAG.CreateStackTemporary(RetVT);
   Entry.Node = SinPtr;
-  Entry.Ty = RetTy->getPointerTo();
+  Entry.Ty = RetTy->getPointerTo(AddrSpace);
   Entry.IsSExt = false;
   Entry.IsZExt = false;
   Args.push_back(Entry);
@@ -2361,7 +2363,7 @@ SelectionDAGLegalize::ExpandSinCosLibCall(SDNode *Node,
   // Also pass the return address of the cos.
   SDValue CosPtr = DAG.CreateStackTemporary(RetVT);
   Entry.Node = CosPtr;
-  Entry.Ty = RetTy->getPointerTo();
+  Entry.Ty = RetTy->getPointerTo(AddrSpace);
   Entry.IsSExt = false;
   Entry.IsZExt = false;
   Args.push_back(Entry);
@@ -2410,8 +2412,7 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(SDNode *Node,
                                       StackSlot.getValueType());
     // set up Hi and Lo (into buffer) address based on endian
     SDValue Hi = StackSlot;
-    SDValue Lo = DAG.getNode(ISD::ADD, dl, StackSlot.getValueType(),
-                             StackSlot, WordOff);
+    SDValue Lo = DAG.getPointerAdd(dl, StackSlot, WordOff);
     if (DAG.getDataLayout().isLittleEndian())
       std::swap(Hi, Lo);
 
@@ -2549,15 +2550,15 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(SDNode *Node,
   }
   if (DAG.getDataLayout().isLittleEndian())
     FF <<= 32;
-  Constant *FudgeFactor = ConstantInt::get(
-                                       Type::getInt64Ty(*DAG.getContext()), FF);
+  Constant *FudgeFactor =
+      ConstantInt::get(Type::getInt64Ty(*DAG.getContext()), FF);
 
   SDValue CPIdx = DAG.getConstantPool(
       FudgeFactor,
       TLI.getPointerTy(DAG.getDataLayout(),
                        DAG.getDataLayout().getGlobalsAddressSpace()));
   unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
-  CPIdx = DAG.getNode(ISD::ADD, dl, CPIdx.getValueType(), CPIdx, CstOffset);
+  CPIdx = DAG.getPointerAdd(dl, CPIdx, CstOffset);
   Alignment = std::min(Alignment, 4u);
   SDValue FudgeInReg;
   if (DestVT == MVT::f32)
@@ -4010,8 +4011,10 @@ void SelectionDAGLegalize::ConvertNodeToLibcall(SDNode *Node) {
   case ISD::ATOMIC_LOAD_UMIN:
   case ISD::ATOMIC_LOAD_UMAX:
   case ISD::ATOMIC_CMP_SWAP: {
+    bool FatPtrBase =
+      cast<AtomicSDNode>(Node)->getBasePtr().getValueType().isFatPointer();
     MVT VT = cast<AtomicSDNode>(Node)->getMemoryVT().getSimpleVT();
-    RTLIB::Libcall LC = RTLIB::getSYNC(Opc, VT);
+    RTLIB::Libcall LC = RTLIB::getSYNC(Opc, VT, FatPtrBase);
     assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unexpected atomic op or value type!");
 
     EVT RetVT = Node->getValueType(0);

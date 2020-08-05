@@ -78,7 +78,10 @@ int main(int, char**)
 {
     test<float>();
     test<double>();
+// NEWLIB doesn't have long double support.
+#ifndef _LIBCPP_HAS_NEWLIB
     test<long double>();
+#endif
 
   return 0;
 }

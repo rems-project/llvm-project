@@ -563,6 +563,11 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   // preparatory transforms.
   EverMadeChange |= placeDbgValues(F);
 
+  // Clear these to make sure that the AssertingVHs get removed.
+  LargeOffsetGEPMap.clear();
+  LargeOffsetGEPID.clear();
+  NewGEPBases.clear();
+
   return EverMadeChange;
 }
 

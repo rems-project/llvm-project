@@ -69,11 +69,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:_(p0) = COPY $x0
     ; CHECK: [[SEXTLOAD:%[0-9]+]]:_(s64) = G_SEXTLOAD [[COPY]](p0) :: (load 4 from %ir.ptr)
     ; CHECK: $x0 = COPY [[SEXTLOAD]](s64)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %0:_(p0) = COPY $x0
     %2:_(s64) = G_SEXTLOAD %0(p0) :: (load 4 from %ir.ptr)
     $x0 = COPY %2(s64)
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 
 ...
 ---
@@ -86,11 +86,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:_(p0) = COPY $x0
     ; CHECK: [[SEXTLOAD:%[0-9]+]]:_(s64) = G_SEXTLOAD [[COPY]](p0) :: (load 2 from %ir.ptr)
     ; CHECK: $x0 = COPY [[SEXTLOAD]](s64)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %0:_(p0) = COPY $x0
     %2:_(s64) = G_SEXTLOAD %0(p0) :: (load 2 from %ir.ptr)
     $x0 = COPY %2(s64)
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 
 ...
 ---
@@ -103,11 +103,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:_(p0) = COPY $x0
     ; CHECK: [[SEXTLOAD:%[0-9]+]]:_(s64) = G_SEXTLOAD [[COPY]](p0) :: (load 1 from %ir.ptr)
     ; CHECK: $x0 = COPY [[SEXTLOAD]](s64)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %0:_(p0) = COPY $x0
     %2:_(s64) = G_SEXTLOAD %0(p0) :: (load 1 from %ir.ptr)
     $x0 = COPY %2(s64)
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 
 ...
 ---
@@ -120,11 +120,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:_(p0) = COPY $x0
     ; CHECK: [[ZEXTLOAD:%[0-9]+]]:_(s64) = G_ZEXTLOAD [[COPY]](p0) :: (load 4 from %ir.ptr)
     ; CHECK: $x0 = COPY [[ZEXTLOAD]](s64)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %0:_(p0) = COPY $x0
     %2:_(s64) = G_ZEXTLOAD %0(p0) :: (load 4 from %ir.ptr)
     $x0 = COPY %2(s64)
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 
 ...
 ---
@@ -137,11 +137,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:_(p0) = COPY $x0
     ; CHECK: [[ZEXTLOAD:%[0-9]+]]:_(s64) = G_ZEXTLOAD [[COPY]](p0) :: (load 2 from %ir.ptr)
     ; CHECK: $x0 = COPY [[ZEXTLOAD]](s64)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %0:_(p0) = COPY $x0
     %2:_(s64) = G_ZEXTLOAD %0(p0) :: (load 2 from %ir.ptr)
     $x0 = COPY %2(s64)
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 
 ...
 ---
@@ -154,10 +154,10 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:_(p0) = COPY $x0
     ; CHECK: [[ZEXTLOAD:%[0-9]+]]:_(s64) = G_ZEXTLOAD [[COPY]](p0) :: (load 1 from %ir.ptr)
     ; CHECK: $x0 = COPY [[ZEXTLOAD]](s64)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %0:_(p0) = COPY $x0
     %2:_(s64) = G_ZEXTLOAD %0(p0) :: (load 1 from %ir.ptr)
     $x0 = COPY %2(s64)
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 
 ...

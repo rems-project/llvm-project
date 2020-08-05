@@ -64,6 +64,15 @@ static cl::opt<bool> EnableStPairSuppress("aarch64-enable-stp-suppress",
                                           cl::desc("Suppress STP for AArch64"),
                                           cl::init(true), cl::Hidden);
 
+static cl::opt<bool> EnableSandboxGlobalsOpt("aarch64-enable-sandbox-globals-opt",
+                                          cl::desc("Optimize sandbox globals"),
+                                          cl::init(true), cl::Hidden);
+
+static cl::opt<bool> EnableRangeChecking("aarch64-enable-range-checking",
+                                         cl::desc("Add range information on "
+                                                  "pointer casts"),
+                                         cl::init(true), cl::Hidden);
+
 static cl::opt<bool> EnableAdvSIMDScalar(
     "aarch64-enable-simd-scalar",
     cl::desc("Enable use of AdvSIMD scalar integer instructions"),
@@ -200,21 +209,38 @@ static std::unique_ptr<TargetLoweringObjectFile> createTLOF(const Triple &TT) {
 }
 
 // Helper function to build a DataLayout string
-static std::string computeDataLayout(const Triple &TT,
+static std::string computeDataLayout(const Triple &TT, StringRef FS,
                                      const MCTargetOptions &Options,
                                      bool LittleEndian) {
   if (Options.getABIName() == "ilp32")
     return "e-m:e-p:32:32-i8:8-i16:16-i64:64-S128";
+  std::string Desc(LittleEndian ? "e" : "E");
+
   if (TT.isOSBinFormatMachO()) {
     if (TT.getArch() == Triple::aarch64_32)
       return "e-m:o-p:32:32-i64:64-i128:128-n32:64-S128";
     return "e-m:o-i64:64-i128:128-n32:64-S128";
   }
+
   if (TT.isOSBinFormatCOFF())
     return "e-m:w-p:64:64-i32:32-i64:64-i128:128-n32:64-S128";
-  if (LittleEndian)
-    return "e-m:e-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128";
-  return "E-m:e-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128";
+
+  if (TT.isOSBinFormatMachO())
+    Desc += "-m:o";
+  else
+    Desc += "-m:e";
+
+  if (FS.find("+c64") != StringRef::npos ||
+      FS.find("+morello") != StringRef::npos)
+    Desc += "-pf200:128:128:128:64";
+
+  Desc += TT.isOSBinFormatMachO() ? "-i64:64-i128:128-n32:64-S128" :
+             "-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128";
+
+  if (Options.getABIName() == "purecap")
+    Desc += "-A200-P200-G200";
+
+  return Desc;
 }
 
 static Reloc::Model getEffectiveRelocModel(const Triple &TT,
@@ -267,10 +293,13 @@ AArch64TargetMachine::AArch64TargetMachine(const Target &T, const Triple &TT,
                                            CodeGenOpt::Level OL, bool JIT,
                                            bool LittleEndian)
     : LLVMTargetMachine(T,
-                        computeDataLayout(TT, Options.MCOptions, LittleEndian),
+                        computeDataLayout(TT, FS, Options.MCOptions, LittleEndian),
                         TT, CPU, FS, Options, getEffectiveRelocModel(TT, RM),
                         getEffectiveAArch64CodeModel(TT, CM, JIT), OL),
-      TLOF(createTLOF(getTargetTriple())), isLittle(LittleEndian) {
+      TLOF(createTLOF(getTargetTriple())), isLittle(LittleEndian),
+      isPureCap(Options.MCOptions.getABIName() == "purecap"),
+      isMorello(FS.find("+morello") != StringRef::npos),
+      isC64(FS.find("+c64") != StringRef::npos) {
   initAsmInfo();
 
   if (TT.isOSBinFormatMachO()) {
@@ -299,10 +328,12 @@ AArch64TargetMachine::AArch64TargetMachine(const Target &T, const Triple &TT,
     // for the tiny code model, the maximum TLS size is 1MiB (< 16MiB)
     this->Options.TLSSize = 24;
 
+  // Morello doesn't support GlobalISel (at least yet), so don't attempt to
+  // enable it.
   // Enable GlobalISel at or below EnableGlobalISelAt0, unless this is
   // MachO/CodeModel::Large, which GlobalISel does not support.
   if (getOptLevel() <= EnableGlobalISelAtO &&
-      TT.getArch() != Triple::aarch64_32 &&
+      TT.getArch() != Triple::aarch64_32 && !isMorello &&
       !(getCodeModel() == CodeModel::Large && TT.isOSBinFormatMachO())) {
     setGlobalISel(true);
     setGlobalISelAbort(GlobalISelAbortMode::Disable);
@@ -472,6 +503,11 @@ void AArch64PassConfig::addIRPasses() {
     // invariant.
     addPass(createLICMPass());
   }
+  if (EnableRangeChecking)
+    addPass(createMorelloRangeChecker());
+  // Add the sandbox pass. Only optimize for C64, since A64 will have a lower
+  addPass(createAArch64Sandbox(TM->getOptLevel() != CodeGenOpt::None,
+                               getAArch64TargetMachine().IsC64()));
 
   addPass(createAArch64StackTaggingPass(/* MergeInit = */ TM->getOptLevel() !=
                                         CodeGenOpt::None));
@@ -483,6 +519,19 @@ void AArch64PassConfig::addIRPasses() {
 
 // Pass Pipeline Configuration
 bool AArch64PassConfig::addPreISel() {
+  // CGP can add calls to memcpy and friends so we need to switch to switch
+  // to the capability variants here.
+  addPass(createAArch64SandboxMemOpLowering());
+  if (EnableSandboxGlobalsOpt && getAArch64TargetMachine().IsMorello())
+    addPass(createAArch64SandboxGlobalsOpt(TM));
+
+  // Don't merge globals in the pure capability ABI at least for now.
+  // The current implementation would drop bounds checks.
+  // The PromoteConstant pass would also create globals in the default
+  // address space and is not ported yet.
+  if (getAArch64TargetMachine().IsPureCap())
+    return false;
+
   // Run promote constant before global merge, so that the promoted constants
   // get a chance to be merged
   if (TM->getOptLevel() != CodeGenOpt::None && EnablePromoteConstant)

@@ -20,10 +20,12 @@
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/SectionKind.h"
+#include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include <cstdint>
 
 namespace llvm {
 
+class ConstantExpr;
 class GlobalValue;
 class MachineModuleInfo;
 class Mangler;
@@ -35,6 +37,7 @@ class MCSymbolRefExpr;
 class MCStreamer;
 class MCValue;
 class TargetMachine;
+class AsmPrinter;
 
 class TargetLoweringObjectFile : public MCObjectFileInfo {
   MCContext *Ctx = nullptr;
@@ -173,6 +176,13 @@ public:
                                                const TargetMachine &TM) const {
     return nullptr;
   }
+
+  virtual const MCExpr *
+  getConstantSymbolLowering(const Constant *CV, Mangler &Mang,
+                            const TargetMachine &TM) const {
+    return nullptr;
+  }
+
 
   /// Target supports replacing a data "PC"-relative access to a symbol
   /// through another symbol, by accessing the later via a GOT entry instead?

@@ -3170,6 +3170,7 @@ bool ASTContext::shouldUseCHERICap(PointerInterpretationKind PIK) const {
     default:
       llvm_unreachable("Invalid pointer interpretation!");
   }
+  llvm_unreachable("Unknown pointer interpretation kind");
 }
 
 /// getPointerType - Return the uniqued reference to the type for a pointer to
@@ -7692,16 +7693,18 @@ CreateAArch64ABIBuiltinVaListDecl(const ASTContext *Context) {
   QualType FieldTypes[NumFields];
   const char *FieldNames[NumFields];
 
+  QualType StackPtrTy = Context->getPointerType(Context->VoidTy);
+
   // void *__stack;
-  FieldTypes[0] = Context->getPointerType(Context->VoidTy);
+  FieldTypes[0] = StackPtrTy;
   FieldNames[0] = "__stack";
 
   // void *__gr_top;
-  FieldTypes[1] = Context->getPointerType(Context->VoidTy);
+  FieldTypes[1] = StackPtrTy;
   FieldNames[1] = "__gr_top";
 
   // void *__vr_top;
-  FieldTypes[2] = Context->getPointerType(Context->VoidTy);
+  FieldTypes[2] = StackPtrTy;
   FieldNames[2] = "__vr_top";
 
   // int __gr_offs;

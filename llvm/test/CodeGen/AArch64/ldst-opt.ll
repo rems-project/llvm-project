@@ -273,7 +273,7 @@ bar:
 ;  ...
 ; ldr X, [x8]
 ;  ->
-; ldr X, [x8, #16]!
+; ldr X, [x8, #16]
 ;
 ; with X being either w0, x0, s0, d0 or q0.
 
@@ -286,7 +286,7 @@ bar:
 define i32 @load-pre-indexed-word2(%pre.struct.i32** %this, i1 %cond,
                                    %pre.struct.i32* %load2) nounwind {
 ; CHECK-LABEL: load-pre-indexed-word2
-; CHECK: ldr w{{[0-9]+}}, [x{{[0-9]+}}, #4]!
+; CHECK: ldur w{{[0-9]+}}, [x{{[0-9]+}}, #4]
   br i1 %cond, label %if.then, label %if.end
 if.then:
   %load1 = load %pre.struct.i32*, %pre.struct.i32** %this
@@ -304,7 +304,7 @@ return:
 define i64 @load-pre-indexed-doubleword2(%pre.struct.i64** %this, i1 %cond,
                                          %pre.struct.i64* %load2) nounwind {
 ; CHECK-LABEL: load-pre-indexed-doubleword2
-; CHECK: ldr x{{[0-9]+}}, [x{{[0-9]+}}, #8]!
+; CHECK: ldur x{{[0-9]+}}, [x{{[0-9]+}}, #8]
   br i1 %cond, label %if.then, label %if.end
 if.then:
   %load1 = load %pre.struct.i64*, %pre.struct.i64** %this
@@ -322,7 +322,7 @@ return:
 define <2 x i64> @load-pre-indexed-quadword2(%pre.struct.i128** %this, i1 %cond,
                                              %pre.struct.i128* %load2) nounwind {
 ; CHECK-LABEL: load-pre-indexed-quadword2
-; CHECK: ldr q{{[0-9]+}}, [x{{[0-9]+}}, #16]!
+; CHECK: ldur q{{[0-9]+}}, [x{{[0-9]+}}, #16]
   br i1 %cond, label %if.then, label %if.end
 if.then:
   %load1 = load %pre.struct.i128*, %pre.struct.i128** %this
@@ -340,7 +340,7 @@ return:
 define float @load-pre-indexed-float2(%pre.struct.float** %this, i1 %cond,
                                       %pre.struct.float* %load2) nounwind {
 ; CHECK-LABEL: load-pre-indexed-float2
-; CHECK: ldr s{{[0-9]+}}, [x{{[0-9]+}}, #4]!
+; CHECK: ldur s{{[0-9]+}}, [x{{[0-9]+}}, #4]
   br i1 %cond, label %if.then, label %if.end
 if.then:
   %load1 = load %pre.struct.float*, %pre.struct.float** %this
@@ -358,7 +358,7 @@ return:
 define double @load-pre-indexed-double2(%pre.struct.double** %this, i1 %cond,
                                         %pre.struct.double* %load2) nounwind {
 ; CHECK-LABEL: load-pre-indexed-double2
-; CHECK: ldr d{{[0-9]+}}, [x{{[0-9]+}}, #8]!
+; CHECK: ldur d{{[0-9]+}}, [x{{[0-9]+}}, #8]
   br i1 %cond, label %if.then, label %if.end
 if.then:
   %load1 = load %pre.struct.double*, %pre.struct.double** %this
@@ -376,7 +376,7 @@ return:
 define i32 @load-pre-indexed-word3(%pre.struct.i32** %this, i1 %cond,
                                    %pre.struct.i32* %load2) nounwind {
 ; CHECK-LABEL: load-pre-indexed-word3
-; CHECK: ldr w{{[0-9]+}}, [x{{[0-9]+}}, #12]!
+; CHECK: ldur w{{[0-9]+}}, [x{{[0-9]+}}, #12]
   br i1 %cond, label %if.then, label %if.end
 if.then:
   %load1 = load %pre.struct.i32*, %pre.struct.i32** %this
@@ -394,7 +394,7 @@ return:
 define i64 @load-pre-indexed-doubleword3(%pre.struct.i64** %this, i1 %cond,
                                          %pre.struct.i64* %load2) nounwind {
 ; CHECK-LABEL: load-pre-indexed-doubleword3
-; CHECK: ldr x{{[0-9]+}}, [x{{[0-9]+}}, #16]!
+; CHECK: ldur x{{[0-9]+}}, [x{{[0-9]+}}, #16]
   br i1 %cond, label %if.then, label %if.end
 if.then:
   %load1 = load %pre.struct.i64*, %pre.struct.i64** %this
@@ -412,7 +412,7 @@ return:
 define <2 x i64> @load-pre-indexed-quadword3(%pre.struct.i128** %this, i1 %cond,
                                              %pre.struct.i128* %load2) nounwind {
 ; CHECK-LABEL: load-pre-indexed-quadword3
-; CHECK: ldr q{{[0-9]+}}, [x{{[0-9]+}}, #32]!
+; CHECK: ldur q{{[0-9]+}}, [x{{[0-9]+}}, #32]
   br i1 %cond, label %if.then, label %if.end
 if.then:
   %load1 = load %pre.struct.i128*, %pre.struct.i128** %this
@@ -430,7 +430,7 @@ return:
 define float @load-pre-indexed-float3(%pre.struct.float** %this, i1 %cond,
                                       %pre.struct.float* %load2) nounwind {
 ; CHECK-LABEL: load-pre-indexed-float3
-; CHECK: ldr s{{[0-9]+}}, [x{{[0-9]+}}, #8]!
+; CHECK: ldur s{{[0-9]+}}, [x{{[0-9]+}}, #8]
   br i1 %cond, label %if.then, label %if.end
 if.then:
   %load1 = load %pre.struct.float*, %pre.struct.float** %this
@@ -448,7 +448,7 @@ return:
 define double @load-pre-indexed-double3(%pre.struct.double** %this, i1 %cond,
                                         %pre.struct.double* %load2) nounwind {
 ; CHECK-LABEL: load-pre-indexed-double3
-; CHECK: ldr d{{[0-9]+}}, [x{{[0-9]+}}, #16]!
+; CHECK: ldur d{{[0-9]+}}, [x{{[0-9]+}}, #16]
   br i1 %cond, label %if.then, label %if.end
 if.then:
   %load1 = load %pre.struct.double*, %pre.struct.double** %this
@@ -469,7 +469,7 @@ return:
 ;  ...
 ; str X, [x8]
 ;  ->
-; str X, [x8, #16]!
+; str X, [x8, #16]
 ;
 ; with X being either w0, x0, s0, d0 or q0.
 
@@ -477,7 +477,7 @@ define void @store-pre-indexed-word2(%pre.struct.i32** %this, i1 %cond,
                                      %pre.struct.i32* %load2,
                                      i32 %val) nounwind {
 ; CHECK-LABEL: store-pre-indexed-word2
-; CHECK: str w{{[0-9]+}}, [x{{[0-9]+}}, #4]!
+; CHECK: stur w{{[0-9]+}}, [x{{[0-9]+}}, #4]
   br i1 %cond, label %if.then, label %if.end
 if.then:
   %load1 = load %pre.struct.i32*, %pre.struct.i32** %this
@@ -496,7 +496,7 @@ define void @store-pre-indexed-doubleword2(%pre.struct.i64** %this, i1 %cond,
                                            %pre.struct.i64* %load2,
                                            i64 %val) nounwind {
 ; CHECK-LABEL: store-pre-indexed-doubleword2
-; CHECK: str x{{[0-9]+}}, [x{{[0-9]+}}, #8]!
+; CHECK: stur x{{[0-9]+}}, [x{{[0-9]+}}, #8]
   br i1 %cond, label %if.then, label %if.end
 if.then:
   %load1 = load %pre.struct.i64*, %pre.struct.i64** %this
@@ -515,7 +515,7 @@ define void @store-pre-indexed-quadword2(%pre.struct.i128** %this, i1 %cond,
                                          %pre.struct.i128* %load2,
                                          <2 x i64> %val) nounwind {
 ; CHECK-LABEL: store-pre-indexed-quadword2
-; CHECK: str q{{[0-9]+}}, [x{{[0-9]+}}, #16]!
+; CHECK: stur q{{[0-9]+}}, [x{{[0-9]+}}, #16]
   br i1 %cond, label %if.then, label %if.end
 if.then:
   %load1 = load %pre.struct.i128*, %pre.struct.i128** %this
@@ -534,7 +534,7 @@ define void @store-pre-indexed-float2(%pre.struct.float** %this, i1 %cond,
                                       %pre.struct.float* %load2,
                                       float %val) nounwind {
 ; CHECK-LABEL: store-pre-indexed-float2
-; CHECK: str s{{[0-9]+}}, [x{{[0-9]+}}, #4]!
+; CHECK: stur s{{[0-9]+}}, [x{{[0-9]+}}, #4]
   br i1 %cond, label %if.then, label %if.end
 if.then:
   %load1 = load %pre.struct.float*, %pre.struct.float** %this
@@ -553,7 +553,7 @@ define void @store-pre-indexed-double2(%pre.struct.double** %this, i1 %cond,
                                       %pre.struct.double* %load2,
                                       double %val) nounwind {
 ; CHECK-LABEL: store-pre-indexed-double2
-; CHECK: str d{{[0-9]+}}, [x{{[0-9]+}}, #8]!
+; CHECK: stur d{{[0-9]+}}, [x{{[0-9]+}}, #8]
   br i1 %cond, label %if.then, label %if.end
 if.then:
   %load1 = load %pre.struct.double*, %pre.struct.double** %this
@@ -572,7 +572,7 @@ define void @store-pre-indexed-word3(%pre.struct.i32** %this, i1 %cond,
                                      %pre.struct.i32* %load2,
                                      i32 %val) nounwind {
 ; CHECK-LABEL: store-pre-indexed-word3
-; CHECK: str w{{[0-9]+}}, [x{{[0-9]+}}, #12]!
+; CHECK: stur w{{[0-9]+}}, [x{{[0-9]+}}, #12]
   br i1 %cond, label %if.then, label %if.end
 if.then:
   %load1 = load %pre.struct.i32*, %pre.struct.i32** %this
@@ -591,7 +591,7 @@ define void @store-pre-indexed-doubleword3(%pre.struct.i64** %this, i1 %cond,
                                            %pre.struct.i64* %load2,
                                            i64 %val) nounwind {
 ; CHECK-LABEL: store-pre-indexed-doubleword3
-; CHECK: str x{{[0-9]+}}, [x{{[0-9]+}}, #24]!
+; CHECK: stur x{{[0-9]+}}, [x{{[0-9]+}}, #24]
   br i1 %cond, label %if.then, label %if.end
 if.then:
   %load1 = load %pre.struct.i64*, %pre.struct.i64** %this
@@ -610,7 +610,7 @@ define void @store-pre-indexed-quadword3(%pre.struct.i128** %this, i1 %cond,
                                          %pre.struct.i128* %load2,
                                          <2 x i64> %val) nounwind {
 ; CHECK-LABEL: store-pre-indexed-quadword3
-; CHECK: str q{{[0-9]+}}, [x{{[0-9]+}}, #32]!
+; CHECK: stur q{{[0-9]+}}, [x{{[0-9]+}}, #32]
   br i1 %cond, label %if.then, label %if.end
 if.then:
   %load1 = load %pre.struct.i128*, %pre.struct.i128** %this
@@ -629,7 +629,7 @@ define void @store-pre-indexed-float3(%pre.struct.float** %this, i1 %cond,
                                       %pre.struct.float* %load2,
                                       float %val) nounwind {
 ; CHECK-LABEL: store-pre-indexed-float3
-; CHECK: str s{{[0-9]+}}, [x{{[0-9]+}}, #8]!
+; CHECK: stur s{{[0-9]+}}, [x{{[0-9]+}}, #8]
   br i1 %cond, label %if.then, label %if.end
 if.then:
   %load1 = load %pre.struct.float*, %pre.struct.float** %this
@@ -648,7 +648,7 @@ define void @store-pre-indexed-double3(%pre.struct.double** %this, i1 %cond,
                                       %pre.struct.double* %load2,
                                       double %val) nounwind {
 ; CHECK-LABEL: store-pre-indexed-double3
-; CHECK: str d{{[0-9]+}}, [x{{[0-9]+}}, #16]!
+; CHECK: stur d{{[0-9]+}}, [x{{[0-9]+}}, #16]
   br i1 %cond, label %if.then, label %if.end
 if.then:
   %load1 = load %pre.struct.double*, %pre.struct.double** %this

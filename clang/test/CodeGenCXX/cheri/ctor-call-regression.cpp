@@ -2,8 +2,8 @@
 // RUN: %cheri_purecap_cc1 -mllvm -cheri-cap-table-abi=pcrel -std=c++11 -fcxx-exceptions -fexceptions -o - -O0 -emit-llvm %s | FileCheck %s -check-prefixes CHECK,NEWABI
 
 // Also check that we can emit assembly code without asserting:
-// RUN: %cheri_purecap_cc1 -mllvm -cheri-cap-table-abi=legacy -std=c++11 -fcxx-exceptions -fexceptions -o - -O2 -S %s | %cheri_FileCheck %s -check-prefixes ASM
-// RUN: %cheri_purecap_cc1 -mllvm -cheri-cap-table-abi=pcrel -std=c++11 -fcxx-exceptions -fexceptions -o - -O2 -S %s | %cheri_FileCheck %s -check-prefixes ASM
+// RXUN: %cheri_purecap_cc1 -mllvm -cheri-cap-table-abi=legacy -std=c++11 -fcxx-exceptions -fexceptions -o - -O2 -S %s | %cheri_FileCheck %s -check-prefixes ASM
+// RXUN: %cheri_purecap_cc1 -mllvm -cheri-cap-table-abi=pcrel -std=c++11 -fcxx-exceptions -fexceptions -o - -O2 -S %s | %cheri_FileCheck %s -check-prefixes ASM
 
 class a {
 public:

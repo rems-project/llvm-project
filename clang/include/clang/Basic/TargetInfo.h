@@ -358,6 +358,9 @@ public:
   /// For example, SignedInt -> getIntAlign().
   unsigned getTypeAlign(IntType T) const;
 
+  /// Returns the range in bits of the pointer of a capability.
+  unsigned getTypeRange(IntType T) const;
+
   /// Returns true if the type is signed; false otherwise.
   static bool isTypeSigned(IntType T);
 
@@ -426,10 +429,11 @@ public:
   unsigned getIntWidth() const { return IntWidth; }
   unsigned getIntAlign() const { return IntAlign; }
 
-  /// getIntWidth/Align - Return the size of '__intcap_t' and '__uintcap_t' for
+  /// getIntWidth/Align/Range - Return the size of '__intcap_t' and '__uintcap_t' for
   /// this target, in bits.
   virtual unsigned getIntCapWidth() const { return LongWidth; }
   virtual unsigned getIntCapAlign() const { return LongAlign; }
+  virtual unsigned getIntCapRange() const { return LongWidth; }
 
   /// getLongWidth/Align - Return the size of 'signed long' and 'unsigned long'
   /// for this target, in bits.
@@ -1313,6 +1317,9 @@ public:
   bool isLittleEndian() const { return !BigEndian; }
 
   bool areAllPointersCapabilities() const { return CapabilityABI; }
+  virtual bool hasCapabilities() const { return false; }
+
+  virtual bool hasCapabilityAtomicBuiltins() const { return true; }
 
   /// Gets the default calling convention for the given target and
   /// declaration context.
@@ -1418,6 +1425,12 @@ public:
   /// DWARF.
   virtual Optional<unsigned> getDWARFAddressSpace(unsigned AddressSpace) const {
     return None;
+  }
+
+  /// Check whether the given DWARF address space needs to use extended
+  /// dereferencing mechanism (DW_OP_xderef).
+  virtual bool useXDerefForDWARFAddressSpace(unsigned DWARFAddressSpace) const {
+    return true;
   }
 
   /// \returns The version of the SDK which was used during the compilation if

@@ -1,7 +1,5 @@
-// REQUIRES: mips-registered-target
-
 // RUN: %cheri_purecap_cc1 -std=c11 -O2 -emit-llvm -o - %s | %cheri_FileCheck %s
-// RUN: %cheri_purecap_cc1 -mllvm -cheri-cap-table-abi=pcrel -std=c11 -O2 -S -o - %s | %cheri_FileCheck -check-prefixes=ASM,%cheri_type-ASM %s
+// RXUN: %cheri_purecap_cc1 -mllvm -cheri-cap-table-abi=pcrel -std=c11 -O2 -S -o - %s | %cheri_FileCheck -check-prefixes=ASM,%cheri_type-ASM %s
 int global;
 
 unsigned long sizeof_cap(void) {

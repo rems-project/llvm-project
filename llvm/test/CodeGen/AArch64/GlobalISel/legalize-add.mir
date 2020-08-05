@@ -141,12 +141,12 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<8 x s16>) = COPY $q1
     ; CHECK: [[ADD:%[0-9]+]]:_(<8 x s16>) = G_ADD [[COPY]], [[COPY1]]
     ; CHECK: $q0 = COPY [[ADD]](<8 x s16>)
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %0:_(<8 x s16>) = COPY $q0
     %1:_(<8 x s16>) = COPY $q1
     %2:_(<8 x s16>) = G_ADD %0, %1
     $q0 = COPY %2(<8 x s16>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 
 ...
 ---
@@ -164,11 +164,11 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<16 x s8>) = COPY $q1
     ; CHECK: [[ADD:%[0-9]+]]:_(<16 x s8>) = G_ADD [[COPY]], [[COPY1]]
     ; CHECK: $q0 = COPY [[ADD]](<16 x s8>)
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %0:_(<16 x s8>) = COPY $q0
     %1:_(<16 x s8>) = COPY $q1
     %2:_(<16 x s8>) = G_ADD %0, %1
     $q0 = COPY %2(<16 x s8>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 
 ...

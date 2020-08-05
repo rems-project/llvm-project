@@ -1,4 +1,5 @@
 ; REQUIRES: cxx-shared-library
+; UNSUPPORTED: libcxx-used
 ; RUN: %lli -remote-mcjit -mcjit-remote-process=lli-child-target%exeext %s
 ; XFAIL: arm, cygwin, windows-msvc, windows-gnu
 ; UNSUPPORTED: powerpc64-unknown-linux-gnu

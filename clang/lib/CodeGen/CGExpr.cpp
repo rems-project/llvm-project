@@ -5868,7 +5868,7 @@ LValue CodeGenFunction::EmitStmtExprLValue(const StmtExpr *E) {
 
 RValue CodeGenFunction::EmitCall(QualType CalleeType, const CGCallee &OrigCallee,
                                  const CallExpr *E, ReturnValueSlot ReturnValue,
-                                 llvm::Value *Chain) {
+                                 llvm::Value *Chain, bool PreserveTags) {
   // Get the actual function type. The callee type will always be a pointer to
   // function type or a block pointer type.
   assert(CalleeType->isFunctionPointerType() &&
@@ -6050,7 +6050,8 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, const CGCallee &OrigCallee
     // Load the global and use it in the call
     // FIXME: EmitSandboxRequiredMethod should return an Address so that we
     // don't have to know the alignment here.
-    auto *MethodNum = Builder.CreateLoad(Address(MethodNumVar, CharUnits::fromQuantity(8)));
+    auto *MethodNum =
+        Builder.CreateLoad(Address(MethodNumVar, CharUnits::fromQuantity(8)));
     MethodNum->setMetadata(CGM.getModule().getMDKindID("invariant.load"),
         llvm::MDNode::get(getLLVMContext(), None));
     CallArg MethodNumArg(RValue::get(MethodNum), NumTy);
@@ -6091,8 +6092,9 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, const CGCallee &OrigCallee
     auto Params = FnPType->getParamTypes();
     FunctionProtoType::ExtProtoInfo EPI = FnPType->getExtProtoInfo();
     NewParams.insert(NewParams.end(), Params.begin(), Params.end());
-    FnType = getContext().getFunctionType(FnPType->getReturnType(),
-        NewParams, EPI)->getAs<FunctionType>();
+    FnType = getContext()
+                 .getFunctionType(FnPType->getReturnType(), NewParams, EPI)
+                 ->getAs<FunctionType>();
   }
   const CGFunctionInfo &FnInfo = CGM.getTypes().arrangeFreeFunctionCall(
       Args, FnType, /*ChainCall=*/Chain);
@@ -6133,7 +6135,7 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, const CGCallee &OrigCallee
 
   llvm::CallBase *CallOrInvoke = nullptr;
   RValue Call = EmitCall(FnInfo, Callee, ReturnValue, Args, &CallOrInvoke,
-                         E->getExprLoc());
+                         E->getExprLoc(), PreserveTags);
 
   // Generate function declaration DISuprogram in order to be used
   // in debug info about call sites.

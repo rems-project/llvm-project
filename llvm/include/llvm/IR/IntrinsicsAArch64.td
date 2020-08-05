@@ -14,15 +14,22 @@ let TargetPrefix = "aarch64" in {
 
 def int_aarch64_ldxr : Intrinsic<[llvm_i64_ty], [llvm_anyptr_ty]>;
 def int_aarch64_ldaxr : Intrinsic<[llvm_i64_ty], [llvm_anyptr_ty]>;
+
+def int_aarch64_cldxr : Intrinsic<[llvm_fatptr_ty], [llvm_anyptr_ty]>;
+def int_aarch64_cldaxr : Intrinsic<[llvm_fatptr_ty], [llvm_anyptr_ty]>;
+
 def int_aarch64_stxr : Intrinsic<[llvm_i32_ty], [llvm_i64_ty, llvm_anyptr_ty]>;
 def int_aarch64_stlxr : Intrinsic<[llvm_i32_ty], [llvm_i64_ty, llvm_anyptr_ty]>;
 
-def int_aarch64_ldxp : Intrinsic<[llvm_i64_ty, llvm_i64_ty], [llvm_ptr_ty]>;
-def int_aarch64_ldaxp : Intrinsic<[llvm_i64_ty, llvm_i64_ty], [llvm_ptr_ty]>;
+def int_aarch64_cstxr : Intrinsic<[llvm_i32_ty], [llvm_fatptr_ty, llvm_anyptr_ty]>;
+def int_aarch64_cstlxr : Intrinsic<[llvm_i32_ty], [llvm_fatptr_ty, llvm_anyptr_ty]>;
+
+def int_aarch64_ldxp : Intrinsic<[llvm_i64_ty, llvm_i64_ty], [llvm_anyptr_ty]>;
+def int_aarch64_ldaxp : Intrinsic<[llvm_i64_ty, llvm_i64_ty], [llvm_anyptr_ty]>;
 def int_aarch64_stxp : Intrinsic<[llvm_i32_ty],
-                               [llvm_i64_ty, llvm_i64_ty, llvm_ptr_ty]>;
+                               [llvm_i64_ty, llvm_i64_ty, llvm_anyptr_ty]>;
 def int_aarch64_stlxp : Intrinsic<[llvm_i32_ty],
-                                [llvm_i64_ty, llvm_i64_ty, llvm_ptr_ty]>;
+                                [llvm_i64_ty, llvm_i64_ty, llvm_anyptr_ty]>;
 
 def int_aarch64_clrex : Intrinsic<[]>;
 
@@ -608,6 +615,25 @@ def int_aarch64_neon_tbx1 : AdvSIMD_Tbx1_Intrinsic;
 def int_aarch64_neon_tbx2 : AdvSIMD_Tbx2_Intrinsic;
 def int_aarch64_neon_tbx3 : AdvSIMD_Tbx3_Intrinsic;
 def int_aarch64_neon_tbx4 : AdvSIMD_Tbx4_Intrinsic;
+
+//===----------------------------------------------------------------------===//
+// Capabilities
+
+//
+// Morello specific
+//
+def int_morello_subset_test_unseal :
+  GCCBuiltin<"__builtin_morello_chkssu">,
+  Intrinsic<[llvm_fatptr_ty], [llvm_fatptr_ty, llvm_fatptr_ty], [IntrNoMem]>;
+def int_morello_convert_to_ptr :
+  GCCBuiltin<"__builtin_morello_cvt">,
+  Intrinsic<[llvm_i64_ty], [llvm_fatptr_ty, llvm_fatptr_ty], [IntrNoMem]>;
+def int_morello_convert_to_offset_null_cap_zero_semantics :
+  GCCBuiltin<"__builtin_morello_cvtz">,
+  Intrinsic<[llvm_fatptr_ty], [llvm_fatptr_ty, llvm_i64_ty], [IntrNoMem]>;
+
+//===----------------------------------------------------------------------===//
+// Crypto
 
 let TargetPrefix = "aarch64" in {
   class FPCR_Get_Intrinsic

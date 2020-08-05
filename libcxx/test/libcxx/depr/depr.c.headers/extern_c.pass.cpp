@@ -15,7 +15,12 @@ extern "C" {
 // complex.h is not supported in extern "C".
 #include <ctype.h>
 #include <errno.h>
+
+#if !defined(_NEWLIB_VERSION)
+// newlib doesn't have fenv.h
 #include <fenv.h>
+#endif
+
 #include <float.h>
 #include <inttypes.h>
 #include <iso646.h>

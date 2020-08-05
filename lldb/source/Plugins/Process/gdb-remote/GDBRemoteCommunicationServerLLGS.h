@@ -16,6 +16,7 @@
 #include "lldb/Host/MainLoop.h"
 #include "lldb/Host/common/NativeProcessProtocol.h"
 #include "lldb/lldb-private-forward.h"
+#include "llvm/ADT/StringRef.h"
 
 #include "GDBRemoteCommunicationServerCommon.h"
 
@@ -152,6 +153,10 @@ protected:
 
   PacketResult Handle_qXfer(StringExtractorGDBRemote &packet);
 
+  PacketResult Handle_qXfer_capa_read(StringExtractorGDBRemote &packet);
+
+  PacketResult Handle_qXfer_siginfo_read(StringExtractorGDBRemote &packet);
+
   PacketResult Handle_QSaveRegisterState(StringExtractorGDBRemote &packet);
 
   PacketResult Handle_jTraceStart(StringExtractorGDBRemote &packet);
@@ -178,6 +183,12 @@ protected:
 
   PacketResult Handle_QPassSignals(StringExtractorGDBRemote &packet);
 
+  bool ParseqXferRange(StringExtractorGDBRemote &packet,
+                       llvm::StringRef packet_name, uint64_t *offset,
+                       uint64_t *length, Status &error);
+
+  PacketResult SendqXferResponse(llvm::StringRef data, uint64_t offset,
+                                 uint64_t length, bool *end_reached = nullptr);
   PacketResult Handle_g(StringExtractorGDBRemote &packet);
 
   void SetCurrentThreadID(lldb::tid_t tid);

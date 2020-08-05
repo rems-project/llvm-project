@@ -221,13 +221,15 @@ public:
     IsAnonymousType ();
 
     lldb::SBType
-    GetPointerType();
+    GetPointerType(lldb::AddressSpace address_space =
+                       lldb::eAddressSpaceNormal);
 
     lldb::SBType
     GetPointeeType();
 
     lldb::SBType
-    GetReferenceType();
+    GetReferenceType(lldb::AddressSpace address_space =
+                         lldb::eAddressSpaceNormal);
 
     lldb::SBType
     SBType::GetTypedefedType();

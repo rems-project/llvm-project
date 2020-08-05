@@ -965,6 +965,7 @@ class GdbRemoteTestCaseBase(TestBase):
         "qXfer:libraries:read",
         "qXfer:libraries-svr4:read",
         "qXfer:features:read",
+        "qXfer:siginfo:read",
         "qEcho",
         "QPassSignals"
     ]

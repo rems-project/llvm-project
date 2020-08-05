@@ -1,6 +1,6 @@
 // RUN: %cheri_purecap_cc1 -O2 -std=c++11 -fcxx-exceptions -fexceptions -mllvm -cheri-cap-table-abi=pcrel -o -  %s -emit-llvm | FileCheck %s
 // Check that this doesn't crash during codegen
-// RUN: %cheri_purecap_cc1 -O2 -std=c++11 -fcxx-exceptions -fexceptions -mllvm -cheri-cap-table-abi=pcrel -o /dev/null  %s -S
+// RXUN: %cheri_purecap_cc1 -O2 -std=c++11 -fcxx-exceptions -fexceptions -mllvm -cheri-cap-table-abi=pcrel -o /dev/null  %s -S
 
 // __tls_guard was being emitted in AS200 which caused selection failures later
 // See https://github.com/CTSRD-CHERI/llvm/issues/269

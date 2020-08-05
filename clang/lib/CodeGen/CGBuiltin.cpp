@@ -107,9 +107,17 @@ llvm::Constant *CodeGenModule::getBuiltinLibFunction(const FunctionDecl *FD,
 
 /// Emit the conversions required to turn the given value into an
 /// integer of the given size.
-static Value *EmitToInt(CodeGenFunction &CGF, llvm::Value *V,
+static Value *EmitToIntOrFatPtr(CodeGenFunction &CGF, llvm::Value *V,
                         QualType T, llvm::IntegerType *IntType) {
   V = CGF.EmitToMemory(V, T);
+
+  auto &M = CGF.CGM.getModule();
+  const DataLayout &DL = M.getDataLayout();
+  if (llvm::PointerType *PT = dyn_cast<llvm::PointerType>(V->getType())) {
+    unsigned AS = PT->getAddressSpace();
+    if (DL.isFatPointer(AS))
+      return V;
+  }
 
   if (V->getType()->isPointerTy())
     return CGF.Builder.CreatePtrToInt(V, IntType);
@@ -118,9 +126,17 @@ static Value *EmitToInt(CodeGenFunction &CGF, llvm::Value *V,
   return V;
 }
 
-static Value *EmitFromInt(CodeGenFunction &CGF, llvm::Value *V,
+static Value *EmitFromIntOrFatPtr(CodeGenFunction &CGF, llvm::Value *V,
                           QualType T, llvm::Type *ResultType) {
   V = CGF.EmitFromMemory(V, T);
+
+  auto &M = CGF.CGM.getModule();
+  const DataLayout &DL = M.getDataLayout();
+  if (llvm::PointerType *PT = dyn_cast<llvm::PointerType>(V->getType())) {
+    unsigned AS = PT->getAddressSpace();
+    if (DL.isFatPointer(AS))
+      return V;
+  }
 
   if (ResultType->isPointerTy())
     return CGF.Builder.CreateIntToPtr(V, ResultType);
@@ -141,19 +157,36 @@ static Value *MakeBinaryAtomicValue(
   assert(CGF.getContext().hasSameUnqualifiedType(T, E->getArg(1)->getType()));
 
   llvm::Value *DestPtr = CGF.EmitScalarExpr(E->getArg(0));
+  unsigned AddrSpace = DestPtr->getType()->getPointerAddressSpace();
+  auto &M = CGF.CGM.getModule();
+  const DataLayout &DL = M.getDataLayout();
+
+  llvm::IntegerType *IntType =
+    llvm::IntegerType::get(CGF.getLLVMContext(),
+                           CGF.getContext().getTypeSize(T));
+  llvm::Type *IntPtrType = IntType->getPointerTo(AddrSpace);
 
   llvm::Value *Args[2];
   Args[0] = DestPtr;
+  bool CapabilityPtr = false;
+  if (llvm::PointerType *PT = dyn_cast<llvm::PointerType>(Args[0]->getType())) {
+    PT = dyn_cast<llvm::PointerType>(PT->getElementType());
+    if (PT) {
+      unsigned AS = PT->getAddressSpace();
+      CapabilityPtr = DL.isFatPointer(AS);
+    }
+  }
+
+  if (!CapabilityPtr)
+    Args[0] = CGF.Builder.CreateBitCast(Args[0], IntPtrType);
+
   Args[1] = CGF.EmitScalarExpr(E->getArg(1));
-  QualType ArgTy = E->getArg(1)->getType();
-  if (ArgTy->isBooleanType())
-    Args[1] = CGF.EmitToMemory(Args[1], E->getArg(1)->getType());
+  llvm::Type *ValueType = Args[1]->getType();
+  Args[1] = EmitToIntOrFatPtr(CGF, Args[1], T, IntType);
 
   llvm::Value *Result = CGF.Builder.CreateAtomicRMW(
       Kind, Args[0], Args[1], Ordering);
-  if (ArgTy->isBooleanType())
-    Result = CGF.EmitFromMemory(Result, ArgTy);
-  return Result;
+  return EmitFromIntOrFatPtr(CGF, Result, T, ValueType);
 }
 
 static Value *EmitNontemporalStore(CodeGenFunction &CGF, const CallExpr *E,
@@ -201,6 +234,8 @@ static RValue EmitBinaryAtomicPost(CodeGenFunction &CGF,
 
   llvm::Value *DestPtr = CGF.EmitScalarExpr(E->getArg(0));
   unsigned AddrSpace = DestPtr->getType()->getPointerAddressSpace();
+  auto &M = CGF.CGM.getModule();
+  const DataLayout &DL = M.getDataLayout();
 
   llvm::IntegerType *IntType =
     llvm::IntegerType::get(CGF.getLLVMContext(),
@@ -208,19 +243,55 @@ static RValue EmitBinaryAtomicPost(CodeGenFunction &CGF,
   llvm::Type *IntPtrType = IntType->getPointerTo(AddrSpace);
 
   llvm::Value *Args[2];
+
+  Args[0] = DestPtr;
   Args[1] = CGF.EmitScalarExpr(E->getArg(1));
   llvm::Type *ValueType = Args[1]->getType();
-  Args[1] = EmitToInt(CGF, Args[1], T, IntType);
-  Args[0] = CGF.Builder.CreateBitCast(DestPtr, IntPtrType);
 
-  llvm::Value *Result = CGF.Builder.CreateAtomicRMW(
-      Kind, Args[0], Args[1], llvm::AtomicOrdering::SequentiallyConsistent);
-  Result = CGF.Builder.CreateBinOp(Op, Result, Args[1]);
-  if (Invert)
-    Result = CGF.Builder.CreateBinOp(llvm::Instruction::Xor, Result,
-                                     llvm::ConstantInt::get(IntType, -1));
-  Result = EmitFromInt(CGF, Result, T, ValueType);
-  return RValue::get(Result);
+  Args[1] = EmitToIntOrFatPtr(CGF, Args[1], T, IntType);
+  bool CapabilityPtr = false;
+  if (llvm::PointerType *PT = dyn_cast<llvm::PointerType>(Args[0]->getType())) {
+    PT = dyn_cast<llvm::PointerType>(PT->getElementType());
+    if (PT) {
+      unsigned AS = PT->getAddressSpace();
+      CapabilityPtr = DL.isFatPointer(AS);
+    }
+  }
+
+  if (!CapabilityPtr)
+    Args[0] = CGF.Builder.CreateBitCast(DestPtr, IntPtrType);
+
+  llvm::Value *Result =
+      CGF.Builder.CreateAtomicRMW(Kind, Args[0], Args[1],
+                                  llvm::AtomicOrdering::SequentiallyConsistent);
+
+  if (CapabilityPtr) {
+    // Extract the pointer, do the operation, reverse it if required
+    // and add it back again.
+    unsigned AS = cast<llvm::PointerType>(Result->getType())->getAddressSpace();
+    llvm::Type *Char = llvm::IntegerType::get(CGF.getLLVMContext(), 8);
+    llvm::PointerType *Void = llvm::PointerType::get(Char, AS);
+
+    llvm::Value *LHS = CGF.getPointerAddress(Result);
+    llvm::Value *RHS = CGF.getPointerAddress(Args[1]);
+
+    Value *NewResult = CGF.Builder.CreateBinOp(Op, LHS, RHS);
+    if (Invert)
+      NewResult = CGF.Builder.CreateBinOp(llvm::Instruction::Xor, NewResult,
+                                       llvm::ConstantInt::get(CGF.Int64Ty, -1));
+
+    llvm::Type *OldTy = Result->getType();
+    Result = CGF.Builder.CreateBitCast(Result, Void);
+    Result = CGF.setPointerAddress(Result, NewResult);
+    Result = CGF.Builder.CreateBitCast(Result, OldTy);
+  } else {
+    Result = CGF.Builder.CreateBinOp(Op, Result, Args[1]);
+    if (Invert)
+      Result = CGF.Builder.CreateBinOp(llvm::Instruction::Xor, Result,
+                                       llvm::ConstantInt::get(IntType, -1));
+  }
+
+  return RValue::get(EmitFromIntOrFatPtr(CGF, Result, T, ValueType));
 }
 
 /// Utility to insert an atomic cmpxchg instruction.
@@ -241,15 +312,33 @@ static Value *MakeAtomicCmpXchgValue(CodeGenFunction &CGF, const CallExpr *E,
                                      bool ReturnBool) {
   QualType T = ReturnBool ? E->getArg(1)->getType() : E->getType();
   llvm::Value *DestPtr = CGF.EmitScalarExpr(E->getArg(0));
+  unsigned AddrSpace = DestPtr->getType()->getPointerAddressSpace();
+  auto &M = CGF.CGM.getModule();
+  const DataLayout &DL = M.getDataLayout();
+
+  llvm::IntegerType *IntType = llvm::IntegerType::get(
+      CGF.getLLVMContext(), CGF.getContext().getTypeSize(T));
+  llvm::Type *IntPtrType = IntType->getPointerTo(AddrSpace);
 
   Value *Args[3];
   Args[0] = DestPtr;
   Args[1] = CGF.EmitScalarExpr(E->getArg(1));
-  Args[2] = CGF.EmitScalarExpr(E->getArg(2));
-  if (E->getArg(1)->getType()->isBooleanType())
-     Args[1] = CGF.EmitToMemory(Args[1], E->getArg(1)->getType());
-  if (E->getArg(2)->getType()->isBooleanType())
-     Args[2] = CGF.EmitToMemory(Args[2], E->getArg(2)->getType());
+  Args[2] = EmitToIntOrFatPtr(CGF, CGF.EmitScalarExpr(E->getArg(2)), T, IntType);
+
+  bool CapabilityPtr = false;
+  if (llvm::PointerType *PT = dyn_cast<llvm::PointerType>(Args[0]->getType())) {
+    PT = dyn_cast<llvm::PointerType>(PT->getElementType());
+    if (PT) {
+      unsigned AS = PT->getAddressSpace();
+      CapabilityPtr = DL.isFatPointer(AS);
+    }
+  }
+
+  if (!CapabilityPtr)
+    Args[0] = CGF.Builder.CreateBitCast(DestPtr, IntPtrType);
+
+  llvm::Type *ValueType = Args[1]->getType();
+  Args[1] = EmitToIntOrFatPtr(CGF, CGF.EmitScalarExpr(E->getArg(1)), T, IntType);
 
   Value *Pair = CGF.Builder.CreateAtomicCmpXchg(
       Args[0], Args[1], Args[2], llvm::AtomicOrdering::SequentiallyConsistent,
@@ -260,7 +349,8 @@ static Value *MakeAtomicCmpXchgValue(CodeGenFunction &CGF, const CallExpr *E,
                                   CGF.ConvertType(E->getType()));
   else
     // Extract old value and emit it using the same type as compare value.
-    return CGF.EmitFromMemory(CGF.Builder.CreateExtractValue(Pair, 0), T);
+    return EmitFromIntOrFatPtr(CGF, CGF.Builder.CreateExtractValue(Pair, 0), T,
+                       ValueType);
 }
 
 /// This function should be invoked to emit atomic cmpxchg for Microsoft's
@@ -515,9 +605,11 @@ static Value *EmitSignBit(CodeGenFunction &CGF, Value *V) {
 }
 
 static RValue emitLibraryCall(CodeGenFunction &CGF, const FunctionDecl *FD,
-                              const CallExpr *E, llvm::Value *calleeValue) {
+                              const CallExpr *E, llvm::Value *calleeValue,
+                              bool PreserveTags = false) {
   CGCallee callee = CGCallee(GlobalDecl(FD), calleeValue);
-  return CGF.EmitCall(E->getCallee()->getType(), callee, E, ReturnValueSlot());
+  return CGF.EmitCall(E->getCallee()->getType(), callee, E, ReturnValueSlot(),
+                      nullptr, PreserveTags);
 }
 
 /// Emit a call to llvm.{sadd,uadd,ssub,usub,smul,umul}.with.overflow.*
@@ -567,6 +659,8 @@ getIntegerWidthAndSignedness(const clang::ASTContext &context,
                              const clang::QualType Type) {
   assert(Type->isIntegerType() && "Given type is not an integer.");
   unsigned Width = Type->isBooleanType() ? 1 : context.getTypeInfo(Type).Width;
+  if (Type->isCHERICapabilityType(context, true))
+    Width = context.getTargetInfo().getPointerRangeForCHERICapability();
   bool Signed = Type->isSignedIntegerType();
   return {Width, Signed};
 }
@@ -1622,8 +1716,17 @@ diagnoseMisalignedCapabiliyCopyDest(CodeGenFunction &CGF, StringRef Function,
   UnderlyingSrcTy =
       QualType(UnderlyingSrcTy->getPointeeOrArrayElementType(), 0);
   auto &Ctx = CGF.CGM.getContext();
-  if (!Ctx.containsCapabilities(UnderlyingSrcTy))
-    return;
+  bool Legacy = false;
+  if (CGF.getLangOpts().getCheriMemopsInlineBehaviour() ==
+      LangOptions::CheriMemopsInlineBehaviour_New) {
+    if (!Ctx.containsCapabilities(UnderlyingSrcTy))
+      return;
+  } else {
+    // The legacy behaviour is that all memory transfer calls preserve tags.
+    if (!Ctx.getTargetInfo().SupportsCapabilities())
+      return;
+    Legacy = true;
+  }
 
   // Add a "must-preserve-cheri-tags" attribute to the memcpy/memmove
   // intrinsic to ensure that the backend will not lower it to an inlined
@@ -1644,12 +1747,16 @@ diagnoseMisalignedCapabiliyCopyDest(CodeGenFunction &CGF, StringRef Function,
       TypeName = "'" + TypeName + "' (aka '" + CanonicalStr + "')";
     else
       TypeName = "'" + TypeName + "'";
+    if (Legacy)
+      return;
     MemInst->addAttribute(llvm::AttributeList::FunctionIndex,
                           llvm::Attribute::get(CGF.getLLVMContext(),
                                                "frontend-memtransfer-type",
                                                TypeName));
     return;
   }
+  if (Legacy)
+    return;
   // Otherwise attempt to diagnose it here (likely to cause false positives)
   uint64_t CapSizeBytes =
       Ctx.toCharUnitsFromBits(Ctx.getTargetInfo().getCHERICapabilityAlign())
@@ -1730,6 +1837,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
                                                Result.Val.getFloat()));
   }
   unsigned DefaultAS = CGM.getTargetCodeGenInfo().getDefaultAS();
+  bool PreserveTags = false;
 
   // There are LLVM math intrinsics/instructions corresponding to math library
   // functions except the LLVM op will never set errno while the math library
@@ -2649,6 +2757,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
 
   case Builtin::BI__builtin___memcpy_chk: {
     // fold __builtin_memcpy_chk(x, y, cst1, cst2) to memcpy iff cst1<=cst2.
+    if (CGM.getContext().getTargetInfo().SupportsCapabilities())
+      PreserveTags = true;
     Expr::EvalResult SizeResult, DstSizeResult;
     if (!E->getArg(2)->EvaluateAsInt(SizeResult, CGM.getContext()) ||
         !E->getArg(3)->EvaluateAsInt(DstSizeResult, CGM.getContext())) {
@@ -2683,6 +2793,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
 
   case Builtin::BI__builtin___memmove_chk: {
     // fold __builtin_memmove_chk(x, y, cst1, cst2) to memmove iff cst1<=cst2.
+    if (CGM.getContext().getTargetInfo().SupportsCapabilities())
+      PreserveTags = true;
     Expr::EvalResult SizeResult, DstSizeResult;
     if (!E->getArg(2)->EvaluateAsInt(SizeResult, CGM.getContext()) ||
         !E->getArg(3)->EvaluateAsInt(DstSizeResult, CGM.getContext())) {
@@ -3015,14 +3127,31 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
   case Builtin::BI__sync_fetch_and_nand_16:
     return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::Nand, E);
 
-  // Clang extensions: not overloaded yet.
-  case Builtin::BI__sync_fetch_and_min:
+  // Clang extensions
+
+  case Builtin::BI__sync_fetch_and_min_1:
+  case Builtin::BI__sync_fetch_and_min_2:
+  case Builtin::BI__sync_fetch_and_min_4:
+  case Builtin::BI__sync_fetch_and_min_8:
+  case Builtin::BI__sync_fetch_and_min_16:
     return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::Min, E);
-  case Builtin::BI__sync_fetch_and_max:
+  case Builtin::BI__sync_fetch_and_max_1:
+  case Builtin::BI__sync_fetch_and_max_2:
+  case Builtin::BI__sync_fetch_and_max_4:
+  case Builtin::BI__sync_fetch_and_max_8:
+  case Builtin::BI__sync_fetch_and_max_16:
     return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::Max, E);
-  case Builtin::BI__sync_fetch_and_umin:
+  case Builtin::BI__sync_fetch_and_umin_1:
+  case Builtin::BI__sync_fetch_and_umin_2:
+  case Builtin::BI__sync_fetch_and_umin_4:
+  case Builtin::BI__sync_fetch_and_umin_8:
+  case Builtin::BI__sync_fetch_and_umin_16:
     return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::UMin, E);
-  case Builtin::BI__sync_fetch_and_umax:
+  case Builtin::BI__sync_fetch_and_umax_1:
+  case Builtin::BI__sync_fetch_and_umax_2:
+  case Builtin::BI__sync_fetch_and_umax_4:
+  case Builtin::BI__sync_fetch_and_umax_8:
+  case Builtin::BI__sync_fetch_and_umax_16:
     return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::UMax, E);
 
   case Builtin::BI__sync_add_and_fetch_1:
@@ -3106,7 +3235,16 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     CharUnits StoreSize = getContext().getTypeSizeInChars(ElTy);
     llvm::Type *ITy = llvm::IntegerType::get(getLLVMContext(),
                                              StoreSize.getQuantity() * 8);
-    Ptr = Builder.CreateBitCast(Ptr, ITy->getPointerTo(DefaultAS));
+    auto &M = CGM.getModule();
+    const DataLayout &DL = M.getDataLayout();
+    if (llvm::PointerType *PT = dyn_cast<llvm::PointerType>(Ptr->getType())) {
+      unsigned AS = PT->getAddressSpace();
+      if (!DL.isFatPointer(AS))
+        Ptr = Builder.CreateBitCast(Ptr, ITy->getPointerTo(DefaultAS));
+      else
+        ITy = PT->getElementType();
+    }
+
     llvm::StoreInst *Store =
       Builder.CreateAlignedStore(llvm::Constant::getNullValue(ITy), Ptr,
                                  StoreSize);
@@ -3505,6 +3643,9 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
         llvm::IntegerType::get(CGM.getLLVMContext(), EncompassingInfo.Width);
 
     llvm::Type *ResultLLVMTy = CGM.getTypes().ConvertType(ResultQTy);
+    if (ResultQTy->isCHERICapabilityType(CGM.getContext()))
+      ResultLLVMTy = llvm::IntegerType::get(CGM.getLLVMContext(),
+                                            ResultInfo.Width);
 
     llvm::Intrinsic::ID IntrinsicId;
     switch (BuiltinID) {
@@ -3531,6 +3672,17 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     llvm::Value *Right = EmitScalarExpr(RightArg);
     Address ResultPtr = EmitPointerWithAlignment(ResultArg);
 
+    llvm::Value *CapLeft = nullptr;
+    llvm::Value *CapRight = nullptr;
+    if (LeftArg->getType()->isCHERICapabilityType(CGM.getContext())) {
+      CapLeft = Left;
+      Left = getCapabilityIntegerValue(Left);
+    }
+    if (RightArg->getType()->isCHERICapabilityType(CGM.getContext())) {
+      CapRight = Right;
+      Right = getCapabilityIntegerValue(Right);
+    }
+
     // Extend each operand to the encompassing type.
     Left = Builder.CreateIntCast(Left, EncompassingLLVMTy, LeftInfo.Signed);
     Right = Builder.CreateIntCast(Right, EncompassingLLVMTy, RightInfo.Signed);
@@ -3553,6 +3705,15 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
 
       Overflow = Builder.CreateOr(Overflow, TruncationOverflow);
       Result = ResultTrunc;
+    }
+
+    if (ResultQTy->isCHERICapabilityType(CGM.getContext())) {
+      // Choose the provenance for the output capability based on the inputs.
+      Value *Source = CapLeft ? CapLeft : CapRight;
+      if (!Source)
+        Source =
+          llvm::Constant::getNullValue(CGM.getTypes().ConvertType(ResultQTy));
+      Result = setCapabilityIntegerValue(Source, Result);
     }
 
     // Finally, store the result using the pointer.
@@ -3800,20 +3961,33 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
       return RValue::get(llvm::ConstantExpr::getBitCast(GV, CGM.Int8PtrTy));
     break;
   }
-
+  case Builtin::BI__builtin_cheri_cap_from_pointer_nonnull_zero:
   case Builtin::BI__builtin_cheri_cap_from_pointer: {
     Value *GlobalCap = EmitScalarExpr(E->getArg(0));
     Value *Ptr = Builder.CreatePtrToInt(EmitScalarExpr(E->getArg(1)), IntPtrTy);
+    unsigned CapFromPointerIntr;
+    switch (BuiltinID) {
+    case Builtin::BI__builtin_cheri_cap_from_pointer: {
+      CapFromPointerIntr = llvm::Intrinsic::cheri_cap_from_pointer;
+      break;
+    }
+    case Builtin::BI__builtin_cheri_cap_from_pointer_nonnull_zero:
+      CapFromPointerIntr = llvm::Intrinsic::cheri_cap_from_pointer_nonnull_zero;
+      break;
+    default:
+      llvm_unreachable("Unknown vector element type!");
+    }
     return RValue::get(Builder.CreateCall(
-        CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_from_pointer, IntPtrTy),
+        CGM.getIntrinsic(CapFromPointerIntr, IntPtrTy),
         {GlobalCap, Ptr}));
   }
   case Builtin::BI__builtin_cheri_cap_to_pointer: {
     Value *GlobalCap = EmitScalarExpr(E->getArg(0));
     Value *Cap = EmitScalarExpr(E->getArg(1));
-    Value *Ptr = Builder.CreateCall(
-        CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_to_pointer, IntPtrTy),
-        {GlobalCap, Cap});
+    Value *Ptr = nullptr;
+    Ptr = Builder.CreateCall(
+          CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_to_pointer, IntPtrTy),
+          {GlobalCap, Cap});
     return RValue::get(Builder.CreateIntToPtr(Ptr, ConvertType(E->getType())));
   }
 
@@ -3881,6 +4055,14 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     return RValue::get(Builder.CreateCall(
         CGM.getIntrinsic(llvm::Intrinsic::cheri_representable_alignment_mask, {SizeTy}),
         {EmitScalarExpr(E->getArg(0))}));
+  case Builtin::BI__builtin_cheri_copy_from_high:
+    return RValue::get(Builder.CreateCall(
+        CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_copy_from_high, {SizeTy}),
+        {EmitScalarExpr(E->getArg(0))}));
+  case Builtin::BI__builtin_cheri_copy_to_high:
+    return RValue::get(Builder.CreateCall(
+        CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_copy_to_high, {SizeTy}),
+        {EmitScalarExpr(E->getArg(0)), EmitScalarExpr(E->getArg(1))}));
 
   case Builtin::BI__builtin_cheri_callback_create: {
     StringRef ClassName = cast<StringLiteral>(E->getArg(0))->getString();
@@ -3916,10 +4098,13 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     return RValue::get(Builder.CreateCall(
         CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_address_set, IntPtrTy),
         {EmitScalarExpr(E->getArg(0)), EmitScalarExpr(E->getArg(1))}));
-  case Builtin::BI__builtin_cheri_cap_load_tags:
+  case Builtin::BI__builtin_cheri_cap_load_tags: {
+    Value *Ptr = EmitScalarExpr(E->getArg(0));
+    llvm::Type *Types[] = { SizeTy, Ptr->getType() };
     return RValue::get(Builder.CreateCall(
-        CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_load_tags, SizeTy),
-        {EmitScalarExpr(E->getArg(0))}));
+        CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_load_tags, Types),
+        {Ptr}));
+  }
 
   case Builtin::BI__fastfail:
     return RValue::get(EmitMSVCBuiltinExpr(MSVCIntrin::__fastfail, E));
@@ -4514,12 +4699,14 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
   // version of the function name.
   if (getContext().BuiltinInfo.isLibFunction(BuiltinID))
     return emitLibraryCall(*this, FD, E,
-                           CGM.getBuiltinLibFunction(FD, BuiltinID));
+                           CGM.getBuiltinLibFunction(FD, BuiltinID),
+                           PreserveTags);
 
   // If this is a predefined lib function (e.g. malloc), emit the call
   // using exactly the normal call path.
   if (getContext().BuiltinInfo.isPredefinedLibFunction(BuiltinID))
-    return emitLibraryCall(*this, FD, E, EmitScalarExpr(E->getCallee()));
+    return emitLibraryCall(*this, FD, E, EmitScalarExpr(E->getCallee()),
+                           PreserveTags);
 
   // Check that a call to a target specific builtin has the correct target
   // features.
@@ -7639,12 +7826,14 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
 
   if ((BuiltinID == AArch64::BI__builtin_arm_ldrex ||
       BuiltinID == AArch64::BI__builtin_arm_ldaex) &&
-      getContext().getTypeSize(E->getType()) == 128) {
-    Function *F = CGM.getIntrinsic(BuiltinID == AArch64::BI__builtin_arm_ldaex
-                                       ? Intrinsic::aarch64_ldaxp
-                                       : Intrinsic::aarch64_ldxp);
+      getContext().getTypeSize(E->getType()) == 128 &&
+      !E->getType()->isCHERICapabilityType(getContext(), true)) {
 
     Value *LdPtr = EmitScalarExpr(E->getArg(0));
+    Function *F = CGM.getIntrinsic(BuiltinID == AArch64::BI__builtin_arm_ldaex
+                                       ? Intrinsic::aarch64_ldaxp
+                                       : Intrinsic::aarch64_ldxp,
+                                   Int8PtrTy);
     Value *Val = Builder.CreateCall(F, Builder.CreateBitCast(LdPtr, Int8PtrTy),
                                     "ldxp");
 
@@ -7661,18 +7850,28 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   } else if (BuiltinID == AArch64::BI__builtin_arm_ldrex ||
              BuiltinID == AArch64::BI__builtin_arm_ldaex) {
     Value *LoadAddr = EmitScalarExpr(E->getArg(0));
-
     QualType Ty = E->getType();
+    bool IsCap = Ty->isCHERICapabilityType(getContext(), true);
     llvm::Type *RealResTy = ConvertType(Ty);
-    llvm::Type *PtrTy = llvm::IntegerType::get(
-        getLLVMContext(), getContext().getTypeSize(Ty))->getPointerTo(DefaultAS);
-    LoadAddr = Builder.CreateBitCast(LoadAddr, PtrTy);
 
-    Function *F = CGM.getIntrinsic(BuiltinID == AArch64::BI__builtin_arm_ldaex
+    llvm::Type *PtrTy = IsCap ? Int8PtrTy :
+        llvm::IntegerType::get(
+            getLLVMContext(),
+            getContext().getTypeSize(Ty))->getPointerTo(DefaultAS);
+    LoadAddr = Builder.CreateBitCast(LoadAddr, PtrTy);
+    unsigned Op = (BuiltinID == AArch64::BI__builtin_arm_ldaex
                                        ? Intrinsic::aarch64_ldaxr
-                                       : Intrinsic::aarch64_ldxr,
+                                       : Intrinsic::aarch64_ldxr);
+    if (IsCap)
+      Op = (BuiltinID == AArch64::BI__builtin_arm_ldaex
+                                ? Intrinsic::aarch64_cldaxr
+                                : Intrinsic::aarch64_cldxr);
+    Function *F = CGM.getIntrinsic(Op,
                                    PtrTy);
     Value *Val = Builder.CreateCall(F, LoadAddr, "ldxr");
+
+    if (IsCap)
+      return Builder.CreateBitCast(Val, RealResTy);
 
     if (RealResTy->isPointerTy())
       return Builder.CreateIntToPtr(Val, RealResTy);
@@ -7685,10 +7884,8 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
 
   if ((BuiltinID == AArch64::BI__builtin_arm_strex ||
        BuiltinID == AArch64::BI__builtin_arm_stlex) &&
-      getContext().getTypeSize(E->getArg(0)->getType()) == 128) {
-    Function *F = CGM.getIntrinsic(BuiltinID == AArch64::BI__builtin_arm_stlex
-                                       ? Intrinsic::aarch64_stlxp
-                                       : Intrinsic::aarch64_stxp);
+      getContext().getTypeSize(E->getArg(0)->getType()) == 128 &&
+      !E->getArg(0)->getType()->isCHERICapabilityType(getContext(), true)) {
     llvm::Type *STy = llvm::StructType::get(Int64Ty, Int64Ty);
 
     Address Tmp = CreateMemTemp(E->getArg(0)->getType());
@@ -7701,6 +7898,10 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
     Value *Arg1 = Builder.CreateExtractValue(Val, 1);
     Value *StPtr = Builder.CreateBitCast(EmitScalarExpr(E->getArg(1)),
                                          Int8PtrTy);
+    Function *F = CGM.getIntrinsic(BuiltinID == AArch64::BI__builtin_arm_stlex
+                                       ? Intrinsic::aarch64_stlxp
+                                       : Intrinsic::aarch64_stxp,
+                                   Int8PtrTy);
     return Builder.CreateCall(F, {Arg0, Arg1, StPtr}, "stxp");
   }
 
@@ -7708,13 +7909,18 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
       BuiltinID == AArch64::BI__builtin_arm_stlex) {
     Value *StoreVal = EmitScalarExpr(E->getArg(0));
     Value *StoreAddr = EmitScalarExpr(E->getArg(1));
+    bool IsCap = E->getArg(0)->getType()->isCHERICapabilityType(getContext(), true);
 
     QualType Ty = E->getArg(0)->getType();
     llvm::Type *StoreTy = llvm::IntegerType::get(getLLVMContext(),
                                                  getContext().getTypeSize(Ty));
-    StoreAddr = Builder.CreateBitCast(StoreAddr, StoreTy->getPointerTo(DefaultAS));
+    llvm::Type *StoreAddrTy = IsCap ? Int8PtrTy : StoreTy->getPointerTo(DefaultAS);
+    StoreAddr = Builder.CreateBitCast(StoreAddr, StoreAddrTy);
 
-    if (StoreVal->getType()->isPointerTy())
+    if (IsCap)
+      StoreVal = Builder.CreateBitCast(StoreVal,
+                                       llvm::PointerType::get(Int8Ty, 200));
+    else if (StoreVal->getType()->isPointerTy())
       StoreVal = Builder.CreatePtrToInt(StoreVal, Int64Ty);
     else {
       llvm::Type *IntTy = llvm::IntegerType::get(
@@ -7723,10 +7929,15 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
       StoreVal = Builder.CreateBitCast(StoreVal, IntTy);
       StoreVal = Builder.CreateZExtOrBitCast(StoreVal, Int64Ty);
     }
-
-    Function *F = CGM.getIntrinsic(BuiltinID == AArch64::BI__builtin_arm_stlex
+    unsigned Op = BuiltinID == AArch64::BI__builtin_arm_stlex
                                        ? Intrinsic::aarch64_stlxr
-                                       : Intrinsic::aarch64_stxr,
+                                       : Intrinsic::aarch64_stxr;
+    if (IsCap)
+      Op = BuiltinID == AArch64::BI__builtin_arm_stlex
+                               ? Intrinsic::aarch64_cstlxr
+                               : Intrinsic::aarch64_cstxr;
+
+    Function *F = CGM.getIntrinsic(Op,
                                    StoreAddr->getType());
     return Builder.CreateCall(F, {StoreVal, StoreAddr}, "stxr");
   }

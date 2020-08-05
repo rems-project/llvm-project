@@ -1,4 +1,5 @@
 // RUN: %cheri_cc1 %s -fsyntax-only -verify  -target-abi purecap
+// RUN: %clang_cc1 %s -fsyntax-only -verify -triple aarch64-none-linux-gnu -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel
 // expected-no-diagnostics
 #define NULL (void*)0
 

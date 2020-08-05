@@ -734,20 +734,24 @@ llvm::DIType *CGDebugInfo::CreateType(const BuiltinType *BT) {
   case BuiltinType::UShort:
   case BuiltinType::UInt:
   case BuiltinType::UInt128:
-  case BuiltinType::UIntCap:
   case BuiltinType::ULong:
   case BuiltinType::WChar_U:
   case BuiltinType::ULongLong:
     Encoding = llvm::dwarf::DW_ATE_unsigned;
     break;
+  case BuiltinType::UIntCap:
+    Encoding = llvm::dwarf::DW_ATE_CHERI_unsigned_intcap;
+    break;
   case BuiltinType::Short:
   case BuiltinType::Int:
   case BuiltinType::Int128:
-  case BuiltinType::IntCap:
   case BuiltinType::Long:
   case BuiltinType::WChar_S:
   case BuiltinType::LongLong:
     Encoding = llvm::dwarf::DW_ATE_signed;
+    break;
+  case BuiltinType::IntCap:
+    Encoding = llvm::dwarf::DW_ATE_CHERI_signed_intcap;
     break;
   case BuiltinType::Bool:
     Encoding = llvm::dwarf::DW_ATE_boolean;
@@ -3857,7 +3861,9 @@ void CGDebugInfo::AppendAddressSpaceXDeref(
     unsigned AddressSpace, SmallVectorImpl<int64_t> &Expr) const {
   Optional<unsigned> DWARFAddressSpace =
       CGM.getTarget().getDWARFAddressSpace(AddressSpace);
-  if (!DWARFAddressSpace)
+  if (!DWARFAddressSpace ||
+      !CGM.getTarget().useXDerefForDWARFAddressSpace(
+          DWARFAddressSpace.getValue()))
     return;
 
   Expr.push_back(llvm::dwarf::DW_OP_constu);

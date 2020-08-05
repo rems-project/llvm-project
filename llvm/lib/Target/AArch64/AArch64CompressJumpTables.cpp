@@ -90,12 +90,16 @@ void AArch64CompressJumpTables::scanFunction() {
 
 bool AArch64CompressJumpTables::compressJumpTable(MachineInstr &MI,
                                                   int Offset) {
-  if (MI.getOpcode() != AArch64::JumpTableDest32)
+  if (MI.getOpcode() != AArch64::JumpTableDest32 &&
+      MI.getOpcode() != AArch64::MCJumpTableDest32)
     return false;
 
   int JTIdx = MI.getOperand(4).getIndex();
   auto &JTInfo = *MF->getJumpTableInfo();
   const MachineJumpTableEntry &JT = JTInfo.getJumpTables()[JTIdx];
+
+  const auto &ST = MF->getSubtarget<AArch64Subtarget>();
+  bool HasPureCap = ST.hasPureCap();
 
   // The jump-table might have been optimized away.
   if (JT.MBBs.empty())
@@ -127,12 +131,14 @@ bool AArch64CompressJumpTables::compressJumpTable(MachineInstr &MI,
   auto AFI = MF->getInfo<AArch64FunctionInfo>();
   if (isUInt<8>(Span / 4)) {
     AFI->setJumpTableEntryInfo(JTIdx, 1, MinBlock->getSymbol());
-    MI.setDesc(TII->get(AArch64::JumpTableDest8));
+    MI.setDesc(TII->get(HasPureCap ? AArch64::MCJumpTableDest8
+                                   : AArch64::JumpTableDest8));
     ++NumJT8;
     return true;
   } else if (isUInt<16>(Span / 4)) {
     AFI->setJumpTableEntryInfo(JTIdx, 2, MinBlock->getSymbol());
-    MI.setDesc(TII->get(AArch64::JumpTableDest16));
+    MI.setDesc(TII->get(HasPureCap ? AArch64::MCJumpTableDest16
+                                   : AArch64::JumpTableDest16));
     ++NumJT16;
     return true;
   }

@@ -38,7 +38,7 @@ static MCAsmInfo *createSparcMCAsmInfo(const MCRegisterInfo &MRI,
   MCAsmInfo *MAI = new SparcELFMCAsmInfo(TT);
   unsigned Reg = MRI.getDwarfRegNum(SP::O6, true);
   MCCFIInstruction Inst = MCCFIInstruction::createDefCfa(nullptr, Reg, 0);
-  MAI->addInitialFrameState(Inst);
+  MAI->addInitialFrameState(MCCFIProcType::Normal, Inst);
   return MAI;
 }
 
@@ -48,7 +48,7 @@ static MCAsmInfo *createSparcV9MCAsmInfo(const MCRegisterInfo &MRI,
   MCAsmInfo *MAI = new SparcELFMCAsmInfo(TT);
   unsigned Reg = MRI.getDwarfRegNum(SP::O6, true);
   MCCFIInstruction Inst = MCCFIInstruction::createDefCfa(nullptr, Reg, 2047);
-  MAI->addInitialFrameState(Inst);
+  MAI->addInitialFrameState(MCCFIProcType::Normal, Inst);
   return MAI;
 }
 

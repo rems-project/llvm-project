@@ -33,6 +33,13 @@
 //
 // _LIBCXX_DYNAMIC_FALLBACK is currently off by default.
 
+#ifdef _LIBCXX_DYNAMIC_FALLBACK
+#include "abort_message.h"
+#include <sys/syslog.h>
+#endif
+
+#ifndef _LIBCXXABI_HAS_NO_RTTI
+
 // On Windows, typeids are different between DLLs and EXEs, so comparing
 // type_info* will work for typeids from the same compiled file but fail
 // for typeids from a DLL and an executable. Among other things, exceptions
@@ -1289,3 +1296,4 @@ __base_class_type_info::search_below_dst(__dynamic_cast_info* info,
 }
 
 }  // __cxxabiv1
+#endif

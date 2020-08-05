@@ -1,4 +1,5 @@
 // RUN: %cheri_purecap_cc1 -emit-llvm -std=c++11 -o - %s | %cheri_FileCheck %s
+// RUN: %clang_cc1 -triple aarch64-none-elf -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel -emit-llvm -std=c++11 -o - %s | %cheri_FileCheck %s
 
 typedef decltype(nullptr) nullptr_t;
 

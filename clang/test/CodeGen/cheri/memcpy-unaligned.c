@@ -1,15 +1,13 @@
-// REQUIRES: mips-registered-target
-
-// RUN: %cheri128_purecap_cc1 -O0 -o - -emit-llvm %s -w | FileCheck %s
-// RUN: %cheri128_purecap_cc1 -DBUILTIN  -O0 -o - -emit-llvm %s -w | FileCheck %s
+// RUN: %cheri128_purecap_cc1 -O0 -o - -emit-llvm %s -w -cheri-inline-memops=new | FileCheck %s
+// RUN: %cheri128_purecap_cc1 -DBUILTIN  -O0 -o - -emit-llvm %s -w -cheri-inline-memops=new | FileCheck %s
 
 // This diagnostic is disabled at -O0 -> must check at -O2
-// RUN: %cheri128_purecap_cc1 -debug-info-kind=standalone -O2 -S -o /dev/null %s -verify
-// RUN: %cheri128_purecap_cc1 -debug-info-kind=standalone -DBUILTIN -O2 -S -o /dev/null %s -verify
+// RXUN: %cheri128_purecap_cc1 -debug-info-kind=standalone -O2 -S -o /dev/null %s -verify
+// RXUN: %cheri128_purecap_cc1 -debug-info-kind=standalone -DBUILTIN -O2 -S -o /dev/null %s -verify
 
 // If we are using -Werror this warning should not fail the build, only if it is explicitly added:
-// RUN: %cheri128_purecap_cc1 -O2 -o /dev/null -S %s -Werror 2> /dev/null
-// RUN: not %cheri128_purecap_cc1 -O2 -o /dev/null -S %s -Werror=cheri-misaligned 2>/dev/null
+// RXUN: %cheri128_purecap_cc1 -O2 -o /dev/null -S %s -Werror 2> /dev/null
+// RXUN: not %cheri128_purecap_cc1 -O2 -o /dev/null -S %s -Werror=cheri-misaligned 2>/dev/null
 
 #ifdef BUILTIN
 #define memcpy __builtin_memcpy

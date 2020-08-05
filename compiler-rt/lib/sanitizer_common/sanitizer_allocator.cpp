@@ -29,7 +29,7 @@ const char *SecondaryAllocatorName = "LargeMmapAllocator";
 #define SANITIZER_USE_MALLOC
 #endif
 
-static constexpr usize InternalDefaultAlign = Max((usize)8, sizeof(void*));
+static constexpr usize InternalDefaultAlign = Max((usize)8, (usize)sizeof(void*));
 
 // ThreadSanitizer for Go uses libc malloc/free.
 #if SANITIZER_GO || defined(SANITIZER_USE_MALLOC)

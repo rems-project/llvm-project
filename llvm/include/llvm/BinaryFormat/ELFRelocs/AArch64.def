@@ -133,6 +133,25 @@ ELF_RELOC(R_AARCH64_TLS_TPREL64,                     0x406)
 ELF_RELOC(R_AARCH64_TLSDESC,                         0x407)
 ELF_RELOC(R_AARCH64_IRELATIVE,                       0x408)
 
+// Morello Specific
+// Static relocations
+ELF_RELOC(R_MORELLO_TSTBR14,                         0xe000)
+ELF_RELOC(R_MORELLO_CONDBR19,                        0xe001)
+ELF_RELOC(R_MORELLO_JUMP26,                          0xe002)
+ELF_RELOC(R_MORELLO_CALL26,                          0xe003)
+ELF_RELOC(R_MORELLO_LD_PREL_LO17,                    0xe004)
+ELF_RELOC(R_MORELLO_ADR_PREL_PG_HI20,                0xe005)
+ELF_RELOC(R_MORELLO_ADR_PREL_PG_HI20_NC,             0xe006)
+ELF_RELOC(R_MORELLO_ADR_GOT_PAGE,                    0xe007)
+ELF_RELOC(R_MORELLO_LD128_GOT_LO12_NC,               0xe008)
+
+// Dynamic Relocations
+ELF_RELOC(R_MORELLO_CAPINIT,                         0xe800)
+ELF_RELOC(R_MORELLO_GLOB_DAT,                        0xe801)
+ELF_RELOC(R_MORELLO_JUMP_SLOT,                       0xe802)
+ELF_RELOC(R_MORELLO_RELATIVE,                        0xe803)
+ELF_RELOC(R_MORELLO_IRELATIVE,                       0xe804)
+
 // ELF_RELOC(R_AARCH64_P32_NONE,                         0)
 ELF_RELOC(R_AARCH64_P32_ABS32,                       0x001)
 ELF_RELOC(R_AARCH64_P32_ABS16,                       0x002)

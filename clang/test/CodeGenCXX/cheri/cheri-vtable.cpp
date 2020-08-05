@@ -2,6 +2,9 @@
 // RUN: %cheri_cc1 -mllvm -cheri-cap-table-abi=pcrel -fno-rtti -std=c++11 -target-abi purecap -emit-llvm -o - %s | %cheri_FileCheck %s -check-prefixes CHECK,NEWABI
 // RUN: %cheri_cc1 -fno-rtti -std=c++11 -target-abi purecap -emit-llvm -o /dev/null \
 // RUN:   -fdump-vtable-layouts -fdump-record-layouts %s 2>&1 | %cheri_FileCheck -check-prefix=CHECK-VTABLE-LAYOUT %s
+// RUN: %clang_cc1 -triple aarch64-none-elf -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel -fno-rtti -std=c++11 -emit-llvm -o - %s | %cheri_FileCheck %s
+// RUN: %clang_cc1 -triple aarch64-none-elf -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel -fno-rtti -std=c++11 -emit-llvm -o /dev/null \
+// RUN:   -fdump-vtable-layouts -fdump-record-layouts %s 2>&1 | %cheri_FileCheck -check-prefix=CHECK-VTABLE-LAYOUT %s
 
 
 // Check that vtable func pointers have the correct addrspace casts

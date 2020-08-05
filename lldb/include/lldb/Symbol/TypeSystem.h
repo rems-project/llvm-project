@@ -236,13 +236,17 @@ public:
 
   virtual CompilerType GetPointeeType(lldb::opaque_compiler_type_t type) = 0;
 
-  virtual CompilerType GetPointerType(lldb::opaque_compiler_type_t type) = 0;
+  virtual CompilerType GetPointerType(
+      lldb::opaque_compiler_type_t type,
+      lldb::AddressSpace address_class = lldb::eAddressSpaceNormal) = 0;
 
-  virtual CompilerType
-  GetLValueReferenceType(lldb::opaque_compiler_type_t type);
+  virtual CompilerType GetLValueReferenceType(
+      lldb::opaque_compiler_type_t type,
+      lldb::AddressSpace address_class = lldb::eAddressSpaceNormal);
 
-  virtual CompilerType
-  GetRValueReferenceType(lldb::opaque_compiler_type_t type);
+  virtual CompilerType GetRValueReferenceType(
+      lldb::opaque_compiler_type_t type,
+      lldb::AddressSpace address_class = lldb::eAddressSpaceNormal);
 
   virtual CompilerType GetAtomicType(lldb::opaque_compiler_type_t type);
 
@@ -266,6 +270,11 @@ public:
 
   virtual lldb::Encoding GetEncoding(lldb::opaque_compiler_type_t type,
                                      uint64_t &count) = 0;
+
+  virtual lldb::MemoryContentType
+  GetMemoryContentType(lldb::opaque_compiler_type_t type) {
+    return lldb::eMemoryContentNormal;
+  }
 
   virtual lldb::Format GetFormat(lldb::opaque_compiler_type_t type) = 0;
 

@@ -277,6 +277,18 @@ public:
   virtual llvm::Value *getPointerAddress(CodeGen::CodeGenFunction &CGF,
                                          llvm::Value *V,
                                          const llvm::Twine &Name) const;
+  virtual llvm::Value *getPointerFromCapability(CodeGen::CodeGenFunction &CGF,
+                                                llvm::Value *V,
+                                                llvm::Type *DestTy) const {
+    assert(0 && "Target did not implement hook to get a pointer from a capability!\n");
+    return nullptr;
+  }
+
+  virtual uint64_t getLoadPerm() const { return 1 << 2; }
+  virtual uint64_t getLoadCapPerm() const { return 1 << 4; }
+  virtual uint64_t getStorePerm() const { return 1 << 3; }
+  virtual uint64_t getStoreCapPerm() const { return 1 << 5; }
+  virtual uint64_t getAllPermMask() const { return (1 << 16) - 1; };
 
   /// Get LLVM calling convention for OpenCL kernel.
   virtual unsigned getOpenCLKernelCallingConv() const;

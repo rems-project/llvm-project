@@ -446,8 +446,10 @@ using ::nearbyint;
 using ::nearbyintf;
 using ::nextafter;
 using ::nextafterf;
+#ifndef _LIBCPP_HAS_NEWLIB
 using ::nexttoward;
 using ::nexttowardf;
+#endif // !_LIBCPP_HAS_NEWLIB
 using ::remainder;
 using ::remainderf;
 using ::remquo;
@@ -465,6 +467,7 @@ using ::tgammaf;
 using ::trunc;
 using ::truncf;
 
+#ifndef _LIBCPP_HAS_NEWLIB
 using ::acosl;
 using ::asinl;
 using ::atanl;
@@ -494,7 +497,9 @@ using ::atanhl;
 using ::cbrtl;
 
 using ::copysignl;
+#endif // !_LIBCPP_HAS_NEWLIB
 
+#if !(defined(_LIBCPP_MSVCRT) && ((_VC_CRT_MAJOR_VERSION-0) < 14)) && !defined(_LIBCPP_HAS_NEWLIB)
 using ::erfl;
 using ::erfcl;
 using ::exp2l;
@@ -525,8 +530,9 @@ using ::scalblnl;
 using ::scalbnl;
 using ::tgammal;
 using ::truncl;
+#endif // !(defined(_LIBCPP_MSVCRT) && ((_VC_CRT_MAJOR_VERSION-0) < 14)) && !_LIBCPP_HAS_NEWLIB
 
-#if _LIBCPP_STD_VER > 14
+#if _LIBCPP_STD_VER > 14 && !defined(_LIBCPP_HAS_NEWLIB)
 inline _LIBCPP_INLINE_VISIBILITY float       hypot(       float x,       float y,       float z ) { return sqrt(x*x + y*y + z*z); }
 inline _LIBCPP_INLINE_VISIBILITY double      hypot(      double x,      double y,      double z ) { return sqrt(x*x + y*y + z*z); }
 inline _LIBCPP_INLINE_VISIBILITY long double hypot( long double x, long double y, long double z ) { return sqrt(x*x + y*y + z*z); }

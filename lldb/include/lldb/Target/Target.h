@@ -187,6 +187,8 @@ public:
 
   void SetNonStopModeEnabled(bool b);
 
+  bool GetEnableAutoInstallMainExecutable() const;
+
   bool GetDisplayRuntimeSupportValues() const;
 
   void SetDisplayRuntimeSupportValues(bool b);

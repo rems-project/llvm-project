@@ -1,0 +1,113 @@
+## Check that llvm-readobj can display AArch64 __caprelocs
+
+# RUN: yaml2obj %s -o %t
+# RUN: llvm-readobj --cap-relocs %t | FileCheck %s
+# RUN: llvm-readobj --cap-relocs --expand-relocs %t | FileCheck %s --check-prefix=EXPAND
+
+# CHECK: CHERI __cap_relocs [
+# CHECK-NEXT:   0x010008 ($d.1)          Base: 0x10000 ($c.0+1) Length: 8 Perms: (FUNC)
+# CHECK-NEXT:   0x010018 Base: 0x10004 (ro+0) Length: 4 Perms: (RODATA)
+# CHECK-NEXT:   0x010028 Base: 0x100b0 (rw+0) Length: 4 Perms: (RWDATA)
+# CHECK-NEXT: ]
+
+# EXPAND: CHERI __cap_relocs [
+# EXPAND-NEXT:   Relocation {
+# EXPAND-NEXT:     Location: 0x10008 ($d.1)
+# EXPAND-NEXT:     Base: $c.0 (0x10000)
+# EXPAND-NEXT:     Offset: 1
+# EXPAND-NEXT:     Length: 8
+# EXPAND-NEXT:     Permissions: (FUNC) (0x8000000000013DBC)
+# EXPAND-NEXT:   }
+# EXPAND-NEXT:   Relocation {
+# EXPAND-NEXT:     Location: 0x10018
+# EXPAND-NEXT:     Base: ro (0x10004)
+# EXPAND-NEXT:     Offset: 0
+# EXPAND-NEXT:     Length: 4
+# EXPAND-NEXT:     Permissions: (RODATA) (0x1BFBE)
+# EXPAND-NEXT:   }
+# EXPAND-NEXT:   Relocation {
+# EXPAND-NEXT:     Location: 0x10028
+# EXPAND-NEXT:     Base: rw (0x100B0)
+# EXPAND-NEXT:     Offset: 0
+# EXPAND-NEXT:     Length: 4
+# EXPAND-NEXT:     Permissions: (RWDATA) (0x8FBE)
+# EXPAND-NEXT:   }
+# EXPAND-NEXT: ]
+
+--- !ELF
+FileHeader:
+  Class:           ELFCLASS64
+  Data:            ELFDATA2LSB
+  Type:            ET_EXEC
+  Machine:         EM_AARCH64
+  Entry:           0x0000000000010001
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    Address:         0x0000000000010000
+    AddressAlign:    0x0000000000000004
+    Content:         C0530686
+  - Name:            .rodata
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC ]
+    Address:         0x0000000000010004
+    AddressAlign:    0x0000000000000001
+    Content:         '01000000'
+  - Name:            .data.rel.ro
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_WRITE, SHF_ALLOC ]
+    Address:         0x0000000000010008
+    AddressAlign:    0x0000000000000001
+    Content:         '000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+  - Name:            __cap_relocs
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_WRITE, SHF_ALLOC ]
+    Address:         0x0000000000010038
+    AddressAlign:    0x0000000000000008
+    EntSize:         0x0000000000000028
+    Content:         0800010000000000000001000000000001000000000000000800000000000000BC3D0100000000801800010000000000040001000000000000000000000000000400000000000000BEBF0100000000002800010000000000B00001000000000000000000000000000400000000000000BE8F000000000000
+  - Name:            .data
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_WRITE, SHF_ALLOC ]
+    Address:         0x00000000000100B0
+    AddressAlign:    0x0000000000000001
+    Content:         '02000000'
+  - Name:            .comment
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_MERGE, SHF_STRINGS ]
+    AddressAlign:    0x0000000000000001
+    EntSize:         0x0000000000000001
+    Content:         4C696E6B65723A204C4C442031302E302E30202868747470733A2F2F65752D6765727269742D312E65756870632E61726D2E636F6D2F617272616E2F6C6C766D2D70726F6A6563742E67697420346331316230326631373362366165366139323031343839376264393338353233366363613163342900
+Symbols:
+  - Name:            '$c.0'
+    Section:         .text
+    Value:           0x0000000000010000
+  - Name:            '$d.1'
+    Section:         .data.rel.ro
+    Value:           0x0000000000010008
+  - Name:            '$d.2'
+    Section:         .rodata
+    Value:           0x0000000000010004
+  - Name:            '$d.3'
+    Section:         .data
+    Value:           0x00000000000100B0
+  - Name:            _start
+    Type:            STT_FUNC
+    Section:         .text
+    Binding:         STB_GLOBAL
+    Value:           0x0000000000010001
+    Size:            0x0000000000000004
+  - Name:            ro
+    Type:            STT_OBJECT
+    Section:         .rodata
+    Binding:         STB_GLOBAL
+    Value:           0x0000000000010004
+    Size:            0x0000000000000004
+  - Name:            rw
+    Type:            STT_OBJECT
+    Section:         .data
+    Binding:         STB_GLOBAL
+    Value:           0x00000000000100B0
+    Size:            0x0000000000000004
+...

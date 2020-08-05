@@ -121,6 +121,11 @@ public:
     return nullptr;
   }
 
+  /// Return true if globals need over-alignment and padding in order
+  /// to be representable by a Cheri capability when the target supports
+  /// Cheri capabilities.
+  virtual bool padGlobalsForCheriCapabilities() const { return true; }
+
   /// Allocate and return a default initialized instance of the YAML
   /// representation for the MachineFunctionInfo.
   virtual yaml::MachineFunctionInfo *createDefaultFuncInfoYAML() const {

@@ -2959,6 +2959,11 @@ static int getMipsRegisterSize(uint8_t Flag) {
 static const EnumEntry<uint64_t> CapRelocsPermsFlags[] = {
     {"Function", 0x8000000000000000ULL}};
 
+static bool isAArch64C64MapSymbol(StringRef Name) {
+  return Name.startswith_lower("$d.") || Name.startswith_lower("$c.") ||
+    Name.startswith_lower("$x.");
+}
+
 template <class ELFT> void ELFDumper<ELFT>::printCheriCapRelocs() {
   const ELFFile<ELFT> *Obj = ObjF->getELFFile();
   const Elf_Shdr *Shdr = findSectionByName(*Obj, ObjF->getFileName(), "__cap_relocs");
@@ -3019,7 +3024,14 @@ template <class ELFT> void ELFDumper<ELFT>::printCheriCapRelocs() {
     std::string Name = getFullSymbolName(&Sym, StrTable, UsingDynsym);
     if (Name.empty())
       continue;
-    SymbolNames.insert({Start, Name});
+    auto IterRet = SymbolNames.insert({Start, Name});
+    // On AArch64 we prefer non mapping symbol names over mapping symbols
+    // at the same address.
+    if (Obj->getHeader()->e_machine == EM_AARCH64 && IterRet.second == false &&
+        !isAArch64C64MapSymbol(Name) &&
+        isAArch64C64MapSymbol(IterRet.first->second)) {
+      IterRet.first->second = Name;
+    }
   }
   // errs() << "Found " << CapRelocsDynRels.size()
   //        << " dynamic relocations pointing to __cap_relocs section\n";
@@ -3053,10 +3065,21 @@ template <class ELFT> void ELFDumper<ELFT>::printCheriCapRelocs() {
     uint64_t Perms =
         support::endian::read<TargetUint, ELFT::TargetEndianness, 1>(
                 entry + 4*sizeof(TargetUint));
-    bool isFunction = Perms & (UINT64_C(1) << ((sizeof(TargetUint) * 8) - 1));
-    bool isReadOnly = Perms & (UINT64_C(1) << ((sizeof(TargetUint) * 8) - 2));
-    const char *PermStr =
+    const char *PermStr;
+    if (Obj->getHeader()->e_machine == EM_AARCH64) {
+      // AArch64 C64 capabilities are encoded differently to CHERI
+      // Check for Morello Capability Permission Encodings
+      bool isFunction = (Perms == 0x8000000000013dbc);
+      bool isReadWrite = (Perms == 0x8fbe);
+      PermStr =
+        isFunction ? "(FUNC)" : (isReadWrite ? "(RWDATA)" : "(RODATA)");
+    }
+    else {
+      bool isFunction = Perms & (UINT64_C(1) << ((sizeof(TargetUint) * 8) - 1));
+      bool isReadOnly = Perms & (UINT64_C(1) << ((sizeof(TargetUint) * 8) - 2));
+      PermStr =
         isFunction ? "Function" : (isReadOnly ? "Constant" : "Object");
+    }
     // Perms &= 0xffffffff;
     std::string BaseSymbol;
     if (Base == 0) {

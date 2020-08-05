@@ -12,7 +12,7 @@
 #include <time.h>        // clock_gettime, CLOCK_MONOTONIC and CLOCK_REALTIME
 #include "include/apple_availability.h"
 
-#if !defined(__APPLE__)
+#if !defined(__APPLE__) && !defined(_LIBCPP_HAS_NEWLIB)
 #define _LIBCPP_USE_CLOCK_GETTIME
 #endif // __APPLE__
 
@@ -69,10 +69,10 @@ system_clock::now() _NOEXCEPT
   GetSystemTimePreciseAsFileTime(&ft);
 #else
   GetSystemTimeAsFileTime(&ft);
-#endif
+#endif // WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 #else
   GetSystemTimeAsFileTime(&ft);
-#endif
+#endif // _WIN32_WINNT >= _WIN32_WINNT_WIN8
 
   filetime_duration d{(static_cast<__int64>(ft.dwHighDateTime) << 32) |
                        static_cast<__int64>(ft.dwLowDateTime)};

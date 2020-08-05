@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// UNSUPPORTED: newlib
+// UNSUPPORTED: libcpp-has-newlib
 
 // <cfenv>
 

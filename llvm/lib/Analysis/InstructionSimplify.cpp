@@ -3914,6 +3914,12 @@ static Value *simplifySelectWithICmpCond(Value *CondVal, Value *TrueVal,
                                               TrueVal, FalseVal))
     return V;
 
+  // The comparison for capabilities is done by virtual address and doesn't
+  // take into account the rest of the bits. The transformation would be
+  // valid for bit equality comparisons, but we don't have this exposed here.
+  if (isCheriPointer(FalseVal->getType(), nullptr))
+    return nullptr;
+
   // If we have an equality comparison, then we know the value in one of the
   // arms of the select. See if substituting this value into the arm and
   // simplifying the result yields the same value as the other arm.

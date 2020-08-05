@@ -69,6 +69,17 @@ BUILTIN(__builtin_arm_isb, "vUi", "nc")
 
 BUILTIN(__builtin_arm_jcvt, "Zid", "nc")
 
+///////////////////////////////
+// Capabilities
+//
+// Morello specific
+//
+BUILTIN(__builtin_morello_chkssu, "v*mvC*mvC*m", "nc")
+BUILTIN(__builtin_morello_cvt, "zvC*mvC*m", "nc")
+BUILTIN(__builtin_morello_cvtz, "v*mvC*mz", "nc")
+//
+///////////////////////////////
+
 // Prefetch
 BUILTIN(__builtin_arm_prefetch, "vvC*UiUiUiUi", "nc")
 

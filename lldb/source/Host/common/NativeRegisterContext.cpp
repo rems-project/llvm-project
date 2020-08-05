@@ -297,6 +297,7 @@ lldb::addr_t NativeRegisterContext::GetWatchpointHitAddress(uint32_t wp_index) {
 
 bool NativeRegisterContext::HardwareSingleStep(bool enable) { return false; }
 
+#if 0
 Status NativeRegisterContext::ReadRegisterValueFromMemory(
     const RegisterInfo *reg_info, lldb::addr_t src_addr, size_t src_len,
     RegisterValue &reg_value) {
@@ -404,6 +405,7 @@ Status NativeRegisterContext::WriteRegisterValueToMemory(
 
   return error;
 }
+#endif
 
 uint32_t
 NativeRegisterContext::ConvertRegisterKindToRegisterNumber(uint32_t kind,

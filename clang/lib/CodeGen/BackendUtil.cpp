@@ -620,6 +620,10 @@ void EmitAssemblyHelper::CreatePasses(legacy::PassManager &MPM,
     PMBuilder.addExtension(PassManagerBuilder::EP_ScalarOptimizerLate,
                            addObjCARCOptPass);
   }
+
+  if (LangOpts.Coroutines)
+    addCoroutinePassesToExtensionPoints(PMBuilder);
+
   if (!llvm::MCTargetOptions::cheriUsesCapabilityTable())
     PMBuilder.addExtension(PassManagerBuilder::EP_EarlyAsPossible,
                            addCHERICapDirectCallsPass);
@@ -629,9 +633,6 @@ void EmitAssemblyHelper::CreatePasses(legacy::PassManager &MPM,
                          addCHERICapFoldIntrinsicsPass);
   PMBuilder.addExtension(PassManagerBuilder::EP_OptimizerLast,
                          addCHERICapFoldIntrinsicsPass);
-
-  if (LangOpts.Coroutines)
-    addCoroutinePassesToExtensionPoints(PMBuilder);
 
   if (LangOpts.Sanitize.has(SanitizerKind::LocalBounds)) {
     PMBuilder.addExtension(PassManagerBuilder::EP_ScalarOptimizerLate,

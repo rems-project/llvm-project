@@ -224,6 +224,9 @@ def llvm_ptr_ty        : LLVMPointerType<llvm_i8_ty>;             // i8*
 def llvm_ptrptr_ty     : LLVMPointerType<llvm_ptr_ty>;            // i8**
 def llvm_anyptr_ty     : LLVMAnyPointerType<llvm_i8_ty>;          // (space)i8*
 def llvm_fatptr_ty     : LLVMFatPointerType<llvm_i8_ty>;          // (space)i8*
+def llvm_i16_fatptr_ty : LLVMFatPointerType<llvm_i16_ty>;         // (space)i16*
+def llvm_i32_fatptr_ty : LLVMFatPointerType<llvm_i32_ty>;         // (space)i32*
+def llvm_i64_fatptr_ty : LLVMFatPointerType<llvm_i64_ty>;         // (space)i64*
 def llvm_anyptrptr_ty  : LLVMAnyPointerType<llvm_ptr_ty>;         // i8*(space)*
 def llvm_empty_ty      : LLVMType<OtherVT>;                       // { }
 def llvm_descriptor_ty : LLVMPointerType<llvm_empty_ty>;          // { }*

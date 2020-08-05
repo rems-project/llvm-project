@@ -4,3 +4,4 @@ USE_LIBCPP := 1
 
 CXXFLAGS_EXTRAS := -O0
 include Makefile.rules
+CXXFLAGS += -O0 $(NO_LIMIT_DEBUG_INFO_FLAGS)

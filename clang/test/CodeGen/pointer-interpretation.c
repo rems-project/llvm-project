@@ -1,4 +1,6 @@
-// RUN: %cheri_cc1 %s -O2 -msoft-float -emit-llvm -o - | FileCheck %s
+// RUN: %cheri_cc1 %s -O2 -msoft-float -emit-llvm -o - | FileCheck %s --check-prefix=CHECK --check-prefix=cheri
+// RUN: %clang -target aarch64-none-linux-gnu -march=morello %s -O2 -S -emit-llvm -o - -fPIC | FileCheck %s --check-prefix=CHECK --check-prefix=morello
+
 #pragma pointer_interpretation capability
 struct test
 {
@@ -24,7 +26,8 @@ _Pragma("pointer_interpretation default")
 //CHECK: %struct.test2 = type { i32*, i32*, i32* }
 //CHECK: %struct.test3 = type { i32*, i32*, i32* }
 
-// CHECK: define signext i32 @x()
+// morello: define i32 @x()
+// cheri: define signext i32 @x()
 int x(void)
 {
 	// CHECK: load i32 addrspace(200)*, i32 addrspace(200)**
@@ -32,14 +35,16 @@ int x(void)
 	return *t.a;
 }
 
-// CHECK: define signext i32 @y()
+// morello: define i32 @y()
+// cheri: define signext i32 @y()
 int y(void)
 {
 	// CHECK: load i32*, i32**
 	// CHECK: load i32, i32*
 	return *t2.a;
 }
-// CHECK: define signext i32 @z()
+// morello: define i32 @z()
+// cheri: define signext i32 @z()
 int z(void)
 {
 	// CHECK: load i32*, i32**

@@ -13,14 +13,14 @@ foo *f() {
   // CHECK: [[ACQUIRE_LABEL]]:
   // CHECK-NEXT: [[ACQUIRED:%.+]] = call i32 @__cxa_guard_acquire(i64 addrspace(200)* @_ZGVZ1fvE1x)
   // CHECK-NEXT: [[TOBOOL:%.+]] = icmp ne i32 [[ACQUIRED]], 0
-  // CHECK-NEXT: br i1 [[TOBOOL]], label %[[INITIALIZE_LABEL:.+]], label %[[EXIT_LABEL]]
+  // CHECK-NEXT: br i1 [[TOBOOL]], label %[[INITIALIZE_LABEL:.+]], label %[[EXIT_LABEL:.+]]
 
   // CHECK: [[INITIALIZE_LABEL]]:
   // CHECK-NEXT: call void @_ZN3fooC1Ev(%struct.foo addrspace(200)* @_ZZ1fvE1x)
   // CHECK-NEXT: call void @__cxa_guard_release(i64 addrspace(200)* @_ZGVZ1fvE1x)
   // CHECK-NEXT: br label %[[EXIT_LABEL]]
 
-  // CHECK [[EXIT_LABEL]]:
+  // CHECK: [[EXIT_LABEL]]:
   // CHECK: ret %struct.foo addrspace(200)* @_ZZ1fvE1x
   static foo x;
   return &x;

@@ -61,7 +61,7 @@ static MCAsmInfo *createXCoreMCAsmInfo(const MCRegisterInfo &MRI,
 
   // Initial state of the frame pointer is SP.
   MCCFIInstruction Inst = MCCFIInstruction::createDefCfa(nullptr, XCore::SP, 0);
-  MAI->addInitialFrameState(Inst);
+  MAI->addInitialFrameState(MCCFIProcType::Normal, Inst);
 
   return MAI;
 }

@@ -1,5 +1,3 @@
-// REQUIRES: mips-registered-target
-
 // RUN: %clang %s -O1 -target cheri-unknown-freebsd -o - -emit-llvm -S | FileCheck %s
 // XXXRW: This functionality is disabled due to source-code compatibility issues.
 // XFAIL: *

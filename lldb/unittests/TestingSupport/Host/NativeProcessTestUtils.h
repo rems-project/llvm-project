@@ -65,7 +65,8 @@ public:
   // Redirect base class Read/Write Memory methods to functions whose signatures
   // are more mock-friendly.
   Status ReadMemory(addr_t Addr, void *Buf, size_t Size,
-                    size_t &BytesRead) /*override*/ {
+                    size_t &BytesRead,
+                    lldb::MemoryContentType type = lldb::eMemoryContentNormal) /*override*/ {
     auto ExpectedMemory = this->ReadMemory(Addr, Size);
     if (!ExpectedMemory) {
       BytesRead = 0;

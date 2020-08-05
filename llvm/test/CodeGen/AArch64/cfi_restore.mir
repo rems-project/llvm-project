@@ -32,6 +32,6 @@ body:             |
     CFI_INSTRUCTION restore $w29
     ; CHECK: .cfi_restore w29
     $sp = ADDXri $sp, 16, 0
-    RET_ReallyLR
+    RET_ReallyLR 0
     ; CHECK: .cfi_endproc
 ...

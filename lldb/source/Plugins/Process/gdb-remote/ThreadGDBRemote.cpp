@@ -225,6 +225,21 @@ StructuredData::ObjectSP ThreadGDBRemote::FetchThreadExtendedInfo() {
   return object_sp;
 }
 
+DataBufferSP ThreadGDBRemote::FetchSigInfoData() const {
+  DataBufferSP object_sp;
+  const lldb::user_id_t tid = GetProtocolID();
+  Log *log(GetLogIfAnyCategoriesSet(GDBR_LOG_THREAD));
+  if (log)
+    log->Printf("Fetching signal information for thread %4.4" PRIx64, tid);
+  ProcessSP process_sp(GetProcess());
+  if (process_sp) {
+    ProcessGDBRemote *gdb_process =
+        static_cast<ProcessGDBRemote *>(process_sp.get());
+    return gdb_process->GetSigInfoDataForThread(tid);
+  }
+  return object_sp;
+}
+
 void ThreadGDBRemote::WillResume(StateType resume_state) {
   int signo = GetResumeSignal();
   const lldb::user_id_t tid = GetProtocolID();

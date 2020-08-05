@@ -499,6 +499,7 @@ private:
   void verifySwiftErrorCall(CallBase &Call, const Value *SwiftErrorVal);
   void verifySwiftErrorValue(const Value *SwiftErrorVal);
   void verifyMustTailCall(CallInst &CI);
+  void verifyMemcpyCapCall(CallInst &CI);
   bool performTypeCheck(Intrinsic::ID ID, Function *F, Type *Ty, int VT,
                         unsigned ArgNo, std::string &Suffix);
   bool verifyAttributeCount(AttributeList Attrs, unsigned Params);
@@ -652,26 +653,15 @@ void Verifier::visitGlobalVariable(const GlobalVariable &GV) {
     // visitGlobalValue will complain on appending non-array.
     if (ArrayType *ATy = dyn_cast<ArrayType>(GV.getValueType())) {
       StructType *STy = dyn_cast<StructType>(ATy->getElementType());
-      // For initializers/destructors the code pointer is in the program address space
-      auto CtorPointerAS = DL.getProgramAddressSpace();
-      if (isCheriPointer(CtorPointerAS, &DL)) {
-        // However, for CHERI we must ensure that the ctors/init_array section
-        // is only filled with virtual addresses and not capabilities
-        // FIXME: we should emit ptrdiff objects instead
-        CtorPointerAS = 0;
-      }
-      PointerType *FuncPtrTy =
-          FunctionType::get(Type::getVoidTy(Context), false)->
-          getPointerTo(CtorPointerAS);
       Assert(STy &&
                  (STy->getNumElements() == 2 || STy->getNumElements() == 3) &&
                  STy->getTypeAtIndex(0u)->isIntegerTy(32),
              "wrong type for intrinsic global variable", &GV);
-      Assert(STy->getTypeAtIndex(1)->isPointerTy() &&
-                 STy->getTypeAtIndex(1)->getPointerAddressSpace() == 0,
-             "llvm.global_ctors/llvm.global_dtors second parameter must be a "
-             "pointer in AS0",
-             &GV);
+      PointerType *Ty = dyn_cast<PointerType>(STy->getTypeAtIndex(1));
+      Assert(Ty, "Expected pointer type at element 1", &GV);
+      unsigned AS = Ty->getAddressSpace();
+      PointerType *FuncPtrTy =
+          FunctionType::get(Type::getVoidTy(Context), false)->getPointerTo(AS);
       Assert(STy->getTypeAtIndex(1) == FuncPtrTy,
              "wrong type for llvm.global_ctors/llvm.global_dtors parameter 2",
              STy->getTypeAtIndex(1));
@@ -3100,6 +3090,16 @@ static AttrBuilder getParameterABIAttributes(int I, AttributeList Attrs) {
   return Copy;
 }
 
+void Verifier::verifyMemcpyCapCall(CallInst &CI) {
+  Assert(CI.getCalledFunction()->getName() == "memcpy" ||
+         CI.getCalledFunction()->getName() == "memmove" ||
+         CI.getCalledFunction()->getName() == "__memcpy_chk" ||
+         CI.getCalledFunction()->getName() == "__memmove_chk" ||
+         CI.getCalledFunction()->getName().startswith("llvm.memcpy") ||
+         CI.getCalledFunction()->getName().startswith("llvm.memmove"),
+         "Can only have have memcpy capability attributes on memcpy and memmove variants");
+}
+
 void Verifier::verifyMustTailCall(CallInst &CI) {
   Assert(!CI.isInlineAsm(), "cannot use musttail call with inline asm", &CI);
 
@@ -3556,8 +3556,14 @@ void Verifier::visitAtomicCmpXchgInst(AtomicCmpXchgInst &CXI) {
   PointerType *PTy = dyn_cast<PointerType>(CXI.getOperand(0)->getType());
   Assert(PTy, "First cmpxchg operand must be a pointer.", &CXI);
   Type *ElTy = PTy->getElementType();
-  Assert(ElTy->isIntOrPtrTy(),
-         "cmpxchg operand must have integer or pointer type", ElTy, &CXI);
+  bool IsFatPointer = false;
+  if (PointerType *Ty = dyn_cast<PointerType>(PTy)) {
+    unsigned AS = Ty->getAddressSpace();
+    IsFatPointer = M.getDataLayout().isFatPointer(AS);
+  }
+  Assert(ElTy->isIntegerTy() || ElTy->isPointerTy() || IsFatPointer,
+         "cmpxchg operand must have integer type!", &CXI,
+         ElTy);
   checkAtomicMemAccessSize(ElTy, &CXI);
   Assert(ElTy == CXI.getOperand(1)->getType(),
          "Expected value type does not match pointer operand type!", &CXI,

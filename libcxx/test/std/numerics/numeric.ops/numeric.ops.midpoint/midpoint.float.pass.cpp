@@ -126,7 +126,9 @@ int main (int, char**)
 {
     fp_test<float>();
     fp_test<double>();
+#ifndef _LIBCPP_HAS_NEWLIB
     fp_test<long double>();
+#endif // !_LIBCPP_HAS_NEWLIB
 
     return 0;
 }

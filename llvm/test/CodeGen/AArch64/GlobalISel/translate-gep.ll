@@ -13,7 +13,7 @@ define i8*  @translate_element_size1(i64 %arg) {
   ; CHECK:   [[GEP:%[0-9]+]]:_(p0) = G_PTR_ADD [[INTTOPTR]], [[COPY]](s64)
   ; CHECK:   [[COPY1:%[0-9]+]]:_(p0) = COPY [[GEP]](p0)
   ; CHECK:   $x0 = COPY [[COPY1]](p0)
-  ; CHECK:   RET_ReallyLR implicit $x0
+  ; CHECK:   RET_ReallyLR 0, implicit $x0
   %tmp = getelementptr i8, i8* null, i64 %arg
   ret i8* %tmp
 }
@@ -27,7 +27,7 @@ define %type* @first_offset_const(%type* %addr) {
   ; CHECK:   [[C:%[0-9]+]]:_(s64) = G_CONSTANT i64 32
   ; CHECK:   [[GEP:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s64)
   ; CHECK:   $x0 = COPY [[GEP]](p0)
-  ; CHECK:   RET_ReallyLR implicit $x0
+  ; CHECK:   RET_ReallyLR 0, implicit $x0
   %res = getelementptr %type, %type* %addr, i32 1
   ret %type* %res
 }
@@ -40,7 +40,7 @@ define %type* @first_offset_trivial(%type* %addr) {
   ; CHECK:   [[COPY:%[0-9]+]]:_(p0) = COPY $x0
   ; CHECK:   [[COPY1:%[0-9]+]]:_(p0) = COPY [[COPY]](p0)
   ; CHECK:   $x0 = COPY [[COPY1]](p0)
-  ; CHECK:   RET_ReallyLR implicit $x0
+  ; CHECK:   RET_ReallyLR 0, implicit $x0
   %res = getelementptr %type, %type* %addr, i32 0
   ret %type* %res
 }
@@ -57,7 +57,7 @@ define %type* @first_offset_variable(%type* %addr, i64 %idx) {
   ; CHECK:   [[GEP:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[MUL]](s64)
   ; CHECK:   [[COPY2:%[0-9]+]]:_(p0) = COPY [[GEP]](p0)
   ; CHECK:   $x0 = COPY [[COPY2]](p0)
-  ; CHECK:   RET_ReallyLR implicit $x0
+  ; CHECK:   RET_ReallyLR 0, implicit $x0
   %res = getelementptr %type, %type* %addr, i64 %idx
   ret %type* %res
 }
@@ -75,7 +75,7 @@ define %type* @first_offset_ext(%type* %addr, i32 %idx) {
   ; CHECK:   [[GEP:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[MUL]](s64)
   ; CHECK:   [[COPY2:%[0-9]+]]:_(p0) = COPY [[GEP]](p0)
   ; CHECK:   $x0 = COPY [[COPY2]](p0)
-  ; CHECK:   RET_ReallyLR implicit $x0
+  ; CHECK:   RET_ReallyLR 0, implicit $x0
   %res = getelementptr %type, %type* %addr, i32 %idx
   ret %type* %res
 }
@@ -95,7 +95,7 @@ define i32* @const_then_var(%type1* %addr, i64 %idx) {
   ; CHECK:   [[GEP1:%[0-9]+]]:_(p0) = G_PTR_ADD [[GEP]], [[MUL]](s64)
   ; CHECK:   [[COPY2:%[0-9]+]]:_(p0) = COPY [[GEP1]](p0)
   ; CHECK:   $x0 = COPY [[COPY2]](p0)
-  ; CHECK:   RET_ReallyLR implicit $x0
+  ; CHECK:   RET_ReallyLR 0, implicit $x0
   %res = getelementptr %type1, %type1* %addr, i32 4, i32 1, i64 %idx
   ret i32* %res
 }
@@ -113,7 +113,7 @@ define i32* @var_then_const(%type1* %addr, i64 %idx) {
   ; CHECK:   [[C1:%[0-9]+]]:_(s64) = G_CONSTANT i64 40
   ; CHECK:   [[GEP1:%[0-9]+]]:_(p0) = G_PTR_ADD [[GEP]], [[C1]](s64)
   ; CHECK:   $x0 = COPY [[GEP1]](p0)
-  ; CHECK:   RET_ReallyLR implicit $x0
+  ; CHECK:   RET_ReallyLR 0, implicit $x0
   %res = getelementptr %type1, %type1* %addr, i64 %idx, i32 2, i32 2
   ret i32* %res
 }

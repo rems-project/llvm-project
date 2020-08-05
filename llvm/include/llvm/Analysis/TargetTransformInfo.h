@@ -412,6 +412,7 @@ public:
     unsigned ImmCost;
     unsigned SetupCost;
     unsigned ScaleCost;
+    unsigned NumFatRegs;
   };
 
   /// Parameters that control the generic loop unrolling transformation.
@@ -963,6 +964,10 @@ public:
   int getGatherScatterOpCost(unsigned Opcode, Type *DataTy, Value *Ptr,
                              bool VariableMask, unsigned Alignment) const;
 
+  /// \return The implementation-defined values when taking the null capability
+  ///        as input for some intrinsics like get_length or get_type.
+  int getCheriIntrinsicNullCaseValue() const;
+
   /// \return The cost of the interleaved memory operation.
   /// \p Opcode is the memory operation code
   /// \p VecTy is the vector type of the interleaved access.
@@ -1336,6 +1341,7 @@ public:
   virtual int getGatherScatterOpCost(unsigned Opcode, Type *DataTy,
                                      Value *Ptr, bool VariableMask,
                                      unsigned Alignment) = 0;
+  virtual int getCheriIntrinsicNullCaseValue() = 0;
   virtual int getInterleavedMemoryOpCost(unsigned Opcode, Type *VecTy,
                                          unsigned Factor,
                                          ArrayRef<unsigned> Indices,
@@ -1756,6 +1762,9 @@ public:
                              unsigned Alignment) override {
     return Impl.getGatherScatterOpCost(Opcode, DataTy, Ptr, VariableMask,
                                        Alignment);
+  }
+  int getCheriIntrinsicNullCaseValue() override {
+    return Impl.getCheriIntrinsicNullCaseValue();
   }
   int getInterleavedMemoryOpCost(unsigned Opcode, Type *VecTy, unsigned Factor,
                                  ArrayRef<unsigned> Indices, unsigned Alignment,

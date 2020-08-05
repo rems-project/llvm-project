@@ -12,6 +12,7 @@
 // UNSUPPORTED: c++98, c++03
 // UNSUPPORTED: windows
 // UNSUPPORTED: with_system_cxx_lib
+// UNSUPPORTED: libcpp-has-newlib
 
 // <list>
 

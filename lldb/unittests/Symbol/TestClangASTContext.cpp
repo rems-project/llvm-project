@@ -87,6 +87,10 @@ TEST_F(TestClangASTContext, TestGetBasicTypeFromEnum) {
                                   context.getObjCSelType()));
   EXPECT_TRUE(
       context.hasSameType(GetBasicQualType(eBasicTypeShort), context.ShortTy));
+  EXPECT_TRUE(context.hasSameType(GetBasicQualType(eBasicTypeSignedIntCap),
+                                  context.IntCapTy));
+  EXPECT_TRUE(context.hasSameType(GetBasicQualType(eBasicTypeUnsignedIntCap),
+                                  context.UnsignedIntCapTy));
   EXPECT_TRUE(context.hasSameType(GetBasicQualType(eBasicTypeSignedChar),
                                   context.SignedCharTy));
   EXPECT_TRUE(context.hasSameType(GetBasicQualType(eBasicTypeUnsignedChar),
@@ -156,6 +160,10 @@ TEST_F(TestClangASTContext, TestGetBasicTypeFromName) {
   EXPECT_EQ(GetBasicQualType(eBasicTypeObjCID), GetBasicQualType("id"));
   EXPECT_EQ(GetBasicQualType(eBasicTypeObjCSel), GetBasicQualType("SEL"));
   EXPECT_EQ(GetBasicQualType(eBasicTypeNullPtr), GetBasicQualType("nullptr"));
+  EXPECT_EQ(GetBasicQualType(eBasicTypeSignedIntCap),
+            GetBasicQualType("__intcap_t"));
+  EXPECT_EQ(GetBasicQualType(eBasicTypeUnsignedIntCap),
+            GetBasicQualType("__uintcap_t"));
 }
 
 void VerifyEncodingAndBitSize(ClangASTContext &clang_context,

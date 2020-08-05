@@ -25,6 +25,8 @@ let Namespace = "AArch64" in {
   def hsub : SubRegIndex<16>;
   def ssub : SubRegIndex<32>;
   def dsub : SubRegIndex<32>;
+  def subeA32 : SubRegIndex<32>;
+  def suboA32 : SubRegIndex<32>;
   def sube32 : SubRegIndex<32>;
   def subo32 : SubRegIndex<32>;
   def qhisub : SubRegIndex<64>;
@@ -47,6 +49,9 @@ let Namespace = "AArch64" in {
   def qsub1 : SubRegIndex<128>;
   def qsub2 : SubRegIndex<128>;
   def qsub3 : SubRegIndex<128>;
+  def sub_64 : SubRegIndex<64>;
+  def capl : SubRegIndex<128>;
+  def caph : SubRegIndex<128>;
 }
 
 let Namespace = "AArch64" in {
@@ -89,7 +94,7 @@ def W28   : AArch64Reg<28, "w28">, DwarfRegNum<[28]>;
 def W29   : AArch64Reg<29, "w29">, DwarfRegNum<[29]>;
 def W30   : AArch64Reg<30, "w30">, DwarfRegNum<[30]>;
 def WSP   : AArch64Reg<31, "wsp">, DwarfRegNum<[31]>;
-def WZR   : AArch64Reg<31, "wzr">, DwarfRegAlias<WSP> { let isConstant = 1; }
+def WZR   : AArch64Reg<31, "wzr">, DwarfRegAlias<WSP>;
 
 let SubRegIndices = [sub_32] in {
 def X0    : AArch64Reg<0,   "x0",  [W0]>, DwarfRegAlias<W0>;
@@ -124,7 +129,7 @@ def X28   : AArch64Reg<28, "x28", [W28]>, DwarfRegAlias<W28>;
 def FP    : AArch64Reg<29, "x29", [W29]>, DwarfRegAlias<W29>;
 def LR    : AArch64Reg<30, "x30", [W30]>, DwarfRegAlias<W30>;
 def SP    : AArch64Reg<31, "sp",  [WSP]>, DwarfRegAlias<WSP>;
-def XZR   : AArch64Reg<31, "xzr", [WZR]>, DwarfRegAlias<WSP> { let isConstant = 1; }
+def XZR   : AArch64Reg<31, "xzr", [WZR]>, DwarfRegAlias<WSP>;
 }
 
 // Condition code register.
@@ -656,27 +661,34 @@ def FPR128Op : RegisterOperand<FPR128, "printOperand"> {
 //===----------------------------------------------------------------------===//
 // ARMv8.1a atomic CASP register operands
 
-
 def WSeqPairs : RegisterTuples<[sube32, subo32],
-                               [(decimate (rotl GPR32, 0), 2),
-                                (decimate (rotl GPR32, 1), 2)]>;
+                               [(rotl GPR32, 0), (rotl GPR32, 1)]>;
 def XSeqPairs : RegisterTuples<[sube64, subo64],
-                               [(decimate (rotl GPR64, 0), 2),
-                                (decimate (rotl GPR64, 1), 2)]>;
+                               [(rotl GPR64, 0), (rotl GPR64, 1)]>;
 
 def WSeqPairsClass   : RegisterClass<"AArch64", [untyped], 32, 
-                                     (add WSeqPairs)>{
+                                     (decimate WSeqPairs, 2)>{
   let Size = 64;
 }
+def WSeqPairsAllClass   : RegisterClass<"AArch64", [untyped], 32, 
+                                        (add WSeqPairs)>{
+  let Size = 64;
+}
+
 def XSeqPairsClass   : RegisterClass<"AArch64", [untyped], 64, 
-                                     (add XSeqPairs)>{
+                                     (decimate XSeqPairs, 2)>{
+  let Size = 128;
+}
+def XSeqPairsAllClass   : RegisterClass<"AArch64", [untyped], 64, 
+                                        (add XSeqPairs)>{
   let Size = 128;
 }
 
-
-let RenderMethod = "addRegOperands", ParserMethod="tryParseGPRSeqPair" in {
+let RenderMethod = "addRegOperands" in {
   def WSeqPairsAsmOperandClass : AsmOperandClass { let Name = "WSeqPair"; }
   def XSeqPairsAsmOperandClass : AsmOperandClass { let Name = "XSeqPair"; }
+  def WSeqPairsAllAsmOperandClass : AsmOperandClass { let Name = "WSeqPairAll"; }
+  def XSeqPairsAllAsmOperandClass : AsmOperandClass { let Name = "XSeqPairAll"; }
 }
 
 def WSeqPairClassOperand :
@@ -687,9 +699,86 @@ def XSeqPairClassOperand :
     RegisterOperand<XSeqPairsClass, "printGPRSeqPairsClassOperand<64>"> {
   let ParserMatchClass = XSeqPairsAsmOperandClass;
 }
-
+def WSeqPairAllClassOperand :
+    RegisterOperand<WSeqPairsAllClass, "printGPRSeqPairsClassOperand<32>"> {
+  let ParserMatchClass = WSeqPairsAllAsmOperandClass;
+}
+def XSeqPairAllClassOperand :
+    RegisterOperand<XSeqPairsAllClass, "printGPRSeqPairsClassOperand<64>"> {
+  let ParserMatchClass = XSeqPairsAllAsmOperandClass;
+}
 
 //===----- END: v8.1a atomic CASP register operands -----------------------===//
+
+//===----------------------------------------------------------------------===//
+// Capabitility registers
+//===----------------------------------------------------------------------===//
+let SubRegIndices = [sub_64] in {
+def C0  : AArch64Reg<0,  "c0",  [X0]>,  DwarfRegNum<[128]>;
+def C1  : AArch64Reg<1,  "c1",  [X1]>,  DwarfRegNum<[129]>;
+def C2  : AArch64Reg<2,  "c2",  [X2]>,  DwarfRegNum<[130]>;
+def C3  : AArch64Reg<3,  "c3",  [X3]>,  DwarfRegNum<[131]>;
+def C4  : AArch64Reg<4,  "c4",  [X4]>,  DwarfRegNum<[132]>;
+def C5  : AArch64Reg<5,  "c5",  [X5]>,  DwarfRegNum<[133]>;
+def C6  : AArch64Reg<6,  "c6",  [X6]>,  DwarfRegNum<[134]>;
+def C7  : AArch64Reg<7,  "c7",  [X7]>,  DwarfRegNum<[135]>;
+def C8  : AArch64Reg<8,  "c8",  [X8]>,  DwarfRegNum<[136]>;
+def C9  : AArch64Reg<9,  "c9",  [X9]>,  DwarfRegNum<[137]>;
+def C10 : AArch64Reg<10, "c10", [X10]>, DwarfRegNum<[138]>;
+def C11 : AArch64Reg<11, "c11", [X11]>, DwarfRegNum<[139]>;
+def C12 : AArch64Reg<12, "c12", [X12]>, DwarfRegNum<[140]>;
+def C13 : AArch64Reg<13, "c13", [X13]>, DwarfRegNum<[141]>;
+def C14 : AArch64Reg<14, "c14", [X14]>, DwarfRegNum<[142]>;
+def C15 : AArch64Reg<15, "c15", [X15]>, DwarfRegNum<[143]>;
+def C16 : AArch64Reg<16, "c16", [X16]>, DwarfRegNum<[144]>;
+def C17 : AArch64Reg<17, "c17", [X17]>, DwarfRegNum<[145]>;
+def C18 : AArch64Reg<18, "c18", [X18]>, DwarfRegNum<[146]>;
+def C19 : AArch64Reg<19, "c19", [X19]>, DwarfRegNum<[147]>;
+def C20 : AArch64Reg<20, "c20", [X20]>, DwarfRegNum<[148]>;
+def C21 : AArch64Reg<21, "c21", [X21]>, DwarfRegNum<[149]>;
+def C22 : AArch64Reg<22, "c22", [X22]>, DwarfRegNum<[150]>;
+def C23 : AArch64Reg<23, "c23", [X23]>, DwarfRegNum<[151]>;
+def C24 : AArch64Reg<24, "c24", [X24]>, DwarfRegNum<[152]>;
+def C25 : AArch64Reg<25, "c25", [X25]>, DwarfRegNum<[153]>;
+def C26 : AArch64Reg<26, "c26", [X26]>, DwarfRegNum<[154]>;
+def C27 : AArch64Reg<27, "c27", [X27]>, DwarfRegNum<[155]>;
+def C28 : AArch64Reg<28, "c28", [X28]>, DwarfRegNum<[156]>;
+def CFP : AArch64Reg<29, "c29", [FP]>,  DwarfRegNum<[157]>;
+def CLR : AArch64Reg<30, "c30", [LR]>,  DwarfRegNum<[158]>;
+def CSP : AArch64Reg<31, "csp", [SP]>,  DwarfRegNum<[159]>;
+def CZR : AArch64Reg<31, "czr", [XZR]>, DwarfRegAlias<CSP>;
+}
+
+// Cap register class, excluding CSP/CZR and CLR (because a pair can not be formed with it)
+def Capcommon : RegisterClass<"AArch64", [iFATPTR128], 128, (add (sequence "C%u", 0, 28), CFP)> {
+  let Size = 128;
+}
+
+// Cap register class common + CLR + CZR
+def Cap : RegisterClass<"AArch64", [iFATPTR128], 128, (add Capcommon, CLR, CZR)> {
+  let Size = 128;
+}
+
+// Cap register class + CLR + CSP
+def Capsp : RegisterClass<"AArch64", [iFATPTR128], 128, (add Capcommon, CLR, CSP)> {
+  let Size = 128;
+}
+
+def Capall : RegisterClass<"AArch64", [iFATPTR128], 128, (add Capcommon, CLR, CSP, CZR)> {
+  let Size = 128;
+}
+
+def Capz : RegisterOperand<Cap> {
+  let GIZeroRegister = CZR;
+}
+
+// For tail calls, we can't use callee-saved registers, as they are restored
+// to the saved value before the tail call, which would clobber a call address.
+// This is for indirect tail calls to store the address of the destination.
+def tcCap : RegisterClass<"AArch64", [iFATPTR128], 128,
+    (sub Capcommon, C19, C20, C21, C22, C23, C24, C25, C26, C27, C28, CFP, CLR)> {
+  let Size = 128;
+}
 
 // SVE predicate registers
 def P0    : AArch64Reg<0,   "p0">, DwarfRegNum<[48]>;

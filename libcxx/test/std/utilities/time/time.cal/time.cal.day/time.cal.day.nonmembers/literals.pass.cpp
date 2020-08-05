@@ -23,6 +23,7 @@
 
 int main(int, char**)
 {
+#if !defined(_LIBCPP_HAS_NO_CXX20_CHRONO_LITERALS)
     {
     using namespace std::chrono;
     ASSERT_NOEXCEPT(               4d);
@@ -43,6 +44,7 @@ int main(int, char**)
     std::chrono::day d1 = 4d;
     assert (d1 == std::chrono::day(4));
     }
+#endif
 
 
   return 0;

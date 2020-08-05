@@ -1,3 +1,4 @@
+// REQUIRES: mips-registered-target
 // RUN: %cheri_purecap_clang -cheri-cap-table-abi=legacy -c %s -o - | llvm-readobj --arch-specific - | FileCheck %s -check-prefix LEGACY
 // LEGACY: ISA Extension: CHERI purecap (legacy) (0xC1)
 

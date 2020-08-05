@@ -3,6 +3,8 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -disable-post-ra -verify-machineinstrs -mattr=+lse < %s | FileCheck %s --check-prefix=CHECK-REG
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -disable-post-ra -verify-machineinstrs -mcpu=saphira < %s | FileCheck %s
 
+; RUN: llc -mtriple=aarch64-none-linux-gnu -disable-post-ra -verify-machineinstrs -mattr=+lse,+morello < %s | FileCheck %s
+
 ; Point of CHECK-REG is to make sure UNPREDICTABLE instructions aren't created
 ; (i.e. reusing a register for status & data in store exclusive).
 ; CHECK-REG-NOT: stlxrb w[[NEW:[0-9]+]], w[[NEW]], [x{{[0-9]+}}]

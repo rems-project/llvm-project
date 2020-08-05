@@ -79,6 +79,10 @@
 # RUN:   FileCheck -check-prefix=SHLIBRBAR %s
 # SHLIBRBAR: trace-symbols.s.tmp1.so: reference to bar
 
+# RUN: ld.lld --no-export-undefined-dynamic-syms -y foo -y bar %t \
+# RUN:   %t1.so %t2.so -o %t3 | FileCheck -check-prefix=NO-SHLIBRBAR %s
+# NO-SHLIBRBAR-NOT: trace-symbols.s.tmp1.so: reference to bar
+
 # RUN: ld.lld -y foo -y bar %t -u bar --start-lib %t1 %t2 --end-lib -o %t3 | \
 # RUN:   FileCheck -check-prefix=STARTLIB %s
 # STARTLIB: trace-symbols.s.tmp1: reference to bar

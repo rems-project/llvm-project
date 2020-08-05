@@ -13,6 +13,7 @@
 #include "lldb/lldb-enumerations.h"
 #include "lldb/lldb-forward.h"
 #include "lldb/lldb-types.h"
+#include "llvm/ADT/APInt.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/DataExtractor.h"
 
@@ -572,6 +573,28 @@ public:
   int64_t GetMaxS64Bitfield(lldb::offset_t *offset_ptr, size_t size,
                             uint32_t bitfield_bit_size,
                             uint32_t bitfield_bit_offset) const;
+
+  /// Extract an unsigned integer of size \a byte_size from \a
+  /// *offset_ptr.
+  ///
+  /// Extract a single unsigned integer value and update the offset
+  /// pointed to by \a offset_ptr. The size of the extracted integer
+  /// is specified by the \a byte_size argument.
+  ///
+  /// @param[in,out] offset_ptr
+  ///     A pointer to an offset within the data that will be advanced
+  ///     by the appropriate number of bytes if the value is extracted
+  ///     correctly. If the offset is out of bounds or there are not
+  ///     enough bytes to extract this value, the offset will be left
+  ///     unmodified.
+  ///
+  /// @param[in] byte_size
+  ///     The size in byte of the integer to extract.
+  ///
+  /// @return
+  ///     The unsigned integer value that was extracted, or zero on
+  ///     failure.
+  llvm::APInt GetAPInt(lldb::offset_t *offset_ptr, size_t byte_size) const;
 
   /// Extract an pointer from \a *offset_ptr.
   ///

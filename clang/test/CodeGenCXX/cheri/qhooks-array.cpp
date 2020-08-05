@@ -1,9 +1,9 @@
 // RUN: %cheri_cc1 -emit-llvm %s -o - | FileCheck %s -check-prefix CHECK-HYBRID
 // RUN: %cheri_purecap_cc1 -mllvm -cheri-cap-table-abi=legacy -emit-llvm %s -o - | %cheri_FileCheck %s -check-prefixes CHECK-PURECAP,PURECAP-LEGACY
 // RUN: %cheri_purecap_cc1 -mllvm -cheri-cap-table-abi=pcrel -emit-llvm %s -o - | %cheri_FileCheck %s -check-prefixes CHECK-PURECAP,PURECAP-NEWABI
-// RUN: %cheri_cc1 -S %s -o - | FileCheck %s -check-prefix HYBRID-ASM
-// RUN: %cheri_purecap_cc1 -S %s -o - | %cheri_FileCheck %s -check-prefix PURECAP-ASM
-// RUN: %cheri_purecap_cc1 -S %s -o - | %cheri_FileCheck %s -check-prefix PURECAP-ASM
+// RXUN: %cheri_cc1 -S %s -o - | FileCheck %s -check-prefix HYBRID-ASM
+// RXUN: %cheri_purecap_cc1 -S %s -o - | %cheri_FileCheck %s -check-prefix PURECAP-ASM
+// RXUN: %cheri_purecap_cc1 -S %s -o - | %cheri_FileCheck %s -check-prefix PURECAP-ASM
 
 // We were miscompiling qhooks.cpp from QtBase: even in the purecap ABI we
 // were emitting .8byte directives for the qtHookData members instead of

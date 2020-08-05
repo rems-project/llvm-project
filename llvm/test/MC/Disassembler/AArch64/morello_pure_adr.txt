@@ -1,0 +1,45 @@
+# RUN: llvm-mc -triple aarch64-none-linux-gnu -disassemble -mattr=+morello,+c64 < %s | FileCheck --check-prefix=C64 %s
+# RUN: llvm-mc -triple aarch64-none-linux-gnu -disassemble -mattr=+morello < %s | FileCheck --check-prefix=A64 %s
+# RUN: llvm-mc -triple aarch64-none-linux-gnu -disassemble < %s | FileCheck --check-prefix=A64 %s
+
+  0xfe,0xff,0x7f,0xf0
+  0x02,0x00,0x00,0x90
+# C64: adrdp    c30, #4294963200
+# C64: adrdp    c2, #0
+# A64: adrp     x30, #4294963200
+# A64: adrp     x2, #0
+
+  0xe5,0xff,0x3f,0xf0
+  0x18,0x00,0x40,0x90
+# C64: adrdp    c5, #2147479552
+# C64: adrdp    c24, #2147483648
+# A64: adrp     x5, #2147479552
+# A64: adrp     x24, #2147483648
+
+  0xd8,0x00,0x00,0xb0
+  0xd8,0x00,0x00,0xd0
+# C64: adrdp    c24, #102400
+# C64: adrdp    c24, #106496
+# A64: adrp     x24, #102400
+# A64: adrp     x24, #106496
+
+  0xfe,0xff,0xff,0xf0
+  0x02,0x00,0x80,0x90
+# C64: adrp     c30, #-4096
+# C64: adrp     c2, #0
+# A64: adrp     x30, #-4096
+# A64: adrp     x2, #-4294967296
+
+  0xe5,0xff,0xbf,0xf0
+  0x18,0x00,0xc0,0x90
+# C64: adrp     c5, #2147479552
+# C64: adrp     c24, #-2147483648
+# A64: adrp     x5, #-2147487744
+# A64: adrp     x24, #-2147483648
+
+  0xd8,0x00,0x80,0xb0
+  0xd8,0x00,0x80,0xd0
+# C64: adrp     c24, #102400
+# C64: adrp     c24, #106496
+# A64: adrp     x24, #-4294864896
+# A64: adrp     x24, #-4294860800

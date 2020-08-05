@@ -153,6 +153,10 @@ static bool shouldDefineSym(SymbolAssignment *cmd) {
   Symbol *b = symtab->find(cmd->name);
   if (b && !b->isDefined())
     return true;
+  // It might also be referenced by a DSO.
+  for (InputFile *F : sharedFiles)
+    if (F->getUndefinedSymbols().count(cmd->name))
+      return true;
   return false;
 }
 
@@ -334,7 +338,9 @@ bool LinkerScript::shouldKeep(InputSectionBase *s) {
   for (InputSectionDescription *id : keptSections)
     if (id->filePat.match(filename))
       for (SectionPattern &p : id->sectionPatterns)
-        if (p.sectionPat.match(s->name))
+        if (p.sectionPat.match(s->name) &&
+            (s->flags & id->withFlags) == id->withFlags &&
+            (s->flags & id->withoutFlags) == 0)
           return true;
   return false;
 }
@@ -430,7 +436,10 @@ LinkerScript::computeInputSections(const InputSectionDescription *cmd) {
         continue;
 
       std::string filename = getFilename(sec->file);
-      if (!cmd->filePat.match(filename) || pat.excludedFilePat.match(filename))
+      if (!cmd->filePat.match(filename) ||
+          pat.excludedFilePat.match(filename) ||
+          (sec->flags & cmd->withFlags) != cmd->withFlags ||
+          (sec->flags & cmd->withoutFlags) != 0)
         continue;
 
       ret.push_back(sec);

@@ -143,6 +143,8 @@ option(LIBCXX_USE_COMPILER_RT "Use compiler-rt instead of libgcc" OFF)
 set(LIBCXX_LIBCPPABI_VERSION "2" CACHE STRING "Version of libc++abi's ABI to re-export from libc++ when re-exporting is enabled.
                                                Note that this is not related to the version of libc++'s ABI itself!")
 
+option(LIBCXX_USE_DEFAULT_LIBS "Use default libs in testing" OFF)
+
 # ABI Library options ---------------------------------------------------------
 set(LIBCXX_CXX_ABI "default" CACHE STRING
     "Specify C++ ABI library to use.")
@@ -248,6 +250,7 @@ option(LIBCXX_ENABLE_MONOTONIC_CLOCK
   "Build libc++ with support for a monotonic clock.
    This option may only be set to OFF when LIBCXX_ENABLE_THREADS=OFF." ON)
 option(LIBCXX_HAS_MUSL_LIBC "Build libc++ with support for the Musl C library" OFF)
+option(LIBCXX_HAS_NEWLIB "Build libc++ with support for the newlib C library" OFF)
 option(LIBCXX_HAS_PTHREAD_API "Ignore auto-detection and force use of pthread API" OFF)
 option(LIBCXX_HAS_WIN32_THREAD_API "Ignore auto-detection and force use of win32 thread API" OFF)
 option(LIBCXX_HAS_EXTERNAL_THREAD_API
@@ -298,6 +301,8 @@ option(LIBCXX_HERMETIC_STATIC_LIBRARY
 #===============================================================================
 # Check option configurations
 #===============================================================================
+
+option(LIBCXX_RUN_LONG_TESTS "Enable running long tests" ON)
 
 # Ensure LIBCXX_ENABLE_MONOTONIC_CLOCK is set to ON only when
 # LIBCXX_ENABLE_THREADS is on.
@@ -451,6 +456,10 @@ set(LIBCXX_LIBRARIES "")
 # Include macros for adding and removing libc++ flags.
 include(HandleLibcxxFlags)
 
+if (triple)
+  set(LIBCXX_TARGET_TRIPLE "${triple}")
+endif()
+
 # Target flags ================================================================
 # These flags get added to CMAKE_CXX_FLAGS and CMAKE_C_FLAGS so that
 # 'config-ix' use them during feature checks. It also adds them to both
@@ -498,6 +507,11 @@ endif()
 #===============================================================================
 
 include(HandleLibCXXABI) # Setup the ABI library flags
+
+if (LIBCXX_CXX_FLAGS)
+  add_compile_flags_if_supported(${LIBCXX_CXX_FLAGS})
+  add_link_flags(${LIBCXX_CXX_FLAGS})
+endif()
 
 if (NOT LIBCXX_STANDALONE_BUILD)
   # Remove flags that may have snuck in.
@@ -553,6 +567,11 @@ function(cxx_add_basic_build_flags target)
   # Let the library headers know they are currently being used to build the
   # library.
   target_compile_definitions(${target} PRIVATE -D_LIBCPP_BUILDING_LIBRARY)
+
+  if(LIBCXX_HAS_NEWLIB)
+    # Some stdlib C functions used have to be enabled by these features macro.
+    add_definitions(-D_GNU_SOURCE=1 -D_XOPEN_SOURCE=1 -D_POSIX_C_SOURCE=200809L -D_POSIX_TIMERS=1)
+  endif(LIBCXX_HAS_NEWLIB)
 
   if (NOT LIBCXX_ENABLE_NEW_DELETE_DEFINITIONS)
     target_compile_definitions(${target} PRIVATE -D_LIBCPP_DISABLE_NEW_DELETE_DEFINITIONS)
@@ -843,6 +862,7 @@ config_define_if(LIBCXX_HAS_EXTERNAL_THREAD_API _LIBCPP_HAS_THREAD_API_EXTERNAL)
 config_define_if(LIBCXX_HAS_WIN32_THREAD_API _LIBCPP_HAS_THREAD_API_WIN32)
 config_define_if(LIBCXX_BUILD_EXTERNAL_THREAD_LIBRARY _LIBCPP_HAS_THREAD_LIBRARY_EXTERNAL)
 config_define_if(LIBCXX_HAS_MUSL_LIBC _LIBCPP_HAS_MUSL_LIBC)
+config_define_if(LIBCXX_HAS_NEWLIB _LIBCPP_HAS_NEWLIB)
 config_define_if(LIBCXX_NO_VCRUNTIME _LIBCPP_NO_VCRUNTIME)
 config_define_if(LIBCXX_ENABLE_PARALLEL_ALGORITHMS _LIBCPP_HAS_PARALLEL_ALGORITHMS)
 

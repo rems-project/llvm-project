@@ -2018,7 +2018,8 @@ static QualType deduceOpenCLPointeeAddrSpace(Sema &S, QualType PointeeType) {
 /// errors. Otherwise, returns a NULL type.
 QualType Sema::BuildPointerType(QualType T,
                                 SourceLocation Loc, DeclarationName Entity,
-                                bool* ValidPointer) {
+                                bool* ValidPointer,
+                                ASTContext::PointerInterpretationKind Kind) {
   if (T->isReferenceType()) {
     // C++ 8.3.2p4: There shall be no ... pointers to references ...
     Diag(Loc, diag::err_illegal_decl_pointer_to_reference)
@@ -2045,8 +2046,9 @@ QualType Sema::BuildPointerType(QualType T,
 
   // If we are in purecap ABI turn pointers marked as using an integer
   // representation into a plain pointer-range-sized integer
-  if (PointerInterpretation == ASTContext::PIK_Integer
-      && Context.getTargetInfo().areAllPointersCapabilities()) {
+  if (Kind == ASTContext::PIK_Default &&
+      PointerInterpretation == ASTContext::PIK_Integer &&
+      Context.getTargetInfo().areAllPointersCapabilities()) {
     // This is not a real pointer type in the sandbox ABI
     // ptrdiff_t will be the same size as a plain mips pointer
     // FIXME: this ValidPointer approach is a HACK to ensure that we return
@@ -2058,7 +2060,8 @@ QualType Sema::BuildPointerType(QualType T,
   // Build the pointer type.
   if (ValidPointer)
     *ValidPointer = true;
-  return Context.getPointerType(T, PointerInterpretation);
+  return Context.getPointerType(T, Kind == ASTContext::PIK_Default ?
+                                      PointerInterpretation : Kind);
 }
 
 /// Build a reference type.
@@ -4509,7 +4512,8 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
         }
       }
       bool ValidPointer = false;
-      T = S.BuildPointerType(T, DeclType.Loc, Name, &ValidPointer);
+      T = S.BuildPointerType(T, DeclType.Loc, Name, &ValidPointer,
+                             ASTContext::PIK_Default);
       if (!ValidPointer) {
         IsIntegerPointerInPureCapABI = true;  // FIXME: is this correct?
       } else if (DeclType.Ptr.TypeQuals)

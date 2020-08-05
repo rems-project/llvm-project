@@ -177,7 +177,7 @@ static void DefineTypeSize(const Twine &MacroName, TargetInfo::IntType Ty,
                            const TargetInfo &TI, MacroBuilder &Builder) {
   assert(Ty != TargetInfo::UnsignedIntCap);
   assert(Ty != TargetInfo::SignedIntCap);
-  DefineTypeSize(MacroName, TI.getTypeWidth(Ty), TI.getTypeConstantSuffix(Ty),
+  DefineTypeSize(MacroName, TI.getTypeRange(Ty), TI.getTypeConstantSuffix(Ty),
                  TI.isTypeSigned(Ty), Builder);
 }
 

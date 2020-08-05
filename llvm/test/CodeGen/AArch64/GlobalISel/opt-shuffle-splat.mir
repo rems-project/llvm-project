@@ -15,14 +15,14 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:gpr32 = COPY $w0
     ; CHECK: [[DUPv4i32gpr:%[0-9]+]]:fpr128 = DUPv4i32gpr [[COPY]]
     ; CHECK: $q0 = COPY [[DUPv4i32gpr]]
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %0:gpr(s32) = COPY $w0
     %2:fpr(<4 x s32>) = G_IMPLICIT_DEF
     %3:gpr(s32) = G_CONSTANT i32 0
     %1:fpr(<4 x s32>) = G_INSERT_VECTOR_ELT %2, %0(s32), %3(s32)
     %4:fpr(<4 x s32>) = G_SHUFFLE_VECTOR %1(<4 x s32>), %2, shufflemask(0, 0, 0, 0)
     $q0 = COPY %4(<4 x s32>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 
 ...
 ---
@@ -40,14 +40,14 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:gpr64 = COPY $x0
     ; CHECK: [[DUPv2i64gpr:%[0-9]+]]:fpr128 = DUPv2i64gpr [[COPY]]
     ; CHECK: $q0 = COPY [[DUPv2i64gpr]]
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %0:gpr(s64) = COPY $x0
     %2:fpr(<2 x s64>) = G_IMPLICIT_DEF
     %3:gpr(s32) = G_CONSTANT i32 0
     %1:fpr(<2 x s64>) = G_INSERT_VECTOR_ELT %2, %0(s64), %3(s32)
     %4:fpr(<2 x s64>) = G_SHUFFLE_VECTOR %1(<2 x s64>), %2, shufflemask(0, 0)
     $q0 = COPY %4(<2 x s64>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 
 ...
 ---
@@ -65,14 +65,14 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:gpr32 = COPY $w0
     ; CHECK: [[DUPv2i32gpr:%[0-9]+]]:fpr64 = DUPv2i32gpr [[COPY]]
     ; CHECK: $d0 = COPY [[DUPv2i32gpr]]
-    ; CHECK: RET_ReallyLR implicit $d0
+    ; CHECK: RET_ReallyLR 0, implicit $d0
     %0:gpr(s32) = COPY $w0
     %2:fpr(<2 x s32>) = G_IMPLICIT_DEF
     %3:gpr(s32) = G_CONSTANT i32 0
     %1:fpr(<2 x s32>) = G_INSERT_VECTOR_ELT %2, %0(s32), %3(s32)
     %4:fpr(<2 x s32>) = G_SHUFFLE_VECTOR %1(<2 x s32>), %2, shufflemask(0, 0)
     $d0 = COPY %4(<2 x s32>)
-    RET_ReallyLR implicit $d0
+    RET_ReallyLR 0, implicit $d0
 
 ...
 ---
@@ -92,14 +92,14 @@ body:             |
     ; CHECK: [[INSERT_SUBREG:%[0-9]+]]:fpr128 = INSERT_SUBREG [[DEF]], [[COPY]], %subreg.ssub
     ; CHECK: [[DUPv4i32lane:%[0-9]+]]:fpr128 = DUPv4i32lane [[INSERT_SUBREG]], 0
     ; CHECK: $q0 = COPY [[DUPv4i32lane]]
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %0:fpr(s32) = COPY $s0
     %2:fpr(<4 x s32>) = G_IMPLICIT_DEF
     %3:gpr(s32) = G_CONSTANT i32 0
     %1:fpr(<4 x s32>) = G_INSERT_VECTOR_ELT %2, %0(s32), %3(s32)
     %4:fpr(<4 x s32>) = G_SHUFFLE_VECTOR %1(<4 x s32>), %2, shufflemask(0, 0, 0, 0)
     $q0 = COPY %4(<4 x s32>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 
 ...
 ---
@@ -119,14 +119,14 @@ body:             |
     ; CHECK: [[INSERT_SUBREG:%[0-9]+]]:fpr128 = INSERT_SUBREG [[DEF]], [[COPY]], %subreg.dsub
     ; CHECK: [[DUPv2i64lane:%[0-9]+]]:fpr128 = DUPv2i64lane [[INSERT_SUBREG]], 0
     ; CHECK: $q0 = COPY [[DUPv2i64lane]]
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %0:fpr(s64) = COPY $d0
     %2:fpr(<2 x s64>) = G_IMPLICIT_DEF
     %3:gpr(s32) = G_CONSTANT i32 0
     %1:fpr(<2 x s64>) = G_INSERT_VECTOR_ELT %2, %0(s64), %3(s32)
     %4:fpr(<2 x s64>) = G_SHUFFLE_VECTOR %1(<2 x s64>), %2, shufflemask(0, 0)
     $q0 = COPY %4(<2 x s64>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 
 ...
 ---
@@ -146,14 +146,14 @@ body:             |
     ; CHECK: [[INSERT_SUBREG:%[0-9]+]]:fpr128 = INSERT_SUBREG [[DEF]], [[COPY]], %subreg.ssub
     ; CHECK: [[DUPv2i32lane:%[0-9]+]]:fpr64 = DUPv2i32lane [[INSERT_SUBREG]], 0
     ; CHECK: $d0 = COPY [[DUPv2i32lane]]
-    ; CHECK: RET_ReallyLR implicit $d0
+    ; CHECK: RET_ReallyLR 0, implicit $d0
     %0:fpr(s32) = COPY $s0
     %2:fpr(<2 x s32>) = G_IMPLICIT_DEF
     %3:gpr(s32) = G_CONSTANT i32 0
     %1:fpr(<2 x s32>) = G_INSERT_VECTOR_ELT %2, %0(s32), %3(s32)
     %4:fpr(<2 x s32>) = G_SHUFFLE_VECTOR %1(<2 x s32>), %2, shufflemask(0, 0)
     $d0 = COPY %4(<2 x s32>)
-    RET_ReallyLR implicit $d0
+    RET_ReallyLR 0, implicit $d0
 
 ...
 ---
@@ -175,7 +175,7 @@ body:             |
     ; CHECK: [[INSERT_SUBREG:%[0-9]+]]:fpr128 = INSERT_SUBREG [[DEF]], [[COPY]], %subreg.dsub
     ; CHECK: [[DUPv2i64lane:%[0-9]+]]:fpr128 = DUPv2i64lane [[INSERT_SUBREG]], 0
     ; CHECK: $q0 = COPY [[DUPv2i64lane]]
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %0:fpr(s64) = COPY $d0
     %2:fpr(<2 x s64>) = G_IMPLICIT_DEF
     %6:fpr(<2 x s64>) = COPY %2
@@ -184,7 +184,7 @@ body:             |
     %7:fpr(<2 x s64>) = COPY %1
     %4:fpr(<2 x s64>) = G_SHUFFLE_VECTOR %7(<2 x s64>), %2, shufflemask(0, 0)
     $q0 = COPY %4(<2 x s64>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 
 ...
 ---
@@ -207,11 +207,11 @@ body:             |
     ; CHECK: [[REG_SEQUENCE:%[0-9]+]]:qq = REG_SEQUENCE [[INSvi64gpr]], %subreg.qsub0, [[DEF]], %subreg.qsub1
     ; CHECK: [[TBLv16i8Two:%[0-9]+]]:fpr128 = TBLv16i8Two [[REG_SEQUENCE]], [[LDRQui]]
     ; CHECK: $q0 = COPY [[TBLv16i8Two]]
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %0:gpr(s64) = COPY $x0
     %2:fpr(<2 x s64>) = G_IMPLICIT_DEF
     %3:gpr(s32) = G_CONSTANT i32 0
     %1:fpr(<2 x s64>) = G_INSERT_VECTOR_ELT %2, %0(s64), %3(s32)
     %4:fpr(<2 x s64>) = G_SHUFFLE_VECTOR %1(<2 x s64>), %2, shufflemask(0, 1)
     $q0 = COPY %4(<2 x s64>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0

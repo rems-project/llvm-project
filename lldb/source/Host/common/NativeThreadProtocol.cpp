@@ -17,3 +17,8 @@ using namespace lldb_private;
 NativeThreadProtocol::NativeThreadProtocol(NativeProcessProtocol &process,
                                            lldb::tid_t tid)
     : m_process(process), m_tid(tid) {}
+
+Status NativeThreadProtocol::GetSigInfoTargetData(DataBufferSP &data_sp) {
+  return Status("obtaining signal information for the last signal received by "
+                "a thread is not supported by the target");
+}

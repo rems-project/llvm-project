@@ -31,7 +31,10 @@ class Stream;
 /// plus appropriate offset, and a colon and space. Bitfield values
 /// can be dumped by calling this function multiple times with the
 /// same start offset, format and size, yet differing \a
-/// item_bit_size and \a item_bit_offset values.
+/// item_bit_size and \a item_bit_offset values. Tagged data can be
+/// dumped using formats that support them with \a tag_byte_size set
+/// to the tag prefix size and \a tagged_byte_size to the size of one
+/// tagged value.
 ///
 /// \param[in] s
 ///     The stream to dump the output to. This value can not be nullptr.
@@ -76,6 +79,17 @@ class Stream;
 ///     same integer value. If the items being displayed are not
 ///     bitfields, this value should be zero.
 ///
+/// \param[in] tag_byte_size
+///     If the value to display is tagged, this value should be the
+///     byte size of the tag. The tag is always stored in the first \a
+///     tag_byte_size bytes of \a tagged_byte_size. If the data is not
+///     tagged, this value should be zero.
+///
+/// \param[in] tagged_byte_size
+///     If the value to display is tagged, this value should be the
+///     byte size of one tagged value. If the data is not tagged, this
+///     value should be zero.
+///
 /// \return
 ///     The offset at which dumping ended.
 lldb::offset_t
@@ -83,6 +97,7 @@ DumpDataExtractor(const DataExtractor &DE, Stream *s, lldb::offset_t offset,
                   lldb::Format item_format, size_t item_byte_size,
                   size_t item_count, size_t num_per_line, uint64_t base_addr,
                   uint32_t item_bit_size, uint32_t item_bit_offset,
+                  uint32_t tag_byte_size = 0, uint32_t tagged_byte_size = 0,
                   ExecutionContextScope *exe_scope = nullptr);
 
 void DumpHexBytes(Stream *s, const void *src, size_t src_len,

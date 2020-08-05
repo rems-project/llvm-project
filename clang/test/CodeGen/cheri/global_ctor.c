@@ -2,6 +2,7 @@
 
 // Check that we don't emit .ctors and .dtors but use .init_array/.fini_array instead
 // llc already defaulted to .init_array, but clang didn't
+// REQUIRES: mips-registered-target
 
 // RUN: %cheri_purecap_clang -fuse-init-array -o - -O0 -S %s -### 2>&1 | FileCheck %s -check-prefix INIT_ARRAY_CMD
 // RUN: %cheri_purecap_clang -fno-use-init-array -o - -O0 -S %s -### 2>&1 | FileCheck %s -check-prefix CTORS_CMD

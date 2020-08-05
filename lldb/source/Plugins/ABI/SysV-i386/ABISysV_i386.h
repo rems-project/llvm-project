@@ -41,7 +41,11 @@ public:
 
   bool CreateDefaultUnwindPlan(lldb_private::UnwindPlan &unwind_plan) override;
 
-  bool RegisterIsVolatile(const lldb_private::RegisterInfo *reg_info) override {
+  bool
+  RegisterIsVolatile(lldb_private::RegisterContext &reg_ctx,
+                     const lldb_private::RegisterInfo *reg_info,
+                     FrameState frame_state,
+                     const lldb_private::UnwindPlan *unwind_plan) override {
     return !RegisterIsCalleeSaved(reg_info);
   }
 
@@ -98,6 +102,11 @@ protected:
                              lldb_private::CompilerType &ast_type) const;
 
   bool RegisterIsCalleeSaved(const lldb_private::RegisterInfo *reg_info);
+
+  lldb_private::CompilerType
+  GetSigInfoCompilerType(const lldb_private::Target &target,
+                         lldb_private::ClangASTContext &ast_ctx,
+                         llvm::StringRef type_name) const override;
 
 private:
   ABISysV_i386(lldb::ProcessSP process_sp,

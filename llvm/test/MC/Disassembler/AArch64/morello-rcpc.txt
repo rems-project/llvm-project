@@ -1,0 +1,27 @@
+# RUN: llvm-mc -triple aarch64-none-linux-gnu -mattr=+c64,+rcpc --disassemble < %s | FileCheck %s
+# RUN: llvm-mc -triple aarch64-none-linux-gnu -mattr=+c64,+morello,+rcpc --disassemble < %s | FileCheck %s
+
+# CHECK: ldaprb w0, [c0]
+# CHECK: ldaprh w0, [c0]
+# CHECK: ldapr w0, [c0]
+# CHECK: ldapr x0, [c0]
+[0x00,0xc0,0xbf,0x38]
+[0x00,0xc0,0xbf,0x78]
+[0x00,0xc0,0xbf,0xb8]
+[0x00,0xc0,0xbf,0xf8]
+
+# RUN: not llvm-mc -triple aarch64-none-linux-gnu -mattr=+v8.2a,+c64 --disassemble < %s 2>&1 | FileCheck --check-prefix=CHECK-V8_2A %s
+# RUN: not llvm-mc -triple aarch64-none-linux-gnu -mattr=+v8.2a,+c64,+morello --disassemble < %s 2>&1 | FileCheck --check-prefix=CHECK-V8_2A %s
+
+# CHECK-V8_2A: warning: invalid instruction encoding
+# CHECK-V8_2A: [0x00,0xc0,0xbf,0x38]
+# CHECK-V8_2A:  ^
+# CHECK-V8_2A: warning: invalid instruction encoding
+# CHECK-V8_2A: [0x00,0xc0,0xbf,0x78]
+# CHECK-V8_2A:  ^
+# CHECK-V8_2A: warning: invalid instruction encoding
+# CHECK-V8_2A: [0x00,0xc0,0xbf,0xb8]
+# CHECK-V8_2A:  ^
+# CHECK-V8_2A: warning: invalid instruction encoding
+# CHECK-V8_2A: [0x00,0xc0,0xbf,0xf8]
+# CHECK-V8_2A:  ^

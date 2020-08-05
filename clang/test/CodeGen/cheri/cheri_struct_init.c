@@ -1,12 +1,17 @@
-// REQUIRES: mips-registered-target
-
 // RUN: %cheri_purecap_cc1 -emit-llvm -o - -no-cheri-linker %s | FileCheck %s
-// RUN: %cheri_purecap_cc1 -S -o - -no-cheri-linker %s | FileCheck %s -check-prefix ASM
+// RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +c64 -target-abi purecap -emit-llvm -o - %s -no-cheri-linker | FileCheck %s --check-prefix=AARCH64
+// RXUN: %cheri_purecap_cc1 -S -o - -no-cheri-linker %s | FileCheck %s -check-prefix ASM
 
 // CHECK: @llvm.global_ctors = appending addrspace(200) global [1 x { i32, void ()*, i8 addrspace(200)* }] [
 // CHECK-SAME: { i32, void ()*, i8 addrspace(200)* }
 // CHECK-SAME: { i32 65535, void ()* addrspacecast (void () addrspace(200)* @_GLOBAL__sub_I_cheri_struct_init.c to void ()*), i8 addrspace(200)* null }]
 // CHECK: __cxx_global_var_init
+
+// AARCH64: @llvm.global_ctors = appending addrspace(200) global [1 x { i32, void () addrspace(200)*, i8 addrspace(200)* }] [
+// AARCH64-SAME: { i32, void () addrspace(200)*, i8 addrspace(200)* }
+// AARCH64-SAME: { i32 65535, void () addrspace(200)* @_GLOBAL__sub_I_cheri_struct_init.c, i8 addrspace(200)* null }]
+// AARCH64: __cxx_global_var_init
+
 
 // Check that this generates an initialiser
 #define NULL (void*)0

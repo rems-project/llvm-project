@@ -24,11 +24,11 @@ body:             |
     ; CHECK: [[COPY8:%[0-9]+]]:fpr(s16) = COPY [[TRUNC]](s16)
     ; CHECK: [[BUILD_VECTOR:%[0-9]+]]:fpr(<8 x s16>) = G_BUILD_VECTOR [[COPY1]](s16), [[COPY2]](s16), [[COPY3]](s16), [[COPY4]](s16), [[COPY5]](s16), [[COPY6]](s16), [[COPY7]](s16), [[COPY8]](s16)
     ; CHECK: $q0 = COPY [[BUILD_VECTOR]](<8 x s16>)
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %0:_(s32) = COPY $w0
     %1:_(s16) = G_TRUNC %0(s32)
     %2:_(<8 x s16>) = G_BUILD_VECTOR %1(s16), %1(s16), %1(s16), %1(s16), %1(s16), %1(s16), %1(s16), %1(s16)
     $q0 = COPY %2(<8 x s16>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 
 ...

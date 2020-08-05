@@ -79,8 +79,10 @@ void test_abs() {
 #endif
   static_assert((std::is_same<decltype(abs((float)0)), float>::value), "");
   static_assert((std::is_same<decltype(abs((double)0)), double>::value), "");
+#ifndef _LIBCPP_HAS_NEWLIB
   static_assert(
       (std::is_same<decltype(abs((long double)0)), long double>::value), "");
+#endif // !_LIBCPP_HAS_NEWLIB
   static_assert((std::is_same<decltype(abs((int)0)), int>::value), "");
   static_assert((std::is_same<decltype(abs((long)0)), long>::value), "");
   static_assert((std::is_same<decltype(abs((long long)0)), long long>::value),

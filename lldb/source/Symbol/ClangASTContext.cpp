@@ -802,6 +802,11 @@ ClangASTContext::GetBuiltinTypeForEncodingAndBitSize(Encoding encoding,
     if (bit_size && !(bit_size & 0x7u))
       return GetType(ast.getExtVectorType(ast.UnsignedCharTy, bit_size / 8));
     break;
+
+  case eEncodingCapability:
+    if (QualTypeMatchesBitSize(bit_size, ast, ast.IntCapTy))
+      return CompilerType(this, ast.IntCapTy.getAsOpaquePtr());
+    break;
   }
 
   return CompilerType();
@@ -856,6 +861,10 @@ ClangASTContext::GetBasicTypeEnumeration(ConstString name) {
       // "int128"
       g_type_map.Append(ConstString("__int128_t"), eBasicTypeInt128);
       g_type_map.Append(ConstString("__uint128_t"), eBasicTypeUnsignedInt128);
+
+      // "intcap"
+      g_type_map.Append(ConstString("__intcap_t"), eBasicTypeSignedIntCap);
+      g_type_map.Append(ConstString("__uintcap_t"), eBasicTypeUnsignedIntCap);
 
       // Miscellaneous
       g_type_map.Append(ConstString("bool"), eBasicTypeBool);
@@ -916,6 +925,21 @@ CompilerType ClangASTContext::GetBuiltinTypeForDWARFEncodingAndBitSize(
     if (QualTypeMatchesBitSize(bit_size, ast, ast.UnsignedIntTy))
       return GetType(ast.UnsignedIntTy);
     break;
+
+  case DW_ATE_CHERI_signed_intcap:
+  case DW_ATE_CHERI_unsigned_intcap: {
+    // Targets that support capabilities use DW_ATE_CHERI_signed_intcap and
+    // DW_ATE_CHERI_unsigned_intcap to record encoding of the intcap_t and
+    // uintcap_t types, respectively.
+    TargetInfo *target_info = getTargetInfo();
+    if (target_info != nullptr &&
+        target_info->getCHERICapabilityWidth() == bit_size)
+      return CompilerType(this,
+                          dw_ate == DW_ATE_CHERI_signed_intcap
+                              ? ast.IntCapTy.getAsOpaquePtr()
+                              : ast.UnsignedIntCapTy.getAsOpaquePtr());
+    break;
+  }
 
   case DW_ATE_lo_user:
     // This has been seen to mean DW_AT_complex_integer
@@ -1825,6 +1849,10 @@ ClangASTContext::GetOpaqueCompilerType(clang::ASTContext *ast,
     return ast->getObjCSelType().getAsOpaquePtr();
   case eBasicTypeNullPtr:
     return ast->NullPtrTy.getAsOpaquePtr();
+  case eBasicTypeSignedIntCap:
+    return ast->IntCapTy.getAsOpaquePtr();
+  case eBasicTypeUnsignedIntCap:
+    return ast->UnsignedIntCapTy.getAsOpaquePtr();
   default:
     return nullptr;
   }
@@ -4250,8 +4278,15 @@ ClangASTContext::GetPointeeType(lldb::opaque_compiler_type_t type) {
   return CompilerType();
 }
 
-CompilerType
-ClangASTContext::GetPointerType(lldb::opaque_compiler_type_t type) {
+static ASTContext::PointerInterpretationKind
+GetPointerInterpretationKindFromAddressSpace(AddressSpace address_space) {
+  if (address_space == eAddressSpaceCapability)
+    return ASTContext::PIK_Capability;
+  return ASTContext::PIK_Default;
+}
+
+CompilerType ClangASTContext::GetPointerType(lldb::opaque_compiler_type_t type,
+                                             AddressSpace address_space) {
   if (type) {
     clang::QualType qual_type(GetQualType(type));
 
@@ -4262,25 +4297,32 @@ ClangASTContext::GetPointerType(lldb::opaque_compiler_type_t type) {
       return GetType(getASTContext().getObjCObjectPointerType(qual_type));
 
     default:
-      return GetType(getASTContext().getPointerType(qual_type));
+      return GetType(getASTContext().getPointerType(qual_type,
+              GetPointerInterpretationKindFromAddressSpace(address_space)));
     }
   }
   return CompilerType();
 }
 
 CompilerType
-ClangASTContext::GetLValueReferenceType(lldb::opaque_compiler_type_t type) {
-  if (type)
-    return GetType(getASTContext().getLValueReferenceType(GetQualType(type)));
-  else
+ClangASTContext::GetLValueReferenceType(lldb::opaque_compiler_type_t type,
+                                        AddressSpace address_space) {
+  if (type) {
+    auto IK = GetPointerInterpretationKindFromAddressSpace(address_space);
+    return GetType(getASTContext().getLValueReferenceType(
+        GetQualType(type), /*SpelledAsLValue*/ true, IK));
+  } else
     return CompilerType();
 }
 
 CompilerType
-ClangASTContext::GetRValueReferenceType(lldb::opaque_compiler_type_t type) {
-  if (type)
-    return GetType(getASTContext().getRValueReferenceType(GetQualType(type)));
-  else
+ClangASTContext::GetRValueReferenceType(lldb::opaque_compiler_type_t type,
+                                        AddressSpace address_space) {
+  if (type) {
+    auto IK = GetPointerInterpretationKindFromAddressSpace(address_space);
+    return GetType(getASTContext().getRValueReferenceType(
+                                       GetQualType(type), IK));
+  } else
     return CompilerType();
 }
 
@@ -4450,6 +4492,14 @@ ClangASTContext::GetBitSize(lldb::opaque_compiler_type_t type,
       // Function types actually have a size of 0, that's not an error.
       if (qual_type->isFunctionProtoType())
         return bit_size;
+
+      // Include the tag bit for address capabilities if GetMemoryContentType()
+      // is able to recognize which special memory content that includes the tag
+      // is used for this compiler type.
+      if (qual_type->isCHERICapabilityType(getASTContext()) &&
+          IsTaggedMemoryContentType(GetMemoryContentType(type)))
+        return bit_size + 1;
+
       if (bit_size)
         return bit_size;
     }
@@ -4576,6 +4626,10 @@ lldb::Encoding ClangASTContext::GetEncoding(lldb::opaque_compiler_type_t type,
     case clang::BuiltinType::NullPtr:
       return lldb::eEncodingUint;
 
+    case clang::BuiltinType::IntCap:
+    case clang::BuiltinType::UIntCap:
+      return lldb::eEncodingCapability;
+
     case clang::BuiltinType::Kind::ARCUnbridgedCast:
     case clang::BuiltinType::Kind::BoundMember:
     case clang::BuiltinType::Kind::BuiltinFn:
@@ -4664,6 +4718,8 @@ lldb::Encoding ClangASTContext::GetEncoding(lldb::opaque_compiler_type_t type,
   case clang::Type::LValueReference:
   case clang::Type::RValueReference:
   case clang::Type::MemberPointer:
+    if (qual_type->isCHERICapabilityType(getASTContext()))
+      return lldb::eEncodingCapability;
     return lldb::eEncodingUint;
   case clang::Type::Complex: {
     lldb::Encoding encoding = lldb::eEncodingIEEE754;
@@ -4719,6 +4775,21 @@ lldb::Encoding ClangASTContext::GetEncoding(lldb::opaque_compiler_type_t type,
   }
   count = 0;
   return lldb::eEncodingInvalid;
+}
+
+MemoryContentType
+ClangASTContext::GetMemoryContentType(opaque_compiler_type_t type) {
+  if (!type)
+    return eMemoryContentNormal;
+
+  clang::QualType qual_type(GetCanonicalQualType(type));
+  if (qual_type->isCHERICapabilityType(getASTContext())) {
+    TargetInfo *target_info = getTargetInfo();
+    if (target_info != nullptr && target_info->getCHERICapabilityWidth() == 128)
+      return eMemoryContentCap128;
+  }
+
+  return eMemoryContentNormal;
 }
 
 lldb::Format ClangASTContext::GetFormat(lldb::opaque_compiler_type_t type) {
@@ -4802,6 +4873,9 @@ lldb::Format ClangASTContext::GetFormat(lldb::opaque_compiler_type_t type) {
     case clang::BuiltinType::Double:
     case clang::BuiltinType::LongDouble:
       return lldb::eFormatFloat;
+    case clang::BuiltinType::IntCap:
+    case clang::BuiltinType::UIntCap:
+      return lldb::eFormatCapability;
     default:
       return lldb::eFormatHex;
     }
@@ -4811,9 +4885,10 @@ lldb::Format ClangASTContext::GetFormat(lldb::opaque_compiler_type_t type) {
   case clang::Type::BlockPointer:
     return lldb::eFormatHex;
   case clang::Type::Pointer:
-    return lldb::eFormatHex;
   case clang::Type::LValueReference:
   case clang::Type::RValueReference:
+    if (qual_type->isCHERICapabilityType(getASTContext()))
+      return lldb::eFormatCapability;
     return lldb::eFormatHex;
   case clang::Type::MemberPointer:
     break;
@@ -5119,6 +5194,10 @@ ClangASTContext::GetBasicTypeEnumeration(lldb::opaque_compiler_type_t type) {
         return eBasicTypeObjCClass;
       case clang::BuiltinType::ObjCSel:
         return eBasicTypeObjCSel;
+      case clang::BuiltinType::IntCap:
+        return eBasicTypeSignedIntCap;
+      case clang::BuiltinType::UIntCap:
+        return eBasicTypeUnsignedIntCap;
       default:
         return eBasicTypeOther;
       }
@@ -8563,7 +8642,7 @@ bool ClangASTContext::DumpTypeValue(
         }
         return DumpDataExtractor(data, s, byte_offset, format, byte_size,
                                  item_count, UINT32_MAX, LLDB_INVALID_ADDRESS,
-                                 bitfield_bit_size, bitfield_bit_offset,
+                                 bitfield_bit_size, bitfield_bit_offset, 0, 0,
                                  exe_scope);
       }
       break;

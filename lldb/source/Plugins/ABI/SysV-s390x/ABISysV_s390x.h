@@ -39,10 +39,16 @@ public:
 
   bool CreateDefaultUnwindPlan(lldb_private::UnwindPlan &unwind_plan) override;
 
-  bool RegisterIsVolatile(const lldb_private::RegisterInfo *reg_info) override;
+  bool RegisterIsVolatile(lldb_private::RegisterContext &reg_ctx,
+                          const lldb_private::RegisterInfo *reg_info,
+                          FrameState frame_state,
+                          const lldb_private::UnwindPlan *unwind_plan) override;
 
   bool GetFallbackRegisterLocation(
-      const lldb_private::RegisterInfo *reg_info,
+      lldb_private::RegisterContext &reg_ctx,
+      const lldb_private::RegisterInfo *reg_info, FrameState frame_state,
+      const lldb_private::UnwindPlan *unwind_plan,
+      lldb::RegisterKind &unwind_registerkind,
       lldb_private::UnwindPlan::Row::RegisterLocation &unwind_regloc) override;
 
   bool CallFrameAddressIsValid(lldb::addr_t cfa) override {

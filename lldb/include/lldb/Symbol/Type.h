@@ -97,7 +97,8 @@ public:
        llvm::Optional<uint64_t> byte_size, SymbolContextScope *context,
        lldb::user_id_t encoding_uid, EncodingDataType encoding_uid_type,
        const Declaration &decl, const CompilerType &compiler_qual_type,
-       ResolveState compiler_type_resolve_state);
+       ResolveState compiler_type_resolve_state,
+       lldb::AddressSpace address_space = lldb::eAddressSpaceNormal);
 
   // This makes an invalid type.  Used for functions that return a Type when
   // they get an error.
@@ -121,6 +122,8 @@ public:
   ConstString GetName();
 
   llvm::Optional<uint64_t> GetByteSize();
+
+  lldb::AddressSpace GetAddressSpace() const { return m_address_space; }
 
   uint32_t GetNumChildren(bool omit_empty_base_classes);
 
@@ -216,6 +219,7 @@ protected:
   CompilerType m_compiler_type;
   ResolveState m_compiler_type_resolve_state;
   bool m_is_complete_objc_class;
+  lldb::AddressSpace m_address_space;
 
   Type *GetEncodingType();
 
@@ -261,11 +265,13 @@ public:
 
   ConstString GetDisplayTypeName() const;
 
-  TypeImpl GetPointerType() const;
+  TypeImpl GetPointerType(
+      lldb::AddressSpace address_space = lldb::eAddressSpaceNormal) const;
 
   TypeImpl GetPointeeType() const;
 
-  TypeImpl GetReferenceType() const;
+  TypeImpl GetReferenceType(
+      lldb::AddressSpace address_space = lldb::eAddressSpaceNormal) const;
 
   TypeImpl GetTypedefedType() const;
 

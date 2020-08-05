@@ -1758,7 +1758,10 @@ bool ABIWindows_x86_64::CreateDefaultUnwindPlan(UnwindPlan &unwind_plan) {
   return true;
 }
 
-bool ABIWindows_x86_64::RegisterIsVolatile(const RegisterInfo *reg_info) {
+bool ABIWindows_x86_64::RegisterIsVolatile(RegisterContext &reg_ctx,
+                                           const RegisterInfo *reg_info,
+                                           FrameState frame_state,
+                                           const UnwindPlan *unwind_plan) {
   return !RegisterIsCalleeSaved(reg_info);
 }
 

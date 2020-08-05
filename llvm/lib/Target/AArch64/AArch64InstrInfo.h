@@ -129,7 +129,7 @@ public:
   /// \p Scale, \p Width, \p MinOffset, and \p MaxOffset accordingly.
   ///
   /// For unscaled instructions, \p Scale is set to 1.
-  static bool getMemOpInfo(unsigned Opcode, unsigned &Scale, unsigned &Width,
+  static bool getMemOpInfo(unsigned Opcode, int &Scale, unsigned &Width,
                            int64_t &MinOffset, int64_t &MaxOffset);
 
   bool shouldClusterMemOps(const MachineOperand &BaseOp1,
@@ -248,6 +248,9 @@ public:
   getSerializableBitmaskMachineOperandTargetFlags() const override;
   ArrayRef<std::pair<MachineMemOperand::Flags, const char *>>
   getSerializableMachineMemOperandTargetFlags() const override;
+
+  bool supportsCapabilities() const override;
+  unsigned getCapabilitiesAddressSpace() const override;
 
   bool isFunctionSafeToOutlineFrom(MachineFunction &MF,
                                    bool OutlineFromLinkOnceODRs) const override;

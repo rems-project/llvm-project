@@ -550,13 +550,24 @@ size_t Formula::getNumRegs() const {
   return !!ScaledReg + BaseRegs.size();
 }
 
-/// Return the type of this formula, if it has one, or null otherwise. This type
-/// is meaningless except for the bit size.
+/// Return the type of this formula, if it has one, or null otherwise.
 Type *Formula::getType() const {
-  return !BaseRegs.empty() ? BaseRegs.front()->getType() :
-         ScaledReg ? ScaledReg->getType() :
-         BaseGV ? BaseGV->getType() :
-         nullptr;
+  Type *BaseRegType = !BaseRegs.empty() ? BaseRegs.front()->getType() : nullptr;
+  for (const SCEV *S : make_range(BaseRegs.begin(), BaseRegs.end())) // JJ
+    BaseRegType = S->getType()->isPointerTy() ? S->getType() : BaseRegType;
+  
+  Type *ScaledRegType = ScaledReg ? ScaledReg->getType() : nullptr;
+  Type *BaseGVType = BaseGV ? BaseGV->getType() : nullptr;
+  // A pointer plus an integer is a pointer, so if any part is a pointer type
+  // we use that.
+  for (Type *Ty : { BaseRegType, ScaledRegType, BaseGVType })
+    if (Ty && Ty->isPointerTy())
+      return Ty;
+  // Otherwise use whichever is non-null.
+  for (Type *Ty : { BaseRegType, ScaledRegType, BaseGVType })
+    if (Ty)
+      return Ty;
+  return nullptr;
 }
 
 /// Delete the given base reg from the BaseRegs list.
@@ -1033,6 +1044,7 @@ public:
     C.ImmCost = 0;
     C.SetupCost = 0;
     C.ScaleCost = 0;
+    C.NumFatRegs = 0;
   }
 
   bool isLess(Cost &Other);
@@ -1048,6 +1060,7 @@ public:
            & C.ImmCost & C.SetupCost & C.ScaleCost) == ~0u);
   }
 #endif
+  bool isInvalidFatFormula(const Formula &F, const Loop *L, const LSRUse &LU);
 
   bool isLoser() {
     assert(isValid() && "invalid cost");
@@ -1236,6 +1249,7 @@ static unsigned getSetupCost(const SCEV *Reg, unsigned Depth) {
 /// Tally up interesting quantities from the given register.
 void Cost::RateRegister(const Formula &F, const SCEV *Reg,
                         SmallPtrSetImpl<const SCEV *> &Regs) {
+  const DataLayout &DL = L->getHeader()->getModule()->getDataLayout();
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Reg)) {
     // If this is an addrec for another loop, it should be an invariant
     // with respect to L since L is the innermost loop (at least
@@ -1253,6 +1267,8 @@ void Cost::RateRegister(const Formula &F, const SCEV *Reg,
       }
 
       // Otherwise, it will be an invariant with respect to Loop L.
+      if (DL.isFatPointer(AR->getType()))
+        ++C.NumFatRegs;
       ++C.NumRegs;
       return;
     }
@@ -1291,6 +1307,8 @@ void Cost::RateRegister(const Formula &F, const SCEV *Reg,
       }
     }
   }
+  if (DL.isFatPointer(Reg->getType()))
+    ++C.NumFatRegs;
   ++C.NumRegs;
 
   // Rough heuristic; favor registers which don't require extra setup
@@ -1320,6 +1338,66 @@ void Cost::RatePrimaryRegister(const Formula &F, const SCEV *Reg,
   }
 }
 
+// Reject SCEV that involves messy FatPointer manipulation
+static bool isInvalidFatPointerSCEV(const SCEV *S, bool InMul) {
+  if (InMul && S->getType()->isPointerTy())
+    return true;
+
+  if (const SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(S)) {
+    for (const SCEV *Op : Mul->operands())
+      if (isInvalidFatPointerSCEV(Op,true))
+        return true;
+  }
+
+  switch (S->getSCEVType()) {
+  case scUnknown:
+  case scConstant:
+    return false;
+  case scTruncate:
+    return isInvalidFatPointerSCEV(cast<SCEVTruncateExpr>(S)->getOperand(), InMul);
+  case scZeroExtend:
+    return isInvalidFatPointerSCEV(cast<SCEVZeroExtendExpr>(S)->getOperand(), InMul);
+  case scSignExtend:
+    return isInvalidFatPointerSCEV(cast<SCEVSignExtendExpr>(S)->getOperand(), InMul);
+  case scUMaxExpr:
+  case scSMaxExpr:
+    //return true;
+  case scAddExpr:
+  case scAddRecExpr: {
+    const SCEVNAryExpr *NAry = cast<SCEVNAryExpr>(S);
+    for (const SCEV *Op : NAry->operands())
+      if (isInvalidFatPointerSCEV(Op, InMul))
+        return true;
+    return false;
+  }
+  case scUDivExpr: {
+    const SCEVUDivExpr *UDiv = cast<SCEVUDivExpr>(S);
+    const SCEV *LHS = UDiv->getLHS(), *RHS = UDiv->getRHS();
+    if (isInvalidFatPointerSCEV(LHS, InMul) || isInvalidFatPointerSCEV(RHS, InMul))
+      return true;
+    return false;
+  }
+  }
+  return false;
+}
+
+bool Cost::isInvalidFatFormula(const Formula &F, const Loop *L,
+                               const LSRUse &LU) {
+  const DataLayout &DL = L->getHeader()->getModule()->getDataLayout();
+  if (!DL.isFatPointer(F.getType()))
+    return false;
+
+  if (F.ScaledReg) {
+    if (isInvalidFatPointerSCEV(F.ScaledReg, false))
+      return true;
+  }
+    for (const SCEV *BaseReg : F.BaseRegs) {
+      if (isInvalidFatPointerSCEV(BaseReg, false))
+        return true;
+    }
+    return false;
+}
+
 void Cost::RateFormula(const Formula &F,
                        SmallPtrSetImpl<const SCEV *> &Regs,
                        const DenseSet<const SCEV *> &VisitedRegs,
@@ -1330,6 +1408,48 @@ void Cost::RateFormula(const Formula &F,
   unsigned PrevAddRecCost = C.AddRecCost;
   unsigned PrevNumRegs = C.NumRegs;
   unsigned PrevNumBaseAdds = C.NumBaseAdds;
+
+  // Reject Formula involving FatPointer multiplications
+  if (isInvalidFatFormula(F, L, LU)) {
+    Lose();
+    return;
+  }
+
+  // Fat pointer address fixups with integer registers are problematic.
+  // We can use inttoptr on constants, but otherwise we would be building
+  // some fat pointer from DDC which could alter our semantics. In the
+  // worst case we could be leaking permissions. We therefore don't touch
+  // these.
+  if (LU.Kind != LSRUse::ICmpZero) {
+    const DataLayout &DL = L->getHeader()->getModule()->getDataLayout();
+    bool HasFatPointerFixup = false;
+    for (const LSRFixup &Fixup : LU.Fixups) {
+      if (DL.isFatPointer(Fixup.OperandValToReplace->getType())) {
+        HasFatPointerFixup = true;
+        break;
+      }
+    }
+    if (HasFatPointerFixup) {
+      bool Valid = false;
+      // At least one of the base registers needs to be a fat pointer.
+      for (const SCEV *BaseReg : F.BaseRegs) {
+        if (DL.isFatPointer(BaseReg->getType())) {
+          Valid = true;
+          break;
+        }
+      }
+      if (const SCEV *ScaledReg = F.ScaledReg) {
+        if (DL.isFatPointer(ScaledReg->getType()) && F.Scale == 1) {
+          Valid = true;
+        }
+      }
+      if (!Valid) {
+        Lose();
+        return;
+      }
+    }
+  }
+
   if (const SCEV *ScaledReg = F.ScaledReg) {
     if (VisitedRegs.count(ScaledReg)) {
       Lose();
@@ -1446,6 +1566,7 @@ void Cost::print(raw_ostream &OS) const {
   if (InsnsCost)
     OS << C.Insns << " instruction" << (C.Insns == 1 ? " " : "s ");
   OS << C.NumRegs << " reg" << (C.NumRegs == 1 ? "" : "s");
+  OS << ", " << C.NumFatRegs << " fat reg" << (C.NumFatRegs == 1 ? "" : "s");
   if (C.AddRecCost != 0)
     OS << ", with addrec cost " << C.AddRecCost;
   if (C.NumIVMuls != 0)
@@ -3594,6 +3715,15 @@ void LSRInstance::GenerateReassociationsImpl(LSRUse &LU, unsigned LUIdx,
     if (isa<SCEVUnknown>(*J) && !SE.isLoopInvariant(*J, L))
       continue;
 
+    // We didn't fully decompose the expression, so it's not safe to reasociate
+    // even the integer parts since we haven't managed to extract all the integer
+    // parts.
+    // FIXME: extract fat pointer part, extract integer part, collect subexpressions
+    // from the integer part and add everything to AddOps.
+    if (isa<SCEVAddRecExpr>(*J) &&
+        SE.getDataLayout().isFatPointer((*J)->getType()))
+      continue;
+
     // Don't pull a constant into a register if the constant could be folded
     // into an immediate field.
     if (isAlwaysFoldable(TTI, SE, LU.MinOffset, LU.MaxOffset, LU.Kind,
@@ -3617,6 +3747,18 @@ void LSRInstance::GenerateReassociationsImpl(LSRUse &LU, unsigned LUIdx,
     if (InnerSum->isZero())
       continue;
     Formula F = Base;
+
+    // Don't split a + b + c where a and b are integers and c is a fat pointer
+    // into a + (b + c). This could generate an out-of-bounds b + c.
+    // FIXME: we could do this if we knew that
+    //   a + b + c > b + c > c
+    // or
+    //   c > b + c > a + b + c
+    // or we knew that b + c cannot take the capability by more than 4096 bytes
+    // outside the bounds.
+    if (AddOps.size() > 2 &&
+        SE.getDataLayout().isFatPointer(InnerSum->getType()))
+      continue;
 
     // Add the remaining pieces of the add back into the new formula.
     const SCEVConstant *InnerSumSC = dyn_cast<SCEVConstant>(InnerSum);
@@ -3693,7 +3835,8 @@ void LSRInstance::GenerateCombinations(LSRUse &LU, unsigned LUIdx,
   Type *CombinedIntegerType = nullptr;
   for (const SCEV *BaseReg : Base.BaseRegs) {
     if (SE.properlyDominates(BaseReg, L->getHeader()) &&
-        !SE.hasComputableLoopEvolution(BaseReg, L)) {
+        !SE.hasComputableLoopEvolution(BaseReg, L) &&
+        !SE.getDataLayout().isFatPointer(BaseReg->getType())) {
       if (!CombinedIntegerType)
         CombinedIntegerType = SE.getEffectiveSCEVType(BaseReg->getType());
       Ops.push_back(BaseReg);
@@ -4182,6 +4325,7 @@ void LSRInstance::GenerateCrossUseConstantOffsets() {
   UniqueItems.clear();
 
   // Now iterate through the worklist and add new formulae.
+  const DataLayout &DL = L->getHeader()->getModule()->getDataLayout();
   for (const WorkItem &WI : WorkItems) {
     size_t LUIdx = WI.LUIdx;
     LSRUse &LU = Uses[LUIdx];
@@ -4195,6 +4339,13 @@ void LSRInstance::GenerateCrossUseConstantOffsets() {
     // TODO: Use a more targeted data structure.
     for (size_t L = 0, LE = LU.Formulae.size(); L != LE; ++L) {
       Formula F = LU.Formulae[L];
+      // Avoid generating cross-uses where we subtract a value from a capability
+      // (which corresponds to having a positive value of Imm). This is because
+      // the subtraction could put the capability outside of its bounds.
+      // TODO: Allow it when we can prove that the result of the subtraction is
+      // actually within bounds.
+      if (DL.isFatPointer(F.getType()) && Imm > 0)
+        continue;
       // FIXME: The code for the scaled and unscaled registers looks
       // very similar but slightly different. Investigate if they
       // could be merged. That way, we would not have to unscale the
@@ -5132,6 +5283,9 @@ Value *LSRInstance::Expand(const LSRUse &LU, const LSRFixup &LF,
   if (LU.RigidFormula)
     return LF.OperandValToReplace;
 
+  const SCEV *FatBase = nullptr;
+  const DataLayout &DL = L->getHeader()->getModule()->getDataLayout();
+
   // Determine an input position which will be dominated by the operands and
   // which will dominate the result.
   IP = AdjustInsertPositionForExpand(IP, LF, LU, Rewriter);
@@ -5143,6 +5297,7 @@ Value *LSRInstance::Expand(const LSRUse &LU, const LSRFixup &LF,
 
   // This is the type that the user actually needs.
   Type *OpTy = LF.OperandValToReplace->getType();
+
   // This will be the type that we'll initially expand to.
   Type *Ty = F.getType();
   if (!Ty)
@@ -5163,6 +5318,12 @@ Value *LSRInstance::Expand(const LSRUse &LU, const LSRFixup &LF,
 
     // If we're expanding for a post-inc user, make the post-inc adjustment.
     Reg = denormalizeForPostIncUse(Reg, LF.PostIncLoops, SE);
+
+    if (DL.isFatPointer(Reg->getType()) && !FatBase) {
+      FatBase = SE.getUnknown(Rewriter.expandCodeFor(Reg, nullptr));
+      continue;
+    }
+
     Ops.push_back(SE.getUnknown(Rewriter.expandCodeFor(Reg, nullptr)));
   }
 
@@ -5209,10 +5370,12 @@ Value *LSRInstance::Expand(const LSRUse &LU, const LSRFixup &LF,
   }
 
   // Expand the GV portion.
-  if (F.BaseGV) {
+  if (F.BaseGV && DL.isFatPointer(F.BaseGV->getType()) && !FatBase) {
+    FatBase = SE.getUnknown(F.BaseGV);
+  } else if (F.BaseGV) {
     // Flush the operand list to suppress SCEVExpander hoisting.
     if (!Ops.empty()) {
-      Value *FullV = Rewriter.expandCodeFor(SE.getAddExpr(Ops), Ty);
+      Value *FullV = Rewriter.expandCodeFor(SE.getAddExpr(Ops), nullptr);
       Ops.clear();
       Ops.push_back(SE.getUnknown(FullV));
     }
@@ -5222,7 +5385,7 @@ Value *LSRInstance::Expand(const LSRUse &LU, const LSRFixup &LF,
   // Flush the operand list to suppress SCEVExpander hoisting of both folded and
   // unfolded offsets. LSR assumes they both live next to their uses.
   if (!Ops.empty()) {
-    Value *FullV = Rewriter.expandCodeFor(SE.getAddExpr(Ops), Ty);
+    Value *FullV = Rewriter.expandCodeFor(SE.getAddExpr(Ops), nullptr);
     Ops.clear();
     Ops.push_back(SE.getUnknown(FullV));
   }
@@ -5254,10 +5417,35 @@ Value *LSRInstance::Expand(const LSRUse &LU, const LSRFixup &LF,
                                                        UnfoldedOffset)));
   }
 
+  if (FatBase) {
+    if (!Ops.empty()) {
+      auto *Val = Rewriter.expandCodeFor(SE.getAddExpr(Ops), nullptr);
+      Ops.clear();
+      Ops.push_back(FatBase);
+      Ops.push_back(SE.getUnknown(Val));
+    } else
+      Ops.push_back(FatBase);
+  }
+
   // Emit instructions summing all the operands.
   const SCEV *FullS = Ops.empty() ?
                       SE.getConstant(IntTy, 0) :
                       SE.getAddExpr(Ops);
+
+  if (LU.Kind == LSRUse::ICmpZero && DL.isFatPointer(Ty)) {
+    bool OnlyIntegers = true;
+    // If all registers are integers, change the type to an integer.
+    for (const SCEV *Op : Ops) {
+      if (DL.isFatPointer(Op->getType())) {
+        OnlyIntegers = false;
+        break;
+      }
+    }
+    if (OnlyIntegers) {
+      Ty = IntTy;
+      OpTy = IntTy;
+    }
+  }
   Value *FullV = Rewriter.expandCodeFor(FullS, Ty);
 
   // We're done expanding now, so reset the rewriter.
@@ -5432,6 +5620,14 @@ void LSRInstance::Rewrite(const LSRUse &LU, const LSRFixup &LF,
     // If this is reuse-by-noop-cast, insert the noop cast.
     Type *OpTy = LF.OperandValToReplace->getType();
     if (FullV->getType() != OpTy) {
+      const DataLayout &DL = L->getHeader()->getModule()->getDataLayout();
+      unsigned Opcode = CastInst::getCastOpcode(FullV, false,
+                                                OpTy, false);
+      if (DL.isFatPointer(OpTy) && Opcode == Instruction::IntToPtr &&
+          LU.Kind == LSRUse::ICmpZero) {
+        OpTy = SE.getEffectiveSCEVType(OpTy);
+      }
+
       Instruction *Cast =
         CastInst::Create(CastInst::getCastOpcode(FullV, false, OpTy, false),
                          FullV, OpTy, "tmp", LF.UserInst);

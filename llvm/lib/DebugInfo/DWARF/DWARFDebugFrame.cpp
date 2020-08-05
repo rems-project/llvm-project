@@ -444,6 +444,10 @@ void DWARFDebugFrame::parse(DWARFDataExtractor Data) {
               StartAugmentationOffset = Offset;
               EndAugmentationOffset = Offset + *AugmentationLength;
               break;
+            case 'C':
+              // Flag indicating that default unwind rules should be initialized
+              // for the pure capability mode, useful mostly for debuggers.
+              break;
             case 'B':
               // B-Key is used for signing functions associated with this
               // augmentation string

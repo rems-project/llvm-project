@@ -1266,7 +1266,10 @@ bool ABISysV_hexagon::CreateDefaultUnwindPlan(UnwindPlan &unwind_plan) {
     b = R14 - R15 and R28 are used by the procedure linkage table
     c = R29 - R31 are saved and restored by allocframe() and deallocframe()
 */
-bool ABISysV_hexagon::RegisterIsVolatile(const RegisterInfo *reg_info) {
+bool ABISysV_hexagon::RegisterIsVolatile(RegisterContext &reg_ctx,
+                                         const RegisterInfo *reg_info,
+                                         FrameState frame_state,
+                                         const UnwindPlan *unwind_plan) {
   return !RegisterIsCalleeSaved(reg_info);
 }
 

@@ -74,21 +74,30 @@ void test_two_member_struct(int& __capability a) {
 }
 
 struct struct_with_ctor_ref {
-    struct_with_ctor_ref(int &);  // expected-note {{passing argument to parameter here}}
+    struct_with_ctor_ref(int &);
 };
 
 struct struct_with_ctor_cap {
-    struct_with_ctor_cap(int& __capability); // expected-note 2 {{passing argument to parameter here}}
+    struct_with_ctor_cap(int& __capability);
 };
 
 void test_struct_with_ctor(int& ptrref, int& __capability capref, int i) {
   struct_with_ctor_ref r1 = ptrref;
-  struct_with_ctor_ref r2 = capref; // expected-error {{converting capability type 'int & __capability' to non-capability type 'int &' without an explicit cast}}
+  struct_with_ctor_ref r2 = capref; // expected-error {{no viable conversion from 'int' to 'struct_with_ctor_ref'}}
+  // expected-note@-11 {{candidate constructor (the implicit copy constructor) not viable: no known conversion from 'int' to 'const struct_with_ctor_ref &' for 1st argument}}
+  // expected-note@-12 {{candidate constructor (the implicit move constructor) not viable: no known conversion from 'int' to 'struct_with_ctor_ref &&' for 1st argument}}
+  // expected-note@-12 {{candidate constructor not viable: no known conversion from 'int' to 'int &' for 1st argument}}
   struct_with_ctor_ref r3 = i;
 
-  struct_with_ctor_cap c1 = ptrref; // expected-error{{converting non-capability type 'int &' to capability type 'int & __capability' without an explicit cast}}
+  struct_with_ctor_cap c1 = ptrref; // expected-error{{no viable conversion from 'int' to 'struct_with_ctor_cap'}}
+  // expected-note@-13 {{candidate constructor (the implicit move constructor) not viable: no known conversion from 'int' to 'struct_with_ctor_cap &&' for 1st argument}}
+  // expected-note@-14 {{candidate constructor (the implicit copy constructor) not viable: no known conversion from 'int' to 'const struct_with_ctor_cap &' for 1st argument}}
+  // expected-note@-14 {{candidate constructor not viable: no known conversion from 'int' to 'int & __capability' for 1st argument}}
   struct_with_ctor_cap c2 = capref;
-  struct_with_ctor_cap c3 = i; // expected-error{{converting non-capability type 'int &' to capability type 'int & __capability' without an explicit cast}}
+  struct_with_ctor_cap c3 = i; // expected-error{{no viable conversion from 'int' to 'struct_with_ctor_cap'}}
+  // expected-note@-18 {{candidate constructor (the implicit copy constructor) not viable: no known conversion from 'int' to 'const struct_with_ctor_cap &' for 1st argument}}
+  // expected-note@-19 {{candidate constructor (the implicit move constructor) not viable: no known conversion from 'int' to 'struct_with_ctor_cap &&' for 1st argument}}
+  // expected-note@-19 {{candidate constructor not viable: no known conversion from 'int' to 'int & __capability' for 1st argument}}
 }
 
 __intcap_t get_intcap();
@@ -101,4 +110,40 @@ void test_intcap(__intcap_t& lval, __intcap_t&& rval) {
 
   __uintcap_t intcap1 = lval;
   __uintcap_t intcap2 = rval;
+}
+
+struct Foo {
+  int a;
+  Foo(const struct Foo & __capability a) {
+    this->a = a.a;
+  };
+  Foo(const struct Foo &a) {
+    this->a = a.a;
+  };
+};
+
+struct Foo fooCapConstructor(struct Foo * __capability c_foo) {
+  struct Foo a = *c_foo;
+  return a;
+}
+
+int fooCapConstructor1(struct Foo *__capability a) {
+  struct Foo b = fooCapConstructor(a);
+  return b.a;
+}
+void fooCapConstructor2(struct Foo * __capability c_foo, struct Foo foo) {
+  *c_foo = foo;
+}
+
+int capArgFun(char *__capability &in);
+
+int capArgTest1(char *__capability c) {
+  return capArgFun(c);
+}
+
+int capArgFun1(char * &__capability in);
+
+int capArgTest2(char *c) {
+  return capArgFun1(c);  // expected-error {{no matching function for call to 'capArgFun1'}}
+  // expected-note@-4 {{candidate function not viable: no known conversion from 'char *' to 'char *& __capability' for 1st argument}}
 }

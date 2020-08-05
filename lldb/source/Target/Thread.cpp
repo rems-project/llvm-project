@@ -16,6 +16,7 @@
 #include "lldb/Core/StructuredDataImpl.h"
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Host/Host.h"
+#include "lldb/DataFormatters/DumpValueObjectOptions.h"
 #include "lldb/Interpreter/OptionValueFileSpecList.h"
 #include "lldb/Interpreter/OptionValueProperties.h"
 #include "lldb/Interpreter/Property.h"
@@ -1947,14 +1948,15 @@ size_t Thread::GetStatus(Stream &strm, uint32_t start_frame,
 }
 
 bool Thread::GetDescription(Stream &strm, lldb::DescriptionLevel level,
-                            bool print_json_thread, bool print_json_stopinfo) {
+                            bool print_json_thread, bool print_json_stopinfo,
+                            bool print_siginfo) {
   const bool stop_format = false;
   DumpUsingSettingsFormat(strm, 0, stop_format);
   strm.Printf("\n");
 
   StructuredData::ObjectSP thread_info = GetExtendedInfo();
 
-  if (print_json_thread || print_json_stopinfo) {
+  if (print_json_thread || print_json_stopinfo || print_siginfo) {
     if (thread_info && print_json_thread) {
       thread_info->Dump(strm);
       strm.Printf("\n");
@@ -1966,6 +1968,19 @@ bool Thread::GetDescription(Stream &strm, lldb::DescriptionLevel level,
         stop_info->Dump(strm);
         strm.Printf("\n");
       }
+    }
+
+    if (print_siginfo) {
+      Status error;
+      ValueObjectSP siginfo = GetSigInfo(error);
+      if (siginfo) {
+        DumpValueObjectOptions options(*siginfo);
+        options.SetHideRootType(true);
+        siginfo->Dump(strm, options);
+      }
+      else
+        strm.PutCString(error.AsCString());
+      strm.EOL();
     }
 
     return true;
@@ -2032,6 +2047,29 @@ bool Thread::GetDescription(Stream &strm, lldb::DescriptionLevel level,
   }
 
   return true;
+}
+
+ValueObjectSP Thread::GetSigInfo(Status &error) const {
+  // Get raw siginfo data.
+  DataBufferSP data_sp = FetchSigInfoData();
+  if (!data_sp) {
+    error.SetErrorStringWithFormatv(
+        "siginfo data for thread #{0} is not available", GetIndexID());
+    return ValueObjectSP();
+  }
+
+  // Check that an ABI object is available to create a value object from the
+  // received data.
+  ABI *abi = GetProcess()->GetABI().get();
+  if (abi == nullptr) {
+    error.SetErrorStringWithFormatv(
+        "no ABI object is available to create a siginfo value");
+    return ValueObjectSP();
+  }
+
+  // Create a siginfo value from the data.
+  return abi->CreateSigInfoValueObject(GetProcess()->GetTarget(), data_sp,
+                                       error);
 }
 
 size_t Thread::GetStackFrameStatus(Stream &strm, uint32_t first_frame,

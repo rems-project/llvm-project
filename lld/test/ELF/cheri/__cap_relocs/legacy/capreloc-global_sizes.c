@@ -1,4 +1,4 @@
-// REQUIRES: clang
+// REQUIRES: clang, mips
 
 // RUN: %cheri_purecap_clang %legacy_caprelocs_flag %s -c -o %t.o
 // RUN: %cheri_purecap_clang %legacy_caprelocs_flag -DLIBBAR %s -c -o %t_bar.o

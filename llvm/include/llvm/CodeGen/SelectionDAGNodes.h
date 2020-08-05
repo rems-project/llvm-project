@@ -1649,6 +1649,9 @@ public:
   }
 };
 
+/// Returns true if \p V is a constant fat pointer zero.
+bool isNullCapConstant(SDValue V);
+
 /// Returns true if \p V is a constant integer zero.
 bool isNullConstant(SDValue V);
 

@@ -497,12 +497,15 @@ static bool isUnsignedDIType(DwarfDebug *DD, const DIType *Ty) {
           Encoding == dwarf::DW_ATE_signed_char ||
           Encoding == dwarf::DW_ATE_float || Encoding == dwarf::DW_ATE_UTF ||
           Encoding == dwarf::DW_ATE_boolean ||
+          Encoding == dwarf::DW_ATE_CHERI_unsigned_intcap ||
+          Encoding == dwarf::DW_ATE_CHERI_signed_intcap ||
           (Ty->getTag() == dwarf::DW_TAG_unspecified_type &&
            Ty->getName() == "decltype(nullptr)")) &&
          "Unsupported encoding");
   return Encoding == dwarf::DW_ATE_unsigned ||
          Encoding == dwarf::DW_ATE_unsigned_char ||
          Encoding == dwarf::DW_ATE_UTF || Encoding == dwarf::DW_ATE_boolean ||
+         Encoding == dwarf::DW_ATE_CHERI_unsigned_intcap ||
          Ty->getTag() == dwarf::DW_TAG_unspecified_type;
 }
 

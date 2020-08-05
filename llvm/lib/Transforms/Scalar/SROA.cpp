@@ -83,6 +83,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
+#include "llvm/ADT/STLExtras.h"
 #include <algorithm>
 #include <cassert>
 #include <chrono>
@@ -923,7 +924,7 @@ private:
     if (!canRangeContainCapabilities(CapSize, Offset, Offset + Size))
       return false;
 
-    if (II.hasFnAttr("must-preserve-cheri-tags"))
+    if (II.preservesTags())
       return true;
 
     if (Offset % CapSize != 0)

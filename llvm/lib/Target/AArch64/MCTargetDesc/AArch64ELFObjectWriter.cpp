@@ -34,6 +34,8 @@ public:
 
   ~AArch64ELFObjectWriter() override = default;
 
+  bool needsRelocateWithSymbol(const MCSymbol &Sym,
+                               unsigned Type) const override;
 protected:
   unsigned getRelocType(MCContext &Ctx, const MCValue &Target,
                         const MCFixup &Fixup, bool IsPCRel) const override;
@@ -41,6 +43,17 @@ protected:
 };
 
 } // end anonymous namespace
+
+bool AArch64ELFObjectWriter::needsRelocateWithSymbol(const MCSymbol &Sym,
+                                                     unsigned Type) const {
+  switch (Type) {
+  default:
+    return false;
+
+  case ELF::R_MORELLO_CAPINIT:
+    return true;
+  }
+}
 
 AArch64ELFObjectWriter::AArch64ELFObjectWriter(uint8_t OSABI, bool IsILP32)
     : MCELFObjectTargetWriter(/*Is64Bit*/ true, OSABI, ELF::EM_AARCH64,
@@ -141,6 +154,21 @@ unsigned AArch64ELFObjectWriter::getRelocType(MCContext &Ctx,
         Ctx.reportError(Fixup.getLoc(),
                         "invalid symbol kind for ADR relocation");
       return R_CLS(ADR_PREL_LO21);
+    case AArch64::fixup_aarch64_pcrel_adrp_imm20:
+      if (IsILP32) {
+        Ctx.reportError(Fixup.getLoc(),
+                        "ILP32 not supported for Morello C64");
+        return ELF::R_AARCH64_NONE;
+      }
+      if (SymLoc == AArch64MCExpr::VK_ABS && !IsNC)
+        return ELF::R_MORELLO_ADR_PREL_PG_HI20;
+      if (SymLoc == AArch64MCExpr::VK_ABS && IsNC)
+        return ELF::R_MORELLO_ADR_PREL_PG_HI20_NC;
+      if (SymLoc == AArch64MCExpr::VK_GOT && !IsNC)
+        return ELF::R_MORELLO_ADR_GOT_PAGE;
+      Ctx.reportError(Fixup.getLoc(),
+                      "invalid symbol kind for ADRP relocation");
+      return ELF::R_AARCH64_NONE;
     case AArch64::fixup_aarch64_pcrel_adrp_imm21:
       if (SymLoc == AArch64MCExpr::VK_ABS && !IsNC)
         return R_CLS(ADR_PREL_PG_HI21);
@@ -167,6 +195,18 @@ unsigned AArch64ELFObjectWriter::getRelocType(MCContext &Ctx,
       return R_CLS(JUMP26);
     case AArch64::fixup_aarch64_pcrel_call26:
       return R_CLS(CALL26);
+    case AArch64::fixup_morello_pcrel_branch26:
+      return ELF::R_MORELLO_JUMP26;
+    case AArch64::fixup_morello_pcrel_call26:
+      return ELF::R_MORELLO_CALL26;
+    case AArch64::fixup_aarch64_ldr_pcrel_imm17_scale16:
+      if (SymLoc == AArch64MCExpr::VK_GOTTPREL ||
+          SymLoc == AArch64MCExpr::VK_GOT) {
+        Ctx.reportError(Fixup.getLoc(),
+                        "tiny code model not yet implemented for C64");
+        return ELF::R_AARCH64_NONE;
+      }
+      return ELF::R_MORELLO_LD_PREL_LO17;
     case AArch64::fixup_aarch64_ldr_pcrel_imm19:
       if (SymLoc == AArch64MCExpr::VK_GOTTPREL)
         return R_CLS(TLSIE_LD_GOTTPREL_PREL19);
@@ -201,7 +241,10 @@ unsigned AArch64ELFObjectWriter::getRelocType(MCContext &Ctx,
                         "relocation not supported (LP64 eqv: ABS64)");
         return ELF::R_AARCH64_NONE;
       } else
-        return ELF::R_AARCH64_ABS64;
+        switch (SymLoc) {
+        case AArch64MCExpr::VK_CAPINIT: return ELF::R_MORELLO_CAPINIT;
+        default: return ELF::R_AARCH64_ABS64;
+        }
     case AArch64::fixup_aarch64_add_imm12:
       if (RefKind == AArch64MCExpr::VK_DTPREL_HI12)
         return R_CLS(TLSLD_ADD_DTPREL_HI12);
@@ -368,6 +411,8 @@ unsigned AArch64ELFObjectWriter::getRelocType(MCContext &Ctx,
         return R_CLS(TLSLE_LDST128_TPREL_LO12);
       if (SymLoc == AArch64MCExpr::VK_TPREL && IsNC)
         return R_CLS(TLSLE_LDST128_TPREL_LO12_NC);
+      if (SymLoc == AArch64MCExpr::VK_GOT && IsNC)
+        return ELF::R_MORELLO_LD128_GOT_LO12_NC;
 
       Ctx.reportError(Fixup.getLoc(),
                       "invalid fixup for 128-bit load/store instruction");

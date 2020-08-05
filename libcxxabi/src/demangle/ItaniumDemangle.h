@@ -3632,6 +3632,9 @@ Node *AbstractManglingParser<Derived, Alloc>::parseQualifiedType() {
     if (Qual.empty())
       return nullptr;
 
+    if (Qual == "cap")
+      Qual = "__capability";
+
     // FIXME parse the optional <template-args> here!
 
     // extension            ::= U <objc-name> <objc-type>  # objc-type<identifier>

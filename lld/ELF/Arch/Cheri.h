@@ -106,6 +106,7 @@ private:
   }
   // TODO: list of added dynamic relocations?
 
+protected:
   llvm::MapVector<CheriCapRelocLocation, CheriCapReloc> relocsMap;
   std::vector<InputSectionBase *> legacyInputs;
   // If we have dynamic relocations we can't sort the __cap_relocs section
@@ -113,6 +114,67 @@ private:
   bool containsDynamicRelocations = false;
   // If this is true reduce number of warnings for compat
   bool containsLegacyCapRelocs() const { return !legacyInputs.empty(); }
+};
+
+// The Morello implementation of CapRelocs is similar in concept and structure to
+// CheriCapRelocsSection defined above. There are sufficient differences to
+// make a separate class worthwhile:
+// - Morello is ELF64LE only, this class does not need to be templated, which
+// simplifies the implementation.
+// - Morello does not support legacy compiler generate __cap_relocs sections.
+// This means that we only add CheriCapRelocs with SymbolAndOffset as {Sym, 0}
+// - Morello does not output the __cap_relocs section when dynamic linking so we
+// never add dynamic relocations to the section.
+// - The Morello dynamic linking model requires information that we use to write
+// out the __cap_relocs in the static case. The calculation of that information
+// has been split out so that it can be called without having to store
+// information in an instance of this class.
+//
+// Alternatives:
+// - There is scope for combining MorelloCapRelocsSection and
+// CheriCapRelocsSection however this should be co-designed with CUCL to avoid
+// merge conflicts from CHERI.
+// - We use CheriCapRelocLocation and CheriCapReloc. Not all fields of these
+// are relevant to Morello and should the decision be made to further separate
+// CHERI and Morello then Morello specific types could be used.
+class MorelloCapRelocsSection : public SyntheticSection {
+public:
+  static constexpr size_t fieldSize = 8;
+  static constexpr size_t relocSize = fieldSize * 5;
+
+  MorelloCapRelocsSection();
+
+  void addCapReloc(CheriCapRelocLocation loc, const SymbolAndOffset &target,
+                   bool targetNeedsDynReloc, int64_t capabilityOffset,
+                   Symbol *sourceSymbol = nullptr);
+
+  void writeTo(uint8_t *buf) override;
+  bool linkerDefinedCapabilityAlign();
+  bool isNeeded() const override { return !relocsMap.empty(); }
+  size_t getSize() const override { return relocsMap.size() * entsize; }
+  void finalizeContents() override;
+  // We need to calculate the PCC to decide how to align the OutputSections
+  // on the boundary of the PCC range. Cache the calculation here so that we
+  // don't need to recalculate later.
+  uint64_t morelloPCCBase;
+  uint64_t morelloPCCLimit;
+
+private:
+  bool addEntry(CheriCapRelocLocation loc, CheriCapReloc relocation) {
+    auto it = relocsMap.insert(std::make_pair(loc, relocation));
+    if (!(it.first->second == relocation)) {
+      error("Newly inserted relocation at " + loc.toString() +
+            " does not match existing one:\n>   Existing: " +
+            it.first->second.target.verboseToString() +
+            ", cap offset=" + Twine(it.first->second.capabilityOffset) +
+            ", dyn=" + Twine(it.first->second.needsDynReloc) +
+            "\n>   New:     " + relocation.target.verboseToString() +
+            ", cap offset=" + Twine(relocation.capabilityOffset) +
+            ", dyn=" + Twine(relocation.needsDynReloc));
+    }
+    return it.second;
+  }
+  llvm::MapVector<CheriCapRelocLocation, CheriCapReloc> relocsMap;
 };
 
 // General cap table structure (for CapSize = 2*WordSize):
@@ -353,6 +415,22 @@ void addCapabilityRelocation(Symbol *sym, RelType type, InputSectionBase *sec,
                              bool isCallExpr,
                              llvm::function_ref<std::string()> referencedBy,
                              RelocationBaseSection *dynRelSec = nullptr);
+
+// Emit either a dynamic relocation or __cap_reloc entry to initialize a
+// GOT slot.
+void addMorelloC64GotRelocation(RelType dynType, Symbol *sym, uint64_t offset);
+
+// Calculate the size of linker defined capabilities such as the PCC
+// capability. These lengths may result in increased alignment requirements
+// for some OutputSections so that CHERI concentrate requirements are met.
+// Return true if we have to modify the alignment of any OutputSection.
+bool morelloLinkerDefinedCapabilityAlign();
+
+// Resolve the R_MORELLO_CAPFRAG_AND_BASE internal relocation to write
+// | 56-bits length | 8-bits permission |
+uint64_t getMorelloSizeAndPermissions(int64_t a, const Symbol &sym,
+                                    InputSectionBase *isec, uint64_t offset);
+
 } // namespace elf
 } // namespace lld
 

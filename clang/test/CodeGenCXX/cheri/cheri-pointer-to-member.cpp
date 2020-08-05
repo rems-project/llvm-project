@@ -1,7 +1,7 @@
 // RUN: %cheri_purecap_cc1 -mllvm -cheri-cap-table-abi=legacy %s -fno-rtti -std=c++11 -o - -emit-llvm | %cheri_FileCheck %s "-implicit-check-not=alloca { i64, i64 }" -check-prefixes CHECK,LEGACY
 // RUN: %cheri_purecap_cc1 -mllvm -cheri-cap-table-abi=pcrel %s -fno-rtti -std=c++11 -o - -emit-llvm | %cheri_FileCheck %s "-implicit-check-not=alloca { i64, i64 }" -check-prefixes CHECK,CAPTABLE
 // RUN: %cheri_cc1 %s -target-abi n64 -fno-rtti -std=c++11 -o - -emit-llvm -O2 | %cheri_FileCheck %s -check-prefix N64
-// RUN: %cheri_cc1 %s -target-abi n64 -fno-rtti -std=c++11 -o - -S -O2 | %cheri_FileCheck %s -check-prefix N64-ASM
+// RXUN: %cheri_cc1 %s -target-abi n64 -fno-rtti -std=c++11 -o - -S -O2 | %cheri_FileCheck %s -check-prefix N64-ASM
 
 class A {
 public:

@@ -1281,10 +1281,16 @@ void CodeGenModule::EmitCtorList(CtorList &Fns, const char *GlobalName) {
   for (const auto &I : Fns) {
     auto ctor = ctors.beginStruct(CtorStructTy);
     ctor.addInt(Int32Ty, I.Priority);
-    ctor.add(llvm::ConstantExpr::getPointerBitCastOrAddrSpaceCast(I.Initializer,
-                                                                  CtorPFTy));
-    if (I.AssociatedData)
-      ctor.add(llvm::ConstantExpr::getBitCast(I.AssociatedData, VoidPtrTy));
+    auto *CExprFun =
+        llvm::ConstantExpr::getPointerBitCastOrAddrSpaceCast(I.Initializer,
+                                                             CtorPFTy);
+    ctor.add(CExprFun);
+    if (I.AssociatedData) {
+      auto *CExprVoid =
+         llvm::ConstantExpr::getPointerBitCastOrAddrSpaceCast(I.AssociatedData,
+                                                              VoidPtrTy);
+      ctor.add(CExprVoid);
+    }
     else
       ctor.addNullPointer(VoidPtrTy);
     ctor.finishAndAddTo(ctors);
@@ -2341,9 +2347,10 @@ llvm::Constant *CodeGenModule::EmitAnnotateAttr(llvm::GlobalValue *GV,
                    GV, GV->getValueType()->getPointerTo(0));
   }
 
+  auto *AS0Ptr = Int8Ty->getPointerTo(0);
   // Create the ConstantStruct for the global annotation.
   llvm::Constant *Fields[4] = {
-    llvm::ConstantExpr::getBitCast(ASZeroGV, Int8PtrTy),
+    llvm::ConstantExpr::getBitCast(ASZeroGV, AS0Ptr),
     llvm::ConstantExpr::getBitCast(AnnoGV, Int8PtrTy),
     llvm::ConstantExpr::getBitCast(UnitGV, Int8PtrTy),
     LineNoCst
@@ -3305,6 +3312,7 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(
 
   llvm::Function *F =
       llvm::Function::Create(FTy, llvm::Function::ExternalLinkage,
+                             getFunctionAddrSpace(),
                              Entry ? StringRef() : MangledName, &getModule());
 
   // If we already created a function with the same mangled name (but different
@@ -4737,7 +4745,8 @@ void CodeGenModule::emitIFuncDefinition(GlobalDecl GD) {
       GetOrCreateLLVMFunction(IFA->getResolver(), DeclTy, GD,
                               /*ForVTable=*/false);
   llvm::GlobalIFunc *GIF =
-      llvm::GlobalIFunc::create(DeclTy, 0, llvm::Function::ExternalLinkage,
+      llvm::GlobalIFunc::create(DeclTy, getFunctionAddrSpace(),
+                                llvm::Function::ExternalLinkage,
                                 "", Resolver, &getModule());
   if (Entry) {
     if (GIF->getResolver() == Entry) {
@@ -5282,7 +5291,10 @@ ConstantAddress CodeGenModule::GetAddrOfGlobalTemporary(
   if (VD->getTLSKind())
     setTLSMode(GV, *VD);
   llvm::Constant *CV = GV;
-  if (AddrSpace != LangAS::Default)
+  LangAS ExpectedAS = LangAS::Default;
+  if (getContext().getTargetInfo().areAllPointersCapabilities())
+    ExpectedAS = getLangASFromTargetAS(getTargetCodeGenInfo().getCHERICapabilityAS());
+  if (AddrSpace != ExpectedAS)
     CV = getTargetCodeGenInfo().performAddrSpaceCast(
         *this, GV, AddrSpace, LangAS::Default,
         Type->getPointerTo(getTargetAddressSpace(LangAS::Default)));

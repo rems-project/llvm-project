@@ -6,6 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/Target/Memory.h"
 #include "lldb/Host/common/NativeProcessProtocol.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/common/NativeBreakpointList.h"
@@ -636,32 +637,58 @@ Status NativeProcessProtocol::RemoveBreakpoint(lldb::addr_t addr,
     return RemoveSoftwareBreakpoint(addr);
 }
 
-Status NativeProcessProtocol::ReadMemoryWithoutTrap(lldb::addr_t addr,
-                                                    void *buf, size_t size,
-                                                    size_t &bytes_read) {
-  Status error = ReadMemory(addr, buf, size, bytes_read);
+Status NativeProcessProtocol::ReadMemoryWithoutTrap(lldb::addr_t addr, void *buf,
+                                                 size_t size,
+                                                 size_t &bytes_read,
+                                                 MemoryContentType type) {
+  Status error = ReadMemory(addr, buf, size, bytes_read, type);
   if (error.Fail())
     return error;
 
-  auto data =
-      llvm::makeMutableArrayRef(static_cast<uint8_t *>(buf), bytes_read);
-  for (const auto &pair : m_software_breakpoints) {
-    lldb::addr_t bp_addr = pair.first;
-    auto saved_opcodes = makeArrayRef(pair.second.saved_opcodes);
-
-    if (bp_addr + saved_opcodes.size() < addr || addr + bytes_read <= bp_addr)
-      continue; // Breapoint not in range, ignore
-
-    if (bp_addr < addr) {
-      saved_opcodes = saved_opcodes.drop_front(addr - bp_addr);
-      bp_addr = addr;
+  auto RemoveTraps = []
+      (lldb::addr_t addr, void *buf, size_t size,
+       std::unordered_map<lldb::addr_t, SoftwareBreakpoint> &Breakpoints) {
+    auto data =
+        llvm::makeMutableArrayRef(static_cast<uint8_t *>(buf), size);
+    for (const auto &pair : Breakpoints) {
+      lldb::addr_t bp_addr = pair.first;
+      auto saved_opcodes = makeArrayRef(pair.second.saved_opcodes);
+ 
+      if (bp_addr + saved_opcodes.size() < addr || addr + size <= bp_addr)
+        continue; // Breapoint not in range, ignore
+ 
+      if (bp_addr < addr) {
+        saved_opcodes = saved_opcodes.drop_front(addr - bp_addr);
+        bp_addr = addr;
+      }
+      auto bp_data = data.drop_front(bp_addr - addr);
+      std::copy_n(saved_opcodes.begin(),
+                  std::min(saved_opcodes.size(), bp_data.size()),
+                  bp_data.begin());
     }
-    auto bp_data = data.drop_front(bp_addr - addr);
-    std::copy_n(saved_opcodes.begin(),
-                std::min(saved_opcodes.size(), bp_data.size()),
-                bp_data.begin());
+    return Status();
+  };
+
+  if (IsTaggedMemoryContentType(type)) {
+    uint32_t base_byte_size = TaggedMemory::GetBaseByteSize(type);
+    uint32_t tag_byte_size = TaggedMemory::GetTagByteSize(type);
+    uint32_t tagged_byte_size = TaggedMemory::GetTaggedByteSize(type);
+
+    assert(bytes_read % tagged_byte_size == 0);
+
+    uint8_t *bytes = static_cast<uint8_t *>(buf);
+    for (size_t bytes_offset = tag_byte_size, addr_offset = 0;
+         bytes_offset < bytes_read;
+         bytes_offset += tagged_byte_size, addr_offset += base_byte_size) {
+      error = RemoveTraps(addr + addr_offset, bytes + bytes_offset,
+                          base_byte_size, m_software_breakpoints);
+      if (error.Fail())
+        break;
+    }
+    return error;
   }
-  return Status();
+
+  return RemoveTraps(addr, buf, bytes_read, m_software_breakpoints);
 }
 
 llvm::Expected<llvm::StringRef>

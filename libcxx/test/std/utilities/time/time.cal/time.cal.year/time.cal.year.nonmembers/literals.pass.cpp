@@ -23,6 +23,7 @@
 
 int main(int, char**)
 {
+#if !defined(_LIBCPP_HAS_NO_CXX20_CHRONO_LITERALS)
     {
     using namespace std::chrono;
     ASSERT_NOEXCEPT(4y);
@@ -41,6 +42,7 @@ int main(int, char**)
     std::chrono::year y1 = 2020y;
     assert (y1 == std::chrono::year(2020));
     }
+#endif
 
   return 0;
 }

@@ -164,12 +164,16 @@ private:
   bool showMatchError(SMLoc Loc, unsigned ErrCode, uint64_t ErrorInfo,
                       OperandVector &Operands);
 
+  bool parseFeatures(StringRef ExtensionString, MCSubtargetInfo &STI,
+                     AArch64::ArchKind ID, SMLoc &L);
   bool parseDirectiveArch(SMLoc L);
   bool parseDirectiveArchExtension(SMLoc L);
   bool parseDirectiveCPU(SMLoc L);
   bool parseDirectiveInst(SMLoc L);
 
   bool parseDirectiveTLSDescCall(SMLoc L);
+
+  bool parseDirectiveCapInit(SMLoc L);
 
   bool parseDirectiveLOH(StringRef LOH, SMLoc L);
   bool parseDirectiveLtorg(SMLoc L);
@@ -185,6 +189,50 @@ private:
                                OperandVector &Operands, MCStreamer &Out,
                                uint64_t &ErrorInfo,
                                bool MatchingInlineAsm) override;
+  // Returns true iff registers First and Second are from the same register
+  // class.
+  template <unsigned ClassID>
+  bool isRegPair(unsigned First, unsigned Second) const {
+    return AArch64MCRegisterClasses[ClassID].contains(First, Second);
+  }
+
+  // Provide an empty template, and specialize it to various register class
+  // to get a mapping between reg class and sub register index.
+  template <unsigned ClassID> unsigned buildSeqPair(unsigned First);
+
+  // Returns true iff the constraint that the second register in the pair has to
+  // be a successor of the first is not satisfied.
+  bool hasInvalidSuccessorEncoding(unsigned First, unsigned Second,
+                                 SMLoc SecondLoc) {
+    const MCRegisterInfo *RI = getContext().getRegisterInfo();
+    unsigned FirstEncoding = RI->getEncodingValue(First);
+    if (RI->getEncodingValue(Second) != FirstEncoding + 1)
+      return Error(
+          SecondLoc,
+          "expected second register in a pair to be a successor of the first");
+    return false;
+  }
+
+  // Returns true iff the constraint that the first GPR in a pair has to be even
+  // is not fulfilled.
+  bool hasInvalidEvenRegisterEncoding(unsigned First, SMLoc FirstLoc) {
+    const MCRegisterInfo *RI = getContext().getRegisterInfo();
+    unsigned FirstEncoding = RI->getEncodingValue(First);
+    if ((FirstEncoding & 0x1) != 0)
+      return Error(FirstLoc, "expected first even register of a "
+                             "consecutive same-size even/odd "
+                             "register pair");
+    return false;
+  }
+
+  // Report a failure to satisfy the constraint that the second register in the
+  // pair has to be of the same size than the first.
+  bool reportNotSameSizeRegPair(SMLoc SecondLoc) {
+    return Error(SecondLoc, "expected second register to be of "
+                            "the same size as the first in a "
+                            "register pair");
+  }
+
 /// @name Auto-generated Match Functions
 /// {
 
@@ -200,6 +248,10 @@ private:
   OperandMatchResultTy tryParseBarrierOperand(OperandVector &Operands);
   OperandMatchResultTy tryParseMRSSystemRegister(OperandVector &Operands);
   OperandMatchResultTy tryParseSysReg(OperandVector &Operands);
+  OperandMatchResultTy tryParseCSysReg(OperandVector &Operands);
+  OperandMatchResultTy tryParseMorelloCSysReg(OperandVector &Operands);
+  OperandMatchResultTy tryParseCapPerm(OperandVector &Operands);
+  OperandMatchResultTy tryParseCapSealForm(OperandVector &Operands);
   OperandMatchResultTy tryParseSysCROperand(OperandVector &Operands);
   template <bool IsSVEPrefetch = false>
   OperandMatchResultTy tryParsePrefetch(OperandVector &Operands);
@@ -224,6 +276,8 @@ private:
   OperandMatchResultTy tryParseVectorList(OperandVector &Operands,
                                           bool ExpectMatch = false);
   OperandMatchResultTy tryParseSVEPattern(OperandVector &Operands);
+  template <bool AllowGPR = false>
+  OperandMatchResultTy tryParseC64CapToGPROperand(OperandVector &Operands);
 
 public:
   enum AArch64MatchResultTy {
@@ -250,9 +304,22 @@ public:
     Parser.addAliasForDirective(".word", ".4byte");
     Parser.addAliasForDirective(".dword", ".8byte");
     Parser.addAliasForDirective(".xword", ".8byte");
+    Parser.addAliasForDirective(".dword", ".8byte");
 
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(getSTI().getFeatureBits()));
+
+    // A feature set with just C64 set.
+    FeatureBitset C64Set;
+    C64Set.set(AArch64::FeatureC64);
+
+    // A feature set with C64 turned off.
+    FeatureBitset NotC64Set;
+
+    // Don't record errors based on the C64 feature. XOR the two
+    // bit patterns to get something that has just C64 and NotC64.
+    setIgnoreFeatures(ComputeAvailableFeatures(C64Set) ^
+                      ComputeAvailableFeatures(NotC64Set));
   }
 
   bool regsEqual(const MCParsedAsmOperand &Op1,
@@ -269,6 +336,27 @@ public:
                                 MCSymbolRefExpr::VariantKind &DarwinRefKind,
                                 int64_t &Addend);
 };
+
+template <>
+unsigned AArch64AsmParser::buildSeqPair<AArch64::WSeqPairsAllClassRegClassID>(
+    unsigned First) {
+  const MCRegisterInfo *RI = getContext().getRegisterInfo();
+  return RI->getMatchingSuperReg(
+      First, AArch64::sube32,
+      &AArch64MCRegisterClasses[AArch64::WSeqPairsAllClassRegClassID]);
+}
+template <>
+unsigned AArch64AsmParser::buildSeqPair<AArch64::XSeqPairsAllClassRegClassID>(
+    unsigned First) {
+  const MCRegisterInfo *RI = getContext().getRegisterInfo();
+  return RI->getMatchingSuperReg(
+      First, AArch64::sube64,
+      &AArch64MCRegisterClasses[AArch64::XSeqPairsAllClassRegClassID]);
+}
+
+} // end anonymous namespace
+
+namespace {
 
 /// AArch64Operand - Instances of this class represent a parsed AArch64 machine
 /// instruction.
@@ -374,6 +462,7 @@ private:
     unsigned Length;
     uint32_t MRSReg;
     uint32_t MSRReg;
+    uint32_t CSysReg;
     uint32_t PStateField;
   };
 
@@ -628,6 +717,15 @@ public:
   bool isImm() const override { return Kind == k_Immediate; }
   bool isMem() const override { return false; }
 
+  bool isSImm6() const { return isSImm<6>(); }
+  bool isSImm6s16() const { return isSImmScaled<6, 16>(); }
+  bool isSImm8() const { return isSImm<8>(); }
+  bool isSImm9() const { return isSImm<9>(); }
+  bool isSImm7s4() const { return isSImmScaled<7, 4>(); }
+  bool isSImm7s8() const { return isSImmScaled<7, 8>(); }
+  bool isSImm7s16() const { return isSImmScaled<7, 16>(); }
+  bool isSImm10s8() const { return isSImmScaled<10, 8>(); }
+
   bool isUImm6() const {
     if (!isImm())
       return false;
@@ -636,6 +734,16 @@ public:
       return false;
     int64_t Val = MCE->getValue();
     return (Val >= 0 && Val < 64);
+  }
+
+  bool isUImm8() const {
+    if (!isImm())
+      return false;
+    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
+    if (!MCE)
+      return false;
+    int64_t Val = MCE->getValue();
+    return (Val >= 0 && Val < 256);
   }
 
   template <int Width> bool isSImm() const { return isSImmScaled<Width, 1>(); }
@@ -786,6 +894,29 @@ public:
     return {};
   }
 
+  bool isScbndsImm() const {
+    if (!isShiftedImm() && !isImm())
+      return false;
+
+    const MCExpr *Expr;
+
+    // An scbnds shifter is either 'lsl #0' or 'lsl #4'.
+    if (isShiftedImm()) {
+      unsigned Shift = ShiftedImm.ShiftAmount;
+      Expr = ShiftedImm.Val;
+      if (Shift != 0 && Shift != 4)
+        return false;
+    } else {
+      Expr = getImm();
+    }
+
+    // An unsigned 6-bit immediate optionally shifted by 4.
+    if (auto ShiftedVal = getShiftedVal<4>())
+      return ShiftedVal->first >= 0 && ShiftedVal->first <= 0x3f;
+
+    return false;
+  }
+
   bool isAddSubImm() const {
     if (!isShiftedImm() && !isImm())
       return false;
@@ -898,7 +1029,7 @@ public:
     return AArch64_AM::isAdvSIMDModImmType10(MCE->getValue());
   }
 
-  template<int N>
+  template <unsigned N, unsigned shift = 2>
   bool isBranchTarget() const {
     if (!isImm())
       return false;
@@ -909,8 +1040,13 @@ public:
     if (Val & 0x3)
       return false;
     assert(N > 0 && "Branch target immediate cannot be 0 bits!");
-    return (Val >= -((1<<(N-1)) << 2) && Val <= (((1<<(N-1))-1) << 2));
+    return (Val >= -((1<<(N-1)) << shift) && Val <= (((1<<(N-1))-1) << shift));
   }
+  bool isBranchTarget26() const { return isBranchTarget<26>(); }
+  bool isPCRelLabel19() const { return isBranchTarget<19>(); }
+  bool isPCRelLabel16() const { return isBranchTarget<16>(); }
+  bool isBranchTarget14() const { return isBranchTarget<14>(); }
+  bool isPCRelLabel17Scale16() const { return isBranchTarget<17, 4>(); }
 
   bool
   isMovWSymbol(ArrayRef<AArch64MCExpr::VariantKind> AllowedModifiers) const {
@@ -1004,6 +1140,29 @@ public:
   bool isMSRSystemRegister() const {
     if (!isSysReg()) return false;
     return SysReg.MSRReg != -1U;
+  }
+  // Used for Morello mrs/msr.
+  bool isCapSystemRegister() const {
+    if (!isSysReg()) return false;
+    return SysReg.CSysReg != -1U;
+  }
+  bool isCapPermImm() const {
+    if (!isImm()) return false;
+
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    uint64_t Value = CE->getValue();
+
+    return Value < 8;
+  }
+  bool isCapSealFormImm() const {
+    if (!isImm()) return false;
+
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    uint64_t Value = CE->getValue();
+
+    return Value < 4 && Value != 0;
   }
 
   bool isSystemPStateFieldWithImm0_1() const {
@@ -1112,6 +1271,14 @@ public:
       AArch64MCRegisterClasses[AArch64::GPR64RegClassID].contains(Reg.RegNum);
   }
 
+  bool isC64CapToGPR() const {
+    if (Kind != k_Register || Reg.Kind != RegKind::Scalar)
+      return false;
+
+    return AArch64MCRegisterClasses[AArch64::GPR64RegClassID].contains(Reg.RegNum) ||
+           AArch64MCRegisterClasses[AArch64::CapRegClassID].contains(Reg.RegNum);
+  }
+
   bool isGPR64as32() const {
     return Kind == k_Register && Reg.Kind == RegKind::Scalar &&
       AArch64MCRegisterClasses[AArch64::GPR32RegClassID].contains(Reg.RegNum);
@@ -1126,6 +1293,18 @@ public:
   bool isXSeqPair() const {
     return Kind == k_Register && Reg.Kind == RegKind::Scalar &&
            AArch64MCRegisterClasses[AArch64::XSeqPairsClassRegClassID].contains(
+               Reg.RegNum);
+  }
+
+  bool isWSeqPairAll() const {
+    return Kind == k_Register && Reg.Kind == RegKind::Scalar &&
+           AArch64MCRegisterClasses[AArch64::WSeqPairsAllClassRegClassID].contains(
+               Reg.RegNum);
+  }
+
+  bool isXSeqPairAll() const {
+    return Kind == k_Register && Reg.Kind == RegKind::Scalar &&
+           AArch64MCRegisterClasses[AArch64::XSeqPairsAllClassRegClassID].contains(
                Reg.RegNum);
   }
 
@@ -1293,6 +1472,46 @@ public:
             getShiftExtendAmount() == 0);
   }
 
+  template <int Shift> bool isCMemXExtend() const {
+    if (!isExtend())
+      return false;
+    return getShiftExtendAmount() == Shift || getShiftExtendAmount() == 0;
+  }
+
+  template <int Shift> bool isCMemWExtend() const {
+    if (!isExtend())
+      return false;
+    return getShiftExtendAmount() == Shift || getShiftExtendAmount() == 0;
+  }
+
+  template <int Shift> bool isCArithXExtend() const {
+    if (!isExtend())
+      return false;
+    AArch64_AM::ShiftExtendType ET = getShiftExtendType();
+    return ET == AArch64_AM::LSL && getShiftExtendAmount() == Shift;
+  }
+
+  template <int Shift> bool isCArithXSExtend() const {
+    if (!isExtend())
+      return false;
+    AArch64_AM::ShiftExtendType ET = getShiftExtendType();
+    return ET == AArch64_AM::SXTX && getShiftExtendAmount() == Shift;
+  }
+
+  template <int Shift> bool isCArithWExtend() const {
+    if (!isExtend())
+      return false;
+    AArch64_AM::ShiftExtendType ET = getShiftExtendType();
+    return ET == AArch64_AM::UXTW && getShiftExtendAmount() == Shift;
+  }
+
+  template <int Shift> bool isCArithWSExtend() const {
+    if (!isExtend())
+      return false;
+    AArch64_AM::ShiftExtendType ET = getShiftExtendType();
+    return ET == AArch64_AM::SXTW && getShiftExtendAmount() == Shift;
+  }
+
   template <unsigned width>
   bool isArithmeticShifter() const {
     if (!isShifter())
@@ -1380,16 +1599,25 @@ public:
     return isSImm<9>() && !isUImm12Offset<Width / 8>();
   }
 
+  template<bool IsPCRel = true, int ImmBits = 21>
   bool isAdrpLabel() const {
     // Validation was handled during parsing, so we just sanity check that
     // something didn't go haywire.
     if (!isImm())
         return false;
 
+    // adrdp at the moment doesn't allow labels.
+    if (!IsPCRel && !isa<MCConstantExpr>(Imm.Val))
+      return false;
+
     if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Imm.Val)) {
       int64_t Val = CE->getValue();
-      int64_t Min = - (4096 * (1LL << (21 - 1)));
-      int64_t Max = 4096 * ((1LL << (21 - 1)) - 1);
+      int64_t Min = - (4096 * (1LL << (ImmBits - 1)));
+      int64_t Max = 4096 * ((1LL << (ImmBits - 1)) - 1);
+      if (!IsPCRel) {
+        Min = 0;
+        Max = 4096 * ((1LL << ImmBits) - 1);
+      }
       return (Val % 4096) == 0 && Val >= Min && Val <= Max;
     }
 
@@ -1564,6 +1792,14 @@ public:
     Inst.addOperand(MCOperand::createImm(getCondCode()));
   }
 
+  void addAdrdpLabelSImm20Operands(MCInst &Inst, unsigned N) const {
+    addAdrpLabelOperands(Inst, N);
+  }
+
+  void addAdrpLabelSImm20Operands(MCInst &Inst, unsigned N) const {
+    addAdrpLabelOperands(Inst, N);
+  }
+
   void addAdrpLabelOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
@@ -1590,6 +1826,12 @@ public:
   }
 
   void addUImm6Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
+    Inst.addOperand(MCOperand::createImm(MCE->getValue()));
+  }
+
+  void addUImm8Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
     Inst.addOperand(MCOperand::createImm(MCE->getValue()));
@@ -1627,10 +1869,11 @@ public:
     Inst.addOperand(MCOperand::createImm(encoding));
   }
 
-  void addBranchTarget26Operands(MCInst &Inst, unsigned N) const {
-    // Branch operands don't encode the low bits, so shift them off
-    // here. If it's a label, however, just put it on directly as there's
-    // not enough information now to do anything.
+  template <int Scale = 2>
+  void addTargetAddress(MCInst &Inst, unsigned N) const {
+    // Branch or PC-relative operands don't encode the low bits, so shift
+    // them off here. If it's a label, however, just put it on directly as
+    // there's not enough information now to do anything.
     assert(N == 1 && "Invalid number of operands!");
     const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
     if (!MCE) {
@@ -1638,35 +1881,27 @@ public:
       return;
     }
     assert(MCE && "Invalid constant immediate operand!");
-    Inst.addOperand(MCOperand::createImm(MCE->getValue() >> 2));
+    Inst.addOperand(MCOperand::createImm(MCE->getValue() >> Scale));
+  }
+
+  void addBranchTarget26Operands(MCInst &Inst, unsigned N) const {
+    addTargetAddress(Inst, N);
   }
 
   void addPCRelLabel19Operands(MCInst &Inst, unsigned N) const {
-    // Branch operands don't encode the low bits, so shift them off
-    // here. If it's a label, however, just put it on directly as there's
-    // not enough information now to do anything.
-    assert(N == 1 && "Invalid number of operands!");
-    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
-    if (!MCE) {
-      addExpr(Inst, getImm());
-      return;
-    }
-    assert(MCE && "Invalid constant immediate operand!");
-    Inst.addOperand(MCOperand::createImm(MCE->getValue() >> 2));
+    addTargetAddress(Inst, N);
+  }
+
+  void addPCRelLabel17Scale16Operands(MCInst &Inst, unsigned N) const {
+    addTargetAddress<4>(Inst, N);
+  }
+
+  void addPCRelLabel16Operands(MCInst &Inst, unsigned N) const {
+    addTargetAddress(Inst, N);
   }
 
   void addBranchTarget14Operands(MCInst &Inst, unsigned N) const {
-    // Branch operands don't encode the low bits, so shift them off
-    // here. If it's a label, however, just put it on directly as there's
-    // not enough information now to do anything.
-    assert(N == 1 && "Invalid number of operands!");
-    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
-    if (!MCE) {
-      addExpr(Inst, getImm());
-      return;
-    }
-    assert(MCE && "Invalid constant immediate operand!");
-    Inst.addOperand(MCOperand::createImm(MCE->getValue() >> 2));
+    addTargetAddress(Inst, N);
   }
 
   void addFPImmOperands(MCInst &Inst, unsigned N) const {
@@ -1690,6 +1925,51 @@ public:
     assert(N == 1 && "Invalid number of operands!");
 
     Inst.addOperand(MCOperand::createImm(SysReg.MSRReg));
+  }
+
+  void addC64CapToGPROperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    int Reg = getReg();
+    const MCRegisterInfo *RI = Ctx.getRegisterInfo();
+    if (AArch64MCRegisterClasses[AArch64::CapRegClassID].contains(Reg))
+      Reg = RI->getSubReg(getReg(), AArch64::sub_64);
+
+    Inst.addOperand(MCOperand::createReg(Reg));
+  }
+
+  void addCapSystemRegisterOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::createImm(SysReg.CSysReg));
+  }
+  void addScbndsImmOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && "Invalid number of operands!");
+    // Handles the lsl #0 case here, otherwise addImmWithOptionalShiftOperands
+    // will use a a lsl #4 for multiples of 16.
+    if (isImm()) {
+      int64_t Val = cast<MCConstantExpr>(getImm())->getValue();
+      if (Val < 64) {
+        addExpr(Inst, getImm());
+        Inst.addOperand(MCOperand::createImm(0));
+        return;
+      }
+    }
+    addImmWithOptionalShiftOperands<4>(Inst, N);
+  }
+
+  void addCapSealFormImmOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+
+    const MCConstantExpr *CE = cast<MCConstantExpr>(getImm());
+    uint64_t Value = CE->getValue();
+    Inst.addOperand(MCOperand::createImm(Value));
+  }
+
+  void addCapPermImmOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+
+    const MCConstantExpr *CE = cast<MCConstantExpr>(getImm());
+    uint64_t Value = CE->getValue();
+    Inst.addOperand(MCOperand::createImm(Value));
   }
 
   void addSystemPStateFieldWithImm0_1Operands(MCInst &Inst, unsigned N) const {
@@ -1755,6 +2035,14 @@ public:
     Inst.addOperand(MCOperand::createImm(getShiftExtendAmount() != 0));
   }
 
+  void addCMemExtendOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && "Invalid number of operands!");
+    AArch64_AM::ShiftExtendType ET = getShiftExtendType();
+    bool IsSigned = ET == AArch64_AM::SXTW || ET == AArch64_AM::SXTX;
+    Inst.addOperand(MCOperand::createImm(IsSigned));
+    Inst.addOperand(MCOperand::createImm(getShiftExtendAmount() != 0));
+  }
+
   // For 8-bit load/store instructions with a register offset, both the
   // "DoShift" and "NoShift" variants have a shift of 0. Because of this,
   // they're disambiguated by whether the shift was explicit or implicit rather
@@ -1765,6 +2053,14 @@ public:
     bool IsSigned = ET == AArch64_AM::SXTW || ET == AArch64_AM::SXTX;
     Inst.addOperand(MCOperand::createImm(IsSigned));
     Inst.addOperand(MCOperand::createImm(hasShiftExtendAmount()));
+  }
+
+  void addCArithExtendOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 2 && "Invalid number of operands!");
+    AArch64_AM::ShiftExtendType ET = getShiftExtendType();
+    bool IsSigned = ET == AArch64_AM::SXTW || ET == AArch64_AM::SXTX;
+    Inst.addOperand(MCOperand::createImm(IsSigned));
+    Inst.addOperand(MCOperand::createImm(getShiftExtendAmount() != 0));
   }
 
   template<int Shift>
@@ -1924,6 +2220,7 @@ public:
   static std::unique_ptr<AArch64Operand> CreateSysReg(StringRef Str, SMLoc S,
                                                       uint32_t MRSReg,
                                                       uint32_t MSRReg,
+                                                      uint32_t CSysReg,
                                                       uint32_t PStateField,
                                                       MCContext &Ctx) {
     auto Op = std::make_unique<AArch64Operand>(k_SysReg, Ctx);
@@ -1931,6 +2228,7 @@ public:
     Op->SysReg.Length = Str.size();
     Op->SysReg.MRSReg = MRSReg;
     Op->SysReg.MSRReg = MSRReg;
+    Op->SysReg.CSysReg = CSysReg;
     Op->SysReg.PStateField = PStateField;
     Op->StartLoc = S;
     Op->EndLoc = S;
@@ -2273,6 +2571,9 @@ unsigned AArch64AsmParser::matchRegisterNameAlias(StringRef Name,
                     .Case("lr",  AArch64::LR)
                     .Case("x31", AArch64::XZR)
                     .Case("w31", AArch64::WZR)
+                    .Case("cfp", AArch64::CFP)
+                    .Case("clr", AArch64::CLR)
+                    .Case("c31", AArch64::CZR)
                     .Default(0))
       return Kind == RegKind::Scalar ? RegNum : 0;
 
@@ -2303,6 +2604,10 @@ AArch64AsmParser::tryParseScalarRegister(unsigned &RegNum) {
   std::string lowerCase = Tok.getString().lower();
   unsigned Reg = matchRegisterNameAlias(lowerCase, RegKind::Scalar);
   if (Reg == 0)
+    return MatchOperand_NoMatch;
+
+  bool Has16CapRegs = STI->getFeatureBits()[AArch64::FeatureUse16CapRegs];
+  if (Has16CapRegs && Reg > AArch64::C7 && Reg < AArch64::C24)
     return MatchOperand_NoMatch;
 
   RegNum = Reg;
@@ -2807,37 +3112,44 @@ AArch64AsmParser::tryParseOptionalShiftExtend(OperandVector &Operands) {
   return MatchOperand_Success;
 }
 
+
 static const struct Extension {
   const char *Name;
   const FeatureBitset Features;
+  const FeatureBitset DisableFeatures;
 } ExtensionMap[] = {
-    {"crc", {AArch64::FeatureCRC}},
-    {"sm4", {AArch64::FeatureSM4}},
-    {"sha3", {AArch64::FeatureSHA3}},
-    {"sha2", {AArch64::FeatureSHA2}},
-    {"aes", {AArch64::FeatureAES}},
-    {"crypto", {AArch64::FeatureCrypto}},
-    {"fp", {AArch64::FeatureFPARMv8}},
-    {"simd", {AArch64::FeatureNEON}},
-    {"ras", {AArch64::FeatureRAS}},
-    {"lse", {AArch64::FeatureLSE}},
-    {"predres", {AArch64::FeaturePredRes}},
-    {"ccdp", {AArch64::FeatureCacheDeepPersist}},
-    {"mte", {AArch64::FeatureMTE}},
-    {"tlb-rmi", {AArch64::FeatureTLB_RMI}},
-    {"pan-rwv", {AArch64::FeaturePAN_RWV}},
-    {"ccpp", {AArch64::FeatureCCPP}},
-    {"sve", {AArch64::FeatureSVE}},
-    {"sve2", {AArch64::FeatureSVE2}},
-    {"sve2-aes", {AArch64::FeatureSVE2AES}},
-    {"sve2-sm4", {AArch64::FeatureSVE2SM4}},
-    {"sve2-sha3", {AArch64::FeatureSVE2SHA3}},
-    {"sve2-bitperm", {AArch64::FeatureSVE2BitPerm}},
-    // FIXME: Unsupported extensions
-    {"pan", {}},
-    {"lor", {}},
-    {"rdma", {}},
-    {"profile", {}},
+  { "crc", {AArch64::FeatureCRC}, {AArch64::FeatureCRC} },
+  { "sm4",  {AArch64::FeatureSM4},  {AArch64::FeatureSM4} },
+  { "sha3", {AArch64::FeatureSHA3}, {AArch64::FeatureSHA3} },
+  { "sha2", {AArch64::FeatureSHA2}, {AArch64::FeatureSHA2} },
+  { "aes",  {AArch64::FeatureAES},  {AArch64::FeatureAES} },
+  { "crypto", {AArch64::FeatureCrypto}, {AArch64::FeatureCrypto} },
+  { "fp", {AArch64::FeatureFPARMv8}, {AArch64::FeatureFPARMv8, AArch64::FeatureNEON} },
+  { "simd", {AArch64::FeatureNEON, AArch64::FeatureFPARMv8}, {AArch64::FeatureNEON} },
+  { "ras", {AArch64::FeatureRAS}, {AArch64::FeatureRAS} },
+  { "lse", {AArch64::FeatureLSE}, {AArch64::FeatureLSE} },
+  { "predres", {AArch64::FeaturePredRes}, {AArch64::FeaturePredRes} },
+  { "ccdp", {AArch64::FeatureCacheDeepPersist}, {AArch64::FeatureCacheDeepPersist} },
+  { "mte", {AArch64::FeatureMTE}, {AArch64::FeatureMTE} },
+  { "tlb-rmi", {AArch64::FeatureTLB_RMI}, {AArch64::FeatureTLB_RMI} },
+  { "pan-rwv", {AArch64::FeaturePAN_RWV}, {AArch64::FeaturePAN_RWV} },
+  { "ccpp", {AArch64::FeatureCCPP}, {AArch64::FeatureCCPP} },
+  { "sve", {AArch64::FeatureSVE}, {AArch64::FeatureSVE} },
+  { "sve2", {AArch64::FeatureSVE2}, {AArch64::FeatureSVE2}},
+  { "sve2-aes", {AArch64::FeatureSVE2AES}, {AArch64::FeatureSVE2AES}},
+  { "sve2-sm4", {AArch64::FeatureSVE2SM4}, {AArch64::FeatureSVE2SM4}},
+  { "sve2-sha3", {AArch64::FeatureSVE2SHA3}, {AArch64::FeatureSVE2SHA3}},
+  { "rcpc", {AArch64::FeatureRCPC}, {AArch64::FeatureRCPC}},
+  { "sve2-bitperm", {AArch64::FeatureSVE2BitPerm}, {AArch64::FeatureSVE2BitPerm}},
+  { "a64c", {AArch64::FeatureMorello},
+            {AArch64::FeatureMorello, AArch64::FeatureC64} },
+  { "c64", {AArch64::FeatureMorello, AArch64::FeatureC64},
+           {AArch64::FeatureC64} },
+  // FIXME: Unsupported extensions
+  { "pan", {}, {} },
+  { "lor", {}, {} },
+  { "rdma", {}, {} },
+  { "profile", {}, {} },
 };
 
 static void setRequiredFeatureString(FeatureBitset FBS, std::string &Str) {
@@ -2899,6 +3211,14 @@ bool AArch64AsmParser::parseSysAlias(StringRef Name, SMLoc NameLoc,
   StringRef Op = Tok.getString();
   SMLoc S = Tok.getLoc();
 
+  // The follwing instructions use capabilities in C64:
+  //    dc zva, ivac, cvac, cvau, civac, cvap
+  //    ic ivau
+  bool HasC64 = getSTI().getFeatureBits()[AArch64::FeatureC64] != 0;
+  bool HasMorello = getSTI().getFeatureBits()[AArch64::FeatureMorello] != 0;
+  bool UseCapForCacheVA = HasC64 && HasMorello;
+  bool UseCap = false;
+
   if (Mnemonic == "ic") {
     const AArch64IC::IC *IC = AArch64IC::lookupICByName(Op);
     if (!IC)
@@ -2909,6 +3229,8 @@ bool AArch64AsmParser::parseSysAlias(StringRef Name, SMLoc NameLoc,
       return TokError(Str.c_str());
     }
     createSysAlias(IC->Encoding, Operands, S);
+    if (IC->Name == std::string("IVAU"))
+      UseCap = UseCapForCacheVA;
   } else if (Mnemonic == "dc") {
     const AArch64DC::DC *DC = AArch64DC::lookupDCByName(Op);
     if (!DC)
@@ -2919,6 +3241,14 @@ bool AArch64AsmParser::parseSysAlias(StringRef Name, SMLoc NameLoc,
       return TokError(Str.c_str());
     }
     createSysAlias(DC->Encoding, Operands, S);
+    UseCap = UseCapForCacheVA && StringSwitch<bool>(DC->Name)
+      .Case("ZVA", true)
+      .Case("IVAC", true)
+      .Case("CVAC", true)
+      .Case("CVAU", true)
+      .Case("CIVAC", true)
+      .Case("CVAP", true)
+      .Default(false);
   } else if (Mnemonic == "at") {
     const AArch64AT::AT *AT = AArch64AT::lookupATByName(Op);
     if (!AT)
@@ -2974,6 +3304,23 @@ bool AArch64AsmParser::parseSysAlias(StringRef Name, SMLoc NameLoc,
     return TokError("specified " + Mnemonic + " op requires a register");
   else if (!ExpectRegister && HasRegister)
     return TokError("specified " + Mnemonic + " op does not use a register");
+
+  if (UseCap && HasRegister) {
+    // Make sure that this is a capability and replace it with the GPR64
+    // sub-register.
+    AArch64Operand &Op =
+      static_cast<AArch64Operand &>(*Operands[Operands.size() - 1]);
+    if (Op.isReg()) {
+      unsigned Reg = Op.getReg();
+      if (!AArch64MCRegisterClasses[AArch64::CapspRegClassID].contains(Reg))
+        return TokError("expected capability register");
+      const MCRegisterInfo *RI = getContext().getRegisterInfo();
+      Reg = RI->getSubReg(Reg, AArch64::sub_64);
+      Operands[Operands.size() - 1] =
+        AArch64Operand::CreateReg(Reg, RegKind::Scalar, Op.getStartLoc(),
+                                  Op.getEndLoc(), getContext());
+    }
+  }
 
   if (parseToken(AsmToken::EndOfStatement, "unexpected token in argument list"))
     return true;
@@ -3046,13 +3393,19 @@ AArch64AsmParser::tryParseSysReg(OperandVector &Operands) {
   if (Tok.isNot(AsmToken::Identifier))
     return MatchOperand_NoMatch;
 
-  int MRSReg, MSRReg;
+  int MRSReg, MSRReg, CReg;
   auto SysReg = AArch64SysReg::lookupSysRegByName(Tok.getString());
+  auto CSysReg = AArch64MorelloCSysReg::lookupMorelloCSysRegByName(Tok.getString());
   if (SysReg && SysReg->haveFeatures(getSTI().getFeatureBits())) {
     MRSReg = SysReg->Readable ? SysReg->Encoding : -1;
     MSRReg = SysReg->Writeable ? SysReg->Encoding : -1;
+    CReg = -1;
+  } else if (CSysReg && CSysReg->haveFeatures(getSTI().getFeatureBits())) {
+    MRSReg = -1;
+    MSRReg = -1;
+    CReg = CSysReg->Encoding;
   } else
-    MRSReg = MSRReg = AArch64SysReg::parseGenericRegister(Tok.getString());
+    MRSReg = MSRReg = CReg = AArch64SysReg::parseGenericRegister(Tok.getString());
 
   auto PState = AArch64PState::lookupPStateByName(Tok.getString());
   unsigned PStateImm = -1;
@@ -3061,10 +3414,77 @@ AArch64AsmParser::tryParseSysReg(OperandVector &Operands) {
 
   Operands.push_back(
       AArch64Operand::CreateSysReg(Tok.getString(), getLoc(), MRSReg, MSRReg,
-                                   PStateImm, getContext()));
+                                   CReg, PStateImm, getContext()));
+
   Parser.Lex(); // Eat identifier
 
   return MatchOperand_Success;
+}
+
+OperandMatchResultTy
+AArch64AsmParser::tryParseCapSealForm(OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
+  const AsmToken &Tok = Parser.getTok();
+  int64_t Val = 0;
+  if (Parser.getTok().is(AsmToken::Hash)) {
+    Parser.Lex();
+    if (Parser.getTok().isNot(AsmToken::Integer)) {
+      SMLoc S = getLoc();
+      Error(S, "Expected integer value");
+      return MatchOperand_ParseFail;
+    }
+    Val = Parser.getTok().getIntVal();
+  } else if (Tok.is(AsmToken::Identifier)) {
+    std::string PermStr = Tok.getIdentifier().lower();
+    Val = StringSwitch<int64_t>(PermStr)
+      .Case("rb", AArch64SealForm::RB)
+      .Case("lpb", AArch64SealForm::LPB)
+      .Case("lb", AArch64SealForm::LB)
+      .Default(0);
+  }
+  if (Val > 0 && Val < 4) {
+    const MCExpr *Imm = MCConstantExpr::create(Val, getContext());
+    Operands.push_back(AArch64Operand::CreateImm(Imm, getLoc(), getLoc(),
+                                                 getContext()));
+    Parser.Lex();
+    return MatchOperand_Success;
+  }
+  return MatchOperand_NoMatch;
+}
+
+OperandMatchResultTy
+AArch64AsmParser::tryParseCapPerm(OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
+  const AsmToken &Tok = Parser.getTok();
+  int64_t Val = 0;
+  if (Parser.getTok().is(AsmToken::Hash)) {
+    Parser.Lex();
+    if (Parser.getTok().isNot(AsmToken::Integer)) {
+      SMLoc S = getLoc();
+      Error(S, "Expected integer value");
+      return MatchOperand_ParseFail;
+    }
+    Val = Parser.getTok().getIntVal();
+  } else if (Tok.is(AsmToken::Identifier)) {
+    std::string PermStr = Tok.getIdentifier().lower();
+    Val = StringSwitch<int64_t>(PermStr)
+      .Case("x", AArch64CapPerm::X)
+      .Case("w", AArch64CapPerm::W)
+      .Case("wx", AArch64CapPerm::WX)
+      .Case("r", AArch64CapPerm::R)
+      .Case("rx", AArch64CapPerm::RX)
+      .Case("rw", AArch64CapPerm::RW)
+      .Case("rwx", AArch64CapPerm::RWX)
+      .Default(-1);
+  }
+  if (Val >= 0 && Val < 8) {
+    const MCExpr *Imm = MCConstantExpr::create(Val, getContext());
+    Operands.push_back(AArch64Operand::CreateImm(Imm, getLoc(), getLoc(),
+                                                 getContext()));
+    Parser.Lex();
+    return MatchOperand_Success;
+  }
+  return MatchOperand_NoMatch;
 }
 
 /// tryParseNeonVectorRegister - Parse a vector register operand.
@@ -3436,6 +3856,58 @@ bool AArch64AsmParser::parseNeonVectorList(OperandVector &Operands) {
   return tryParseVectorIndex(Operands) == MatchOperand_ParseFail;
 }
 
+template <bool AllowGPR>
+OperandMatchResultTy
+AArch64AsmParser::tryParseC64CapToGPROperand(OperandVector &Operands) {
+  SMLoc Loc = getLoc();
+
+  // This needs to be either a capability or X register before we can eat the
+  // token.
+  MCAsmParser &Parser = getParser();
+  const AsmToken &Tok = Parser.getTok();
+  if (Tok.isNot(AsmToken::Identifier))
+    return MatchOperand_NoMatch;
+
+  std::string lowerCase = Tok.getString().lower();
+  unsigned RegNum = matchRegisterNameAlias(lowerCase, RegKind::Scalar);
+  if (RegNum == 0)
+    return MatchOperand_NoMatch;
+
+  bool IsCap = AArch64MCRegisterClasses[AArch64::CapRegClassID].contains(RegNum);
+  bool IsGPR = AArch64MCRegisterClasses[AArch64::GPR64RegClassID].contains(RegNum);
+
+  if (!IsCap && !IsGPR)
+    return MatchOperand_NoMatch;
+
+  // Call tryParseScalarRegister to make sure this register exists.
+  OperandMatchResultTy Res = tryParseScalarRegister(RegNum);
+  if (Res != MatchOperand_Success)
+    return Res;
+
+  // Allow a GPR only in the case where we have 16 capability registers and the
+  // GPR doesn't have a corresponding capability register.
+  bool Has16CapRegs = STI->getFeatureBits()[AArch64::FeatureUse16CapRegs];
+  bool ValidGPR = AllowGPR && (RegNum > AArch64::X7 && RegNum < AArch64::X24) &&
+                  Has16CapRegs;
+
+  bool HasC64 = getSTI().getFeatureBits()[AArch64::FeatureC64] != 0;
+  bool HasMorello = getSTI().getFeatureBits()[AArch64::FeatureMorello] != 0;
+
+  if (HasC64 && HasMorello && !IsCap && !ValidGPR) {
+    Error(Loc, "invalid operand for instruction");
+    return MatchOperand_ParseFail;
+  }
+  if ((!HasMorello) || (HasMorello && !HasC64))
+    if (IsCap) {
+      Error(Loc, "invalid operand for instruction");
+      return MatchOperand_ParseFail;
+    }
+
+  Operands.push_back(AArch64Operand::CreateReg(
+    RegNum, RegKind::Scalar, Loc, getLoc(), getContext()));
+  return MatchOperand_Success;
+}
+
 OperandMatchResultTy
 AArch64AsmParser::tryParseGPR64sp0Operand(OperandVector &Operands) {
   SMLoc StartLoc = getLoc();
@@ -3684,6 +4156,11 @@ bool AArch64AsmParser::parseOperand(OperandVector &Operands, bool isCondCode,
     bool IsXReg =
         AArch64MCRegisterClasses[AArch64::GPR64allRegClassID].contains(
             Operands[1]->getReg());
+    bool IsCReg =
+        AArch64MCRegisterClasses[AArch64::CapallRegClassID].contains(
+            Operands[1]->getReg());
+    if (IsCReg)
+      return Error(Loc, "Cannot use capability for literal pool loads");
 
     MCContext& Ctx = getContext();
     E = SMLoc::getFromPointer(Loc.getPointer() - 1);
@@ -3965,6 +4442,11 @@ bool AArch64AsmParser::validateInstruction(MCInst &Inst, SMLoc &IDLoc,
   // same as a destination/source register or pair load where
   // the Rt == Rt2. All of those are undefined behaviour.
   switch (Inst.getOpcode()) {
+  case AArch64::ALDPSWpre:
+  case AArch64::ALDPWpre:
+  case AArch64::ALDPXpre:
+  case AArch64::ALDPWpost:
+  case AArch64::ALDPXpost:
   case AArch64::LDPSWpre:
   case AArch64::LDPWpost:
   case AArch64::LDPWpre:
@@ -3981,6 +4463,12 @@ bool AArch64AsmParser::validateInstruction(MCInst &Inst, SMLoc &IDLoc,
                            "is also a destination");
     LLVM_FALLTHROUGH;
   }
+  case AArch64::ALDPDi:
+  case AArch64::ALDPQi:
+  case AArch64::ALDPSi:
+  case AArch64::ALDPSWi:
+  case AArch64::ALDPWi:
+  case AArch64::ALDPXi:
   case AArch64::LDPDi:
   case AArch64::LDPQi:
   case AArch64::LDPSi:
@@ -3993,6 +4481,13 @@ bool AArch64AsmParser::validateInstruction(MCInst &Inst, SMLoc &IDLoc,
       return Error(Loc[1], "unpredictable LDP instruction, Rt2==Rt");
     break;
   }
+  case AArch64::ALDPDpre:
+  case AArch64::ALDPQpre:
+  case AArch64::ALDPSpre:
+  case AArch64::ALDPDpost:
+  case AArch64::ALDPQpost:
+  case AArch64::ALDPSpost:
+  case AArch64::ALDPSWpost:
   case AArch64::LDPDpost:
   case AArch64::LDPDpre:
   case AArch64::LDPQpost:
@@ -4006,6 +4501,16 @@ bool AArch64AsmParser::validateInstruction(MCInst &Inst, SMLoc &IDLoc,
       return Error(Loc[1], "unpredictable LDP instruction, Rt2==Rt");
     break;
   }
+  case AArch64::ASTPDpre:
+  case AArch64::ASTPQpre:
+  case AArch64::ASTPSpre:
+  case AArch64::ASTPWpre:
+  case AArch64::ASTPXpre:
+  case AArch64::ASTPDpost:
+  case AArch64::ASTPQpost:
+  case AArch64::ASTPSpost:
+  case AArch64::ASTPWpost:
+  case AArch64::ASTPXpost:
   case AArch64::STPDpost:
   case AArch64::STPDpre:
   case AArch64::STPQpost:
@@ -4027,6 +4532,28 @@ bool AArch64AsmParser::validateInstruction(MCInst &Inst, SMLoc &IDLoc,
                            "is also a source");
     break;
   }
+  case AArch64::ALDRBBpre:
+  case AArch64::ALDRBpre:
+  case AArch64::ALDRHHpre:
+  case AArch64::ALDRHpre:
+  case AArch64::ALDRSBWpre:
+  case AArch64::ALDRSBXpre:
+  case AArch64::ALDRSHWpre:
+  case AArch64::ALDRSHXpre:
+  case AArch64::ALDRSWpre:
+  case AArch64::ALDRWpre:
+  case AArch64::ALDRXpre:
+  case AArch64::ALDRBBpost:
+  case AArch64::ALDRBpost:
+  case AArch64::ALDRHHpost:
+  case AArch64::ALDRHpost:
+  case AArch64::ALDRSBWpost:
+  case AArch64::ALDRSBXpost:
+  case AArch64::ALDRSHWpost:
+  case AArch64::ALDRSHXpost:
+  case AArch64::ALDRSWpost:
+  case AArch64::ALDRWpost:
+  case AArch64::ALDRXpost:
   case AArch64::LDRBBpre:
   case AArch64::LDRBpre:
   case AArch64::LDRHHpre:
@@ -4056,6 +4583,18 @@ bool AArch64AsmParser::validateInstruction(MCInst &Inst, SMLoc &IDLoc,
                            "is also a source");
     break;
   }
+  case AArch64::ASTRBBpost:
+  case AArch64::ASTRBpost:
+  case AArch64::ASTRHHpost:
+  case AArch64::ASTRHpost:
+  case AArch64::ASTRWpost:
+  case AArch64::ASTRXpost:
+  case AArch64::ASTRBBpre:
+  case AArch64::ASTRBpre:
+  case AArch64::ASTRHHpre:
+  case AArch64::ASTRHpre:
+  case AArch64::ASTRWpre:
+  case AArch64::ASTRXpre:
   case AArch64::STRBBpost:
   case AArch64::STRBpost:
   case AArch64::STRHHpost:
@@ -4223,6 +4762,10 @@ bool AArch64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode,
                  "expected compatible register or floating-point constant");
   case Match_InvalidMemoryIndexedSImm6:
     return Error(Loc, "index must be an integer in range [-32, 31].");
+  case Match_InvalidMemoryIndexed16SImm6:
+    return Error(Loc, "index must be a multiple of 16 in range [-32*16, 31*16].");
+  case Match_InvalidMemoryIndexed1SImm8:
+    return Error(Loc, "index must be an integer in range [-128, 127].");
   case Match_InvalidMemoryIndexedSImm5:
     return Error(Loc, "index must be an integer in range [-16, 15].");
   case Match_InvalidMemoryIndexed1SImm4:
@@ -4297,6 +4840,17 @@ bool AArch64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode,
   case Match_InvalidMemoryXExtend128:
     return Error(Loc,
                  "expected 'lsl' or 'sxtx' with optional shift of #0 or #4");
+  case Match_InvalidScbndsImm:
+    return Error(Loc, "immediate must be an integer in range [0, 63] "
+                      "with optional shift of #0 or #4 or a multiple of 16 in "
+                      "range [0, 1008]");
+  case Match_InvalidCArithWExtend0:
+  case Match_InvalidCArithXExtend0:
+  case Match_InvalidCArithWExtend16:
+  case Match_InvalidCArithXExtend16:
+    return Error(
+        Loc,
+        "expected 'lsl' or 'sxtx' or 'uxtx' with optional shift of #0 or #4");
   case Match_InvalidMemoryIndexed1:
     return Error(Loc, "index must be an integer in range [0, 4095].");
   case Match_InvalidMemoryIndexed2:
@@ -4371,6 +4925,8 @@ bool AArch64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode,
     return Error(Loc, "vector lane must be an integer in range [0, 3].");
   case Match_InvalidLabel:
     return Error(Loc, "expected label or encodable integer pc offset");
+  case Match_InvalidDataLabel:
+    return Error(Loc, "expected encodable integer data offset");
   case Match_MRS:
     return Error(Loc, "expected readable system register");
   case Match_MSR:
@@ -4706,6 +5262,110 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
       }
     }
   }
+  // Yet another horrible hack. The parser can not do look-ahead to
+  // disambiguate some instructions when parsing the operands.
+  // To solve the issue, we do not use a custom operand parser 'tryParse...'
+  // and rely instead on the generic operand parsing. This hack is massaging
+  // the operands (building register pairs and checking the constraints if any)
+  // depending on the instruction and all its operands.
+  bool HasC64 = STI->getFeatureBits()[AArch64::FeatureC64] != 0;
+  if (NumOperands == 8 && (Tok == "casp" || Tok == "caspa" ||
+                           Tok == "caspl" || Tok == "caspal")) {
+    AArch64Operand &Addr = static_cast<AArch64Operand &>(*Operands[6]);
+    if (!Addr.isReg())
+        return Error(Addr.getStartLoc(), "invalid operand for instruction");
+    int AddrReg = Addr.getReg();
+
+    bool UseMorelloInstr =
+       AArch64MCRegisterClasses[AArch64::CapspRegClassID].contains(AddrReg) &&
+       HasC64;
+    bool UseC64Instr =
+       AArch64MCRegisterClasses[AArch64::GPR64spRegClassID].contains(AddrReg)&&
+       !HasC64;
+
+    if (UseMorelloInstr || UseC64Instr) {
+      AArch64Operand &First = static_cast<AArch64Operand &>(*Operands[1]);
+      AArch64Operand &Second = static_cast<AArch64Operand &>(*Operands[2]);
+      AArch64Operand &Third = static_cast<AArch64Operand &>(*Operands[3]);
+      AArch64Operand &Fourth = static_cast<AArch64Operand &>(*Operands[4]);
+
+      if (!First.isReg())
+        return Error(First.getStartLoc(), "invalid operand for instruction");
+      if (!Second.isReg())
+        return Error(Second.getStartLoc(), "invalid operand for instruction");
+      if (!Third.isReg())
+        return Error(Third.getStartLoc(), "invalid operand for instruction");
+      if (!Fourth.isReg())
+        return Error(Fourth.getStartLoc(), "invalid operand for instruction");
+
+      int FirstReg = First.getReg();
+      int SecondReg = Second.getReg();
+      int ThirdReg = Third.getReg();
+      int FourthReg = Fourth.getReg();
+
+      bool AreWPairs =
+          isRegPair<AArch64::GPR32RegClassID>(FirstReg, SecondReg) &&
+          isRegPair<AArch64::GPR32RegClassID>(ThirdReg, FourthReg);
+      bool AreXPairs =
+          isRegPair<AArch64::GPR64RegClassID>(FirstReg, SecondReg) &&
+          isRegPair<AArch64::GPR64RegClassID>(ThirdReg, FourthReg);
+
+      // Provide a detailed diagnostic
+      if (!AreWPairs && !AreXPairs) {
+        // Check the first pair.
+        if (!isRegPair<AArch64::GPR32RegClassID>(FirstReg, SecondReg) &&
+            !isRegPair<AArch64::GPR64RegClassID>(FirstReg, SecondReg))
+          return reportNotSameSizeRegPair(Second.getStartLoc());
+        // Check the second pair.
+        if (!isRegPair<AArch64::GPR32RegClassID>(ThirdReg, FourthReg) &&
+            !isRegPair<AArch64::GPR64RegClassID>(ThirdReg, FourthReg))
+          return reportNotSameSizeRegPair(Fourth.getStartLoc());
+        // Then the pairs do not use same register size.
+        return Error(Third.getStartLoc(),
+                     "expected second register pair to be of "
+                     "the same size as the first register pair");
+      }
+
+      // Check the constraint that the first GPR in a pair has to be even
+      if (AreXPairs || AreWPairs) {
+        if (hasInvalidEvenRegisterEncoding(FirstReg, First.getStartLoc()))
+          return true;
+        if (hasInvalidEvenRegisterEncoding(ThirdReg, Third.getStartLoc()))
+          return true;
+      }
+
+      // Check the constraint that the second register in the pair has to be
+      // a successor of the first
+      if (hasInvalidSuccessorEncoding(FirstReg, SecondReg, Second.getStartLoc()))
+        return true;
+      if (hasInvalidSuccessorEncoding(ThirdReg, FourthReg, Fourth.getStartLoc()))
+        return true;
+
+      // Now build the pairs of the right type
+      unsigned FirstPair, SecondPair;
+      if (AreXPairs) {
+        FirstPair = buildSeqPair<AArch64::XSeqPairsAllClassRegClassID>(FirstReg);
+        SecondPair = buildSeqPair<AArch64::XSeqPairsAllClassRegClassID>(ThirdReg);
+      } else if (AreWPairs) {
+        FirstPair = buildSeqPair<AArch64::WSeqPairsAllClassRegClassID>(FirstReg);
+        SecondPair = buildSeqPair<AArch64::WSeqPairsAllClassRegClassID>(ThirdReg);
+      } else
+        llvm_unreachable("Missing a case.");
+
+      // And modify the operand list to now use the explicit pairs
+      Operands[1] =
+          AArch64Operand::CreateReg(FirstPair, RegKind::Scalar, First.getStartLoc(),
+                                    Second.getEndLoc(), getContext());
+      Operands[2] =
+          AArch64Operand::CreateReg(SecondPair, RegKind::Scalar, Third.getStartLoc(),
+                                    Fourth.getEndLoc(), getContext());
+      Operands[3] = std::move(Operands[5]);
+      Operands[4] = std::move(Operands[6]);
+      Operands[5] = std::move(Operands[7]);
+      Operands.pop_back();
+      Operands.pop_back();
+    }
+  }
 
   // The Cyclone CPU and early successors didn't execute the zero-cycle zeroing
   // instruction for FP registers correctly in some rare circumstances. Convert
@@ -4897,6 +5557,13 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidMemoryIndexed4SImm7:
   case Match_InvalidMemoryIndexed8SImm7:
   case Match_InvalidMemoryIndexed16SImm7:
+  case Match_InvalidMemoryIndexed16SImm6:
+  case Match_InvalidMemoryIndexed1SImm8:
+  case Match_InvalidScbndsImm:
+  case Match_InvalidCArithWExtend16:
+  case Match_InvalidCArithXExtend16:
+  case Match_InvalidCArithWExtend0:
+  case Match_InvalidCArithXExtend0:
   case Match_InvalidMemoryIndexed8UImm5:
   case Match_InvalidMemoryIndexed4UImm5:
   case Match_InvalidMemoryIndexed2UImm5:
@@ -4942,6 +5609,7 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidSVEIndexRange0_7:
   case Match_InvalidSVEIndexRange0_3:
   case Match_InvalidLabel:
+  case Match_InvalidDataLabel:
   case Match_InvalidComplexRotationEven:
   case Match_InvalidComplexRotationOdd:
   case Match_InvalidGPR64shifted8:
@@ -5013,6 +5681,8 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
       ErrorLoc = IDLoc;
     return showMatchError(ErrorLoc, MatchResult, ErrorInfo, Operands);
   }
+  default:
+    llvm::errs() << "Should not have been there !\n";
   }
 
   llvm_unreachable("Implement any new match types added!");
@@ -5036,6 +5706,8 @@ bool AArch64AsmParser::ParseDirective(AsmToken DirectiveID) {
     parseDirectiveLtorg(Loc);
   else if (IDVal == ".unreq")
     parseDirectiveUnreq(Loc);
+  else if (IDVal == ".capinit")
+    parseDirectiveCapInit(Loc);
   else if (IDVal == ".inst")
     parseDirectiveInst(Loc);
   else if (IDVal == ".cfi_negate_ra_state")
@@ -5052,6 +5724,10 @@ bool AArch64AsmParser::ParseDirective(AsmToken DirectiveID) {
   } else
     return true;
   return false;
+}
+
+static SMLoc incrementLoc(SMLoc L, int Offset) {
+  return SMLoc::getFromPointer(L.getPointer() + Offset);
 }
 
 static void ExpandCryptoAEK(AArch64::ArchKind ArchKind,
@@ -5130,21 +5806,50 @@ bool AArch64AsmParser::parseDirectiveArch(SMLoc L) {
   std::vector<std::string> ArchFeatures(AArch64Features.begin(), AArch64Features.end());
   STI.setDefaultFeatures("generic", join(ArchFeatures.begin(), ArchFeatures.end(), ","));
 
+  return parseFeatures(ExtensionString, STI, ID, ArchLoc);
+}
+
+bool AArch64AsmParser::parseFeatures(StringRef ExtensionString,
+                                     MCSubtargetInfo &STI,
+                                     AArch64::ArchKind ID,
+                                     SMLoc &CurLoc) {
+
+  setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
+
   SmallVector<StringRef, 4> RequestedExtensions;
   if (!ExtensionString.empty())
     ExtensionString.split(RequestedExtensions, '+');
 
+  bool HasA64C = false, HasC64 = false, EnableA64C = false, EnableC64 = false;
   ExpandCryptoAEK(ID, RequestedExtensions);
 
-  FeatureBitset Features = STI.getFeatureBits();
-  for (auto Name : RequestedExtensions) {
+  for (auto &Name : RequestedExtensions) {
+    FeatureBitset Features = STI.getFeatureBits();
     bool EnableFeature = true;
+
+    // Advance source location past '+'.
+    CurLoc = incrementLoc(CurLoc, 1);
 
     if (Name.startswith_lower("no")) {
       EnableFeature = false;
       Name = Name.substr(2);
     }
 
+    if (Name == "a64c") {
+      HasA64C = true;
+      EnableA64C = EnableFeature;
+      if (!EnableFeature && EnableC64)
+        continue;
+    }
+    if (Name == "c64") {
+      HasC64 = true;
+      EnableC64 = EnableFeature;
+      if (!EnableFeature && EnableA64C)
+        continue;
+    }
+
+
+    bool FoundExtension = false;
     for (const auto &Extension : ExtensionMap) {
       if (Extension.Name != Name)
         continue;
@@ -5154,13 +5859,38 @@ bool AArch64AsmParser::parseDirectiveArch(SMLoc L) {
 
       FeatureBitset ToggleFeatures = EnableFeature
                                          ? (~Features & Extension.Features)
-                                         : ( Features & Extension.Features);
+                                         : (Features & Extension.DisableFeatures);
       FeatureBitset Features =
           ComputeAvailableFeatures(STI.ToggleFeature(ToggleFeatures));
       setAvailableFeatures(Features);
+      FoundExtension = true;
       break;
     }
+    if (!FoundExtension)
+      Error(CurLoc, "unsupported architectural extension");
+    CurLoc = incrementLoc(CurLoc, Name.size());
   }
+
+  if (HasA64C && HasC64 && EnableA64C && EnableC64)
+    report_fatal_error("Cannot enable both A64C and C64");
+  return false;
+}
+
+/// parseDirectiveCapInit
+///   ::= .capinit Expr
+bool AArch64AsmParser::parseDirectiveCapInit(SMLoc L) {
+  SMLoc CapInitLoc = getLoc();
+  bool HasCap = STI->getFeatureBits()[AArch64::FeatureMorello] != 0;
+  if (!HasCap)
+    return Error(CapInitLoc, ".capinit directive requires the morello target feature");
+
+  const MCExpr *ExprVal;
+  if (getParser().parseExpression(ExprVal))
+    return Error(CapInitLoc, ".capinit directive expects symbol or symbol+offset");
+
+  ExprVal = AArch64MCExpr::create(ExprVal, AArch64MCExpr::VK_CAPINIT, getContext());
+
+  getParser().getStreamer().EmitCapInit(ExprVal);
   return false;
 }
 
@@ -5202,10 +5932,6 @@ bool AArch64AsmParser::parseDirectiveArchExtension(SMLoc L) {
   return Error(ExtLoc, "unknown architectural extension: " + Name);
 }
 
-static SMLoc incrementLoc(SMLoc L, int Offset) {
-  return SMLoc::getFromPointer(L.getPointer() + Offset);
-}
-
 /// parseDirectiveCPU
 ///   ::= .cpu id
 bool AArch64AsmParser::parseDirectiveCPU(SMLoc L) {
@@ -5218,10 +5944,6 @@ bool AArch64AsmParser::parseDirectiveCPU(SMLoc L) {
   if (parseToken(AsmToken::EndOfStatement))
     return true;
 
-  SmallVector<StringRef, 4> RequestedExtensions;
-  if (!ExtensionString.empty())
-    ExtensionString.split(RequestedExtensions, '+');
-
   // FIXME This is using tablegen data, but should be moved to ARMTargetParser
   // once that is tablegen'ed
   if (!getSTI().isCPUStringValid(CPU)) {
@@ -5233,45 +5955,8 @@ bool AArch64AsmParser::parseDirectiveCPU(SMLoc L) {
   STI.setDefaultFeatures(CPU, "");
   CurLoc = incrementLoc(CurLoc, CPU.size());
 
-  ExpandCryptoAEK(llvm::AArch64::getCPUArchKind(CPU), RequestedExtensions);
-
-  FeatureBitset Features = STI.getFeatureBits();
-  for (auto Name : RequestedExtensions) {
-    // Advance source location past '+'.
-    CurLoc = incrementLoc(CurLoc, 1);
-
-    bool EnableFeature = true;
-
-    if (Name.startswith_lower("no")) {
-      EnableFeature = false;
-      Name = Name.substr(2);
-    }
-
-    bool FoundExtension = false;
-    for (const auto &Extension : ExtensionMap) {
-      if (Extension.Name != Name)
-        continue;
-
-      if (Extension.Features.none())
-        report_fatal_error("unsupported architectural extension: " + Name);
-
-      FeatureBitset ToggleFeatures = EnableFeature
-                                         ? (~Features & Extension.Features)
-                                         : ( Features & Extension.Features);
-      FeatureBitset Features =
-          ComputeAvailableFeatures(STI.ToggleFeature(ToggleFeatures));
-      setAvailableFeatures(Features);
-      FoundExtension = true;
-
-      break;
-    }
-
-    if (!FoundExtension)
-      Error(CurLoc, "unsupported architectural extension");
-
-    CurLoc = incrementLoc(CurLoc, Name.size());
-  }
-  return false;
+  return parseFeatures(ExtensionString, STI,
+                       llvm::AArch64::getCPUArchKind(CPU), CurLoc);
 }
 
 /// parseDirectiveInst
@@ -5288,7 +5973,7 @@ bool AArch64AsmParser::parseDirectiveInst(SMLoc Loc) {
     const MCConstantExpr *Value = dyn_cast_or_null<MCConstantExpr>(Expr);
     if (check(!Value, L, "expected constant expression"))
       return true;
-    getTargetStreamer().emitInst(Value->getValue());
+    getTargetStreamer().emitInst(Value->getValue(), getSTI());
     return false;
   };
 

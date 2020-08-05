@@ -299,7 +299,8 @@ ENUM_LANGOPT(CheriCapConversion, CheriCapConversionMode, 1, CapConv_Err,
              "error on conversions between pointers and capabilities")
 // See test/CodeGen/CHERI/bitwise-and-in-conditional.c for the motivating use case (deadlocks in mutex code)
 LANGOPT(CheriDataDependentProvenance, 1, 0, "Derive pointer provenance for bitwise-and operations depending on value of the RHS")
-
+ENUM_LANGOPT(CheriMemopsInlineBehaviour, CheriMemopsInlineBehaviourMode, 1, CheriMemopsInlineBehaviour_Legacy,
+             "Specify when the compiler is allowed to inline memcpy/memmove calls")
 
 BENIGN_LANGOPT(ArrowDepth, 32, 256,
                "maximum number of operator->s to follow")

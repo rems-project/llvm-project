@@ -21,12 +21,12 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:fpr64 = COPY $d1
     ; CHECK: [[USHLv2i32_:%[0-9]+]]:fpr64 = USHLv2i32 [[COPY]], [[COPY1]]
     ; CHECK: $d0 = COPY [[USHLv2i32_]]
-    ; CHECK: RET_ReallyLR implicit $d0
+    ; CHECK: RET_ReallyLR 0, implicit $d0
     %0:fpr(<2 x s32>) = COPY $d0
     %1:fpr(<2 x s32>) = COPY $d1
     %2:fpr(<2 x s32>) = G_SHL %0, %1(<2 x s32>)
     $d0 = COPY %2(<2 x s32>)
-    RET_ReallyLR implicit $d0
+    RET_ReallyLR 0, implicit $d0
 
 ...
 ---
@@ -54,13 +54,13 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr64 = COPY $d0
     ; CHECK: [[SHLv2i32_shift:%[0-9]+]]:fpr64 = SHLv2i32_shift [[COPY]], 24
     ; CHECK: $d0 = COPY [[SHLv2i32_shift]]
-    ; CHECK: RET_ReallyLR implicit $d0
+    ; CHECK: RET_ReallyLR 0, implicit $d0
     %0:fpr(<2 x s32>) = COPY $d0
     %2:gpr(s32) = G_CONSTANT i32 24
     %1:fpr(<2 x s32>) = G_BUILD_VECTOR %2(s32), %2(s32)
     %3:fpr(<2 x s32>) = G_SHL %0, %1(<2 x s32>)
     $d0 = COPY %3(<2 x s32>)
-    RET_ReallyLR implicit $d0
+    RET_ReallyLR 0, implicit $d0
 
 ...
 ---
@@ -93,13 +93,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:fpr64 = COPY [[INSvi32gpr]].dsub
     ; CHECK: [[USHLv2i32_:%[0-9]+]]:fpr64 = USHLv2i32 [[COPY]], [[COPY1]]
     ; CHECK: $d0 = COPY [[USHLv2i32_]]
-    ; CHECK: RET_ReallyLR implicit $d0
+    ; CHECK: RET_ReallyLR 0, implicit $d0
     %0:fpr(<2 x s32>) = COPY $d0
     %2:gpr(s32) = G_CONSTANT i32 40
     %1:fpr(<2 x s32>) = G_BUILD_VECTOR %2(s32), %2(s32)
     %3:fpr(<2 x s32>) = G_SHL %0, %1(<2 x s32>)
     $d0 = COPY %3(<2 x s32>)
-    RET_ReallyLR implicit $d0
+    RET_ReallyLR 0, implicit $d0
 
 ...
 ---
@@ -123,12 +123,12 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:fpr128 = COPY $q1
     ; CHECK: [[USHLv4i32_:%[0-9]+]]:fpr128 = USHLv4i32 [[COPY]], [[COPY1]]
     ; CHECK: $q0 = COPY [[USHLv4i32_]]
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %0:fpr(<4 x s32>) = COPY $q0
     %1:fpr(<4 x s32>) = COPY $q1
     %2:fpr(<4 x s32>) = G_SHL %0, %1(<4 x s32>)
     $q0 = COPY %2(<4 x s32>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 
 ...
 ---
@@ -156,13 +156,13 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr128 = COPY $q0
     ; CHECK: [[SHLv4i32_shift:%[0-9]+]]:fpr128 = SHLv4i32_shift [[COPY]], 24
     ; CHECK: $q0 = COPY [[SHLv4i32_shift]]
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %0:fpr(<4 x s32>) = COPY $q0
     %2:gpr(s32) = G_CONSTANT i32 24
     %1:fpr(<4 x s32>) = G_BUILD_VECTOR %2(s32), %2(s32), %2(s32), %2(s32)
     %3:fpr(<4 x s32>) = G_SHL %0, %1(<4 x s32>)
     $q0 = COPY %3(<4 x s32>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 
 ...
 ---
@@ -186,12 +186,12 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:fpr128 = COPY $q1
     ; CHECK: [[USHLv2i64_:%[0-9]+]]:fpr128 = USHLv2i64 [[COPY]], [[COPY1]]
     ; CHECK: $q0 = COPY [[USHLv2i64_]]
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %0:fpr(<2 x s64>) = COPY $q0
     %1:fpr(<2 x s64>) = COPY $q1
     %2:fpr(<2 x s64>) = G_SHL %0, %1(<2 x s64>)
     $q0 = COPY %2(<2 x s64>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 
 ...
 ---
@@ -219,13 +219,13 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr128 = COPY $q0
     ; CHECK: [[SHLv2i64_shift:%[0-9]+]]:fpr128 = SHLv2i64_shift [[COPY]], 24
     ; CHECK: $q0 = COPY [[SHLv2i64_shift]]
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %0:fpr(<2 x s64>) = COPY $q0
     %2:gpr(s64) = G_CONSTANT i64 24
     %1:fpr(<2 x s64>) = G_BUILD_VECTOR %2(s64), %2(s64)
     %3:fpr(<2 x s64>) = G_SHL %0, %1(<2 x s64>)
     $q0 = COPY %3(<2 x s64>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 
 ...
 ---
@@ -258,13 +258,13 @@ body:             |
     ; CHECK: [[INSvi64gpr:%[0-9]+]]:fpr128 = INSvi64gpr [[INSERT_SUBREG]], 1, [[SUBREG_TO_REG]]
     ; CHECK: [[USHLv2i64_:%[0-9]+]]:fpr128 = USHLv2i64 [[COPY]], [[INSvi64gpr]]
     ; CHECK: $q0 = COPY [[USHLv2i64_]]
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %0:fpr(<2 x s64>) = COPY $q0
     %2:gpr(s64) = G_CONSTANT i64 70
     %1:fpr(<2 x s64>) = G_BUILD_VECTOR %2(s64), %2(s64)
     %3:fpr(<2 x s64>) = G_SHL %0, %1(<2 x s64>)
     $q0 = COPY %3(<2 x s64>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 
 ...
 ---
@@ -289,12 +289,12 @@ body:             |
     ; CHECK: [[NEGv2i32_:%[0-9]+]]:fpr64 = NEGv2i32 [[COPY1]]
     ; CHECK: [[SSHLv2i32_:%[0-9]+]]:fpr64 = SSHLv2i32 [[COPY]], [[NEGv2i32_]]
     ; CHECK: $d0 = COPY [[SSHLv2i32_]]
-    ; CHECK: RET_ReallyLR implicit $d0
+    ; CHECK: RET_ReallyLR 0, implicit $d0
     %0:fpr(<2 x s32>) = COPY $d0
     %1:fpr(<2 x s32>) = COPY $d1
     %2:fpr(<2 x s32>) = G_ASHR %0, %1(<2 x s32>)
     $d0 = COPY %2(<2 x s32>)
-    RET_ReallyLR implicit $d0
+    RET_ReallyLR 0, implicit $d0
 
 ...
 ---
@@ -319,12 +319,12 @@ body:             |
     ; CHECK: [[NEGv4i32_:%[0-9]+]]:fpr128 = NEGv4i32 [[COPY1]]
     ; CHECK: [[SSHLv4i32_:%[0-9]+]]:fpr128 = SSHLv4i32 [[COPY]], [[NEGv4i32_]]
     ; CHECK: $q0 = COPY [[SSHLv4i32_]]
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %0:fpr(<4 x s32>) = COPY $q0
     %1:fpr(<4 x s32>) = COPY $q1
     %2:fpr(<4 x s32>) = G_ASHR %0, %1(<4 x s32>)
     $q0 = COPY %2(<4 x s32>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 
 ...
 ---
@@ -349,11 +349,11 @@ body:             |
     ; CHECK: [[NEGv2i64_:%[0-9]+]]:fpr128 = NEGv2i64 [[COPY1]]
     ; CHECK: [[SSHLv2i64_:%[0-9]+]]:fpr128 = SSHLv2i64 [[COPY]], [[NEGv2i64_]]
     ; CHECK: $q0 = COPY [[SSHLv2i64_]]
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %0:fpr(<2 x s64>) = COPY $q0
     %1:fpr(<2 x s64>) = COPY $q1
     %2:fpr(<2 x s64>) = G_ASHR %0, %1(<2 x s64>)
     $q0 = COPY %2(<2 x s64>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 
 ...

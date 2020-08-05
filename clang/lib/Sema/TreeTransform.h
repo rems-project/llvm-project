@@ -731,7 +731,8 @@ public:
   ///
   /// By default, performs semantic analysis when building the pointer type.
   /// Subclasses may override this routine to provide different behavior.
-  QualType RebuildPointerType(QualType PointeeType, SourceLocation Sigil);
+  QualType RebuildPointerType(QualType PointeeType, SourceLocation Sigil,
+                              bool IsCapability);
 
   /// Build a new block pointer type given its pointee type.
   ///
@@ -4672,6 +4673,11 @@ QualType TreeTransform<Derived>::TransformPointerType(TypeLocBuilder &TLB,
     return QualType();
 
   QualType Result = TL.getType();
+
+  bool IsCapability = false;
+  if (const PointerType *PT = Result->getAs<PointerType>())
+    IsCapability = PT->isCHERICapability();
+
   if (PointeeType->getAs<ObjCObjectType>()) {
     // A dependent pointer type 'T *' has is being transformed such
     // that an Objective-C class type is being replaced for 'T'. The
@@ -4686,7 +4692,8 @@ QualType TreeTransform<Derived>::TransformPointerType(TypeLocBuilder &TLB,
 
   if (getDerived().AlwaysRebuild() ||
       PointeeType != TL.getPointeeLoc().getType()) {
-    Result = getDerived().RebuildPointerType(PointeeType, TL.getSigilLoc());
+    Result = getDerived().RebuildPointerType(PointeeType, TL.getSigilLoc(),
+                                             IsCapability);
     if (Result.isNull())
       return QualType();
   }
@@ -13119,9 +13126,12 @@ TreeTransform<Derived>::TransformAtomicExpr(AtomicExpr *E) {
 
 template<typename Derived>
 QualType TreeTransform<Derived>::RebuildPointerType(QualType PointeeType,
-                                                    SourceLocation Star) {
+                                                    SourceLocation Star,
+                                                    bool UseCapability) {
   return SemaRef.BuildPointerType(PointeeType, Star,
-                                  getDerived().getBaseEntity(), nullptr);
+                                  getDerived().getBaseEntity(), nullptr,
+                                  UseCapability ? ASTContext::PIK_Capability :
+                                                  ASTContext::PIK_Integer);
 }
 
 template<typename Derived>

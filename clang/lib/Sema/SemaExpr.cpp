@@ -2800,6 +2800,7 @@ Sema::PerformObjectMemberConversion(Expr *From,
   QualType FromRecordType;
   QualType FromType = From->getType();
   bool PointerConversions = false;
+  auto PtrKind = ASTContext::PIK_Default;
   if (isa<FieldDecl>(Member)) {
     DestRecordType = Context.getCanonicalType(Context.getTypeDeclType(RD));
     auto FromPtrType = FromType->getAs<PointerType>();
@@ -2829,6 +2830,9 @@ Sema::PerformObjectMemberConversion(Expr *From,
     if (FromType->getAs<PointerType>()) {
       FromRecordType = FromType->getPointeeType();
       PointerConversions = true;
+      PtrKind = FromType->isCHERICapabilityType(Context) ?
+                    ASTContext::PIK_Capability :
+                    ASTContext::PIK_Integer;
     } else {
       FromRecordType = FromType;
       DestType = DestRecordType;
@@ -15036,6 +15040,10 @@ static void diagnoseBadVariadicFunctionPointerAssignment(Sema &S,
                                                          QualType SrcType,
                                                          QualType DstType,
                                                          Expr* SrcExpr) {
+  if (!S.Context.getTargetInfo().SupportsCapabilities()) {
+    return;
+  }
+
   const FunctionType *DstFnTy =
       DstType->getPointeeType()->getAs<FunctionType>();
 

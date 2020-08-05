@@ -2310,6 +2310,12 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
 
   // See below for the enumeral issue.
   if (SrcType->isNullPtrType() && DestType->isIntegralType(Self.Context)) {
+    if (SrcType->isCHERICapabilityType(Self.Context) &&
+        Self.Context.getTargetInfo().getIntCapRange() <=
+        Self.Context.getTypeSize(DestType)) {
+      Kind = CK_PointerToIntegral;
+      return TC_Success;
+    }
     // C++0x 5.2.10p4: A pointer can be explicitly converted to any integral
     //   type large enough to hold it. A value of std::nullptr_t can be
     //   converted to an integral type; the conversion has the same meaning
@@ -2671,8 +2677,20 @@ void CastOperation::CheckCXXCStyleCast(bool FunctionalStyle,
                                    /*CStyle*/ true, msg);
   if (SrcExpr.isInvalid())
     return;
-  if (isValidCast(tcr))
+  if (isValidCast(tcr)) {
     Kind = CK_NoOp;
+    // This would be a noop, unless one of the pointers is a capability, in
+    // which case a conversion is needed.
+    QualType SrcType = SrcExpr.get()->getType();
+    if (SrcType->isPointerType() && DestType->isPointerType()) {
+      if (!SrcType->isCHERICapabilityType(Self.Context) &&
+          DestType->isCHERICapabilityType(Self.Context))
+        Kind = CK_PointerToCHERICapability;
+      else if (SrcType->isCHERICapabilityType(Self.Context) &&
+               !DestType->isCHERICapabilityType(Self.Context))
+        Kind = CK_CHERICapabilityToPointer;
+    }
+  }
 
   Sema::CheckedConversionKind CCK =
       FunctionalStyle ? Sema::CCK_FunctionalCast : Sema::CCK_CStyleCast;
@@ -3156,10 +3174,10 @@ ExprResult Sema::BuildCheriToOrFromCap(SourceLocation LParenLoc, bool IsToCap,
   // Do all the default cast checks (including array-to-pointer decay, etc.)
   Op.CheckCheriCast();
   // Update the SubExpr pointer after potential conversions
-  const Expr *const SubExpr = Op.SrcExpr.get();
+  Expr *SubExpr = Op.SrcExpr.get();
   const QualType DestTy = Op.DestType;
   // Use getRealReferenceType() because getType() only returns T for T&
-  const QualType SrcTy = SubExpr->getRealReferenceType(Context, false);
+  QualType SrcTy = SubExpr->getRealReferenceType(Context, false);
   if (SrcTy->isDependentType() || DestTy->isDependentType()) {
     // Don't perform any checking for dependent types:
     if (Op.SrcExpr.isInvalid())
@@ -3174,8 +3192,19 @@ ExprResult Sema::BuildCheriToOrFromCap(SourceLocation LParenLoc, bool IsToCap,
     return Op.complete(CE);
   }
 
-  // We don't included __uintcap_t here since it should be be allowed to use
-  // a __cheri_{to,from}cap on __uintcap_t
+  // If the source is an intcap_t insert an implicit cast to void * __capability.
+  if (auto *BType = SrcTy->getAs<BuiltinType>()) {
+    auto Kind = BType->getKind();
+    if ((Kind == BuiltinType::IntCap || Kind == BuiltinType::UIntCap)) {
+      QualType VoidPtrTy = Context.getPointerType(
+          Context.VoidTy,
+          ASTContext::PIK_Capability);
+      SubExpr = ImplicitCastExpr::Create(Context, VoidPtrTy, CK_BitCast,
+                                         SubExpr, nullptr, VK_RValue);
+      SrcTy = VoidPtrTy;
+    }
+  }
+
   const bool SrcIsCap = SrcTy->isCHERICapabilityType(Context, false);
   const bool DestIsCap = DestTy->isCHERICapabilityType(Context, false);
   Op.Kind = CK_NoOp;

@@ -2,7 +2,7 @@
 
 // RUN: %cheri_purecap_cc1 -emit-llvm -std=c++11 -DINVALID_ATOMIC_CALL -fsyntax-only -verify %s
 // RUN: %cheri_purecap_cc1 -emit-llvm -std=c++11 -o - %s | %cheri_FileCheck %s
-// RUN: %cheri_purecap_cc1 -O2 -mllvm -cheri-cap-table-abi=pcrel -std=c++11 -S -o - %s | %cheri_FileCheck -check-prefix=ASM -enable-var-scope %s
+// RXUN: %cheri_purecap_cc1 -O2 -mllvm -cheri-cap-table-abi=pcrel -std=c++11 -S -o - %s | %cheri_FileCheck -check-prefix=ASM -enable-var-scope %s
 // RUN: %cheri_purecap_cc1 -std=c++11 -ast-dump %s | %cheri_FileCheck -check-prefix=AST %s
 // reduced testcase for libcxx exception_fallback.ipp/new_handler_fallback.ipp
 

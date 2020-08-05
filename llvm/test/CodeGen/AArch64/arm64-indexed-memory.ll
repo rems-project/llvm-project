@@ -512,3 +512,25 @@ define i64* @postidx_clobber(i64* %addr) nounwind noinline ssp {
  %newaddr = getelementptr i64, i64* %addr, i32 1
  ret i64* %newaddr
 }
+
+define double* @predecidxf64(double* %src, double* %out) {
+; CHECK-LABEL: predecidxf64:
+; CHECK: ldr     d0, [x0, #-8]!
+; CHECK: str     d0, [x1]
+; CHECK: ret
+  %ptr = getelementptr inbounds double, double* %src, i32 -1
+  %tmp = load double, double* %ptr, align 4
+  store double %tmp, double* %out, align 4
+  ret double* %ptr
+}
+
+define i64* @postdecidxi64(i64* %src, i64* %out) {
+; CHECK-LABEL: postdecidxi64:
+; CHECK: ldr     x{{[0-9]+}}, [x0], #-8
+; CHECK: str     x{{[0-9]+}}, [x1]
+; CHECK: ret
+  %ptr = getelementptr inbounds i64, i64* %src, i32 -1
+  %tmp = load i64, i64* %src, align 4
+  store i64 %tmp, i64* %out, align 4
+  ret i64* %ptr
+}

@@ -1,4 +1,5 @@
 // RUN: %cheri_purecap_cc1 -std=c++14 -emit-llvm -o - %s 2>&1 | FileCheck %s
+// RUN: %clang_cc1 -triple aarch64-none-elf -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel -std=c++14 -emit-llvm -o - %s 2>&1 | FileCheck %s
 
 
 struct __two {char __lx[2];};

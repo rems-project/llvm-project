@@ -380,9 +380,10 @@ struct SDTypeConstraint {
 
   unsigned OperandNo;   // The operand # this constraint applies to.
   enum {
-    SDTCisVT, SDTCisPtrTy, SDTCisInt, SDTCisFP, SDTCisVec, SDTCisSameAs,
-    SDTCisVTSmallerThanOp, SDTCisOpSmallerThanOp, SDTCisEltOfVec,
-    SDTCisSubVecOfVec, SDTCVecEltisVT, SDTCisSameNumEltsAs, SDTCisSameSizeAs
+    SDTCisVT, SDTCisPtrTy, SDTCisFatPtrTy, SDTCisAnyPtrTy, SDTCisInt, SDTCisFP,
+    SDTCisVec, SDTCisSameAs, SDTCisVTSmallerThanOp, SDTCisOpSmallerThanOp,
+    SDTCisEltOfVec, SDTCisSubVecOfVec, SDTCVecEltisVT, SDTCisSameNumEltsAs,
+    SDTCisSameSizeAs
   } ConstraintType;
 
   union {   // The discriminated union.
@@ -548,6 +549,10 @@ public:
   bool isStore() const;
   // Is the desired predefined predicate for an atomic?
   bool isAtomic() const;
+
+  // Is the desired predefined predicate a load/store accessing memory through
+  // a capability?
+  bool isCapability() const;
 
   /// Is this predicate the predefined unindexed load predicate?
   /// Is this predicate the predefined unindexed store predicate?

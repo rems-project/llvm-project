@@ -12,7 +12,7 @@ body: |
 
     STGOffset $x0, $x0, 0
     $x0 = ADDXri $x0, 112, 0
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 
 # CHECK-LABEL: name: test_STG_post_same_reg
@@ -24,7 +24,7 @@ body: |
 
     STGOffset $x1, $x0, 0
     $x0 = ADDXri $x0, 112, 0
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 
 # CHECK-LABEL: name: test_STG_post_unaligned
@@ -37,7 +37,7 @@ body: |
 
     STGOffset $x0, $x0, 0
     $x0 = ADDXri $x0, 8, 0
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 
 # CHECK-LABEL: name: test_STG_post2
@@ -49,7 +49,7 @@ body: |
 
     STGOffset $x0, $x0, 0
     $x0 = SUBXri $x0, 4096, 0
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 
 # CHECK-LABEL: name: test_STG_post3
@@ -62,7 +62,7 @@ body: |
 
     STGOffset $x0, $x0, 0
     $x0 = SUBXri $x0, 4112, 0
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 
 # CHECK-LABEL: name: test_STG_post4
@@ -74,7 +74,7 @@ body: |
 
     STGOffset $x0, $x0, 0
     $x0 = ADDXri $x0, 4080, 0
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 
 # CHECK-LABEL: name: test_STG_post5
@@ -87,7 +87,7 @@ body: |
 
     STGOffset $x0, $x0, 0
     $x0 = ADDXri $x0, 4096, 0
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 
 ### The rest of ST*G variants.
@@ -101,7 +101,7 @@ body: |
 
     STZGOffset $x0, $x0, 0
     $x0 = ADDXri $x0, 112, 0
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 
 # CHECK-LABEL: name: test_ST2G_post
@@ -113,7 +113,7 @@ body: |
 
     ST2GOffset $x0, $x0, 0
     $x0 = ADDXri $x0, 112, 0
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 
 # CHECK-LABEL: name: test_STZ2G_post
@@ -125,7 +125,7 @@ body: |
 
     STZ2GOffset $x0, $x0, 0
     $x0 = ADDXri $x0, 112, 0
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 
 ### STGP and its offset limits
@@ -139,7 +139,7 @@ body: |
 
     STGPi $x1, $x2, $x0, 0
     $x0 = ADDXri $x0, 112, 0
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 
 # CHECK-LABEL: name: test_STGP_post2
@@ -151,7 +151,7 @@ body: |
 
     STGPi $x1, $x2, $x0, 0
     $x0 = SUBXri $x0, 1024, 0
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 
 # CHECK-LABEL: name: test_STGP_post3
@@ -164,7 +164,7 @@ body: |
 
     STGPi $x1, $x2, $x0, 0
     $x0 = SUBXri $x0, 1040, 0
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 
 # CHECK-LABEL: name: test_STGP_post4
@@ -176,7 +176,7 @@ body: |
 
     STGPi $x1, $x2, $x0, 0
     $x0 = ADDXri $x0, 1008, 0
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 
 # CHECK-LABEL: name: test_STGP_post5
@@ -189,7 +189,7 @@ body: |
 
     STGPi $x1, $x2, $x0, 0
     $x0 = ADDXri $x0, 1024, 0
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 
 ### Pre-indexed forms
@@ -203,7 +203,7 @@ body: |
 
     STGOffset $x0, $x0, 10
     $x0 = ADDXri $x0, 160, 0
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 
 # CHECK-LABEL: name: test_STGP_pre
@@ -215,7 +215,7 @@ body: |
 
     STGPi $x1, $x2, $x0, 10
     $x0 = ADDXri $x0, 160, 0
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 
 ### Pre-indexed forms with add/sub coming before the store.
@@ -229,7 +229,7 @@ body: |
 
     $x0 = ADDXri $x0, 32, 0
     STGOffset $x0, $x0, 0
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 
 # CHECK-LABEL: name: test_STGP_pre_back
@@ -241,7 +241,7 @@ body: |
 
     $x0 = SUBXri $x0, 48, 0
     STGPi $x1, $x2, $x0, 0
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 
 ### STGP with source register == address register
@@ -255,7 +255,7 @@ body: |
 
     STGPi $x0, $x0, $x0, 0
     $x0 = ADDXri $x0, 112, 0
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 
 # CHECK-LABEL: name: test_STGP_pre_same_reg
@@ -267,7 +267,7 @@ body: |
 
     STGPi $x0, $x0, $x0, 7
     $x0 = ADDXri $x0, 112, 0
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 
 # This case can not be merged because the source register is always read before writeback.
@@ -281,5 +281,5 @@ body: |
 
     $x0 = SUBXri $x0, 48, 0
     STGPi $x0, $x0, $x0, 0
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...

@@ -123,6 +123,20 @@ namespace llvm {
   }
 }
 
+namespace llvm {
+  namespace AArch64CSysReg {
+#define GET_CSYSREG_IMPL
+#include "AArch64GenSystemOperands.inc"
+  }
+}
+
+namespace llvm {
+  namespace AArch64MorelloCSysReg {
+#define GET_MORELLOCSYSREG_IMPL
+#include "AArch64GenSystemOperands.inc"
+  }
+}
+
 uint32_t AArch64SysReg::parseGenericRegister(StringRef Name) {
   // Try to parse an S<op0>_<op1>_<Cn>_<Cm>_<op2> register name
   static const Regex GenericRegPattern("^S([0-3])_([0-7])_C([0-9]|1[0-5])_C([0-9]|1[0-5])_([0-7])$");

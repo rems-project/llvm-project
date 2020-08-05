@@ -36,6 +36,19 @@ public:
 
   NativeProcessProtocol &GetProcess() { return m_process; }
 
+  /// Obtain a siginfo data in a target's format that describe the
+  /// last signal received by the thread.
+  ///
+  /// @param[out] data_sp
+  ///     A shared pointer to the resulting siginfo data which can
+  ///     contain nullptr if the value could not be obtained.
+  ///
+  /// @return
+  ///     A status object that indicates success or the reason for
+  ///     failure.
+  //------------------------------------------------------------------
+  virtual Status GetSigInfoTargetData(lldb::DataBufferSP &data_sp);
+
   // Thread-specific watchpoints
   virtual Status SetWatchpoint(lldb::addr_t addr, size_t size,
                                uint32_t watch_flags, bool hardware) = 0;

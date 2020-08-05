@@ -38,6 +38,7 @@
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/AST/DeclTemplate.h"
 
 #include <map>
@@ -239,7 +240,8 @@ TypeSP DWARFASTParserClang::ParseTypeFromClangModule(const SymbolContext &sc,
   TypeSP type_sp(new Type(
       die.GetID(), dwarf, pcm_type_sp->GetName(), pcm_type_sp->GetByteSize(),
       nullptr, LLDB_INVALID_UID, Type::eEncodingInvalid,
-      &pcm_type_sp->GetDeclaration(), type, Type::ResolveState::Forward));
+      &pcm_type_sp->GetDeclaration(), type, Type::ResolveState::Forward,
+      pcm_type_sp->GetAddressSpace()));
 
   dwarf->GetTypeList().Insert(type_sp);
   dwarf->GetDIEToType()[die.GetDIE()] = type_sp.get();
@@ -282,7 +284,8 @@ static void CompleteExternalTagDeclType(ClangASTContext &ast,
   }
 }
 
-ParsedDWARFTypeAttributes::ParsedDWARFTypeAttributes(const DWARFDIE &die) {
+ParsedDWARFTypeAttributes::ParsedDWARFTypeAttributes(const DWARFDIE &die,
+    lldb_private::ClangASTContext &m_ast ) {
   DWARFAttributes attributes;
   size_t num_attributes = die.GetAttributes(attributes);
   for (size_t i = 0; i < num_attributes; ++i) {
@@ -314,6 +317,19 @@ ParsedDWARFTypeAttributes::ParsedDWARFTypeAttributes(const DWARFDIE &die) {
     case DW_AT_byte_stride:
       byte_stride = form_value.Unsigned();
       break;
+
+    case DW_AT_address_class: {
+      uint64_t address_class = form_value.Unsigned();
+      // Recognize the capability address class on AArch64.
+      clang::TargetInfo *target_info = m_ast.getTargetInfo();
+      if (target_info && (target_info->getTriple().getArch() ==
+                              llvm::Triple::aarch64 ||
+                          target_info->getTriple().getArch() ==
+                              llvm::Triple::aarch64_be) &&
+          address_class == 1)
+        address_space = eAddressSpaceCapability;
+      break;
+    }
 
     case DW_AT_calling_convention:
       calling_convention = form_value.Unsigned();
@@ -449,7 +465,7 @@ TypeSP DWARFASTParserClang::ParseTypeFromDWARF(const SymbolContext &sc,
   // Set a bit that lets us know that we are currently parsing this
   dwarf->GetDIEToType()[die.GetDIE()] = DIE_IS_BEING_PARSED;
 
-  ParsedDWARFTypeAttributes attrs(die);
+  ParsedDWARFTypeAttributes attrs(die, m_ast);
 
   if (DWARFDIE signature_die = attrs.signature.Reference()) {
     if (TypeSP type_sp =
@@ -538,6 +554,8 @@ DWARFASTParserClang::ParseTypeModifier(const SymbolContext &sc,
   Type::EncodingDataType encoding_data_type = Type::eEncodingIsUID;
   TypeSP type_sp;
   CompilerType clang_type;
+
+  AddressSpace address_space = attrs.address_space;
 
   if (tag == DW_TAG_typedef && attrs.type.IsValid()) {
     // Try to parse a typedef from the (DWARF embedded in the) Clang
@@ -735,7 +753,7 @@ DWARFASTParserClang::ParseTypeModifier(const SymbolContext &sc,
   type_sp = std::make_shared<Type>(
       die.GetID(), dwarf, attrs.name, attrs.byte_size, nullptr,
       dwarf->GetUID(attrs.type.Reference()), encoding_data_type, &attrs.decl,
-      clang_type, resolve_state);
+      clang_type, resolve_state, address_space);
 
   dwarf->GetDIEToType()[die.GetDIE()] = type_sp.get();
   return type_sp;

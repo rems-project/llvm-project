@@ -27,7 +27,9 @@ class SDTCisVT<int OpNum, ValueType vt> : SDTypeConstraint<OpNum> {
   ValueType VT = vt;
 }
 
+class SDTCisAnyPtrTy<int OpNum> : SDTypeConstraint<OpNum>;
 class SDTCisPtrTy<int OpNum> : SDTypeConstraint<OpNum>;
+class SDTCisFatPtrTy<int OpNum> : SDTypeConstraint<OpNum>;
 
 // SDTCisInt - The specified operand has integer type.
 class SDTCisInt<int OpNum> : SDTypeConstraint<OpNum>;
@@ -109,7 +111,13 @@ def SDTOther  : SDTypeProfile<1, 0, [SDTCisVT<0, OtherVT>]>; // for 'vt'.
 def SDTUNDEF  : SDTypeProfile<1, 0, []>;                     // for 'undef'.
 def SDTUnaryOp  : SDTypeProfile<1, 1, []>;                   // for bitconvert.
 
-def SDTFatPtrAddOp : SDTypeProfile<1, 2, []>;
+def SDTFatPtrAddOp : SDTypeProfile<1, 2, [
+  SDTCisSameAs<0, 1>, SDTCisFatPtrTy<1>
+]>;
+
+def SDTFatPtrToInt : SDTypeProfile<1, 1, [
+  SDTCisInt<0>, SDTCisFatPtrTy<1>
+]>;
 
 def SDTIntBinOp : SDTypeProfile<1, 2, [     // add, and, or, xor, udiv, etc.
   SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisInt<0>
@@ -208,6 +216,10 @@ def SDTBrind : SDTypeProfile<0, 1, [        // brind
   SDTCisPtrTy<0>
 ]>;
 
+def SDTCBrind : SDTypeProfile<0, 1, [        // Fat pointer brind
+  SDTCisFatPtrTy<0>
+]>;
+
 def SDTCatchret : SDTypeProfile<0, 2, [     // catchret
   SDTCisVT<0, OtherVT>, SDTCisVT<1, OtherVT>
 ]>;
@@ -217,13 +229,23 @@ def SDTNone : SDTypeProfile<0, 0, []>;      // ret, trap
 def SDTLoad : SDTypeProfile<1, 1, [         // load
   SDTCisPtrTy<1>
 ]>;
+def SDTCLoad : SDTypeProfile<1, 1, [         // load via capability
+  SDTCisFatPtrTy<1>
+]>;
 
 def SDTStore : SDTypeProfile<0, 2, [        // store
   SDTCisPtrTy<1>
 ]>;
+def SDTCStore : SDTypeProfile<0, 2, [       // store via capability
+  SDTCisFatPtrTy<1>
+]>;
 
 def SDTIStore : SDTypeProfile<1, 3, [       // indexed store
   SDTCisSameAs<0, 2>, SDTCisPtrTy<0>, SDTCisPtrTy<3>
+]>;
+
+def SDTICStore : SDTypeProfile<1, 3, [       // indexed store via capability
+  SDTCisSameAs<0, 2>, SDTCisFatPtrTy<0>, SDTCisPtrTy<3>
 ]>;
 
 def SDTMaskedStore: SDTypeProfile<0, 4, [       // masked store
@@ -273,16 +295,42 @@ def SDTAtomic2 : SDTypeProfile<1, 2, [
   SDTCisSameAs<0,2>, SDTCisInt<0>, SDTCisPtrTy<1>
 ]>;
 
+def SDTCAtomic2 : SDTypeProfile<1, 2, [
+  SDTCisSameAs<0,2>, SDTCisInt<0>, SDTCisFatPtrTy<1>
+]>;
+def SDTCAtomic3 : SDTypeProfile<1, 3, [
+  SDTCisSameAs<0,2>,  SDTCisSameAs<0,3>, SDTCisInt<0>, SDTCisFatPtrTy<1>
+]>;
+
 def SDTFPAtomic2 : SDTypeProfile<1, 2, [
   SDTCisSameAs<0,2>, SDTCisFP<0>, SDTCisPtrTy<1>
 ]>;
-
 def SDTAtomicStore : SDTypeProfile<0, 2, [
   SDTCisPtrTy<0>, SDTCisInt<1>
 ]>;
 def SDTAtomicLoad : SDTypeProfile<1, 1, [
   SDTCisInt<0>, SDTCisPtrTy<1>
 ]>;
+def SDTCAtomicStore : SDTypeProfile<0, 2, [
+  SDTCisFatPtrTy<0>, SDTCisInt<1>
+]>;
+def SDTCAtomicCStore : SDTypeProfile<0, 2, [
+  SDTCisFatPtrTy<0>, SDTCisFatPtrTy<1>
+]>;
+def SDTCCAtomicStore : SDTypeProfile<0, 2, [
+  SDTCisPtrTy<0>, SDTCisFatPtrTy<1>
+]>;
+def SDTCAtomicLoad : SDTypeProfile<1, 1, [
+  SDTCisInt<0>, SDTCisFatPtrTy<1>
+]>;
+def SDTCAtomicCLoad : SDTypeProfile<1, 1, [
+  SDTCisFatPtrTy<0>, SDTCisFatPtrTy<1>
+]>;
+def SDTCCAtomicLoad : SDTypeProfile<1, 1, [
+  SDTCisFatPtrTy<0>, SDTCisPtrTy<1>
+]>;
+
+
 
 def SDTAtomicCapLoad : SDTypeProfile<1, 1, [
   SDTCisPtrTy<0>, SDTCisPtrTy<1>
@@ -291,10 +339,10 @@ def SDTAtomicCapStore : SDTypeProfile<0, 2, [
   SDTCisPtrTy<0>, SDTCisPtrTy<1>
 ]>;
 def SDTAtomicCap3 : SDTypeProfile<1, 3, [
-  SDTCisSameAs<0,2>,  SDTCisSameAs<0,3>, SDTCisPtrTy<0>, SDTCisPtrTy<1>
+  SDTCisSameAs<0,2>,  SDTCisSameAs<0,3>, SDTCisFatPtrTy<0>, SDTCisPtrTy<1>
 ]>;
 def SDTAtomicCap2 : SDTypeProfile<1, 2, [
-  SDTCisSameAs<0,2>, SDTCisPtrTy<0>, SDTCisPtrTy<1>
+  SDTCisSameAs<0,2>, SDTCisFatPtrTy<0>, SDTCisPtrTy<1>
 ]>;
 
 def SDTConvertOp : SDTypeProfile<1, 5, [ //cvtss, su, us, uu, ff, fs, fu, sf, su
@@ -577,6 +625,7 @@ def selectcc   : SDNode<"ISD::SELECT_CC"  , SDTSelectCC>;
 def brcc       : SDNode<"ISD::BR_CC"      , SDTBrCC,   [SDNPHasChain]>;
 def brcond     : SDNode<"ISD::BRCOND"     , SDTBrcond, [SDNPHasChain]>;
 def brind      : SDNode<"ISD::BRIND"      , SDTBrind,  [SDNPHasChain]>;
+def cbrind     : SDNode<"ISD::BRIND"      , SDTCBrind, [SDNPHasChain]>;
 def br         : SDNode<"ISD::BR"         , SDTBr,     [SDNPHasChain]>;
 def catchret   : SDNode<"ISD::CATCHRET"   , SDTCatchret,
                         [SDNPHasChain, SDNPSideEffect]>;
@@ -629,7 +678,6 @@ def atomic_load_fadd : SDNode<"ISD::ATOMIC_LOAD_FADD" , SDTFPAtomic2,
                     [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
 def atomic_load_fsub : SDNode<"ISD::ATOMIC_LOAD_FSUB" , SDTFPAtomic2,
                     [SDNPHasChain, SDNPMayStore, SDNPMayLoad, SDNPMemOperand]>;
-
 def atomic_load      : SDNode<"ISD::ATOMIC_LOAD", SDTAtomicLoad,
                     [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
 def atomic_store     : SDNode<"ISD::ATOMIC_STORE", SDTAtomicStore,
@@ -653,9 +701,15 @@ def masked_ld    : SDNode<"ISD::MLOAD",  SDTMaskedLoad,
 // and truncst (see below).
 def ld         : SDNode<"ISD::LOAD"       , SDTLoad,
                         [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
+def cld        : SDNode<"ISD::LOAD"       , SDTCLoad,
+                        [SDNPHasChain, SDNPMayLoad, SDNPMemOperand]>;
 def st         : SDNode<"ISD::STORE"      , SDTStore,
                         [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;
+def cst        : SDNode<"ISD::STORE"      , SDTCStore,
+                        [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;
 def ist        : SDNode<"ISD::STORE"      , SDTIStore,
+                        [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;
+def icst       : SDNode<"ISD::STORE"      , SDTICStore,
                         [SDNPHasChain, SDNPMayStore, SDNPMemOperand]>;
 
 def vector_shuffle : SDNode<"ISD::VECTOR_SHUFFLE", SDTVecShuffle, []>;
@@ -787,6 +841,9 @@ class PatFrags<dag ops, list<dag> frags, code pred = [{}],
   bit IsStore = ?;
   // Is the desired pre-packaged predicate for an atomic?
   bit IsAtomic = ?;
+
+  // Is the desired pre-packaged predicate a load/store on a capability base?
+  bit IsCapability = ?;
 
   // cast<LoadSDNode>(N)->getAddressingMode() == ISD::UNINDEXED;
   // cast<StoreSDNode>(N)->getAddressingMode() == ISD::UNINDEXED;
@@ -932,15 +989,17 @@ def ineg : PatFrag<(ops node:$in), (sub 0, node:$in)>;
 // in the expansion, the pattern is discarded and it is as-if '[]' had been
 // specified. This allows multiclasses to have the isel patterns be optional.
 def null_frag : SDPatternOperator;
-
+let IsCapability = 0 in {
 // load fragments.
 def unindexedload : PatFrag<(ops node:$ptr), (ld node:$ptr)> {
   let IsLoad = 1;
   let IsUnindexed = 1;
+  let IsCapability = 0;
 }
 def load : PatFrag<(ops node:$ptr), (unindexedload node:$ptr)> {
   let IsLoad = 1;
   let IsNonExtLoad = 1;
+  let IsCapability = 0;
 }
 
 // extending load fragments.
@@ -1076,10 +1135,12 @@ def zextloadvi32 : PatFrag<(ops node:$ptr), (zextload node:$ptr)> {
 }
 
 // store fragments.
+
 def unindexedstore : PatFrag<(ops node:$val, node:$ptr),
                              (st node:$val, node:$ptr)> {
   let IsStore = 1;
   let IsUnindexed = 1;
+  let IsCapability = 0;
 }
 def store : PatFrag<(ops node:$val, node:$ptr),
                     (unindexedstore node:$val, node:$ptr)> {
@@ -1150,6 +1211,18 @@ def pre_store : PatFrag<(ops node:$val, node:$base, node:$offset),
   return AM == ISD::PRE_INC || AM == ISD::PRE_DEC;
 }]>;
 
+def pre_dec_store : PatFrag<(ops node:$val, node:$base, node:$offset),
+                        (istore node:$val, node:$base, node:$offset), [{
+  ISD::MemIndexedMode AM = cast<StoreSDNode>(N)->getAddressingMode();
+  return AM == ISD::PRE_DEC;
+}]>;
+
+def pre_inc_store : PatFrag<(ops node:$val, node:$base, node:$offset),
+                        (istore node:$val, node:$base, node:$offset), [{
+  ISD::MemIndexedMode AM = cast<StoreSDNode>(N)->getAddressingMode();
+  return AM == ISD::PRE_INC;
+}]>;
+
 def itruncstore : PatFrag<(ops node:$val, node:$base, node:$offset),
                           (ist node:$val, node:$base, node:$offset)> {
   let IsStore = 1;
@@ -1196,10 +1269,84 @@ def pre_truncstvi16 : PatFrag<(ops node:$val, node:$base, node:$offset),
   let ScalarMemoryVT = i16;
 }
 
+def pre_inc_truncst : PatFrag<(ops node:$val, node:$base, node:$offset),
+                          (itruncstore node:$val, node:$base, node:$offset), [{
+  ISD::MemIndexedMode AM = cast<StoreSDNode>(N)->getAddressingMode();
+  return AM == ISD::PRE_INC;
+}]>;
+def pre_inc_truncsti1 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                            (pre_inc_truncst node:$val, node:$base, node:$offset)> {
+  let IsStore = 1;
+  let MemoryVT = i1;
+}
+def pre_inc_truncsti8 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                            (pre_inc_truncst node:$val, node:$base, node:$offset)> {
+  let IsStore = 1;
+  let MemoryVT = i8;
+}
+def pre_inc_truncsti16 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                             (pre_inc_truncst node:$val, node:$base, node:$offset)> {
+  let IsStore = 1;
+  let MemoryVT = i16;
+}
+def pre_inc_truncsti32 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                             (pre_inc_truncst node:$val, node:$base, node:$offset)> {
+  let IsStore = 1;
+  let MemoryVT = i32;
+}
+def pre_inc_truncstf32 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                             (pre_inc_truncst node:$val, node:$base, node:$offset)> {
+  let IsStore = 1;
+  let MemoryVT = f32;
+}
+
+def pre_dec_truncst : PatFrag<(ops node:$val, node:$base, node:$offset),
+                          (itruncstore node:$val, node:$base, node:$offset), [{
+  ISD::MemIndexedMode AM = cast<StoreSDNode>(N)->getAddressingMode();
+  return AM == ISD::PRE_DEC;
+}]>;
+def pre_dec_truncsti1 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                            (pre_dec_truncst node:$val, node:$base, node:$offset)> {
+  let IsStore = 1;
+  let MemoryVT = i1;
+}
+def pre_dec_truncsti8 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                            (pre_dec_truncst node:$val, node:$base, node:$offset)> {
+  let IsStore = 1;
+  let MemoryVT = i8;
+}
+def pre_dec_truncsti16 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                             (pre_dec_truncst node:$val, node:$base, node:$offset)> {
+  let IsStore = 1;
+  let MemoryVT = i16;
+}
+def pre_dec_truncsti32 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                             (pre_dec_truncst node:$val, node:$base, node:$offset)> {
+  let IsStore = 1;
+  let MemoryVT = i32;
+}
+def pre_dec_truncstf32 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                             (pre_dec_truncst node:$val, node:$base, node:$offset)> {
+  let IsStore = 1;
+  let MemoryVT = f32;
+}
+
 def post_store : PatFrag<(ops node:$val, node:$ptr, node:$offset),
                          (istore node:$val, node:$ptr, node:$offset), [{
   ISD::MemIndexedMode AM = cast<StoreSDNode>(N)->getAddressingMode();
   return AM == ISD::POST_INC || AM == ISD::POST_DEC;
+}]>;
+
+def post_inc_store : PatFrag<(ops node:$val, node:$ptr, node:$offset),
+                         (istore node:$val, node:$ptr, node:$offset), [{
+  ISD::MemIndexedMode AM = cast<StoreSDNode>(N)->getAddressingMode();
+  return AM == ISD::POST_INC;
+}]>;
+
+def post_dec_store : PatFrag<(ops node:$val, node:$ptr, node:$offset),
+                         (istore node:$val, node:$ptr, node:$offset), [{
+  ISD::MemIndexedMode AM = cast<StoreSDNode>(N)->getAddressingMode();
+  return AM == ISD::POST_DEC;
 }]>;
 
 def post_truncst : PatFrag<(ops node:$val, node:$base, node:$offset),
@@ -1242,6 +1389,342 @@ def post_truncstvi16 : PatFrag<(ops node:$val, node:$base, node:$offset),
   let IsStore = 1;
   let ScalarMemoryVT = i16;
 }
+
+def post_inc_truncst : PatFrag<(ops node:$val, node:$base, node:$offset),
+                           (itruncstore node:$val, node:$base, node:$offset), [{
+  ISD::MemIndexedMode AM = cast<StoreSDNode>(N)->getAddressingMode();
+  return AM == ISD::POST_INC;
+}]>;
+def post_inc_truncsti1 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                             (post_inc_truncst node:$val, node:$base, node:$offset)> {
+  let IsStore = 1;
+  let MemoryVT = i1;
+}
+def post_inc_truncsti8 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                             (post_inc_truncst node:$val, node:$base, node:$offset)> {
+  let IsStore = 1;
+  let MemoryVT = i8;
+}
+def post_inc_truncsti16 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                              (post_inc_truncst node:$val, node:$base, node:$offset)> {
+  let IsStore = 1;
+  let MemoryVT = i16;
+}
+def post_inc_truncsti32 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                              (post_inc_truncst node:$val, node:$base, node:$offset)> {
+  let IsStore = 1;
+  let MemoryVT = i32;
+}
+def post_inc_truncstf32 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                              (post_inc_truncst node:$val, node:$base, node:$offset)> {
+  let IsStore = 1;
+  let MemoryVT = f32;
+}
+
+def post_dec_truncst : PatFrag<(ops node:$val, node:$base, node:$offset),
+                           (itruncstore node:$val, node:$base, node:$offset), [{
+  ISD::MemIndexedMode AM = cast<StoreSDNode>(N)->getAddressingMode();
+  return AM == ISD::POST_DEC;
+}]>;
+def post_dec_truncsti1 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                             (post_dec_truncst node:$val, node:$base, node:$offset)> {
+  let IsStore = 1;
+  let MemoryVT = i1;
+}
+def post_dec_truncsti8 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                             (post_dec_truncst node:$val, node:$base, node:$offset)> {
+  let IsStore = 1;
+  let MemoryVT = i8;
+}
+def post_dec_truncsti16 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                              (post_dec_truncst node:$val, node:$base, node:$offset)> {
+  let IsStore = 1;
+  let MemoryVT = i16;
+}
+def post_dec_truncsti32 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                              (post_dec_truncst node:$val, node:$base, node:$offset)> {
+  let IsStore = 1;
+  let MemoryVT = i32;
+}
+def post_dec_truncstf32 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                              (post_dec_truncst node:$val, node:$base, node:$offset)> {
+  let IsStore = 1;
+  let MemoryVT = f32;
+}
+
+}
+
+def loadFromCapability : PatFrag<(ops node:$ptr), (cld node:$ptr), [{
+  return accessesMemoryViaCapability(N);
+}]>;
+def unindexedcload : PatFrag<(ops node:$ptr), (loadFromCapability node:$ptr), [{
+  return cast<LoadSDNode>(N)->getAddressingMode() == ISD::UNINDEXED;
+}]>;
+def cload : PatFrag<(ops node:$ptr), (unindexedcload node:$ptr), [{
+  return cast<LoadSDNode>(N)->getExtensionType() == ISD::NON_EXTLOAD;
+}]>;
+
+// extending load fragments.
+multiclass extendingLoad<PatFrag load> {
+  def ext#NAME   : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+    return cast<LoadSDNode>(N)->getExtensionType() == ISD::EXTLOAD;
+  }]>;
+  def sext#NAME  : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+    return cast<LoadSDNode>(N)->getExtensionType() == ISD::SEXTLOAD;
+  }]>;
+  def zext#NAME  : PatFrag<(ops node:$ptr), (load node:$ptr), [{
+    return cast<LoadSDNode>(N)->getExtensionType() == ISD::ZEXTLOAD;
+  }]>;
+}
+defm cload: extendingLoad<unindexedcload>;
+
+multiclass intExtendingLoad<PatFrag extload> {
+  def i1  : PatFrag<(ops node:$ptr), (extload node:$ptr), [{
+    return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i1;
+  }]>;
+  def i8  : PatFrag<(ops node:$ptr), (extload node:$ptr), [{
+    return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i8;
+  }]>;
+  def i16 : PatFrag<(ops node:$ptr), (extload node:$ptr), [{
+    return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i16;
+  }]>;
+  def i32 : PatFrag<(ops node:$ptr), (extload node:$ptr), [{
+    return cast<LoadSDNode>(N)->getMemoryVT() == MVT::i32;
+  }]>;
+  def vi1  : PatFrag<(ops node:$ptr), (extload node:$ptr), [{
+    return cast<LoadSDNode>(N)->getMemoryVT().getScalarType() == MVT::i1;
+  }]>;
+  def vi8  : PatFrag<(ops node:$ptr), (extload node:$ptr), [{
+    return cast<LoadSDNode>(N)->getMemoryVT().getScalarType() == MVT::i8;
+  }]>;
+  def vi16 : PatFrag<(ops node:$ptr), (extload node:$ptr), [{
+    return cast<LoadSDNode>(N)->getMemoryVT().getScalarType() == MVT::i16;
+  }]>;
+  def vi32 : PatFrag<(ops node:$ptr), (extload node:$ptr), [{
+    return cast<LoadSDNode>(N)->getMemoryVT().getScalarType() == MVT::i32;
+  }]>;
+}
+multiclass floatingPointExtendingLoad<PatFrag extload> {
+  def f32 : PatFrag<(ops node:$ptr), (extload node:$ptr), [{
+    return cast<LoadSDNode>(N)->getMemoryVT() == MVT::f32;
+  }]>;
+  def f64 : PatFrag<(ops node:$ptr), (extload node:$ptr), [{
+    return cast<LoadSDNode>(N)->getMemoryVT() == MVT::f64;
+  }]>;
+  def vf32 : PatFrag<(ops node:$ptr), (extload node:$ptr), [{
+    return cast<LoadSDNode>(N)->getMemoryVT().getScalarType() == MVT::f32;
+  }]>;
+  def vf64 : PatFrag<(ops node:$ptr), (extload node:$ptr), [{
+    return cast<LoadSDNode>(N)->getMemoryVT().getScalarType() == MVT::f64;
+  }]>;
+}
+
+defm extcload: intExtendingLoad<extcload>;
+defm extcload: floatingPointExtendingLoad<extcload>;
+defm sextcload: intExtendingLoad<sextcload>;
+defm zextcload: intExtendingLoad<zextcload>;
+
+def storeToCapability : PatFrag<(ops node:$val, node:$ptr),
+                                (cst node:$val, node:$ptr), [{
+  return accessesMemoryViaCapability(N);
+}]>;
+def unindexedcstore : PatFrag<(ops node:$val, node:$ptr),
+                              (storeToCapability node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->getAddressingMode() == ISD::UNINDEXED;
+}]>;
+def cstore : PatFrag<(ops node:$val, node:$ptr),
+                     (unindexedcstore node:$val, node:$ptr), [{
+  return !cast<StoreSDNode>(N)->isTruncatingStore();
+}]>;
+
+// truncstore fragments.
+def trunccstore : PatFrag<(ops node:$val, node:$ptr),
+                         (unindexedcstore node:$val, node:$ptr), [{
+  return cast<StoreSDNode>(N)->isTruncatingStore();
+}]>;
+multiclass intTruncatingStore<PatFrag tstore> {
+  def i8 : PatFrag<(ops node:$val, node:$ptr),
+                   (tstore node:$val, node:$ptr), [{
+    return cast<StoreSDNode>(N)->getMemoryVT() == MVT::i8;
+  }]>;
+  def i16 : PatFrag<(ops node:$val, node:$ptr),
+                    (tstore node:$val, node:$ptr), [{
+    return cast<StoreSDNode>(N)->getMemoryVT() == MVT::i16;
+  }]>;
+  def i32 : PatFrag<(ops node:$val, node:$ptr),
+                    (tstore node:$val, node:$ptr), [{
+    return cast<StoreSDNode>(N)->getMemoryVT() == MVT::i32;
+  }]>;
+
+  def vi8 : PatFrag<(ops node:$val, node:$ptr),
+                    (tstore node:$val, node:$ptr), [{
+    return cast<StoreSDNode>(N)->getMemoryVT().getScalarType() == MVT::i8;
+  }]>;
+  def vi16 : PatFrag<(ops node:$val, node:$ptr),
+                     (tstore node:$val, node:$ptr), [{
+    return cast<StoreSDNode>(N)->getMemoryVT().getScalarType() == MVT::i16;
+  }]>;
+  def vi32 : PatFrag<(ops node:$val, node:$ptr),
+                     (tstore node:$val, node:$ptr), [{
+    return cast<StoreSDNode>(N)->getMemoryVT().getScalarType() == MVT::i32;
+  }]>;
+}
+multiclass floatingPointTruncatingStore<PatFrag tstore> {
+  def f32 : PatFrag<(ops node:$val, node:$ptr),
+                    (tstore node:$val, node:$ptr), [{
+    return cast<StoreSDNode>(N)->getMemoryVT() == MVT::f32;
+  }]>;
+  def f64 : PatFrag<(ops node:$val, node:$ptr),
+                    (tstore node:$val, node:$ptr), [{
+    return cast<StoreSDNode>(N)->getMemoryVT() == MVT::f64;
+  }]>;
+}
+defm trunccstore: intTruncatingStore<trunccstore>;
+defm trunccstore: floatingPointTruncatingStore<trunccstore>;
+
+// indexed store fragments.
+def icstore : PatFrag<(ops node:$val, node:$base, node:$offset),
+                      (icst node:$val, node:$base, node:$offset), [{
+  if (!accessesMemoryViaCapability(N))
+    return false;
+  return !cast<StoreSDNode>(N)->isTruncatingStore();
+}]>;
+
+def pre_cstore : PatFrag<(ops node:$val, node:$base, node:$offset),
+                         (icstore node:$val, node:$base, node:$offset), [{
+  ISD::MemIndexedMode AM = cast<StoreSDNode>(N)->getAddressingMode();
+  return AM == ISD::PRE_INC || AM == ISD::PRE_DEC;
+}]>;
+
+def pre_inc_cstore : PatFrag<(ops node:$val, node:$base, node:$offset),
+                         (icstore node:$val, node:$base, node:$offset), [{
+  ISD::MemIndexedMode AM = cast<StoreSDNode>(N)->getAddressingMode();
+  return AM == ISD::PRE_INC;
+}]>;
+
+
+
+def pre_dec_cstore : PatFrag<(ops node:$val, node:$base, node:$offset),
+                         (icstore node:$val, node:$base, node:$offset), [{
+  ISD::MemIndexedMode AM = cast<StoreSDNode>(N)->getAddressingMode();
+  return AM == ISD::PRE_DEC;
+}]>;
+
+
+def itrunccstore : PatFrag<(ops node:$val, node:$base, node:$offset),
+                          (ist node:$val, node:$base, node:$offset)> {
+  let IsStore = 1;
+  let IsTruncStore = 1;
+  let IsCapability = 1;
+}
+
+def pre_trunccst : PatFrag<(ops node:$val, node:$base, node:$offset),
+                           (itrunccstore node:$val, node:$base, node:$offset), [{
+  ISD::MemIndexedMode AM = cast<StoreSDNode>(N)->getAddressingMode();
+  return AM == ISD::PRE_INC || AM == ISD::PRE_DEC;
+}]>;
+
+def pre_inc_trunccst : PatFrag<(ops node:$val, node:$base, node:$offset),
+                           (itrunccstore node:$val, node:$base, node:$offset), [{
+  ISD::MemIndexedMode AM = cast<StoreSDNode>(N)->getAddressingMode();
+  return AM == ISD::PRE_INC;
+}]>;
+
+def pre_dec_trunccst : PatFrag<(ops node:$val, node:$base, node:$offset),
+                           (itrunccstore node:$val, node:$base, node:$offset), [{
+  ISD::MemIndexedMode AM = cast<StoreSDNode>(N)->getAddressingMode();
+  return AM == ISD::PRE_DEC;
+}]>;
+
+multiclass preIndexedTruncatingStore<PatFrag ptstore> {
+  def i1 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                   (ptstore node:$val, node:$base, node:$offset), [{
+    return cast<StoreSDNode>(N)->getMemoryVT() == MVT::i1;
+  }]>;
+  def i8 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                   (ptstore node:$val, node:$base, node:$offset), [{
+    return cast<StoreSDNode>(N)->getMemoryVT() == MVT::i8;
+  }]>;
+  def i16 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                    (ptstore node:$val, node:$base, node:$offset), [{
+    return cast<StoreSDNode>(N)->getMemoryVT() == MVT::i16;
+  }]>;
+  def i32 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                    (ptstore node:$val, node:$base, node:$offset), [{
+    return cast<StoreSDNode>(N)->getMemoryVT() == MVT::i32;
+  }]>;
+  def f32 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                    (ptstore node:$val, node:$base, node:$offset), [{
+    return cast<StoreSDNode>(N)->getMemoryVT() == MVT::f32;
+  }]>;
+}
+
+defm pre_trunccst: preIndexedTruncatingStore<pre_trunccst>;
+defm pre_inc_trunccst: preIndexedTruncatingStore<pre_inc_trunccst>;
+defm pre_dec_trunccst: preIndexedTruncatingStore<pre_dec_trunccst>;
+
+def post_cstore : PatFrag<(ops node:$val, node:$ptr, node:$offset),
+                          (icstore node:$val, node:$ptr, node:$offset), [{
+  ISD::MemIndexedMode AM = cast<StoreSDNode>(N)->getAddressingMode();
+  return AM == ISD::POST_INC || AM == ISD::POST_DEC;
+}]>;
+
+def post_inc_cstore : PatFrag<(ops node:$val, node:$ptr, node:$offset),
+                          (icstore node:$val, node:$ptr, node:$offset), [{
+  ISD::MemIndexedMode AM = cast<StoreSDNode>(N)->getAddressingMode();
+  return AM == ISD::POST_INC;
+}]>;
+
+def post_dec_cstore : PatFrag<(ops node:$val, node:$ptr, node:$offset),
+                          (icstore node:$val, node:$ptr, node:$offset), [{
+  ISD::MemIndexedMode AM = cast<StoreSDNode>(N)->getAddressingMode();
+  return AM == ISD::POST_DEC;
+}]>;
+
+def post_inc_trunccst : PatFrag<(ops node:$val, node:$base, node:$offset),
+                            (itrunccstore node:$val, node:$base, node:$offset), [{
+  ISD::MemIndexedMode AM = cast<StoreSDNode>(N)->getAddressingMode();
+  return AM == ISD::POST_INC;
+}]>;
+
+def post_dec_trunccst : PatFrag<(ops node:$val, node:$base, node:$offset),
+                            (itrunccstore node:$val, node:$base, node:$offset), [{
+  ISD::MemIndexedMode AM = cast<StoreSDNode>(N)->getAddressingMode();
+  return AM == ISD::POST_DEC;
+}]>;
+
+multiclass postIndexedTruncatingStore<PatFrag ptstore> {
+  def i1 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                   (ptstore node:$val, node:$base, node:$offset), [{
+    return cast<StoreSDNode>(N)->getMemoryVT() == MVT::i1;
+  }]>;
+  def i8 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                   (ptstore node:$val, node:$base, node:$offset), [{
+    return cast<StoreSDNode>(N)->getMemoryVT() == MVT::i8;
+  }]>;
+  def i16 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                    (ptstore node:$val, node:$base, node:$offset), [{
+    return cast<StoreSDNode>(N)->getMemoryVT() == MVT::i16;
+  }]>;
+  def i32 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                    (ptstore node:$val, node:$base, node:$offset), [{
+    return cast<StoreSDNode>(N)->getMemoryVT() == MVT::i32;
+  }]>;
+  def f32 : PatFrag<(ops node:$val, node:$base, node:$offset),
+                    (ptstore node:$val, node:$base, node:$offset), [{
+    return cast<StoreSDNode>(N)->getMemoryVT() == MVT::f32;
+  }]>;
+}
+
+def post_trunccst : PatFrag<(ops node:$val, node:$base, node:$offset),
+                           (itrunccstore node:$val, node:$base, node:$offset), [{
+  ISD::MemIndexedMode AM = cast<StoreSDNode>(N)->getAddressingMode();
+  return AM == ISD::POST_INC || AM == ISD::POST_DEC;
+}]>;
+
+defm post_trunccst: postIndexedTruncatingStore<post_trunccst>;
+defm post_inc_trunccst: postIndexedTruncatingStore<post_inc_trunccst>;
+defm post_dec_trunccst: postIndexedTruncatingStore<post_dec_trunccst>;
 
 // TODO: Split these into volatile and unordered flavors to enable
 // selectively legal optimizations for each.  (See D66309)
@@ -1442,26 +1925,31 @@ multiclass binary_atomic_op_ord<SDNode atomic_op> {
       (!cast<SDPatternOperator>(#NAME) node:$ptr, node:$val)> {
     let IsAtomic = 1;
     let IsAtomicOrderingMonotonic = 1;
+    let IsCapability = 0;
   }
   def #NAME#_acquire : PatFrag<(ops node:$ptr, node:$val),
       (!cast<SDPatternOperator>(#NAME) node:$ptr, node:$val)> {
     let IsAtomic = 1;
     let IsAtomicOrderingAcquire = 1;
+    let IsCapability = 0;
   }
   def #NAME#_release : PatFrag<(ops node:$ptr, node:$val),
       (!cast<SDPatternOperator>(#NAME) node:$ptr, node:$val)> {
     let IsAtomic = 1;
     let IsAtomicOrderingRelease = 1;
+    let IsCapability = 0;
   }
   def #NAME#_acq_rel : PatFrag<(ops node:$ptr, node:$val),
       (!cast<SDPatternOperator>(#NAME) node:$ptr, node:$val)> {
     let IsAtomic = 1;
     let IsAtomicOrderingAcquireRelease = 1;
+    let IsCapability = 0;
   }
   def #NAME#_seq_cst : PatFrag<(ops node:$ptr, node:$val),
       (!cast<SDPatternOperator>(#NAME) node:$ptr, node:$val)> {
     let IsAtomic = 1;
     let IsAtomicOrderingSequentiallyConsistent = 1;
+    let IsCapability = 0;
   }
 }
 
@@ -1564,6 +2052,8 @@ defm atomic_load_umax : binary_atomic_op<atomic_load_umax>;
 defm atomic_store     : binary_atomic_op<atomic_store>;
 defm atomic_cmp_swap  : ternary_atomic_op<atomic_cmp_swap>;
 
+
+let IsCapability = 0 in {
 def atomic_load_8 :
   PatFrag<(ops node:$ptr),
           (atomic_load node:$ptr)> {
@@ -1587,6 +2077,7 @@ def atomic_load_64 :
           (atomic_load node:$ptr)> {
   let IsAtomic = 1;
   let MemoryVT = i64;
+}
 }
 
 // We can't use let MemoryVT = iFATPTRAny here since by the time it runs we
@@ -1615,7 +2106,6 @@ def atomic_cmp_swap_cap :
   return cast<AtomicSDNode>(N)->getMemoryVT().isFatPointer();
 }]>;
 defm atomic_cmp_swap_cap : ternary_atomic_op_ord<atomic_cmp_swap_cap_node>;
-
 //===----------------------------------------------------------------------===//
 // Selection DAG Pattern Support.
 //

@@ -465,11 +465,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr64 = COPY $d0
     ; CHECK: [[COPY1:%[0-9]+]]:gpr64sp = COPY $x0
     ; CHECK: STRDui [[COPY]], [[COPY1]], 0 :: (store 8 into %ir.ptr)
-    ; CHECK: RET_ReallyLR
+    ; CHECK: RET_ReallyLR 0
     %0:fpr(<4 x s16>) = COPY $d0
     %1:gpr(p0) = COPY $x0
     G_STORE %0(<4 x s16>), %1(p0) :: (store 8 into %ir.ptr)
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -491,11 +491,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr128 = COPY $q0
     ; CHECK: [[COPY1:%[0-9]+]]:gpr64sp = COPY $x0
     ; CHECK: STRQui [[COPY]], [[COPY1]], 0 :: (store 16 into %ir.ptr)
-    ; CHECK: RET_ReallyLR
+    ; CHECK: RET_ReallyLR 0
     %0:fpr(<4 x s32>) = COPY $q0
     %1:gpr(p0) = COPY $x0
     G_STORE %0(<4 x s32>), %1(p0) :: (store 16 into %ir.ptr)
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -517,11 +517,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr128 = COPY $q0
     ; CHECK: [[COPY1:%[0-9]+]]:gpr64sp = COPY $x0
     ; CHECK: STRQui [[COPY]], [[COPY1]], 0 :: (store 16 into %ir.ptr)
-    ; CHECK: RET_ReallyLR
+    ; CHECK: RET_ReallyLR 0
     %0:fpr(<8 x s16>) = COPY $q0
     %1:gpr(p0) = COPY $x0
     G_STORE %0(<8 x s16>), %1(p0) :: (store 16 into %ir.ptr)
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -543,10 +543,10 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr128 = COPY $q0
     ; CHECK: [[COPY1:%[0-9]+]]:gpr64sp = COPY $x0
     ; CHECK: STRQui [[COPY]], [[COPY1]], 0 :: (store 16 into %ir.ptr)
-    ; CHECK: RET_ReallyLR
+    ; CHECK: RET_ReallyLR 0
     %0:fpr(<16 x s8>) = COPY $q0
     %1:gpr(p0) = COPY $x0
     G_STORE %0(<16 x s8>), %1(p0) :: (store 16 into %ir.ptr)
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...

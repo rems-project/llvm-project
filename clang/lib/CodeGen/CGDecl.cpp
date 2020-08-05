@@ -323,6 +323,7 @@ CodeGenFunction::AddInitializerToStaticVarDecl(const VarDecl &D,
     const Expr *InitExpr = D.getAnyInitializer(InitDecl);
     QualType T = InitExpr->getType();
     if (getContext().containsCapabilities(T)) {
+      emitter.finalize(GV);
       GV->setConstant(false);
       CGM.EmitCXXGlobalVarDeclInitFunc(&D, GV, true);
       return GV;
@@ -1560,6 +1561,10 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
     EnsureInsertPoint();
 
     if (!DidCallStackSave) {
+      unsigned AS = 0;
+      if (getTarget().areAllPointersCapabilities())
+        AS = CGM.getTargetCodeGenInfo().getCHERICapabilityAS();
+
       // Save the stack.
       Address Stack = CreateTempAlloca(Int8PtrTy,
           getPointerAlign(), "saved_stack");
@@ -2364,6 +2369,34 @@ llvm::Function *CodeGenModule::getLLVMLifetimeEndFn() {
   LifetimeEndFn = llvm::Intrinsic::getDeclaration(&getModule(),
     llvm::Intrinsic::lifetime_end, AllocaInt8PtrTy);
   return LifetimeEndFn;
+}
+
+/// Lazily declare the @llvm.stacksave intrinsic.
+llvm::Constant *CodeGenModule::getStackSaveFn() {
+  if (StackSaveFn)
+    return StackSaveFn;
+
+  unsigned AS = 0;
+  if (getTarget().areAllPointersCapabilities())
+    AS = getTargetCodeGenInfo().getCHERICapabilityAS();
+  llvm::Type *PtrTy = Int8Ty->getPointerTo(AS);
+  StackSaveFn = llvm::Intrinsic::getDeclaration(
+      &getModule(), llvm::Intrinsic::stacksave, PtrTy);
+  return StackSaveFn;
+}
+
+/// Lazily declare the @llvm.stackrestore intrinsic.
+llvm::Constant *CodeGenModule::getStackRestoreFn() {
+  if (StackRestoreFn)
+    return StackRestoreFn;
+
+  unsigned AS = 0;
+  if (getTarget().areAllPointersCapabilities())
+    AS = getTargetCodeGenInfo().getCHERICapabilityAS();
+  llvm::Type *PtrTy = Int8Ty->getPointerTo(AS);
+  StackRestoreFn = llvm::Intrinsic::getDeclaration(
+      &getModule(), llvm::Intrinsic::stackrestore, PtrTy);
+  return StackRestoreFn;
 }
 
 namespace {

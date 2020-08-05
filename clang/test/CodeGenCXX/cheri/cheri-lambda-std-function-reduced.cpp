@@ -1,3 +1,4 @@
+// Note that this is a back-end specific issue so it's not worth porting the test to other targets.
 // https://github.com/CTSRD-CHERI/clang/issues/148
 // It now fails to compile whereas before it would crash the compiler
 // RUN: not %cheri_purecap_cc1 -emit-llvm -std=c++11 -o /dev/null %s

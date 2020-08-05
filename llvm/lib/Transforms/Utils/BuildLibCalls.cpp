@@ -909,7 +909,7 @@ Value *llvm::emitStpNCpy(Value *Dst, Value *Src, Value *Len, IRBuilder<> &B,
 
 Value *llvm::emitMemCpyChk(Value *Dst, Value *Src, Value *Len, Value *ObjSize,
                            IRBuilder<> &B, const DataLayout &DL,
-                           const TargetLibraryInfo *TLI) {
+                           const TargetLibraryInfo *TLI, bool HasCap) {
   if (!TLI->has(LibFunc_memcpy_chk))
     return nullptr;
 
@@ -926,6 +926,8 @@ Value *llvm::emitMemCpyChk(Value *Dst, Value *Src, Value *Len, Value *ObjSize,
       I8Ptr, I8Ptr, DL.getIntPtrType(Context),
       DL.getIntPtrType(Context));
   CallInst *CI = B.CreateCall(MemCpy, {Dst, Src, Len, ObjSize});
+  if (HasCap)
+    CI->setPreservesTags();
   if (const Function *F =
           dyn_cast<Function>(MemCpy.getCallee()->stripPointerCasts()))
     CI->setCallingConv(F->getCallingConv());
@@ -1284,9 +1286,10 @@ Value *llvm::emitMalloc(Value *Num, IRBuilder<> &B, const DataLayout &DL,
   Module *M = B.GetInsertBlock()->getModule();
   StringRef MallocName = TLI->getName(LibFunc_malloc);
   LLVMContext &Context = B.GetInsertBlock()->getContext();
-  // FIXME: We don't have a heap address space in data layout, so we can't
-  // insert a malloc returning a non-zero address space.
-  FunctionCallee Malloc = M->getOrInsertFunction(MallocName, B.getInt8PtrTy(),
+  // FIXME: We need the heap address space here, but for now use use the alloca
+  // address space which covers the same use cases.
+  unsigned AS = DL.getAllocaAddrSpace();
+  FunctionCallee Malloc = M->getOrInsertFunction(MallocName, B.getInt8PtrTy(AS),
                                                  DL.getIntPtrType(Context));
   inferLibFuncAttributes(M, MallocName, *TLI);
   CallInst *CI = B.CreateCall(Malloc, Num, MallocName);
@@ -1306,9 +1309,12 @@ Value *llvm::emitCalloc(Value *Num, Value *Size, const AttributeList &Attrs,
   Module *M = B.GetInsertBlock()->getModule();
   StringRef CallocName = TLI.getName(LibFunc_calloc);
   const DataLayout &DL = M->getDataLayout();
+  // We need the heap address space here, but for now use use the alloca
+  // address space which covers the same use cases.
+  unsigned AS = DL.getAllocaAddrSpace();
   IntegerType *PtrType = DL.getIntPtrType((B.GetInsertBlock()->getContext()));
   FunctionCallee Calloc = M->getOrInsertFunction(
-      CallocName, Attrs, B.getInt8PtrTy(), PtrType, PtrType);
+      CallocName, Attrs, B.getInt8PtrTy(AS), PtrType, PtrType);
   inferLibFuncAttributes(M, CallocName, TLI);
   CallInst *CI = B.CreateCall(Calloc, {Num, Size}, CallocName);
 

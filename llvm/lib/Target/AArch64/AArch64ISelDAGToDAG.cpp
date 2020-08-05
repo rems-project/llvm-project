@@ -95,19 +95,34 @@ public:
     return SelectAddrModeIndexedBitWidth(N, false, 6, 16, Base, OffImm);
   }
   bool SelectAddrModeIndexed8(SDValue N, SDValue &Base, SDValue &OffImm) {
-    return SelectAddrModeIndexed(N, 1, Base, OffImm);
+    return SelectAddrModeIndexed(N, 1, Base, OffImm, false);
   }
   bool SelectAddrModeIndexed16(SDValue N, SDValue &Base, SDValue &OffImm) {
-    return SelectAddrModeIndexed(N, 2, Base, OffImm);
+    return SelectAddrModeIndexed(N, 2, Base, OffImm, false);
   }
   bool SelectAddrModeIndexed32(SDValue N, SDValue &Base, SDValue &OffImm) {
-    return SelectAddrModeIndexed(N, 4, Base, OffImm);
+    return SelectAddrModeIndexed(N, 4, Base, OffImm, false);
   }
   bool SelectAddrModeIndexed64(SDValue N, SDValue &Base, SDValue &OffImm) {
-    return SelectAddrModeIndexed(N, 8, Base, OffImm);
+    return SelectAddrModeIndexed(N, 8, Base, OffImm, false);
   }
   bool SelectAddrModeIndexed128(SDValue N, SDValue &Base, SDValue &OffImm) {
-    return SelectAddrModeIndexed(N, 16, Base, OffImm);
+    return SelectAddrModeIndexed(N, 16, Base, OffImm, false);
+  }
+  bool SelectCAddrModeIndexed8(SDValue N, SDValue &Base, SDValue &OffImm) {
+    return SelectAddrModeIndexed(N, 1, Base, OffImm, true);
+  }
+  bool SelectCAddrModeIndexed16(SDValue N, SDValue &Base, SDValue &OffImm) {
+    return SelectAddrModeIndexed(N, 2, Base, OffImm, true);
+  }
+  bool SelectCAddrModeIndexed32(SDValue N, SDValue &Base, SDValue &OffImm) {
+    return SelectAddrModeIndexed(N, 4, Base, OffImm, true);
+  }
+  bool SelectCAddrModeIndexed64(SDValue N, SDValue &Base, SDValue &OffImm) {
+    return SelectAddrModeIndexed(N, 8, Base, OffImm, true);
+  }
+  bool SelectCAddrModeIndexed128(SDValue N, SDValue &Base, SDValue &OffImm) {
+    return SelectAddrModeIndexed(N, 16, Base, OffImm, true);
   }
   bool SelectAddrModeUnscaled8(SDValue N, SDValue &Base, SDValue &OffImm) {
     return SelectAddrModeUnscaled(N, 1, Base, OffImm);
@@ -124,6 +139,31 @@ public:
   bool SelectAddrModeUnscaled128(SDValue N, SDValue &Base, SDValue &OffImm) {
     return SelectAddrModeUnscaled(N, 16, Base, OffImm);
   }
+  bool SelectNegSImm(SDValue N, SDValue &Imm) {
+    if (ConstantSDNode *ImmNode = dyn_cast<ConstantSDNode>(N.getNode())) {
+      int64_t ImmVal = ImmNode->getSExtValue();
+      SDLoc dl(N);
+      Imm = CurDAG->getTargetConstant(-ImmVal, dl, MVT::i64);
+      return true;
+    }
+    return false;
+  }
+
+  template <unsigned Width>
+  bool SelectPAddrModeUnscaled(SDValue N, SDValue &Base, SDValue &OffImm) {
+    return SelectCAddrModeUnscaled(N, Width, Base, OffImm, false);
+  }
+
+  template <unsigned Width>
+  bool SelectCAddrModeUnscaled(SDValue N, SDValue &Base, SDValue &OffImm) {
+    return SelectCAddrModeUnscaled(N, Width, Base, OffImm, true);
+  }
+
+  template <unsigned Width>
+  bool SelectPCAddrModeUnscaled(SDValue N, SDValue &Base, SDValue &OffImm) {
+    return SelectAddrModeUnscaled(N, Width, Base, OffImm, true);
+  }
+
 
   template<int Width>
   bool SelectAddrModeWRO(SDValue N, SDValue &Base, SDValue &Offset,
@@ -132,12 +172,87 @@ public:
   }
 
   template<int Width>
+  bool SelectCAddrModeWRO(SDValue N, SDValue &Base, SDValue &Offset,
+                         SDValue &SignExtend, SDValue &DoShift) {
+    return SelectCAddrModeWRO(N, Width / 8, Base, Offset, SignExtend, DoShift);
+  }
+
+  bool SelectScbndsImm(SDValue N, SDValue &Val, SDValue &Shift) {
+    const ConstantSDNode *C = dyn_cast<const ConstantSDNode>(N);
+    if (!C)
+      return false;
+
+    uint64_t Imm = C->getZExtValue();
+    // The set bounds immediate has 6 bits and can be optionally shifted by 4.
+    uint64_t ShiftAmt = 0;
+    if (Imm > 63) {
+      if (Imm % 16 != 0)
+        return false;
+      Imm = Imm / 16;
+      ShiftAmt = 4;
+      if (Imm > 63)
+        return false;
+    }
+
+    SDLoc dl(N);
+    Val = CurDAG->getTargetConstant(Imm, dl, MVT::i32);
+    Shift = CurDAG->getTargetConstant(ShiftAmt, dl, MVT::i32);
+    return true;
+  }
+
+  bool SelectClearPermImm(SDValue N, SDValue &Val) {
+    const ConstantSDNode *C = dyn_cast<const ConstantSDNode>(N);
+    if (!C)
+      return false;
+
+    uint64_t Imm = C->getZExtValue();
+    // Make sure we're only clearing r, w or x.
+    // x -> bit 15
+    // w -> bit 16
+    // r -> bit 17
+    // We have bits 18 pemission bits in total.
+    uint64_t AllBits = (1 << 18) - 1;
+    uint64_t ReadBit = (1 << 17);
+    uint64_t WriteBit = (1 << 16);
+    uint64_t ExecBit = (1 << 15);
+
+    Imm = Imm & AllBits;
+
+    // If any other permissions need to be cleared we cannot select this.
+    if (Imm & ~(ReadBit | WriteBit | ExecBit))
+      return false;
+
+    uint64_t Value = 0;
+    if (Imm & ReadBit)
+      Value |= AArch64CapPerm::R;
+    if (Imm & WriteBit)
+      Value |= AArch64CapPerm::W;
+    if (Imm & ExecBit)
+      Value |= AArch64CapPerm::X;
+
+    SDLoc dl(N);
+    Val = CurDAG->getTargetConstant(Value, dl, MVT::i32);
+    return true;
+  }
+
+  template<int Width>
   bool SelectAddrModeXRO(SDValue N, SDValue &Base, SDValue &Offset,
                          SDValue &SignExtend, SDValue &DoShift) {
     return SelectAddrModeXRO(N, Width / 8, Base, Offset, SignExtend, DoShift);
   }
 
+  template<int Width>
+  bool SelectCAddrModeXRO(SDValue N, SDValue &Base, SDValue &Offset,
+                         SDValue &SignExtend, SDValue &DoShift) {
+    return SelectCAddrModeXRO(N, Width / 8, Base, Offset, SignExtend, DoShift);
+  }
+
+  template<int Width>
   bool SelectDupZeroOrUndef(SDValue N) {
+    if (N.getValueType().isScalableVector() &&
+        N.getValueType().getSizeInBits() != TypeSize::Scalable(Width))
+      return false;
+
     switch(N->getOpcode()) {
     case ISD::UNDEF:
       return true;
@@ -206,21 +321,20 @@ public:
   void SelectTable(SDNode *N, unsigned NumVecs, unsigned Opc, bool isExt);
 
   bool tryIndexedLoad(SDNode *N);
+  bool tryIndexedStore(SDNode *N);
 
   bool trySelectStackSlotTagP(SDNode *N);
   void SelectTagP(SDNode *N);
 
-  void SelectLoad(SDNode *N, unsigned NumVecs, unsigned Opc,
-                     unsigned SubRegIdx);
-  void SelectPostLoad(SDNode *N, unsigned NumVecs, unsigned Opc,
-                         unsigned SubRegIdx);
-  void SelectLoadLane(SDNode *N, unsigned NumVecs, unsigned Opc);
-  void SelectPostLoadLane(SDNode *N, unsigned NumVecs, unsigned Opc);
+  void SelectLoad(SDNode *N, unsigned NumVecs);
+  void SelectPostLoad(SDNode *N, unsigned NumVecs);
+  void SelectLoadLane(SDNode *N, unsigned NumVecs);
+  void SelectPostLoadLane(SDNode *N, unsigned NumVecs);
 
-  void SelectStore(SDNode *N, unsigned NumVecs, unsigned Opc);
-  void SelectPostStore(SDNode *N, unsigned NumVecs, unsigned Opc);
-  void SelectStoreLane(SDNode *N, unsigned NumVecs, unsigned Opc);
-  void SelectPostStoreLane(SDNode *N, unsigned NumVecs, unsigned Opc);
+  void SelectStore(SDNode *N, unsigned NumVecs);
+  void SelectPostStore(SDNode *N, unsigned NumVecs);
+  void SelectStoreLane(SDNode *N, unsigned NumVecs);
+  void SelectPostStoreLane(SDNode *N, unsigned NumVecs);
 
   bool tryBitfieldExtractOp(SDNode *N);
   bool tryBitfieldExtractOpFromSExt(SDNode *N);
@@ -231,6 +345,11 @@ public:
 
   bool tryReadRegister(SDNode *N);
   bool tryWriteRegister(SDNode *N);
+
+  SDNode *SelectPointerToCapabilityOp(SDNode *N);
+
+  SDNode *SelectReadRegister(SDNode *N);
+  SDNode *SelectWriteRegister(SDNode *N);
 
 // Include the pieces autogenerated from the target description.
 #include "AArch64GenDAGISel.inc"
@@ -246,13 +365,21 @@ private:
                                      unsigned Size, SDValue &Base,
                                      SDValue &OffImm);
   bool SelectAddrModeIndexed(SDValue N, unsigned Size, SDValue &Base,
-                             SDValue &OffImm);
+                             SDValue &OffImm, bool UseFatPtr);
   bool SelectAddrModeUnscaled(SDValue N, unsigned Size, SDValue &Base,
-                              SDValue &OffImm);
+                              SDValue &OffImm, bool MatchFatPtr = false);
+  bool SelectCAddrModeUnscaled(SDValue N, unsigned Width, SDValue &Base,
+                               SDValue &OffImm, bool MatchFatPtr);
   bool SelectAddrModeWRO(SDValue N, unsigned Size, SDValue &Base,
                          SDValue &Offset, SDValue &SignExtend,
                          SDValue &DoShift);
   bool SelectAddrModeXRO(SDValue N, unsigned Size, SDValue &Base,
+                         SDValue &Offset, SDValue &SignExtend,
+                         SDValue &DoShift);
+  bool SelectCAddrModeWRO(SDValue N, unsigned Size, SDValue &Base,
+                         SDValue &Offset, SDValue &SignExtend,
+                         SDValue &DoShift);
+  bool SelectCAddrModeXRO(SDValue N, unsigned Size, SDValue &Base,
                          SDValue &Offset, SDValue &SignExtend,
                          SDValue &DoShift);
   bool isWorthFolding(SDValue V) const;
@@ -267,6 +394,8 @@ private:
   bool SelectCVTFixedPosOperand(SDValue N, SDValue &FixedPos, unsigned Width);
 
   bool SelectCMP_SWAP(SDNode *N);
+
+  bool SelectCapabilityBranch(SDNode *N, bool Clear, bool Tail);
 
   bool SelectSVEAddSubImm(SDValue N, MVT VT, SDValue &Imm, SDValue &Shift);
 
@@ -442,7 +571,8 @@ bool AArch64DAGToDAGISel::isWorthFolding(SDValue V) const {
   if (Subtarget->hasLSLFast() && V.getOpcode() == ISD::SHL &&
       isWorthFoldingSHL(V))
     return true;
-  if (Subtarget->hasLSLFast() && V.getOpcode() == ISD::ADD) {
+  if (Subtarget->hasLSLFast() &&
+    (V.getOpcode() == ISD::ADD || V.getOpcode() == ISD::PTRADD)) {
     const SDValue LHS = V.getOperand(0);
     const SDValue RHS = V.getOperand(1);
     if (LHS.getOpcode() == ISD::SHL && isWorthFoldingSHL(LHS))
@@ -746,6 +876,19 @@ static bool isWorthFoldingADDlow(SDValue N) {
   return true;
 }
 
+static bool isWorthFoldingADDClow(SDValue N) {
+  for (auto Use : N->uses()) {
+    // FIXME: we should be able also fold for atomics.
+    if (Use->getOpcode() != ISD::LOAD && Use->getOpcode() != ISD::STORE)
+      return false;
+
+    if (isStrongerThanMonotonic(cast<MemSDNode>(Use)->getOrdering()))
+      return false;
+  }
+
+  return true;
+}
+
 /// SelectAddrModeIndexedBitWidth - Select a "register plus scaled (un)signed BW-bit
 /// immediate" address.  The "Size" argument is the size in bytes of the memory
 /// reference, which determines the scale.
@@ -813,10 +956,17 @@ bool AArch64DAGToDAGISel::SelectAddrModeIndexedBitWidth(SDValue N, bool IsSigned
 /// immediate" address.  The "Size" argument is the size in bytes of the memory
 /// reference, which determines the scale.
 bool AArch64DAGToDAGISel::SelectAddrModeIndexed(SDValue N, unsigned Size,
-                                              SDValue &Base, SDValue &OffImm) {
+                                                SDValue &Base, SDValue &OffImm,
+                                                bool UseFatPtr) {
   SDLoc dl(N);
   const DataLayout &DL = CurDAG->getDataLayout();
   const TargetLowering *TLI = getTargetLowering();
+
+  EVT AddrTy = N.getValueType();
+  bool CapabilityBase = AddrTy.isFatPointer();
+  if (CapabilityBase != UseFatPtr)
+    return false;
+
   if (N.getOpcode() == ISD::FrameIndex) {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
     Base = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy(DL));
@@ -824,7 +974,9 @@ bool AArch64DAGToDAGISel::SelectAddrModeIndexed(SDValue N, unsigned Size,
     return true;
   }
 
-  if (N.getOpcode() == AArch64ISD::ADDlow && isWorthFoldingADDlow(N)) {
+  const bool HasC64 = Subtarget->hasC64();
+  if (((N.getOpcode() == AArch64ISD::ADDlow && isWorthFoldingADDlow(N) && !HasC64) ||
+       (N.getOpcode() == AArch64ISD::ADDClow && isWorthFoldingADDClow(N) && HasC64))) {
     GlobalAddressSDNode *GAN =
         dyn_cast<GlobalAddressSDNode>(N.getOperand(1).getNode());
     Base = N.getOperand(0);
@@ -844,7 +996,8 @@ bool AArch64DAGToDAGISel::SelectAddrModeIndexed(SDValue N, unsigned Size,
     }
   }
 
-  if (CurDAG->isBaseWithConstantOffset(N)) {
+  if ((!CapabilityBase && CurDAG->isBaseWithConstantOffset(N)) ||
+      (CapabilityBase && CurDAG->isCapabilityBaseWithConstantOffset(N))) {
     if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       int64_t RHSC = (int64_t)RHS->getZExtValue();
       unsigned Scale = Log2_32(Size);
@@ -862,7 +1015,7 @@ bool AArch64DAGToDAGISel::SelectAddrModeIndexed(SDValue N, unsigned Size,
 
   // Before falling back to our general case, check if the unscaled
   // instructions can handle this. If so, that's preferable.
-  if (SelectAddrModeUnscaled(N, Size, Base, OffImm))
+  if (SelectAddrModeUnscaled(N, Size, Base, OffImm, UseFatPtr))
     return false;
 
   // Base only. The address will be materialized into a register before
@@ -881,9 +1034,18 @@ bool AArch64DAGToDAGISel::SelectAddrModeIndexed(SDValue N, unsigned Size,
 /// what is valid for a scaled immediate.
 bool AArch64DAGToDAGISel::SelectAddrModeUnscaled(SDValue N, unsigned Size,
                                                  SDValue &Base,
-                                                 SDValue &OffImm) {
-  if (!CurDAG->isBaseWithConstantOffset(N))
+                                                 SDValue &OffImm,
+                                                 bool MatchFatPtr) {
+  EVT AddrTy = N.getValueType();
+  bool CapabilityBase = AddrTy.isFatPointer();
+  if (CapabilityBase != MatchFatPtr)
     return false;
+
+  if (!MatchFatPtr && !CurDAG->isBaseWithConstantOffset(N))
+    return false;
+  if (MatchFatPtr && !CurDAG->isCapabilityBaseWithConstantOffset(N))
+    return false;
+
   if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
     int64_t RHSC = RHS->getSExtValue();
     // If the offset is valid as a scaled immediate, don't match here.
@@ -903,6 +1065,52 @@ bool AArch64DAGToDAGISel::SelectAddrModeUnscaled(SDValue N, unsigned Size,
     }
   }
   return false;
+}
+
+/// SelectCAddrModeUnscaled - Select a "capability plus unscaled signed
+/// Width-bit immediate" address. This is also the fallback for when we
+// did not find  any other better addressing mode.
+bool AArch64DAGToDAGISel::SelectCAddrModeUnscaled(SDValue N, unsigned Width,
+                                                  SDValue &Base,
+                                                  SDValue &OffImm,
+                                                  bool MatchFatPtr) {
+  EVT AddrTy = N.getValueType();
+  bool CapabilityBase = AddrTy.isFatPointer();
+  if (CapabilityBase != MatchFatPtr)
+    return false;
+
+  SDLoc dl(N);
+  if (N.getOpcode() == ISD::FrameIndex) {
+    int FI = cast<FrameIndexSDNode>(N)->getIndex();
+    const DataLayout &DL = CurDAG->getDataLayout();
+    Base = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy(DL));
+    OffImm = CurDAG->getTargetConstant(0, dl, MVT::i64);
+    return true;
+  }
+
+  if ((CapabilityBase && CurDAG->isCapabilityBaseWithConstantOffset(N)) ||
+      (!CapabilityBase && CurDAG->isBaseWithConstantOffset(N)))
+    if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      int64_t RHSC = RHS->getSExtValue();
+      int64_t minBound = -(1<<(Width-1));
+      int64_t maxBound = -minBound;
+      if (RHSC >= minBound && RHSC < maxBound) {
+        Base = N.getOperand(0);
+        if (Base.getOpcode() == ISD::FrameIndex) {
+          int FI = cast<FrameIndexSDNode>(Base)->getIndex();
+          const TargetLowering *TLI = getTargetLowering();
+          Base = CurDAG->getTargetFrameIndex(
+              FI, TLI->getPointerTy(CurDAG->getDataLayout()));
+        }
+        OffImm = CurDAG->getTargetConstant(RHSC, dl, MVT::i64);
+        return true;
+      }
+    }
+
+  // Fallback to pointer/capability + zero offset.
+  Base = N;
+  OffImm = CurDAG->getTargetConstant(0, dl, MVT::i64);
+  return true;
 }
 
 static SDValue Widen(SelectionDAG *CurDAG, SDValue N) {
@@ -947,6 +1155,63 @@ bool AArch64DAGToDAGISel::SelectExtendedSHL(SDValue N, unsigned Size,
     return false;
 
   return isWorthFolding(N);
+}
+
+bool AArch64DAGToDAGISel::SelectCAddrModeWRO(SDValue N, unsigned Size,
+                                             SDValue &Base, SDValue &Offset,
+                                             SDValue &SignExtend,
+                                             SDValue &DoShift) {
+  if (N.getOpcode() != ISD::PTRADD)
+    return false;
+  SDValue LHS = N.getOperand(0);
+  SDValue RHS = N.getOperand(1);
+  SDLoc dl(N);
+
+  if (LHS.getValueType() != MVT::iFATPTR128)
+    return false;
+
+  // We don't want to match immediate adds here, because they are better lowered
+  // to the register-immediate addressing modes.
+  if (isa<ConstantSDNode>(RHS))
+    return false;
+
+  // Check if this particular node is reused in any non-memory related
+  // operation.  If yes, do not try to fold this node into the address
+  // computation, since the computation will be kept.
+  const SDNode *Node = N.getNode();
+  for (SDNode *UI : Node->uses()) {
+    if (!isa<MemSDNode>(*UI))
+      return false;
+  }
+
+  // Remember if it is worth folding N when it produces extended register.
+  bool IsExtendedRegisterWorthFolding = isWorthFolding(N);
+
+  // Try to match a shifted extend on the RHS.
+  if (IsExtendedRegisterWorthFolding && RHS.getOpcode() == ISD::SHL &&
+      SelectExtendedSHL(RHS, Size, true, Offset, SignExtend)) {
+    Base = LHS;
+    DoShift = CurDAG->getTargetConstant(true, dl, MVT::i32);
+    return true;
+  }
+
+  // There was no shift, whatever else we find.
+  DoShift = CurDAG->getTargetConstant(false, dl, MVT::i32);
+
+  AArch64_AM::ShiftExtendType Ext = AArch64_AM::InvalidShiftExtend;
+  // Try to match an unshifted extend on the RHS.
+  if (IsExtendedRegisterWorthFolding &&
+      (Ext = getExtendTypeForNode(RHS, true)) !=
+          AArch64_AM::InvalidShiftExtend) {
+    Base = LHS;
+    Offset = narrowIfNeeded(CurDAG, RHS.getOperand(0));
+    SignExtend = CurDAG->getTargetConstant(Ext == AArch64_AM::SXTW, dl,
+                                           MVT::i32);
+    if (isWorthFolding(RHS))
+      return true;
+  }
+
+  return false;
 }
 
 bool AArch64DAGToDAGISel::SelectAddrModeWRO(SDValue N, unsigned Size,
@@ -1023,6 +1288,83 @@ bool AArch64DAGToDAGISel::SelectAddrModeWRO(SDValue N, unsigned Size,
   return false;
 }
 
+static bool isPreferredADD(int64_t ImmOff);
+
+bool AArch64DAGToDAGISel::SelectCAddrModeXRO(SDValue N, unsigned Size,
+                                            SDValue &Base, SDValue &Offset,
+                                            SDValue &SignExtend,
+                                            SDValue &DoShift) {
+  if (N.getOpcode() != ISD::PTRADD)
+    return false;
+  SDValue LHS = N.getOperand(0);
+  SDValue RHS = N.getOperand(1);
+
+  if (LHS.getValueType() != MVT::iFATPTR128)
+    return false;
+
+  SDLoc DL(N);
+
+  // Check if this particular node is reused in any non-memory related
+  // operation.  If yes, do not try to fold this node into the address
+  // computation, since the computation will be kept.
+  const SDNode *Node = N.getNode();
+  for (SDNode *UI : Node->uses()) {
+    if (!isa<MemSDNode>(*UI))
+      return false;
+  }
+
+  const bool HasC64 = Subtarget->hasC64();
+  // Alternate [BasReg+Imm] addressing mode uses an unscaled immediate
+  // unscaled immediate.
+  if (isa<ConstantSDNode>(RHS)) {
+    int64_t ImmOff = (int64_t)cast<ConstantSDNode>(RHS)->getZExtValue();
+    // Skip the immediate can be selected by load/store addressing mode
+    // (unscaled, 6 bit signed immediate).
+    //
+    // Also skip the immediate can be encoded by a single ADD (SUB is also
+    // checked by using -ImmOff).
+    unsigned Bits = HasC64 ? 12 : 9;
+    unsigned Scale = HasC64 ? Log2_32(Size) : 0;
+
+    unsigned SMin = (APInt::getSignedMinValue(Bits).getSExtValue() - 1) << Scale;
+    unsigned UMax = (APInt::getMaxValue(Bits).getZExtValue() + 1) << Scale;
+    unsigned SMax = (APInt::getSignedMaxValue(Bits).getZExtValue() + 1) << Scale;
+
+    bool CanUseLD = (HasC64 ? ImmOff >= 0 : ImmOff > SMin) &&
+                    ImmOff < (HasC64 ? UMax : SMax) &&
+                    (HasC64 ? ImmOff % Size == 0 : true);
+
+    if (CanUseLD || isPreferredADD(ImmOff) || isPreferredADD(-ImmOff))
+      return false;
+
+    SDValue Ops[] = { RHS };
+    SDNode *MOVI =
+        CurDAG->getMachineNode(AArch64::MOVi64imm, DL, MVT::i64, Ops);
+    SDValue MOVIV = SDValue(MOVI, 0);
+    // This ADD of a fatptr and an X register will be selected into
+    // [CReg+Reg] mode.
+    N = CurDAG->getNode(ISD::PTRADD, DL, MVT::iFATPTR128, LHS, MOVIV);
+  }
+
+  // Remember if it is worth folding N when it produces extended register.
+  bool IsExtendedRegisterWorthFolding = isWorthFolding(N);
+
+  // Try to match a shifted extend on the RHS.
+  if (IsExtendedRegisterWorthFolding && RHS.getOpcode() == ISD::SHL &&
+      SelectExtendedSHL(RHS, Size, false, Offset, SignExtend)) {
+    Base = LHS;
+    DoShift = CurDAG->getTargetConstant(true, DL, MVT::i32);
+    return true;
+  }
+
+  // Match any non-shifted, non-extend, non-immediate add expression.
+  Base = LHS;
+  Offset = RHS;
+  SignExtend = CurDAG->getTargetConstant(false, DL, MVT::i32);
+  DoShift = CurDAG->getTargetConstant(false, DL, MVT::i32);
+  return true;
+}
+
 // Check if the given immediate is preferred by ADD. If an immediate can be
 // encoded in an ADD, or it can be encoded in an "ADD LSL #12" and can not be
 // encoded by one MOVZ, return true.
@@ -1071,11 +1413,22 @@ bool AArch64DAGToDAGISel::SelectAddrModeXRO(SDValue N, unsigned Size,
   if (isa<ConstantSDNode>(RHS)) {
     int64_t ImmOff = (int64_t)cast<ConstantSDNode>(RHS)->getZExtValue();
     unsigned Scale = Log2_32(Size);
+    const bool HasC64 = Subtarget->hasC64();
+    // The number of bits for the load immediate varies with the ISA
+    // (we have less bits in pure capability mode).
+    unsigned Bits = HasC64 ? 9 : 12;
     // Skip the immediate can be selected by load/store addressing mode.
     // Also skip the immediate can be encoded by a single ADD (SUB is also
     // checked by using -ImmOff).
-    if ((ImmOff % Size == 0 && ImmOff >= 0 && ImmOff < (0x1000 << Scale)) ||
-        isPreferredADD(ImmOff) || isPreferredADD(-ImmOff))
+    unsigned SMin = (APInt::getSignedMinValue(Bits).getSExtValue() - 1) << Scale;
+    unsigned UMax = (APInt::getMaxValue(Bits).getZExtValue() + 1) << Scale;
+    unsigned SMax = (APInt::getSignedMaxValue(Bits).getZExtValue() + 1) << Scale;
+
+    bool CanUseLD = (HasC64 ? ImmOff > SMin : ImmOff >= 0) &&
+                    ImmOff < (HasC64 ? SMax : UMax) &&
+                    (HasC64 ? true : ImmOff % Size == 0);
+
+    if (CanUseLD || isPreferredADD(ImmOff) || isPreferredADD(-ImmOff))
       return false;
 
     SDValue Ops[] = { RHS };
@@ -1182,14 +1535,76 @@ void AArch64DAGToDAGISel::SelectTable(SDNode *N, unsigned NumVecs, unsigned Opc,
   ReplaceNode(N, CurDAG->getMachineNode(Opc, dl, VT, Ops));
 }
 
+bool AArch64DAGToDAGISel::tryIndexedStore(SDNode *N) {
+  StoreSDNode *ST = cast<StoreSDNode>(N);
+
+  const bool HasC64 = Subtarget->hasC64();
+
+  if (ST->isUnindexed())
+    return false;
+  EVT VT = ST->getMemoryVT();
+
+  // Only match some of the fat pointer indexed stores. The others are done
+  // through tablegen.
+  if (VT != MVT::iFATPTR128)
+    return false;
+
+  ISD::MemIndexedMode AM = ST->getAddressingMode();
+  bool IsPre = AM == ISD::PRE_INC || AM == ISD::PRE_DEC;
+  bool IsDec = AM == ISD::PRE_DEC || AM == ISD::POST_DEC;
+
+  unsigned Opcode = 0;
+  SDValue Base = ST->getBasePtr();
+  EVT AddrTy = Base.getValueType();
+  bool CapabilityBase = AddrTy.isFatPointer();
+  const int64_t Scale = 16;
+
+  if (CapabilityBase && HasC64) {
+    Opcode = IsPre ? AArch64::PCapStoreImmPreW
+                   : AArch64::PCapStoreImmPost;
+  } else if (!CapabilityBase && !HasC64) {
+    Opcode = IsPre ? AArch64::CapStoreImmPreW
+                   : AArch64::CapStoreImmPost;
+  }
+
+  if (Opcode == 0)
+    return false;
+
+  SDValue Chain = ST->getChain();
+  SDValue Value = ST->getValue();
+  ConstantSDNode *OffsetOp = cast<ConstantSDNode>(ST->getOffset());
+  long OffsetVal = (long)OffsetOp->getSExtValue();
+  if (IsDec)
+    OffsetVal = -OffsetVal;
+  if (OffsetVal % Scale != 0)
+    return false;
+  OffsetVal /= Scale;
+
+  SDLoc dl(N);
+  SDValue Offset = CurDAG->getTargetConstant(OffsetVal, dl, MVT::i64);
+  SDValue Ops[] = { Value, Base, Offset, Chain };
+  SDNode *Res = CurDAG->getMachineNode(Opcode, dl, AddrTy,
+                                       MVT::Other, Ops);
+
+  ReplaceUses(SDValue(N, 0), SDValue(Res, 0));
+  ReplaceUses(SDValue(N, 1), SDValue(Res, 1));
+  CurDAG->RemoveDeadNode(N);
+
+  return true;
+}
+
 bool AArch64DAGToDAGISel::tryIndexedLoad(SDNode *N) {
   LoadSDNode *LD = cast<LoadSDNode>(N);
+
+  const bool HasC64 = Subtarget->hasC64();
+
   if (LD->isUnindexed())
     return false;
   EVT VT = LD->getMemoryVT();
   EVT DstVT = N->getValueType(0);
   ISD::MemIndexedMode AM = LD->getAddressingMode();
   bool IsPre = AM == ISD::PRE_INC || AM == ISD::PRE_DEC;
+  bool IsDec = AM == ISD::PRE_DEC || AM == ISD::POST_DEC;
 
   // We're not doing validity checking here. That was done when checking
   // if we should mark the load as indexed or not. We're just selecting
@@ -1198,15 +1613,47 @@ bool AArch64DAGToDAGISel::tryIndexedLoad(SDNode *N) {
 
   ISD::LoadExtType ExtType = LD->getExtensionType();
   bool InsertTo64 = false;
-  if (VT == MVT::i64)
-    Opcode = IsPre ? AArch64::LDRXpre : AArch64::LDRXpost;
-  else if (VT == MVT::i32) {
-    if (ExtType == ISD::NON_EXTLOAD)
-      Opcode = IsPre ? AArch64::LDRWpre : AArch64::LDRWpost;
-    else if (ExtType == ISD::SEXTLOAD)
-      Opcode = IsPre ? AArch64::LDRSWpre : AArch64::LDRSWpost;
+  SDValue Base = LD->getBasePtr();
+  EVT AddrTy = Base.getValueType();
+  bool CapabilityBase = AddrTy.isFatPointer();
+  long Scale = 1;
+
+  if (CapabilityBase != HasC64) {
+    llvm_unreachable("Unexpected addressing mode");
+  }
+
+  if (VT == MVT::iFATPTR128) {
+    if (CapabilityBase && HasC64) {
+      Opcode = IsPre ? AArch64::PCapLoadImmPreW
+                     : AArch64::PCapLoadImmPost;
+      Scale = 16;
+    } else {
+      Opcode = IsPre ? AArch64::CapLoadImmPreW
+                     : AArch64::CapLoadImmPost;
+      Scale = 16;
+    }
+  } else if (VT == MVT::i64) {
+    if (CapabilityBase && HasC64)
+      Opcode = IsPre ? AArch64::ALDRXpre : AArch64::ALDRXpost;
+    else
+      Opcode = IsPre ? AArch64::LDRXpre : AArch64::LDRXpost;
+  } else if (VT == MVT::i32) {
+    if (ExtType == ISD::NON_EXTLOAD) {
+      if (CapabilityBase && HasC64)
+        Opcode = IsPre ? AArch64::ALDRWpre : AArch64::ALDRWpost;
+      else
+        Opcode = IsPre ? AArch64::LDRWpre : AArch64::LDRWpost;
+    } else if (ExtType == ISD::SEXTLOAD) {
+      if (CapabilityBase && HasC64)
+        Opcode = IsPre ? AArch64::ALDRSWpre : AArch64::ALDRSWpost;
+      else
+        Opcode = IsPre ? AArch64::LDRSWpre : AArch64::LDRSWpost;
+    }
     else {
-      Opcode = IsPre ? AArch64::LDRWpre : AArch64::LDRWpost;
+      if (CapabilityBase && HasC64)
+        Opcode = IsPre ? AArch64::ALDRWpre : AArch64::ALDRWpost;
+      else
+        Opcode = IsPre ? AArch64::LDRWpre : AArch64::LDRWpost;
       InsertTo64 = true;
       // The result of the load is only i32. It's the subreg_to_reg that makes
       // it into an i64.
@@ -1214,12 +1661,23 @@ bool AArch64DAGToDAGISel::tryIndexedLoad(SDNode *N) {
     }
   } else if (VT == MVT::i16) {
     if (ExtType == ISD::SEXTLOAD) {
-      if (DstVT == MVT::i64)
-        Opcode = IsPre ? AArch64::LDRSHXpre : AArch64::LDRSHXpost;
-      else
-        Opcode = IsPre ? AArch64::LDRSHWpre : AArch64::LDRSHWpost;
+      if (CapabilityBase && HasC64) {
+        if (DstVT == MVT::i64)
+          Opcode = IsPre ? AArch64::ALDRSHXpre : AArch64::ALDRSHXpost;
+        else
+          Opcode = IsPre ? AArch64::ALDRSHWpre : AArch64::ALDRSHWpost;
+      } else {
+        if (DstVT == MVT::i64)
+          Opcode = IsPre ? AArch64::LDRSHXpre : AArch64::LDRSHXpost;
+        else
+          Opcode = IsPre ? AArch64::LDRSHWpre : AArch64::LDRSHWpost;
+      }
     } else {
-      Opcode = IsPre ? AArch64::LDRHHpre : AArch64::LDRHHpost;
+      if (CapabilityBase && HasC64)
+        Opcode = IsPre ? AArch64::ALDRHHpre : AArch64::ALDRHHpost;
+      else
+        Opcode = IsPre ? AArch64::LDRHHpre : AArch64::LDRHHpost;
+
       InsertTo64 = DstVT == MVT::i64;
       // The result of the load is only i32. It's the subreg_to_reg that makes
       // it into an i64.
@@ -1227,38 +1685,67 @@ bool AArch64DAGToDAGISel::tryIndexedLoad(SDNode *N) {
     }
   } else if (VT == MVT::i8) {
     if (ExtType == ISD::SEXTLOAD) {
-      if (DstVT == MVT::i64)
-        Opcode = IsPre ? AArch64::LDRSBXpre : AArch64::LDRSBXpost;
-      else
-        Opcode = IsPre ? AArch64::LDRSBWpre : AArch64::LDRSBWpost;
+      if (CapabilityBase && HasC64) {
+        if (DstVT == MVT::i64)
+          Opcode = IsPre ? AArch64::ALDRSBXpre : AArch64::ALDRSBXpost;
+        else
+          Opcode = IsPre ? AArch64::ALDRSBWpre : AArch64::ALDRSBWpost;
+      } else {
+        if (DstVT == MVT::i64)
+          Opcode = IsPre ? AArch64::LDRSBXpre : AArch64::LDRSBXpost;
+        else
+          Opcode = IsPre ? AArch64::LDRSBWpre : AArch64::LDRSBWpost;
+      }
     } else {
-      Opcode = IsPre ? AArch64::LDRBBpre : AArch64::LDRBBpost;
+      if (CapabilityBase && HasC64)
+        Opcode = IsPre ? AArch64::ALDRBBpre : AArch64::ALDRBBpost;
+      else
+        Opcode = IsPre ? AArch64::LDRBBpre : AArch64::LDRBBpost;
+
       InsertTo64 = DstVT == MVT::i64;
       // The result of the load is only i32. It's the subreg_to_reg that makes
       // it into an i64.
       DstVT = MVT::i32;
     }
   } else if (VT == MVT::f16) {
-    Opcode = IsPre ? AArch64::LDRHpre : AArch64::LDRHpost;
+    if (CapabilityBase && HasC64)
+      Opcode = IsPre ? AArch64::ALDRHpre : AArch64::ALDRHpost;
+    else
+      Opcode = IsPre ? AArch64::LDRHpre : AArch64::LDRHpost;
   } else if (VT == MVT::f32) {
-    Opcode = IsPre ? AArch64::LDRSpre : AArch64::LDRSpost;
+    if (CapabilityBase && HasC64)
+      Opcode = IsPre ? AArch64::ALDRSpre : AArch64::ALDRSpost;
+    else
+      Opcode = IsPre ? AArch64::LDRSpre : AArch64::LDRSpost;
   } else if (VT == MVT::f64 || VT.is64BitVector()) {
-    Opcode = IsPre ? AArch64::LDRDpre : AArch64::LDRDpost;
-  } else if (VT.is128BitVector()) {
+    if (CapabilityBase && HasC64)
+      Opcode = IsPre ? AArch64::ALDRDpre : AArch64::ALDRDpost;
+    else
+      Opcode = IsPre ? AArch64::LDRDpre : AArch64::LDRDpost;
+  } else if (CapabilityBase && HasC64 &&
+             (VT == MVT::f128 || VT.is128BitVector())) {
+    Opcode = IsPre ? AArch64::ALDRQpre : AArch64::ALDRQpost;
+  } else if (VT == MVT::f128 || VT.is128BitVector()) {
     Opcode = IsPre ? AArch64::LDRQpre : AArch64::LDRQpost;
   } else
     return false;
   SDValue Chain = LD->getChain();
-  SDValue Base = LD->getBasePtr();
   ConstantSDNode *OffsetOp = cast<ConstantSDNode>(LD->getOffset());
-  int OffsetVal = (int)OffsetOp->getZExtValue();
+  long OffsetVal = (long)OffsetOp->getSExtValue();
+  if (IsDec)
+    OffsetVal = -OffsetVal;
+  if (OffsetVal % Scale != 0)
+    return false;
+  OffsetVal /= Scale;
+
   SDLoc dl(N);
   SDValue Offset = CurDAG->getTargetConstant(OffsetVal, dl, MVT::i64);
   SDValue Ops[] = { Base, Offset, Chain };
-  SDNode *Res = CurDAG->getMachineNode(Opcode, dl, MVT::i64, DstVT,
+  SDNode *Res = CurDAG->getMachineNode(Opcode, dl, AddrTy, DstVT,
                                        MVT::Other, Ops);
   // Either way, we're replacing the node, so tell the caller that.
   SDValue LoadedVal = SDValue(Res, 1);
+
   if (InsertTo64) {
     SDValue SubReg = CurDAG->getTargetConstant(AArch64::sub_32, dl, MVT::i32);
     LoadedVal =
@@ -1267,6 +1754,7 @@ bool AArch64DAGToDAGISel::tryIndexedLoad(SDNode *N) {
                     CurDAG->getTargetConstant(0, dl, MVT::i64), LoadedVal,
                     SubReg),
                 0);
+    DstVT = MVT::i64;
   }
 
   ReplaceUses(SDValue(N, 0), LoadedVal);
@@ -1276,8 +1764,535 @@ bool AArch64DAGToDAGISel::tryIndexedLoad(SDNode *N) {
   return true;
 }
 
-void AArch64DAGToDAGISel::SelectLoad(SDNode *N, unsigned NumVecs, unsigned Opc,
-                                     unsigned SubRegIdx) {
+// Helper function for vector load/store select functions to specialize the
+// opcode based on the value type.
+static unsigned GetVectorMemOpc(SDNode *N, EVT VT, unsigned BaseOperand) {
+  bool CapabilityBase = N->getOperand(BaseOperand).getValueType().isFatPointer();
+  // Chose an opcode table based on node opcode. The opcode table is ordered by
+  // element size then vector size.
+  SmallVector<unsigned, 8> Opcodes;
+  switch (N->getOpcode()) {
+  default:
+    llvm_unreachable("Expected a vector load/store");
+    break;
+  case ISD::INTRINSIC_W_CHAIN:
+  case ISD::INTRINSIC_VOID: {
+    unsigned IntNo = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
+    switch (IntNo) {
+    default:
+      llvm_unreachable("Expected a vector load/store");
+      break;
+    case Intrinsic::aarch64_neon_ld1x2:
+      if (CapabilityBase)
+        Opcodes = { AArch64::ALD1Twov8b, AArch64::ALD1Twov16b,
+                    AArch64::ALD1Twov4h, AArch64::ALD1Twov8h,
+                    AArch64::ALD1Twov2s, AArch64::ALD1Twov4s,
+                    AArch64::ALD1Twov1d, AArch64::ALD1Twov2d };
+      else
+        Opcodes = { AArch64::LD1Twov8b, AArch64::LD1Twov16b,
+                    AArch64::LD1Twov4h, AArch64::LD1Twov8h,
+                    AArch64::LD1Twov2s, AArch64::LD1Twov4s,
+                    AArch64::LD1Twov1d, AArch64::LD1Twov2d };
+      break;
+    case Intrinsic::aarch64_neon_ld1x3:
+      if (CapabilityBase)
+        Opcodes = { AArch64::ALD1Threev8b, AArch64::ALD1Threev16b,
+                    AArch64::ALD1Threev4h, AArch64::ALD1Threev8h,
+                    AArch64::ALD1Threev2s, AArch64::ALD1Threev4s,
+                    AArch64::ALD1Threev1d, AArch64::ALD1Threev2d };
+      else
+        Opcodes = { AArch64::LD1Threev8b, AArch64::LD1Threev16b,
+                    AArch64::LD1Threev4h, AArch64::LD1Threev8h,
+                    AArch64::LD1Threev2s, AArch64::LD1Threev4s,
+                    AArch64::LD1Threev1d, AArch64::LD1Threev2d };
+      break;
+    case Intrinsic::aarch64_neon_ld1x4:
+      if (CapabilityBase)
+        Opcodes = { AArch64::ALD1Fourv8b, AArch64::ALD1Fourv16b,
+                    AArch64::ALD1Fourv4h, AArch64::ALD1Fourv8h,
+                    AArch64::ALD1Fourv2s, AArch64::ALD1Fourv4s,
+                    AArch64::ALD1Fourv1d, AArch64::ALD1Fourv2d };
+      else
+        Opcodes = { AArch64::LD1Fourv8b, AArch64::LD1Fourv16b,
+                    AArch64::LD1Fourv4h, AArch64::LD1Fourv8h,
+                    AArch64::LD1Fourv2s, AArch64::LD1Fourv4s,
+                    AArch64::LD1Fourv1d, AArch64::LD1Fourv2d };
+      break;
+    case Intrinsic::aarch64_neon_ld2:
+      if (CapabilityBase)
+        Opcodes = { AArch64::ALD2Twov8b, AArch64::ALD2Twov16b,
+                    AArch64::ALD2Twov4h, AArch64::ALD2Twov8h,
+                    AArch64::ALD2Twov2s, AArch64::ALD2Twov4s,
+                    AArch64::ALD1Twov1d, AArch64::ALD2Twov2d };
+      else
+        Opcodes = { AArch64::LD2Twov8b, AArch64::LD2Twov16b,
+                    AArch64::LD2Twov4h, AArch64::LD2Twov8h,
+                    AArch64::LD2Twov2s, AArch64::LD2Twov4s,
+                    AArch64::LD1Twov1d, AArch64::LD2Twov2d };
+      break;
+    case Intrinsic::aarch64_neon_ld3:
+      if (CapabilityBase)
+        Opcodes = { AArch64::ALD3Threev8b, AArch64::ALD3Threev16b,
+                    AArch64::ALD3Threev4h, AArch64::ALD3Threev8h,
+                    AArch64::ALD3Threev2s, AArch64::ALD3Threev4s,
+                    AArch64::ALD1Threev1d, AArch64::ALD3Threev2d };
+      else
+        Opcodes = { AArch64::LD3Threev8b, AArch64::LD3Threev16b,
+                    AArch64::LD3Threev4h, AArch64::LD3Threev8h,
+                    AArch64::LD3Threev2s, AArch64::LD3Threev4s,
+                    AArch64::LD1Threev1d, AArch64::LD3Threev2d };
+      break;
+    case Intrinsic::aarch64_neon_ld4:
+      if (CapabilityBase)
+        Opcodes = { AArch64::ALD4Fourv8b, AArch64::ALD4Fourv16b,
+                    AArch64::ALD4Fourv4h, AArch64::ALD4Fourv8h,
+                    AArch64::ALD4Fourv2s, AArch64::ALD4Fourv4s,
+                    AArch64::ALD1Fourv1d, AArch64::ALD4Fourv2d };
+      else
+        Opcodes = { AArch64::LD4Fourv8b, AArch64::LD4Fourv16b,
+                    AArch64::LD4Fourv4h, AArch64::LD4Fourv8h,
+                    AArch64::LD4Fourv2s, AArch64::LD4Fourv4s,
+                    AArch64::LD1Fourv1d, AArch64::LD4Fourv2d };
+      break;
+    case Intrinsic::aarch64_neon_ld2r:
+      if (CapabilityBase)
+        Opcodes = { AArch64::ALD2Rv8b, AArch64::ALD2Rv16b,
+                    AArch64::ALD2Rv4h, AArch64::ALD2Rv8h,
+                    AArch64::ALD2Rv2s, AArch64::ALD2Rv4s,
+                    AArch64::ALD2Rv1d, AArch64::ALD2Rv2d };
+      else
+        Opcodes = { AArch64::LD2Rv8b, AArch64::LD2Rv16b,
+                    AArch64::LD2Rv4h, AArch64::LD2Rv8h,
+                    AArch64::LD2Rv2s, AArch64::LD2Rv4s,
+                    AArch64::LD2Rv1d, AArch64::LD2Rv2d };
+      break;
+    case Intrinsic::aarch64_neon_ld3r:
+      if (CapabilityBase)
+        Opcodes = { AArch64::ALD3Rv8b, AArch64::ALD3Rv16b,
+                    AArch64::ALD3Rv4h, AArch64::ALD3Rv8h,
+                    AArch64::ALD3Rv2s, AArch64::ALD3Rv4s,
+                    AArch64::ALD3Rv1d, AArch64::ALD3Rv2d };
+      else
+        Opcodes = { AArch64::LD3Rv8b, AArch64::LD3Rv16b,
+                    AArch64::LD3Rv4h, AArch64::LD3Rv8h,
+                    AArch64::LD3Rv2s, AArch64::LD3Rv4s,
+                    AArch64::LD3Rv1d, AArch64::LD3Rv2d };
+      break;
+    case Intrinsic::aarch64_neon_ld4r:
+      if (CapabilityBase)
+        Opcodes = { AArch64::ALD4Rv8b, AArch64::ALD4Rv16b,
+                    AArch64::ALD4Rv4h, AArch64::ALD4Rv8h,
+                    AArch64::ALD4Rv2s, AArch64::ALD4Rv4s,
+                    AArch64::ALD4Rv1d, AArch64::ALD4Rv2d };
+      else
+        Opcodes = { AArch64::LD4Rv8b, AArch64::LD4Rv16b,
+                    AArch64::LD4Rv4h, AArch64::LD4Rv8h,
+                    AArch64::LD4Rv2s, AArch64::LD4Rv4s,
+                    AArch64::LD4Rv1d, AArch64::LD4Rv2d };
+      break;
+    case Intrinsic::aarch64_neon_st1x2:
+      if (CapabilityBase)
+        Opcodes = { AArch64::AST1Twov8b, AArch64::AST1Twov16b,
+                    AArch64::AST1Twov4h, AArch64::AST1Twov8h,
+                    AArch64::AST1Twov2s, AArch64::AST1Twov4s,
+                    AArch64::AST1Twov1d, AArch64::AST1Twov2d };
+      else
+        Opcodes = { AArch64::ST1Twov8b, AArch64::ST1Twov16b,
+                    AArch64::ST1Twov4h, AArch64::ST1Twov8h,
+                    AArch64::ST1Twov2s, AArch64::ST1Twov4s,
+                    AArch64::ST1Twov1d, AArch64::ST1Twov2d };
+      break;
+    case Intrinsic::aarch64_neon_st1x3:
+      if (CapabilityBase)
+        Opcodes = { AArch64::AST1Threev8b, AArch64::AST1Threev16b,
+                    AArch64::AST1Threev4h, AArch64::AST1Threev8h,
+                    AArch64::AST1Threev2s, AArch64::AST1Threev4s,
+                    AArch64::AST1Threev1d, AArch64::AST1Threev2d };
+      else
+        Opcodes = { AArch64::ST1Threev8b, AArch64::ST1Threev16b,
+                    AArch64::ST1Threev4h, AArch64::ST1Threev8h,
+                    AArch64::ST1Threev2s, AArch64::ST1Threev4s,
+                    AArch64::ST1Threev1d, AArch64::ST1Threev2d };
+      break;
+    case Intrinsic::aarch64_neon_st1x4:
+      if (CapabilityBase)
+        Opcodes = { AArch64::AST1Fourv8b, AArch64::AST1Fourv16b,
+                    AArch64::AST1Fourv4h, AArch64::AST1Fourv8h,
+                    AArch64::AST1Fourv2s, AArch64::AST1Fourv4s,
+                    AArch64::AST1Fourv1d, AArch64::AST1Fourv2d };
+      else
+        Opcodes = { AArch64::ST1Fourv8b, AArch64::ST1Fourv16b,
+                    AArch64::ST1Fourv4h, AArch64::ST1Fourv8h,
+                    AArch64::ST1Fourv2s, AArch64::ST1Fourv4s,
+                    AArch64::ST1Fourv1d, AArch64::ST1Fourv2d };
+      break;
+    case Intrinsic::aarch64_neon_st2:
+      if (CapabilityBase)
+        Opcodes = { AArch64::AST2Twov8b, AArch64::AST2Twov16b,
+                    AArch64::AST2Twov4h, AArch64::AST2Twov8h,
+                    AArch64::AST2Twov2s, AArch64::AST2Twov4s,
+                    AArch64::AST1Twov1d, AArch64::AST2Twov2d };
+      else
+        Opcodes = { AArch64::ST2Twov8b, AArch64::ST2Twov16b,
+                    AArch64::ST2Twov4h, AArch64::ST2Twov8h,
+                    AArch64::ST2Twov2s, AArch64::ST2Twov4s,
+                    AArch64::ST1Twov1d, AArch64::ST2Twov2d };
+      break;
+    case Intrinsic::aarch64_neon_st3:
+      if (CapabilityBase)
+        Opcodes = { AArch64::AST3Threev8b, AArch64::AST3Threev16b,
+                    AArch64::AST3Threev4h, AArch64::AST3Threev8h,
+                    AArch64::AST3Threev2s, AArch64::AST3Threev4s,
+                    AArch64::AST1Threev1d, AArch64::AST3Threev2d };
+      else
+        Opcodes = { AArch64::ST3Threev8b, AArch64::ST3Threev16b,
+                    AArch64::ST3Threev4h, AArch64::ST3Threev8h,
+                    AArch64::ST3Threev2s, AArch64::ST3Threev4s,
+                    AArch64::ST1Threev1d, AArch64::ST3Threev2d };
+      break;
+    case Intrinsic::aarch64_neon_st4:
+      if (CapabilityBase)
+        Opcodes = { AArch64::AST4Fourv8b, AArch64::AST4Fourv16b,
+                    AArch64::AST4Fourv4h, AArch64::AST4Fourv8h,
+                    AArch64::AST4Fourv2s, AArch64::AST4Fourv4s,
+                    AArch64::AST1Fourv1d, AArch64::AST4Fourv2d };
+      else
+        Opcodes = { AArch64::ST4Fourv8b, AArch64::ST4Fourv16b,
+                    AArch64::ST4Fourv4h, AArch64::ST4Fourv8h,
+                    AArch64::ST4Fourv2s, AArch64::ST4Fourv4s,
+                    AArch64::ST1Fourv1d, AArch64::ST4Fourv2d };
+      break;
+    }
+    break;
+  }
+  case AArch64ISD::LD2post:
+    if (CapabilityBase)
+      Opcodes = { AArch64::ALD2Twov8b_POST, AArch64::ALD2Twov16b_POST,
+                  AArch64::ALD2Twov4h_POST, AArch64::ALD2Twov8h_POST,
+                  AArch64::ALD2Twov2s_POST, AArch64::ALD2Twov4s_POST,
+                  AArch64::ALD1Twov1d_POST, AArch64::ALD2Twov2d_POST };
+    else
+      Opcodes = { AArch64::LD2Twov8b_POST, AArch64::LD2Twov16b_POST,
+                  AArch64::LD2Twov4h_POST, AArch64::LD2Twov8h_POST,
+                  AArch64::LD2Twov2s_POST, AArch64::LD2Twov4s_POST,
+                  AArch64::LD1Twov1d_POST, AArch64::LD2Twov2d_POST };
+    break;
+  case AArch64ISD::LD3post:
+    if (CapabilityBase)
+      Opcodes = { AArch64::ALD3Threev8b_POST, AArch64::ALD3Threev16b_POST,
+                  AArch64::ALD3Threev4h_POST, AArch64::ALD3Threev8h_POST,
+                  AArch64::ALD3Threev2s_POST, AArch64::ALD3Threev4s_POST,
+                  AArch64::ALD1Threev1d_POST, AArch64::ALD3Threev2d_POST };
+    else
+      Opcodes = { AArch64::LD3Threev8b_POST, AArch64::LD3Threev16b_POST,
+                  AArch64::LD3Threev4h_POST, AArch64::LD3Threev8h_POST,
+                  AArch64::LD3Threev2s_POST, AArch64::LD3Threev4s_POST,
+                  AArch64::LD1Threev1d_POST, AArch64::LD3Threev2d_POST };
+    break;
+  case AArch64ISD::LD4post:
+    if (CapabilityBase)
+      Opcodes = { AArch64::ALD4Fourv8b_POST, AArch64::ALD4Fourv16b_POST,
+                  AArch64::ALD4Fourv4h_POST, AArch64::ALD4Fourv8h_POST,
+                  AArch64::ALD4Fourv2s_POST, AArch64::ALD4Fourv4s_POST,
+                  AArch64::ALD1Fourv1d_POST, AArch64::ALD4Fourv2d_POST };
+    else
+      Opcodes = { AArch64::LD4Fourv8b_POST, AArch64::LD4Fourv16b_POST,
+                  AArch64::LD4Fourv4h_POST, AArch64::LD4Fourv8h_POST,
+                  AArch64::LD4Fourv2s_POST, AArch64::LD4Fourv4s_POST,
+                  AArch64::LD1Fourv1d_POST, AArch64::LD4Fourv2d_POST };
+    break;
+  case AArch64ISD::LD1x2post:
+    if (CapabilityBase)
+      Opcodes = { AArch64::ALD1Twov8b_POST, AArch64::ALD1Twov16b_POST,
+                  AArch64::ALD1Twov4h_POST, AArch64::ALD1Twov8h_POST,
+                  AArch64::ALD1Twov2s_POST, AArch64::ALD1Twov4s_POST,
+                  AArch64::ALD1Twov1d_POST, AArch64::ALD1Twov2d_POST };
+    else
+      Opcodes = { AArch64::LD1Twov8b_POST, AArch64::LD1Twov16b_POST,
+                  AArch64::LD1Twov4h_POST, AArch64::LD1Twov8h_POST,
+                  AArch64::LD1Twov2s_POST, AArch64::LD1Twov4s_POST,
+                  AArch64::LD1Twov1d_POST, AArch64::LD1Twov2d_POST };
+    break;
+  case AArch64ISD::LD1x3post:
+    if (CapabilityBase)
+      Opcodes = { AArch64::ALD1Threev8b_POST, AArch64::ALD1Threev16b_POST,
+                  AArch64::ALD1Threev4h_POST, AArch64::ALD1Threev8h_POST,
+                  AArch64::ALD1Threev2s_POST, AArch64::ALD1Threev4s_POST,
+                  AArch64::ALD1Threev1d_POST, AArch64::ALD1Threev2d_POST };
+    else
+      Opcodes = { AArch64::LD1Threev8b_POST, AArch64::LD1Threev16b_POST,
+                  AArch64::LD1Threev4h_POST, AArch64::LD1Threev8h_POST,
+                  AArch64::LD1Threev2s_POST, AArch64::LD1Threev4s_POST,
+                  AArch64::LD1Threev1d_POST, AArch64::LD1Threev2d_POST };
+    break;
+  case AArch64ISD::LD1x4post:
+    if (CapabilityBase)
+      Opcodes = { AArch64::ALD1Fourv8b_POST, AArch64::ALD1Fourv16b_POST,
+                  AArch64::ALD1Fourv4h_POST, AArch64::ALD1Fourv8h_POST,
+                  AArch64::ALD1Fourv2s_POST, AArch64::ALD1Fourv4s_POST,
+                  AArch64::ALD1Fourv1d_POST, AArch64::ALD1Fourv2d_POST };
+    else
+      Opcodes = { AArch64::LD1Fourv8b_POST, AArch64::LD1Fourv16b_POST,
+                  AArch64::LD1Fourv4h_POST, AArch64::LD1Fourv8h_POST,
+                  AArch64::LD1Fourv2s_POST, AArch64::LD1Fourv4s_POST,
+                  AArch64::LD1Fourv1d_POST, AArch64::LD1Fourv2d_POST };
+    break;
+  case AArch64ISD::LD1DUPpost:
+    if (CapabilityBase)
+      Opcodes = { AArch64::ALD1Rv8b_POST, AArch64::ALD1Rv16b_POST,
+                  AArch64::ALD1Rv4h_POST, AArch64::ALD1Rv8h_POST,
+                  AArch64::ALD1Rv2s_POST, AArch64::ALD1Rv4s_POST,
+                  AArch64::ALD1Rv1d_POST, AArch64::ALD1Rv2d_POST };
+    else
+      Opcodes = { AArch64::LD1Rv8b_POST, AArch64::LD1Rv16b_POST,
+                  AArch64::LD1Rv4h_POST, AArch64::LD1Rv8h_POST,
+                  AArch64::LD1Rv2s_POST, AArch64::LD1Rv4s_POST,
+                  AArch64::LD1Rv1d_POST, AArch64::LD1Rv2d_POST };
+    break;
+  case AArch64ISD::LD2DUPpost:
+    if (CapabilityBase)
+      Opcodes = { AArch64::ALD2Rv8b_POST, AArch64::ALD2Rv16b_POST,
+                  AArch64::ALD2Rv4h_POST, AArch64::ALD2Rv8h_POST,
+                  AArch64::ALD2Rv2s_POST, AArch64::ALD2Rv4s_POST,
+                  AArch64::ALD2Rv1d_POST, AArch64::ALD2Rv2d_POST };
+    else
+      Opcodes = { AArch64::LD2Rv8b_POST, AArch64::LD2Rv16b_POST,
+                  AArch64::LD2Rv4h_POST, AArch64::LD2Rv8h_POST,
+                  AArch64::LD2Rv2s_POST, AArch64::LD2Rv4s_POST,
+                  AArch64::LD2Rv1d_POST, AArch64::LD2Rv2d_POST };
+    break;
+  case AArch64ISD::LD3DUPpost:
+    if (CapabilityBase)
+      Opcodes = { AArch64::ALD3Rv8b_POST, AArch64::ALD3Rv16b_POST,
+                  AArch64::ALD3Rv4h_POST, AArch64::ALD3Rv8h_POST,
+                  AArch64::ALD3Rv2s_POST, AArch64::ALD3Rv4s_POST,
+                  AArch64::ALD3Rv1d_POST, AArch64::ALD3Rv2d_POST };
+    else
+      Opcodes = { AArch64::LD3Rv8b_POST, AArch64::LD3Rv16b_POST,
+                  AArch64::LD3Rv4h_POST, AArch64::LD3Rv8h_POST,
+                  AArch64::LD3Rv2s_POST, AArch64::LD3Rv4s_POST,
+                  AArch64::LD3Rv1d_POST, AArch64::LD3Rv2d_POST };
+    break;
+  case AArch64ISD::LD4DUPpost:
+    if (CapabilityBase)
+      Opcodes = { AArch64::ALD4Rv8b_POST, AArch64::ALD4Rv16b_POST,
+                  AArch64::ALD4Rv4h_POST, AArch64::ALD4Rv8h_POST,
+                  AArch64::ALD4Rv2s_POST, AArch64::ALD4Rv4s_POST,
+                  AArch64::ALD4Rv1d_POST, AArch64::ALD4Rv2d_POST };
+    else
+      Opcodes = { AArch64::LD4Rv8b_POST, AArch64::LD4Rv16b_POST,
+                  AArch64::LD4Rv4h_POST, AArch64::LD4Rv8h_POST,
+                  AArch64::LD4Rv2s_POST, AArch64::LD4Rv4s_POST,
+                  AArch64::LD4Rv1d_POST, AArch64::LD4Rv2d_POST };
+    break;
+  case AArch64ISD::ST2post:
+    if (CapabilityBase)
+      Opcodes = { AArch64::AST2Twov8b_POST, AArch64::AST2Twov16b_POST,
+                  AArch64::AST2Twov4h_POST, AArch64::AST2Twov8h_POST,
+                  AArch64::AST2Twov2s_POST, AArch64::AST2Twov4s_POST,
+                  AArch64::AST1Twov1d_POST, AArch64::AST2Twov2d_POST };
+    else
+      Opcodes = { AArch64::ST2Twov8b_POST, AArch64::ST2Twov16b_POST,
+                  AArch64::ST2Twov4h_POST, AArch64::ST2Twov8h_POST,
+                  AArch64::ST2Twov2s_POST, AArch64::ST2Twov4s_POST,
+                  AArch64::ST1Twov1d_POST, AArch64::ST2Twov2d_POST };
+    break;
+  case AArch64ISD::ST3post:
+    if (CapabilityBase)
+      Opcodes = { AArch64::AST3Threev8b_POST, AArch64::AST3Threev16b_POST,
+                  AArch64::AST3Threev4h_POST, AArch64::AST3Threev8h_POST,
+                  AArch64::AST3Threev2s_POST, AArch64::AST3Threev4s_POST,
+                  AArch64::AST1Threev1d_POST, AArch64::AST3Threev2d_POST };
+    else
+      Opcodes = { AArch64::ST3Threev8b_POST, AArch64::ST3Threev16b_POST,
+                  AArch64::ST3Threev4h_POST, AArch64::ST3Threev8h_POST,
+                  AArch64::ST3Threev2s_POST, AArch64::ST3Threev4s_POST,
+                  AArch64::ST1Threev1d_POST, AArch64::ST3Threev2d_POST };
+    break;
+  case AArch64ISD::ST4post:
+    if (CapabilityBase)
+      Opcodes = { AArch64::AST4Fourv8b_POST, AArch64::AST4Fourv16b_POST,
+                  AArch64::AST4Fourv4h_POST, AArch64::AST4Fourv8h_POST,
+                  AArch64::AST4Fourv2s_POST, AArch64::AST4Fourv4s_POST,
+                  AArch64::AST1Fourv1d_POST, AArch64::AST4Fourv2d_POST };
+    else
+      Opcodes = { AArch64::ST4Fourv8b_POST, AArch64::ST4Fourv16b_POST,
+                  AArch64::ST4Fourv4h_POST, AArch64::ST4Fourv8h_POST,
+                  AArch64::ST4Fourv2s_POST, AArch64::ST4Fourv4s_POST,
+                  AArch64::ST1Fourv1d_POST, AArch64::ST4Fourv2d_POST };
+    break;
+  case AArch64ISD::ST1x2post:
+    if (CapabilityBase)
+      Opcodes = { AArch64::AST1Twov8b_POST, AArch64::AST1Twov16b_POST,
+                  AArch64::AST1Twov4h_POST, AArch64::AST1Twov8h_POST,
+                  AArch64::AST1Twov2s_POST, AArch64::AST1Twov4s_POST,
+                  AArch64::AST1Twov1d_POST, AArch64::AST1Twov2d_POST };
+    else
+      Opcodes = { AArch64::ST1Twov8b_POST, AArch64::ST1Twov16b_POST,
+                  AArch64::ST1Twov4h_POST, AArch64::ST1Twov8h_POST,
+                  AArch64::ST1Twov2s_POST, AArch64::ST1Twov4s_POST,
+                  AArch64::ST1Twov1d_POST, AArch64::ST1Twov2d_POST };
+    break;
+  case AArch64ISD::ST1x3post:
+    if (CapabilityBase)
+      Opcodes = { AArch64::AST1Threev8b_POST, AArch64::AST1Threev16b_POST,
+                  AArch64::AST1Threev4h_POST, AArch64::AST1Threev8h_POST,
+                  AArch64::AST1Threev2s_POST, AArch64::AST1Threev4s_POST,
+                  AArch64::AST1Threev1d_POST, AArch64::AST1Threev2d_POST };
+    else
+      Opcodes = { AArch64::ST1Threev8b_POST, AArch64::ST1Threev16b_POST,
+                  AArch64::ST1Threev4h_POST, AArch64::ST1Threev8h_POST,
+                  AArch64::ST1Threev2s_POST, AArch64::ST1Threev4s_POST,
+                  AArch64::ST1Threev1d_POST, AArch64::ST1Threev2d_POST };
+    break;
+  case AArch64ISD::ST1x4post:
+    if (CapabilityBase)
+      Opcodes = { AArch64::AST1Fourv8b_POST, AArch64::AST1Fourv16b_POST,
+                  AArch64::AST1Fourv4h_POST, AArch64::AST1Fourv8h_POST,
+                  AArch64::AST1Fourv2s_POST, AArch64::AST1Fourv4s_POST,
+                  AArch64::AST1Fourv1d_POST, AArch64::AST1Fourv2d_POST };
+    else
+      Opcodes = { AArch64::ST1Fourv8b_POST, AArch64::ST1Fourv16b_POST,
+                  AArch64::ST1Fourv4h_POST, AArch64::ST1Fourv8h_POST,
+                  AArch64::ST1Fourv2s_POST, AArch64::ST1Fourv4s_POST,
+                  AArch64::ST1Fourv1d_POST, AArch64::ST1Fourv2d_POST };
+    break;
+  }
+  unsigned LogElementSize = Log2_32_Ceil(VT.getScalarSizeInBits()/8);
+  return Opcodes[(2 * LogElementSize) + VT.is128BitVector()];
+}
+
+// Helper function for vector load/store lane select functions to specialize the
+// opcode based on the value type.
+static unsigned GetVectorMemLaneOpc(SDNode *N, EVT VT, unsigned BaseOperand) {
+  bool CapabilityBase = N->getOperand(BaseOperand).getValueType().isFatPointer();
+  // Chose an opcode table based on node opcode. The opcode table is ordered by
+  // element size.
+  SmallVector<unsigned, 4> Opcodes;
+  switch (N->getOpcode()) {
+  default:
+    llvm_unreachable("Expected a vector load/store");
+    break;
+  case ISD::INTRINSIC_W_CHAIN:
+  case ISD::INTRINSIC_VOID: {
+    unsigned IntNo = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
+    switch (IntNo) {
+    default:
+      llvm_unreachable("Expected a vector load/store");
+      break;
+    case Intrinsic::aarch64_neon_ld2lane:
+      if (CapabilityBase)
+        Opcodes = { AArch64::ALD2i8, AArch64::ALD2i16,
+                    AArch64::ALD2i32, AArch64::ALD2i64 };
+      else
+        Opcodes = { AArch64::LD2i8, AArch64::LD2i16,
+                    AArch64::LD2i32, AArch64::LD2i64 };
+      break;
+    case Intrinsic::aarch64_neon_ld3lane:
+      if (CapabilityBase)
+        Opcodes = { AArch64::ALD3i8, AArch64::ALD3i16,
+                    AArch64::ALD3i32, AArch64::ALD3i64 };
+      else
+        Opcodes = { AArch64::LD3i8, AArch64::LD3i16,
+                    AArch64::LD3i32, AArch64::LD3i64 };
+      break;
+    case Intrinsic::aarch64_neon_ld4lane:
+      if (CapabilityBase)
+        Opcodes = { AArch64::ALD4i8, AArch64::ALD4i16,
+                    AArch64::ALD4i32, AArch64::ALD4i64 };
+      else
+        Opcodes = { AArch64::LD4i8, AArch64::LD4i16,
+                    AArch64::LD4i32, AArch64::LD4i64 };
+      break;
+    case Intrinsic::aarch64_neon_st2lane:
+      if (CapabilityBase)
+        Opcodes = { AArch64::AST2i8, AArch64::AST2i16,
+                    AArch64::AST2i32, AArch64::AST2i64 };
+      else
+        Opcodes = { AArch64::ST2i8, AArch64::ST2i16,
+                    AArch64::ST2i32, AArch64::ST2i64 };
+      break;
+    case Intrinsic::aarch64_neon_st3lane:
+      if (CapabilityBase)
+        Opcodes = { AArch64::AST3i8, AArch64::AST3i16,
+                    AArch64::AST3i32, AArch64::AST3i64 };
+      else
+        Opcodes = { AArch64::ST3i8, AArch64::ST3i16,
+                    AArch64::ST3i32, AArch64::ST3i64 };
+      break;
+    case Intrinsic::aarch64_neon_st4lane:
+      if (CapabilityBase)
+        Opcodes = { AArch64::AST4i8, AArch64::AST4i16,
+                    AArch64::AST4i32, AArch64::AST4i64 };
+      else
+        Opcodes = { AArch64::ST4i8, AArch64::ST4i16,
+                    AArch64::ST4i32, AArch64::ST4i64 };
+      break;
+    }
+    break;
+  }
+  case AArch64ISD::LD1LANEpost:
+    if (CapabilityBase)
+      Opcodes = { AArch64::ALD1i8_POST, AArch64::ALD1i16_POST,
+                  AArch64::ALD1i32_POST, AArch64::ALD1i64_POST };
+    else
+      Opcodes = { AArch64::LD1i8_POST, AArch64::LD1i16_POST,
+                  AArch64::LD1i32_POST, AArch64::LD1i64_POST };
+    break;
+  case AArch64ISD::LD2LANEpost:
+    if (CapabilityBase)
+      Opcodes = { AArch64::ALD2i8_POST, AArch64::ALD2i16_POST,
+                  AArch64::ALD2i32_POST, AArch64::ALD2i64_POST };
+    else
+      Opcodes = { AArch64::LD2i8_POST, AArch64::LD2i16_POST,
+                  AArch64::LD2i32_POST, AArch64::LD2i64_POST };
+    break;
+  case AArch64ISD::LD3LANEpost:
+    if (CapabilityBase)
+      Opcodes = { AArch64::ALD3i8_POST, AArch64::ALD3i16_POST,
+                  AArch64::ALD3i32_POST, AArch64::ALD3i64_POST };
+    else
+      Opcodes = { AArch64::LD3i8_POST, AArch64::LD3i16_POST,
+                  AArch64::LD3i32_POST, AArch64::LD3i64_POST };
+    break;
+  case AArch64ISD::LD4LANEpost:
+    if (CapabilityBase)
+      Opcodes = { AArch64::ALD4i8_POST, AArch64::ALD4i16_POST,
+                  AArch64::ALD4i32_POST, AArch64::ALD4i64_POST };
+    else
+      Opcodes = { AArch64::LD4i8_POST, AArch64::LD4i16_POST,
+                  AArch64::LD4i32_POST, AArch64::LD4i64_POST };
+    break;
+  case AArch64ISD::ST2LANEpost:
+    if (CapabilityBase)
+      Opcodes = { AArch64::AST2i8_POST, AArch64::AST2i16_POST,
+                  AArch64::AST2i32_POST, AArch64::AST2i64_POST };
+    else
+      Opcodes = { AArch64::ST2i8_POST, AArch64::ST2i16_POST,
+                  AArch64::ST2i32_POST, AArch64::ST2i64_POST };
+    break;
+  case AArch64ISD::ST3LANEpost:
+    if (CapabilityBase)
+      Opcodes = { AArch64::AST3i8_POST, AArch64::AST3i16_POST,
+                  AArch64::AST3i32_POST, AArch64::AST3i64_POST };
+    else
+      Opcodes = { AArch64::ST3i8_POST, AArch64::ST3i16_POST,
+                  AArch64::ST3i32_POST, AArch64::ST3i64_POST };
+    break;
+  case AArch64ISD::ST4LANEpost:
+    if (CapabilityBase)
+      Opcodes = { AArch64::AST4i8_POST, AArch64::AST4i16_POST,
+                  AArch64::AST4i32_POST, AArch64::AST4i64_POST };
+    else
+      Opcodes = { AArch64::ST4i8_POST, AArch64::ST4i16_POST,
+                  AArch64::ST4i32_POST, AArch64::ST4i64_POST };
+    break;
+  }
+  unsigned LogElementSize = Log2_32_Ceil(VT.getScalarSizeInBits()/8);
+  return Opcodes[LogElementSize];
+}
+
+void AArch64DAGToDAGISel::SelectLoad(SDNode *N, unsigned NumVecs) {
   SDLoc dl(N);
   EVT VT = N->getValueType(0);
   SDValue Chain = N->getOperand(0);
@@ -1286,6 +2301,9 @@ void AArch64DAGToDAGISel::SelectLoad(SDNode *N, unsigned NumVecs, unsigned Opc,
                    Chain};
 
   const EVT ResTys[] = {MVT::Untyped, MVT::Other};
+
+  unsigned Opc = GetVectorMemOpc(N, VT, 2);
+  unsigned SubRegIdx = VT.is64BitVector() ? AArch64::dsub0 : AArch64::qsub0;
 
   SDNode *Ld = CurDAG->getMachineNode(Opc, dl, ResTys, Ops);
   SDValue SuperReg = SDValue(Ld, 0);
@@ -1302,9 +2320,9 @@ void AArch64DAGToDAGISel::SelectLoad(SDNode *N, unsigned NumVecs, unsigned Opc,
   CurDAG->RemoveDeadNode(N);
 }
 
-void AArch64DAGToDAGISel::SelectPostLoad(SDNode *N, unsigned NumVecs,
-                                         unsigned Opc, unsigned SubRegIdx) {
+void AArch64DAGToDAGISel::SelectPostLoad(SDNode *N, unsigned NumVecs) {
   SDLoc dl(N);
+  EVT BaseVT = N->getOperand(1)->getValueType(0);
   EVT VT = N->getValueType(0);
   SDValue Chain = N->getOperand(0);
 
@@ -1312,11 +2330,13 @@ void AArch64DAGToDAGISel::SelectPostLoad(SDNode *N, unsigned NumVecs,
                    N->getOperand(2), // Incremental
                    Chain};
 
-  const EVT ResTys[] = {MVT::i64, // Type of the write back register
+  const EVT ResTys[] = {BaseVT, // Type of the write back register
                         MVT::Untyped, MVT::Other};
 
-  SDNode *Ld = CurDAG->getMachineNode(Opc, dl, ResTys, Ops);
+  unsigned Opc = GetVectorMemOpc(N, VT, 1);
+  unsigned SubRegIdx = VT.is64BitVector() ? AArch64::dsub0 : AArch64::qsub0;
 
+  SDNode *Ld = CurDAG->getMachineNode(Opc, dl, ResTys, Ops);
   // Update uses of write back register
   ReplaceUses(SDValue(N, NumVecs), SDValue(Ld, 0));
 
@@ -1334,8 +2354,7 @@ void AArch64DAGToDAGISel::SelectPostLoad(SDNode *N, unsigned NumVecs,
   CurDAG->RemoveDeadNode(N);
 }
 
-void AArch64DAGToDAGISel::SelectStore(SDNode *N, unsigned NumVecs,
-                                      unsigned Opc) {
+void AArch64DAGToDAGISel::SelectStore(SDNode *N, unsigned NumVecs) {
   SDLoc dl(N);
   EVT VT = N->getOperand(2)->getValueType(0);
 
@@ -1343,6 +2362,8 @@ void AArch64DAGToDAGISel::SelectStore(SDNode *N, unsigned NumVecs,
   bool Is128Bit = VT.getSizeInBits() == 128;
   SmallVector<SDValue, 4> Regs(N->op_begin() + 2, N->op_begin() + 2 + NumVecs);
   SDValue RegSeq = Is128Bit ? createQTuple(Regs) : createDTuple(Regs);
+
+  unsigned Opc = GetVectorMemOpc(N, VT, NumVecs + 2);
 
   SDValue Ops[] = {RegSeq, N->getOperand(NumVecs + 2), N->getOperand(0)};
   SDNode *St = CurDAG->getMachineNode(Opc, dl, N->getValueType(0), Ops);
@@ -1354,17 +2375,19 @@ void AArch64DAGToDAGISel::SelectStore(SDNode *N, unsigned NumVecs,
   ReplaceNode(N, St);
 }
 
-void AArch64DAGToDAGISel::SelectPostStore(SDNode *N, unsigned NumVecs,
-                                          unsigned Opc) {
+void AArch64DAGToDAGISel::SelectPostStore(SDNode *N, unsigned NumVecs) {
   SDLoc dl(N);
+  EVT BaseVT = N->getOperand(NumVecs + 1)->getValueType(0);
   EVT VT = N->getOperand(2)->getValueType(0);
-  const EVT ResTys[] = {MVT::i64,    // Type of the write back register
+  const EVT ResTys[] = {BaseVT, // Type of the write back register
                         MVT::Other}; // Type for the Chain
 
   // Form a REG_SEQUENCE to force register allocation.
   bool Is128Bit = VT.getSizeInBits() == 128;
   SmallVector<SDValue, 4> Regs(N->op_begin() + 1, N->op_begin() + 1 + NumVecs);
   SDValue RegSeq = Is128Bit ? createQTuple(Regs) : createDTuple(Regs);
+
+  unsigned Opc = GetVectorMemOpc(N, VT, NumVecs + 1);
 
   SDValue Ops[] = {RegSeq,
                    N->getOperand(NumVecs + 1), // base register
@@ -1410,8 +2433,7 @@ static SDValue NarrowVector(SDValue V128Reg, SelectionDAG &DAG) {
                                     V128Reg);
 }
 
-void AArch64DAGToDAGISel::SelectLoadLane(SDNode *N, unsigned NumVecs,
-                                         unsigned Opc) {
+void AArch64DAGToDAGISel::SelectLoadLane(SDNode *N, unsigned NumVecs) {
   SDLoc dl(N);
   EVT VT = N->getValueType(0);
   bool Narrow = VT.getSizeInBits() == 64;
@@ -1429,6 +2451,8 @@ void AArch64DAGToDAGISel::SelectLoadLane(SDNode *N, unsigned NumVecs,
 
   unsigned LaneNo =
       cast<ConstantSDNode>(N->getOperand(NumVecs + 2))->getZExtValue();
+
+  unsigned Opc = GetVectorMemLaneOpc(N, VT, NumVecs + 3);
 
   SDValue Ops[] = {RegSeq, CurDAG->getTargetConstant(LaneNo, dl, MVT::i64),
                    N->getOperand(NumVecs + 3), N->getOperand(0)};
@@ -1449,9 +2473,9 @@ void AArch64DAGToDAGISel::SelectLoadLane(SDNode *N, unsigned NumVecs,
   CurDAG->RemoveDeadNode(N);
 }
 
-void AArch64DAGToDAGISel::SelectPostLoadLane(SDNode *N, unsigned NumVecs,
-                                             unsigned Opc) {
+void AArch64DAGToDAGISel::SelectPostLoadLane(SDNode *N, unsigned NumVecs) {
   SDLoc dl(N);
+  EVT BaseVT = N->getOperand(NumVecs + 2)->getValueType(0);
   EVT VT = N->getValueType(0);
   bool Narrow = VT.getSizeInBits() == 64;
 
@@ -1464,11 +2488,13 @@ void AArch64DAGToDAGISel::SelectPostLoadLane(SDNode *N, unsigned NumVecs,
 
   SDValue RegSeq = createQTuple(Regs);
 
-  const EVT ResTys[] = {MVT::i64, // Type of the write back register
+  const EVT ResTys[] = {BaseVT, // Type of the write back register
                         RegSeq->getValueType(0), MVT::Other};
 
   unsigned LaneNo =
       cast<ConstantSDNode>(N->getOperand(NumVecs + 1))->getZExtValue();
+
+  unsigned Opc = GetVectorMemLaneOpc(N, VT, NumVecs + 2);
 
   SDValue Ops[] = {RegSeq,
                    CurDAG->getTargetConstant(LaneNo, dl,
@@ -1504,8 +2530,7 @@ void AArch64DAGToDAGISel::SelectPostLoadLane(SDNode *N, unsigned NumVecs,
   CurDAG->RemoveDeadNode(N);
 }
 
-void AArch64DAGToDAGISel::SelectStoreLane(SDNode *N, unsigned NumVecs,
-                                          unsigned Opc) {
+void AArch64DAGToDAGISel::SelectStoreLane(SDNode *N, unsigned NumVecs) {
   SDLoc dl(N);
   EVT VT = N->getOperand(2)->getValueType(0);
   bool Narrow = VT.getSizeInBits() == 64;
@@ -1522,6 +2547,8 @@ void AArch64DAGToDAGISel::SelectStoreLane(SDNode *N, unsigned NumVecs,
   unsigned LaneNo =
       cast<ConstantSDNode>(N->getOperand(NumVecs + 2))->getZExtValue();
 
+  unsigned Opc = GetVectorMemLaneOpc(N, VT, NumVecs + 3);
+
   SDValue Ops[] = {RegSeq, CurDAG->getTargetConstant(LaneNo, dl, MVT::i64),
                    N->getOperand(NumVecs + 3), N->getOperand(0)};
   SDNode *St = CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops);
@@ -1533,9 +2560,9 @@ void AArch64DAGToDAGISel::SelectStoreLane(SDNode *N, unsigned NumVecs,
   ReplaceNode(N, St);
 }
 
-void AArch64DAGToDAGISel::SelectPostStoreLane(SDNode *N, unsigned NumVecs,
-                                              unsigned Opc) {
+void AArch64DAGToDAGISel::SelectPostStoreLane(SDNode *N, unsigned NumVecs) {
   SDLoc dl(N);
+  EVT BaseVT = N->getOperand(NumVecs + 2)->getValueType(0);
   EVT VT = N->getOperand(2)->getValueType(0);
   bool Narrow = VT.getSizeInBits() == 64;
 
@@ -1548,11 +2575,13 @@ void AArch64DAGToDAGISel::SelectPostStoreLane(SDNode *N, unsigned NumVecs,
 
   SDValue RegSeq = createQTuple(Regs);
 
-  const EVT ResTys[] = {MVT::i64, // Type of the write back register
+  const EVT ResTys[] = {BaseVT, // Type of the write back register
                         MVT::Other};
 
   unsigned LaneNo =
       cast<ConstantSDNode>(N->getOperand(NumVecs + 1))->getZExtValue();
+
+  unsigned Opc = GetVectorMemLaneOpc(N, VT, NumVecs + 2);
 
   SDValue Ops[] = {RegSeq, CurDAG->getTargetConstant(LaneNo, dl, MVT::i64),
                    N->getOperand(NumVecs + 2), // Base Register
@@ -2552,6 +3581,47 @@ bool AArch64DAGToDAGISel::tryBitfieldInsertInZeroOp(SDNode *N) {
   return true;
 }
 
+SDNode *AArch64DAGToDAGISel::SelectPointerToCapabilityOp(SDNode *N) {
+  if (N->getOpcode() != ISD::INTTOPTR)
+    return nullptr;
+
+  SDLoc DL(N);
+  MVT CapTy = N->getSimpleValueType(0);
+
+  SDValue Zero = SDValue(
+      CurDAG->getMachineNode(AArch64::MOVi64imm, DL, MVT::i64,
+                             CurDAG->getTargetConstant(0, DL, MVT::i64)),
+      0);
+  SDValue SubReg = CurDAG->getTargetConstant(AArch64::sub_64, DL, MVT::i32);
+  Zero = SDValue(CurDAG->getMachineNode(
+                      AArch64::SUBREG_TO_REG, DL, MVT::iFATPTR128,
+                      CurDAG->getTargetConstant(0, DL, MVT::i64),
+                      Zero,
+                      SubReg),
+                 0);
+
+
+  // If this is a convert from null, then materialize a null capability.
+  if (ConstantSDNode *ConstNode = dyn_cast<ConstantSDNode>(N->getOperand(0)))
+    if (ConstNode->isNullValue())
+      return Zero.getNode();
+
+  // Check if we need to extend the operand.
+  SDValue Op = N->getOperand(0);
+  if (Op.getSimpleValueType() == MVT::i32) {
+    SDValue SubReg = CurDAG->getTargetConstant(AArch64::sub_32, DL, MVT::i32);
+    Op = SDValue(CurDAG->getMachineNode(
+                    AArch64::SUBREG_TO_REG, DL, MVT::i64,
+                    CurDAG->getTargetConstant(0, DL, MVT::i64), Op,
+                    SubReg),
+                 0);
+  }
+
+  // And generate a capability.
+  return CurDAG->getMachineNode(AArch64::CapSetValue, DL, CapTy,
+                                Zero, Op);
+}
+
 /// tryShiftAmountMod - Take advantage of built-in mod of shift amount in
 /// variable shift/rotate instructions.
 bool AArch64DAGToDAGISel::tryShiftAmountMod(SDNode *N) {
@@ -2851,18 +3921,32 @@ bool AArch64DAGToDAGISel::SelectCMP_SWAP(SDNode *N) {
   // Leave IR for LSE if subtarget supports it.
   if (Subtarget->hasLSE()) return false;
 
+  bool FatPtrBase =
+      cast<MemSDNode>(N)->getBasePtr().getValueType() == MVT::iFATPTR128;
+
+  // Morello has compare swap capability instructions for non-alternate
+  // addressing.
+  if (MemTy == MVT::iFATPTR128 && (Subtarget->hasC64() == FatPtrBase))
+    return false;
+
   if (MemTy == MVT::i8)
-    Opcode = AArch64::CMP_SWAP_8;
+    Opcode = FatPtrBase ? AArch64::CMP_SWAP_CAP_8 : AArch64::CMP_SWAP_8;
   else if (MemTy == MVT::i16)
-    Opcode = AArch64::CMP_SWAP_16;
+    Opcode = FatPtrBase ? AArch64::CMP_SWAP_CAP_16 : AArch64::CMP_SWAP_16;
   else if (MemTy == MVT::i32)
-    Opcode = AArch64::CMP_SWAP_32;
+    Opcode = FatPtrBase ? AArch64::CMP_SWAP_CAP_32 : AArch64::CMP_SWAP_32;
   else if (MemTy == MVT::i64)
-    Opcode = AArch64::CMP_SWAP_64;
+    Opcode = FatPtrBase ? AArch64::CMP_SWAP_CAP_64 : AArch64::CMP_SWAP_64;
+  else if (MemTy == MVT::iFATPTR128)
+    Opcode = FatPtrBase ? AArch64::CMP_SWAP_CAP_FATPTR
+                        : AArch64::CMP_SWAP_FATPTR;
   else
     llvm_unreachable("Unknown AtomicCmpSwap type");
 
   MVT RegTy = MemTy == MVT::i64 ? MVT::i64 : MVT::i32;
+  if (MemTy == MVT::iFATPTR128)
+    RegTy = MVT::iFATPTR128;
+
   SDValue Ops[] = {N->getOperand(1), N->getOperand(2), N->getOperand(3),
                    N->getOperand(0)};
   SDNode *CmpSwap = CurDAG->getMachineNode(
@@ -2874,6 +3958,49 @@ bool AArch64DAGToDAGISel::SelectCMP_SWAP(SDNode *N) {
 
   ReplaceUses(SDValue(N, 0), SDValue(CmpSwap, 0));
   ReplaceUses(SDValue(N, 1), SDValue(CmpSwap, 2));
+  CurDAG->RemoveDeadNode(N);
+
+  return true;
+}
+
+bool AArch64DAGToDAGISel::
+SelectCapabilityBranch(SDNode *N, bool Clear, bool Tail) {
+  SDLoc dl(N);
+  SDValue CalleeNode = N->getOperand(1);
+
+  unsigned Opcode = Clear ? AArch64::CBranchLinkClear
+                          : AArch64::CapBranchLink;
+  if (CalleeNode.getOpcode() == ISD::TargetGlobalAddress ||
+      CalleeNode.getOpcode() == ISD::TargetExternalSymbol)
+    Opcode = Clear ? AArch64::PBLClear : AArch64::BL;
+
+  if (Tail) {
+    Opcode = Clear ? AArch64::ClearCTCRETURNr : AArch64::CTCRETURNr;
+    if (CalleeNode.getOpcode() == ISD::TargetGlobalAddress ||
+        CalleeNode.getOpcode() == ISD::TargetExternalSymbol)
+      Opcode = Clear ? AArch64::ClearTCRETURNdi : AArch64::TCRETURNdi;
+  }
+
+  unsigned NumOps = N->getNumOperands();
+  bool HasGlue = false;
+  if (N->getOperand(NumOps - 1).getValueType() == MVT::Glue) {
+    NumOps--;
+    HasGlue = true;
+  }
+
+  SmallVector<SDValue, 5> Operands;
+  for (unsigned i = 1; i < NumOps; ++i)
+    Operands.push_back(N->getOperand(i));
+  Operands.push_back(N->getOperand(0));
+  if (HasGlue)
+    Operands.push_back(N->getOperand(NumOps));
+
+  SDNode *NewNode = CurDAG->getMachineNode(Opcode, dl, N->getVTList(),
+                                           Operands);
+
+  for (unsigned i = 0; i < N->getNumValues(); ++i)
+    ReplaceUses(SDValue(N, i), SDValue(NewNode, i));
+
   CurDAG->RemoveDeadNode(N);
 
   return true;
@@ -3070,6 +4197,13 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
     break;
   }
 
+  case ISD::STORE: {
+    // Try to select as an indexed store.
+    if (tryIndexedStore(Node))
+      return;
+    break;
+  }
+
   case ISD::SRL:
   case ISD::AND:
   case ISD::SRA:
@@ -3100,6 +4234,13 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
       return;
     break;
 
+  case ISD::INTTOPTR:
+    if (SDNode *I = SelectPointerToCapabilityOp(Node)) {
+      ReplaceNode(Node, I);
+      return;
+    }
+    break;
+
   case ISD::Constant: {
     // Materialize zero constants as copies from WZR/XZR.  This allows
     // the coalescer to propagate these into other instructions.
@@ -3124,13 +4265,18 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
     // Selects to ADDXri FI, 0 which in turn will become ADDXri SP, imm.
     int FI = cast<FrameIndexSDNode>(Node)->getIndex();
     unsigned Shifter = AArch64_AM::getShifterImm(AArch64_AM::LSL, 0);
-    const TargetLowering *TLI = getTargetLowering();
-    SDValue TFI = CurDAG->getTargetFrameIndex(
-        FI, TLI->getPointerTy(CurDAG->getDataLayout()));
+    const bool HasPureCap = Subtarget->hasPureCap();
+    SDValue TFI =
+        CurDAG->getTargetFrameIndex(FI, HasPureCap ? MVT::iFATPTR128 : MVT::i64);
     SDLoc DL(Node);
     SDValue Ops[] = { TFI, CurDAG->getTargetConstant(0, DL, MVT::i32),
                       CurDAG->getTargetConstant(Shifter, DL, MVT::i32) };
-    CurDAG->SelectNodeTo(Node, AArch64::ADDXri, MVT::i64, Ops);
+
+    if (Subtarget->hasPureCap()) {
+      CurDAG->SelectNodeTo(Node, AArch64::CapAddImm, MVT::iFATPTR128, Ops);
+    } else
+      CurDAG->SelectNodeTo(Node, AArch64::ADDXri, MVT::i64, Ops);
+
     return;
   }
   case ISD::INTRINSIC_W_CHAIN: {
@@ -3140,36 +4286,174 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
       break;
     case Intrinsic::aarch64_ldaxp:
     case Intrinsic::aarch64_ldxp: {
-      unsigned Op =
-          IntNo == Intrinsic::aarch64_ldaxp ? AArch64::LDAXPX : AArch64::LDXPX;
+      MemIntrinsicSDNode *MemNode = cast<MemIntrinsicSDNode>(Node);
       SDValue MemAddr = Node->getOperand(2);
+      EVT AddrTy = MemAddr.getValueType();
+      bool CapabilityBase = AddrTy.isFatPointer();
+
+      unsigned Op = 0;
+      unsigned Size = MemNode->getMemoryVT().getSizeInBits() / 8;
+      MVT Ty = MVT::i64;
+      if (!CapabilityBase) {
+        switch (IntNo) {
+          // These are handled by tablegen.
+          default: break;
+          case Intrinsic::aarch64_ldxp:
+            Op = AArch64::LDXPX;
+            break;
+          case Intrinsic::aarch64_ldaxp:
+            Op = AArch64::LDAXPX;
+            break;
+        }
+      } else {
+        switch (IntNo) {
+          default: llvm_unreachable("Unknown intrinsic");
+          case Intrinsic::aarch64_ldxp: {
+            switch(Size) {
+              case 8:
+                Op = AArch64::ALDXPW;
+                Ty = MVT::i32;
+                break;
+              case 16:
+                Op = AArch64::ALDXPX;
+                Ty = MVT::i64;
+                break;
+              default: llvm_unreachable("Invalid size");
+            }
+            break;
+          }
+          case Intrinsic::aarch64_ldaxp: {
+            switch(Size) {
+              case 8:
+                Op = AArch64::ALDAXPW;
+                Ty = MVT::i32;
+                break;
+              case 16:
+                Op = AArch64::ALDAXPX;
+                Ty = MVT::i64;
+                break;
+              default: llvm_unreachable("Invalid size");
+            }
+            break;
+          }
+        }
+      }
+
+      if (Op == 0)
+        break;
+
       SDLoc DL(Node);
       SDValue Chain = Node->getOperand(0);
 
-      SDNode *Ld = CurDAG->getMachineNode(Op, DL, MVT::i64, MVT::i64,
-                                          MVT::Other, MemAddr, Chain);
+      SDNode *Ld = nullptr;
+      SDValue Ops[] = {MemAddr, Chain};
+
+      if (IntNo == Intrinsic::aarch64_ldaxp ||
+          IntNo == Intrinsic::aarch64_ldxp)
+        Ld = CurDAG->getMachineNode(Op, DL, Ty, Ty, MVT::Other, Ops);
+      else
+        Ld = CurDAG->getMachineNode(Op, DL, Ty,
+                                    MVT::Other, Ops);
 
       // Transfer memoperands.
       MachineMemOperand *MemOp =
           cast<MemIntrinsicSDNode>(Node)->getMemOperand();
       CurDAG->setNodeMemRefs(cast<MachineSDNode>(Ld), {MemOp});
+
+      SDValue LoadedVal = SDValue(Ld, 0);
+
+      // Insert to 64 if required.
+      if (Ty != MVT::i64 && Ty != MVT::i128 && Ty != MVT::iFATPTR128) {
+        SDValue SubReg = CurDAG->getTargetConstant(AArch64::sub_32, DL, MVT::i32);
+        LoadedVal = SDValue(CurDAG->getMachineNode(
+                        AArch64::SUBREG_TO_REG, DL, MVT::i64,
+                        CurDAG->getTargetConstant(0, DL, MVT::i64),
+                        SDValue(Ld, 0), SubReg), 0);
+        ReplaceUses(SDValue(Node, 0), LoadedVal); // Loaded value
+        ReplaceUses(SDValue(Node, 1), SDValue(Ld, 1)); // Chain
+        CurDAG->RemoveDeadNode(Node);
+        return;
+      }
+
       ReplaceNode(Node, Ld);
       return;
     }
     case Intrinsic::aarch64_stlxp:
     case Intrinsic::aarch64_stxp: {
-      unsigned Op =
-          IntNo == Intrinsic::aarch64_stlxp ? AArch64::STLXPX : AArch64::STXPX;
-      SDLoc DL(Node);
-      SDValue Chain = Node->getOperand(0);
-      SDValue ValLo = Node->getOperand(2);
-      SDValue ValHi = Node->getOperand(3);
-      SDValue MemAddr = Node->getOperand(4);
+      MemIntrinsicSDNode *MemNode = cast<MemIntrinsicSDNode>(Node);
+      bool IsPair = (IntNo == Intrinsic::aarch64_stxp ||
+                     IntNo == Intrinsic::aarch64_stlxp);
+      SDValue MemAddr = Node->getOperand(IsPair ? 4 : 3);
+      EVT AddrTy = MemAddr.getValueType();
 
-      // Place arguments in the right order.
-      SDValue Ops[] = {ValLo, ValHi, MemAddr, Chain};
+      bool CapabilityBase = AddrTy.isFatPointer();
+      unsigned Op = 0;
+      unsigned Size = MemNode->getMemoryVT().getSizeInBits() / 8;
+      MVT Ty = MVT::i64;
+      if (!CapabilityBase) {
+        switch (IntNo) {
+          // These are handled by tablegen.
+          default: break;
+          case Intrinsic::aarch64_stlxp:
+            Op = AArch64::STLXPX;
+            break;
+          case Intrinsic::aarch64_stxp:
+            Op = AArch64::STXPX;
+            break;
+        }
+      } else {
+        switch (IntNo) {
+          default: llvm_unreachable("Unknown intrinsic");
+          case Intrinsic::aarch64_stxp: {
+            switch(Size) {
+              case 8:
+                Op = AArch64::ASTXPW;
+                Ty = MVT::i32;
+                break;
+              case 16:
+                Op = AArch64::ASTXPX;
+                break;
+              default: llvm_unreachable("Invalid size");
+            }
+            break;
+          }
+          case Intrinsic::aarch64_stlxp: {
+            switch(Size) {
+              case 8:
+                Op = AArch64::ASTLXPW;
+                break;
+              case 16:
+                Op = AArch64::ASTLXPX;
+                break;
+              default: llvm_unreachable("Invalid size");
+            }
+            break;
+          }
+        }
+      }
+
+      if (Op == 0)
+        break;
+      SDLoc DL(Node);
+
+      // Construct a vector of operands for the new instruction.
+      SmallVector<SDValue, 4> Ops;
+      Ops.push_back(Ty == MVT::i32 ?
+                    narrowIfNeeded(CurDAG, Node->getOperand(2)) :
+                    Node->getOperand(2));
+      // Store pair instructions have an additional operand.
+      if (IntNo == Intrinsic::aarch64_stxp ||
+          IntNo == Intrinsic::aarch64_stlxp)
+        Ops.push_back(Ty == MVT::i32 ?
+                      narrowIfNeeded(CurDAG, Node->getOperand(3)) :
+                      Node->getOperand(3));
+
+      Ops.push_back(MemAddr);
+      // Push the chain.
+      Ops.push_back(Node->getOperand(0));
 
       SDNode *St = CurDAG->getMachineNode(Op, DL, MVT::i32, MVT::Other, Ops);
+
       // Transfer memoperands.
       MachineMemOperand *MemOp =
           cast<MemIntrinsicSDNode>(Node)->getMemOperand();
@@ -3178,303 +4462,30 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
       ReplaceNode(Node, St);
       return;
     }
-    case Intrinsic::aarch64_neon_ld1x2:
-      if (VT == MVT::v8i8) {
-        SelectLoad(Node, 2, AArch64::LD1Twov8b, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v16i8) {
-        SelectLoad(Node, 2, AArch64::LD1Twov16b, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-        SelectLoad(Node, 2, AArch64::LD1Twov4h, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-        SelectLoad(Node, 2, AArch64::LD1Twov8h, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-        SelectLoad(Node, 2, AArch64::LD1Twov2s, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-        SelectLoad(Node, 2, AArch64::LD1Twov4s, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-        SelectLoad(Node, 2, AArch64::LD1Twov1d, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-        SelectLoad(Node, 2, AArch64::LD1Twov2d, AArch64::qsub0);
-        return;
-      }
-      break;
-    case Intrinsic::aarch64_neon_ld1x3:
-      if (VT == MVT::v8i8) {
-        SelectLoad(Node, 3, AArch64::LD1Threev8b, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v16i8) {
-        SelectLoad(Node, 3, AArch64::LD1Threev16b, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-        SelectLoad(Node, 3, AArch64::LD1Threev4h, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-        SelectLoad(Node, 3, AArch64::LD1Threev8h, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-        SelectLoad(Node, 3, AArch64::LD1Threev2s, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-        SelectLoad(Node, 3, AArch64::LD1Threev4s, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-        SelectLoad(Node, 3, AArch64::LD1Threev1d, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-        SelectLoad(Node, 3, AArch64::LD1Threev2d, AArch64::qsub0);
-        return;
-      }
-      break;
-    case Intrinsic::aarch64_neon_ld1x4:
-      if (VT == MVT::v8i8) {
-        SelectLoad(Node, 4, AArch64::LD1Fourv8b, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v16i8) {
-        SelectLoad(Node, 4, AArch64::LD1Fourv16b, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-        SelectLoad(Node, 4, AArch64::LD1Fourv4h, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-        SelectLoad(Node, 4, AArch64::LD1Fourv8h, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-        SelectLoad(Node, 4, AArch64::LD1Fourv2s, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-        SelectLoad(Node, 4, AArch64::LD1Fourv4s, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-        SelectLoad(Node, 4, AArch64::LD1Fourv1d, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-        SelectLoad(Node, 4, AArch64::LD1Fourv2d, AArch64::qsub0);
-        return;
-      }
-      break;
     case Intrinsic::aarch64_neon_ld2:
-      if (VT == MVT::v8i8) {
-        SelectLoad(Node, 2, AArch64::LD2Twov8b, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v16i8) {
-        SelectLoad(Node, 2, AArch64::LD2Twov16b, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-        SelectLoad(Node, 2, AArch64::LD2Twov4h, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-        SelectLoad(Node, 2, AArch64::LD2Twov8h, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-        SelectLoad(Node, 2, AArch64::LD2Twov2s, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-        SelectLoad(Node, 2, AArch64::LD2Twov4s, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-        SelectLoad(Node, 2, AArch64::LD1Twov1d, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-        SelectLoad(Node, 2, AArch64::LD2Twov2d, AArch64::qsub0);
-        return;
-      }
-      break;
-    case Intrinsic::aarch64_neon_ld3:
-      if (VT == MVT::v8i8) {
-        SelectLoad(Node, 3, AArch64::LD3Threev8b, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v16i8) {
-        SelectLoad(Node, 3, AArch64::LD3Threev16b, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-        SelectLoad(Node, 3, AArch64::LD3Threev4h, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-        SelectLoad(Node, 3, AArch64::LD3Threev8h, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-        SelectLoad(Node, 3, AArch64::LD3Threev2s, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-        SelectLoad(Node, 3, AArch64::LD3Threev4s, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-        SelectLoad(Node, 3, AArch64::LD1Threev1d, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-        SelectLoad(Node, 3, AArch64::LD3Threev2d, AArch64::qsub0);
-        return;
-      }
-      break;
-    case Intrinsic::aarch64_neon_ld4:
-      if (VT == MVT::v8i8) {
-        SelectLoad(Node, 4, AArch64::LD4Fourv8b, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v16i8) {
-        SelectLoad(Node, 4, AArch64::LD4Fourv16b, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-        SelectLoad(Node, 4, AArch64::LD4Fourv4h, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-        SelectLoad(Node, 4, AArch64::LD4Fourv8h, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-        SelectLoad(Node, 4, AArch64::LD4Fourv2s, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-        SelectLoad(Node, 4, AArch64::LD4Fourv4s, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-        SelectLoad(Node, 4, AArch64::LD1Fourv1d, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-        SelectLoad(Node, 4, AArch64::LD4Fourv2d, AArch64::qsub0);
-        return;
-      }
-      break;
+    case Intrinsic::aarch64_neon_ld1x2:
     case Intrinsic::aarch64_neon_ld2r:
-      if (VT == MVT::v8i8) {
-        SelectLoad(Node, 2, AArch64::LD2Rv8b, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v16i8) {
-        SelectLoad(Node, 2, AArch64::LD2Rv16b, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-        SelectLoad(Node, 2, AArch64::LD2Rv4h, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-        SelectLoad(Node, 2, AArch64::LD2Rv8h, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-        SelectLoad(Node, 2, AArch64::LD2Rv2s, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-        SelectLoad(Node, 2, AArch64::LD2Rv4s, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-        SelectLoad(Node, 2, AArch64::LD2Rv1d, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-        SelectLoad(Node, 2, AArch64::LD2Rv2d, AArch64::qsub0);
-        return;
-      }
-      break;
+      SelectLoad(Node, 2);
+      return;
+    case Intrinsic::aarch64_neon_ld3:
+    case Intrinsic::aarch64_neon_ld1x3:
     case Intrinsic::aarch64_neon_ld3r:
-      if (VT == MVT::v8i8) {
-        SelectLoad(Node, 3, AArch64::LD3Rv8b, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v16i8) {
-        SelectLoad(Node, 3, AArch64::LD3Rv16b, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-        SelectLoad(Node, 3, AArch64::LD3Rv4h, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-        SelectLoad(Node, 3, AArch64::LD3Rv8h, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-        SelectLoad(Node, 3, AArch64::LD3Rv2s, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-        SelectLoad(Node, 3, AArch64::LD3Rv4s, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-        SelectLoad(Node, 3, AArch64::LD3Rv1d, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-        SelectLoad(Node, 3, AArch64::LD3Rv2d, AArch64::qsub0);
-        return;
-      }
-      break;
+      SelectLoad(Node, 3);
+      return;
+    case Intrinsic::aarch64_neon_ld4:
+    case Intrinsic::aarch64_neon_ld1x4:
     case Intrinsic::aarch64_neon_ld4r:
-      if (VT == MVT::v8i8) {
-        SelectLoad(Node, 4, AArch64::LD4Rv8b, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v16i8) {
-        SelectLoad(Node, 4, AArch64::LD4Rv16b, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-        SelectLoad(Node, 4, AArch64::LD4Rv4h, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-        SelectLoad(Node, 4, AArch64::LD4Rv8h, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-        SelectLoad(Node, 4, AArch64::LD4Rv2s, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-        SelectLoad(Node, 4, AArch64::LD4Rv4s, AArch64::qsub0);
-        return;
-      } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-        SelectLoad(Node, 4, AArch64::LD4Rv1d, AArch64::dsub0);
-        return;
-      } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-        SelectLoad(Node, 4, AArch64::LD4Rv2d, AArch64::qsub0);
-        return;
-      }
-      break;
+      SelectLoad(Node, 4);
+      return;
     case Intrinsic::aarch64_neon_ld2lane:
-      if (VT == MVT::v16i8 || VT == MVT::v8i8) {
-        SelectLoadLane(Node, 2, AArch64::LD2i8);
-        return;
-      } else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
-                 VT == MVT::v8f16) {
-        SelectLoadLane(Node, 2, AArch64::LD2i16);
-        return;
-      } else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
-                 VT == MVT::v2f32) {
-        SelectLoadLane(Node, 2, AArch64::LD2i32);
-        return;
-      } else if (VT == MVT::v2i64 || VT == MVT::v1i64 || VT == MVT::v2f64 ||
-                 VT == MVT::v1f64) {
-        SelectLoadLane(Node, 2, AArch64::LD2i64);
-        return;
-      }
-      break;
+      SelectLoadLane(Node, 2);
+      return;
     case Intrinsic::aarch64_neon_ld3lane:
-      if (VT == MVT::v16i8 || VT == MVT::v8i8) {
-        SelectLoadLane(Node, 3, AArch64::LD3i8);
-        return;
-      } else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
-                 VT == MVT::v8f16) {
-        SelectLoadLane(Node, 3, AArch64::LD3i16);
-        return;
-      } else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
-                 VT == MVT::v2f32) {
-        SelectLoadLane(Node, 3, AArch64::LD3i32);
-        return;
-      } else if (VT == MVT::v2i64 || VT == MVT::v1i64 || VT == MVT::v2f64 ||
-                 VT == MVT::v1f64) {
-        SelectLoadLane(Node, 3, AArch64::LD3i64);
-        return;
-      }
-      break;
+      SelectLoadLane(Node, 3);
+      return;
     case Intrinsic::aarch64_neon_ld4lane:
-      if (VT == MVT::v16i8 || VT == MVT::v8i8) {
-        SelectLoadLane(Node, 4, AArch64::LD4i8);
-        return;
-      } else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
-                 VT == MVT::v8f16) {
-        SelectLoadLane(Node, 4, AArch64::LD4i16);
-        return;
-      } else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
-                 VT == MVT::v2f32) {
-        SelectLoadLane(Node, 4, AArch64::LD4i32);
-        return;
-      } else if (VT == MVT::v2i64 || VT == MVT::v1i64 || VT == MVT::v2f64 ||
-                 VT == MVT::v1f64) {
-        SelectLoadLane(Node, 4, AArch64::LD4i64);
-        return;
-      }
-      break;
+      SelectLoadLane(Node, 4);
+      return;
     }
   } break;
   case ISD::INTRINSIC_WO_CHAIN: {
@@ -3482,6 +4493,40 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
     switch (IntNo) {
     default:
       break;
+    case Intrinsic::cheri_ddc_get: {
+      SDLoc DL(Node);
+      MVT CapTy = Node->getSimpleValueType(0);
+      unsigned Reg = AArch64MorelloCSysReg::DDC;
+      SDNode *Ret = CurDAG->getMachineNode(
+          AArch64::CapGetSys,
+          DL, CapTy, MVT::Other,
+          CurDAG->getTargetConstant(Reg, DL, MVT::i32));
+      ReplaceNode(Node, Ret);
+      return;
+    }
+    case Intrinsic::cheri_pcc_get: {
+      SDLoc DL(Node);
+      MVT CapTy = Node->getSimpleValueType(0);
+      SDValue Zero = CurDAG->getTargetConstant(0, DL, MVT::i32);
+      if (!Subtarget->hasC64()) {
+        SDValue Adr = SDValue(
+            CurDAG->getMachineNode(AArch64::ADR, DL, MVT::i64, Zero), 0);
+        SDNode *CVTP = CurDAG->getMachineNode(AArch64::CapConvert64ToCapPCC,
+                                              DL, CapTy, Adr);
+        ReplaceNode(Node, CVTP);
+        return;
+      }
+      SDNode *CAdr = CurDAG->getMachineNode(AArch64::CAdr, DL, CapTy, Zero);
+      ReplaceNode(Node, CAdr);
+      return;
+    }
+    case Intrinsic::cheri_stack_cap_get: {
+      SDLoc DL(Node);
+      SDValue CSP = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), SDLoc(Node),
+          AArch64::CSP, MVT::iFATPTR128);
+      ReplaceNode(Node, CSP.getNode());
+      return;
+    }
     case Intrinsic::aarch64_tagp:
       SelectTagP(Node);
       return;
@@ -3530,823 +4575,94 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
     switch (IntNo) {
     default:
       break;
-    case Intrinsic::aarch64_neon_st1x2: {
-      if (VT == MVT::v8i8) {
-        SelectStore(Node, 2, AArch64::ST1Twov8b);
-        return;
-      } else if (VT == MVT::v16i8) {
-        SelectStore(Node, 2, AArch64::ST1Twov16b);
-        return;
-      } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-        SelectStore(Node, 2, AArch64::ST1Twov4h);
-        return;
-      } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-        SelectStore(Node, 2, AArch64::ST1Twov8h);
-        return;
-      } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-        SelectStore(Node, 2, AArch64::ST1Twov2s);
-        return;
-      } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-        SelectStore(Node, 2, AArch64::ST1Twov4s);
-        return;
-      } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-        SelectStore(Node, 2, AArch64::ST1Twov2d);
-        return;
-      } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-        SelectStore(Node, 2, AArch64::ST1Twov1d);
-        return;
-      }
-      break;
-    }
-    case Intrinsic::aarch64_neon_st1x3: {
-      if (VT == MVT::v8i8) {
-        SelectStore(Node, 3, AArch64::ST1Threev8b);
-        return;
-      } else if (VT == MVT::v16i8) {
-        SelectStore(Node, 3, AArch64::ST1Threev16b);
-        return;
-      } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-        SelectStore(Node, 3, AArch64::ST1Threev4h);
-        return;
-      } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-        SelectStore(Node, 3, AArch64::ST1Threev8h);
-        return;
-      } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-        SelectStore(Node, 3, AArch64::ST1Threev2s);
-        return;
-      } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-        SelectStore(Node, 3, AArch64::ST1Threev4s);
-        return;
-      } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-        SelectStore(Node, 3, AArch64::ST1Threev2d);
-        return;
-      } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-        SelectStore(Node, 3, AArch64::ST1Threev1d);
-        return;
-      }
-      break;
-    }
-    case Intrinsic::aarch64_neon_st1x4: {
-      if (VT == MVT::v8i8) {
-        SelectStore(Node, 4, AArch64::ST1Fourv8b);
-        return;
-      } else if (VT == MVT::v16i8) {
-        SelectStore(Node, 4, AArch64::ST1Fourv16b);
-        return;
-      } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-        SelectStore(Node, 4, AArch64::ST1Fourv4h);
-        return;
-      } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-        SelectStore(Node, 4, AArch64::ST1Fourv8h);
-        return;
-      } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-        SelectStore(Node, 4, AArch64::ST1Fourv2s);
-        return;
-      } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-        SelectStore(Node, 4, AArch64::ST1Fourv4s);
-        return;
-      } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-        SelectStore(Node, 4, AArch64::ST1Fourv2d);
-        return;
-      } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-        SelectStore(Node, 4, AArch64::ST1Fourv1d);
-        return;
-      }
-      break;
-    }
-    case Intrinsic::aarch64_neon_st2: {
-      if (VT == MVT::v8i8) {
-        SelectStore(Node, 2, AArch64::ST2Twov8b);
-        return;
-      } else if (VT == MVT::v16i8) {
-        SelectStore(Node, 2, AArch64::ST2Twov16b);
-        return;
-      } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-        SelectStore(Node, 2, AArch64::ST2Twov4h);
-        return;
-      } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-        SelectStore(Node, 2, AArch64::ST2Twov8h);
-        return;
-      } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-        SelectStore(Node, 2, AArch64::ST2Twov2s);
-        return;
-      } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-        SelectStore(Node, 2, AArch64::ST2Twov4s);
-        return;
-      } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-        SelectStore(Node, 2, AArch64::ST2Twov2d);
-        return;
-      } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-        SelectStore(Node, 2, AArch64::ST1Twov1d);
-        return;
-      }
-      break;
-    }
-    case Intrinsic::aarch64_neon_st3: {
-      if (VT == MVT::v8i8) {
-        SelectStore(Node, 3, AArch64::ST3Threev8b);
-        return;
-      } else if (VT == MVT::v16i8) {
-        SelectStore(Node, 3, AArch64::ST3Threev16b);
-        return;
-      } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-        SelectStore(Node, 3, AArch64::ST3Threev4h);
-        return;
-      } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-        SelectStore(Node, 3, AArch64::ST3Threev8h);
-        return;
-      } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-        SelectStore(Node, 3, AArch64::ST3Threev2s);
-        return;
-      } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-        SelectStore(Node, 3, AArch64::ST3Threev4s);
-        return;
-      } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-        SelectStore(Node, 3, AArch64::ST3Threev2d);
-        return;
-      } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-        SelectStore(Node, 3, AArch64::ST1Threev1d);
-        return;
-      }
-      break;
-    }
-    case Intrinsic::aarch64_neon_st4: {
-      if (VT == MVT::v8i8) {
-        SelectStore(Node, 4, AArch64::ST4Fourv8b);
-        return;
-      } else if (VT == MVT::v16i8) {
-        SelectStore(Node, 4, AArch64::ST4Fourv16b);
-        return;
-      } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-        SelectStore(Node, 4, AArch64::ST4Fourv4h);
-        return;
-      } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-        SelectStore(Node, 4, AArch64::ST4Fourv8h);
-        return;
-      } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-        SelectStore(Node, 4, AArch64::ST4Fourv2s);
-        return;
-      } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-        SelectStore(Node, 4, AArch64::ST4Fourv4s);
-        return;
-      } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-        SelectStore(Node, 4, AArch64::ST4Fourv2d);
-        return;
-      } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-        SelectStore(Node, 4, AArch64::ST1Fourv1d);
-        return;
-      }
-      break;
-    }
-    case Intrinsic::aarch64_neon_st2lane: {
-      if (VT == MVT::v16i8 || VT == MVT::v8i8) {
-        SelectStoreLane(Node, 2, AArch64::ST2i8);
-        return;
-      } else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
-                 VT == MVT::v8f16) {
-        SelectStoreLane(Node, 2, AArch64::ST2i16);
-        return;
-      } else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
-                 VT == MVT::v2f32) {
-        SelectStoreLane(Node, 2, AArch64::ST2i32);
-        return;
-      } else if (VT == MVT::v2i64 || VT == MVT::v1i64 || VT == MVT::v2f64 ||
-                 VT == MVT::v1f64) {
-        SelectStoreLane(Node, 2, AArch64::ST2i64);
-        return;
-      }
-      break;
-    }
-    case Intrinsic::aarch64_neon_st3lane: {
-      if (VT == MVT::v16i8 || VT == MVT::v8i8) {
-        SelectStoreLane(Node, 3, AArch64::ST3i8);
-        return;
-      } else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
-                 VT == MVT::v8f16) {
-        SelectStoreLane(Node, 3, AArch64::ST3i16);
-        return;
-      } else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
-                 VT == MVT::v2f32) {
-        SelectStoreLane(Node, 3, AArch64::ST3i32);
-        return;
-      } else if (VT == MVT::v2i64 || VT == MVT::v1i64 || VT == MVT::v2f64 ||
-                 VT == MVT::v1f64) {
-        SelectStoreLane(Node, 3, AArch64::ST3i64);
-        return;
-      }
-      break;
-    }
-    case Intrinsic::aarch64_neon_st4lane: {
-      if (VT == MVT::v16i8 || VT == MVT::v8i8) {
-        SelectStoreLane(Node, 4, AArch64::ST4i8);
-        return;
-      } else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
-                 VT == MVT::v8f16) {
-        SelectStoreLane(Node, 4, AArch64::ST4i16);
-        return;
-      } else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
-                 VT == MVT::v2f32) {
-        SelectStoreLane(Node, 4, AArch64::ST4i32);
-        return;
-      } else if (VT == MVT::v2i64 || VT == MVT::v1i64 || VT == MVT::v2f64 ||
-                 VT == MVT::v1f64) {
-        SelectStoreLane(Node, 4, AArch64::ST4i64);
-        return;
-      }
-      break;
-    }
-    }
-    break;
-  }
-  case AArch64ISD::LD2post: {
-    if (VT == MVT::v8i8) {
-      SelectPostLoad(Node, 2, AArch64::LD2Twov8b_POST, AArch64::dsub0);
+    case Intrinsic::aarch64_neon_st1x2:
+    case Intrinsic::aarch64_neon_st2:
+      SelectStore(Node, 2);
       return;
-    } else if (VT == MVT::v16i8) {
-      SelectPostLoad(Node, 2, AArch64::LD2Twov16b_POST, AArch64::qsub0);
+    case Intrinsic::aarch64_neon_st1x3:
+    case Intrinsic::aarch64_neon_st3:
+      SelectStore(Node, 3);
       return;
-    } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-      SelectPostLoad(Node, 2, AArch64::LD2Twov4h_POST, AArch64::dsub0);
+    case Intrinsic::aarch64_neon_st1x4:
+    case Intrinsic::aarch64_neon_st4:
+      SelectStore(Node, 4);
       return;
-    } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-      SelectPostLoad(Node, 2, AArch64::LD2Twov8h_POST, AArch64::qsub0);
+    case Intrinsic::aarch64_neon_st2lane:
+      SelectStoreLane(Node, 2);
       return;
-    } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-      SelectPostLoad(Node, 2, AArch64::LD2Twov2s_POST, AArch64::dsub0);
+    case Intrinsic::aarch64_neon_st3lane:
+      SelectStoreLane(Node, 3);
       return;
-    } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-      SelectPostLoad(Node, 2, AArch64::LD2Twov4s_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-      SelectPostLoad(Node, 2, AArch64::LD1Twov1d_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-      SelectPostLoad(Node, 2, AArch64::LD2Twov2d_POST, AArch64::qsub0);
+    case Intrinsic::aarch64_neon_st4lane:
+      SelectStoreLane(Node, 4);
       return;
     }
     break;
   }
-  case AArch64ISD::LD3post: {
-    if (VT == MVT::v8i8) {
-      SelectPostLoad(Node, 3, AArch64::LD3Threev8b_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v16i8) {
-      SelectPostLoad(Node, 3, AArch64::LD3Threev16b_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-      SelectPostLoad(Node, 3, AArch64::LD3Threev4h_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-      SelectPostLoad(Node, 3, AArch64::LD3Threev8h_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-      SelectPostLoad(Node, 3, AArch64::LD3Threev2s_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-      SelectPostLoad(Node, 3, AArch64::LD3Threev4s_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-      SelectPostLoad(Node, 3, AArch64::LD1Threev1d_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-      SelectPostLoad(Node, 3, AArch64::LD3Threev2d_POST, AArch64::qsub0);
-      return;
-    }
-    break;
+  case AArch64ISD::LD1DUPpost:
+    SelectPostLoad(Node, 1);
+    return;
+  case AArch64ISD::LD2post:
+  case AArch64ISD::LD1x2post:
+  case AArch64ISD::LD2DUPpost:
+    SelectPostLoad(Node, 2);
+    return;
+  case AArch64ISD::LD3post:
+  case AArch64ISD::LD1x3post:
+  case AArch64ISD::LD3DUPpost:
+    SelectPostLoad(Node, 3);
+    return;
+  case AArch64ISD::LD4post:
+  case AArch64ISD::LD1x4post:
+  case AArch64ISD::LD4DUPpost:
+    SelectPostLoad(Node, 4);
+    return;
+  case AArch64ISD::LD1LANEpost:
+    SelectPostLoadLane(Node, 1);
+    return;
+  case AArch64ISD::LD2LANEpost:
+    SelectPostLoadLane(Node, 2);
+    return;
+  case AArch64ISD::LD3LANEpost:
+    SelectPostLoadLane(Node, 3);
+    return;
+  case AArch64ISD::LD4LANEpost:
+    SelectPostLoadLane(Node, 4);
+    return;
+  case AArch64ISD::ST2post:
+  case AArch64ISD::ST1x2post:
+    SelectPostStore(Node, 2);
+    return;
+  case AArch64ISD::ST3post:
+  case AArch64ISD::ST1x3post:
+    SelectPostStore(Node, 3);
+    return;
+  case AArch64ISD::ST4post:
+  case AArch64ISD::ST1x4post:
+    SelectPostStore(Node, 4);
+    return;
+  case AArch64ISD::ST2LANEpost:
+    SelectPostStoreLane(Node, 2);
+    return;
+  case AArch64ISD::ST3LANEpost:
+    SelectPostStoreLane(Node, 3);
+    return;
+  case AArch64ISD::ST4LANEpost:
+    SelectPostStoreLane(Node, 4);
+    return;
+  // This would be horrible to implement with tablegen at the moment
+  // so select it here.
+  case AArch64ISD::CTC_RETURN:
+  case AArch64ISD::ClearCTC_RETURN: {
+    bool Clear = (Node->getOpcode() == AArch64ISD::ClearCTC_RETURN);
+    SelectCapabilityBranch(Node, Clear, /*Tail=*/true);
+    return;
   }
-  case AArch64ISD::LD4post: {
-    if (VT == MVT::v8i8) {
-      SelectPostLoad(Node, 4, AArch64::LD4Fourv8b_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v16i8) {
-      SelectPostLoad(Node, 4, AArch64::LD4Fourv16b_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-      SelectPostLoad(Node, 4, AArch64::LD4Fourv4h_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-      SelectPostLoad(Node, 4, AArch64::LD4Fourv8h_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-      SelectPostLoad(Node, 4, AArch64::LD4Fourv2s_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-      SelectPostLoad(Node, 4, AArch64::LD4Fourv4s_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-      SelectPostLoad(Node, 4, AArch64::LD1Fourv1d_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-      SelectPostLoad(Node, 4, AArch64::LD4Fourv2d_POST, AArch64::qsub0);
-      return;
-    }
-    break;
-  }
-  case AArch64ISD::LD1x2post: {
-    if (VT == MVT::v8i8) {
-      SelectPostLoad(Node, 2, AArch64::LD1Twov8b_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v16i8) {
-      SelectPostLoad(Node, 2, AArch64::LD1Twov16b_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-      SelectPostLoad(Node, 2, AArch64::LD1Twov4h_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-      SelectPostLoad(Node, 2, AArch64::LD1Twov8h_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-      SelectPostLoad(Node, 2, AArch64::LD1Twov2s_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-      SelectPostLoad(Node, 2, AArch64::LD1Twov4s_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-      SelectPostLoad(Node, 2, AArch64::LD1Twov1d_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-      SelectPostLoad(Node, 2, AArch64::LD1Twov2d_POST, AArch64::qsub0);
-      return;
-    }
-    break;
-  }
-  case AArch64ISD::LD1x3post: {
-    if (VT == MVT::v8i8) {
-      SelectPostLoad(Node, 3, AArch64::LD1Threev8b_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v16i8) {
-      SelectPostLoad(Node, 3, AArch64::LD1Threev16b_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-      SelectPostLoad(Node, 3, AArch64::LD1Threev4h_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-      SelectPostLoad(Node, 3, AArch64::LD1Threev8h_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-      SelectPostLoad(Node, 3, AArch64::LD1Threev2s_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-      SelectPostLoad(Node, 3, AArch64::LD1Threev4s_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-      SelectPostLoad(Node, 3, AArch64::LD1Threev1d_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-      SelectPostLoad(Node, 3, AArch64::LD1Threev2d_POST, AArch64::qsub0);
-      return;
-    }
-    break;
-  }
-  case AArch64ISD::LD1x4post: {
-    if (VT == MVT::v8i8) {
-      SelectPostLoad(Node, 4, AArch64::LD1Fourv8b_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v16i8) {
-      SelectPostLoad(Node, 4, AArch64::LD1Fourv16b_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-      SelectPostLoad(Node, 4, AArch64::LD1Fourv4h_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-      SelectPostLoad(Node, 4, AArch64::LD1Fourv8h_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-      SelectPostLoad(Node, 4, AArch64::LD1Fourv2s_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-      SelectPostLoad(Node, 4, AArch64::LD1Fourv4s_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-      SelectPostLoad(Node, 4, AArch64::LD1Fourv1d_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-      SelectPostLoad(Node, 4, AArch64::LD1Fourv2d_POST, AArch64::qsub0);
-      return;
-    }
-    break;
-  }
-  case AArch64ISD::LD1DUPpost: {
-    if (VT == MVT::v8i8) {
-      SelectPostLoad(Node, 1, AArch64::LD1Rv8b_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v16i8) {
-      SelectPostLoad(Node, 1, AArch64::LD1Rv16b_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-      SelectPostLoad(Node, 1, AArch64::LD1Rv4h_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-      SelectPostLoad(Node, 1, AArch64::LD1Rv8h_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-      SelectPostLoad(Node, 1, AArch64::LD1Rv2s_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-      SelectPostLoad(Node, 1, AArch64::LD1Rv4s_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-      SelectPostLoad(Node, 1, AArch64::LD1Rv1d_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-      SelectPostLoad(Node, 1, AArch64::LD1Rv2d_POST, AArch64::qsub0);
-      return;
-    }
-    break;
-  }
-  case AArch64ISD::LD2DUPpost: {
-    if (VT == MVT::v8i8) {
-      SelectPostLoad(Node, 2, AArch64::LD2Rv8b_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v16i8) {
-      SelectPostLoad(Node, 2, AArch64::LD2Rv16b_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-      SelectPostLoad(Node, 2, AArch64::LD2Rv4h_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-      SelectPostLoad(Node, 2, AArch64::LD2Rv8h_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-      SelectPostLoad(Node, 2, AArch64::LD2Rv2s_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-      SelectPostLoad(Node, 2, AArch64::LD2Rv4s_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-      SelectPostLoad(Node, 2, AArch64::LD2Rv1d_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-      SelectPostLoad(Node, 2, AArch64::LD2Rv2d_POST, AArch64::qsub0);
-      return;
-    }
-    break;
-  }
-  case AArch64ISD::LD3DUPpost: {
-    if (VT == MVT::v8i8) {
-      SelectPostLoad(Node, 3, AArch64::LD3Rv8b_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v16i8) {
-      SelectPostLoad(Node, 3, AArch64::LD3Rv16b_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-      SelectPostLoad(Node, 3, AArch64::LD3Rv4h_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-      SelectPostLoad(Node, 3, AArch64::LD3Rv8h_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-      SelectPostLoad(Node, 3, AArch64::LD3Rv2s_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-      SelectPostLoad(Node, 3, AArch64::LD3Rv4s_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-      SelectPostLoad(Node, 3, AArch64::LD3Rv1d_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-      SelectPostLoad(Node, 3, AArch64::LD3Rv2d_POST, AArch64::qsub0);
-      return;
-    }
-    break;
-  }
-  case AArch64ISD::LD4DUPpost: {
-    if (VT == MVT::v8i8) {
-      SelectPostLoad(Node, 4, AArch64::LD4Rv8b_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v16i8) {
-      SelectPostLoad(Node, 4, AArch64::LD4Rv16b_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-      SelectPostLoad(Node, 4, AArch64::LD4Rv4h_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-      SelectPostLoad(Node, 4, AArch64::LD4Rv8h_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-      SelectPostLoad(Node, 4, AArch64::LD4Rv2s_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-      SelectPostLoad(Node, 4, AArch64::LD4Rv4s_POST, AArch64::qsub0);
-      return;
-    } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-      SelectPostLoad(Node, 4, AArch64::LD4Rv1d_POST, AArch64::dsub0);
-      return;
-    } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-      SelectPostLoad(Node, 4, AArch64::LD4Rv2d_POST, AArch64::qsub0);
-      return;
-    }
-    break;
-  }
-  case AArch64ISD::LD1LANEpost: {
-    if (VT == MVT::v16i8 || VT == MVT::v8i8) {
-      SelectPostLoadLane(Node, 1, AArch64::LD1i8_POST);
-      return;
-    } else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
-               VT == MVT::v8f16) {
-      SelectPostLoadLane(Node, 1, AArch64::LD1i16_POST);
-      return;
-    } else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
-               VT == MVT::v2f32) {
-      SelectPostLoadLane(Node, 1, AArch64::LD1i32_POST);
-      return;
-    } else if (VT == MVT::v2i64 || VT == MVT::v1i64 || VT == MVT::v2f64 ||
-               VT == MVT::v1f64) {
-      SelectPostLoadLane(Node, 1, AArch64::LD1i64_POST);
-      return;
-    }
-    break;
-  }
-  case AArch64ISD::LD2LANEpost: {
-    if (VT == MVT::v16i8 || VT == MVT::v8i8) {
-      SelectPostLoadLane(Node, 2, AArch64::LD2i8_POST);
-      return;
-    } else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
-               VT == MVT::v8f16) {
-      SelectPostLoadLane(Node, 2, AArch64::LD2i16_POST);
-      return;
-    } else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
-               VT == MVT::v2f32) {
-      SelectPostLoadLane(Node, 2, AArch64::LD2i32_POST);
-      return;
-    } else if (VT == MVT::v2i64 || VT == MVT::v1i64 || VT == MVT::v2f64 ||
-               VT == MVT::v1f64) {
-      SelectPostLoadLane(Node, 2, AArch64::LD2i64_POST);
-      return;
-    }
-    break;
-  }
-  case AArch64ISD::LD3LANEpost: {
-    if (VT == MVT::v16i8 || VT == MVT::v8i8) {
-      SelectPostLoadLane(Node, 3, AArch64::LD3i8_POST);
-      return;
-    } else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
-               VT == MVT::v8f16) {
-      SelectPostLoadLane(Node, 3, AArch64::LD3i16_POST);
-      return;
-    } else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
-               VT == MVT::v2f32) {
-      SelectPostLoadLane(Node, 3, AArch64::LD3i32_POST);
-      return;
-    } else if (VT == MVT::v2i64 || VT == MVT::v1i64 || VT == MVT::v2f64 ||
-               VT == MVT::v1f64) {
-      SelectPostLoadLane(Node, 3, AArch64::LD3i64_POST);
-      return;
-    }
-    break;
-  }
-  case AArch64ISD::LD4LANEpost: {
-    if (VT == MVT::v16i8 || VT == MVT::v8i8) {
-      SelectPostLoadLane(Node, 4, AArch64::LD4i8_POST);
-      return;
-    } else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
-               VT == MVT::v8f16) {
-      SelectPostLoadLane(Node, 4, AArch64::LD4i16_POST);
-      return;
-    } else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
-               VT == MVT::v2f32) {
-      SelectPostLoadLane(Node, 4, AArch64::LD4i32_POST);
-      return;
-    } else if (VT == MVT::v2i64 || VT == MVT::v1i64 || VT == MVT::v2f64 ||
-               VT == MVT::v1f64) {
-      SelectPostLoadLane(Node, 4, AArch64::LD4i64_POST);
-      return;
-    }
-    break;
-  }
-  case AArch64ISD::ST2post: {
-    VT = Node->getOperand(1).getValueType();
-    if (VT == MVT::v8i8) {
-      SelectPostStore(Node, 2, AArch64::ST2Twov8b_POST);
-      return;
-    } else if (VT == MVT::v16i8) {
-      SelectPostStore(Node, 2, AArch64::ST2Twov16b_POST);
-      return;
-    } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-      SelectPostStore(Node, 2, AArch64::ST2Twov4h_POST);
-      return;
-    } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-      SelectPostStore(Node, 2, AArch64::ST2Twov8h_POST);
-      return;
-    } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-      SelectPostStore(Node, 2, AArch64::ST2Twov2s_POST);
-      return;
-    } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-      SelectPostStore(Node, 2, AArch64::ST2Twov4s_POST);
-      return;
-    } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-      SelectPostStore(Node, 2, AArch64::ST2Twov2d_POST);
-      return;
-    } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-      SelectPostStore(Node, 2, AArch64::ST1Twov1d_POST);
-      return;
-    }
-    break;
-  }
-  case AArch64ISD::ST3post: {
-    VT = Node->getOperand(1).getValueType();
-    if (VT == MVT::v8i8) {
-      SelectPostStore(Node, 3, AArch64::ST3Threev8b_POST);
-      return;
-    } else if (VT == MVT::v16i8) {
-      SelectPostStore(Node, 3, AArch64::ST3Threev16b_POST);
-      return;
-    } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-      SelectPostStore(Node, 3, AArch64::ST3Threev4h_POST);
-      return;
-    } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-      SelectPostStore(Node, 3, AArch64::ST3Threev8h_POST);
-      return;
-    } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-      SelectPostStore(Node, 3, AArch64::ST3Threev2s_POST);
-      return;
-    } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-      SelectPostStore(Node, 3, AArch64::ST3Threev4s_POST);
-      return;
-    } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-      SelectPostStore(Node, 3, AArch64::ST3Threev2d_POST);
-      return;
-    } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-      SelectPostStore(Node, 3, AArch64::ST1Threev1d_POST);
-      return;
-    }
-    break;
-  }
-  case AArch64ISD::ST4post: {
-    VT = Node->getOperand(1).getValueType();
-    if (VT == MVT::v8i8) {
-      SelectPostStore(Node, 4, AArch64::ST4Fourv8b_POST);
-      return;
-    } else if (VT == MVT::v16i8) {
-      SelectPostStore(Node, 4, AArch64::ST4Fourv16b_POST);
-      return;
-    } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-      SelectPostStore(Node, 4, AArch64::ST4Fourv4h_POST);
-      return;
-    } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-      SelectPostStore(Node, 4, AArch64::ST4Fourv8h_POST);
-      return;
-    } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-      SelectPostStore(Node, 4, AArch64::ST4Fourv2s_POST);
-      return;
-    } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-      SelectPostStore(Node, 4, AArch64::ST4Fourv4s_POST);
-      return;
-    } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-      SelectPostStore(Node, 4, AArch64::ST4Fourv2d_POST);
-      return;
-    } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-      SelectPostStore(Node, 4, AArch64::ST1Fourv1d_POST);
-      return;
-    }
-    break;
-  }
-  case AArch64ISD::ST1x2post: {
-    VT = Node->getOperand(1).getValueType();
-    if (VT == MVT::v8i8) {
-      SelectPostStore(Node, 2, AArch64::ST1Twov8b_POST);
-      return;
-    } else if (VT == MVT::v16i8) {
-      SelectPostStore(Node, 2, AArch64::ST1Twov16b_POST);
-      return;
-    } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-      SelectPostStore(Node, 2, AArch64::ST1Twov4h_POST);
-      return;
-    } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-      SelectPostStore(Node, 2, AArch64::ST1Twov8h_POST);
-      return;
-    } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-      SelectPostStore(Node, 2, AArch64::ST1Twov2s_POST);
-      return;
-    } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-      SelectPostStore(Node, 2, AArch64::ST1Twov4s_POST);
-      return;
-    } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-      SelectPostStore(Node, 2, AArch64::ST1Twov1d_POST);
-      return;
-    } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-      SelectPostStore(Node, 2, AArch64::ST1Twov2d_POST);
-      return;
-    }
-    break;
-  }
-  case AArch64ISD::ST1x3post: {
-    VT = Node->getOperand(1).getValueType();
-    if (VT == MVT::v8i8) {
-      SelectPostStore(Node, 3, AArch64::ST1Threev8b_POST);
-      return;
-    } else if (VT == MVT::v16i8) {
-      SelectPostStore(Node, 3, AArch64::ST1Threev16b_POST);
-      return;
-    } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-      SelectPostStore(Node, 3, AArch64::ST1Threev4h_POST);
-      return;
-    } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-      SelectPostStore(Node, 3, AArch64::ST1Threev8h_POST);
-      return;
-    } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-      SelectPostStore(Node, 3, AArch64::ST1Threev2s_POST);
-      return;
-    } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-      SelectPostStore(Node, 3, AArch64::ST1Threev4s_POST);
-      return;
-    } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-      SelectPostStore(Node, 3, AArch64::ST1Threev1d_POST);
-      return;
-    } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-      SelectPostStore(Node, 3, AArch64::ST1Threev2d_POST);
-      return;
-    }
-    break;
-  }
-  case AArch64ISD::ST1x4post: {
-    VT = Node->getOperand(1).getValueType();
-    if (VT == MVT::v8i8) {
-      SelectPostStore(Node, 4, AArch64::ST1Fourv8b_POST);
-      return;
-    } else if (VT == MVT::v16i8) {
-      SelectPostStore(Node, 4, AArch64::ST1Fourv16b_POST);
-      return;
-    } else if (VT == MVT::v4i16 || VT == MVT::v4f16) {
-      SelectPostStore(Node, 4, AArch64::ST1Fourv4h_POST);
-      return;
-    } else if (VT == MVT::v8i16 || VT == MVT::v8f16) {
-      SelectPostStore(Node, 4, AArch64::ST1Fourv8h_POST);
-      return;
-    } else if (VT == MVT::v2i32 || VT == MVT::v2f32) {
-      SelectPostStore(Node, 4, AArch64::ST1Fourv2s_POST);
-      return;
-    } else if (VT == MVT::v4i32 || VT == MVT::v4f32) {
-      SelectPostStore(Node, 4, AArch64::ST1Fourv4s_POST);
-      return;
-    } else if (VT == MVT::v1i64 || VT == MVT::v1f64) {
-      SelectPostStore(Node, 4, AArch64::ST1Fourv1d_POST);
-      return;
-    } else if (VT == MVT::v2i64 || VT == MVT::v2f64) {
-      SelectPostStore(Node, 4, AArch64::ST1Fourv2d_POST);
-      return;
-    }
-    break;
-  }
-  case AArch64ISD::ST2LANEpost: {
-    VT = Node->getOperand(1).getValueType();
-    if (VT == MVT::v16i8 || VT == MVT::v8i8) {
-      SelectPostStoreLane(Node, 2, AArch64::ST2i8_POST);
-      return;
-    } else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
-               VT == MVT::v8f16) {
-      SelectPostStoreLane(Node, 2, AArch64::ST2i16_POST);
-      return;
-    } else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
-               VT == MVT::v2f32) {
-      SelectPostStoreLane(Node, 2, AArch64::ST2i32_POST);
-      return;
-    } else if (VT == MVT::v2i64 || VT == MVT::v1i64 || VT == MVT::v2f64 ||
-               VT == MVT::v1f64) {
-      SelectPostStoreLane(Node, 2, AArch64::ST2i64_POST);
-      return;
-    }
-    break;
-  }
-  case AArch64ISD::ST3LANEpost: {
-    VT = Node->getOperand(1).getValueType();
-    if (VT == MVT::v16i8 || VT == MVT::v8i8) {
-      SelectPostStoreLane(Node, 3, AArch64::ST3i8_POST);
-      return;
-    } else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
-               VT == MVT::v8f16) {
-      SelectPostStoreLane(Node, 3, AArch64::ST3i16_POST);
-      return;
-    } else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
-               VT == MVT::v2f32) {
-      SelectPostStoreLane(Node, 3, AArch64::ST3i32_POST);
-      return;
-    } else if (VT == MVT::v2i64 || VT == MVT::v1i64 || VT == MVT::v2f64 ||
-               VT == MVT::v1f64) {
-      SelectPostStoreLane(Node, 3, AArch64::ST3i64_POST);
-      return;
-    }
-    break;
-  }
-  case AArch64ISD::ST4LANEpost: {
-    VT = Node->getOperand(1).getValueType();
-    if (VT == MVT::v16i8 || VT == MVT::v8i8) {
-      SelectPostStoreLane(Node, 4, AArch64::ST4i8_POST);
-      return;
-    } else if (VT == MVT::v8i16 || VT == MVT::v4i16 || VT == MVT::v4f16 ||
-               VT == MVT::v8f16) {
-      SelectPostStoreLane(Node, 4, AArch64::ST4i16_POST);
-      return;
-    } else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
-               VT == MVT::v2f32) {
-      SelectPostStoreLane(Node, 4, AArch64::ST4i32_POST);
-      return;
-    } else if (VT == MVT::v2i64 || VT == MVT::v1i64 || VT == MVT::v2f64 ||
-               VT == MVT::v1f64) {
-      SelectPostStoreLane(Node, 4, AArch64::ST4i64_POST);
-      return;
-    }
-    break;
+  case AArch64ISD::CCALL:
+  case AArch64ISD::ClearCCALL: {
+    bool Clear = (Node->getOpcode() == AArch64ISD::ClearCCALL);
+    SelectCapabilityBranch(Node, Clear, /*Tail=*/false);
+    return;
   }
   }
 

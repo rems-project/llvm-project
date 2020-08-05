@@ -1376,6 +1376,30 @@ Sema::CheckBuiltinFunctionCall(FunctionDecl *FDecl, unsigned BuiltinID,
   case Builtin::BI__sync_fetch_and_nand_4:
   case Builtin::BI__sync_fetch_and_nand_8:
   case Builtin::BI__sync_fetch_and_nand_16:
+  case Builtin::BI__sync_fetch_and_min:
+  case Builtin::BI__sync_fetch_and_min_1:
+  case Builtin::BI__sync_fetch_and_min_2:
+  case Builtin::BI__sync_fetch_and_min_4:
+  case Builtin::BI__sync_fetch_and_min_8:
+  case Builtin::BI__sync_fetch_and_min_16:
+  case Builtin::BI__sync_fetch_and_max:
+  case Builtin::BI__sync_fetch_and_max_1:
+  case Builtin::BI__sync_fetch_and_max_2:
+  case Builtin::BI__sync_fetch_and_max_4:
+  case Builtin::BI__sync_fetch_and_max_8:
+  case Builtin::BI__sync_fetch_and_max_16:
+  case Builtin::BI__sync_fetch_and_umin:
+  case Builtin::BI__sync_fetch_and_umin_1:
+  case Builtin::BI__sync_fetch_and_umin_2:
+  case Builtin::BI__sync_fetch_and_umin_4:
+  case Builtin::BI__sync_fetch_and_umin_8:
+  case Builtin::BI__sync_fetch_and_umin_16:
+  case Builtin::BI__sync_fetch_and_umax:
+  case Builtin::BI__sync_fetch_and_umax_1:
+  case Builtin::BI__sync_fetch_and_umax_2:
+  case Builtin::BI__sync_fetch_and_umax_4:
+  case Builtin::BI__sync_fetch_and_umax_8:
+  case Builtin::BI__sync_fetch_and_umax_16:
   case Builtin::BI__sync_add_and_fetch:
   case Builtin::BI__sync_add_and_fetch_1:
   case Builtin::BI__sync_add_and_fetch_2:
@@ -4380,7 +4404,8 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
   // XXXAR: disallow __sync builtins with capabilities for now
   // It would result in incorrect code generation because we would end up
   // using the _16 versions and generating i256 in the IR
-  if (pointerType->getPointeeType()->isCHERICapabilityType(Context)) {
+  if (pointerType->getPointeeType()->isCHERICapabilityType(Context) &&
+    !Context.getTargetInfo().hasCapabilityAtomicBuiltins()) {
     switch (FDecl->getBuiltinID()) {
     case Builtin::BI__sync_bool_compare_and_swap:
     case Builtin::BI__sync_val_compare_and_swap:
@@ -4455,7 +4480,12 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
     BUILTIN_ROW(__sync_bool_compare_and_swap),
     BUILTIN_ROW(__sync_lock_test_and_set),
     BUILTIN_ROW(__sync_lock_release),
-    BUILTIN_ROW(__sync_swap)
+    BUILTIN_ROW(__sync_swap),
+
+    BUILTIN_ROW(__sync_fetch_and_min),
+    BUILTIN_ROW(__sync_fetch_and_max),
+    BUILTIN_ROW(__sync_fetch_and_umin),
+    BUILTIN_ROW(__sync_fetch_and_umax),
   };
 #undef BUILTIN_ROW
 
@@ -4467,11 +4497,15 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
   case 4: SizeIndex = 2; break;
   case 8: SizeIndex = 3; break;
   case 16: SizeIndex = 4; break;
+  case 32: SizeIndex = 4; break; // FIXME-cheri-c++: add 32 byte versions of builtins?
   default:
     Diag(DRE->getBeginLoc(), diag::err_atomic_builtin_pointer_size)
         << FirstArg->getType() << FirstArg->getSourceRange();
     return ExprError();
   }
+
+  // FIXME: Currently the morello builtins that handle capabilities go through
+  // sync_fetch_and_add_16. Do we need separate ones for capabilities?
 
   // Each of these builtins has one pointer argument, followed by some number of
   // values (0, 1 or 2) followed by a potentially empty varags list of stuff
@@ -4640,6 +4674,42 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
   case Builtin::BI__sync_swap_8:
   case Builtin::BI__sync_swap_16:
     BuiltinIndex = 16;
+    break;
+
+  case Builtin::BI__sync_fetch_and_min:
+  case Builtin::BI__sync_fetch_and_min_1:
+  case Builtin::BI__sync_fetch_and_min_2:
+  case Builtin::BI__sync_fetch_and_min_4:
+  case Builtin::BI__sync_fetch_and_min_8:
+  case Builtin::BI__sync_fetch_and_min_16:
+    BuiltinIndex = 17;
+    break;
+
+  case Builtin::BI__sync_fetch_and_max:
+  case Builtin::BI__sync_fetch_and_max_1:
+  case Builtin::BI__sync_fetch_and_max_2:
+  case Builtin::BI__sync_fetch_and_max_4:
+  case Builtin::BI__sync_fetch_and_max_8:
+  case Builtin::BI__sync_fetch_and_max_16:
+    BuiltinIndex = 18;
+    break;
+
+  case Builtin::BI__sync_fetch_and_umin:
+  case Builtin::BI__sync_fetch_and_umin_1:
+  case Builtin::BI__sync_fetch_and_umin_2:
+  case Builtin::BI__sync_fetch_and_umin_4:
+  case Builtin::BI__sync_fetch_and_umin_8:
+  case Builtin::BI__sync_fetch_and_umin_16:
+    BuiltinIndex = 19;
+    break;
+
+  case Builtin::BI__sync_fetch_and_umax:
+  case Builtin::BI__sync_fetch_and_umax_1:
+  case Builtin::BI__sync_fetch_and_umax_2:
+  case Builtin::BI__sync_fetch_and_umax_4:
+  case Builtin::BI__sync_fetch_and_umax_8:
+  case Builtin::BI__sync_fetch_and_umax_16:
+    BuiltinIndex = 20;
     break;
   }
 

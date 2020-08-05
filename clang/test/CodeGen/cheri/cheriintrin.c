@@ -9,10 +9,10 @@ void use_size_t(__SIZE_TYPE__ s);
 void use_bool(_Bool b);
 void use_cap(void *__capability p);
 
-void test(void *__capability cap, char *__capability cap2, __SIZE_TYPE__ i);
+void test(void *__capability cap, char *__capability cap2, void *ptr, __SIZE_TYPE__ i);
 
 // CHECK-LABEL: define {{[^@]+}}@test
-// CHECK-SAME: (i8 addrspace(200)* [[CAP:%.*]], i8 addrspace(200)* [[CAP2:%.*]], i64 zeroext [[I:%.*]]) local_unnamed_addr
+// CHECK-SAME: (i8 addrspace(200)* [[CAP:%.*]], i8 addrspace(200)* [[CAP2:%.*]], {{.*}}, i64 zeroext [[I:%.*]]) local_unnamed_addr
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = call i64 @llvm.cheri.cap.address.get.i64(i8 addrspace(200)* [[CAP]])
 // CHECK-NEXT:    call void @use_size_t(i64 zeroext [[TMP0]]) #5
@@ -78,11 +78,11 @@ void test(void *__capability cap, char *__capability cap2, __SIZE_TYPE__ i);
 // CHECK-NEXT:    call void @use_size_t(i64 zeroext [[TMP26]]) #5
 // CHECK-NEXT:    [[TMP27:%.*]] = call i8 addrspace(200)* @llvm.cheri.cap.flags.set.i64(i8 addrspace(200)* [[CAP]], i64 [[I]])
 // CHECK-NEXT:    call void @use_cap(i8 addrspace(200)* [[TMP27]]) #5
-// CHECK-NEXT:    [[TMP28:%.*]] = call i64 @llvm.cheri.cap.load.tags.i64(i8 addrspace(200)* [[CAP]])
+// CHECK-NEXT:    [[TMP28:%.*]] = call i64 @llvm.cheri.cap.load.tags.i64.{{.*}}
 // CHECK-NEXT:    call void @use_size_t(i64 zeroext [[TMP28]]) #5
 // CHECK-NEXT:    ret void
 //
-void test(void *__capability cap, char *__capability cap2, __SIZE_TYPE__ i) {
+void test(void *__capability cap, char *__capability cap2, void * ptr, __SIZE_TYPE__ i) {
   use_size_t(cheri_address_get(cap));
   use_cap(cheri_address_set(cap, i));
 
@@ -146,7 +146,7 @@ void test(void *__capability cap, char *__capability cap2, __SIZE_TYPE__ i) {
   use_size_t(cheri_flags_get(cap));
   use_cap(cheri_flags_set(cap, i));
 
-  use_size_t(cheri_tags_load(cap));
+  use_size_t(cheri_tags_load(ptr));
 }
 
 /* We also define macros for __builtin_is_aligned/__builtin_align_{up,down}().

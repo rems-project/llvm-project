@@ -27,6 +27,7 @@
 #include "llvm/Support/SMLoc.h"
 #include "llvm/Support/TargetParser.h"
 #include "llvm/Support/VersionTuple.h"
+#include "llvm/MC/MCDwarf.h"
 #include <cassert>
 #include <cstdint>
 #include <memory>
@@ -104,6 +105,20 @@ public:
   virtual void emitLabel(MCSymbol *Symbol);
   // Allow a target to add behavior to the emitAssignment of MCStreamer.
   virtual void emitAssignment(MCSymbol *Symbol, const MCExpr *Value);
+
+  // Let the target customize how it emit the initializer for a CHERI capability.
+  // This will emit the relocation and make sure to allocate the required space.
+  virtual void emitCHERICapability(const MCSymbol *Symbol, int64_t Offset,
+                                   unsigned CapSize, SMLoc Loc = SMLoc());
+  virtual void emitCHERICapability(const MCSymbol *Symbol, const MCExpr *Addend,
+                                   unsigned CapSize, SMLoc Loc = SMLoc());
+  virtual void emitCHERICapability(const MCExpr *Expr, unsigned CapSize,
+                                   SMLoc Loc = SMLoc()) {
+    llvm_unreachable("Target only supports symbol + offset");
+  }
+
+  virtual void emitCheriIntcap(int64_t Value, unsigned CapSize,
+                               SMLoc Loc = SMLoc());
 
   virtual void prettyPrintAsm(MCInstPrinter &InstPrinter, uint64_t Address,
                               const MCInst &Inst, const MCSubtargetInfo &STI,
@@ -493,6 +508,10 @@ public:
   /// Note in the output that the specified \p Func is a Thumb mode
   /// function (ARM target only).
   virtual void EmitThumbFunc(MCSymbol *Func);
+
+  /// Emit a capinit relocation. This doesn't allocate the storage
+  /// for the capability, and we expect some data directives to follow this.
+  virtual void EmitCapInit(const MCExpr *Func) {};
 
   /// Emit an assignment of \p Value to \p Symbol.
   ///
@@ -960,7 +979,7 @@ public:
 
   virtual MCSymbol *getDwarfLineTableSymbol(unsigned CUID);
   virtual void EmitCFISections(bool EH, bool Debug);
-  void EmitCFIStartProc(bool IsSimple, SMLoc Loc = SMLoc());
+  void EmitCFIStartProc(MCCFIProcType Type, SMLoc Loc = SMLoc());
   void EmitCFIEndProc();
   virtual void EmitCFIDefCfa(int64_t Register, int64_t Offset);
   virtual void EmitCFIDefCfaOffset(int64_t Offset);
@@ -1060,6 +1079,9 @@ public:
 
   virtual bool mayHaveInstructions(MCSection &Sec) const { return true; }
 
+  void AddFatReloc(std::tuple<MCSymbol*, const MCExpr*, StringRef> Reloc) {
+    FatRelocs.push_back(Reloc);
+  }
 protected:
   virtual void EmitCheriCapabilityImpl(const MCSymbol *Value,
                                        const MCExpr *Addend, unsigned CapSize,

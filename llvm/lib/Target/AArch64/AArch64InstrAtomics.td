@@ -42,6 +42,7 @@ class relaxed_load<PatFrag base>
   let IsAtomicOrderingAcquireOrStronger = 0;
 }
 
+let Predicates = [HasNotC64] in {
 // 8-bit loads
 def : Pat<(acquiring_load<atomic_load_8>  GPR64sp:$ptr), (LDARB GPR64sp:$ptr)>;
 def : Pat<(relaxed_load<atomic_load_8> (ro_Windexed8 GPR64sp:$Rn, GPR32:$Rm,
@@ -101,6 +102,7 @@ def : Pat<(relaxed_load<atomic_load_64> (am_indexed64 GPR64sp:$Rn,
 def : Pat<(relaxed_load<atomic_load_64>
                (am_unscaled64 GPR64sp:$Rn, simm9:$offset)),
           (LDURXi GPR64sp:$Rn, simm9:$offset)>;
+}
 
 //===----------------------------------
 // Atomic stores
@@ -124,6 +126,7 @@ class relaxed_store<PatFrag base>
   let IsAtomicOrderingReleaseOrStronger = 0;
 }
 
+let Predicates = [HasNotC64] in {
 // 8-bit stores
 def : Pat<(releasing_store<atomic_store_8> GPR64sp:$ptr, GPR32:$val),
           (STLRB GPR32:$val, GPR64sp:$ptr)>;
@@ -195,6 +198,7 @@ def : Pat<(relaxed_store<atomic_store_64>
 def : Pat<(relaxed_store<atomic_store_64>
                (am_unscaled64 GPR64sp:$Rn, simm9:$offset), GPR64:$val),
           (STURXi GPR64:$val, GPR64sp:$Rn, simm9:$offset)>;
+}
 
 //===----------------------------------
 // Low-level exclusive operations
@@ -226,6 +230,7 @@ def ldxr_8 : PatFrag<(ops node:$ptr), (int_aarch64_ldxr node:$ptr), [{
   let GISelPredicateCode = [{ return isLoadStoreOfNumBytes(MI, 8); }];
 }
 
+let Predicates = [HasNotC64] in {
 def : Pat<(ldxr_1 GPR64sp:$addr),
           (SUBREG_TO_REG (i64 0), (LDXRB GPR64sp:$addr), sub_32)>;
 def : Pat<(ldxr_2 GPR64sp:$addr),
@@ -240,6 +245,7 @@ def : Pat<(and (ldxr_2 GPR64sp:$addr), 0xffff),
           (SUBREG_TO_REG (i64 0), (LDXRH GPR64sp:$addr), sub_32)>;
 def : Pat<(and (ldxr_4 GPR64sp:$addr), 0xffffffff),
           (SUBREG_TO_REG (i64 0), (LDXRW GPR64sp:$addr), sub_32)>;
+}
 
 // Load-exclusives.
 
@@ -267,6 +273,7 @@ def ldaxr_8 : PatFrag<(ops node:$ptr), (int_aarch64_ldaxr node:$ptr), [{
   let GISelPredicateCode = [{ return isLoadStoreOfNumBytes(MI, 8); }];
 }
 
+let Predicates = [HasNotC64] in {
 def : Pat<(ldaxr_1 GPR64sp:$addr),
           (SUBREG_TO_REG (i64 0), (LDAXRB GPR64sp:$addr), sub_32)>;
 def : Pat<(ldaxr_2 GPR64sp:$addr),
@@ -281,6 +288,7 @@ def : Pat<(and (ldaxr_2 GPR64sp:$addr), 0xffff),
           (SUBREG_TO_REG (i64 0), (LDAXRH GPR64sp:$addr), sub_32)>;
 def : Pat<(and (ldaxr_4 GPR64sp:$addr), 0xffffffff),
           (SUBREG_TO_REG (i64 0), (LDAXRW GPR64sp:$addr), sub_32)>;
+}
 
 // Store-exclusives.
 
@@ -313,6 +321,7 @@ def stxr_8 : PatFrag<(ops node:$val, node:$ptr),
 }
 
 
+let Predicates = [HasNotC64] in {
 def : Pat<(stxr_1 GPR64:$val, GPR64sp:$addr),
           (STXRB (EXTRACT_SUBREG GPR64:$val, sub_32), GPR64sp:$addr)>;
 def : Pat<(stxr_2 GPR64:$val, GPR64sp:$addr),
@@ -335,6 +344,7 @@ def : Pat<(stxr_2 (and GPR64:$val, 0xffff), GPR64sp:$addr),
           (STXRH (EXTRACT_SUBREG GPR64:$val, sub_32), GPR64sp:$addr)>;
 def : Pat<(stxr_4 (and GPR64:$val, 0xffffffff), GPR64sp:$addr),
           (STXRW (EXTRACT_SUBREG GPR64:$val, sub_32), GPR64sp:$addr)>;
+}
 
 // Store-release-exclusives.
 
@@ -367,6 +377,7 @@ def stlxr_8 : PatFrag<(ops node:$val, node:$ptr),
 }
 
 
+let Predicates = [HasNotC64] in {
 def : Pat<(stlxr_1 GPR64:$val, GPR64sp:$addr),
           (STLXRB (EXTRACT_SUBREG GPR64:$val, sub_32), GPR64sp:$addr)>;
 def : Pat<(stlxr_2 GPR64:$val, GPR64sp:$addr),
@@ -389,10 +400,9 @@ def : Pat<(stlxr_2 (and GPR64:$val, 0xffff), GPR64sp:$addr),
           (STLXRH (EXTRACT_SUBREG GPR64:$val, sub_32), GPR64sp:$addr)>;
 def : Pat<(stlxr_4 (and GPR64:$val, 0xffffffff), GPR64sp:$addr),
           (STLXRW (EXTRACT_SUBREG GPR64:$val, sub_32), GPR64sp:$addr)>;
-
+}
 
 // And clear exclusive.
-
 def : Pat<(int_aarch64_clrex), (CLREX 0xf)>;
 
 //===----------------------------------
@@ -436,7 +446,7 @@ def CMP_SWAP_128 : Pseudo<(outs GPR64:$RdLo, GPR64:$RdHi, GPR32:$scratch),
                    Sched<[WriteAtomic]>;
 
 // v8.1 Atomic instructions:
-let Predicates = [HasLSE] in {
+let Predicates = [HasLSE, HasNotC64] in {
   defm : LDOPregister_patterns<"LDADD", "atomic_load_add">;
   defm : LDOPregister_patterns<"LDSET", "atomic_load_or">;
   defm : LDOPregister_patterns<"LDEOR", "atomic_load_xor">;

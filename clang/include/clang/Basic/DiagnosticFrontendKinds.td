@@ -265,6 +265,9 @@ def note_cheri_memintrin_misaligned_fixit : Note<
   " be used to maintain tag bits). For more information see"
   " https://github.com/CTSRD-CHERI/llvm-project/wiki/Unaligned-capability-copies">;
 
+def warn_coro_cheri_purecap :
+  Warning<"coroutines not supported in the purecap ABI. "
+          "Ignoring the -fcoroutines-ts option">, InGroup<CHERIMissingFeatures>;
 // TODO: move these into a sensible warning group
 // TODO: it probably doesn't make sense to warn for additions since this is just inefficient
 def warn_uintcap_add_subtract : Warning<

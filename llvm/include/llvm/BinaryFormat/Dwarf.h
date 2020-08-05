@@ -64,7 +64,8 @@ enum LLVMConstants : uint32_t {
   DWARF_VENDOR_GOOGLE = 4,
   DWARF_VENDOR_LLVM = 5,
   DWARF_VENDOR_MIPS = 6,
-  DWARF_VENDOR_WASM = 7
+  DWARF_VENDOR_WASM = 7,
+  DWARF_VENDOR_CHERI = 8
 };
 
 /// Constants that define the DWARF format as 32 or 64 bit.

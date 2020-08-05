@@ -4,4 +4,6 @@ add_lldb_unittest(EditlineTests
   LINK_LIBS
     lldbHost
     lldbUtility
+  LINK_COMPONENTS
+    RuntimeDyld
   )

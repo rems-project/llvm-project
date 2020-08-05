@@ -564,6 +564,7 @@ public:
 
   unsigned getIntCapWidth() const override { return CapSize; }
   unsigned getIntCapAlign() const override { return CapSize; }
+  unsigned getIntCapRange() const override { return 64; }
 
   uint64_t getCHERICapabilityWidth() const override { return CapSize; }
 
@@ -596,6 +597,8 @@ public:
 #endif
     return TargetInfo::hasBuiltinAtomic(AtomicSizeInBits, AlignmentInBits);
   }
+
+  bool hasCapabilityAtomicBuiltins() const override { return false; }
 
   unsigned getUnwindWordWidth() const override;
 

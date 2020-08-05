@@ -161,14 +161,15 @@ bool SBType::IsReferenceType() {
   return m_opaque_sp->GetCompilerType(true).IsReferenceType();
 }
 
-SBType SBType::GetPointerType() {
-  LLDB_RECORD_METHOD_NO_ARGS(lldb::SBType, SBType, GetPointerType);
+SBType SBType::GetPointerType(AddressSpace address_space) {
+  LLDB_RECORD_METHOD(lldb::SBType, SBType, GetPointerType, (AddressSpace),
+                     address_space);
 
   if (!IsValid())
     return LLDB_RECORD_RESULT(SBType());
 
-  return LLDB_RECORD_RESULT(
-      SBType(TypeImplSP(new TypeImpl(m_opaque_sp->GetPointerType()))));
+  return LLDB_RECORD_RESULT(SBType(
+      TypeImplSP(new TypeImpl(m_opaque_sp->GetPointerType(address_space)))));
 }
 
 SBType SBType::GetPointeeType() {
@@ -180,13 +181,14 @@ SBType SBType::GetPointeeType() {
       SBType(TypeImplSP(new TypeImpl(m_opaque_sp->GetPointeeType()))));
 }
 
-SBType SBType::GetReferenceType() {
-  LLDB_RECORD_METHOD_NO_ARGS(lldb::SBType, SBType, GetReferenceType);
+SBType SBType::GetReferenceType(AddressSpace address_space) {
+  LLDB_RECORD_METHOD(lldb::SBType, SBType, GetReferenceType, (AddressSpace),
+                     address_space);
 
   if (!IsValid())
     return LLDB_RECORD_RESULT(SBType());
-  return LLDB_RECORD_RESULT(
-      SBType(TypeImplSP(new TypeImpl(m_opaque_sp->GetReferenceType()))));
+  return LLDB_RECORD_RESULT(SBType(
+      TypeImplSP(new TypeImpl(m_opaque_sp->GetReferenceType(address_space)))));
 }
 
 SBType SBType::GetTypedefedType() {
@@ -913,9 +915,9 @@ void RegisterMethods<SBType>(Registry &R) {
   LLDB_REGISTER_METHOD(bool, SBType, IsArrayType, ());
   LLDB_REGISTER_METHOD(bool, SBType, IsVectorType, ());
   LLDB_REGISTER_METHOD(bool, SBType, IsReferenceType, ());
-  LLDB_REGISTER_METHOD(lldb::SBType, SBType, GetPointerType, ());
+  LLDB_REGISTER_METHOD(lldb::SBType, SBType, GetPointerType, (AddressSpace));
   LLDB_REGISTER_METHOD(lldb::SBType, SBType, GetPointeeType, ());
-  LLDB_REGISTER_METHOD(lldb::SBType, SBType, GetReferenceType, ());
+  LLDB_REGISTER_METHOD(lldb::SBType, SBType, GetReferenceType, (AddressSpace));
   LLDB_REGISTER_METHOD(lldb::SBType, SBType, GetTypedefedType, ());
   LLDB_REGISTER_METHOD(lldb::SBType, SBType, GetDereferencedType, ());
   LLDB_REGISTER_METHOD(lldb::SBType, SBType, GetArrayElementType, ());

@@ -203,17 +203,20 @@ public:
   CompilerType GetPointeeType() const;
 
   // Return a new CompilerType that is a pointer to this type
-  CompilerType GetPointerType() const;
+  CompilerType GetPointerType(
+      lldb::AddressSpace address_space = lldb::eAddressSpaceNormal) const;
 
   // Return a new CompilerType that is a L value reference to this type if this
   // type is valid and the type system supports L value references, else return
   // an invalid type.
-  CompilerType GetLValueReferenceType() const;
+  CompilerType GetLValueReferenceType(
+      lldb::AddressSpace address_space = lldb::eAddressSpaceNormal) const;
 
   // Return a new CompilerType that is a R value reference to this type if this
   // type is valid and the type system supports R value references, else return
   // an invalid type.
-  CompilerType GetRValueReferenceType() const;
+  CompilerType GetRValueReferenceType(
+      lldb::AddressSpace address_space = lldb::eAddressSpaceNormal) const;
 
   // Return a new CompilerType adds a const modifier to this type if this type
   // is valid and the type system supports const modifiers, else return an
@@ -257,6 +260,8 @@ public:
   llvm::Optional<uint64_t> GetBitSize(ExecutionContextScope *exe_scope) const;
 
   lldb::Encoding GetEncoding(uint64_t &count) const;
+
+  lldb::MemoryContentType GetMemoryContentType() const;
 
   lldb::Format GetFormat() const;
 

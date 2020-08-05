@@ -146,6 +146,12 @@ void GDBRemoteCommunicationServerLLGS::RegisterPacketHandlers() {
   RegisterMemberFunctionHandler(
       StringExtractorGDBRemote::eServerPacketType_qXfer,
       &GDBRemoteCommunicationServerLLGS::Handle_qXfer);
+  RegisterMemberFunctionHandler(
+      StringExtractorGDBRemote::eServerPacketType_qXfer_capa_read,
+      &GDBRemoteCommunicationServerLLGS::Handle_qXfer_capa_read);
+  RegisterMemberFunctionHandler(
+      StringExtractorGDBRemote::eServerPacketType_qXfer_siginfo_read,
+      &GDBRemoteCommunicationServerLLGS::Handle_qXfer_siginfo_read);
   RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_s,
                                 &GDBRemoteCommunicationServerLLGS::Handle_s);
   RegisterMemberFunctionHandler(
@@ -1712,6 +1718,9 @@ GDBRemoteCommunicationServerLLGS::Handle_qRegisterInfo(
   case eEncodingVector:
     response.PutCString("encoding:vector;");
     break;
+  case eEncodingCapability:
+    response.PutCString("encoding:capability;");
+    break;
   default:
     break;
   }
@@ -1816,6 +1825,18 @@ GDBRemoteCommunicationServerLLGS::Handle_qRegisterInfo(
     break;
   case LLDB_REGNUM_GENERIC_ARG8:
     response.PutCString("generic:arg8;");
+    break;
+  case LLDB_REGNUM_GENERIC_PCC:
+    response.PutCString("generic:pcc;");
+    break;
+  case LLDB_REGNUM_GENERIC_CSP:
+    response.PutCString("generic:csp;");
+    break;
+  case LLDB_REGNUM_GENERIC_CFP:
+    response.PutCString("generic:cfp;");
+    break;
+  case LLDB_REGNUM_GENERIC_RAC:
+    response.PutCString("generic:rac;");
     break;
   default:
     break;
@@ -2791,6 +2812,106 @@ GDBRemoteCommunicationServerLLGS::ReadXferObject(llvm::StringRef object,
 }
 
 GDBRemoteCommunication::PacketResult
+GDBRemoteCommunicationServerLLGS::Handle_qXfer_capa_read(
+    StringExtractorGDBRemote &packet) {
+  Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PROCESS));
+
+  if (!m_debugged_process_up ||
+      (m_debugged_process_up->GetID() == LLDB_INVALID_PROCESS_ID)) {
+    LLDB_LOG(log, "no process available");
+    return SendErrorResponse(0x15);
+  }
+
+  // Parse out the address.
+  packet.SetFilePos(strlen("qXfer:capa:read:"));
+  if (packet.GetBytesLeft() < 1)
+    return SendIllFormedResponse(packet,
+                                 "packet qXfer:capa:read: is missing address");
+
+  addr_t read_addr =
+      packet.GetHexMaxU64(false, std::numeric_limits<uint64_t>::max());
+  if (read_addr == std::numeric_limits<uint64_t>::max())
+    return SendIllFormedResponse(
+        packet, "packet qXfer:capa:read: specifies invalid address");
+
+  // Parse out colon.
+  if (packet.GetBytesLeft() < 1 || packet.GetChar() != ':')
+    return SendIllFormedResponse(
+        packet, "packet qXfer:capa:read: is missing a colon after address");
+
+  // Parse out the offset and length.
+  uint64_t read_offset, read_length;
+  Status error;
+  if (!ParseqXferRange(packet, "qXfer:cap:read:", &read_offset, &read_length,
+                       error))
+    return SendIllFormedResponse(packet, error.AsCString());
+
+  // Allocate the response buffer.
+  uint32_t byte_count = TaggedMemory::GetTaggedByteSize(eMemoryContentCap128);
+  std::string buf(byte_count, '\0');
+  if (buf.empty())
+    return SendErrorResponse(0x78);
+
+  // Retrieve the process memory.
+  size_t bytes_read = 0;
+  error = m_debugged_process_up->ReadMemoryWithoutTrap(
+      read_addr, &buf[0], byte_count, bytes_read, eMemoryContentCap128);
+  if (error.Fail()) {
+    LLDB_LOG(log, "pid {0} mem {1:x}: failed to read. Error: {2}",
+             m_debugged_process_up->GetID(), read_addr, error);
+    return SendErrorResponse(0x08);
+  }
+
+  if (bytes_read != byte_count) {
+    LLDB_LOG(log, "pid {0} mem {1:x}: read {2} of {3} requested bytes",
+             m_debugged_process_up->GetID(), read_addr, bytes_read, byte_count);
+    return SendErrorResponse(0x08);
+  }
+
+  // Send the response.
+  return SendqXferResponse(buf, read_offset, read_length);
+}
+
+GDBRemoteCommunication::PacketResult
+GDBRemoteCommunicationServerLLGS::Handle_qXfer_siginfo_read(
+    StringExtractorGDBRemote &packet) {
+#if defined(__linux__)
+  Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PROCESS));
+
+  // Parse out the offset and length.
+  packet.SetFilePos(strlen("qXfer:siginfo:read::"));
+  uint64_t siginfo_offset, siginfo_length;
+  Status error;
+  if (!ParseqXferRange(packet, "qXfer:siginfo:read::", &siginfo_offset,
+                       &siginfo_length, error))
+    return SendIllFormedResponse(packet, error.AsCString());
+
+  // Get the thread to use.
+  NativeThreadProtocol *thread_sp = GetThreadFromSuffix(packet);
+  if (!thread_sp) {
+    LLDB_LOG(log, "no thread available");
+    return SendErrorResponse(0x15);
+  }
+
+  // Grab the auxv data.
+  DataBufferSP data_sp;
+  error = thread_sp->GetSigInfoTargetData(data_sp);
+  if (error.Fail()) {
+    LLDB_LOG(log, "no siginfo data retrieved: {0}", error);
+    return SendErrorResponse(error.GetError());
+  }
+
+  // Send the response.
+  return SendqXferResponse(
+      llvm::StringRef(reinterpret_cast<const char *>(data_sp->GetBytes()),
+                      data_sp->GetByteSize()),
+      siginfo_offset, siginfo_length);
+#else
+  return SendUnimplementedResponse("not implemented on this platform");
+#endif
+}
+
+GDBRemoteCommunication::PacketResult
 GDBRemoteCommunicationServerLLGS::Handle_qXfer(
     StringExtractorGDBRemote &packet) {
   SmallVector<StringRef, 5> fields;
@@ -3185,6 +3306,77 @@ GDBRemoteCommunicationServerLLGS::Handle_QPassSignals(
     return SendErrorResponse(69);
 
   return SendOKResponse();
+}
+
+bool GDBRemoteCommunicationServerLLGS::ParseqXferRange(
+    StringExtractorGDBRemote &packet, llvm::StringRef packet_name,
+    uint64_t *offset, uint64_t *length, Status &error) {
+  // Parse out the offset.
+  if (packet.GetBytesLeft() < 1) {
+    error.SetErrorStringWithFormatv("packet {0} is missing offset",
+                                    packet_name);
+    return false;
+  }
+
+  *offset = packet.GetHexMaxU64(false, std::numeric_limits<uint64_t>::max());
+  if (*offset == std::numeric_limits<uint64_t>::max()) {
+    error.SetErrorStringWithFormatv("packet {0} specifies invalid offset",
+                                    packet_name);
+    return false;
+  }
+
+  // Parse out the comma.
+  if (packet.GetBytesLeft() < 1 || packet.GetChar() != ',') {
+    error.SetErrorStringWithFormatv(
+        "packet {0} is missing a comma after offset", packet_name);
+    return false;
+  }
+
+  // Parse out the length.
+  *length = packet.GetHexMaxU64(false, std::numeric_limits<uint64_t>::max());
+  if (*length == std::numeric_limits<uint64_t>::max()) {
+    error.SetErrorStringWithFormatv("packet {0} specifies invalid length",
+                                    packet_name);
+    return false;
+  }
+  return true;
+}
+
+GDBRemoteCommunication::PacketResult
+GDBRemoteCommunicationServerLLGS::SendqXferResponse(llvm::StringRef data,
+                                                    uint64_t offset,
+                                                    uint64_t length,
+                                                    bool *end_reached) {
+  StreamGDBRemote response;
+  if (end_reached != nullptr)
+    *end_reached = false;
+
+  if (offset >= data.size()) {
+    // Nothing left to send. Mark the buffer as complete.
+    response.PutChar('l');
+    if (end_reached != nullptr)
+      *end_reached = true;
+  } else {
+    // Figure out how many bytes are available starting at the given offset.
+    data = data.drop_front(offset);
+
+    // Mark the response type according to whether all data are read.
+    if (length >= data.size()) {
+      // There will be nothing left to read after this.
+      response.PutChar('l');
+      if (end_reached != nullptr)
+        *end_reached = true;
+    } else {
+      // There will still be bytes to read after this request.
+      response.PutChar('m');
+      data = data.take_front(length);
+    }
+
+    // Write the data in encoded binary form.
+    response.PutEscapedBytes(data.data(), data.size());
+  }
+
+  return SendPacketNoLock(response.GetString());
 }
 
 void GDBRemoteCommunicationServerLLGS::MaybeCloseInferiorTerminalConnection() {

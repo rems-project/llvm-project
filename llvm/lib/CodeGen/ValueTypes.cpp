@@ -350,9 +350,13 @@ MVT MVT::getVT(Type *Ty, bool HandleUnknown){
   case Type::FP128TyID:     return MVT(MVT::f128);
   case Type::PPC_FP128TyID: return MVT(MVT::ppcf128);
   case Type::PointerTyID: {
-    // FIXME: require a DataLayout here!
+    // FIXME: This used to return a iFATPTRAny, but it doesn't work because
+    // now we can't round-trip EVTs through the IR and get the same thing.
+    // This means EVTs containing vectors of capabilities can't work.
+    // Perhaps we should have the diffrent capability types in different
+    // address spaces?
     if (isCheriPointer(Ty, nullptr))
-      return MVT(MVT::iFATPTRAny);
+      return MVT(MVT::iFATPTR128);
     return MVT(MVT::iPTR);
   }
   case Type::VectorTyID: {

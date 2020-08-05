@@ -13,6 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "AArch64TargetStreamer.h"
+#include "AArch64MCTargetDesc.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/StringExtras.h"
 #include "AArch64WinCOFFStreamer.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringRef.h"
@@ -45,7 +48,7 @@ class AArch64ELFStreamer;
 class AArch64TargetAsmStreamer : public AArch64TargetStreamer {
   formatted_raw_ostream &OS;
 
-  void emitInst(uint32_t Inst) override;
+  void emitInst(uint32_t Inst, const MCSubtargetInfo &STI) override;
 
 public:
   AArch64TargetAsmStreamer(MCStreamer &S, formatted_raw_ostream &OS);
@@ -55,7 +58,8 @@ AArch64TargetAsmStreamer::AArch64TargetAsmStreamer(MCStreamer &S,
                                                    formatted_raw_ostream &OS)
   : AArch64TargetStreamer(S), OS(OS) {}
 
-void AArch64TargetAsmStreamer::emitInst(uint32_t Inst) {
+void AArch64TargetAsmStreamer::emitInst(uint32_t Inst,
+                                        const MCSubtargetInfo &STI) {
   OS << "\t.inst\t0x" << Twine::utohexstr(Inst) << "\n";
 }
 
@@ -88,6 +92,9 @@ public:
     LastMappingSymbols[getPreviousSection().first] = LastEMS;
     LastEMS = LastMappingSymbols.lookup(Section);
 
+    LastLabels[getPreviousSection().first] = std::move(CurrentLabels);
+    CurrentLabels = std::move(LastLabels[Section]);
+
     MCELFStreamer::ChangeSection(Section, Subsection);
   }
 
@@ -104,13 +111,14 @@ public:
   /// necessary.
   void EmitInstruction(const MCInst &Inst,
                        const MCSubtargetInfo &STI) override {
-    EmitA64MappingSymbol();
+    EmitCodeMappingSymbol(STI);
+    AdjustCurrentLabels(STI);
     MCELFStreamer::EmitInstruction(Inst, STI);
   }
 
   /// Emit a 32-bit value as an instruction. This is only used for the .inst
   /// directive, EmitInstruction should be used in other cases.
-  void emitInst(uint32_t Inst) {
+  void emitInst(uint32_t Inst, const MCSubtargetInfo &STI) {
     char Buffer[4];
 
     // We can't just use EmitIntValue here, as that will emit a data mapping
@@ -121,7 +129,8 @@ public:
       Inst >>= 8;
     }
 
-    EmitA64MappingSymbol();
+    EmitCodeMappingSymbol(STI);
+    AdjustCurrentLabels(STI);
     MCELFStreamer::EmitBytes(StringRef(Buffer, 4));
   }
 
@@ -129,6 +138,7 @@ public:
   /// AArch64 streamer overrides it to add the appropriate mapping symbol ($d)
   /// if necessary.
   void EmitBytes(StringRef Data) override {
+    CurrentLabels.clear();
     EmitDataMappingSymbol();
     MCELFStreamer::EmitBytes(Data);
   }
@@ -137,8 +147,13 @@ public:
   /// AArch64 streamer overrides it to add the appropriate mapping symbol ($d)
   /// if necessary.
   void EmitValueImpl(const MCExpr *Value, unsigned Size, SMLoc Loc) override {
+    CurrentLabels.clear();
     EmitDataMappingSymbol();
     MCELFStreamer::EmitValueImpl(Value, Size, Loc);
+  }
+
+  void SetCurrentLabel(MCSymbol *Label) {
+    CurrentLabels.push_back(Label);
   }
 
   void emitFill(const MCExpr &NumBytes, uint64_t FillValue,
@@ -150,6 +165,7 @@ private:
   enum ElfMappingSymbol {
     EMS_None,
     EMS_A64,
+    EMS_C64,
     EMS_Data
   };
 
@@ -167,10 +183,40 @@ private:
     LastEMS = EMS_A64;
   }
 
+  void EmitC64MappingSymbol() {
+    if (LastEMS == EMS_C64)
+      return;
+    EmitMappingSymbol("$c");
+    LastEMS = EMS_C64;
+  }
+
+  void EmitThumbFunc(MCSymbol *Func) override {
+    getAssembler().setIsThumbFunc(Func);
+  }
+
+  void AdjustCurrentLabels(const MCSubtargetInfo &STI) {
+    if (!STI.getFeatureBits()[AArch64::FeatureC64]) {
+      CurrentLabels.clear();
+      return;
+    }
+    for (MCSymbol *Symb : CurrentLabels) {
+      EmitThumbFunc(Symb);
+    }
+    CurrentLabels.clear();
+  }
+
+  void EmitCodeMappingSymbol(const MCSubtargetInfo &STI) {
+    if (STI.getFeatureBits()[AArch64::FeatureC64])
+      EmitC64MappingSymbol();
+    else
+      EmitA64MappingSymbol();
+  }
+
   void EmitMappingSymbol(StringRef Name) {
     auto *Symbol = cast<MCSymbolELF>(getContext().getOrCreateSymbol(
         Name + "." + Twine(MappingSymbolCounter++)));
     EmitLabel(Symbol);
+
     Symbol->setType(ELF::STT_NOTYPE);
     Symbol->setBinding(ELF::STB_LOCAL);
     Symbol->setExternal(false);
@@ -179,7 +225,9 @@ private:
   int64_t MappingSymbolCounter;
 
   DenseMap<const MCSection *, ElfMappingSymbol> LastMappingSymbols;
+  DenseMap<const MCSection *, SmallVector<MCSymbol *, 3> > LastLabels;
   ElfMappingSymbol LastEMS;
+  SmallVector<MCSymbol *, 3> CurrentLabels;
 };
 
 } // end anonymous namespace
@@ -190,8 +238,17 @@ AArch64ELFStreamer &AArch64TargetELFStreamer::getStreamer() {
   return static_cast<AArch64ELFStreamer &>(Streamer);
 }
 
-void AArch64TargetELFStreamer::emitInst(uint32_t Inst) {
-  getStreamer().emitInst(Inst);
+void AArch64TargetELFStreamer::emitInst(uint32_t Inst,
+                                        const MCSubtargetInfo &STI) {
+  getStreamer().emitInst(Inst, STI);
+}
+
+void AArch64TargetELFStreamer::emitLabel(MCSymbol *Symbol) {
+  AArch64ELFStreamer &Streamer = getStreamer();
+
+  unsigned Type = cast<MCSymbolELF>(Symbol)->getType();
+  if (Type == ELF::STT_FUNC || Type == ELF::STT_GNU_IFUNC)
+    Streamer.SetCurrentLabel(Symbol);
 }
 
 MCTargetStreamer *createAArch64AsmTargetStreamer(MCStreamer &S,

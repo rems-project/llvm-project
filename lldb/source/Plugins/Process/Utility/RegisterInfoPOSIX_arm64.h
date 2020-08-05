@@ -37,6 +37,33 @@ public:
     uint32_t fpcr;
   };
 
+  struct CReg {
+    uint8_t bytes[17];
+  };
+
+  struct CAP {
+    CReg c[28]; // c0-c28
+    CReg cfp;   // c29
+    CReg clr;   // c30
+    CReg csp;   // c31
+    CReg pcc;
+    CReg ddc;
+  };
+
+  struct STATE {
+    uint64_t sp_el0;
+    uint64_t rsp_el0;
+    CReg csp_el0;
+    CReg rcsp_el0;
+    CReg ddc_el0;
+    CReg rddc_el0;
+  };
+
+  struct THREAD {
+    uint64_t tpidr_el0;
+    CReg ctpidr_el0;
+  };
+
   // based on RegisterContextDarwin_arm64.h
   struct EXC {
     uint64_t far;       // Virtual Fault Address

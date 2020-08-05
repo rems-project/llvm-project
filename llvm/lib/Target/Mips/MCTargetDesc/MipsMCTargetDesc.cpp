@@ -94,7 +94,7 @@ static MCAsmInfo *createMipsMCAsmInfo(const MCRegisterInfo &MRI,
   const bool IsPurecap = TT.getEnvironment() == Triple::CheriPurecap || Options.ABIName == "purecap";
   unsigned SP = MRI.getDwarfRegNum(IsPurecap ? Mips::C11 : Mips::SP, true);
   MCCFIInstruction Inst = MCCFIInstruction::createDefCfaRegister(nullptr, SP);
-  MAI->addInitialFrameState(Inst);
+  MAI->addInitialFrameState(MCCFIProcType::Normal, Inst);
 
   return MAI;
 }

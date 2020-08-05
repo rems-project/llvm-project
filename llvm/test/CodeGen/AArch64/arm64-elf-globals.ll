@@ -91,10 +91,17 @@ define i32 @test_vis() {
   %rhs = load i32, i32* @protectedvar, align 4
   %ret = add i32 %lhs, %rhs
   ret i32 %ret
+; CHECK-LABEL: test_vis:
+; CHECK: adrp {{x[0-9]+}}, hiddenvar
+; CHECK: ldr {{w[0-9]+}}, [{{x[0-9]+}}, :lo12:hiddenvar]
+; CHECK: adrp {{x[0-9]+}}, protectedvar
+; CHECK: ldr {{w[0-9]+}}, [{{x[0-9]+}}, :lo12:protectedvar]
+
 ; CHECK-PIC: adrp {{x[0-9]+}}, hiddenvar
 ; CHECK-PIC: ldr {{w[0-9]+}}, [{{x[0-9]+}}, :lo12:hiddenvar]
-; CHECK-PIC: adrp {{x[0-9]+}}, protectedvar
-; CHECK-PIC: ldr {{w[0-9]+}}, [{{x[0-9]+}}, :lo12:protectedvar]
+; CHECK-PIC: adrp x[[HIREG:[0-9]+]], :got:protectedvar
+; CHECK-PIC: ldr x[[ADDR:[0-9]+]], [x[[HIREG]], :got_lo12:protectedvar]
+; CHECK-PIC: ldr {{w[0-9]+}}, [x[[ADDR]]]
 }
 
 @var_default = external global [2 x i32]

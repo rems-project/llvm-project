@@ -1388,6 +1388,7 @@ public:
     void OptionParsingStarting(ExecutionContext *execution_context) override {
       m_json_thread = false;
       m_json_stopinfo = false;
+      m_siginfo = false;
     }
 
     Status SetOptionValue(uint32_t option_idx, llvm::StringRef option_arg,
@@ -1404,6 +1405,10 @@ public:
         m_json_stopinfo = true;
         break;
 
+      case 'S':
+        m_siginfo = true;
+        break;
+
       default:
         llvm_unreachable("Unimplemented option");
       }
@@ -1416,6 +1421,7 @@ public:
 
     bool m_json_thread;
     bool m_json_stopinfo;
+    bool m_siginfo;
   };
 
   CommandObjectThreadInfo(CommandInterpreter &interpreter)
@@ -1448,9 +1454,9 @@ public:
     Thread *thread = thread_sp.get();
 
     Stream &strm = result.GetOutputStream();
-    if (!thread->GetDescription(strm, eDescriptionLevelFull,
-                                m_options.m_json_thread,
-                                m_options.m_json_stopinfo)) {
+    if (!thread->GetDescription(
+            strm, eDescriptionLevelFull, m_options.m_json_thread,
+            m_options.m_json_stopinfo, m_options.m_siginfo)) {
       result.AppendErrorWithFormat("error displaying info for thread: \"%d\"\n",
                                    thread->GetIndexID());
       result.SetStatus(eReturnStatusFailed);

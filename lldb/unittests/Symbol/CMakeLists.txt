@@ -16,6 +16,8 @@ add_lldb_unittest(SymbolTests
     lldbPluginSymbolFileDWARF
     lldbPluginSymbolFileSymtab
     LLVMTestingSupport
+  LINK_COMPONENTS
+    RuntimeDyld
   )
 
 set(test_inputs

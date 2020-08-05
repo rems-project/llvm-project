@@ -1157,8 +1157,8 @@ let Predicates = [HasSVE] in {
   // Add more complex addressing modes here as required
   multiclass pred_load<ValueType Ty, ValueType PredTy, SDPatternOperator Load,
                         Instruction RegImmInst> {
-
-    def _default_z : Pat<(Ty (Load  GPR64:$base, (PredTy PPR:$gp), (SVEDup0Undef))),
+    def _default_z : Pat<(Ty (Load  GPR64:$base, (PredTy PPR:$gp),
+                             (!cast<ComplexPattern>("SVEDup0Undef_" # Ty)))),
                          (RegImmInst PPR:$gp, GPR64:$base, (i64 0))>;
   }
 

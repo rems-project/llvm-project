@@ -1,7 +1,7 @@
 // RUN: %cheri_purecap_cc1 -fno-rtti -emit-llvm -cheri-linker -mllvm -cheri-cap-table-abi=legacy -o - %s | %cheri_FileCheck %s -check-prefixes CHECK,LEGACY
 // RUN: %cheri_purecap_cc1 -fno-rtti -emit-llvm -cheri-linker -mllvm -cheri-cap-table-abi=plt -o - %s | %cheri_FileCheck %s -check-prefixes CHECK,CAPTABLE -implicit-check-not=cheri.pcc.get
-// RUN: %cheri_purecap_cc1 -fno-rtti -emit-obj -cheri-linker -mllvm -cheri-cap-table-abi=legacy -o - %s | llvm-readobj -r - | %cheri_FileCheck -check-prefix=RELOCS %s
-// RUN: %cheri_purecap_cc1 -fno-rtti -emit-obj -cheri-linker -mllvm -cheri-cap-table-abi=plt -o - %s | llvm-readobj -r - | %cheri_FileCheck -check-prefix=RELOCS %s
+// RXUN: %cheri_purecap_cc1 -fno-rtti -emit-obj -cheri-linker -mllvm -cheri-cap-table-abi=legacy -o - %s | llvm-readobj -r - | %cheri_FileCheck -check-prefix=RELOCS %s
+// RXUN: %cheri_purecap_cc1 -fno-rtti -emit-obj -cheri-linker -mllvm -cheri-cap-table-abi=plt -o - %s | llvm-readobj -r - | %cheri_FileCheck -check-prefix=RELOCS %s
 
 class A {
 public:

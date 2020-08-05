@@ -370,6 +370,8 @@ static void checkOptions() {
     error("-z force-ibt may not be used with -z retpolineplt");
 
   if (config->emachine != EM_AARCH64) {
+    if (config->morelloC64Plt)
+      error("--morello-c64-plt only supported on AArch64");
     if (config->pacPlt)
       error("-z pac-plt only supported on AArch64");
     if (config->forceBTI)
@@ -907,10 +909,15 @@ static void readConfigs(opt::InputArgList &args) {
       args.hasFlag(OPT_allow_multiple_definition,
                    OPT_no_allow_multiple_definition, false) ||
       hasZOption(args, "muldefs");
+  config->exportUndefDynSyms =
+      args.hasFlag(OPT_export_undefined_dynamic_syms,
+                   OPT_no_export_undefined_dynamic_syms,
+                   /* Default */ true);
   config->allowShlibUndefined =
       args.hasFlag(OPT_allow_shlib_undefined, OPT_no_allow_shlib_undefined,
                    args.hasArg(OPT_shared));
   config->allowUndefinedCapRelocs = args.hasArg(OPT_allow_undefined_cap_relocs);
+  config->morelloC64Plt = args.hasArg(OPT_morello_c64_plt);
   config->auxiliaryList = args::getStrings(args, OPT_auxiliary);
   config->bsymbolic = args.hasArg(OPT_Bsymbolic);
   config->bsymbolicFunctions = args.hasArg(OPT_Bsymbolic_functions);
@@ -1213,7 +1220,7 @@ static void setConfigs(opt::InputArgList &args) {
   config->isPic = config->pie || config->shared;
   config->picThunk = args.hasArg(OPT_pic_veneer, config->isPic);
   config->wordsize = config->is64 ? 8 : 4;
-
+  config->gotEntrySize = config->morelloC64Plt ? 16 : config->wordsize;
   // ELF defines two different ways to store relocation addends as shown below:
   //
   //  Rel:  Addends are stored to the location where relocations are applied.
@@ -1929,6 +1936,10 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &args) {
   // so that we can version them.
   // They also might be exported if referenced by DSOs.
   script->declareSymbols();
+
+  // Handle undefined symbols in DSOs.
+  if (!config->shared)
+    symtab->scanShlibUndefined<ELFT>();
 
   // Handle the -exclude-libs option.
   if (args.hasArg(OPT_exclude_libs))

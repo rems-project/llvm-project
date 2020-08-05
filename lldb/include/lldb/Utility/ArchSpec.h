@@ -425,6 +425,33 @@ public:
   /// from the Architecture's code bus
   uint32_t GetCodeByteSize() const;
 
+  /// Returns \b true if the architecture supports tagged memory,
+  /// \b false otherwise.
+  ///
+  /// @return \b true if the architecture supports tagged memory and
+  ///         \b false otherwise.
+  //------------------------------------------------------------------
+  bool HasTaggedMemorySupport() const;
+
+  /// Returns the default tagged memory type for the architecture.
+  ///
+  /// @return The tagged memory enumeration for the default tagged
+  ///         memory type of the architecture.
+  lldb::MemoryContentType GetDefaultTaggedMemoryType() const;
+
+  /// Returns the byte order which the architecture uses to store
+  /// capabilities.
+  ///
+  /// @return The endian enumeration for the current endianness used
+  ///         to store capabilities.
+  lldb::ByteOrder GetCapabilityByteOrder() const;
+
+  /// Returns the capability type used by the architecture.
+  ///
+  /// @return The capability type enumeration for the capability type
+  ///         used by the architecture.
+  lldb::CapabilityType GetCapabilityType() const;
+
   /// Architecture triple accessor.
   ///
   /// \return A triple describing this ArchSpec.

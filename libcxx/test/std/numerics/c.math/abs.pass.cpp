@@ -68,7 +68,9 @@ int main(int, char**)
     test_abs<std::int32_t, typename correct_size_int<std::int32_t>::type>();
     test_abs<std::int64_t, typename correct_size_int<std::int64_t>::type>();
 
+#ifndef _LIBCPP_HAS_NEWLIB
     test_abs<long double, long double>();
+#endif // !_LIBCPP_HAS_NEWLIB
     test_abs<double, double>();
     test_abs<float, float>();
 

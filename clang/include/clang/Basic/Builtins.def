@@ -779,13 +779,37 @@ ATOMIC_BUILTIN(__atomic_fetch_max, "v.", "t")
 
 #undef ATOMIC_BUILTIN
 
+// GCC does not support these, they are a Clang extension.
+BUILTIN(__sync_fetch_and_min, "v.", "t")
+BUILTIN(__sync_fetch_and_min_1, "ccD*c.", "tn")
+BUILTIN(__sync_fetch_and_min_2, "ssD*s.", "tn")
+BUILTIN(__sync_fetch_and_min_4, "iiD*i.", "tn")
+BUILTIN(__sync_fetch_and_min_8, "LLiLLiD*LLi.", "tn")
+BUILTIN(__sync_fetch_and_min_16, "LLLiLLLiD*LLLi.", "tn")
+
+BUILTIN(__sync_fetch_and_max, "v.", "t")
+BUILTIN(__sync_fetch_and_max_1, "ccD*c.", "tn")
+BUILTIN(__sync_fetch_and_max_2, "ssD*s.", "tn")
+BUILTIN(__sync_fetch_and_max_4, "iiD*i.", "tn")
+BUILTIN(__sync_fetch_and_max_8, "LLiLLiD*LLi.", "tn")
+BUILTIN(__sync_fetch_and_max_16, "LLLiLLLiD*LLLi.", "tn")
+
+BUILTIN(__sync_fetch_and_umin, "v.", "t")
+BUILTIN(__sync_fetch_and_umin_1, "ccD*c.", "tn")
+BUILTIN(__sync_fetch_and_umin_2, "ssD*s.", "tn")
+BUILTIN(__sync_fetch_and_umin_4, "iiD*i.", "tn")
+BUILTIN(__sync_fetch_and_umin_8, "LLiLLiD*LLi.", "tn")
+BUILTIN(__sync_fetch_and_umin_16, "LLLiLLLiD*LLLi.", "tn")
+
+BUILTIN(__sync_fetch_and_umax, "v.", "t")
+BUILTIN(__sync_fetch_and_umax_1, "ccD*c.", "tn")
+BUILTIN(__sync_fetch_and_umax_2, "ssD*s.", "tn")
+BUILTIN(__sync_fetch_and_umax_4, "iiD*i.", "tn")
+BUILTIN(__sync_fetch_and_umax_8, "LLiLLiD*LLi.", "tn")
+BUILTIN(__sync_fetch_and_umax_16, "LLLiLLLiD*LLLi.", "tn")
+
 // Non-overloaded atomic builtins.
 BUILTIN(__sync_synchronize, "v", "n")
-// GCC does not support these, they are a Clang extension.
-BUILTIN(__sync_fetch_and_min, "iiD*i", "n")
-BUILTIN(__sync_fetch_and_max, "iiD*i", "n")
-BUILTIN(__sync_fetch_and_umin, "UiUiD*Ui", "n")
-BUILTIN(__sync_fetch_and_umax, "UiUiD*Ui", "n")
 
 // Random libc builtins.
 BUILTIN(__builtin_abort, "v", "Fnr")
@@ -1507,6 +1531,7 @@ BUILTIN(__builtin_cheri_conditional_seal, "v*mvC*mvC*m", "nc")
 BUILTIN(__builtin_cheri_unseal, "v*mvC*mvC*m", "nc")
 BUILTIN(__builtin_cheri_type_check, "vvC*mvC*m", "nc")
 BUILTIN(__builtin_cheri_perms_check, "vvC*mCz", "nc")
+BUILTIN(__builtin_cheri_bit_equals, "bvC*mvC*m", "nc")
 BUILTIN(__builtin_cheri_subset_test, "bvC*mvC*m", "nc")
 BUILTIN(__builtin_cheri_global_data_get, "v*m", "nc")
 BUILTIN(__builtin_cheri_program_counter_get, "v*m", "nc")
@@ -1517,13 +1542,16 @@ BUILTIN(__builtin_cheri_callback_create, "v.", "nct")
 BUILTIN(__builtin_cheri_address_get, "zvC*m", "nc")
 BUILTIN(__builtin_cheri_address_set, "v*mvC*mz", "nc")
 
-BUILTIN(__builtin_cheri_cap_load_tags, "zvC*m", "n")
+BUILTIN(__builtin_cheri_cap_load_tags, "zvC*", "n")
 BUILTIN(__builtin_cheri_round_representable_length, "zz", "nc")
 BUILTIN(__builtin_cheri_representable_alignment_mask, "zz", "nc")
+BUILTIN(__builtin_cheri_copy_from_high, "zvC*m", "nc")
+BUILTIN(__builtin_cheri_copy_to_high, "v*mvC*mz", "nc")
 
 BUILTIN(__builtin_cheri_stack_get, "v*m", "nc")
-BUILTIN(__builtin_cheri_cap_from_pointer, "v*mvC*mvC*", "nc")
-BUILTIN(__builtin_cheri_cap_to_pointer, "v*vC*mvC*m", "nc")
+BUILTIN(__builtin_cheri_cap_from_pointer, "v*mvC*mz", "nc")
+BUILTIN(__builtin_cheri_cap_from_pointer_nonnull_zero, "v*mvC*mz", "nc")
+BUILTIN(__builtin_cheri_cap_to_pointer, "zvC*mvC*m", "nc")
 
 BUILTIN(__builtin_cheri_cap_build, "v*mvC*mvC*m", "nc")
 BUILTIN(__builtin_cheri_cap_type_copy, "v*mvC*mvC*m", "nc")

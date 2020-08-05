@@ -1,4 +1,5 @@
 // RUN: %cheri_cc1 %s -O1 -o - -emit-llvm | FileCheck %s
+// RUN: %clang %s -O1 -target aarch64-none-linux-gnu -march=morello -o - -emit-llvm -S | FileCheck %s
 // XFAIL: *
 
 struct example {

@@ -6,5 +6,7 @@ add_lldb_unittest(UnwindAssemblyx86Tests
       lldbPluginUnwindAssemblyX86
     LINK_COMPONENTS
       Support
+      MCDisassembler
+      RuntimeDyld
       ${LLVM_TARGETS_TO_BUILD}
   )

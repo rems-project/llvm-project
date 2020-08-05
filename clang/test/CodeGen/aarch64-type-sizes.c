@@ -1,7 +1,16 @@
-// RUN: %clang_cc1 -triple aarch64_be-none-linux-gnu -emit-llvm -w -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple aarch64_be-none-linux-gnu -emit-llvm -w -o - %s \
+// RUN:   | FileCheck --check-prefix=CHECK --check-prefix=CHECK-BASE %s
+// RUN: %clang_cc1 -triple aarch64_be-none-linux-gnu -target-feature +morello -emit-llvm -w -o - %s \
+// RUN:   | FileCheck --check-prefix=CHECK --check-prefix=CHECK-HYBRID %s
+// RUN: %clang_cc1 -triple aarch64_be-none-linux-gnu -target-feature +c64 -target-abi purecap -emit-llvm -w -o - %s \
+// RUN:   | FileCheck --check-prefix=CHECK --check-prefix=CHECK-PURECAP %s
+// RUN: %clang_cc1 -triple aarch64_be-none-linux-gnu -target-feature +c64 -target-abi purecap -emit-llvm -w -o - -mllvm -cheri-cap-table-abi=pcrel %s \
+// RUN:   | FileCheck --check-prefix=CHECK --check-prefix=CHECK-PURECAP %s
 // char by definition has size 1
 
-// CHECK: target datalayout = "E-m:e-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128"
+// CHECK-BASE: target datalayout = "E-m:e-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128"
+// CHECK-HYBRID: target datalayout = "E-m:e-pf200:128:128:128:64-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128"
+// CHECK-PURECAP: target datalayout = "E-m:e-pf200:128:128:128:64-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"
 
 int check_short() {
   return sizeof(short);
@@ -88,3 +97,18 @@ int foo() {
   return sizeof(enum Small);
 // CHECK: ret i32 4
 }
+
+int check_pointer() {
+  return sizeof(int *);
+// CHECK-BASE: ret i32 8
+// CHECK-HYBRID: ret i32 8
+// CHECK-PURECAP: ret i32 16
+}
+
+#ifdef __CHERI__
+int check_capability_pointer() {
+  return sizeof(int *__capability);
+// CHECK-HYBRID: ret i32 16
+// CHECK-PURECAP: ret i32 16
+}
+#endif

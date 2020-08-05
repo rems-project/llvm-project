@@ -8,4 +8,5 @@ add_lldb_unittest(ScriptInterpreterPythonTests
     LLVMTestingSupport
   LINK_COMPONENTS
     Support
+    RuntimeDyld
   )

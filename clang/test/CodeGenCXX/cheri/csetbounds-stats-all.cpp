@@ -1,3 +1,4 @@
+// REQUIRES: mips-registered-target
 // RUN: rm -f %t-hybrid.csv %t-purecap.csv
 // RUN: %cheri128_purecap_cc1 %s -mllvm -cheri-cap-table-abi=pcrel -cheri-bounds=aggressive \
 // RUN:   -mllvm -collect-csetbounds-stats=csv -cheri-stats-file=%t-purecap.csv -S -o /dev/null -O1

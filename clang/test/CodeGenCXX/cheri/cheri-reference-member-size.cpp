@@ -2,6 +2,10 @@
 // RUN:  -fdump-record-layouts -verify %s -o /dev/null
 // RUN: %cheri_purecap_cc1 -emit-llvm \
 // RUN:  -fdump-record-layouts %s -o /dev/null 2>&1 | %cheri_FileCheck %s
+// RUN: %clang_cc1 -triple aarch64-none-elf -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel \
+// RUN:  -emit-llvm -fdump-record-layouts -verify %s -o /dev/null
+// RUN: %clang_cc1 -triple aarch64-none-elf -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel \
+// RUN:  -emit-llvm -fdump-record-layouts %s -o /dev/null 2>&1 | %cheri_FileCheck %s
 // expected-no-diagnostics
 
 // CHECK:     *** Dumping AST Record Layout
@@ -18,7 +22,7 @@
 // CHECK-SAME:       dsize=[[#CAP_SIZE]], align=[[#CAP_SIZE]],
 // CHECK-NEXT:    |  nvsize=[[#CAP_SIZE]], nvalign=[[#CAP_SIZE]]]
 
-//CHECK: LLVMType:%class.Foo = type { %class.A addrspace(200)* }
+// CHECK: LLVMType:%class.Foo = type { %class.A addrspace(200)* }
 
 // CHECK:      *** Dumping AST Record Layout
 // CHECK-NEXT:     0 | class Bar

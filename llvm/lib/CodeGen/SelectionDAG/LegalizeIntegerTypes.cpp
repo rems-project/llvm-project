@@ -22,6 +22,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/KnownBits.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/CodeGen/TargetSubtargetInfo.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "legalize-types"
@@ -1962,7 +1963,9 @@ void DAGTypeLegalizer::ExpandIntegerResult(SDNode *N, unsigned ResNo) {
 std::pair <SDValue, SDValue> DAGTypeLegalizer::ExpandAtomic(SDNode *Node) {
   unsigned Opc = Node->getOpcode();
   MVT VT = cast<AtomicSDNode>(Node)->getMemoryVT().getSimpleVT();
-  RTLIB::Libcall LC = RTLIB::getSYNC(Opc, VT);
+  bool FatPtrBase =
+    cast<AtomicSDNode>(Node)->getBasePtr().getValueType().isFatPointer();
+  RTLIB::Libcall LC = RTLIB::getSYNC(Opc, VT, FatPtrBase);
   assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unexpected atomic op or value type!");
 
   EVT RetVT = Node->getValueType(0);

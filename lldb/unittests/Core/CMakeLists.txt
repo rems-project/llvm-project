@@ -14,4 +14,5 @@ add_lldb_unittest(LLDBCoreTests
     LLVMTestingSupport
   LINK_COMPONENTS
     Support
+    RuntimeDyld
   )

@@ -75,6 +75,8 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient()
       m_supports_qXfer_libraries_read(eLazyBoolCalculate),
       m_supports_qXfer_libraries_svr4_read(eLazyBoolCalculate),
       m_supports_qXfer_features_read(eLazyBoolCalculate),
+      m_supports_qXfer_siginfo_read(eLazyBoolCalculate),
+      m_supports_qXfer_capa_read(eLazyBoolCalculate),
       m_supports_qXfer_memory_map_read(eLazyBoolCalculate),
       m_supports_augmented_libraries_svr4_read(eLazyBoolCalculate),
       m_supports_jThreadExtendedInfo(eLazyBoolCalculate),
@@ -93,7 +95,8 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient()
       m_curr_pid(LLDB_INVALID_PROCESS_ID), m_curr_tid(LLDB_INVALID_THREAD_ID),
       m_curr_tid_run(LLDB_INVALID_THREAD_ID),
       m_num_supported_hardware_watchpoints(0), m_host_arch(), m_process_arch(),
-      m_os_build(), m_os_kernel(), m_hostname(), m_gdb_server_name(),
+      m_os_build(), m_os_kernel(), m_hostname(),
+      m_host_feature_addrcap(eLazyBoolCalculate), m_gdb_server_name(),
       m_gdb_server_version(UINT32_MAX), m_default_packet_timeout(0),
       m_max_packet_size(0), m_qSupported_response(),
       m_supported_async_json_packets_is_valid(false),
@@ -183,6 +186,19 @@ bool GDBRemoteCommunicationClient::GetQXferFeaturesReadSupported() {
     GetRemoteQSupported();
   }
   return m_supports_qXfer_features_read == eLazyBoolYes;
+}
+
+bool GDBRemoteCommunicationClient::GetQXferSigInfoReadSupported() {
+  if (m_supports_qXfer_siginfo_read == eLazyBoolCalculate) {
+    GetRemoteQSupported();
+  }
+  return m_supports_qXfer_siginfo_read == eLazyBoolYes;
+}
+
+bool GDBRemoteCommunicationClient::GetQXferCapaReadSupported() {
+  if (m_supports_qXfer_capa_read == eLazyBoolCalculate)
+    GetRemoteQSupported();
+  return m_supports_qXfer_capa_read == eLazyBoolYes;
 }
 
 bool GDBRemoteCommunicationClient::GetQXferMemoryMapReadSupported() {
@@ -289,6 +305,8 @@ void GDBRemoteCommunicationClient::ResetDiscoverableSettings(bool did_exec) {
     m_supports_qXfer_libraries_read = eLazyBoolCalculate;
     m_supports_qXfer_libraries_svr4_read = eLazyBoolCalculate;
     m_supports_qXfer_features_read = eLazyBoolCalculate;
+    m_supports_qXfer_siginfo_read = eLazyBoolCalculate;
+    m_supports_qXfer_capa_read = eLazyBoolCalculate;
     m_supports_qXfer_memory_map_read = eLazyBoolCalculate;
     m_supports_augmented_libraries_svr4_read = eLazyBoolCalculate;
     m_supports_qProcessInfoPID = true;
@@ -311,6 +329,7 @@ void GDBRemoteCommunicationClient::ResetDiscoverableSettings(bool did_exec) {
     m_os_build.clear();
     m_os_kernel.clear();
     m_hostname.clear();
+    m_host_feature_addrcap = eLazyBoolCalculate;
     m_gdb_server_name.clear();
     m_gdb_server_version = UINT32_MAX;
     m_default_packet_timeout = seconds(0);
@@ -334,6 +353,8 @@ void GDBRemoteCommunicationClient::GetRemoteQSupported() {
   m_supports_qXfer_libraries_svr4_read = eLazyBoolNo;
   m_supports_augmented_libraries_svr4_read = eLazyBoolNo;
   m_supports_qXfer_features_read = eLazyBoolNo;
+  m_supports_qXfer_siginfo_read = eLazyBoolNo;
+  m_supports_qXfer_capa_read = eLazyBoolNo;
   m_supports_qXfer_memory_map_read = eLazyBoolNo;
   m_max_packet_size = UINT64_MAX; // It's supposed to always be there, but if
                                   // not, we assume no limit
@@ -369,6 +390,10 @@ void GDBRemoteCommunicationClient::GetRemoteQSupported() {
       m_supports_qXfer_libraries_read = eLazyBoolYes;
     if (::strstr(response_cstr, "qXfer:features:read+"))
       m_supports_qXfer_features_read = eLazyBoolYes;
+    if (::strstr(response_cstr, "qXfer:siginfo:read+"))
+      m_supports_qXfer_siginfo_read = eLazyBoolYes;
+    if (::strstr(response_cstr, "qXfer:capa:read+"))
+      m_supports_qXfer_capa_read = eLazyBoolYes;
     if (::strstr(response_cstr, "qXfer:memory-map:read+"))
       m_supports_qXfer_memory_map_read = eLazyBoolYes;
 
@@ -655,7 +680,8 @@ bool GDBRemoteCommunicationClient::GetxPacketSupported() {
 
 GDBRemoteCommunicationClient::PacketResult
 GDBRemoteCommunicationClient::SendPacketsAndConcatenateResponses(
-    const char *payload_prefix, std::string &response_string) {
+    llvm::StringRef payload_prefix, std::string &response_string,
+    llvm::StringRef payload_suffix) {
   Lock lock(*this, false);
   if (!lock) {
     Log *log(ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet(GDBR_LOG_PROCESS |
@@ -667,8 +693,15 @@ GDBRemoteCommunicationClient::SendPacketsAndConcatenateResponses(
     return PacketResult::ErrorNoSequenceLock;
   }
 
+  return SendPacketsAndConcatenateResponsesNoLock(
+      payload_prefix, response_string, payload_suffix);
+}
+
+GDBRemoteCommunicationClient::PacketResult
+GDBRemoteCommunicationClient::SendPacketsAndConcatenateResponsesNoLock(
+    llvm::StringRef payload_prefix, std::string &response_string,
+    llvm::StringRef payload_suffix) {
   response_string = "";
-  std::string payload_prefix_str(payload_prefix);
   unsigned int response_size = 0x1000;
   if (response_size > GetRemoteMaxPacketSize()) { // May send qSupported packet
     response_size = GetRemoteMaxPacketSize();
@@ -676,12 +709,11 @@ GDBRemoteCommunicationClient::SendPacketsAndConcatenateResponses(
 
   for (unsigned int offset = 0; true; offset += response_size) {
     StringExtractorGDBRemote this_response;
-    // Construct payload
-    char sizeDescriptor[128];
-    snprintf(sizeDescriptor, sizeof(sizeDescriptor), "%x,%x", offset,
-             response_size);
     PacketResult result = SendPacketAndWaitForResponseNoLock(
-        payload_prefix_str + sizeDescriptor, this_response);
+        llvm::formatv("{0}{1:x-},{2:x-}{3}", payload_prefix, offset,
+                      response_size, payload_suffix)
+            .str(),
+        this_response);
     if (result != PacketResult::Success)
       return result;
 
@@ -699,6 +731,31 @@ GDBRemoteCommunicationClient::SendPacketsAndConcatenateResponses(
       // We're done
       return PacketResult::Success;
   }
+}
+
+GDBRemoteCommunication::PacketResult
+GDBRemoteCommunicationClient::SendThreadSpecificPacketsAndConcatenateResponses(
+    lldb::tid_t tid, llvm::StringRef payload_prefix,
+    std::string &response_string) {
+  Lock lock(*this, false);
+  if (!lock) {
+    Log *log = ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet(GDBR_LOG_PROCESS |
+                                                             GDBR_LOG_PACKETS);
+    LLDB_LOG(log, "failed to get packet sequence mutex, not sending packets "
+                  "with prefix '{0}'", payload_prefix);
+    return PacketResult::ErrorNoSequenceLock;
+  }
+
+  StreamString payload_suffix;
+  if (GetThreadSuffixSupported())
+    payload_suffix.Printf(";thread:%4.4" PRIx64 ";", tid);
+  else {
+    if (!SetCurrentThread(tid))
+      return PacketResult::ErrorSendFailed;
+  }
+
+  return SendPacketsAndConcatenateResponsesNoLock(
+      payload_prefix, response_string, payload_suffix.GetString());
 }
 
 lldb::pid_t GDBRemoteCommunicationClient::GetCurrentProcessID(bool allow_lazy) {
@@ -972,6 +1029,12 @@ bool GDBRemoteCommunicationClient::GetHostname(std::string &s) {
   return false;
 }
 
+bool GDBRemoteCommunicationClient::HasHostAddressCapabilityFeature() {
+  if (m_host_feature_addrcap == eLazyBoolCalculate)
+    GetHostInfo();
+  return m_host_feature_addrcap == eLazyBoolYes;
+}
+
 ArchSpec GDBRemoteCommunicationClient::GetSystemArchitecture() {
   if (GetHostInfo())
     return m_host_arch;
@@ -1144,6 +1207,7 @@ bool GDBRemoteCommunicationClient::GetHostInfo(bool force) {
         std::string environment;
         std::string vendor_name;
         std::string triple;
+        std::string features;
         std::string distribution_id;
         uint32_t pointer_byte_size = 0;
         ByteOrder byte_order = eByteOrderInvalid;
@@ -1163,6 +1227,10 @@ bool GDBRemoteCommunicationClient::GetHostInfo(bool force) {
           } else if (name.equals("triple")) {
             StringExtractor extractor(value);
             extractor.GetHexByteString(triple);
+            ++num_keys_decoded;
+          } else if (name.equals("features")) {
+            StringExtractor extractor(value);
+            extractor.GetHexByteString(features);
             ++num_keys_decoded;
           } else if (name.equals("distribution_id")) {
             StringExtractor extractor(value);
@@ -1312,6 +1380,18 @@ bool GDBRemoteCommunicationClient::GetHostInfo(bool force) {
         }
         if (!distribution_id.empty())
           m_host_arch.SetDistributionId(distribution_id.c_str());
+
+        // Decode host features.
+        m_host_feature_addrcap = eLazyBoolNo;
+        if (!features.empty()) {
+          llvm::StringRef remaining(features);
+          while (!remaining.empty()) {
+            llvm::StringRef feature;
+            std::tie(feature, remaining) = remaining.split(',');
+            if (feature.equals("addrcap"))
+              m_host_feature_addrcap = eLazyBoolYes;
+          }
+        }
       }
     }
   }

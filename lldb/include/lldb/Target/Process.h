@@ -543,6 +543,29 @@ public:
 
   uint32_t GetAddressByteSize() const;
 
+  //------------------------------------------------------------------
+  /// Obtain information about how a register is saved in memory.
+  ///
+  /// @param[in] reg_info
+  ///     The information describing the register.
+  ///
+  /// @param[out] content_type
+  ///     A memory content type used to store the register.
+  ///
+  /// @param[out] byte_order
+  ///     A byte order in which the register is stored.
+  ///
+  /// @param[out] error
+  ///     An error descriptor if the method failed to determine how
+  ///     the register should be saved.
+  ///
+  /// @return
+  ///     \b true on success, \b false otherwise.
+  //------------------------------------------------------------------
+  bool GetRegisterSaveInformation(const RegisterInfo &reg_info,
+                                  lldb::MemoryContentType &content_type,
+                                  lldb::ByteOrder &byte_order, Status &error);
+
   uint32_t GetUniqueID() const { return m_process_unique_id; }
 
   /// Check if a plug-in instance can debug the file in \a module.
@@ -1414,6 +1437,33 @@ public:
   virtual size_t DoReadMemory(lldb::addr_t vm_addr, void *buf, size_t size,
                               Status &error) = 0;
 
+  /// Actually do the reading of tagged memory from a process.
+  ///
+  /// Subclasses must override this function and can return fewer
+  /// bytes than requested when memory requests are too large. This
+  /// class will break up the memory requests and keep advancing the
+  /// arguments along as needed.
+  ///
+  /// \param[in] vm_addr
+  ///     A virtual load address that indicates where to start reading
+  ///     memory from.
+  ///
+  /// \param[out] buf
+  ///     A byte buffer that is at least \a size bytes long that
+  ///     will receive the tagged memory bytes.
+  ///
+  /// \param[in] size
+  ///     The number of bytes to read (including the tag bytes).
+  ///
+  /// \param[in] type
+  ///     The type of the tagged read.
+  ///
+  /// \return
+  ///     The number of bytes that were actually read into \a buf.
+  virtual size_t DoReadTaggedMemory(lldb::addr_t vm_addr, void *buf,
+                                    size_t size, lldb::MemoryContentType type,
+                                    Status &error);
+
   /// Read of memory from a process.
   ///
   /// This function will read memory from the current process's address space
@@ -1434,6 +1484,9 @@ public:
   /// \param[in] size
   ///     The number of bytes to read.
   ///
+  /// \param[in] type
+  ///     The type of the read memory content.
+  ///
   /// \param[out] error
   ///     An error that indicates the success or failure of this
   ///     operation. If error indicates success (error.Success()),
@@ -1446,8 +1499,9 @@ public:
   ///     size, then this function will get called again with \a
   ///     vm_addr, \a buf, and \a size updated appropriately. Zero is
   ///     returned in the case of an error.
-  virtual size_t ReadMemory(lldb::addr_t vm_addr, void *buf, size_t size,
-                            Status &error);
+  virtual size_t
+  ReadMemory(lldb::addr_t vm_addr, void *buf, size_t size, Status &error,
+             lldb::MemoryContentType type = lldb::eMemoryContentNormal);
 
   /// Read of memory from a process.
   ///
@@ -1477,8 +1531,9 @@ public:
   ///     size, then this function will get called again with \a
   ///     vm_addr, \a buf, and \a size updated appropriately. Zero is
   ///     returned in the case of an error.
-  size_t ReadMemoryFromInferior(lldb::addr_t vm_addr, void *buf, size_t size,
-                                Status &error);
+  size_t ReadMemoryFromInferior(
+      lldb::addr_t vm_addr, void *buf, size_t size, Status &error,
+      lldb::MemoryContentType type = lldb::eMemoryContentNormal);
 
   /// Read a NULL terminated string from memory
   ///

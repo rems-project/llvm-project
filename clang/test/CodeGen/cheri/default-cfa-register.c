@@ -1,3 +1,4 @@
+// REQUIRES: mips-registered-target
 // RUN: %cheri_purecap_cc1 -debug-info-kind=standalone -emit-obj -o %t.purecap.o %s
 // RUN: llvm-dwarfdump -debug-frame %t.purecap.o | FileCheck %s -check-prefixes PURECAP,CHECK
 // RUN: %cheri_cc1 "-mrelocation-model" "pic" -debug-info-kind=standalone -emit-obj -o %t.hybrid.o %s

@@ -5017,7 +5017,7 @@ QualType Expr::getRealReferenceType(ASTContext &Ctx,
   }
 
   // For LValues infer whether they should be capability references or not:
-  if (LValuesAsReferences && E->isLValue() && !E->getType()->isPointerType()) {
+  if (LValuesAsReferences && E->isLValue()) {
 #if 0
       && (isa<MemberExpr>(E) || isa<AbstractConditionalOperator>(E) ||
        isa<UnaryOperator>(E) || isa<BinaryOperator>(E) || isa<DeclRefExpr>(E) ||

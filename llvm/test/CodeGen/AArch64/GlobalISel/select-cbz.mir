@@ -134,7 +134,7 @@ body:             |
   ; CHECK:   successors: %bb.2(0x80000000)
   ; CHECK:   STRXui $xzr, [[COPY]], 0 :: (store 8 into %ir.p)
   ; CHECK: bb.2:
-  ; CHECK:   RET_ReallyLR
+  ; CHECK:   RET_ReallyLR 0
   bb.1:
     successors: %bb.2, %bb.3
     liveins: $x0
@@ -151,7 +151,7 @@ body:             |
     G_STORE %5(s64), %0(p0) :: (store 8 into %ir.p)
 
   bb.3:
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -173,7 +173,7 @@ body:             |
   ; CHECK:   successors: %bb.2(0x80000000)
   ; CHECK:   STRXui $xzr, [[COPY]], 0 :: (store 8 into %ir.p)
   ; CHECK: bb.2:
-  ; CHECK:   RET_ReallyLR
+  ; CHECK:   RET_ReallyLR 0
   bb.1:
     successors: %bb.2, %bb.3
     liveins: $x0
@@ -191,6 +191,6 @@ body:             |
     G_STORE %6(s64), %0(p0) :: (store 8 into %ir.p)
 
   bb.3:
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...

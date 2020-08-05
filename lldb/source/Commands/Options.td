@@ -447,7 +447,7 @@ let Command = "reproducer xcrash" in {
 let Command = "memory read" in {
   def memory_read_num_per_line : Option<"num-per-line", "l">, Group<1>,
     Arg<"NumberPerLine">, Desc<"The number of items per line to display.">;
-  def memory_read_binary : Option<"binary", "b">, Group<2>,
+  def memory_read_binary : Option<"binary", "b">, Groups<[2,4,5]>,
     Desc<"If true, memory will be saved as binary. If false, the memory is "
     "saved save as an ASCII dump that uses the format, size, count and number "
     "per line settings.">;
@@ -458,8 +458,12 @@ let Command = "memory read" in {
   def memory_read_offset : Option<"offset", "E">, Group<3>, Arg<"Count">,
     Desc<"How many elements of the specified type to skip before starting to "
     "display data.">;
-  def memory_read_force : Option<"force", "r">, Groups<[1,2,3]>,
+  def memory_read_force : Option<"force", "r">, Groups<[1,2,3,4,5]>,
     Desc<"Necessary if reading over target.max-memory-read-size bytes.">;
+  def memory_read_tagged : Option<"tagged", "C">, Group<5>,
+    OptionalEnumArg<"TaggedMemory", "TaggedMemoryValues()">,
+    Desc<"Read tagged memory (default is the base tagged memory type for the "
+    "target architecture).">;
 }
 
 let Command = "memory find" in {
@@ -931,6 +935,8 @@ let Command = "thread info" in {
     " JSON format.">;
   def thread_info_stop_info : Option<"stop-info", "s">, Desc<"Display the "
     "extended stop info in JSON format.">;
+  def thread_info_sig_info : Option<"sig-info", "S">, Desc<"Display information "
+    "about the last received signal in siginfo type format">;
 }
 
 let Command = "thread return" in {

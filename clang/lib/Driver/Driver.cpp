@@ -8,6 +8,7 @@
 
 #include "clang/Driver/Driver.h"
 #include "InputInfo.h"
+#include "ToolChains/AArch64BareMetal.h"
 #include "ToolChains/AIX.h"
 #include "ToolChains/AMDGPU.h"
 #include "ToolChains/AVR.h"
@@ -4978,6 +4979,9 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
         break;
       case llvm::Triple::xcore:
         TC = std::make_unique<toolchains::XCoreToolChain>(*this, Target, Args);
+        break;
+      case llvm::Triple::aarch64:
+        TC = std::make_unique<toolchains::AArch64BareMetalToolChain>(*this, Target, Args);
         break;
       case llvm::Triple::wasm32:
       case llvm::Triple::wasm64:

@@ -23,14 +23,14 @@ void j() {
   char * __capability x;
   __uintcap_t y = x; // expected-warning {{incompatible pointer to integer conversion initializing '__uintcap_t' with an expression of type 'char * __capability'}}
 }
-void k() {
+int k() {
+  char * __capability x;
+  char *y;
+  return x < y; // expected-error {{comparison between integer pointer and capability ('char * __capability' and 'char *')}}
+}
+void l() {
   char staticarray[2];
   char * __capability array = staticarray; // this is fine
-}
-
-void l() {
-  unsigned int *x;
-  int * __capability y = x; // expected-warning {{implicit conversion from non-capability type 'unsigned int *' to capability type 'int * __capability' converts between integer types with different signs}}
 }
 
 void n() {
@@ -45,4 +45,9 @@ void o() {
 
 void p() {
   void (* __capability pf)() = o; // this is fine
+}
+
+void q() {
+  unsigned int *x;
+  int * __capability y = x; // expected-warning {{implicit conversion from non-capability type 'unsigned int *' to capability type 'int * __capability' converts between integer types with different signs}}
 }

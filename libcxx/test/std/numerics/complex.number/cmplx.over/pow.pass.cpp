@@ -33,7 +33,9 @@ promote(T, typename std::enable_if<std::is_integral<T>::value>::type* = 0);
 
 float promote(float);
 double promote(double);
+#ifndef _LIBCPP_HAS_NEWLIB
 long double promote(long double);
+#endif // ! _LIBCPP_HAS_NEWLIB
 
 template <class T, class U>
 void
@@ -83,24 +85,36 @@ int main(int, char**)
 {
     test<int, float>();
     test<int, double>();
+#ifndef _LIBCPP_HAS_NEWLIB
     test<int, long double>();
+#endif // ! _LIBCPP_HAS_NEWLIB
 
     test<unsigned, float>();
     test<unsigned, double>();
+#ifndef _LIBCPP_HAS_NEWLIB
     test<unsigned, long double>();
+#endif // ! _LIBCPP_HAS_NEWLIB
 
     test<long long, float>();
     test<long long, double>();
+#ifndef _LIBCPP_HAS_NEWLIB
     test<long long, long double>();
+#endif // ! _LIBCPP_HAS_NEWLIB
 
     test<float, double>();
+#ifndef _LIBCPP_HAS_NEWLIB
     test<float, long double>();
+#endif // ! _LIBCPP_HAS_NEWLIB
 
     test<double, float>();
+#ifndef _LIBCPP_HAS_NEWLIB
     test<double, long double>();
+#endif // ! _LIBCPP_HAS_NEWLIB
 
+#ifndef _LIBCPP_HAS_NEWLIB
     test<long double, float>();
     test<long double, double>();
+#endif // ! _LIBCPP_HAS_NEWLIB
 
   return 0;
 }

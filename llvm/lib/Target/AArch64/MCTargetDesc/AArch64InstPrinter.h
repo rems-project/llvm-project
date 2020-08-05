@@ -69,6 +69,8 @@ protected:
                         const MCSubtargetInfo &STI, raw_ostream &O);
   void printSysCROperand(const MCInst *MI, unsigned OpNo,
                          const MCSubtargetInfo &STI, raw_ostream &O);
+  void printScbndsImm(const MCInst *MI, unsigned OpNum,
+                      const MCSubtargetInfo &STI, raw_ostream &O);
   void printAddSubImm(const MCInst *MI, unsigned OpNum,
                       const MCSubtargetInfo &STI, raw_ostream &O);
   template <typename T>
@@ -85,6 +87,20 @@ protected:
 
   void printMemExtend(const MCInst *MI, unsigned OpNum, raw_ostream &O,
                       char SrcRegKind, unsigned Width);
+  void printCArithExtend(const MCInst *MI, unsigned OpNum, raw_ostream &O,
+                         char SrcRegKind, unsigned Shift) const;
+  void printCMemExtend(const MCInst *MI, unsigned OpNum, raw_ostream &O,
+                       char SrcRegKind, unsigned Shift) const;
+  template <char SrcRegKind, unsigned Shift>
+  void printCMemExtend(const MCInst *MI, unsigned OpNum,
+                       const MCSubtargetInfo &STI, raw_ostream &O) const {
+    printCMemExtend(MI, OpNum, O, SrcRegKind, Shift);
+  }
+  template <char SrcRegKind, unsigned Shift>
+  void printCArithExtend(const MCInst *MI, unsigned OpNum,
+                         const MCSubtargetInfo &STI, raw_ostream &O) const {
+    printCArithExtend(MI, OpNum, O, SrcRegKind, Shift);
+  }
   template <char SrcRegKind, unsigned Width>
   void printMemExtend(const MCInst *MI, unsigned OpNum,
                       const MCSubtargetInfo &STI, raw_ostream &O) {
@@ -97,10 +113,13 @@ protected:
                      const MCSubtargetInfo &STI, raw_ostream &O);
   void printInverseCondCode(const MCInst *MI, unsigned OpNum,
                             const MCSubtargetInfo &STI, raw_ostream &O);
+  template <int Scale = 4>
   void printAlignedLabel(const MCInst *MI, unsigned OpNum,
                          const MCSubtargetInfo &STI, raw_ostream &O);
   void printUImm12Offset(const MCInst *MI, unsigned OpNum, unsigned Scale,
                          raw_ostream &O);
+  void printC64CapToGPR(const MCInst *MI, unsigned OpNum,
+                   const MCSubtargetInfo &STI, raw_ostream &O);
   void printAMIndexedWB(const MCInst *MI, unsigned OpNum, unsigned Scale,
                         raw_ostream &O);
 
@@ -159,6 +178,13 @@ protected:
   void printMSRSystemRegister(const MCInst *MI, unsigned OpNum,
                               const MCSubtargetInfo &STI, raw_ostream &O);
   void printMRSSystemRegister(const MCInst *MI, unsigned OpNum,
+                              const MCSubtargetInfo &STI, raw_ostream &O);
+  void printCapSealForm(const MCInst *MI, unsigned OpNum,
+                        const MCSubtargetInfo &STI, raw_ostream &O);
+  void printCapPerm(const MCInst *MI, unsigned OpNum,
+                    const MCSubtargetInfo &STI, raw_ostream &O);
+  // Used for Morello capability system registers.
+  void printCapSystemRegister(const MCInst *MI, unsigned OpNum,
                               const MCSubtargetInfo &STI, raw_ostream &O);
   void printSystemPStateField(const MCInst *MI, unsigned OpNum,
                               const MCSubtargetInfo &STI, raw_ostream &O);

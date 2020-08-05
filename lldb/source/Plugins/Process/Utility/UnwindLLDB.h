@@ -9,19 +9,152 @@
 #ifndef lldb_UnwindLLDB_h_
 #define lldb_UnwindLLDB_h_
 
+#include <string>
 #include <vector>
 
+#include "lldb/Core/Capability.h"
+#include "lldb/Utility/RegisterValue.h"
 #include "lldb/Symbol/FuncUnwinders.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/UnwindPlan.h"
+#include "lldb/Target/ABI.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Unwind.h"
 #include "lldb/Utility/ConstString.h"
+#include "lldb/Utility/Status.h"
 #include "lldb/lldb-public.h"
 
 namespace lldb_private {
 
 class RegisterContextLLDB;
+
+// Canonical frame address. Its type can be either a plain linear address or an
+// address capability, for example, on AArch64.
+class FrameAddressLLDB {
+public:
+  enum FrameAddressType { eFrameAddressPlain, eFrameAddressCapability };
+
+  explicit FrameAddressLLDB(lldb::addr_t addr = LLDB_INVALID_ADDRESS)
+      : m_type(eFrameAddressPlain), m_value(addr) {}
+  explicit FrameAddressLLDB(const Capability &cap)
+      : m_type(eFrameAddressCapability), m_value(cap) {}
+  FrameAddressLLDB(const Thread &thread, const RegisterValue &reg_value,
+                   int64_t offset = 0);
+  FrameAddressLLDB(const FrameAddressLLDB &other) : m_value(0) { Copy(other); }
+  ~FrameAddressLLDB() { Destroy(); }
+
+  FrameAddressLLDB &operator=(const FrameAddressLLDB &other);
+  bool operator==(const FrameAddressLLDB &other) const;
+
+  FrameAddressType GetType() const { return m_type; }
+  lldb::addr_t GetAddress() const;
+  const Capability &GetCapability() const;
+  std::string GetAsString() const;
+
+  // Obtain a register value from the CFA.
+  bool GetCFARegisterValue(const RegisterInfo &reg_info, int64_t offset,
+                           RegisterValue &reg_value, Status &error) const;
+
+private:
+  union Value {
+    lldb::addr_t address;
+    Capability capability;
+
+    // FrameAddressLLDB takes care about proper construction and destruction.
+    Value() {}
+    Value(lldb::addr_t addr) : address(addr) {}
+    Value(const Capability &cap) : capability(cap) {}
+    ~Value() {}
+  };
+
+  void Destroy();
+  void Copy(const FrameAddressLLDB &other);
+
+  FrameAddressType m_type;
+  Value m_value;
+};
+
+// Location information describing where a register was stored.
+class RegisterLocationLLDB {
+public:
+  enum RegisterLocationType {
+    // Register was not preserved by a callee.
+    eRegisterNotSaved,
+    // Register is saved at a specific word of the target memory
+    // (target_memory_location).
+    eRegisterSavedAtMemoryLocation,
+    // Register is available in a (possibly other) register (register_number).
+    eRegisterInRegister,
+    // Register is saved at a word in LLDB's address space.
+    eRegisterSavedAtHostMemoryLocation,
+    // Register value was computed (and is in inferred_value).
+    eRegisterValueInferred,
+    // Register value is in a live (stack frame #0) register.
+    eRegisterInLiveRegisterContext
+  };
+
+  RegisterLocationLLDB()
+      : m_type(eRegisterNotSaved),
+        m_overlay_register_number(LLDB_INVALID_REGNUM) {}
+  RegisterLocationLLDB(const RegisterLocationLLDB &other) { Copy(other); }
+  ~RegisterLocationLLDB() { Destroy(); }
+
+  RegisterLocationLLDB &operator=(const RegisterLocationLLDB &other);
+
+  void SetNotSaved();
+  void SetSavedAtMemoryLocation(lldb::addr_t addr);
+  void SetInRegister(uint32_t lldb_regnum);
+  void SetSavedAtHostMemoryLocation(void *addr);
+  void SetValueInferred(const RegisterValue &value);
+  void SetInLiveRegisterContext(uint32_t lldb_regnum);
+  void SetRegisterOverlay(bool is_zero_frame, uint32_t base_regnum,
+                          uint32_t overlay_regnum);
+  void SetInRegisterType(RegisterLocationType type, uint32_t lldb_regnum);
+
+  RegisterLocationType GetType() const { return m_type; }
+
+  lldb::addr_t GetTargetMemoryLocation() const;
+  uint32_t GetRegisterNumber() const;
+  void *GetHostMemoryLocation() const;
+  const RegisterValue &GetInferredValue() const;
+
+  uint32_t GetOverlayRegisterNumber() const {
+    return m_overlay_register_number;
+  }
+  void SetOverlayRegisterNumber(uint32_t overlay_register_number) {
+    m_overlay_register_number = overlay_register_number;
+  }
+
+private:
+  union Location {
+    lldb::addr_t target_memory_location;
+    uint32_t register_number; // In eRegisterKindLLDB register numbering system.
+    void *host_memory_location;
+
+    // eRegisterValueInferred - e.g. stack pointer == cfa + offset.
+    RegisterValue inferred_value;
+
+    // RegisterLocationLLDB takes care about proper construction and
+    // destruction.
+    Location() {}
+    ~Location() {}
+  };
+
+  void Destroy();
+  void Copy(const RegisterLocationLLDB &other);
+
+  RegisterLocationType m_type;
+  Location m_location;
+
+  // Register number used to additionally overlay the restored value. If not
+  // equal to LLDB_INVALID_REGNUM, caller's value can be restored by first using
+  // the recorded location information to obtain the base value and then
+  // overlaying it with the caller's value of the overlay register. For
+  // instance, this allows to specify on AArch64 that register CLR is overlayed
+  // by LR. The tag and attributes in CLR come from the recorded location
+  // information and the address is set to caller's LR.
+  uint32_t m_overlay_register_number;
+};
 
 class UnwindLLDB : public lldb_private::Unwind {
 public:
@@ -37,32 +170,6 @@ public:
 
 protected:
   friend class lldb_private::RegisterContextLLDB;
-
-  struct RegisterLocation {
-    enum RegisterLocationTypes {
-      eRegisterNotSaved = 0, // register was not preserved by callee.  If
-                             // volatile reg, is unavailable
-      eRegisterSavedAtMemoryLocation, // register is saved at a specific word of
-                                      // target mem (target_memory_location)
-      eRegisterInRegister, // register is available in a (possible other)
-                           // register (register_number)
-      eRegisterSavedAtHostMemoryLocation, // register is saved at a word in
-                                          // lldb's address space
-      eRegisterValueInferred,        // register val was computed (and is in
-                                     // inferred_value)
-      eRegisterInLiveRegisterContext // register value is in a live (stack frame
-                                     // #0) register
-    };
-    int type;
-    union {
-      lldb::addr_t target_memory_location;
-      uint32_t
-          register_number; // in eRegisterKindLLDB register numbering system
-      void *host_memory_location;
-      uint64_t inferred_value; // eRegisterValueInferred - e.g. stack pointer ==
-                               // cfa + offset
-    } location;
-  };
 
   void DoClear() override {
     m_frames.clear();
@@ -90,9 +197,11 @@ protected:
   // Iterate over the RegisterContextLLDB's in our m_frames vector, look for the
   // first one that
   // has a saved location for this reg.
-  bool SearchForSavedLocationForRegister(
-      uint32_t lldb_regnum, lldb_private::UnwindLLDB::RegisterLocation &regloc,
-      uint32_t starting_frame_num, bool pc_register);
+  bool SearchForSavedLocationForRegister(uint32_t lldb_regnum,
+                                         ABI::FrameState caller_frame_state,
+                                         RegisterLocationLLDB &regloc,
+                                         uint32_t starting_frame_num,
+                                         bool pc_register);
 
   /// Provide the list of user-specified trap handler functions
   ///
@@ -112,15 +221,14 @@ private:
   struct Cursor {
     lldb::addr_t start_pc; // The start address of the function/symbol for this
                            // frame - current pc if unknown
-    lldb::addr_t cfa;      // The canonical frame address for this stack frame
+    FrameAddressLLDB cfa;  // The canonical frame address for this stack frame
     lldb_private::SymbolContext sctx; // A symbol context we'll contribute to &
                                       // provide to the StackFrame creation
     RegisterContextLLDBSP
         reg_ctx_lldb_sp; // These are all RegisterContextLLDB's
 
     Cursor()
-        : start_pc(LLDB_INVALID_ADDRESS), cfa(LLDB_INVALID_ADDRESS), sctx(),
-          reg_ctx_lldb_sp() {}
+        : start_pc(LLDB_INVALID_ADDRESS), cfa(), sctx(), reg_ctx_lldb_sp() {}
 
   private:
     DISALLOW_COPY_AND_ASSIGN(Cursor);

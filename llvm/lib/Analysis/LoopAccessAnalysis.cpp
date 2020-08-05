@@ -1376,8 +1376,8 @@ static bool isSafeDependenceDistance(const DataLayout &DL, ScalarEvolution &SE,
 
   const SCEV *CastedDist = &Dist;
   const SCEV *CastedProduct = Product;
-  uint64_t DistTypeSize = DL.getTypeAllocSize(Dist.getType());
-  uint64_t ProductTypeSize = DL.getTypeAllocSize(Product->getType());
+  uint64_t DistTypeSize = SE.getTypeSizeInBits(Dist.getType());
+  uint64_t ProductTypeSize = SE.getTypeSizeInBits(Product->getType());
 
   // The dependence distance can be positive/negative, so we sign extend Dist;
   // The multiplication of the absolute stride in bytes and the

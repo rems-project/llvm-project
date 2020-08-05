@@ -21,6 +21,9 @@ enum Fixups {
   // A 21-bit pc-relative immediate inserted into an ADRP instruction.
   fixup_aarch64_pcrel_adrp_imm21,
 
+  // A 20-bit pc-relative immediate inserted into an ADRP instruction (C64).
+  fixup_aarch64_pcrel_adrp_imm20,
+
   // 12-bit fixup for add/sub instructions. No alignment adjustment. All value
   // bits are encoded.
   fixup_aarch64_add_imm12,
@@ -36,6 +39,9 @@ enum Fixups {
   // fixup_aarch64_pcrel_adrhi, except this is used by pc-relative loads and
   // generates relocations directly when necessary.
   fixup_aarch64_ldr_pcrel_imm19,
+
+  // The high 17 bits of a 21-bit pc-relative immediate.
+  fixup_aarch64_ldr_pcrel_imm17_scale16,
 
   // FIXME: comment
   fixup_aarch64_movw,
@@ -54,6 +60,9 @@ enum Fixups {
   // The high 26 bits of a 28-bit pc-relative immediate. Distinguished from
   // branch26 only on ELF.
   fixup_aarch64_pcrel_call26,
+
+  fixup_morello_pcrel_branch26,
+  fixup_morello_pcrel_call26,
 
   // zero-space placeholder for the ELF R_AARCH64_TLSDESC_CALL relocation.
   fixup_aarch64_tlsdesc_call,

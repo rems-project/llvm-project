@@ -12,7 +12,7 @@ target triple = "aarch64--"
 ; CHECK-NEXT: [[ARG2:%[0-9]+]]:_(s64) = COPY $x1
 ; CHECK-NEXT: [[RES:%[0-9]+]]:_(s64) = G_ADD [[ARG1]], [[ARG2]]
 ; CHECK-NEXT: $x0 = COPY [[RES]]
-; CHECK-NEXT: RET_ReallyLR implicit $x0
+; CHECK-NEXT: RET_ReallyLR 0, implicit $x0
 define i64 @addi64(i64 %arg1, i64 %arg2) {
   %res = add i64 %arg1, %arg2
   ret i64 %res
@@ -23,7 +23,7 @@ define i64 @addi64(i64 %arg1, i64 %arg2) {
 ; CHECK-NEXT: [[ARG2:%[0-9]+]]:_(s64) = COPY $x1
 ; CHECK-NEXT: [[RES:%[0-9]+]]:_(s64) = G_MUL [[ARG1]], [[ARG2]]
 ; CHECK-NEXT: $x0 = COPY [[RES]]
-; CHECK-NEXT: RET_ReallyLR implicit $x0
+; CHECK-NEXT: RET_ReallyLR 0, implicit $x0
 define i64 @muli64(i64 %arg1, i64 %arg2) {
   %res = mul i64 %arg1, %arg2
   ret i64 %res
@@ -69,7 +69,7 @@ define void @allocai64() {
 ;
 ; Check that end contains the return instruction.
 ; CHECK: [[END:bb.[0-9]+]].{{[a-zA-Z0-9.]+}}:
-; CHECK-NEXT: RET_ReallyLR
+; CHECK-NEXT: RET_ReallyLR 0
 ;
 ; CHECK: bb.{{[0-9]+}}.{{[a-zA-Z0-9.]+}}:
 ; CHECK-NEXT: successors: %[[END]](0x80000000)
@@ -90,7 +90,7 @@ bb2:
 ; We don't emit a branch here, as we can fallthrough to the successor.
 ; CHECK-NOT: G_BR
 ; CHECK: [[END]].{{[a-zA-Z0-9.]+}}:
-; CHECK-NEXT: RET_ReallyLR
+; CHECK-NEXT: RET_ReallyLR 0
 define void @uncondbr_fallthrough() {
 entry:
   br label %end
@@ -117,9 +117,9 @@ end:
 ;
 ; Check that each successor contains the return instruction.
 ; CHECK: [[TRUE]].{{[a-zA-Z0-9.]+}}:
-; CHECK-NEXT: RET_ReallyLR
+; CHECK-NEXT: RET_ReallyLR 0
 ; CHECK: [[FALSE]].{{[a-zA-Z0-9.]+}}:
-; CHECK-NEXT: RET_ReallyLR
+; CHECK-NEXT: RET_ReallyLR 0
 define void @condbr(i1* %tstaddr) {
   %tst = load i1, i1* %tstaddr
   br i1 %tst, label %true, label %false
@@ -147,7 +147,7 @@ false:
 ;
 ; Check basic block L2 is the return basic block
 ; CHECK: [[BB_L2]].{{[a-zA-Z0-9.]+}} (address-taken):
-; CHECK-NEXT: RET_ReallyLR
+; CHECK-NEXT: RET_ReallyLR 0
 
 @indirectbr.L = internal unnamed_addr constant [3 x i8*] [i8* blockaddress(@indirectbr, %L1), i8* blockaddress(@indirectbr, %L2), i8* null], align 8
 
@@ -171,7 +171,7 @@ L2:                                               ; preds = %L1
 ; CHECK-NEXT: [[ARG2:%[0-9]+]]:_(s64) = COPY $x1
 ; CHECK-NEXT: [[RES:%[0-9]+]]:_(s64) = G_OR [[ARG1]], [[ARG2]]
 ; CHECK-NEXT: $x0 = COPY [[RES]]
-; CHECK-NEXT: RET_ReallyLR implicit $x0
+; CHECK-NEXT: RET_ReallyLR 0, implicit $x0
 define i64 @ori64(i64 %arg1, i64 %arg2) {
   %res = or i64 %arg1, %arg2
   ret i64 %res
@@ -182,7 +182,7 @@ define i64 @ori64(i64 %arg1, i64 %arg2) {
 ; CHECK-NEXT: [[ARG2:%[0-9]+]]:_(s32) = COPY $w1
 ; CHECK-NEXT: [[RES:%[0-9]+]]:_(s32) = G_OR [[ARG1]], [[ARG2]]
 ; CHECK-NEXT: $w0 = COPY [[RES]]
-; CHECK-NEXT: RET_ReallyLR implicit $w0
+; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
 define i32 @ori32(i32 %arg1, i32 %arg2) {
   %res = or i32 %arg1, %arg2
   ret i32 %res
@@ -194,7 +194,7 @@ define i32 @ori32(i32 %arg1, i32 %arg2) {
 ; CHECK-NEXT: [[ARG2:%[0-9]+]]:_(s64) = COPY $x1
 ; CHECK-NEXT: [[RES:%[0-9]+]]:_(s64) = G_XOR [[ARG1]], [[ARG2]]
 ; CHECK-NEXT: $x0 = COPY [[RES]]
-; CHECK-NEXT: RET_ReallyLR implicit $x0
+; CHECK-NEXT: RET_ReallyLR 0, implicit $x0
 define i64 @xori64(i64 %arg1, i64 %arg2) {
   %res = xor i64 %arg1, %arg2
   ret i64 %res
@@ -205,7 +205,7 @@ define i64 @xori64(i64 %arg1, i64 %arg2) {
 ; CHECK-NEXT: [[ARG2:%[0-9]+]]:_(s32) = COPY $w1
 ; CHECK-NEXT: [[RES:%[0-9]+]]:_(s32) = G_XOR [[ARG1]], [[ARG2]]
 ; CHECK-NEXT: $w0 = COPY [[RES]]
-; CHECK-NEXT: RET_ReallyLR implicit $w0
+; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
 define i32 @xori32(i32 %arg1, i32 %arg2) {
   %res = xor i32 %arg1, %arg2
   ret i32 %res
@@ -217,7 +217,7 @@ define i32 @xori32(i32 %arg1, i32 %arg2) {
 ; CHECK-NEXT: [[ARG2:%[0-9]+]]:_(s64) = COPY $x1
 ; CHECK-NEXT: [[RES:%[0-9]+]]:_(s64) = G_AND [[ARG1]], [[ARG2]]
 ; CHECK-NEXT: $x0 = COPY [[RES]]
-; CHECK-NEXT: RET_ReallyLR implicit $x0
+; CHECK-NEXT: RET_ReallyLR 0, implicit $x0
 define i64 @andi64(i64 %arg1, i64 %arg2) {
   %res = and i64 %arg1, %arg2
   ret i64 %res
@@ -228,7 +228,7 @@ define i64 @andi64(i64 %arg1, i64 %arg2) {
 ; CHECK-NEXT: [[ARG2:%[0-9]+]]:_(s32) = COPY $w1
 ; CHECK-NEXT: [[RES:%[0-9]+]]:_(s32) = G_AND [[ARG1]], [[ARG2]]
 ; CHECK-NEXT: $w0 = COPY [[RES]]
-; CHECK-NEXT: RET_ReallyLR implicit $w0
+; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
 define i32 @andi32(i32 %arg1, i32 %arg2) {
   %res = and i32 %arg1, %arg2
   ret i32 %res
@@ -240,7 +240,7 @@ define i32 @andi32(i32 %arg1, i32 %arg2) {
 ; CHECK-NEXT: [[ARG2:%[0-9]+]]:_(s64) = COPY $x1
 ; CHECK-NEXT: [[RES:%[0-9]+]]:_(s64) = G_SUB [[ARG1]], [[ARG2]]
 ; CHECK-NEXT: $x0 = COPY [[RES]]
-; CHECK-NEXT: RET_ReallyLR implicit $x0
+; CHECK-NEXT: RET_ReallyLR 0, implicit $x0
 define i64 @subi64(i64 %arg1, i64 %arg2) {
   %res = sub i64 %arg1, %arg2
   ret i64 %res
@@ -251,7 +251,7 @@ define i64 @subi64(i64 %arg1, i64 %arg2) {
 ; CHECK-NEXT: [[ARG2:%[0-9]+]]:_(s32) = COPY $w1
 ; CHECK-NEXT: [[RES:%[0-9]+]]:_(s32) = G_SUB [[ARG1]], [[ARG2]]
 ; CHECK-NEXT: $w0 = COPY [[RES]]
-; CHECK-NEXT: RET_ReallyLR implicit $w0
+; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
 define i32 @subi32(i32 %arg1, i32 %arg2) {
   %res = sub i32 %arg1, %arg2
   ret i32 %res
@@ -261,7 +261,7 @@ define i32 @subi32(i32 %arg1, i32 %arg2) {
 ; CHECK: [[ARG1:%[0-9]+]]:_(p0) = COPY $x0
 ; CHECK: [[RES:%[0-9]+]]:_(s64) = G_PTRTOINT [[ARG1]]
 ; CHECK: $x0 = COPY [[RES]]
-; CHECK: RET_ReallyLR implicit $x0
+; CHECK: RET_ReallyLR 0, implicit $x0
 define i64 @ptrtoint(i64* %a) {
   %val = ptrtoint i64* %a to i64
   ret i64 %val
@@ -271,7 +271,7 @@ define i64 @ptrtoint(i64* %a) {
 ; CHECK: [[ARG1:%[0-9]+]]:_(s64) = COPY $x0
 ; CHECK: [[RES:%[0-9]+]]:_(p0) = G_INTTOPTR [[ARG1]]
 ; CHECK: $x0 = COPY [[RES]]
-; CHECK: RET_ReallyLR implicit $x0
+; CHECK: RET_ReallyLR 0, implicit $x0
 define i64* @inttoptr(i64 %a) {
   %val = inttoptr i64 %a to i64*
   ret i64* %val
@@ -280,7 +280,7 @@ define i64* @inttoptr(i64 %a) {
 ; CHECK-LABEL: name: trivial_bitcast
 ; CHECK: [[ARG1:%[0-9]+]]:_(p0) = COPY $x0
 ; CHECK: $x0 = COPY [[ARG1]]
-; CHECK: RET_ReallyLR implicit $x0
+; CHECK: RET_ReallyLR 0, implicit $x0
 define i64* @trivial_bitcast(i8* %a) {
   %val = bitcast i8* %a to i64*
   ret i64* %val
@@ -311,7 +311,7 @@ cast:
 ; CHECK: [[RES1:%[0-9]+]]:_(<2 x s32>) = G_BITCAST [[ARG1]]
 ; CHECK: [[RES2:%[0-9]+]]:_(s64) = G_BITCAST [[RES1]]
 ; CHECK: $x0 = COPY [[RES2]]
-; CHECK: RET_ReallyLR implicit $x0
+; CHECK: RET_ReallyLR 0, implicit $x0
 define i64 @bitcast(i64 %a) {
   %res1 = bitcast i64 %a to <2 x i32>
   %res2 = bitcast <2 x i32> %res1 to i64
@@ -323,7 +323,7 @@ define i64 @bitcast(i64 %a) {
 ; CHECK: [[RES1:%[0-9]+]]:_(p2) = G_ADDRSPACE_CAST [[ARG1]]
 ; CHECK: [[RES2:%[0-9]+]]:_(p0) = G_ADDRSPACE_CAST [[RES1]]
 ; CHECK: $x0 = COPY [[RES2]]
-; CHECK: RET_ReallyLR implicit $x0
+; CHECK: RET_ReallyLR 0, implicit $x0
 define i64* @addrspacecast(i32 addrspace(1)* %a) {
   %res1 = addrspacecast i32 addrspace(1)* %a to i64 addrspace(2)*
   %res2 = addrspacecast i64 addrspace(2)* %res1 to i64*
@@ -354,7 +354,7 @@ define void @trunc(i64 %a) {
 ; CHECK: [[VAL4:%[0-9]+]]:_(s64) = G_LOAD [[ADDR]](p0) :: (load 8 from %ir.addr, !range !0)
 ; CHECK: [[SUM4:%[0-9]+]]:_(s64) = G_ADD [[SUM3]], [[VAL4]]
 ; CHECK: $x0 = COPY [[SUM4]]
-; CHECK: RET_ReallyLR implicit $x0
+; CHECK: RET_ReallyLR 0, implicit $x0
 define i64 @load(i64* %addr, i64 addrspace(42)* %addr42) {
   %val1 = load i64, i64* %addr, align 16
 
@@ -377,7 +377,7 @@ define i64 @load(i64* %addr, i64 addrspace(42)* %addr42) {
 ; CHECK: G_STORE [[VAL1]](s64), [[ADDR]](p0) :: (store 8 into %ir.addr, align 16)
 ; CHECK: G_STORE [[VAL2]](s64), [[ADDR42]](p42) :: (store 8 into %ir.addr42, addrspace 42)
 ; CHECK: G_STORE [[VAL1]](s64), [[ADDR]](p0) :: (volatile store 8 into %ir.addr)
-; CHECK: RET_ReallyLR
+; CHECK: RET_ReallyLR 0
 define void @store(i64* %addr, i64 addrspace(42)* %addr42, i64 %val1, i64 %val2) {
   store i64 %val1, i64* %addr, align 16
   store i64 %val2, i64 addrspace(42)* %addr42
@@ -393,7 +393,7 @@ define void @store(i64* %addr, i64 addrspace(42)* %addr42, i64 %val1, i64 %val2)
 ; CHECK: [[PTR_VEC:%[0-9]+]]:_(p0) = G_FRAME_INDEX %stack.0.ptr.vec
 ; CHECK: [[VEC:%[0-9]+]]:_(<8 x s8>) = G_LOAD [[PTR_VEC]]
 ; CHECK: G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.neon.st2), [[VEC]](<8 x s8>), [[VEC]](<8 x s8>), [[PTR]](p0)
-; CHECK: RET_ReallyLR
+; CHECK: RET_ReallyLR 0
 declare i8* @llvm.returnaddress(i32)
 declare void @llvm.aarch64.neon.st2.v8i8.p0i8(<8 x i8>, <8 x i8>, i8*)
 declare { <8 x i8>, <8 x i8> } @llvm.aarch64.neon.ld2.v8i8.p0v8i8(<8 x i8>*)
@@ -520,7 +520,7 @@ define i64 @test_zext(i32 %in) {
 ; CHECK-NEXT: [[ARG2:%[0-9]+]]:_(s32) = COPY $w1
 ; CHECK-NEXT: [[RES:%[0-9]+]]:_(s32) = G_SHL [[ARG1]], [[ARG2]]
 ; CHECK-NEXT: $w0 = COPY [[RES]]
-; CHECK-NEXT: RET_ReallyLR implicit $w0
+; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
 define i32 @test_shl(i32 %arg1, i32 %arg2) {
   %res = shl i32 %arg1, %arg2
   ret i32 %res
@@ -532,7 +532,7 @@ define i32 @test_shl(i32 %arg1, i32 %arg2) {
 ; CHECK-NEXT: [[ARG2:%[0-9]+]]:_(s32) = COPY $w1
 ; CHECK-NEXT: [[RES:%[0-9]+]]:_(s32) = G_LSHR [[ARG1]], [[ARG2]]
 ; CHECK-NEXT: $w0 = COPY [[RES]]
-; CHECK-NEXT: RET_ReallyLR implicit $w0
+; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
 define i32 @test_lshr(i32 %arg1, i32 %arg2) {
   %res = lshr i32 %arg1, %arg2
   ret i32 %res
@@ -543,7 +543,7 @@ define i32 @test_lshr(i32 %arg1, i32 %arg2) {
 ; CHECK-NEXT: [[ARG2:%[0-9]+]]:_(s32) = COPY $w1
 ; CHECK-NEXT: [[RES:%[0-9]+]]:_(s32) = G_ASHR [[ARG1]], [[ARG2]]
 ; CHECK-NEXT: $w0 = COPY [[RES]]
-; CHECK-NEXT: RET_ReallyLR implicit $w0
+; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
 define i32 @test_ashr(i32 %arg1, i32 %arg2) {
   %res = ashr i32 %arg1, %arg2
   ret i32 %res
@@ -554,7 +554,7 @@ define i32 @test_ashr(i32 %arg1, i32 %arg2) {
 ; CHECK-NEXT: [[ARG2:%[0-9]+]]:_(s32) = COPY $w1
 ; CHECK-NEXT: [[RES:%[0-9]+]]:_(s32) = G_SDIV [[ARG1]], [[ARG2]]
 ; CHECK-NEXT: $w0 = COPY [[RES]]
-; CHECK-NEXT: RET_ReallyLR implicit $w0
+; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
 define i32 @test_sdiv(i32 %arg1, i32 %arg2) {
   %res = sdiv i32 %arg1, %arg2
   ret i32 %res
@@ -565,7 +565,7 @@ define i32 @test_sdiv(i32 %arg1, i32 %arg2) {
 ; CHECK-NEXT: [[ARG2:%[0-9]+]]:_(s32) = COPY $w1
 ; CHECK-NEXT: [[RES:%[0-9]+]]:_(s32) = G_UDIV [[ARG1]], [[ARG2]]
 ; CHECK-NEXT: $w0 = COPY [[RES]]
-; CHECK-NEXT: RET_ReallyLR implicit $w0
+; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
 define i32 @test_udiv(i32 %arg1, i32 %arg2) {
   %res = udiv i32 %arg1, %arg2
   ret i32 %res
@@ -576,7 +576,7 @@ define i32 @test_udiv(i32 %arg1, i32 %arg2) {
 ; CHECK-NEXT: [[ARG2:%[0-9]+]]:_(s32) = COPY $w1
 ; CHECK-NEXT: [[RES:%[0-9]+]]:_(s32) = G_SREM [[ARG1]], [[ARG2]]
 ; CHECK-NEXT: $w0 = COPY [[RES]]
-; CHECK-NEXT: RET_ReallyLR implicit $w0
+; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
 define i32 @test_srem(i32 %arg1, i32 %arg2) {
   %res = srem i32 %arg1, %arg2
   ret i32 %res
@@ -587,7 +587,7 @@ define i32 @test_srem(i32 %arg1, i32 %arg2) {
 ; CHECK-NEXT: [[ARG2:%[0-9]+]]:_(s32) = COPY $w1
 ; CHECK-NEXT: [[RES:%[0-9]+]]:_(s32) = G_UREM [[ARG1]], [[ARG2]]
 ; CHECK-NEXT: $w0 = COPY [[RES]]
-; CHECK-NEXT: RET_ReallyLR implicit $w0
+; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
 define i32 @test_urem(i32 %arg1, i32 %arg2) {
   %res = urem i32 %arg1, %arg2
   ret i32 %res
@@ -655,7 +655,7 @@ define void @ptr_comparison(i8* %a, i8* %b, i1* %addr) {
 ; CHECK-NEXT: [[ARG2:%[0-9]+]]:_(s32) = COPY $s1
 ; CHECK-NEXT: [[RES:%[0-9]+]]:_(s32) = G_FADD [[ARG1]], [[ARG2]]
 ; CHECK-NEXT: $s0 = COPY [[RES]]
-; CHECK-NEXT: RET_ReallyLR implicit $s0
+; CHECK-NEXT: RET_ReallyLR 0, implicit $s0
 define float @test_fadd(float %arg1, float %arg2) {
   %res = fadd float %arg1, %arg2
   ret float %res
@@ -666,7 +666,7 @@ define float @test_fadd(float %arg1, float %arg2) {
 ; CHECK-NEXT: [[ARG2:%[0-9]+]]:_(s32) = COPY $s1
 ; CHECK-NEXT: [[RES:%[0-9]+]]:_(s32) = G_FSUB [[ARG1]], [[ARG2]]
 ; CHECK-NEXT: $s0 = COPY [[RES]]
-; CHECK-NEXT: RET_ReallyLR implicit $s0
+; CHECK-NEXT: RET_ReallyLR 0, implicit $s0
 define float @test_fsub(float %arg1, float %arg2) {
   %res = fsub float %arg1, %arg2
   ret float %res
@@ -677,7 +677,7 @@ define float @test_fsub(float %arg1, float %arg2) {
 ; CHECK-NEXT: [[ARG2:%[0-9]+]]:_(s32) = COPY $s1
 ; CHECK-NEXT: [[RES:%[0-9]+]]:_(s32) = G_FMUL [[ARG1]], [[ARG2]]
 ; CHECK-NEXT: $s0 = COPY [[RES]]
-; CHECK-NEXT: RET_ReallyLR implicit $s0
+; CHECK-NEXT: RET_ReallyLR 0, implicit $s0
 define float @test_fmul(float %arg1, float %arg2) {
   %res = fmul float %arg1, %arg2
   ret float %res
@@ -688,7 +688,7 @@ define float @test_fmul(float %arg1, float %arg2) {
 ; CHECK-NEXT: [[ARG2:%[0-9]+]]:_(s32) = COPY $s1
 ; CHECK-NEXT: [[RES:%[0-9]+]]:_(s32) = G_FDIV [[ARG1]], [[ARG2]]
 ; CHECK-NEXT: $s0 = COPY [[RES]]
-; CHECK-NEXT: RET_ReallyLR implicit $s0
+; CHECK-NEXT: RET_ReallyLR 0, implicit $s0
 define float @test_fdiv(float %arg1, float %arg2) {
   %res = fdiv float %arg1, %arg2
   ret float %res
@@ -699,7 +699,7 @@ define float @test_fdiv(float %arg1, float %arg2) {
 ; CHECK-NEXT: [[ARG2:%[0-9]+]]:_(s32) = COPY $s1
 ; CHECK-NEXT: [[RES:%[0-9]+]]:_(s32) = G_FREM [[ARG1]], [[ARG2]]
 ; CHECK-NEXT: $s0 = COPY [[RES]]
-; CHECK-NEXT: RET_ReallyLR implicit $s0
+; CHECK-NEXT: RET_ReallyLR 0, implicit $s0
 define float @test_frem(float %arg1, float %arg2) {
   %res = frem float %arg1, %arg2
   ret float %res
@@ -709,7 +709,7 @@ define float @test_frem(float %arg1, float %arg2) {
 ; CHECK: [[ARG1:%[0-9]+]]:_(s32) = COPY $s0
 ; CHECK-NEXT: [[RES:%[0-9]+]]:_(s32) = G_FNEG [[ARG1]]
 ; CHECK-NEXT: $s0 = COPY [[RES]]
-; CHECK-NEXT: RET_ReallyLR implicit $s0
+; CHECK-NEXT: RET_ReallyLR 0, implicit $s0
 define float @test_fneg(float %arg1) {
   %res = fneg float %arg1
   ret float %res
@@ -719,7 +719,7 @@ define float @test_fneg(float %arg1) {
 ; CHECK: [[ARG1:%[0-9]+]]:_(s32) = COPY $s0
 ; CHECK-NEXT: [[RES:%[0-9]+]]:_(s32) = nnan ninf nsz arcp contract afn reassoc G_FNEG [[ARG1]]
 ; CHECK-NEXT: $s0 = COPY [[RES]]
-; CHECK-NEXT: RET_ReallyLR implicit $s0
+; CHECK-NEXT: RET_ReallyLR 0, implicit $s0
 define float @test_fneg_fmf(float %arg1) {
   %res = fneg fast float %arg1
   ret float %res
@@ -1213,7 +1213,7 @@ define void @test_va_end(i8* %list) {
 ; CHECK-LABEL: name: test_va_end
 ; CHECK-NOT: va_end
 ; CHECK-NOT: INTRINSIC
-; CHECK: RET_ReallyLR
+; CHECK: RET_ReallyLR 0
   call void @llvm.va_end.p0i8(i8* %list)
   ret void
 }
@@ -1400,7 +1400,7 @@ declare void @llvm.lifetime.start.p0i8(i64, i8*)
 declare void @llvm.lifetime.end.p0i8(i64, i8*)
 define void @test_lifetime_intrin() {
 ; CHECK-LABEL: name: test_lifetime_intrin
-; CHECK: RET_ReallyLR
+; CHECK: RET_ReallyLR 0
 ; O3-LABEL: name: test_lifetime_intrin
 ; O3: {{%[0-9]+}}:_(p0) = G_FRAME_INDEX %stack.0.slot
 ; O3-NEXT: LIFETIME_START %stack.0.slot
@@ -1766,7 +1766,7 @@ define i64 @test_phi_loop(i32 %n) {
 ; CHECK: G_BR %bb.2
 
 ; CHECK: $x0 = COPY [[PN2]](s64)
-; CHECK: RET_ReallyLR implicit $x0
+; CHECK: RET_ReallyLR 0, implicit $x0
 entry:
   br label %loop
 
@@ -1824,7 +1824,7 @@ define void @test_phi_diamond({ i8, i16, i32 }* %a.ptr, { i8, i16, i32 }* %b.ptr
 ; CHECK: [[CST6:%[0-9]+]]:_(s64) = G_CONSTANT i64 4
 ; CHECK: [[GEP6:%[0-9]+]]:_(p0) = G_PTR_ADD [[ARG4]], [[CST6]](s64)
 ; CHECK: G_STORE [[PN3]](s32), [[GEP6]](p0) :: (store 4 into %ir.dst + 4)
-; CHECK: RET_ReallyLR
+; CHECK: RET_ReallyLR 0
 
 entry:
   br i1 %selector, label %store.a, label %store.b
@@ -1886,7 +1886,7 @@ define i1 @return_i1_zext() {
 ; CHECK: [[ZEXT:%[0-9]+]]:_(s8) = G_ZEXT [[CST]](s1)
 ; CHECK: [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[ZEXT]](s8)
 ; CHECK: $w0 = COPY [[ANYEXT]](s32)
-; CHECK: RET_ReallyLR implicit $w0
+; CHECK: RET_ReallyLR 0, implicit $w0
   ret i1 true
 }
 
@@ -2332,7 +2332,7 @@ define i64 @test_readcyclecounter() {
   ; CHECK-LABEL: name:            test_readcyclecounter
   ; CHECK: [[RES:%[0-9]+]]:_(s64) = G_READCYCLECOUNTER{{$}}
   ; CHECK-NEXT: $x0 = COPY [[RES]]
-  ; CHECK-NEXT: RET_ReallyLR implicit $x0
+  ; CHECK-NEXT: RET_ReallyLR 0, implicit $x0
   %res = call i64 @llvm.readcyclecounter()
   ret i64 %res
 }

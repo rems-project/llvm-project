@@ -39,7 +39,10 @@ public:
 
   bool CreateDefaultUnwindPlan(lldb_private::UnwindPlan &unwind_plan) override;
 
-  bool RegisterIsVolatile(const lldb_private::RegisterInfo *reg_info) override;
+  bool RegisterIsVolatile(lldb_private::RegisterContext &reg_ctx,
+                          const lldb_private::RegisterInfo *reg_info,
+                          FrameState frame_state,
+                          const lldb_private::UnwindPlan *unwind_plan) override;
 
   // The SysV ppc ABI requires that stack frames be 16 byte aligned.
   // When there is a trap handler on the stack, e.g. _sigtramp in userland

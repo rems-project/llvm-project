@@ -78,6 +78,11 @@ private:
   bool expandSetTagLoop(MachineBasicBlock &MBB,
                         MachineBasicBlock::iterator MBBI,
                         MachineBasicBlock::iterator &NextMBBI);
+  void clearUnusedArgRegisters(MachineFunction &MF,
+                               MachineBasicBlock::iterator MBBI, bool IsReturn);
+
+  const AArch64RegisterInfo *TRI;
+
 };
 
 } // end anonymous namespace
@@ -101,6 +106,89 @@ static void transferImpOps(MachineInstr &OldMI, MachineInstrBuilder &UseMI,
     else
       DefMI.add(MO);
   }
+}
+
+/// Insert at MBBI some clearing instructions for all registers with a bit
+/// set in Registers.
+static void clearRegisters(MachineBasicBlock::iterator MBBI,
+                           const BitVector &Registers,
+                           const AArch64InstrInfo *TII,
+                           const TargetRegisterClass *RC, unsigned Opcode) {
+  MachineBasicBlock &MBB = *MBBI->getParent();
+  DebugLoc DL = MBBI->getDebugLoc();
+  SmallVector<unsigned, 32> ToBeCleared;
+
+  for (auto &Reg : RC->getRegisters())
+    if (Registers[Reg])
+      ToBeCleared.push_back(Reg);
+
+  for (unsigned i = 0; i < ToBeCleared.size(); i++) {
+    switch (Opcode) {
+    case (AArch64::ORRXrs): {
+      BuildMI(MBB, MBBI, DL, TII->get(Opcode))
+          .addReg(ToBeCleared[i])
+          .addReg(AArch64::XZR)
+          .addReg(AArch64::XZR)
+          .addImm(0);
+      continue;
+    }
+    case (AArch64::FMOVXDr): {
+      BuildMI(MBB, MBBI, DL, TII->get(Opcode))
+          .addReg(ToBeCleared[i])
+          .addReg(AArch64::XZR);
+      continue;
+    }
+    default: llvm_unreachable("Unexpected opcode");
+    }
+  }
+}
+
+static const uint16_t CCallArgRegList[] =
+                                   {AArch64::C0,  AArch64::C1,  AArch64::C2,
+                                    AArch64::C3,  AArch64::C4,  AArch64::C5,
+                                    AArch64::C6,  AArch64::C7,  AArch64::C8,
+                                    AArch64::C9,  AArch64::C10, AArch64::C11,
+                                    AArch64::Q0,  AArch64::Q1,  AArch64::Q2,
+                                    AArch64::Q3,  AArch64::Q4,  AArch64::Q5,
+                                    AArch64::Q6,  AArch64::Q7};
+
+/// Clear all registers used in this function, unless they are used by
+/// this instruction.
+void AArch64ExpandPseudo::clearUnusedArgRegisters(
+    MachineFunction &MF, MachineBasicBlock::iterator MBBI, bool IsReturn) {
+  // Get the set of registers used for argument passing.
+  // We need to clear all argument registers not used in during the call,
+  // or we risk leaking capabilities.
+  ArrayRef<MCPhysReg> Args = CCallArgRegList;
+
+  BitVector ArgRegs(TRI->getNumRegs(), false);
+  for (unsigned Reg : Args)
+    for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
+      ArgRegs.set(*AI);
+
+  // The call uses 3 extra arguments and possibliy also X8.
+  // We don't use these on return so we don't need to clear them.
+  if (IsReturn) {
+    ArgRegs.reset(AArch64::X9);
+    ArgRegs.reset(AArch64::X10);
+    ArgRegs.reset(AArch64::X11);
+    ArgRegs.reset(AArch64::X8);
+  }
+
+  // Remove all registers used by the callee : arguments, ...
+  for (unsigned i = 1; i < MBBI->getNumOperands(); i++) {
+    auto &Op = MBBI->getOperand(i);
+    if (Op.isReg()) {
+      unsigned Reg = Op.getReg();
+      for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI)
+        ArgRegs.reset(*AI);
+    }
+  }
+
+  clearRegisters(MBBI, ArgRegs, TII, &AArch64::GPR64spRegClass,
+                 AArch64::ORRXrs);
+  clearRegisters(MBBI, ArgRegs, TII, &AArch64::FPR64RegClass,
+                 AArch64::FMOVXDr);
 }
 
 /// Expand a MOVi32imm or MOVi64imm pseudo instruction to one or more
@@ -278,12 +366,23 @@ bool AArch64ExpandPseudo::expandCMP_SWAP_128(
   MF->insert(++LoadCmpBB->getIterator(), StoreBB);
   MF->insert(++StoreBB->getIterator(), DoneBB);
 
+  const AArch64Subtarget &STI =
+      static_cast<const AArch64Subtarget &>(MBB.getParent()->getSubtarget());
+  assert((MI.getOpcode() == AArch64::CMP_SWAP_CAP_128 ||
+          MI.getOpcode() == AArch64::CMP_SWAP_128) && "Unexpected opcode");
+  // Supporting the alternate base addressing mode here would be a bit
+  // more complex since it requires xDestLo/xDestHi to be replaced with
+  // a sequential register.
+  assert(((MI.getOpcode() == AArch64::CMP_SWAP_CAP_128) == STI.hasC64()) &&
+         "Alternate base not supported for i128");
+
   // .Lloadcmp:
   //     ldaxp xDestLo, xDestHi, [xAddr]
   //     cmp xDestLo, xDesiredLo
   //     sbcs xDestHi, xDesiredHi
   //     b.ne .Ldone
-  BuildMI(LoadCmpBB, DL, TII->get(AArch64::LDAXPX))
+  unsigned LoadOp = STI.hasC64() ? AArch64::ALDAXPX : AArch64::LDAXPX;
+  BuildMI(LoadCmpBB, DL, TII->get(LoadOp))
       .addReg(DestLo.getReg(), RegState::Define)
       .addReg(DestHi.getReg(), RegState::Define)
       .addReg(AddrReg);
@@ -312,7 +411,8 @@ bool AArch64ExpandPseudo::expandCMP_SWAP_128(
   // .Lstore:
   //     stlxp wStatus, xNewLo, xNewHi, [xAddr]
   //     cbnz wStatus, .Lloadcmp
-  BuildMI(StoreBB, DL, TII->get(AArch64::STLXPX), StatusReg)
+  unsigned StoreOp = STI.hasC64() ? AArch64::ASTLXPX : AArch64::STLXPX;
+  BuildMI(StoreBB, DL, TII->get(StoreOp), StatusReg)
       .addReg(NewLoReg)
       .addReg(NewHiReg)
       .addReg(AddrReg);
@@ -493,11 +593,79 @@ bool AArch64ExpandPseudo::expandMI(MachineBasicBlock &MBB,
     return true;
   }
 
+  case AArch64::LOADCgot: {
+    // Expand into ADRP + ALDR.
+    // The register should already be constrained such that it will have the
+    // capability super-register.
+    unsigned SuperReg = MI.getOperand(0).getReg();
+    const MachineOperand &MO1 = MI.getOperand(1);
+    unsigned Flags = MO1.getTargetFlags();
+    const AArch64Subtarget &STI =
+        static_cast<const AArch64Subtarget &>(MBB.getParent()->getSubtarget());
+    assert(STI.hasMorello() && "capability support missing");
+    assert(MBB.getParent()->getTarget().getCodeModel() != CodeModel::Tiny &&
+           "Tiny code model not supported with capabilities");
+    MachineOperand MO = MI.getOperand(0);
+    MO.setImplicit();
+    unsigned DstReg = TRI->getSubReg(MO.getReg(), AArch64::sub_64);
+
+    MachineInstrBuilder MIB1 =
+        BuildMI(MBB, MBBI, MI.getDebugLoc(),
+                TII->get(AArch64::PADRP), SuperReg);
+
+    if (MO1.isGlobal())
+      MIB1 = MIB1.addGlobalAddress(MO1.getGlobal(), 0,
+                                   Flags | AArch64II::MO_PAGE);
+    else if (MO1.isSymbol())
+      MIB1 = MIB1.addExternalSymbol(MO1.getSymbolName(),
+                                    Flags | AArch64II::MO_PAGE);
+    else {
+      assert(MO1.isCPI() &&
+             "Only expect globals, externalsymbols, or constant pools");
+      MIB1 = MIB1.addConstantPoolIndex(MO1.getIndex(), MO1.getOffset(),
+                                       Flags | AArch64II::MO_PAGE);
+    }
+
+    unsigned OpCode =
+        STI.hasC64() ? (STI.hasCapGOT() ? AArch64::PCapLoadImmPre
+                                        : AArch64::ALDRXui)
+                     : AArch64::CapLoadImmPre;
+    MachineInstrBuilder MIB2 =
+        BuildMI(MBB, MBBI, MI.getDebugLoc(),
+                TII->get(OpCode), STI.hasCapGOT() ? SuperReg : DstReg);
+
+    // Add the base register. C64 always uses a capability.
+    if (STI.hasC64())
+      MIB2 = MIB2.addReg(SuperReg);
+    else
+      MIB2 = MIB2.addReg(DstReg);
+
+    if (MO1.isGlobal()) {
+      MIB2 = MIB2.addGlobalAddress(MO1.getGlobal(), 0,
+                                   Flags | AArch64II::MO_PAGEOFF |
+                                   AArch64II::MO_NC);
+    } else if (MO1.isSymbol()) {
+      MIB2.addExternalSymbol(MO1.getSymbolName(),
+                             Flags | AArch64II::MO_PAGEOFF | AArch64II::MO_NC);
+    } else {
+      assert(MO1.isCPI() &&
+             "Only expect globals, externalsymbols, or constant pools");
+      MIB2.addConstantPoolIndex(MO1.getIndex(), MO1.getOffset(),
+                                Flags | AArch64II::MO_PAGEOFF | AArch64II::MO_NC);
+    }
+    transferImpOps(MI, MIB1, MIB2);
+    MI.eraseFromParent();
+    return true;
+  }
+
   case AArch64::LOADgot: {
     MachineFunction *MF = MBB.getParent();
     Register DstReg = MI.getOperand(0).getReg();
     const MachineOperand &MO1 = MI.getOperand(1);
     unsigned Flags = MO1.getTargetFlags();
+    const AArch64Subtarget &STI =
+        static_cast<const AArch64Subtarget &>(MBB.getParent()->getSubtarget());
+    assert((!STI.hasCapGOT()) && "LOADgot unexpected with a capability GOT");
 
     if (MF->getTarget().getCodeModel() == CodeModel::Tiny) {
       // Tiny codemodel expand to LDR
@@ -601,6 +769,33 @@ bool AArch64ExpandPseudo::expandMI(MachineBasicBlock &MBB,
     MI.eraseFromParent();
     return true;
   }
+  case AArch64::CMOVaddr:
+  case AArch64::CMOVaddrJT:
+  case AArch64::CMOVaddrCP:
+  case AArch64::CMOVaddrBA:
+  case AArch64::CMOVaddrTLS:
+  case AArch64::CMOVaddrEXT: {
+    // Expand into ADRP + CAddImm.
+    const AArch64Subtarget &STI =
+        static_cast<const AArch64Subtarget &>(MBB.getParent()->getSubtarget());
+    unsigned DstReg = MI.getOperand(0).getReg();
+    assert(STI.hasC64() && STI.hasMorello() && "Unexpected features");
+    MachineInstrBuilder MIB1 =
+        BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(AArch64::PADRP))
+          .addDef(MI.getOperand(0).getReg())
+          .add(MI.getOperand(1));
+
+    MachineInstrBuilder MIB2 =
+        BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(AArch64::CapAddImm))
+            .add(MI.getOperand(0))
+            .addReg(DstReg)
+            .add(MI.getOperand(2))
+            .addImm(0);
+
+    transferImpOps(MI, MIB1, MIB2);
+    MI.eraseFromParent();
+    return true;
+  }
   case AArch64::ADDlowTLS:
     // Produce a plain ADD
     BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(AArch64::ADDXri))
@@ -634,42 +829,165 @@ bool AArch64ExpandPseudo::expandMI(MachineBasicBlock &MBB,
     return expandMOVImm(MBB, MBBI, 32);
   case AArch64::MOVi64imm:
     return expandMOVImm(MBB, MBBI, 64);
-  case AArch64::RET_ReallyLR: {
+
+  case AArch64::PBLClear:
+  case AArch64::PBLRClear:
+  case AArch64::CBranchLinkClear: {
+    clearUnusedArgRegisters(*MBB.getParent(), MBBI, false);
+    unsigned Opc;
+    switch (Opcode) {
+    default:
+      llvm_unreachable("Missing case.");
+    case AArch64::PBLClear: Opc = AArch64::BL; break;
+    case AArch64::PBLRClear: Opc = AArch64::BLR; break;
+    case AArch64::CBranchLinkClear: Opc = AArch64::CapBranchLink; break;
+    }
+    MI.setDesc(TII->get(Opc));
+    return true;
+  }
+  case AArch64::GetDDC: {
+    unsigned DstReg = MI.getOperand(0).getReg();
+    unsigned Opc = AArch64::CapGetSys;
+    unsigned DDCReg = AArch64MorelloCSysReg::DDC;
+    MachineInstrBuilder MIB =
+        BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(Opc), DstReg)
+            .addImm(DDCReg);
+    transferImpOps(MI, MIB, MIB);
+    MI.eraseFromParent();
+    return true;
+  }
+
+  case AArch64::RET_ReallyLR:
+  case AArch64::CRET_ReallyLR: {
     // Hiding the LR use with RET_ReallyLR may lead to extra kills in the
     // function and missing live-ins. We are fine in practice because callee
     // saved register handling ensures the register value is restored before
     // RET, but we need the undef flag here to appease the MachineVerifier
     // liveness checks.
+    uint64_t ClearRegs = MI.getOperand(0).getImm();
+    if (ClearRegs != 0 )
+      clearUnusedArgRegisters(*MBB.getParent(), MBBI, true);
+
+    unsigned Opc = Opcode == AArch64::CRET_ReallyLR
+                       ? AArch64::CapReturn
+                       : AArch64::RET;
+    unsigned LR = Opcode == AArch64::CRET_ReallyLR ? AArch64::CLR : AArch64::LR;
     MachineInstrBuilder MIB =
-        BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(AArch64::RET))
-          .addReg(AArch64::LR, RegState::Undef);
+        BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(Opc))
+          .addReg(LR, RegState::Undef);
     transferImpOps(MI, MIB, MIB);
     MI.eraseFromParent();
     return true;
   }
-  case AArch64::CMP_SWAP_8:
-    return expandCMP_SWAP(MBB, MBBI, AArch64::LDAXRB, AArch64::STLXRB,
+  case AArch64::CMP_SWAP_8: {
+    return expandCMP_SWAP(MBB, MBBI,
+                          AArch64::LDAXRB,
+                          AArch64::STLXRB,
                           AArch64::SUBSWrx,
                           AArch64_AM::getArithExtendImm(AArch64_AM::UXTB, 0),
                           AArch64::WZR, NextMBBI);
-  case AArch64::CMP_SWAP_16:
-    return expandCMP_SWAP(MBB, MBBI, AArch64::LDAXRH, AArch64::STLXRH,
+  }
+  case AArch64::CMP_SWAP_16: {
+    return expandCMP_SWAP(MBB, MBBI,
+                          AArch64::LDAXRH,
+                          AArch64::STLXRH,
                           AArch64::SUBSWrx,
                           AArch64_AM::getArithExtendImm(AArch64_AM::UXTH, 0),
                           AArch64::WZR, NextMBBI);
-  case AArch64::CMP_SWAP_32:
-    return expandCMP_SWAP(MBB, MBBI, AArch64::LDAXRW, AArch64::STLXRW,
+  }
+  case AArch64::CMP_SWAP_32: {
+    return expandCMP_SWAP(MBB, MBBI,
+                          AArch64::LDAXRW,
+                          AArch64::STLXRW,
                           AArch64::SUBSWrs,
                           AArch64_AM::getShifterImm(AArch64_AM::LSL, 0),
                           AArch64::WZR, NextMBBI);
-  case AArch64::CMP_SWAP_64:
+  }
+  case AArch64::CMP_SWAP_64: {
     return expandCMP_SWAP(MBB, MBBI,
-                          AArch64::LDAXRX, AArch64::STLXRX, AArch64::SUBSXrs,
+                          AArch64::LDAXRX,
+                          AArch64::STLXRX,
+                          AArch64::SUBSXrs,
                           AArch64_AM::getShifterImm(AArch64_AM::LSL, 0),
                           AArch64::XZR, NextMBBI);
-  case AArch64::CMP_SWAP_128:
-    return expandCMP_SWAP_128(MBB, MBBI, NextMBBI);
+  }
+  case AArch64::CMP_SWAP_CAP_8: {
+    return expandCMP_SWAP(MBB, MBBI,
+                          AArch64::ALDAXRB,
+                          AArch64::ASTLXRB,
+                          AArch64::SUBSWrx,
+                          AArch64_AM::getArithExtendImm(AArch64_AM::UXTB, 0),
+                          AArch64::WZR, NextMBBI);
+  }
+  case AArch64::CMP_SWAP_CAP_16: {
+    return expandCMP_SWAP(MBB, MBBI,
+                          AArch64::ALDAXRH,
+                          AArch64::ASTLXRH,
+                          AArch64::SUBSWrx,
+                          AArch64_AM::getArithExtendImm(AArch64_AM::UXTH, 0),
+                          AArch64::WZR, NextMBBI);
+  }
+  case AArch64::CMP_SWAP_CAP_32: {
+    return expandCMP_SWAP(MBB, MBBI,
+                          AArch64::ALDAXRW,
+                          AArch64::ASTLXRW,
+                          AArch64::SUBSWrs,
+                          AArch64_AM::getShifterImm(AArch64_AM::LSL, 0),
+                          AArch64::WZR, NextMBBI);
+  }
+  case AArch64::CMP_SWAP_CAP_64: {
+    return expandCMP_SWAP(MBB, MBBI,
+                          AArch64::ALDAXRX,
+                          AArch64::ASTLXRX,
+                          AArch64::SUBSXrs,
+                          AArch64_AM::getShifterImm(AArch64_AM::LSL, 0),
+                          AArch64::XZR, NextMBBI);
+  }
 
+  case AArch64::CMP_SWAP_128:
+  case AArch64::CMP_SWAP_CAP_128:
+    return expandCMP_SWAP_128(MBB, MBBI, NextMBBI);
+  case AArch64::CAdr:
+  case AArch64::CAdrp: {
+    const AArch64Subtarget &STI =
+      static_cast<const AArch64Subtarget &>(MBB.getParent()->getSubtarget());
+    bool HasC64 = STI.hasC64();
+    unsigned NewOpcode = Opcode == AArch64::CAdr ? AArch64::ADR : AArch64::ADRP;
+    bool UseSubreg = true;
+    if (HasC64 && Opcode == AArch64::CAdrp) {
+      NewOpcode = AArch64::PADRP;
+      UseSubreg = false;
+    }
+    MachineOperand MO = MI.getOperand(0);
+    MO.setImplicit();
+    MachineInstrBuilder MIB =
+        BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(NewOpcode));
+    if (UseSubreg)
+      MIB = MIB.addDef(TRI->getSubReg(MO.getReg(), AArch64::sub_64));
+    else
+      MIB = MIB.addDef(MO.getReg());
+    MIB = MIB.add(MI.getOperand(1));
+    if (UseSubreg)
+      MIB = MIB.add(MO);
+    transferImpOps(MI, MIB, MIB);
+    MI.eraseFromParent();
+    return true;
+  }
+  case AArch64::CBNZC:
+  case AArch64::CBZC: {
+    MachineOperand MO = MI.getOperand(0);
+    MO.setImplicit();
+    unsigned NewOpcode =
+        (Opcode == AArch64::CBZC ? AArch64::CBZX : AArch64::CBNZX);
+    MachineInstrBuilder MIB =
+        BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(NewOpcode))
+            .addReg(TRI->getSubReg(MO.getReg(), AArch64::sub_64))
+            .add(MI.getOperand(1))
+            .add(MO);
+    transferImpOps(MI, MIB, MIB);
+    MI.eraseFromParent();
+    return true;
+  }
   case AArch64::AESMCrrTied:
   case AArch64::AESIMCrrTied: {
     MachineInstrBuilder MIB =
@@ -750,7 +1068,10 @@ bool AArch64ExpandPseudo::expandMBB(MachineBasicBlock &MBB) {
 }
 
 bool AArch64ExpandPseudo::runOnMachineFunction(MachineFunction &MF) {
-  TII = static_cast<const AArch64InstrInfo *>(MF.getSubtarget().getInstrInfo());
+  const AArch64Subtarget &STI =
+      static_cast<const AArch64Subtarget &>(MF.getSubtarget());
+  TII = STI.getInstrInfo();
+  TRI = STI.getRegisterInfo();
 
   bool Modified = false;
   for (auto &MBB : MF)

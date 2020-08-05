@@ -1,4 +1,5 @@
 // RUN: %cheri_purecap_cc1 -fsyntax-only -ast-dump %s | FileCheck %s
+// RUN: %clang_cc1 -triple aarch64-none-elf -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel -fsyntax-only -ast-dump %s | FileCheck %s
 
 template <class _ValueType>
 bool __libcpp_atomic_compare_exchange(_ValueType* __val,

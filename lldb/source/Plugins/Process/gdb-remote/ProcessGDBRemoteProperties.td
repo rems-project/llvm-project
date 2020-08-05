@@ -13,6 +13,11 @@ let Definition = "processgdbremote" in {
     Global,
     DefaultFalse,
     Desc<"If true, the libraries-svr4 feature will be used to get a hold of the process's loaded modules.">;
+  def TargetDefinitionAArch64MorelloBuiltIn:
+    Property<"target-definition-aarch64-morello-builtin", "Boolean">,
+    Global,
+    DefaultTrue,
+    Desc<"Use client-builtin register information for AArch64-Morello.">;
   def UseGPacketForReading: Property<"use-g-packet-for-reading", "Boolean">,
     Global,
     DefaultFalse,

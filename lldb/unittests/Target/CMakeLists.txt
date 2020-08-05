@@ -15,6 +15,7 @@ add_lldb_unittest(TargetTests
       lldbUtilityHelpers
     LINK_COMPONENTS
       Support
+      RuntimeDyld
   )
 
 add_unittest_inputs(TargetTests TestModule.so)

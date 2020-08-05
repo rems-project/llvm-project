@@ -40,14 +40,14 @@ body:             |
     ; CHECK: [[MV:%[0-9]+]]:_(s128) = G_MERGE_VALUES [[COPY2]](s64), [[COPY3]](s64)
     ; CHECK: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK: G_STORE [[MV]](s128), [[COPY]](p0) :: (store 16 into %ir.v1ptr)
-    ; CHECK: RET_ReallyLR
+    ; CHECK: RET_ReallyLR 0
     %0:_(p0) = COPY $x0
     %1:_(p0) = COPY $x1
     %2:_(s128) = G_LOAD %0(p0) :: (load 16 from %ir.v1ptr)
     %3:_(s128) = G_LOAD %1(p0) :: (load 16 from %ir.v2ptr)
     %4:_(s128) = G_UDIV %2, %3
     G_STORE %4(s128), %0(p0) :: (store 16 into %ir.v1ptr)
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -81,13 +81,13 @@ body:             |
     ; CHECK: [[MV:%[0-9]+]]:_(s128) = G_MERGE_VALUES [[COPY2]](s64), [[COPY3]](s64)
     ; CHECK: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK: G_STORE [[MV]](s128), [[COPY]](p0) :: (store 16 into %ir.v1ptr)
-    ; CHECK: RET_ReallyLR
+    ; CHECK: RET_ReallyLR 0
     %0:_(p0) = COPY $x0
     %1:_(p0) = COPY $x1
     %2:_(s128) = G_LOAD %0(p0) :: (load 16 from %ir.v1ptr)
     %3:_(s128) = G_LOAD %1(p0) :: (load 16 from %ir.v2ptr)
     %4:_(s128) = G_SDIV %2, %3
     G_STORE %4(s128), %0(p0) :: (store 16 into %ir.v1ptr)
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...

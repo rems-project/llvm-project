@@ -98,7 +98,7 @@ define void @test_varargs_2() {
   ; DARWIN-NOT: TCRETURNdi @varargs
   ; DARWIN:   BL @varargs, csr_aarch64_aapcs, implicit-def $lr, implicit $sp, implicit $w0, implicit $d0, implicit $x1
   ; DARWIN:   ADJCALLSTACKUP 8, 0, implicit-def $sp, implicit $sp
-  ; DARWIN:   RET_ReallyLR
+  ; DARWIN:   RET_ReallyLR 0
 
   ; WINDOWS-LABEL: name: test_varargs_2
   ; WINDOWS: bb.1 (%ir-block.0):
@@ -123,7 +123,7 @@ define void @test_varargs_3([8 x <2 x double>], <4 x half> %arg) {
   ; DARWIN-NOT: TCRETURNdi @varargs
   ; DARWIN:   BL @varargs, csr_aarch64_aapcs, implicit-def $lr, implicit $sp, implicit $w0, implicit $d0, implicit $x1
   ; DARWIN:   ADJCALLSTACKUP 8, 0, implicit-def $sp, implicit $sp
-  ; DARWIN:   RET_ReallyLR
+  ; DARWIN:   RET_ReallyLR 0
 
   ; WINDOWS-LABEL: name: test_varargs_3
   ; WINDOWS: bb.1 (%ir-block.1):
@@ -160,7 +160,7 @@ define void @test_bad_call_conv() {
   ; COMMON:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; COMMON:   BL @bad_call_conv_fn, csr_aarch64_noregs, implicit-def $lr, implicit $sp
   ; COMMON:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
-  ; COMMON:   RET_ReallyLR
+  ; COMMON:   RET_ReallyLR 0
   tail call ghccc void @bad_call_conv_fn()
   ret void
 }
@@ -174,7 +174,7 @@ define void @test_byval(i8* byval %ptr) {
   ; COMMON:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; COMMON:   BL @simple_fn, csr_aarch64_aapcs, implicit-def $lr, implicit $sp
   ; COMMON:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
-  ; COMMON:   RET_ReallyLR
+  ; COMMON:   RET_ReallyLR 0
   tail call void @simple_fn()
   ret void
 }
@@ -188,7 +188,7 @@ define void @test_inreg(i8* inreg %ptr) {
   ; COMMON:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; COMMON:   BL @simple_fn, csr_aarch64_aapcs, implicit-def $lr, implicit $sp
   ; COMMON:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
-  ; COMMON:   RET_ReallyLR
+  ; COMMON:   RET_ReallyLR 0
   tail call void @simple_fn()
   ret void
 }

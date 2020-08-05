@@ -291,6 +291,20 @@ int AArch64TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src,
     }
   }
 
+  // Handle vectors of fat pointers. There are no EVTs associated with these.
+  // Maybe this should be in the generic part?
+  bool FatPtrVecSrc =
+      Src->isVectorTy() && DL.isFatPointer(Src->getVectorElementType());
+  bool FatPtrVecDst =
+      Dst->isVectorTy() && DL.isFatPointer(Dst->getVectorElementType());
+  if (FatPtrVecSrc || FatPtrVecDst) {
+    if (FatPtrVecSrc == FatPtrVecDst)
+      return 0;
+    if (FatPtrVecSrc)
+      return Src->getVectorNumElements();
+    return 1 + Src->getVectorNumElements();
+  }
+
   EVT SrcTy = TLI->getValueType(DL, Src);
   EVT DstTy = TLI->getValueType(DL, Dst);
 
@@ -644,6 +658,17 @@ int AArch64TTIImpl::getMemoryOpCost(unsigned Opcode, Type *Ty,
                                     const Instruction *I) {
   auto LT = TLI->getTypeLegalizationCost(DL, Ty);
 
+  // Cowardly refuse any kind of vectorization when capabilities are
+  // vector element types.
+  // FIXME: this is not bullet proof, as we are just playing with
+  // the heuristics, but at the moment, there is no way to simply
+  // say do not do it for this type on this target.
+  if (Ty->isVectorTy()) {
+    Type *EltTy = Ty->getScalarType();
+    if (EltTy->isPointerTy() && EltTy->getPointerAddressSpace() == 200)
+      return 10000;
+  }
+
   if (ST->isMisaligned128StoreSlow() && Opcode == Instruction::Store &&
       LT.second.is128BitVector() && (!Alignment || *Alignment < Align(16))) {
     // Unaligned stores are extremely inefficient. We don't split all
@@ -677,6 +702,10 @@ int AArch64TTIImpl::getMemoryOpCost(unsigned Opcode, Type *Ty,
   return LT.first;
 }
 
+int AArch64TTIImpl::getCheriIntrinsicNullCaseValue() {
+  return 0;
+}
+
 int AArch64TTIImpl::getInterleavedMemoryOpCost(unsigned Opcode, Type *VecTy,
                                                unsigned Factor,
                                                ArrayRef<unsigned> Indices,
@@ -687,8 +716,18 @@ int AArch64TTIImpl::getInterleavedMemoryOpCost(unsigned Opcode, Type *VecTy,
   assert(Factor >= 2 && "Invalid interleave factor");
   assert(isa<VectorType>(VecTy) && "Expect a vector type");
 
+  // Cowardly refuse any kind of interleving when capabilities are
+  // vector element types.
+  // FIXME: this is not bullet proof, as we are just playing with
+  // the heuristics, but at the moment, there is no way to simply
+  // say do not do it for this type on this target.
+  Type *EltTy = VecTy->getScalarType();
+  if (EltTy->isPointerTy() && EltTy->getPointerAddressSpace() == 200)
+    return 10000;
+
   if (!UseMaskForCond && !UseMaskForGaps &&
-      Factor <= TLI->getMaxSupportedInterleaveFactor()) {
+      Factor <= TLI->getMaxSupportedInterleaveFactor() &&
+      ST->hasC64() == DL.isFatPointer(AddressSpace)) {
     unsigned NumElts = VecTy->getVectorNumElements();
     auto *SubVecTy = VectorType::get(VecTy->getScalarType(), NumElts / Factor);
 

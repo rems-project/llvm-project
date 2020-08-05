@@ -8,6 +8,8 @@
 
 // <fenv.h>
 
+// UNSUPPORTED: libcpp-has-newlib
+
 #include <fenv.h>
 
 #ifndef _LIBCPP_VERSION

@@ -114,6 +114,9 @@ unsigned AArch64InstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
   case AArch64::JumpTableDest32:
   case AArch64::JumpTableDest16:
   case AArch64::JumpTableDest8:
+  case AArch64::MCJumpTableDest32:
+  case AArch64::MCJumpTableDest16:
+  case AArch64::MCJumpTableDest8:
     NumBytes = 12;
     break;
   case AArch64::SPACE:
@@ -138,6 +141,8 @@ static void parseCondBranch(MachineInstr *LastInst, MachineBasicBlock *&Target,
   case AArch64::CBZX:
   case AArch64::CBNZW:
   case AArch64::CBNZX:
+  case AArch64::CBZC:
+  case AArch64::CBNZC:
     Target = LastInst->getOperand(1).getMBB();
     Cond.push_back(MachineOperand::CreateImm(-1));
     Cond.push_back(MachineOperand::CreateImm(LastInst->getOpcode()));
@@ -152,6 +157,7 @@ static void parseCondBranch(MachineInstr *LastInst, MachineBasicBlock *&Target,
     Cond.push_back(MachineOperand::CreateImm(LastInst->getOpcode()));
     Cond.push_back(LastInst->getOperand(0));
     Cond.push_back(LastInst->getOperand(1));
+    break;
   }
 }
 
@@ -170,6 +176,8 @@ static unsigned getBranchDisplacementBits(unsigned Opc) {
   case AArch64::CBZW:
   case AArch64::CBNZX:
   case AArch64::CBZX:
+  case AArch64::CBZC:
+  case AArch64::CBNZC:
     return CBZDisplacementBits;
   case AArch64::Bcc:
     return BCCDisplacementBits;
@@ -201,6 +209,8 @@ AArch64InstrInfo::getBranchDestBlock(const MachineInstr &MI) const {
   case AArch64::CBZX:
   case AArch64::CBNZX:
   case AArch64::Bcc:
+  case AArch64::CBZC:
+  case AArch64::CBNZC:
     return MI.getOperand(1).getMBB();
   }
 }
@@ -327,6 +337,12 @@ bool AArch64InstrInfo::reverseBranchCondition(
       break;
     case AArch64::TBNZX:
       Cond[1].setImm(AArch64::TBZX);
+      break;
+    case AArch64::CBZC:
+      Cond[1].setImm(AArch64::CBNZC);
+      break;
+    case AArch64::CBNZC:
+      Cond[1].setImm(AArch64::CBZC);
       break;
     }
   }
@@ -557,6 +573,8 @@ void AArch64InstrInfo::insertSelect(MachineBasicBlock &MBB,
     switch (Cond[1].getImm()) {
     default:
       llvm_unreachable("Unknown branch opcode in Cond");
+    // We don't have to handle CBZC/CBNZC here as currently canInsertSelect
+    // will return false for capabilities.
     case AArch64::CBZW:
       Is64Bit = false;
       CC = AArch64CC::EQ;
@@ -1606,8 +1624,11 @@ bool AArch64InstrInfo::isGPRCopy(const MachineInstr &MI) {
     // GPR32 copies will by lowered to ORRXrs
     Register DstReg = MI.getOperand(0).getReg();
     return (AArch64::GPR32RegClass.contains(DstReg) ||
-            AArch64::GPR64RegClass.contains(DstReg));
+            AArch64::GPR64RegClass.contains(DstReg) ||
+            AArch64::CapspRegClass.contains(DstReg));
   }
+  case AArch64::CapCopy: // Capability move
+      return true;
   case AArch64::ORRXrs: // orr Xd, Xzr, Xm (LSL #0)
     if (MI.getOperand(1).getReg() == AArch64::XZR) {
       assert(MI.getDesc().getNumOperands() == 4 &&
@@ -1661,6 +1682,24 @@ unsigned AArch64InstrInfo::isLoadFromStackSlot(const MachineInstr &MI,
   case AArch64::LDRSui:
   case AArch64::LDRDui:
   case AArch64::LDRQui:
+  case AArch64::CapLoadImmPre:
+  case AArch64::AltLoadCapImmPre:
+  case AArch64::AltLoadWordImmUnscaled:
+  case AArch64::AltLoadDWordImmUnscaled:
+  case AArch64::AltLoadFPByteImmUnscaled:
+  case AArch64::AltLoadFPHalfImmUnscaled:
+  case AArch64::AltLoadFPSingleImmUnscaled:
+  case AArch64::AltLoadFPDoubleImmUnscaled:
+  case AArch64::AltLoadFPQuadImmUnscaled:
+  case AArch64::PCapLoadImmPre:
+  case AArch64::PAltLoadCapImmPre:
+  case AArch64::PAltLoadWordImmUnscaled:
+  case AArch64::PAltLoadDWordImmUnscaled:
+  case AArch64::PAltLoadFPByteImmUnscaled:
+  case AArch64::PAltLoadFPHalfImmUnscaled:
+  case AArch64::PAltLoadFPSingleImmUnscaled:
+  case AArch64::PAltLoadFPDoubleImmUnscaled:
+  case AArch64::PAltLoadFPQuadImmUnscaled:
     if (MI.getOperand(0).getSubReg() == 0 && MI.getOperand(1).isFI() &&
         MI.getOperand(2).isImm() && MI.getOperand(2).getImm() == 0) {
       FrameIndex = MI.getOperand(1).getIndex();
@@ -1684,6 +1723,24 @@ unsigned AArch64InstrInfo::isStoreToStackSlot(const MachineInstr &MI,
   case AArch64::STRSui:
   case AArch64::STRDui:
   case AArch64::STRQui:
+  case AArch64::CapStoreImmPre:
+  case AArch64::AltStoreCapImmPre:
+  case AArch64::AltStoreWordImmUnscaled:
+  case AArch64::AltStoreDWordImmUnscaled:
+  case AArch64::AltStoreFPByteImmUnscaled:
+  case AArch64::AltStoreFPHalfImmUnscaled:
+  case AArch64::AltStoreFPSingleImmUnscaled:
+  case AArch64::AltStoreFPDoubleImmUnscaled:
+  case AArch64::AltStoreFPQuadImmUnscaled:
+  case AArch64::PCapStoreImmPre:
+  case AArch64::PAltStoreCapImmPre:
+  case AArch64::PAltStoreWordImmUnscaled:
+  case AArch64::PAltStoreDWordImmUnscaled:
+  case AArch64::PAltStoreFPByteImmUnscaled:
+  case AArch64::PAltStoreFPHalfImmUnscaled:
+  case AArch64::PAltStoreFPSingleImmUnscaled:
+  case AArch64::PAltStoreFPDoubleImmUnscaled:
+  case AArch64::PAltStoreFPQuadImmUnscaled:
     if (MI.getOperand(0).getSubReg() == 0 && MI.getOperand(1).isFI() &&
         MI.getOperand(2).isImm() && MI.getOperand(2).getImm() == 0) {
       FrameIndex = MI.getOperand(1).getIndex();
@@ -1736,6 +1793,79 @@ bool AArch64InstrInfo::isUnscaledLdSt(unsigned Opc) {
   case AArch64::LDURBBi:
   case AArch64::LDURSBWi:
   case AArch64::LDURSHWi:
+  case AArch64::ASTURSi:
+  case AArch64::ASTURDi:
+  case AArch64::ASTURQi:
+  case AArch64::ASTURBBi:
+  case AArch64::ASTURHHi:
+  case AArch64::ASTURWi:
+  case AArch64::ASTURXi:
+  case AArch64::ALDURSi:
+  case AArch64::ALDURDi:
+  case AArch64::ALDURQi:
+  case AArch64::ALDURWi:
+  case AArch64::ALDURXi:
+  case AArch64::ALDURSWi:
+  case AArch64::ALDURHHi:
+  case AArch64::ALDURBBi:
+  case AArch64::ALDURSBWi:
+  case AArch64::ALDURSHWi:
+  // Morello A64 instructions.
+  case AArch64::AltLoadByteImmUnscaled:
+  case AArch64::AltLoadCapabilityImmUnscaled:
+  case AArch64::AltLoadDWordImmUnscaled:
+  case AArch64::AltLoadFPByteImmUnscaled:
+  case AArch64::AltLoadFPDoubleImmUnscaled:
+  case AArch64::AltLoadFPHalfImmUnscaled:
+  case AArch64::AltLoadFPQuadImmUnscaled:
+  case AArch64::AltLoadFPSingleImmUnscaled:
+  case AArch64::AltLoadHalfImmUnscaled:
+  case AArch64::AltLoadSignedByteToDWordImmUnscaled:
+  case AArch64::AltLoadSignedByteToWordImmUnscaled:
+  case AArch64::AltLoadSignedHalfToDWordImmUnscaled:
+  case AArch64::AltLoadSignedHalfToWordImmUnscaled:
+  case AArch64::AltLoadSignedWordToDWordImmUnscaled:
+  case AArch64::AltLoadWordImmUnscaled:
+  case AArch64::AltStoreByteImmUnscaled:
+  case AArch64::AltStoreCapabilityImmUnscaled:
+  case AArch64::AltStoreDWordImmUnscaled:
+  case AArch64::AltStoreFPByteImmUnscaled:
+  case AArch64::AltStoreFPDoubleImmUnscaled:
+  case AArch64::AltStoreFPHalfImmUnscaled:
+  case AArch64::AltStoreFPQuadImmUnscaled:
+  case AArch64::AltStoreFPSingleImmUnscaled:
+  case AArch64::AltStoreHalfImmUnscaled:
+  case AArch64::AltStoreWordImmUnscaled:
+  case AArch64::CapLoadUnscaledImm:
+  case AArch64::CapStoreUnscaledImm:
+  // Morello C64 load/store instructions.
+  case AArch64::PAltLoadByteImmUnscaled:
+  case AArch64::PAltLoadCapabilityImmUnscaled:
+  case AArch64::PAltLoadDWordImmUnscaled:
+  case AArch64::PAltLoadFPByteImmUnscaled:
+  case AArch64::PAltLoadFPDoubleImmUnscaled:
+  case AArch64::PAltLoadFPHalfImmUnscaled:
+  case AArch64::PAltLoadFPQuadImmUnscaled:
+  case AArch64::PAltLoadFPSingleImmUnscaled:
+  case AArch64::PAltLoadHalfImmUnscaled:
+  case AArch64::PAltLoadSignedByteToDWordImmUnscaled:
+  case AArch64::PAltLoadSignedByteToWordImmUnscaled:
+  case AArch64::PAltLoadSignedHalfToDWordImmUnscaled:
+  case AArch64::PAltLoadSignedHalfToWordImmUnscaled:
+  case AArch64::PAltLoadSignedWordToDWordImmUnscaled:
+  case AArch64::PAltLoadWordImmUnscaled:
+  case AArch64::PAltStoreByteImmUnscaled:
+  case AArch64::PAltStoreCapabilityImmUnscaled:
+  case AArch64::PAltStoreDWordImmUnscaled:
+  case AArch64::PAltStoreFPByteImmUnscaled:
+  case AArch64::PAltStoreFPDoubleImmUnscaled:
+  case AArch64::PAltStoreFPHalfImmUnscaled:
+  case AArch64::PAltStoreFPQuadImmUnscaled:
+  case AArch64::PAltStoreFPSingleImmUnscaled:
+  case AArch64::PAltStoreHalfImmUnscaled:
+  case AArch64::PAltStoreWordImmUnscaled:
+  case AArch64::PCapLoadUnscaledImm:
+  case AArch64::PCapStoreUnscaledImm:
     return true;
   }
 }
@@ -1767,6 +1897,34 @@ Optional<unsigned> AArch64InstrInfo::getUnscaledLdSt(unsigned Opc) {
   case AArch64::STRQui: return AArch64::STURQi;
   case AArch64::STRBBui: return AArch64::STURBBi;
   case AArch64::STRHHui: return AArch64::STURHHi;
+  case AArch64::APRFMui: return AArch64::APRFUMi;
+  case AArch64::ALDRXui: return AArch64::ALDURXi;
+  case AArch64::ALDRWui: return AArch64::ALDURWi;
+  case AArch64::ALDRBui: return AArch64::ALDURBi;
+  case AArch64::ALDRHui: return AArch64::ALDURHi;
+  case AArch64::ALDRSui: return AArch64::ALDURSi;
+  case AArch64::ALDRDui: return AArch64::ALDURDi;
+  case AArch64::ALDRQui: return AArch64::ALDURQi;
+  case AArch64::ALDRBBui: return AArch64::ALDURBBi;
+  case AArch64::ALDRHHui: return AArch64::ALDURHHi;
+  case AArch64::ALDRSBXui: return AArch64::ALDURSBXi;
+  case AArch64::ALDRSBWui: return AArch64::ALDURSBWi;
+  case AArch64::ALDRSHXui: return AArch64::ALDURSHXi;
+  case AArch64::ALDRSHWui: return AArch64::ALDURSHWi;
+  case AArch64::ALDRSWui: return AArch64::ALDURSWi;
+  case AArch64::ASTRXui: return AArch64::ASTURXi;
+  case AArch64::ASTRWui: return AArch64::ASTURWi;
+  case AArch64::ASTRBui: return AArch64::ASTURBi;
+  case AArch64::ASTRHui: return AArch64::ASTURHi;
+  case AArch64::ASTRSui: return AArch64::ASTURSi;
+  case AArch64::ASTRDui: return AArch64::ASTURDi;
+  case AArch64::ASTRQui: return AArch64::ASTURQi;
+  case AArch64::ASTRBBui: return AArch64::ASTURBBi;
+  case AArch64::ASTRHHui: return AArch64::ASTURHHi;
+  case AArch64::CapLoadImmPre: return AArch64::CapLoadUnscaledImm;
+  case AArch64::PCapLoadImmPre: return AArch64::PCapLoadUnscaledImm;
+  case AArch64::CapStoreImmPre: return AArch64::CapStoreUnscaledImm;
+  case AArch64::PCapStoreImmPre: return AArch64::PCapStoreUnscaledImm;
   }
 }
 
@@ -1796,6 +1954,30 @@ unsigned AArch64InstrInfo::getLoadStoreImmIdx(unsigned Opc) {
   case AArch64::STNPSi:
   case AArch64::LDG:
   case AArch64::STGPi:
+  case AArch64::ALDPXi:
+  case AArch64::ALDPDi:
+  case AArch64::ASTPXi:
+  case AArch64::ASTPDi:
+  case AArch64::ALDNPXi:
+  case AArch64::ALDNPDi:
+  case AArch64::ASTNPXi:
+  case AArch64::ASTNPDi:
+  case AArch64::ALDPQi:
+  case AArch64::ASTPQi:
+  case AArch64::ALDNPQi:
+  case AArch64::ASTNPQi:
+  case AArch64::ALDPWi:
+  case AArch64::ALDPSi:
+  case AArch64::ASTPWi:
+  case AArch64::ASTPSi:
+  case AArch64::ALDNPWi:
+  case AArch64::ALDNPSi:
+  case AArch64::ASTNPWi:
+  case AArch64::ASTNPSi:
+  case AArch64::CapLoadPairImmPre:
+  case AArch64::CapStorePairImmPre:
+  case AArch64::PCapLoadPairImmPre:
+  case AArch64::PCapStorePairImmPre:
     return 3;
   case AArch64::ADDG:
   case AArch64::STGOffset:
@@ -1819,6 +2001,21 @@ bool AArch64InstrInfo::isPairableLdStInst(const MachineInstr &MI) {
   case AArch64::LDRXui:
   case AArch64::LDRWui:
   case AArch64::LDRSWui:
+  case AArch64::ASTRSui:
+  case AArch64::ASTRDui:
+  case AArch64::ASTRQui:
+  case AArch64::ASTRXui:
+  case AArch64::ASTRWui:
+  case AArch64::ALDRSui:
+  case AArch64::ALDRDui:
+  case AArch64::ALDRQui:
+  case AArch64::ALDRXui:
+  case AArch64::ALDRWui:
+  case AArch64::ALDRSWui:
+  case AArch64::PCapStoreImmPre:
+  case AArch64::PCapLoadImmPre:
+  case AArch64::CapStoreImmPre:
+  case AArch64::CapLoadImmPre:
   // Unscaled instructions.
   case AArch64::STURSi:
   case AArch64::STURDi:
@@ -1831,6 +2028,21 @@ bool AArch64InstrInfo::isPairableLdStInst(const MachineInstr &MI) {
   case AArch64::LDURWi:
   case AArch64::LDURXi:
   case AArch64::LDURSWi:
+  case AArch64::ASTURSi:
+  case AArch64::ASTURDi:
+  case AArch64::ASTURQi:
+  case AArch64::ASTURWi:
+  case AArch64::ASTURXi:
+  case AArch64::ALDURSi:
+  case AArch64::ALDURDi:
+  case AArch64::ALDURQi:
+  case AArch64::ALDURWi:
+  case AArch64::ALDURXi:
+  case AArch64::ALDURSWi:
+  case AArch64::CapLoadUnscaledImm:
+  case AArch64::CapStoreUnscaledImm:
+  case AArch64::PCapLoadUnscaledImm:
+  case AArch64::PCapStoreUnscaledImm:
     return true;
   }
 }
@@ -1971,6 +2183,10 @@ bool AArch64InstrInfo::isCandidateToMergeOrPair(const MachineInstr &MI) const {
     case AArch64::STURQi:
     case AArch64::LDRQui:
     case AArch64::STRQui:
+    case AArch64::ALDURQi:
+    case AArch64::ASTURQi:
+    case AArch64::ALDRQui:
+    case AArch64::ASTRQui:
       return false;
     }
   }
@@ -2010,7 +2226,7 @@ bool AArch64InstrInfo::getMemOperandWithOffsetWidth(
 
   // Get the scaling factor for the instruction and set the width for the
   // instruction.
-  unsigned Scale = 0;
+  int Scale = 0;
   int64_t Dummy1, Dummy2;
 
   // If this returns false, then it's an instruction we don't want to handle.
@@ -2043,7 +2259,7 @@ AArch64InstrInfo::getMemOpBaseRegImmOfsOffsetOperand(MachineInstr &LdSt) const {
   return OfsOp;
 }
 
-bool AArch64InstrInfo::getMemOpInfo(unsigned Opcode, unsigned &Scale,
+bool AArch64InstrInfo::getMemOpInfo(unsigned Opcode, int &Scale,
                                     unsigned &Width, int64_t &MinOffset,
                                     int64_t &MaxOffset) {
   switch (Opcode) {
@@ -2054,6 +2270,8 @@ bool AArch64InstrInfo::getMemOpInfo(unsigned Opcode, unsigned &Scale,
     return false;
   case AArch64::STRWpost:
   case AArch64::LDRWpost:
+  case AArch64::ASTRWpost:
+  case AArch64::ALDRWpost:
     Width = 32;
     Scale = 4;
     MinOffset = -256;
@@ -2061,6 +2279,8 @@ bool AArch64InstrInfo::getMemOpInfo(unsigned Opcode, unsigned &Scale,
     break;
   case AArch64::LDURQi:
   case AArch64::STURQi:
+  case AArch64::ALDURQi:
+  case AArch64::ASTURQi:
     Width = 16;
     Scale = 1;
     MinOffset = -256;
@@ -2071,6 +2291,11 @@ bool AArch64InstrInfo::getMemOpInfo(unsigned Opcode, unsigned &Scale,
   case AArch64::LDURDi:
   case AArch64::STURXi:
   case AArch64::STURDi:
+  case AArch64::APRFUMi:
+  case AArch64::ALDURXi:
+  case AArch64::ALDURDi:
+  case AArch64::ASTURXi:
+  case AArch64::ASTURDi:
     Width = 8;
     Scale = 1;
     MinOffset = -256;
@@ -2081,6 +2306,11 @@ bool AArch64InstrInfo::getMemOpInfo(unsigned Opcode, unsigned &Scale,
   case AArch64::LDURSWi:
   case AArch64::STURWi:
   case AArch64::STURSi:
+  case AArch64::ALDURWi:
+  case AArch64::ALDURSi:
+  case AArch64::ALDURSWi:
+  case AArch64::ASTURWi:
+  case AArch64::ASTURSi:
     Width = 4;
     Scale = 1;
     MinOffset = -256;
@@ -2092,6 +2322,12 @@ bool AArch64InstrInfo::getMemOpInfo(unsigned Opcode, unsigned &Scale,
   case AArch64::LDURSHWi:
   case AArch64::STURHi:
   case AArch64::STURHHi:
+  case AArch64::ALDURHi:
+  case AArch64::ALDURHHi:
+  case AArch64::ALDURSHXi:
+  case AArch64::ALDURSHWi:
+  case AArch64::ASTURHi:
+  case AArch64::ASTURHHi:
     Width = 2;
     Scale = 1;
     MinOffset = -256;
@@ -2103,6 +2339,12 @@ bool AArch64InstrInfo::getMemOpInfo(unsigned Opcode, unsigned &Scale,
   case AArch64::LDURSBWi:
   case AArch64::STURBi:
   case AArch64::STURBBi:
+  case AArch64::ALDURBi:
+  case AArch64::ALDURBBi:
+  case AArch64::ALDURSBXi:
+  case AArch64::ALDURSBWi:
+  case AArch64::ASTURBi:
+  case AArch64::ASTURBBi:
     Width = 1;
     Scale = 1;
     MinOffset = -256;
@@ -2112,6 +2354,10 @@ bool AArch64InstrInfo::getMemOpInfo(unsigned Opcode, unsigned &Scale,
   case AArch64::LDNPQi:
   case AArch64::STPQi:
   case AArch64::STNPQi:
+  case AArch64::ALDPQi:
+  case AArch64::ALDNPQi:
+  case AArch64::ASTPQi:
+  case AArch64::ASTNPQi:
     Scale = 16;
     Width = 32;
     MinOffset = -64;
@@ -2119,6 +2365,8 @@ bool AArch64InstrInfo::getMemOpInfo(unsigned Opcode, unsigned &Scale,
     break;
   case AArch64::LDRQui:
   case AArch64::STRQui:
+  case AArch64::ALDRQui:
+  case AArch64::ASTRQui:
     Scale = Width = 16;
     MinOffset = 0;
     MaxOffset = 4095;
@@ -2131,6 +2379,14 @@ bool AArch64InstrInfo::getMemOpInfo(unsigned Opcode, unsigned &Scale,
   case AArch64::STPDi:
   case AArch64::STNPXi:
   case AArch64::STNPDi:
+  case AArch64::ALDPXi:
+  case AArch64::ALDPDi:
+  case AArch64::ALDNPXi:
+  case AArch64::ALDNPDi:
+  case AArch64::ASTPXi:
+  case AArch64::ASTPDi:
+  case AArch64::ASTNPXi:
+  case AArch64::ASTNPDi:
     Scale = 8;
     Width = 16;
     MinOffset = -64;
@@ -2141,6 +2397,11 @@ bool AArch64InstrInfo::getMemOpInfo(unsigned Opcode, unsigned &Scale,
   case AArch64::LDRDui:
   case AArch64::STRXui:
   case AArch64::STRDui:
+  case AArch64::APRFMui:
+  case AArch64::ALDRXui:
+  case AArch64::ALDRDui:
+  case AArch64::ASTRXui:
+  case AArch64::ASTRDui:
     Scale = Width = 8;
     MinOffset = 0;
     MaxOffset = 4095;
@@ -2153,6 +2414,14 @@ bool AArch64InstrInfo::getMemOpInfo(unsigned Opcode, unsigned &Scale,
   case AArch64::STPSi:
   case AArch64::STNPWi:
   case AArch64::STNPSi:
+  case AArch64::ALDPWi:
+  case AArch64::ALDPSi:
+  case AArch64::ALDNPWi:
+  case AArch64::ALDNPSi:
+  case AArch64::ASTPWi:
+  case AArch64::ASTPSi:
+  case AArch64::ASTNPWi:
+  case AArch64::ASTNPSi:
     Scale = 4;
     Width = 8;
     MinOffset = -64;
@@ -2163,6 +2432,11 @@ bool AArch64InstrInfo::getMemOpInfo(unsigned Opcode, unsigned &Scale,
   case AArch64::LDRSWui:
   case AArch64::STRWui:
   case AArch64::STRSui:
+  case AArch64::ALDRWui:
+  case AArch64::ALDRSui:
+  case AArch64::ALDRSWui:
+  case AArch64::ASTRWui:
+  case AArch64::ASTRSui:
     Scale = Width = 4;
     MinOffset = 0;
     MaxOffset = 4095;
@@ -2173,6 +2447,12 @@ bool AArch64InstrInfo::getMemOpInfo(unsigned Opcode, unsigned &Scale,
   case AArch64::LDRSHXui:
   case AArch64::STRHui:
   case AArch64::STRHHui:
+  case AArch64::ALDRHui:
+  case AArch64::ALDRHHui:
+  case AArch64::ALDRSHWui:
+  case AArch64::ALDRSHXui:
+  case AArch64::ASTRHui:
+  case AArch64::ASTRHHui:
     Scale = Width = 2;
     MinOffset = 0;
     MaxOffset = 4095;
@@ -2183,6 +2463,12 @@ bool AArch64InstrInfo::getMemOpInfo(unsigned Opcode, unsigned &Scale,
   case AArch64::LDRSBXui:
   case AArch64::STRBui:
   case AArch64::STRBBui:
+  case AArch64::ALDRBui:
+  case AArch64::ALDRBBui:
+  case AArch64::ALDRSBWui:
+  case AArch64::ALDRSBXui:
+  case AArch64::ASTRBui:
+  case AArch64::ASTRBBui:
     Scale = Width = 1;
     MinOffset = 0;
     MaxOffset = 4095;
@@ -2220,6 +2506,154 @@ bool AArch64InstrInfo::getMemOpInfo(unsigned Opcode, unsigned &Scale,
     MinOffset = -256;
     MaxOffset = 255;
     break;
+  // Morello instructions.
+  case AArch64::AltLoadByteImmUnscaled:
+  case AArch64::AltLoadFPByteImmUnscaled:
+  case AArch64::AltLoadSignedByteToDWordImmUnscaled:
+  case AArch64::AltLoadSignedByteToWordImmUnscaled:
+  case AArch64::AltStoreByteImmUnscaled:
+  case AArch64::AltStoreFPByteImmUnscaled:
+  case AArch64::PAltLoadByteImmUnscaled:
+  case AArch64::PAltLoadFPByteImmUnscaled:
+  case AArch64::PAltLoadSignedByteToDWordImmUnscaled:
+  case AArch64::PAltLoadSignedByteToWordImmUnscaled:
+  case AArch64::PAltStoreByteImmUnscaled:
+  case AArch64::PAltStoreFPByteImmUnscaled:
+    Width = Scale = 1;
+    MinOffset = -256;
+    MaxOffset = 255;
+    break;
+  case AArch64::AltLoadHalfImmUnscaled:
+  case AArch64::AltLoadFPHalfImmUnscaled:
+  case AArch64::AltLoadSignedHalfToDWordImmUnscaled:
+  case AArch64::AltLoadSignedHalfToWordImmUnscaled:
+  case AArch64::AltStoreHalfImmUnscaled:
+  case AArch64::AltStoreFPHalfImmUnscaled:
+  case AArch64::PAltLoadHalfImmUnscaled:
+  case AArch64::PAltLoadFPHalfImmUnscaled:
+  case AArch64::PAltLoadSignedHalfToDWordImmUnscaled:
+  case AArch64::PAltLoadSignedHalfToWordImmUnscaled:
+  case AArch64::PAltStoreHalfImmUnscaled:
+  case AArch64::PAltStoreFPHalfImmUnscaled:
+    Width = 2;
+    Scale = 1;
+    MinOffset = -256;
+    MaxOffset = 255;
+    break;
+  case AArch64::AltLoadFPSingleImmUnscaled:
+  case AArch64::AltLoadSignedWordToDWordImmUnscaled:
+  case AArch64::AltLoadWordImmUnscaled:
+  case AArch64::AltStoreFPSingleImmUnscaled:
+  case AArch64::AltStoreWordImmUnscaled:
+  case AArch64::PAltLoadFPSingleImmUnscaled:
+  case AArch64::PAltLoadSignedWordToDWordImmUnscaled:
+  case AArch64::PAltLoadWordImmUnscaled:
+  case AArch64::PAltStoreFPSingleImmUnscaled:
+  case AArch64::PAltStoreWordImmUnscaled:
+    Width = 4;
+    Scale = 1;
+    MinOffset = -256;
+    MaxOffset = 255;
+    break;
+  case AArch64::AltLoadDWordImmUnscaled:
+  case AArch64::AltLoadFPDoubleImmUnscaled:
+  case AArch64::AltStoreDWordImmUnscaled:
+  case AArch64::AltStoreFPDoubleImmUnscaled:
+  case AArch64::PAltLoadDWordImmUnscaled:
+  case AArch64::PAltLoadFPDoubleImmUnscaled:
+  case AArch64::PAltStoreDWordImmUnscaled:
+  case AArch64::PAltStoreFPDoubleImmUnscaled:
+    Width = 8;
+    Scale = 1;
+    MinOffset = -256;
+    MaxOffset = 255;
+    break;
+  case AArch64::AltLoadFPQuadImmUnscaled:
+  case AArch64::AltStoreCapabilityImmUnscaled:
+  case AArch64::AltLoadCapabilityImmUnscaled:
+  case AArch64::AltStoreFPQuadImmUnscaled:
+  case AArch64::CapLoadUnscaledImm:
+  case AArch64::CapStoreUnscaledImm:
+  case AArch64::PAltLoadFPQuadImmUnscaled:
+  case AArch64::PAltStoreCapabilityImmUnscaled:
+  case AArch64::PAltLoadCapabilityImmUnscaled:
+  case AArch64::PAltStoreFPQuadImmUnscaled:
+  case AArch64::PCapLoadUnscaledImm:
+  case AArch64::PCapStoreUnscaledImm:
+    Width = 16;
+    Scale = 1;
+    MinOffset = -256;
+    MaxOffset = 255;
+    break;
+  case AArch64::AltLoadByteImmPre:
+  case AArch64::AltStoreByteImmPre:
+  case AArch64::PAltLoadByteImmPre:
+  case AArch64::PAltStoreByteImmPre:
+    Width = Scale = 1;
+    MinOffset = 0;
+    MaxOffset = 511;
+    break;
+  case AArch64::AltLoadWordImmPre:
+  case AArch64::AltStoreWordImmPre:
+  case AArch64::PAltLoadWordImmPre:
+  case AArch64::PAltStoreWordImmPre:
+    Width = Scale = 4;
+    MinOffset = 0;
+    MaxOffset = 511;
+    break;
+  case AArch64::AltLoadDWordImmPre:
+  case AArch64::AltStoreDWordImmPre:
+  case AArch64::PAltLoadDWordImmPre:
+  case AArch64::PAltStoreDWordImmPre:
+    Width = Scale = 8;
+    MinOffset = 0;
+    MaxOffset = 511;
+    break;
+  case AArch64::AltLoadCapImmPre:
+  case AArch64::AltStoreCapImmPre:
+  case AArch64::PAltLoadCapImmPre:
+  case AArch64::PAltStoreCapImmPre:
+    Width = Scale = 16;
+    MinOffset = 0;
+    MaxOffset = 511;
+    break;
+  case AArch64::CapLoadImmPre:
+  case AArch64::CapStoreImmPre:
+  case AArch64::PCapLoadImmPre:
+  case AArch64::PCapStoreImmPre:
+    Width = Scale = 16;
+    MinOffset = 0;
+    MaxOffset = 4095;
+    break;
+  case AArch64::CapLoadImmPreW:
+  case AArch64::CapStoreImmPreW:
+  case AArch64::CapLoadImmPost:
+  case AArch64::CapStoreImmPost:
+  case AArch64::PCapLoadImmPreW:
+  case AArch64::PCapStoreImmPreW:
+  case AArch64::PCapLoadImmPost:
+  case AArch64::PCapStoreImmPost:
+    Width = Scale = 16;
+    MinOffset = -256;
+    MaxOffset = 255;
+    break;
+  case AArch64::CapLoadPairImmPre:
+  case AArch64::CapStorePairImmPre:
+  case AArch64::CapLoadPairImmPreW:
+  case AArch64::CapStorePairImmPreW:
+  case AArch64::CapLoadPairImmPost:
+  case AArch64::CapStorePairImmPost:
+  case AArch64::PCapLoadPairImmPre:
+  case AArch64::PCapStorePairImmPre:
+  case AArch64::PCapLoadPairImmPreW:
+  case AArch64::PCapStorePairImmPreW:
+  case AArch64::PCapLoadPairImmPost:
+  case AArch64::PCapStorePairImmPost:
+    Width = 32;
+    Scale = 16;
+    MinOffset = -64;
+    MaxOffset = 63;
+    break;
   case AArch64::ST2GOffset:
   case AArch64::STZ2GOffset:
     Scale = 16;
@@ -2248,6 +2682,16 @@ int AArch64InstrInfo::getMemScale(unsigned Opc) {
   case AArch64::LDURSBWi:
   case AArch64::STRBBui:
   case AArch64::STURBBi:
+  case AArch64::ALDRBBui:
+  case AArch64::ALDURBBi:
+  case AArch64::ALDRSBWui:
+  case AArch64::ALDURSBWi:
+  case AArch64::ASTRBBui:
+  case AArch64::ASTURBBi:
+  case AArch64::CapLoadUnscaledImm:
+  case AArch64::CapStoreUnscaledImm:
+  case AArch64::PCapLoadUnscaledImm:
+  case AArch64::PCapStoreUnscaledImm:
     return 1;
   case AArch64::LDRHHui:
   case AArch64::LDURHHi:
@@ -2255,6 +2699,12 @@ int AArch64InstrInfo::getMemScale(unsigned Opc) {
   case AArch64::LDURSHWi:
   case AArch64::STRHHui:
   case AArch64::STURHHi:
+  case AArch64::ALDRHHui:
+  case AArch64::ALDURHHi:
+  case AArch64::ALDRSHWui:
+  case AArch64::ALDURSHWi:
+  case AArch64::ASTRHHui:
+  case AArch64::ASTURHHi:
     return 2;
   case AArch64::LDRSui:
   case AArch64::LDURSi:
@@ -2271,6 +2721,21 @@ int AArch64InstrInfo::getMemScale(unsigned Opc) {
   case AArch64::LDPWi:
   case AArch64::STPSi:
   case AArch64::STPWi:
+  case AArch64::ALDRSui:
+  case AArch64::ALDURSi:
+  case AArch64::ALDRSWui:
+  case AArch64::ALDURSWi:
+  case AArch64::ALDRWui:
+  case AArch64::ALDURWi:
+  case AArch64::ASTRSui:
+  case AArch64::ASTURSi:
+  case AArch64::ASTRWui:
+  case AArch64::ASTURWi:
+  case AArch64::ALDPSi:
+  case AArch64::ALDPSWi:
+  case AArch64::ALDPWi:
+  case AArch64::ASTPSi:
+  case AArch64::ASTPWi:
     return 4;
   case AArch64::LDRDui:
   case AArch64::LDURDi:
@@ -2284,6 +2749,18 @@ int AArch64InstrInfo::getMemScale(unsigned Opc) {
   case AArch64::LDPXi:
   case AArch64::STPDi:
   case AArch64::STPXi:
+  case AArch64::ALDRDui:
+  case AArch64::ALDURDi:
+  case AArch64::ALDRXui:
+  case AArch64::ALDURXi:
+  case AArch64::ASTRDui:
+  case AArch64::ASTURDi:
+  case AArch64::ASTRXui:
+  case AArch64::ASTURXi:
+  case AArch64::ALDPDi:
+  case AArch64::ALDPXi:
+  case AArch64::ASTPDi:
+  case AArch64::ASTPXi:
     return 8;
   case AArch64::LDRQui:
   case AArch64::LDURQi:
@@ -2291,6 +2768,20 @@ int AArch64InstrInfo::getMemScale(unsigned Opc) {
   case AArch64::STURQi:
   case AArch64::LDPQi:
   case AArch64::STPQi:
+  case AArch64::ALDRQui:
+  case AArch64::ALDURQi:
+  case AArch64::ASTRQui:
+  case AArch64::ASTURQi:
+  case AArch64::ALDPQi:
+  case AArch64::ASTPQi:
+  case AArch64::PCapLoadImmPre:
+  case AArch64::PCapLoadPairImmPre:
+  case AArch64::PCapStoreImmPre:
+  case AArch64::PCapStorePairImmPre:
+  case AArch64::CapLoadImmPre:
+  case AArch64::CapLoadPairImmPre:
+  case AArch64::CapStoreImmPre:
+  case AArch64::CapStorePairImmPre:
   case AArch64::STGOffset:
   case AArch64::STZGOffset:
   case AArch64::ST2GOffset:
@@ -2329,6 +2820,12 @@ static bool canPairLdStOpc(unsigned FirstOpc, unsigned SecondOpc) {
   case AArch64::LDRSWui:
   case AArch64::LDURSWi:
     return SecondOpc == AArch64::LDRWui || SecondOpc == AArch64::LDURWi;
+  case AArch64::ALDRWui:
+  case AArch64::ALDURWi:
+    return SecondOpc == AArch64::ALDRSWui || SecondOpc == AArch64::ALDURSWi;
+  case AArch64::ALDRSWui:
+  case AArch64::ALDURSWi:
+    return SecondOpc == AArch64::ALDRWui || SecondOpc == AArch64::ALDURWi;
   }
   // These instructions can't be paired based on their opcodes.
   return false;
@@ -2658,16 +3155,16 @@ void AArch64InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     return;
   }
 
-  if (AArch64::XSeqPairsClassRegClass.contains(DestReg) &&
-      AArch64::XSeqPairsClassRegClass.contains(SrcReg)) {
+  if (AArch64::XSeqPairsAllClassRegClass.contains(DestReg) &&
+      AArch64::XSeqPairsAllClassRegClass.contains(SrcReg)) {
     static const unsigned Indices[] = {AArch64::sube64, AArch64::subo64};
     copyGPRRegTuple(MBB, I, DL, DestReg, SrcReg, KillSrc, AArch64::ORRXrs,
                     AArch64::XZR, Indices);
     return;
   }
 
-  if (AArch64::WSeqPairsClassRegClass.contains(DestReg) &&
-      AArch64::WSeqPairsClassRegClass.contains(SrcReg)) {
+  if (AArch64::WSeqPairsAllClassRegClass.contains(DestReg) &&
+      AArch64::WSeqPairsAllClassRegClass.contains(SrcReg)) {
     static const unsigned Indices[] = {AArch64::sube32, AArch64::subo32};
     copyGPRRegTuple(MBB, I, DL, DestReg, SrcReg, KillSrc, AArch64::ORRWrs,
                     AArch64::WZR, Indices);
@@ -2798,6 +3295,13 @@ void AArch64InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     return;
   }
 
+  if (AArch64::CapspRegClass.contains(DestReg) &&
+      AArch64::CapspRegClass.contains(SrcReg)) {
+    BuildMI(MBB, I, DL, get(AArch64::CapCopy), DestReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+    return;
+  }
+
   if (DestReg == AArch64::NZCV) {
     assert(AArch64::GPR64RegClass.contains(SrcReg) && "Invalid NZCV copy");
     BuildMI(MBB, I, DL, get(AArch64::MSR))
@@ -2816,6 +3320,10 @@ void AArch64InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   }
 
   llvm_unreachable("unimplemented reg-to-reg copy");
+}
+
+static bool isStackPointerRegister(unsigned Reg) {
+  return Reg == AArch64::WSP || Reg == AArch64::SP || Reg == AArch64::CSP;
 }
 
 static void storeRegPairToStackSlot(const TargetRegisterInfo &TRI,
@@ -2848,6 +3356,8 @@ void AArch64InstrInfo::storeRegToStackSlot(
   MachineFunction &MF = *MBB.getParent();
   MachineFrameInfo &MFI = MF.getFrameInfo();
   unsigned Align = MFI.getObjectAlignment(FI);
+  const bool HasC64 = Subtarget.hasC64();
+  const bool HasPureCap = Subtarget.hasPureCap();
 
   MachinePointerInfo PtrInfo = MachinePointerInfo::getFixedStack(MF, FI);
   MachineMemOperand *MMO = MF.getMachineMemOperand(
@@ -2857,32 +3367,32 @@ void AArch64InstrInfo::storeRegToStackSlot(
   switch (TRI->getSpillSize(*RC)) {
   case 1:
     if (AArch64::FPR8RegClass.hasSubClassEq(RC))
-      Opc = AArch64::STRBui;
+      Opc = HasPureCap ? AArch64::ASTRBui : AArch64::STRBui;
     break;
   case 2:
     if (AArch64::FPR16RegClass.hasSubClassEq(RC))
-      Opc = AArch64::STRHui;
+      Opc = HasPureCap ? AArch64::ASTRHui : AArch64::STRHui;
     break;
   case 4:
     if (AArch64::GPR32allRegClass.hasSubClassEq(RC)) {
-      Opc = AArch64::STRWui;
+      Opc = HasPureCap ? AArch64::ASTRWui : AArch64::STRWui;
       if (Register::isVirtualRegister(SrcReg))
         MF.getRegInfo().constrainRegClass(SrcReg, &AArch64::GPR32RegClass);
       else
-        assert(SrcReg != AArch64::WSP);
+        assert(!isStackPointerRegister(SrcReg));
     } else if (AArch64::FPR32RegClass.hasSubClassEq(RC))
-      Opc = AArch64::STRSui;
+      Opc = HasPureCap ? AArch64::ASTRSui : AArch64::STRSui;
     break;
   case 8:
     if (AArch64::GPR64allRegClass.hasSubClassEq(RC)) {
-      Opc = AArch64::STRXui;
+      Opc = HasPureCap ? AArch64::ASTRXui : AArch64::STRXui;
       if (Register::isVirtualRegister(SrcReg))
         MF.getRegInfo().constrainRegClass(SrcReg, &AArch64::GPR64RegClass);
       else
-        assert(SrcReg != AArch64::SP);
+        assert(!isStackPointerRegister(SrcReg));
     } else if (AArch64::FPR64RegClass.hasSubClassEq(RC)) {
-      Opc = AArch64::STRDui;
-    } else if (AArch64::WSeqPairsClassRegClass.hasSubClassEq(RC)) {
+      Opc = HasPureCap ? AArch64::ASTRDui : AArch64::STRDui;
+    } else if (AArch64::WSeqPairsAllClassRegClass.hasSubClassEq(RC)) {
       storeRegPairToStackSlot(getRegisterInfo(), MBB, MBBI,
                               get(AArch64::STPWi), SrcReg, isKill,
                               AArch64::sube32, AArch64::subo32, FI, MMO);
@@ -2890,13 +3400,20 @@ void AArch64InstrInfo::storeRegToStackSlot(
     }
     break;
   case 16:
-    if (AArch64::FPR128RegClass.hasSubClassEq(RC))
-      Opc = AArch64::STRQui;
+    if (AArch64::CapallRegClass.hasSubClassEq(RC)) {
+      Opc = HasC64 ? AArch64::PCapStoreImmPre : AArch64::CapStoreImmPre;
+      if (Register::isVirtualRegister(SrcReg))
+        MF.getRegInfo().constrainRegClass(SrcReg, &AArch64::CapRegClass);
+      else
+        assert(!isStackPointerRegister(SrcReg));
+    } else if (AArch64::FPR128RegClass.hasSubClassEq(RC))
+      Opc = HasPureCap ? AArch64::ASTRQui : AArch64::STRQui;
     else if (AArch64::DDRegClass.hasSubClassEq(RC)) {
-      assert(Subtarget.hasNEON() && "Unexpected register store without NEON");
-      Opc = AArch64::ST1Twov1d;
+      assert(Subtarget.hasNEON() && (HasPureCap == HasC64) &&
+             "Unexpected register store without NEON");
+      Opc = HasPureCap ? AArch64::AST1Twov1d : AArch64::ST1Twov1d;
       Offset = false;
-    } else if (AArch64::XSeqPairsClassRegClass.hasSubClassEq(RC)) {
+    } else if (AArch64::XSeqPairsAllClassRegClass.hasSubClassEq(RC)) {
       storeRegPairToStackSlot(getRegisterInfo(), MBB, MBBI,
                               get(AArch64::STPXi), SrcReg, isKill,
                               AArch64::sube64, AArch64::subo64, FI, MMO);
@@ -2905,33 +3422,38 @@ void AArch64InstrInfo::storeRegToStackSlot(
     break;
   case 24:
     if (AArch64::DDDRegClass.hasSubClassEq(RC)) {
-      assert(Subtarget.hasNEON() && "Unexpected register store without NEON");
-      Opc = AArch64::ST1Threev1d;
+      assert(Subtarget.hasNEON() && (HasPureCap == HasC64) &&
+             "Unexpected register store without NEON");
+      Opc = HasPureCap ? AArch64::AST1Threev1d: AArch64::ST1Threev1d;
       Offset = false;
     }
     break;
   case 32:
     if (AArch64::DDDDRegClass.hasSubClassEq(RC)) {
-      assert(Subtarget.hasNEON() && "Unexpected register store without NEON");
-      Opc = AArch64::ST1Fourv1d;
+      assert(Subtarget.hasNEON() && (HasPureCap == HasC64) &&
+             "Unexpected register store without NEON");
+      Opc = HasPureCap ? AArch64::AST1Fourv1d : AArch64::ST1Fourv1d;
       Offset = false;
     } else if (AArch64::QQRegClass.hasSubClassEq(RC)) {
-      assert(Subtarget.hasNEON() && "Unexpected register store without NEON");
-      Opc = AArch64::ST1Twov2d;
+      assert(Subtarget.hasNEON() && (HasPureCap == HasC64) &&
+             "Unexpected register store without NEON");
+      Opc = HasPureCap ? AArch64::AST1Twov2d : AArch64::ST1Twov2d;
       Offset = false;
     }
     break;
   case 48:
     if (AArch64::QQQRegClass.hasSubClassEq(RC)) {
-      assert(Subtarget.hasNEON() && "Unexpected register store without NEON");
-      Opc = AArch64::ST1Threev2d;
+      assert(Subtarget.hasNEON() && (HasPureCap == HasC64) &&
+             "Unexpected register store without NEON");
+      Opc = HasPureCap ? AArch64::AST1Threev2d : AArch64::ST1Threev2d;
       Offset = false;
     }
     break;
   case 64:
     if (AArch64::QQQQRegClass.hasSubClassEq(RC)) {
-      assert(Subtarget.hasNEON() && "Unexpected register store without NEON");
-      Opc = AArch64::ST1Fourv2d;
+      assert(Subtarget.hasNEON() && (HasPureCap == HasC64) &&
+             "Unexpected register store without NEON");
+      Opc = HasPureCap ? AArch64::AST1Fourv2d : AArch64::ST1Fourv2d;
       Offset = false;
     }
     break;
@@ -2990,6 +3512,8 @@ void AArch64InstrInfo::loadRegFromStackSlot(
   MachineFunction &MF = *MBB.getParent();
   MachineFrameInfo &MFI = MF.getFrameInfo();
   unsigned Align = MFI.getObjectAlignment(FI);
+  const bool HasPureCap = Subtarget.hasPureCap();
+  const bool HasC64 = Subtarget.hasC64();
   MachinePointerInfo PtrInfo = MachinePointerInfo::getFixedStack(MF, FI);
   MachineMemOperand *MMO = MF.getMachineMemOperand(
       PtrInfo, MachineMemOperand::MOLoad, MFI.getObjectSize(FI), Align);
@@ -2999,32 +3523,32 @@ void AArch64InstrInfo::loadRegFromStackSlot(
   switch (TRI->getSpillSize(*RC)) {
   case 1:
     if (AArch64::FPR8RegClass.hasSubClassEq(RC))
-      Opc = AArch64::LDRBui;
+      Opc = HasPureCap ? AArch64::ALDRBui : AArch64::LDRBui;
     break;
   case 2:
     if (AArch64::FPR16RegClass.hasSubClassEq(RC))
-      Opc = AArch64::LDRHui;
+      Opc = HasPureCap ? AArch64::ALDRHui : AArch64::LDRHui;
     break;
   case 4:
     if (AArch64::GPR32allRegClass.hasSubClassEq(RC)) {
-      Opc = AArch64::LDRWui;
+      Opc = HasPureCap ? AArch64::ALDRWui : AArch64::LDRWui;
       if (Register::isVirtualRegister(DestReg))
         MF.getRegInfo().constrainRegClass(DestReg, &AArch64::GPR32RegClass);
       else
-        assert(DestReg != AArch64::WSP);
+        assert(!isStackPointerRegister(DestReg));
     } else if (AArch64::FPR32RegClass.hasSubClassEq(RC))
-      Opc = AArch64::LDRSui;
+      Opc = HasPureCap ? AArch64::ALDRSui : AArch64::LDRSui;
     break;
   case 8:
     if (AArch64::GPR64allRegClass.hasSubClassEq(RC)) {
-      Opc = AArch64::LDRXui;
+      Opc = HasPureCap ? AArch64::ALDRXui : AArch64::LDRXui;
       if (Register::isVirtualRegister(DestReg))
         MF.getRegInfo().constrainRegClass(DestReg, &AArch64::GPR64RegClass);
       else
-        assert(DestReg != AArch64::SP);
+        assert(!isStackPointerRegister(DestReg));
     } else if (AArch64::FPR64RegClass.hasSubClassEq(RC)) {
-      Opc = AArch64::LDRDui;
-    } else if (AArch64::WSeqPairsClassRegClass.hasSubClassEq(RC)) {
+      Opc = HasPureCap ? AArch64::ALDRDui : AArch64::LDRDui;
+    } else if (AArch64::WSeqPairsAllClassRegClass.hasSubClassEq(RC)) {
       loadRegPairFromStackSlot(getRegisterInfo(), MBB, MBBI,
                                get(AArch64::LDPWi), DestReg, AArch64::sube32,
                                AArch64::subo32, FI, MMO);
@@ -3032,13 +3556,16 @@ void AArch64InstrInfo::loadRegFromStackSlot(
     }
     break;
   case 16:
-    if (AArch64::FPR128RegClass.hasSubClassEq(RC))
-      Opc = AArch64::LDRQui;
+    if (AArch64::CapallRegClass.hasSubClassEq(RC)) {
+      Opc = (HasC64 ? AArch64::PCapLoadImmPre : AArch64::CapLoadImmPre);
+    } else if (AArch64::FPR128RegClass.hasSubClassEq(RC))
+      Opc = HasPureCap ? AArch64::ALDRQui : AArch64::LDRQui;
     else if (AArch64::DDRegClass.hasSubClassEq(RC)) {
-      assert(Subtarget.hasNEON() && "Unexpected register load without NEON");
-      Opc = AArch64::LD1Twov1d;
+      assert(Subtarget.hasNEON() && (HasPureCap == HasC64) &&
+             "Unexpected register load without NEON");
+      Opc = HasC64 ? AArch64::ALD1Twov1d : AArch64::LD1Twov1d;
       Offset = false;
-    } else if (AArch64::XSeqPairsClassRegClass.hasSubClassEq(RC)) {
+    } else if (AArch64::XSeqPairsAllClassRegClass.hasSubClassEq(RC)) {
       loadRegPairFromStackSlot(getRegisterInfo(), MBB, MBBI,
                                get(AArch64::LDPXi), DestReg, AArch64::sube64,
                                AArch64::subo64, FI, MMO);
@@ -3047,33 +3574,38 @@ void AArch64InstrInfo::loadRegFromStackSlot(
     break;
   case 24:
     if (AArch64::DDDRegClass.hasSubClassEq(RC)) {
-      assert(Subtarget.hasNEON() && "Unexpected register load without NEON");
-      Opc = AArch64::LD1Threev1d;
+      assert(Subtarget.hasNEON() && (HasPureCap == HasC64) &&
+             "Unexpected register load without NEON");
+      Opc = HasC64 ? AArch64::ALD1Threev1d : AArch64::LD1Threev1d;
       Offset = false;
     }
     break;
   case 32:
     if (AArch64::DDDDRegClass.hasSubClassEq(RC)) {
-      assert(Subtarget.hasNEON() && "Unexpected register load without NEON");
-      Opc = AArch64::LD1Fourv1d;
+      assert(Subtarget.hasNEON() && (HasPureCap == HasC64) &&
+             "Unexpected register load without NEON");
+      Opc = HasC64 ? AArch64::ALD1Fourv1d : AArch64::LD1Fourv1d;
       Offset = false;
     } else if (AArch64::QQRegClass.hasSubClassEq(RC)) {
-      assert(Subtarget.hasNEON() && "Unexpected register load without NEON");
-      Opc = AArch64::LD1Twov2d;
+      assert(Subtarget.hasNEON() && (HasPureCap == HasC64) &&
+             "Unexpected register load without NEON");
+      Opc = HasC64 ? AArch64::ALD1Twov2d: AArch64::LD1Twov2d;
       Offset = false;
     }
     break;
   case 48:
     if (AArch64::QQQRegClass.hasSubClassEq(RC)) {
-      assert(Subtarget.hasNEON() && "Unexpected register load without NEON");
-      Opc = AArch64::LD1Threev2d;
+      assert(Subtarget.hasNEON() && (HasPureCap == HasC64) &&
+             "Unexpected register load without NEON");
+      Opc = HasC64 ? AArch64::ALD1Threev2d : AArch64::LD1Threev2d;
       Offset = false;
     }
     break;
   case 64:
     if (AArch64::QQQQRegClass.hasSubClassEq(RC)) {
-      assert(Subtarget.hasNEON() && "Unexpected register load without NEON");
-      Opc = AArch64::LD1Fourv2d;
+      assert(Subtarget.hasNEON() && (HasPureCap == HasC64) &&
+             "Unexpected register load without NEON");
+      Opc = HasC64 ? AArch64::ALD1Fourv2d : AArch64::LD1Fourv2d;
       Offset = false;
     }
     break;
@@ -3117,6 +3649,8 @@ static void emitFrameOffsetAdj(MachineBasicBlock &MBB,
   case AArch64::ADDSXri:
   case AArch64::SUBXri:
   case AArch64::SUBSXri:
+  case AArch64::CapAddImm:
+  case AArch64::CapSubImm:
     MaxEncoding = 0xfff;
     ShiftSize = 12;
     break;
@@ -3133,18 +3667,6 @@ static void emitFrameOffsetAdj(MachineBasicBlock &MBB,
   default:
     llvm_unreachable("Unsupported opcode");
   }
-
-  // FIXME: If the offset won't fit in 24-bits, compute the offset into a
-  // scratch register.  If DestReg is a virtual register, use it as the
-  // scratch register; otherwise, create a new virtual register (to be
-  // replaced by the scavenger at the end of PEI).  That case can be optimized
-  // slightly if DestReg is SP which is always 16-byte aligned, so the scratch
-  // register can be loaded with offset%8 and the add/sub can use an extending
-  // instruction with LSL#3.
-  // Currently the function handles any offsets but generates a poor sequence
-  // of code.
-  //  assert(Offset < (1 << 24) && "unimplemented reg plus immediate");
-
   const unsigned MaxEncodableValue = MaxEncoding << ShiftSize;
   do {
     uint64_t ThisVal = std::min<uint64_t>(Offset, MaxEncodableValue);
@@ -3201,17 +3723,33 @@ void llvm::emitFrameOffset(MachineBasicBlock &MBB,
                            StackOffset Offset, const TargetInstrInfo *TII,
                            MachineInstr::MIFlag Flag, bool SetNZCV,
                            bool NeedsWinCFI, bool *HasWinCFI) {
+  bool UsesCapabilities = AArch64::CapspRegClass.contains(SrcReg);
   int64_t Bytes, NumPredicateVectors, NumDataVectors;
   Offset.getForFrameOffset(Bytes, NumPredicateVectors, NumDataVectors);
 
   // First emit non-scalable frame offsets, or a simple 'mov'.
   if (Bytes || (!Offset && SrcReg != DestReg)) {
-    assert((DestReg != AArch64::SP || Bytes % 16 == 0) &&
+    assert(((DestReg != AArch64::SP && DestReg != AArch64::CSP) ||
+           Bytes % 16 == 0) &&
            "SP increment/decrement not 16-byte aligned");
-    unsigned Opc = SetNZCV ? AArch64::ADDSXri : AArch64::ADDXri;
+    if (UsesCapabilities && SetNZCV)
+      llvm_unreachable("Unable to set NZCV when emitting frame offset.");
+
+    if (UsesCapabilities && Bytes == 0) {
+      BuildMI(MBB, MBBI, DL, TII->get(AArch64::CapCopy), DestReg)
+          .addReg(SrcReg)
+          .setMIFlag(Flag);
+      return;
+    }
+
+    unsigned Opc = UsesCapabilities ?
+        AArch64::CapAddImm :
+        (SetNZCV ? AArch64::ADDSXri : AArch64::ADDXri);
     if (Bytes < 0) {
       Bytes = -Bytes;
-      Opc = SetNZCV ? AArch64::SUBSXri : AArch64::SUBXri;
+      Opc = UsesCapabilities ?
+          AArch64::CapSubImm :
+          (SetNZCV ? AArch64::SUBSXri : AArch64::SUBXri);
     }
     emitFrameOffsetAdj(MBB, MBBI, DL, DestReg, SrcReg, Bytes, Opc, TII, Flag,
                        NeedsWinCFI, HasWinCFI);
@@ -3256,13 +3794,51 @@ MachineInstr *AArch64InstrInfo::foldMemoryOperandImpl(
   if (MI.isFullCopy()) {
     Register DstReg = MI.getOperand(0).getReg();
     Register SrcReg = MI.getOperand(1).getReg();
-    if (SrcReg == AArch64::SP && Register::isVirtualRegister(DstReg)) {
-      MF.getRegInfo().constrainRegClass(DstReg, &AArch64::GPR64RegClass);
-      return nullptr;
+    if (Register::isVirtualRegister(DstReg)) {
+      if (SrcReg == AArch64::SP) {
+        MF.getRegInfo().constrainRegClass(DstReg, &AArch64::GPR64RegClass);
+        return nullptr;
+      }
+      else if (SrcReg == AArch64::CSP) {
+        MF.getRegInfo().constrainRegClass(DstReg, &AArch64::CapRegClass);
+        return nullptr;
+      }
     }
-    if (DstReg == AArch64::SP && Register::isVirtualRegister(SrcReg)) {
-      MF.getRegInfo().constrainRegClass(SrcReg, &AArch64::GPR64RegClass);
-      return nullptr;
+    if (Register::isVirtualRegister(SrcReg)) {
+      if (DstReg == AArch64::SP) {
+        MF.getRegInfo().constrainRegClass(SrcReg, &AArch64::GPR64RegClass);
+        return nullptr;
+      }
+      if (DstReg == AArch64::CSP) {
+        MF.getRegInfo().constrainRegClass(SrcReg, &AArch64::CapRegClass);
+        return nullptr;
+      }
+    }
+  }
+
+  // Add Morello support for spilling properly the null capability.
+  // For example:
+  //     %vreg42:sub_64<def,read-undef> = MOVi64imm 0; Cap:%vreg42
+  //     PCapStoreImmPre %vreg42, <fi#0>, 0; mem:ST16[FixedStack0] Cap:%vreg42
+  // Can be turned into
+  //     PCapStoreImmPre CZR <fi#0>, 0
+  //
+  if (MI.getOpcode() == AArch64::MOVi64imm && MI.getOperand(1).getImm() == 0) {
+    unsigned DstReg = MI.getOperand(0).getReg();
+    const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
+    const MachineRegisterInfo &MRI = MF.getRegInfo();
+    const TargetRegisterClass *RegClass =
+        Register::isVirtualRegister(DstReg)
+            ? MRI.getRegClass(DstReg)
+            : TRI.getMinimalPhysRegClass(DstReg);
+    bool IsSpill = Ops[0] == 0;
+    if (IsSpill && (RegClass == &AArch64::CapRegClass ||
+                    RegClass == &AArch64::Cap_and_CapspRegClass)) {
+      MachineBasicBlock &MBB = *MI.getParent();
+      storeRegToStackSlot(MBB, InsertPt, AArch64::CZR,
+                          MI.getOperand(0).isKill(), FrameIndex, RegClass,
+                          &TRI);
+      return &*--InsertPt;
     }
   }
 
@@ -3458,13 +4034,26 @@ int llvm::isAArch64FrameOffsetLegal(const MachineInstr &MI,
   case AArch64::ST1Fourv1d:
   case AArch64::IRG:
   case AArch64::IRGstack:
+  case AArch64::ALD1Twov2d:
+  case AArch64::ALD1Threev2d:
+  case AArch64::ALD1Fourv2d:
+  case AArch64::ALD1Twov1d:
+  case AArch64::ALD1Threev1d:
+  case AArch64::ALD1Fourv1d:
+  case AArch64::AST1Twov2d:
+  case AArch64::AST1Threev2d:
+  case AArch64::AST1Fourv2d:
+  case AArch64::AST1Twov1d:
+  case AArch64::AST1Threev1d:
+  case AArch64::AST1Fourv1d:
   case AArch64::STGloop:
   case AArch64::STZGloop:
     return AArch64FrameOffsetCannotUpdate;
   }
 
   // Get the min/max offset and the scale.
-  unsigned Scale, Width;
+  int Scale;
+  unsigned Width;
   int64_t MinOff, MaxOff;
   if (!AArch64InstrInfo::getMemOpInfo(MI.getOpcode(), Scale, Width, MinOff,
                                       MaxOff))
@@ -3525,7 +4114,8 @@ bool llvm::rewriteAArch64FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
   unsigned Opcode = MI.getOpcode();
   unsigned ImmIdx = FrameRegIdx + 1;
 
-  if (Opcode == AArch64::ADDSXri || Opcode == AArch64::ADDXri) {
+  if (Opcode == AArch64::ADDSXri || Opcode == AArch64::ADDXri ||
+      Opcode == AArch64::CapAddImm) {
     Offset += StackOffset(MI.getOperand(ImmIdx).getImm(), MVT::i8);
     emitFrameOffset(*MI.getParent(), MI, MI.getDebugLoc(),
                     MI.getOperand(0).getReg(), FrameReg, Offset, TII,
@@ -5239,10 +5829,12 @@ bool AArch64InstrInfo::optimizeCondBranch(MachineInstr &MI) const {
     return false;
   case AArch64::CBZW:
   case AArch64::CBZX:
+  case AArch64::CBZC:
     TargetBBInMI = 1;
     break;
   case AArch64::CBNZW:
   case AArch64::CBNZX:
+  case AArch64::CBNZC:
     TargetBBInMI = 1;
     IsNegativeBranch = true;
     break;
@@ -5369,6 +5961,15 @@ std::pair<unsigned, unsigned>
 AArch64InstrInfo::decomposeMachineOperandsTargetFlags(unsigned TF) const {
   const unsigned Mask = AArch64II::MO_FRAGMENT;
   return std::make_pair(TF & Mask, TF & ~Mask);
+}
+
+bool AArch64InstrInfo::supportsCapabilities() const {
+  return Subtarget.hasMorello();
+}
+
+unsigned AArch64InstrInfo::getCapabilitiesAddressSpace() const {
+  assert(Subtarget.hasMorello() && "No morello support.");
+  return 200;
 }
 
 ArrayRef<std::pair<unsigned, const char *>>
@@ -5824,7 +6425,7 @@ outliner::OutlinedFunction AArch64InstrInfo::getOutliningCandidateInfo(
       // if fixing it up would be in range.
       int64_t MinOffset,
           MaxOffset;  // Unscaled offsets for the instruction.
-      unsigned Scale; // The scale to multiply the offsets by.
+      int Scale; // The scale to multiply the offsets by.
       unsigned DummyWidth;
       getMemOpInfo(MI.getOpcode(), Scale, DummyWidth, MinOffset, MaxOffset);
 
@@ -6215,7 +6816,7 @@ void AArch64InstrInfo::fixupPostOutline(MachineBasicBlock &MBB) const {
       continue;
 
     // It is, so we have to fix it up.
-    unsigned Scale;
+    int Scale;
     int64_t Dummy1, Dummy2;
 
     MachineOperand &StackOffsetOperand = getMemOpBaseRegImmOfsOffsetOperand(MI);

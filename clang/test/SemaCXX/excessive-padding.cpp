@@ -1,4 +1,5 @@
 // RUN: %cheri128_cc1 -Wexcess-padding -verify %s
+// RUN: %clang_cc1 -triple aarch64-none-elf -target-feature +morello -std=c++11 -Wexcess-padding -verify %s
 
 struct IntAndPtr { // this one is fine
   int i;
@@ -54,6 +55,18 @@ struct Empty2 : public Empty1 {
 struct Empty3 : private Empty1 {
 }; // fine
 
+// Make sure we don't crash when using templates.
+template<typename T>
+class foo {
+public:
+  T Val;
+};
+
+// Test unions.
+union alignas(32) BigUnion { // expected-warning{{'BigUnion' contains 28 bytes of padding in a 32 byte structure}}
+  char c;
+  int d;
+};
 
 // This used to crash:
 template <class mapT> class Dependent {

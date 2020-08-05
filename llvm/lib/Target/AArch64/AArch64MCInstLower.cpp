@@ -12,10 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "AArch64MCInstLower.h"
+#include "AArch64Subtarget.h"
 #include "MCTargetDesc/AArch64MCExpr.h"
 #include "Utils/AArch64BaseInfo.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/IR/Mangler.h"
@@ -114,6 +116,13 @@ MCOperand AArch64MCInstLower::lowerSymbolOperandDarwin(const MachineOperand &MO,
 MCOperand AArch64MCInstLower::lowerSymbolOperandELF(const MachineOperand &MO,
                                                     MCSymbol *Sym) const {
   uint32_t RefFlags = 0;
+  bool SetZeroBit = false;
+  bool IsCode = false;
+  const MachineFunction *MF = MO.getParent()->getParent()->getParent();
+  bool HasC64 = MF->getSubtarget<AArch64Subtarget>().hasC64();
+
+  if (MO.isBlockAddress() || MO.isMBB())
+    IsCode = true;
 
   if (MO.getTargetFlags() & AArch64II::MO_GOT)
     RefFlags |= AArch64MCExpr::VK_GOT;
@@ -159,27 +168,38 @@ MCOperand AArch64MCInstLower::lowerSymbolOperandELF(const MachineOperand &MO,
   if ((MO.getTargetFlags() & AArch64II::MO_FRAGMENT) == AArch64II::MO_PAGE)
     RefFlags |= AArch64MCExpr::VK_PAGE;
   else if ((MO.getTargetFlags() & AArch64II::MO_FRAGMENT) ==
-           AArch64II::MO_PAGEOFF)
+           AArch64II::MO_PAGEOFF) {
     RefFlags |= AArch64MCExpr::VK_PAGEOFF;
+    SetZeroBit = (IsCode && HasC64) ? true : SetZeroBit;
+  }
   else if ((MO.getTargetFlags() & AArch64II::MO_FRAGMENT) == AArch64II::MO_G3)
     RefFlags |= AArch64MCExpr::VK_G3;
   else if ((MO.getTargetFlags() & AArch64II::MO_FRAGMENT) == AArch64II::MO_G2)
     RefFlags |= AArch64MCExpr::VK_G2;
   else if ((MO.getTargetFlags() & AArch64II::MO_FRAGMENT) == AArch64II::MO_G1)
     RefFlags |= AArch64MCExpr::VK_G1;
-  else if ((MO.getTargetFlags() & AArch64II::MO_FRAGMENT) == AArch64II::MO_G0)
+  else if ((MO.getTargetFlags() & AArch64II::MO_FRAGMENT) == AArch64II::MO_G0) {
     RefFlags |= AArch64MCExpr::VK_G0;
+    SetZeroBit = (IsCode && HasC64) ? true : SetZeroBit;
+  }
   else if ((MO.getTargetFlags() & AArch64II::MO_FRAGMENT) == AArch64II::MO_HI12)
     RefFlags |= AArch64MCExpr::VK_HI12;
 
   if (MO.getTargetFlags() & AArch64II::MO_NC)
     RefFlags |= AArch64MCExpr::VK_NC;
 
+  // Ignore if this is the address of a GOT entry.
+  if (MO.getTargetFlags() & AArch64II::MO_GOT)
+    SetZeroBit = false;
+
   const MCExpr *Expr =
       MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_None, Ctx);
   if (!MO.isJTI() && MO.getOffset())
     Expr = MCBinaryExpr::createAdd(
         Expr, MCConstantExpr::create(MO.getOffset(), Ctx), Ctx);
+
+  if (SetZeroBit)
+    Expr = MCBinaryExpr::createAdd(Expr, MCConstantExpr::create(1, Ctx), Ctx);
 
   AArch64MCExpr::VariantKind RefKind;
   RefKind = static_cast<AArch64MCExpr::VariantKind>(RefFlags);

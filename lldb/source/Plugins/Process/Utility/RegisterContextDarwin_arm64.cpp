@@ -43,6 +43,11 @@ using namespace lldb_private;
 #define FPU_OFFSET_NAME(reg)                                                   \
   (LLVM_EXTENSION offsetof(RegisterContextDarwin_arm64::FPU, reg))
 
+// TODO Morello: Implement properly.
+#define CAP_OFFSET(idx) ((idx)*17)
+#define STATE_OFFSET_NAME(reg) 0
+#define THREAD_OFFSET_NAME(reg) 0
+
 #define EXC_OFFSET_NAME(reg)                                                   \
   (LLVM_EXTENSION offsetof(RegisterContextDarwin_arm64::EXC, reg) +            \
    sizeof(RegisterContextDarwin_arm64::GPR) +                                  \
@@ -61,6 +66,7 @@ using namespace lldb_private;
                                LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM,       \
                                LLDB_INVALID_REGNUM },                          \
                                NULL, NULL, NULL, 0
+
 #define REG_CONTEXT_SIZE                                                       \
   (sizeof(RegisterContextDarwin_arm64::GPR) +                                  \
    sizeof(RegisterContextDarwin_arm64::FPU) +                                  \
@@ -68,8 +74,10 @@ using namespace lldb_private;
 
 // Include RegisterInfos_arm64 to declare our g_register_infos_arm64 structure.
 #define DECLARE_REGISTER_INFOS_ARM64_STRUCT
+#define DECLARE_CAPABILITY_REGISTER_INFOS
 #include "RegisterInfos_arm64.h"
 #undef DECLARE_REGISTER_INFOS_ARM64_STRUCT
+#undef DECLARE_CAPABILITY_REGISTER_INFOS
 
 // General purpose registers
 static uint32_t g_gpr_regnums[] = {

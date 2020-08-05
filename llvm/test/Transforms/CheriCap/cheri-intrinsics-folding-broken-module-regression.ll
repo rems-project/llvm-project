@@ -1,3 +1,5 @@
+; REQUIRES: mips-registered-target
+
 ; In order to reproduce the broken function crash we need to run the intrinsics
 ; folder more than once and also run other passes:
 ; RUN: %cheri_purecap_opt -S -cheri-fold-intrisics -O3 %s -o %t1.ll

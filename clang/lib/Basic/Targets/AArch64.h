@@ -39,6 +39,10 @@ class LLVM_LIBRARY_VISIBILITY AArch64TargetInfo : public TargetInfo {
 
   llvm::AArch64::ArchKind ArchKind;
 
+  bool Morello;
+  bool C64;
+  const unsigned CapSize;
+
   static const Builtin::Info BuiltinInfo[];
 
   std::string ABI;
@@ -78,6 +82,53 @@ public:
   bool hasFeature(StringRef Feature) const override;
   bool handleTargetFeatures(std::vector<std::string> &Features,
                             DiagnosticsEngine &Diags) override;
+
+  bool hasMorello() const { return Morello; }
+  bool hasPureCap() const { return CapabilityABI; }
+  bool hasCapabilities() const override { return Morello || C64; }
+  bool hasC64() const { return C64; }
+  unsigned getIntCapWidth() const override { return CapSize; }
+  unsigned getIntCapAlign() const override { return CapSize; }
+  unsigned getIntCapRange() const override { return 64; }
+  uint64_t getCHERICapabilityWidth() const override { return CapSize; }
+  uint64_t getCHERICapabilityAlign() const override { return CapSize; }
+  uint64_t getPointerRangeForCHERICapability() const override { return 64; }
+
+  Optional<unsigned>
+  getDWARFAddressSpace(unsigned AddressSpace) const override {
+    if (AddressSpace == 200)
+      return 1;
+    return None;
+  }
+
+  bool
+  useXDerefForDWARFAddressSpace(unsigned DWARFAddressSpace) const override {
+    // Do not use extended dereferencing mechanism for address spaces on
+    // AArch64. The only used DWARF address space by this target is '1' which
+    // indicates that the pointer/reference type is a capability. Xderef is not
+    // needed for such a type.
+    return false;
+  }
+
+  uint64_t getPointerWidthV(unsigned AddrSpace) const override {
+    return (AddrSpace == 200) ? CapSize : PointerWidth;
+  }
+  uint64_t getPointerAlignV(unsigned AddrSpace) const override {
+    return (AddrSpace == 200) ? CapSize : PointerAlign;
+  }
+  uint64_t getPointerRangeV(unsigned) const override { return 64; }
+
+  bool SupportsCapabilities() const override { return Morello; }
+
+  bool hasBuiltinAtomic(uint64_t AtomicSizeInBits,
+                        uint64_t AlignmentInBits) const override {
+    if (SupportsCapabilities() &&
+        AtomicSizeInBits == getCHERICapabilityWidth() &&
+        AlignmentInBits == getCHERICapabilityAlign()) {
+      return true;
+    }
+    return TargetInfo::hasBuiltinAtomic(AtomicSizeInBits, AlignmentInBits);
+  }
 
   CallingConvCheckResult checkCallingConvention(CallingConv CC) const override;
 

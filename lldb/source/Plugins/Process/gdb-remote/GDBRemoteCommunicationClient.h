@@ -41,26 +41,79 @@ public:
   // we are communicating with it.
   bool HandshakeWithServer(Status *error_ptr);
 
-  // For packets which specify a range of output to be returned,
-  // return all of the output via a series of request packets of the form
-  // <prefix>0,<size>
-  // <prefix><size>,<size>
-  // <prefix><size>*2,<size>
-  // <prefix><size>*3,<size>
-  // ...
-  // until a "$l..." packet is received, indicating the end.
-  // (size is in hex; this format is used by a standard gdbserver to
-  // return the given portion of the output specified by <prefix>;
-  // for example, "qXfer:libraries-svr4:read::fff,1000" means
-  // "return a chunk of the xml description file for shared
-  // library load addresses, where the chunk starts at offset 0xfff
-  // and continues for 0x1000 bytes").
-  // Concatenate the resulting server response packets together and
-  // return in response_string.  If any packet fails, the return value
-  // indicates that failure and the returned string value is undefined.
-  PacketResult
-  SendPacketsAndConcatenateResponses(const char *send_payload_prefix,
-                                     std::string &response_string);
+  //------------------------------------------------------------------
+  /// Obtain a complete response for a packet type that specifies a
+  /// range of data to be returned. The result is gathered via a
+  /// series of request packets of the following form:
+  ///     <prefix>0,<size><suffix>
+  ///     <prefix><size>,<size><suffix>
+  ///     <prefix><size>*2,<size><suffix>
+  ///     <prefix><size>*3,<size><suffix>
+  ///     ...
+  ///
+  /// This is done until the "$l..." packet is received which
+  /// indicates the end of data. Responses from individual packets are
+  /// then concatenated together and returned in response_string. If
+  /// any packet fails, the return value indicates that failure and
+  /// the returned string value is undefined.
+  ///
+  /// This format is used by a standard gdbserver to return a given
+  /// portion of the output specified by <prefix>. For instance,
+  /// "qXfer:libraries-svr4:read::fff,1000" requests to return a chunk
+  /// of the XML description file for shared library load addresses,
+  /// where the chunk starts at offset 0xfff and continues for 0x1000
+  /// bytes.
+  ///
+  /// @param[in] payload_prefix
+  ///     The prefix of the packet.
+  ///
+  /// @param[out] response_string
+  ///     The complete obtained response.
+  ///
+  /// @param[in] payload_suffix
+  ///     The suffix of the packet.
+  ///
+  /// @return
+  ///     PacketResult indicating the result of the operation.
+  //------------------------------------------------------------------
+  PacketResult SendPacketsAndConcatenateResponses(
+      llvm::StringRef payload_prefix, std::string &response_string,
+      llvm::StringRef payload_suffix = llvm::StringRef());
+
+  //------------------------------------------------------------------
+  /// Obtain a complete response for a packet type that specifies a
+  /// range of data to be returned, without acquiring a packet
+  /// sequence mutex. This is a variant of method
+  /// SendPacketsAndConcatenateResponses() for callers that already
+  /// hold the packet sequence mutex.
+  ///
+  /// @see GDBRemoteCommunicationClient::SendPacketsAndConcatenateResponses()
+  //------------------------------------------------------------------
+  PacketResult SendPacketsAndConcatenateResponsesNoLock(
+      llvm::StringRef payload_prefix, std::string &response_string,
+      llvm::StringRef payload_suffix = llvm::StringRef());
+
+  //------------------------------------------------------------------
+  /// Obtain a complete response for a packet type that specifies a
+  /// range of data to be returned and is thread-specific.
+  ///
+  /// @param[in] tid
+  ///     The thread for which the packet should be issued.
+  ///
+  /// @param[in] payload_prefix
+  ///     The prefix of the packet.
+  ///
+  /// @param[out] response_string
+  ///     The complete obtained response.
+  ///
+  /// @return
+  ///     PacketResult indicating the result of the operation.
+  ///
+  /// @see GDBRemoteCommunicationClient::SendPacketsAndConcatenateResponses()
+  //------------------------------------------------------------------
+  PacketResult SendThreadSpecificPacketsAndConcatenateResponses(
+      lldb::tid_t tid, llvm::StringRef payload_prefix,
+      std::string &response_string);
 
   bool GetThreadSuffixSupported();
 
@@ -259,6 +312,8 @@ public:
 
   bool GetHostname(std::string &s);
 
+  bool HasHostAddressCapabilityFeature();
+
   lldb::addr_t GetShlibInfoAddr();
 
   bool GetSupportsThreadSuffix();
@@ -327,6 +382,10 @@ public:
   bool GetQXferLibrariesReadSupported();
 
   bool GetQXferLibrariesSVR4ReadSupported();
+
+  bool GetQXferSigInfoReadSupported();
+
+  bool GetQXferCapaReadSupported();
 
   uint64_t GetRemoteMaxPacketSize();
 
@@ -523,6 +582,8 @@ protected:
   LazyBool m_supports_qXfer_libraries_read;
   LazyBool m_supports_qXfer_libraries_svr4_read;
   LazyBool m_supports_qXfer_features_read;
+  LazyBool m_supports_qXfer_siginfo_read;
+  LazyBool m_supports_qXfer_capa_read;
   LazyBool m_supports_qXfer_memory_map_read;
   LazyBool m_supports_augmented_libraries_svr4_read;
   LazyBool m_supports_jThreadExtendedInfo;
@@ -555,6 +616,7 @@ protected:
   std::string m_os_build;
   std::string m_os_kernel;
   std::string m_hostname;
+  LazyBool m_host_feature_addrcap;
   std::string m_gdb_server_name; // from reply to qGDBServerVersion, empty if
                                  // qGDBServerVersion is not supported
   uint32_t m_gdb_server_version; // from reply to qGDBServerVersion, zero if

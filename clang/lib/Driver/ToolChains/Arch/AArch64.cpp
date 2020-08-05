@@ -58,8 +58,37 @@ static bool DecodeAArch64Features(const Driver &D, StringRef text,
   SmallVector<StringRef, 8> Split;
   text.split(Split, StringRef("+"), -1, false);
 
+  bool UseC64 = false;
+  bool UseA64C = false;
+
   for (StringRef Feature : Split) {
     StringRef FeatureName = llvm::AArch64::getArchExtFeature(Feature);
+    // Special case a64c and c64 since they are mutually exclusive and
+    // also reject ambiguous combinations.
+    if (Feature == "a64c") {
+      UseA64C = true;
+      continue;
+    }
+    if (Feature == "noa64c") {
+      if (UseA64C) {
+        D.Diag(clang::diag::err_ambiguous_a64c_arch);
+        return false;
+      }
+      UseA64C = false;
+      continue;
+    }
+    if (Feature == "c64") {
+      UseC64 = true;
+      continue;
+    }
+    if (Feature == "noc64") {
+      if (UseC64) {
+        D.Diag(clang::diag::err_ambiguous_c64_arch);
+        return false;
+      }
+      UseC64 = false;
+      continue;
+    }
     if (!FeatureName.empty())
       Features.push_back(FeatureName);
     else if (Feature == "neon" || Feature == "noneon")
@@ -67,6 +96,14 @@ static bool DecodeAArch64Features(const Driver &D, StringRef text,
     else
       return false;
   }
+  if (UseA64C && UseC64)
+    D.Diag(clang::diag::err_ambiguous_arch);
+
+  if (UseA64C || UseC64)
+    Features.push_back("+morello");
+  if (UseC64)
+    Features.push_back("+c64");
+
   return true;
 }
 
@@ -160,6 +197,50 @@ getAArch64MicroArchFeaturesFromMcpu(const Driver &D, StringRef Mcpu,
   return getAArch64MicroArchFeaturesFromMtune(D, CPU, Args, Features);
 }
 
+void aarch64::getMorelloMode(const Driver &D, const llvm::Triple &Triple,
+                             const ArgList &Args, bool &A64C,
+                             bool &C64, bool &PureCap,
+                             bool &ReducedCapRegs) {
+  bool ForcePureCap = false;
+  bool ForceNoPureCap = false;
+
+  A64C = false;
+  C64 = false;
+  PureCap = false;
+  ReducedCapRegs = false;
+
+  if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ)) {
+    PureCap = strcmp(A->getValue(), "purecap") == 0;
+    // Something got passed with mabi, so force either aapcs or purecap.
+    ForcePureCap = PureCap;
+    ForceNoPureCap = !PureCap;
+  }
+
+  if (Arg *A = Args.getLastArg(options::OPT_m16_cap_regs))
+    ReducedCapRegs = true;
+
+  std::vector<StringRef> Features;
+  getAArch64TargetFeatures(D, Triple, Args, Features);
+
+  // Look through all the features to take what into account what's coming from
+  // -march.
+  const auto ItDisableC64 = std::find(Features.rbegin(), Features.rend(), "-c64");
+  const auto ItEnableC64 = std::find(Features.rbegin(), Features.rend(), "+c64");
+  const auto ItDisableMorello = std::find(Features.rbegin(), Features.rend(), "-morello");
+  const auto ItEnableMorello = std::find(Features.rbegin(), Features.rend(), "+morello");
+
+  C64 = ItEnableC64 < ItDisableC64;
+  A64C = ItEnableMorello < ItDisableMorello;
+}
+
+void aarch64::addMorelloLinkerFlags(const ArgList &Args, ArgStringList &CmdArgs) {
+  bool PureCap = false;
+  if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ))
+    PureCap = strcmp(A->getValue(), "purecap") == 0;
+  if (PureCap)
+    CmdArgs.push_back("--morello-c64-plt");
+}
+
 void aarch64::getAArch64TargetFeatures(const Driver &D,
                                        const llvm::Triple &Triple,
                                        const ArgList &Args,
@@ -215,6 +296,9 @@ void aarch64::getAArch64TargetFeatures(const Driver &D,
     else
       Features.push_back("-crc");
   }
+
+  if (Arg *A = Args.getLastArg(options::OPT_m16_cap_regs))
+    Features.push_back("+use-16-cap-regs");
 
   // Handle (arch-dependent) fp16fml/fullfp16 relationship.
   // FIXME: this fp16fml option handling will be reimplemented after the

@@ -15,6 +15,7 @@
 #include "UnwindLLDB.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/UnwindPlan.h"
+#include "lldb/Target/ABI.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/RegisterNumber.h"
 #include "lldb/lldb-private.h"
@@ -61,11 +62,13 @@ public:
 
   bool IsTrapHandlerFrame() const;
 
-  bool GetCFA(lldb::addr_t &cfa);
+  bool GetCFA(FrameAddressLLDB &cfa);
 
   bool GetStartPC(lldb::addr_t &start_pc);
 
   bool ReadPC(lldb::addr_t &start_pc);
+
+  ABI::FrameState GetFrameState() const { return m_frame_state; }
 
 private:
   enum FrameType {
@@ -144,15 +147,22 @@ private:
   // as the requesting frame's.
   lldb_private::UnwindLLDB::RegisterSearchResult
   SavedLocationForRegister(uint32_t lldb_regnum,
-                           lldb_private::UnwindLLDB::RegisterLocation &regloc);
+                           lldb_private::RegisterLocationLLDB &regloc);
+
+  // Get a location of the given register by searching for a register that
+  // aliases it. If such a register exists the method tries to obtain its
+  // location and then derive the location of the original register from it.
+  // Returns true on success, false otherwise.
+  bool GetSavedLocationForRegisterThroughAlias(
+      uint32_t lldb_regnum, lldb_private::RegisterLocationLLDB &regloc);
 
   bool ReadRegisterValueFromRegisterLocation(
-      lldb_private::UnwindLLDB::RegisterLocation regloc,
+      const lldb_private::RegisterLocationLLDB &regloc,
       const lldb_private::RegisterInfo *reg_info,
       lldb_private::RegisterValue &value);
 
   bool WriteRegisterValueToRegisterLocation(
-      lldb_private::UnwindLLDB::RegisterLocation regloc,
+      const lldb_private::RegisterLocationLLDB &regloc,
       const lldb_private::RegisterInfo *reg_info,
       const lldb_private::RegisterValue &value);
 
@@ -187,7 +197,8 @@ private:
 
   // Get the Frame Address register for a given frame.
   bool ReadFrameAddress(lldb::RegisterKind register_kind,
-                          UnwindPlan::Row::FAValue &fa, lldb::addr_t &address);
+                          UnwindPlan::Row::FAValue &fa,
+                          FrameAddressLLDB &value);
 
   lldb::UnwindPlanSP GetFastUnwindPlanForFrame();
 
@@ -218,9 +229,10 @@ private:
   bool m_all_registers_available; // Can we retrieve all regs or just
                                   // nonvolatile regs?
   int m_frame_type;               // enum FrameType
+  ABI::FrameState m_frame_state;
 
-  lldb::addr_t m_cfa;
-  lldb::addr_t m_afa;
+  FrameAddressLLDB m_cfa;
+  FrameAddressLLDB m_afa;
   lldb_private::Address m_start_pc;
   lldb_private::Address m_current_pc;
 
@@ -243,7 +255,7 @@ private:
 
   uint32_t m_frame_number; // What stack frame this RegisterContext is
 
-  std::map<uint32_t, lldb_private::UnwindLLDB::RegisterLocation>
+  std::map<uint32_t, lldb_private::RegisterLocationLLDB>
       m_registers; // where to find reg values for this frame
 
   lldb_private::UnwindLLDB &m_parent_unwind; // The UnwindLLDB that is creating

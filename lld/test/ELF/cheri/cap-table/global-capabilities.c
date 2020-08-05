@@ -1,5 +1,5 @@
 
-// REQUIRES: clang
+// REQUIRES: clang, mips
 
 // RUN: %cheri128_purecap_cc1 -mllvm -mxcaptable -emit-obj -O2 -mllvm -cheri-cap-table-abi=plt %s -o %t-128.o
 // RUN: %cheri256_purecap_cc1 -mllvm -mxcaptable -emit-obj -O2 -mllvm -cheri-cap-table-abi=plt %s -o %t-256.o

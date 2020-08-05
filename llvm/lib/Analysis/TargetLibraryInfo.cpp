@@ -633,7 +633,7 @@ bool TargetLibraryInfoImpl::isValidProtoForLibFunc(const FunctionType &FTy,
                                                    LibFunc F,
                                                    const DataLayout *DL) const {
   LLVMContext &Ctx = FTy.getContext();
-  Type *PCharTy = Type::getInt8PtrTy(Ctx);
+  Type *PCharTy = Type::getInt8PtrTy(Ctx, DL->getAllocaAddrSpace());
   Type *SizeTTy = DL ? DL->getIntPtrType(Ctx, /*AS=*/0) : nullptr;
   auto IsSizeTTy = [SizeTTy](Type *Ty) {
     return SizeTTy ? Ty == SizeTTy : Ty->isIntegerTy();

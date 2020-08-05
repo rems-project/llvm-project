@@ -9,6 +9,7 @@
 #include "lldb/Target/Memory.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Utility/DataBufferHeap.h"
+#include "lldb/Utility/DataExtractor.h"
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/RangeMap.h"
 #include "lldb/Utility/State.h"
@@ -18,6 +19,103 @@
 
 using namespace lldb;
 using namespace lldb_private;
+
+const char *
+lldb_private::GetMemoryContentTypeAsCString(MemoryContentType type) {
+  switch (type) {
+  case eMemoryContentNormal:
+    return "normal memory";
+  case eMemoryContentCap128:
+    return "tagged 128-bit capability data";
+  }
+  return "???";
+}
+
+bool lldb_private::IsTaggedMemoryContentType(lldb::MemoryContentType type) {
+  switch (type) {
+  case eMemoryContentNormal:
+    break;
+  case eMemoryContentCap128:
+    return true;
+  }
+  return false;
+}
+
+uint32_t TaggedMemory::GetBaseByteSize(MemoryContentType type) {
+  switch (type) {
+  case eMemoryContentNormal:
+    break;
+  case eMemoryContentCap128:
+    return 16;
+  }
+  return 1;
+}
+
+uint32_t TaggedMemory::GetTagByteSize(MemoryContentType type) {
+  switch (type) {
+  case eMemoryContentNormal:
+    break;
+  case eMemoryContentCap128:
+    return 1;
+  }
+  return 0;
+}
+
+uint32_t TaggedMemory::GetTaggedByteSize(MemoryContentType type) {
+  return GetTagByteSize(type) + GetBaseByteSize(type);
+}
+
+bool TaggedMemory::GetCapabilityType(uint32_t byte_size,
+                                     MemoryContentType &content_type,
+                                     Status &error) {
+  if (byte_size == 17) {
+    content_type = eMemoryContentCap128;
+    return true;
+  }
+
+  error.SetErrorStringWithFormat("no tagged memory type was recognized for "
+                                 "capability with size of %" PRIu32 " bytes",
+                                 byte_size);
+  return false;
+}
+
+bool TaggedMemory::TransformDataToValue(DataExtractor &data,
+                                        lldb::MemoryContentType content_type,
+                                        lldb::ByteOrder byte_order,
+                                        Status &error) {
+  switch (content_type) {
+  case eMemoryContentNormal:
+    llvm_unreachable("Invalid tagged memory content type.");
+  case eMemoryContentCap128:
+    uint64_t byte_size = data.GetByteSize();
+    if (byte_size != 17) {
+      error.SetErrorStringWithFormat(
+          "a value cannot be constructed from %" PRIu64 " bytes of %s",
+          byte_size, GetMemoryContentTypeAsCString(content_type));
+      return false;
+    }
+
+    // Take the obtained memory data and produce a new value with the tag being
+    // the most significant byte. No operation is needed if the data is stored
+    // as big-endian because it is already in the right order.
+    if (byte_order == eByteOrderBig) {
+      data.SetByteOrder(eByteOrderBig);
+      return true;
+    }
+
+    offset_t offset = 0;
+    uint8_t tag = data.GetU8(&offset);
+    const void *base = data.GetData(&offset, 16);
+    assert(base != nullptr);
+
+    auto buffer = new DataBufferHeap(base, 16);
+    buffer->AppendData(&tag, 1);
+    data.SetData(DataBufferSP(buffer));
+    data.SetByteOrder(eByteOrderLittle);
+    return true;
+  }
+  return false;
+}
 
 // MemoryCache constructor
 MemoryCache::MemoryCache(Process &process)

@@ -176,6 +176,9 @@ static cl::opt<bool> StackTaggingMergeSetTag(
     cl::Hidden);
 
 STATISTIC(NumRedZoneFunctions, "Number of functions using red zone");
+STATISTIC(CapabilitySpills, "Number of capability registers spilled");
+STATISTIC(XRegsSpills, "Number of GPR64 registers spilled");
+
 
 /// This is the biggest offset to the stack pointer we can encode in aarch64
 /// instructions (without using a separate calculation and a temp register).
@@ -193,6 +196,7 @@ static unsigned estimateRSStackSizeLimit(MachineFunction &MF) {
   for (MachineBasicBlock &MBB : MF) {
     for (MachineInstr &MI : MBB) {
       if (MI.isDebugInstr() || MI.isPseudo() ||
+          MI.getOpcode() == AArch64::CapAddImm ||
           MI.getOpcode() == AArch64::ADDXri ||
           MI.getOpcode() == AArch64::ADDSXri)
         continue;
@@ -290,6 +294,9 @@ MachineBasicBlock::iterator AArch64FrameLowering::eliminateCallFramePseudoInstr(
   bool IsDestroy = Opc == TII->getCallFrameDestroyOpcode();
   uint64_t CalleePopAmount = IsDestroy ? I->getOperand(1).getImm() : 0;
 
+  const AArch64RegisterInfo *TRI = static_cast<const AArch64RegisterInfo *>(
+      MF.getSubtarget().getRegisterInfo());
+  unsigned SP = TRI->getStackPointerRegister(MF);
   if (!hasReservedCallFrame(MF)) {
     unsigned Align = getStackAlignment();
 
@@ -313,14 +320,14 @@ MachineBasicBlock::iterator AArch64FrameLowering::eliminateCallFramePseudoInstr(
       // Most call frames will be allocated at the start of a function so
       // this is OK, but it is a limitation that needs dealing with.
       assert(Amount > -0xffffff && Amount < 0xffffff && "call frame too large");
-      emitFrameOffset(MBB, I, DL, AArch64::SP, AArch64::SP, {Amount, MVT::i8},
+      emitFrameOffset(MBB, I, DL, SP, SP, {Amount, MVT::i8},
                       TII);
     }
   } else if (CalleePopAmount != 0) {
     // If the calling convention demands that the callee pops arguments from the
     // stack, we want to add it back if we have a reserved call frame.
     assert(CalleePopAmount < 0xffffff && "call frame too large");
-    emitFrameOffset(MBB, I, DL, AArch64::SP, AArch64::SP,
+    emitFrameOffset(MBB, I, DL, SP, SP,
                     {-(int64_t)CalleePopAmount, MVT::i8}, TII);
   }
   return MBB.erase(I);
@@ -369,6 +376,7 @@ void AArch64FrameLowering::emitCalleeSavedFrameMoves(
     unsigned Reg = Info.getReg();
     int64_t Offset =
         MFI.getObjectOffset(Info.getFrameIdx()) - getOffsetOfLocalArea();
+
     unsigned DwarfReg = MRI->getDwarfRegNum(Reg, true);
     unsigned CFIIndex = MF.addFrameInst(
         MCCFIInstruction::createOffset(nullptr, DwarfReg, Offset));
@@ -389,14 +397,33 @@ void AArch64FrameLowering::emitCalleeSavedFrameMoves(
 // but we would then have to make sure that we were in fact saving at least one
 // callee-save register in the prologue, which is additional complexity that
 // doesn't seem worth the benefit.
-static unsigned findScratchNonCalleeSaveRegister(MachineBasicBlock *MBB) {
+static unsigned findScratchNonCalleeSaveRegister(MachineBasicBlock *MBB,
+    unsigned OldScratch = AArch64::NoRegister) {
+
+  static const MCPhysReg ScratchCapReg1[2] = {AArch64::C6, AArch64::C9};
+  static const MCPhysReg ScratchCapReg2[2] = {AArch64::C7, AArch64::C10};
+
   MachineFunction *MF = MBB->getParent();
 
-  // If MBB is an entry block, use X9 as the scratch register
-  if (&MF->front() == MBB)
-    return AArch64::X9;
-
   const AArch64Subtarget &Subtarget = MF->getSubtarget<AArch64Subtarget>();
+  bool HasPureCap = Subtarget.hasPureCap();
+  bool Use32CapRegs = !Subtarget.use16CapRegs();
+  // We can use an intra-procedural registers here since aligning the
+  // prologue doesn't require having this live across branches.
+  unsigned DefaultScratch = HasPureCap ? ScratchCapReg1[Use32CapRegs] : AArch64::X9;
+  if (OldScratch == DefaultScratch)
+    DefaultScratch = HasPureCap ? ScratchCapReg2[Use32CapRegs] : AArch64::X10;
+
+  const TargetRegisterClass ScratchRegClass =
+      HasPureCap ? AArch64::CapRegClass : AArch64::GPR64RegClass;
+
+  // If MBB is an entry block, use X9 as the scratch register
+  if (&MF->front() == MBB) {
+    assert(DefaultScratch != OldScratch &&
+           "Should not reuse scratch register");
+    return DefaultScratch;
+  }
+
   const AArch64RegisterInfo &TRI = *Subtarget.getRegisterInfo();
   LivePhysRegs LiveRegs(TRI);
   LiveRegs.addLiveIns(*MBB);
@@ -406,12 +433,15 @@ static unsigned findScratchNonCalleeSaveRegister(MachineBasicBlock *MBB) {
   for (unsigned i = 0; CSRegs[i]; ++i)
     LiveRegs.addReg(CSRegs[i]);
 
-  // Prefer X9 since it was historically used for the prologue scratch reg.
-  const MachineRegisterInfo &MRI = MF->getRegInfo();
-  if (LiveRegs.available(MRI, AArch64::X9))
-    return AArch64::X9;
+  if (OldScratch != AArch64::NoRegister)
+    LiveRegs.addReg(OldScratch);
 
-  for (unsigned Reg : AArch64::GPR64RegClass) {
+  // Prefer X9/C6 since it was historically used for the prologue scratch reg.
+  const MachineRegisterInfo &MRI = MF->getRegInfo();
+  if (LiveRegs.available(MRI, DefaultScratch))
+    return DefaultScratch;
+
+  for (unsigned Reg : ScratchRegClass) {
     if (LiveRegs.available(MRI, Reg))
       return Reg;
   }
@@ -666,23 +696,33 @@ static MachineBasicBlock::iterator convertCalleeSaveRestoreToSPPrePostIncDec(
     MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
     const DebugLoc &DL, const TargetInstrInfo *TII, int CSStackSizeInc,
     bool NeedsWinCFI, bool *HasWinCFI, bool InProlog = true) {
+  MachineFunction &MF = *MBB.getParent();
+  const AArch64RegisterInfo *MRI = static_cast<const AArch64RegisterInfo *>(
+      MF.getSubtarget().getRegisterInfo());
+  unsigned SP = MRI->getStackPointerRegister(MF);
+  const bool HasCap = MF.getSubtarget<AArch64Subtarget>().hasMorello();
   // Ignore instructions that do not operate on SP, i.e. shadow call stack
   // instructions and associated CFI instruction.
   while (MBBI->getOpcode() == AArch64::STRXpost ||
          MBBI->getOpcode() == AArch64::LDRXpre ||
          MBBI->getOpcode() == AArch64::CFI_INSTRUCTION) {
-    if (MBBI->getOpcode() != AArch64::CFI_INSTRUCTION)
+    if (MBBI->getOpcode() != AArch64::CFI_INSTRUCTION) {
       assert(MBBI->getOperand(0).getReg() != AArch64::SP);
+      assert(!HasCap && "shadow call stack not supported with capabilities");
+    }
     ++MBBI;
   }
   unsigned NewOpc;
-  int Scale = 1;
+  int Scale = 8;
   switch (MBBI->getOpcode()) {
   default:
     llvm_unreachable("Unexpected callee-save save/restore opcode!");
   case AArch64::STPXi:
     NewOpc = AArch64::STPXpre;
     Scale = 8;
+    break;
+  case AArch64::ASTPXi:
+    NewOpc = AArch64::ASTPXpre;
     break;
   case AArch64::STPDi:
     NewOpc = AArch64::STPDpre;
@@ -692,18 +732,35 @@ static MachineBasicBlock::iterator convertCalleeSaveRestoreToSPPrePostIncDec(
     NewOpc = AArch64::STPQpre;
     Scale = 16;
     break;
+  case AArch64::ASTPDi:
+    NewOpc = AArch64::ASTPDpre;
+    break;
   case AArch64::STRXui:
     NewOpc = AArch64::STRXpre;
+    Scale = 1;
+    break;
+  case AArch64::ASTRXui:
+    NewOpc = AArch64::ASTRXpre;
+    Scale = 1;
     break;
   case AArch64::STRDui:
     NewOpc = AArch64::STRDpre;
+    Scale = 1;
+    break;
+  case AArch64::ASTRDui:
+    NewOpc = AArch64::ASTRDpre;
+    Scale = 1;
     break;
   case AArch64::STRQui:
     NewOpc = AArch64::STRQpre;
+    Scale = 1;
     break;
   case AArch64::LDPXi:
     NewOpc = AArch64::LDPXpost;
     Scale = 8;
+    break;
+  case AArch64::ALDPXi:
+    NewOpc = AArch64::ALDPXpost;
     break;
   case AArch64::LDPDi:
     NewOpc = AArch64::LDPDpost;
@@ -713,14 +770,60 @@ static MachineBasicBlock::iterator convertCalleeSaveRestoreToSPPrePostIncDec(
     NewOpc = AArch64::LDPQpost;
     Scale = 16;
     break;
+  case AArch64::ALDPDi:
+    NewOpc = AArch64::ALDPDpost;
+    break;
   case AArch64::LDRXui:
     NewOpc = AArch64::LDRXpost;
+    Scale = 1;
+    break;
+  case AArch64::ALDRXui:
+    NewOpc = AArch64::ALDRXpost;
+    Scale = 1;
     break;
   case AArch64::LDRDui:
     NewOpc = AArch64::LDRDpost;
+    Scale = 1;
+    break;
+  case AArch64::ALDRDui:
+    NewOpc = AArch64::ALDRDpost;
+    Scale = 1;
     break;
   case AArch64::LDRQui:
     NewOpc = AArch64::LDRQpost;
+    Scale = 1;
+    break;
+  case AArch64::PCapStorePairImmPre:
+    NewOpc = AArch64::PCapStorePairImmPreW;
+    Scale = 16;
+    break;
+  case AArch64::CapStorePairImmPre:
+    NewOpc = AArch64::CapStorePairImmPreW;
+    Scale = 16;
+    break;
+  case AArch64::PCapStoreImmPre:
+    NewOpc = AArch64::PCapStoreImmPreW;
+    Scale = 16;
+    break;
+  case AArch64::CapStoreImmPre:
+    NewOpc = AArch64::CapStoreImmPreW;
+    Scale = 16;
+    break;
+  case AArch64::PCapLoadPairImmPre:
+    NewOpc = AArch64::PCapLoadPairImmPost;
+    Scale = 16;
+    break;
+  case AArch64::CapLoadPairImmPre:
+    NewOpc = AArch64::CapLoadPairImmPost;
+    Scale = 16;
+    break;
+  case AArch64::CapLoadImmPre:
+    NewOpc = AArch64::CapLoadImmPost;
+    Scale = 16;
+    break;
+  case AArch64::PCapLoadImmPre:
+    NewOpc = AArch64::PCapLoadImmPost;
+    Scale = 16;
     break;
   }
   // Get rid of the SEH code associated with the old instruction.
@@ -731,7 +834,7 @@ static MachineBasicBlock::iterator convertCalleeSaveRestoreToSPPrePostIncDec(
   }
 
   MachineInstrBuilder MIB = BuildMI(MBB, MBBI, DL, TII->get(NewOpc));
-  MIB.addReg(AArch64::SP, RegState::Define);
+  MIB.addReg(SP, RegState::Define);
 
   // Copy all operands other than the immediate offset.
   unsigned OpndIdx = 0;
@@ -742,7 +845,7 @@ static MachineBasicBlock::iterator convertCalleeSaveRestoreToSPPrePostIncDec(
   assert(MBBI->getOperand(OpndIdx).getImm() == 0 &&
          "Unexpected immediate offset in first/last callee-save save/restore "
          "instruction!");
-  assert(MBBI->getOperand(OpndIdx - 1).getReg() == AArch64::SP &&
+  assert(MBBI->getOperand(OpndIdx - 1).getReg() == SP &&
          "Unexpected base register in callee-save save/restore instruction!");
   assert(CSStackSizeInc % Scale == 0);
   MIB.addImm(CSStackSizeInc / Scale);
@@ -776,26 +879,47 @@ static void fixupCalleeSaveRestoreStackOffset(MachineInstr &MI,
   if (Opc == AArch64::STRXpost || Opc == AArch64::LDRXpre ||
       Opc == AArch64::CFI_INSTRUCTION) {
     if (Opc != AArch64::CFI_INSTRUCTION)
-      assert(MI.getOperand(0).getReg() != AArch64::SP);
+      assert(MI.getOperand(0).getReg() != AArch64::SP &&
+             MI.getOperand(0).getReg() != AArch64::CSP);
     return;
   }
 
   unsigned Scale;
   switch (Opc) {
   case AArch64::STPXi:
+  case AArch64::ASTPXi:
   case AArch64::STRXui:
+  case AArch64::ASTRXui:
   case AArch64::STPDi:
+  case AArch64::ASTPDi:
   case AArch64::STRDui:
+  case AArch64::ASTRDui:
   case AArch64::LDPXi:
+  case AArch64::ALDPXi:
   case AArch64::LDRXui:
+  case AArch64::ALDRXui:
   case AArch64::LDPDi:
+  case AArch64::ALDPDi:
   case AArch64::LDRDui:
+  case AArch64::ALDRDui:
     Scale = 8;
     break;
   case AArch64::STPQi:
+  case AArch64::ASTPQi:
   case AArch64::STRQui:
+  case AArch64::ASTRQui:
   case AArch64::LDPQi:
+  case AArch64::ALDPQi:
   case AArch64::LDRQui:
+  case AArch64::ALDRQui:
+  case AArch64::PCapStorePairImmPre:
+  case AArch64::CapStorePairImmPre:
+  case AArch64::PCapStoreImmPre:
+  case AArch64::CapStoreImmPre:
+  case AArch64::PCapLoadPairImmPre:
+  case AArch64::CapLoadPairImmPre:
+  case AArch64::CapLoadImmPre:
+  case AArch64::PCapLoadImmPre:
     Scale = 16;
     break;
   default:
@@ -803,7 +927,8 @@ static void fixupCalleeSaveRestoreStackOffset(MachineInstr &MI,
   }
 
   unsigned OffsetIdx = MI.getNumExplicitOperands() - 1;
-  assert(MI.getOperand(OffsetIdx - 1).getReg() == AArch64::SP &&
+  assert((MI.getOperand(OffsetIdx - 1).getReg() == AArch64::SP ||
+         MI.getOperand(OffsetIdx - 1).getReg() == AArch64::CSP) &&
          "Unexpected base register in callee-save save/restore instruction!");
   // Last operand is immediate offset that needs fixing.
   MachineOperand &OffsetOpnd = MI.getOperand(OffsetIdx);
@@ -878,6 +1003,10 @@ static bool isTargetWindows(const MachineFunction &MF) {
   return MF.getSubtarget<AArch64Subtarget>().isTargetWindows();
 }
 
+static bool hasTopFrameRecord(const MachineFunction &MF) {
+  return isTargetDarwin(MF);
+}
+
 // Convenience function to determine whether I is an SVE callee save.
 static bool IsSVECalleeSave(MachineBasicBlock::iterator I) {
   switch (I->getOpcode()) {
@@ -902,6 +1031,7 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
   const TargetInstrInfo *TII = Subtarget.getInstrInfo();
   MachineModuleInfo &MMI = MF.getMMI();
   AArch64FunctionInfo *AFI = MF.getInfo<AArch64FunctionInfo>();
+  const bool HasPureCap = MF.getSubtarget<AArch64Subtarget>().hasPureCap();
   bool needsFrameMoves =
       MF.needsFrameMoves() && !MF.getTarget().getMCAsmInfo()->usesWindowsCFI();
   bool HasFP = hasFP(MF);
@@ -919,6 +1049,8 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
   // Debug location must be unknown since the first debug location is used
   // to determine the end of the prologue.
   DebugLoc DL;
+  unsigned SP = RegInfo->getStackPointerRegister(MF);
+  unsigned FP = RegInfo->getFramePointerRegister(MF);
 
   if (ShouldSignReturnAddress(MF)) {
     if (ShouldSignWithAKey(MF))
@@ -971,7 +1103,7 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
       AFI->setHasRedZone(true);
       ++NumRedZoneFunctions;
     } else {
-      emitFrameOffset(MBB, MBBI, DL, AArch64::SP, AArch64::SP,
+      emitFrameOffset(MBB, MBBI, DL, SP, SP,
                       {-NumBytes, MVT::i8}, TII, MachineInstr::FrameSetup,
                       false, NeedsWinCFI, &HasWinCFI);
       if (!NeedsWinCFI && needsFrameMoves) {
@@ -1008,7 +1140,7 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
   bool CombineSPBump = shouldCombineCSRLocalStackBump(MF, NumBytes);
   if (CombineSPBump) {
     assert(!SVEStackSize && "Cannot combine SP bump with SVE");
-    emitFrameOffset(MBB, MBBI, DL, AArch64::SP, AArch64::SP,
+    emitFrameOffset(MBB, MBBI, DL, SP, SP,
                     {-NumBytes, MVT::i8}, TII, MachineInstr::FrameSetup, false,
                     NeedsWinCFI, &HasWinCFI);
     NumBytes = 0;
@@ -1058,7 +1190,10 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
 
   if (HasFP) {
     // Only set up FP if we actually need to.
-    int64_t FPOffset = isTargetDarwin(MF) ? (AFI->getCalleeSavedStackSize() - 16) : 0;
+    bool HasTopFrameRecord = hasTopFrameRecord(MF);
+    int64_t FPOffset = HasTopFrameRecord ? (AFI->getCalleeSavedStackSize() -
+                                            AFI->getFrameRecordSize())
+                                         : 0;
 
     if (CombineSPBump)
       FPOffset += AFI->getLocalStackSize();
@@ -1067,7 +1202,7 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
     //          mov fp,sp          when FPOffset is zero.
     // Note: All stores of callee-saved registers are marked as "FrameSetup".
     // This code marks the instruction(s) that set the FP also.
-    emitFrameOffset(MBB, MBBI, DL, AArch64::FP, AArch64::SP,
+    emitFrameOffset(MBB, MBBI, DL, FP, SP,
                     {FPOffset, MVT::i8}, TII, MachineInstr::FrameSetup, false,
                     NeedsWinCFI, &HasWinCFI);
   }
@@ -1200,7 +1335,7 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
   // Allocate space for the rest of the frame.
   if (NumBytes) {
     const bool NeedsRealignment = RegInfo->needsStackRealignment(MF);
-    unsigned scratchSPReg = AArch64::SP;
+    unsigned scratchSPReg = SP;
 
     if (NeedsRealignment) {
       scratchSPReg = findScratchNonCalleeSaveRegister(&MBB);
@@ -1212,7 +1347,7 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
       // FIXME: in the case of dynamic re-alignment, NumBytes doesn't have
       // the correct value here, as NumBytes also includes padding bytes,
       // which shouldn't be counted here.
-      emitFrameOffset(MBB, MBBI, DL, scratchSPReg, AArch64::SP,
+      emitFrameOffset(MBB, MBBI, DL, scratchSPReg, SP,
                       {-NumBytes, MVT::i8}, TII, MachineInstr::FrameSetup,
                       false, NeedsWinCFI, &HasWinCFI);
 
@@ -1220,7 +1355,7 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
       const unsigned Alignment = MFI.getMaxAlignment();
       const unsigned NrBitsToZero = countTrailingZeros(Alignment);
       assert(NrBitsToZero > 1);
-      assert(scratchSPReg != AArch64::SP);
+      assert(scratchSPReg != SP);
 
       // SUB X9, SP, NumBytes
       //   -- X9 is temporary register, so shouldn't contain any live data here,
@@ -1232,10 +1367,15 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
       uint32_t andMaskEncoded = (1 << 12)                         // = N
                                 | ((64 - NrBitsToZero) << 6)      // immr
                                 | ((64 - NrBitsToZero - 1) << 0); // imms
-
-      BuildMI(MBB, MBBI, DL, TII->get(AArch64::ANDXri), AArch64::SP)
-          .addReg(scratchSPReg, RegState::Kill)
-          .addImm(andMaskEncoded);
+      if (!HasPureCap) {
+        BuildMI(MBB, MBBI, DL, TII->get(AArch64::ANDXri), SP)
+            .addReg(scratchSPReg, RegState::Kill)
+            .addImm(andMaskEncoded);
+      } else {
+        BuildMI(MBB, MBBI, DL, TII->get(AArch64::CapAlignDown), SP)
+            .addReg(scratchSPReg, RegState::Kill)
+            .addImm(NrBitsToZero);
+      }
       AFI->setStackRealigned(true);
       if (NeedsWinCFI) {
         HasWinCFI = true;
@@ -1254,8 +1394,7 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
   // Note: Use emitFrameOffset() like above for FP if the FrameSetup flag is
   // needed.
   if (RegInfo->hasBasePointer(MF)) {
-    TII->copyPhysReg(MBB, MBBI, DL, RegInfo->getBaseRegister(), AArch64::SP,
-                     false);
+    TII->copyPhysReg(MBB, MBBI, DL, RegInfo->getBaseRegister(MF), SP, false);
     if (NeedsWinCFI) {
       HasWinCFI = true;
       BuildMI(MBB, MBBI, DL, TII->get(AArch64::SEH_Nop))
@@ -1272,8 +1411,9 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
 
   if (needsFrameMoves) {
     const DataLayout &TD = MF.getDataLayout();
-    const int StackGrowth = isTargetDarwin(MF)
-                                ? (2 * -TD.getPointerSize(0))
+    bool HasTopFrameRecord = hasTopFrameRecord(MF);
+    const int StackGrowth = HasTopFrameRecord
+                                ? (2 * -TD.getPointerSize(HasPureCap ? 200 : 0))
                                 : -AFI->getCalleeSavedStackSize();
     Register FramePtr = RegInfo->getFrameRegister(MF);
     // An example of the prologue:
@@ -1308,11 +1448,11 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
     // 10018 |                X27 Register               |
     // 1001c |                X27 Register               |
     //       +===========================================+
-    // 10020 |                Frame Pointer              |
-    // 10024 |                Frame Pointer              |
+    // 10020 |                Frame Pointer              | (16 bytes in the
+    // 10024 |                Frame Pointer              |  sandbox mode)
     //       +-------------------------------------------+
-    // 10028 |                Link Register              |
-    // 1002c |                Link Register              |
+    // 10028 |                Link Register              | (16 bytes in the
+    // 1002c |                Link Register              |  sandbox mode)
     //       +===========================================+
     // 10030 | ........ | ........ | ........ | ........ |
     // 10034 | ........ | ........ | ........ | ........ |
@@ -1411,6 +1551,7 @@ void AArch64FrameLowering::emitEpilogue(MachineFunction &MF,
   MachineFrameInfo &MFI = MF.getFrameInfo();
   const AArch64Subtarget &Subtarget = MF.getSubtarget<AArch64Subtarget>();
   const TargetInstrInfo *TII = Subtarget.getInstrInfo();
+  const AArch64RegisterInfo *RegInfo = Subtarget.getRegisterInfo();
   DebugLoc DL;
   bool IsTailCallReturn = false;
   bool NeedsWinCFI = needsWinCFI(MF);
@@ -1425,6 +1566,7 @@ void AArch64FrameLowering::emitEpilogue(MachineFunction &MF,
     DL = MBBI->getDebugLoc();
     unsigned RetOpcode = MBBI->getOpcode();
     IsTailCallReturn = RetOpcode == AArch64::TCRETURNdi ||
+                       RetOpcode == AArch64::CTCRETURNr ||
                        RetOpcode == AArch64::TCRETURNri ||
                        RetOpcode == AArch64::TCRETURNriBTI;
     IsFunclet = isFuncletReturnInstr(*MBBI);
@@ -1433,6 +1575,7 @@ void AArch64FrameLowering::emitEpilogue(MachineFunction &MF,
   int64_t NumBytes = IsFunclet ? getWinEHFuncletFrameSize(MF)
                                : MFI.getStackSize();
   AArch64FunctionInfo *AFI = MF.getInfo<AArch64FunctionInfo>();
+  const bool HasCap = MF.getSubtarget<AArch64Subtarget>().hasMorello();
 
   // All calls are tail calls in GHC calling conv, and functions have no
   // prologue/epilogue.
@@ -1508,11 +1651,19 @@ void AArch64FrameLowering::emitEpilogue(MachineFunction &MF,
     MachineBasicBlock::iterator Pop = std::prev(MBB.getFirstTerminator());
     while (AArch64InstrInfo::isSEHInstruction(*Pop))
       Pop = std::prev(Pop);
+
+    // The size of the callee saved area in the pure capability ABI can be 256,
+    // which is just enough to not be handled by a post-indexed variant of
+    // ALDRDui. If that's the case do an add instead.
+    bool CanConvertToDec = true;
+    if (Pop->getOpcode() == AArch64::ALDRDui && PrologueSaveSize >= 256)
+      CanConvertToDec = false;
+
     // Converting the last ldp to a post-index ldp is valid only if the last
     // ldp's offset is 0.
     const MachineOperand &OffsetOp = Pop->getOperand(Pop->getNumOperands() - 1);
     // If the offset is 0, convert it to a post-index ldp.
-    if (OffsetOp.getImm() == 0)
+    if (OffsetOp.getImm() == 0 && CanConvertToDec)
       convertCalleeSaveRestoreToSPPrePostIncDec(
           MBB, Pop, DL, TII, PrologueSaveSize, NeedsWinCFI, &HasWinCFI, false);
     else {
@@ -1540,6 +1691,9 @@ void AArch64FrameLowering::emitEpilogue(MachineFunction &MF,
                                         NeedsWinCFI, &HasWinCFI);
   }
 
+  unsigned SP = RegInfo->getStackPointerRegister(MF);
+  unsigned FP = RegInfo->getFramePointerRegister(MF);
+
   if (NeedsWinCFI) {
     HasWinCFI = true;
     BuildMI(MBB, LastPopI, DL, TII->get(AArch64::SEH_EpilogStart))
@@ -1551,7 +1705,7 @@ void AArch64FrameLowering::emitEpilogue(MachineFunction &MF,
   // If there is a single SP update, insert it before the ret and we're done.
   if (CombineSPBump) {
     assert(!SVEStackSize && "Cannot combine SP bump with SVE");
-    emitFrameOffset(MBB, MBB.getFirstTerminator(), DL, AArch64::SP, AArch64::SP,
+    emitFrameOffset(MBB, MBB.getFirstTerminator(), DL, SP, SP,
                     {NumBytes + (int64_t)AfterCSRPopSize, MVT::i8}, TII,
                     MachineInstr::FrameDestroy, false, NeedsWinCFI, &HasWinCFI);
     if (NeedsWinCFI && HasWinCFI)
@@ -1632,7 +1786,7 @@ void AArch64FrameLowering::emitEpilogue(MachineFunction &MF,
     if (Done)
       adaptForLdStOpt(MBB, MBB.getFirstTerminator(), LastPopI);
 
-    emitFrameOffset(MBB, LastPopI, DL, AArch64::SP, AArch64::SP,
+    emitFrameOffset(MBB, LastPopI, DL, SP, SP,
                     {StackRestoreBytes, MVT::i8}, TII,
                     MachineInstr::FrameDestroy, false, NeedsWinCFI, &HasWinCFI);
     if (Done) {
@@ -1653,13 +1807,15 @@ void AArch64FrameLowering::emitEpilogue(MachineFunction &MF,
   // non-post-indexed loads for the restores if we aren't actually going to
   // be able to save any instructions.
   if (!IsFunclet && (MFI.hasVarSizedObjects() || AFI->isStackRealigned())) {
+    bool HasTopFrameRecord = hasTopFrameRecord(MF);
     int64_t OffsetToFrameRecord =
-        isTargetDarwin(MF) ? (-(int64_t)AFI->getCalleeSavedStackSize() + 16) : 0;
-    emitFrameOffset(MBB, LastPopI, DL, AArch64::SP, AArch64::FP,
+        HasTopFrameRecord ? (-(int64_t)AFI->getCalleeSavedStackSize() +
+                                       AFI->getFrameRecordSize()) : 0;
+    emitFrameOffset(MBB, LastPopI, DL, SP, FP,
                     {OffsetToFrameRecord, MVT::i8},
                     TII, MachineInstr::FrameDestroy, false, NeedsWinCFI);
   } else if (NumBytes)
-    emitFrameOffset(MBB, LastPopI, DL, AArch64::SP, AArch64::SP,
+    emitFrameOffset(MBB, LastPopI, DL, SP, SP,
                     {NumBytes, MVT::i8}, TII, MachineInstr::FrameDestroy, false,
                     NeedsWinCFI);
 
@@ -1674,14 +1830,15 @@ void AArch64FrameLowering::emitEpilogue(MachineFunction &MF,
     while (FirstSPPopI != Begin) {
       auto Prev = std::prev(FirstSPPopI);
       if (Prev->getOpcode() != AArch64::LDRXpre ||
-          Prev->getOperand(0).getReg() == AArch64::SP)
+          Prev->getOperand(0).getReg() == SP ||
+          HasCap)
         break;
       FirstSPPopI = Prev;
     }
 
     adaptForLdStOpt(MBB, FirstSPPopI, LastPopI);
 
-    emitFrameOffset(MBB, FirstSPPopI, DL, AArch64::SP, AArch64::SP,
+    emitFrameOffset(MBB, FirstSPPopI, DL, SP, SP,
                     {(int64_t)AfterCSRPopSize, MVT::i8}, TII,
                     MachineInstr::FrameDestroy, false, NeedsWinCFI, &HasWinCFI);
   }
@@ -1718,8 +1875,9 @@ static StackOffset getFPOffset(const MachineFunction &MF, int64_t ObjectOffset) 
   bool IsWin64 =
       Subtarget.isCallingConvWin64(MF.getFunction().getCallingConv());
   unsigned FixedObject = IsWin64 ? alignTo(AFI->getVarArgsGPRSize(), 16) : 0;
-  unsigned FPAdjust = isTargetDarwin(MF)
-                        ? 16 : AFI->getCalleeSavedStackSize(MF.getFrameInfo());
+  bool HasTopFrameRecord = hasTopFrameRecord(MF);
+  unsigned FPAdjust = HasTopFrameRecord ? AFI->getFrameRecordSize()
+                                        : AFI->getCalleeSavedStackSize(MF.getFrameInfo());
   return {ObjectOffset + FixedObject + FPAdjust, MVT::i8};
 }
 
@@ -1851,7 +2009,7 @@ StackOffset AArch64FrameLowering::resolveFrameOffsetReference(
       return FPOffset;
     }
 
-    FrameReg = RegInfo->hasBasePointer(MF) ? RegInfo->getBaseRegister()
+    FrameReg = RegInfo->hasBasePointer(MF) ? RegInfo->getBaseRegister(MF)
                                            : (unsigned)AArch64::SP;
     return SPOffset;
   }
@@ -1869,11 +2027,11 @@ StackOffset AArch64FrameLowering::resolveFrameOffsetReference(
 
   // Use the base pointer if we have one.
   if (RegInfo->hasBasePointer(MF))
-    FrameReg = RegInfo->getBaseRegister();
+    FrameReg = RegInfo->getBaseRegister(MF);
   else {
     assert(!MFI.hasVarSizedObjects() &&
            "Can't use SP when we have var sized objects.");
-    FrameReg = AArch64::SP;
+    FrameReg = RegInfo->getStackPointerRegister(MF);
     // If we're using the red zone for this function, the SP won't actually
     // be adjusted, so the offsets will be negative. They're also all
     // within range of the signed 9-bit immediate instructions.
@@ -1926,14 +2084,15 @@ static bool invalidateWindowsRegisterPairing(unsigned Reg1, unsigned Reg2,
 /// LR and FP need to be allocated together when the frame needs to save
 /// the frame-record. This means any other register pairing with LR is invalid.
 static bool invalidateRegisterPairing(unsigned Reg1, unsigned Reg2,
-                                      bool UsesWinAAPCS, bool NeedsWinCFI, bool NeedsFrameRecord) {
+                                      bool UsesWinAAPCS, bool NeedsWinCFI, bool NeedsFrameRecord,
+                                      unsigned LR) {
   if (UsesWinAAPCS)
     return invalidateWindowsRegisterPairing(Reg1, Reg2, NeedsWinCFI);
 
   // If we need to store the frame record, don't pair any register
   // with LR other than FP.
   if (NeedsFrameRecord)
-    return Reg2 == AArch64::LR;
+    return Reg2 == LR;
 
   return false;
 }
@@ -1945,7 +2104,7 @@ struct RegPairInfo {
   unsigned Reg2 = AArch64::NoRegister;
   int FrameIdx;
   int Offset;
-  enum RegType { GPR, FPR64, FPR128, PPR, ZPR } Type;
+  enum RegType { GPR, Cap, FPR64, FPR128, PPR, ZPR } Type;
 
   RegPairInfo() = default;
 
@@ -1960,6 +2119,7 @@ struct RegPairInfo {
       return 8;
     case ZPR:
     case FPR128:
+    case Cap:
       return 16;
     }
     llvm_unreachable("Unsupported type");
@@ -1992,6 +2152,10 @@ static void computeCalleeSaveRegisterPairs(
           (Count & 1) == 0) &&
          "Odd number of callee-saved regs to spill!");
   int ByteOffset = AFI->getCalleeSavedStackSize();
+  const AArch64RegisterInfo *RegInfo = static_cast<const AArch64RegisterInfo *>(
+      MF.getSubtarget().getRegisterInfo());
+  unsigned FP = RegInfo->getFramePointerRegister(MF);
+  unsigned LR = RegInfo->getLinkRegister(MF);
   int ScalableByteOffset = AFI->getSVECalleeSavedStackSize();
   // On Linux, we will have either one or zero non-paired register.  On Windows
   // with CFI, we can have multiple unpaired registers in order to utilize the
@@ -2004,6 +2168,8 @@ static void computeCalleeSaveRegisterPairs(
 
     if (AArch64::GPR64RegClass.contains(RPI.Reg1))
       RPI.Type = RegPairInfo::GPR;
+    else if (AArch64::CapRegClass.contains(RPI.Reg1))
+      RPI.Type = RegPairInfo::Cap;
     else if (AArch64::FPR64RegClass.contains(RPI.Reg1))
       RPI.Type = RegPairInfo::FPR64;
     else if (AArch64::FPR128RegClass.contains(RPI.Reg1))
@@ -2022,7 +2188,13 @@ static void computeCalleeSaveRegisterPairs(
       case RegPairInfo::GPR:
         if (AArch64::GPR64RegClass.contains(NextReg) &&
             !invalidateRegisterPairing(RPI.Reg1, NextReg, IsWindows, NeedsWinCFI,
-                                       NeedsFrameRecord))
+                                       NeedsFrameRecord, LR))
+          RPI.Reg2 = NextReg;
+        break;
+      case RegPairInfo::Cap:
+        if (AArch64::CapRegClass.contains(NextReg) &&
+            !invalidateRegisterPairing(RPI.Reg1, NextReg, IsWindows, NeedsWinCFI,
+                                       NeedsFrameRecord, LR))
           RPI.Reg2 = NextReg;
         break;
       case RegPairInfo::FPR64:
@@ -2038,6 +2210,11 @@ static void computeCalleeSaveRegisterPairs(
       case RegPairInfo::ZPR:
         break;
       }
+    }
+
+    if (MF.getFunction().hasFnAttribute(Attribute::ShadowCallStack) &&
+        MF.getSubtarget<AArch64Subtarget>().hasPureCap()) {
+      report_fatal_error("Shadow call stack not supported with Morello");
     }
 
     // If either of the registers to be saved is the lr register, it means that
@@ -2059,8 +2236,8 @@ static void computeCalleeSaveRegisterPairs(
             (CSI[i].getFrameIdx() + 1 == CSI[i + 1].getFrameIdx())) &&
            "Out of order callee saved regs!");
 
-    assert((!RPI.isPaired() || !NeedsFrameRecord || RPI.Reg2 != AArch64::FP ||
-            RPI.Reg1 == AArch64::LR) &&
+    assert((!RPI.isPaired() || !NeedsFrameRecord || RPI.Reg2 != FP ||
+            RPI.Reg1 == LR) &&
            "FrameRecord must be allocated together with LR");
 
     // Windows AAPCS has FP and LR reversed.
@@ -2073,7 +2250,7 @@ static void computeCalleeSaveRegisterPairs(
     assert((!produceCompactUnwindFrame(MF) ||
             CC == CallingConv::PreserveMost ||
             (RPI.isPaired() &&
-             ((RPI.Reg1 == AArch64::LR && RPI.Reg2 == AArch64::FP) ||
+             ((RPI.Reg1 == LR && RPI.Reg2 == FP) ||
               RPI.Reg1 + 1 == RPI.Reg2))) &&
            "Callee-save registers not saved as adjacent register pair!");
 
@@ -2088,12 +2265,25 @@ static void computeCalleeSaveRegisterPairs(
     assert(!(RPI.isScalable() && RPI.isPaired()) &&
            "Paired spill/fill instructions don't exist for SVE vectors");
 
+    // We need to align to 16 bytes if:
+    //   - this is an unpaired register and the last CSR, with size 8
+    //    or
+    //   - the next CSR requires 16 bytes alignment.
+    bool NeedsAlign = false;
+    if (!RPI.isPaired()) {
+      if (i + 1 != Count) {
+        unsigned NextReg = CSI[i + 1].getReg();
+        if (AArch64::CapRegClass.contains(NextReg))
+          NeedsAlign = true;
+      }
+    }
+
     // Round up size of non-pair to pair size if we need to pad the
     // callee-save area to ensure 16-byte alignment.
-    if (AFI->hasCalleeSaveStackFreeSpace() && !FixupDone &&
-        !RPI.isScalable() && RPI.Type != RegPairInfo::FPR128 &&
+    if ((AFI->hasCalleeSaveStackFreeSpace() || NeedsAlign) && !FixupDone &&
+        !RPI.isScalable() && Scale == 8 && ByteOffset % 16 == 8 &&
         !RPI.isPaired()) {
-      FixupDone = true;
+      FixupDone = !NeedsAlign;
       ByteOffset -= 8;
       assert(ByteOffset % 16 == 0);
       assert(MFI.getObjectAlignment(RPI.FrameIdx) <= 16);
@@ -2119,6 +2309,8 @@ bool AArch64FrameLowering::spillCalleeSavedRegisters(
     const std::vector<CalleeSavedInfo> &CSI,
     const TargetRegisterInfo *TRI) const {
   MachineFunction &MF = *MBB.getParent();
+  const AArch64RegisterInfo &RegInfo = *static_cast<const AArch64RegisterInfo *>(
+      MF.getSubtarget().getRegisterInfo());
   const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
   bool NeedsWinCFI = needsWinCFI(MF);
   DebugLoc DL;
@@ -2128,6 +2320,7 @@ bool AArch64FrameLowering::spillCalleeSavedRegisters(
   computeCalleeSaveRegisterPairs(MF, CSI, TRI, RegPairs,
                                  NeedShadowCallStackProlog, hasFP(MF));
   const MachineRegisterInfo &MRI = MF.getRegInfo();
+  unsigned SP = RegInfo.getStackPointerRegister(MF);
 
   if (NeedShadowCallStackProlog) {
     // Shadow call stack prolog: str x30, [x18], #8
@@ -2163,6 +2356,8 @@ bool AArch64FrameLowering::spillCalleeSavedRegisters(
     MBB.addLiveIn(AArch64::X18);
   }
 
+  const bool HasC64 = MF.getSubtarget<AArch64Subtarget>().hasC64();
+
   for (auto RPII = RegPairs.rbegin(), RPIE = RegPairs.rend(); RPII != RPIE;
        ++RPII) {
     RegPairInfo RPI = *RPII;
@@ -2183,17 +2378,36 @@ bool AArch64FrameLowering::spillCalleeSavedRegisters(
     unsigned Size, Align;
     switch (RPI.Type) {
     case RegPairInfo::GPR:
-       StrOpc = RPI.isPaired() ? AArch64::STPXi : AArch64::STRXui;
+       XRegsSpills += (RPI.isPaired() ? 2 : 1);
+       StrOpc = RPI.isPaired() ?
+                 (HasC64 ? AArch64::ASTPXi :AArch64::STPXi) :
+                 (HasC64 ? AArch64::ASTRXui : AArch64::STRXui);
+
        Size = 8;
        Align = 8;
        break;
+    case RegPairInfo::Cap:
+       CapabilitySpills += (RPI.isPaired() ? 2 : 1);
+       StrOpc = RPI.isPaired() ?
+              (HasC64 ? AArch64::PCapStorePairImmPre
+                      : AArch64::CapStorePairImmPre) :
+              (HasC64 ? AArch64::PCapStoreImmPre
+                      : AArch64::CapStoreImmPre);
+
+       Size = 16;
+       Align = 16;
+       break;
     case RegPairInfo::FPR64:
-       StrOpc = RPI.isPaired() ? AArch64::STPDi : AArch64::STRDui;
+       StrOpc = RPI.isPaired() ?
+                 (HasC64 ? AArch64::ASTPDi : AArch64::STPDi) :
+                 (HasC64 ? AArch64::ASTRDui : AArch64::STRDui);
        Size = 8;
        Align = 8;
        break;
     case RegPairInfo::FPR128:
        StrOpc = RPI.isPaired() ? AArch64::STPQi : AArch64::STRQui;
+       assert(!MF.getSubtarget<AArch64Subtarget>().hasMorello() &&
+              "Vector ABI not suppprted with capabilities");
        Size = 16;
        Align = 16;
        break;
@@ -2236,8 +2450,9 @@ bool AArch64FrameLowering::spillCalleeSavedRegisters(
           MachinePointerInfo::getFixedStack(MF, FrameIdxReg2),
           MachineMemOperand::MOStore, Size, Align));
     }
+
     MIB.addReg(Reg1, getPrologueDeath(MF, Reg1))
-        .addReg(AArch64::SP)
+        .addReg(SP)
         .addImm(RPI.Offset) // [sp, #offset*scale],
                             // where factor*scale is implicit
         .setMIFlag(MachineInstr::FrameSetup);
@@ -2262,9 +2477,14 @@ bool AArch64FrameLowering::restoreCalleeSavedRegisters(
     const TargetRegisterInfo *TRI) const {
   MachineFunction &MF = *MBB.getParent();
   const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
+  const AArch64RegisterInfo *MRI = static_cast<const AArch64RegisterInfo *>(
+      MF.getSubtarget().getRegisterInfo());
   DebugLoc DL;
   SmallVector<RegPairInfo, 8> RegPairs;
   bool NeedsWinCFI = needsWinCFI(MF);
+
+  unsigned SP = MRI->getStackPointerRegister(MF);
+  const bool HasC64 = MF.getSubtarget<AArch64Subtarget>().hasC64();
 
   if (MI != MBB.end())
     DL = MI->getDebugLoc();
@@ -2289,17 +2509,32 @@ bool AArch64FrameLowering::restoreCalleeSavedRegisters(
     unsigned Size, Align;
     switch (RPI.Type) {
     case RegPairInfo::GPR:
-       LdrOpc = RPI.isPaired() ? AArch64::LDPXi : AArch64::LDRXui;
+       LdrOpc = RPI.isPaired() ?
+                (HasC64 ? AArch64::ALDPXi : AArch64::LDPXi) :
+                (HasC64 ? AArch64::ALDRXui : AArch64::LDRXui);
        Size = 8;
        Align = 8;
        break;
+    case RegPairInfo::Cap:
+       LdrOpc = RPI.isPaired() ?
+                (HasC64 ? AArch64::PCapLoadPairImmPre
+                        : AArch64::CapLoadPairImmPre) :
+                (HasC64 ? AArch64::PCapLoadImmPre
+                        : AArch64::CapLoadImmPre);
+       Size = 16;
+       Align = 16;
+       break;
     case RegPairInfo::FPR64:
-       LdrOpc = RPI.isPaired() ? AArch64::LDPDi : AArch64::LDRDui;
+       LdrOpc = RPI.isPaired() ?
+                (HasC64 ? AArch64::ALDPDi : AArch64::LDPDi) :
+                (HasC64 ? AArch64::ALDRDui :AArch64::LDRDui);
        Size = 8;
        Align = 8;
        break;
     case RegPairInfo::FPR128:
        LdrOpc = RPI.isPaired() ? AArch64::LDPQi : AArch64::LDRQui;
+       assert(!MF.getSubtarget<AArch64Subtarget>().hasMorello() &&
+              "Vector ABI not suppprted with Morello");
        Size = 16;
        Align = 16;
        break;
@@ -2336,9 +2571,11 @@ bool AArch64FrameLowering::restoreCalleeSavedRegisters(
           MachinePointerInfo::getFixedStack(MF, FrameIdxReg2),
           MachineMemOperand::MOLoad, Size, Align));
     }
+    int64_t Imm = RPI.Offset;
+
     MIB.addReg(Reg1, getDefRegState(true))
-        .addReg(AArch64::SP)
-        .addImm(RPI.Offset) // [sp, #offset*scale]
+        .addReg(SP)
+        .addImm(Imm) // [sp, #offset*scale]
                             // where factor*scale is implicit
         .setMIFlag(MachineInstr::FrameDestroy);
     MIB.addMemOperand(MF.getMachineMemOperand(
@@ -2389,21 +2626,24 @@ void AArch64FrameLowering::determineCalleeSaves(MachineFunction &MF,
   AArch64FunctionInfo *AFI = MF.getInfo<AArch64FunctionInfo>();
   unsigned UnspilledCSGPR = AArch64::NoRegister;
   unsigned UnspilledCSGPRPaired = AArch64::NoRegister;
+  const bool HasCapRegs = MF.getSubtarget<AArch64Subtarget>().hasMorello();
+  const bool HasPureCap = MF.getSubtarget<AArch64Subtarget>().hasPureCap();
 
   MachineFrameInfo &MFI = MF.getFrameInfo();
   const MCPhysReg *CSRegs = MF.getRegInfo().getCalleeSavedRegs();
 
   unsigned BasePointerReg = RegInfo->hasBasePointer(MF)
-                                ? RegInfo->getBaseRegister()
+                                ? RegInfo->getBaseRegister(MF)
                                 : (unsigned)AArch64::NoRegister;
 
   unsigned ExtraCSSpill = 0;
+
   // Figure out which callee-saved registers to save/restore.
   for (unsigned i = 0; CSRegs[i]; ++i) {
     const unsigned Reg = CSRegs[i];
 
     // Add the base pointer register to SavedRegs if it is callee-save.
-    if (Reg == BasePointerReg)
+    if (RegInfo->isSuperOrSubRegisterEq(Reg, BasePointerReg))
       SavedRegs.set(Reg);
 
     bool RegUsed = SavedRegs.test(Reg);
@@ -2414,10 +2654,13 @@ void AArch64FrameLowering::determineCalleeSaves(MachineFunction &MF,
       PairedReg = CSRegs[i ^ 1];
 
     if (!RegUsed) {
-      if (AArch64::GPR64RegClass.contains(Reg) &&
+      if (((AArch64::GPR64RegClass.contains(Reg) && !HasPureCap) ||
+           (AArch64::CapRegClass.contains(Reg) && HasPureCap)) &&
           !RegInfo->isReservedReg(MF, Reg)) {
         UnspilledCSGPR = Reg;
         UnspilledCSGPRPaired = PairedReg;
+        if (HasPureCap && !AArch64::CapRegClass.contains(Reg))
+          UnspilledCSGPRPaired = AArch64::NoRegister;
       }
       continue;
     }
@@ -2428,7 +2671,8 @@ void AArch64FrameLowering::determineCalleeSaves(MachineFunction &MF,
     if (produceCompactUnwindFrame(MF) && PairedReg != AArch64::NoRegister &&
         !SavedRegs.test(PairedReg)) {
       SavedRegs.set(PairedReg);
-      if (AArch64::GPR64RegClass.contains(PairedReg) &&
+      if (((AArch64::GPR64RegClass.contains(PairedReg)  && !HasPureCap) ||
+           (AArch64::CapRegClass.contains(PairedReg) && HasPureCap)) &&
           !RegInfo->isReservedReg(MF, PairedReg))
         ExtraCSSpill = PairedReg;
     }
@@ -2448,6 +2692,29 @@ void AArch64FrameLowering::determineCalleeSaves(MachineFunction &MF,
       CSStackSize += RegSize;
   }
 
+  // GPRs are saved first and then capabilities in order to get the frame
+  // record just above the FP register spill area. If we have an odd number of
+  // GPRs and at least one capability, adjust the callee saved area size to
+  // make up for the padding. Don't do this for the alternate mode (A64 + pure
+  // capabilitiy ABI, as we are spilling capability registers first there).
+  bool NeedsGPRPadding = false;
+  bool HasCap = hasFP(MF);
+  if (HasPureCap && !hasTopFrameRecord(MF)) {
+    unsigned NumGPRs = 0;
+    for (unsigned Reg : SavedRegs.set_bits()) {
+      if (AArch64::GPR64RegClass.contains(Reg))
+        NumGPRs++;
+      if (AArch64::CapRegClass.contains(Reg))
+        HasCap = true;
+    }
+    if (NumGPRs % 2 == 1)
+      NeedsGPRPadding = true;
+    if (HasCap && NumGPRs % 2 == 1) {
+        CSStackSize += 8;
+        HasCap = true;
+    }
+  }
+
   // Save number of saved regs, so we can easily update CSStackSize later.
   unsigned NumSavedRegs = SavedRegs.count();
 
@@ -2455,8 +2722,15 @@ void AArch64FrameLowering::determineCalleeSaves(MachineFunction &MF,
   uint64_t EstimatedStackSize = MFI.estimateStackSize(MF);
   if (hasFP(MF) ||
       windowsRequiresStackProbe(MF, EstimatedStackSize + CSStackSize + 16)) {
-    SavedRegs.set(AArch64::FP);
-    SavedRegs.set(AArch64::LR);
+    if (HasPureCap) {
+      AFI->setFrameRecordSize(32);
+      SavedRegs.set(AArch64::CFP);
+      SavedRegs.set(AArch64::CLR);
+    } else {
+      AFI->setFrameRecordSize(16);
+      SavedRegs.set(AArch64::FP);
+      SavedRegs.set(AArch64::LR);
+    }
   }
 
   LLVM_DEBUG(dbgs() << "*** determineCalleeSaves\nSaved CSRs:";
@@ -2503,18 +2777,23 @@ void AArch64FrameLowering::determineCalleeSaves(MachineFunction &MF,
     // an emergency spill slot.
     if (!ExtraCSSpill || MF.getRegInfo().isPhysRegUsed(ExtraCSSpill)) {
       const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
-      const TargetRegisterClass &RC = AArch64::GPR64RegClass;
+      const TargetRegisterClass &RC =
+          HasCapRegs ? AArch64::CapRegClass : AArch64::GPR64RegClass;
       unsigned Size = TRI->getSpillSize(RC);
       unsigned Align = TRI->getSpillAlignment(RC);
       int FI = MFI.CreateStackObject(Size, Align, false);
       RS->addScavengingFrameIndex(FI);
       LLVM_DEBUG(dbgs() << "No available CS registers, allocated fi#" << FI
-                        << " as the emergency spill slot.\n");
+                   << " as the emergency spill slot.\n");
     }
   }
 
-  // Adding the size of additional 64bit GPR saves.
-  CSStackSize += 8 * (SavedRegs.count() - NumSavedRegs);
+  // Adding the size of additional GPR/Cap saves.
+  CSStackSize += (HasPureCap ? 16 : 8) * (SavedRegs.count() - NumSavedRegs);
+  // If we've pushed any capability registers and we need padding, add this now.
+  if (HasPureCap && NeedsGPRPadding && !HasCap &&
+      SavedRegs.count() - NumSavedRegs != (hasFP(MF) ? 2 : 0))
+    CSStackSize += 8;
   uint64_t AlignedCSStackSize = alignTo(CSStackSize, 16);
   LLVM_DEBUG(dbgs() << "Estimated stack frame size: "
                << EstimatedStackSize + AlignedCSStackSize

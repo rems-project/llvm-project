@@ -1876,7 +1876,10 @@ bool ABIMacOSX_arm::CreateDefaultUnwindPlan(UnwindPlan &unwind_plan) {
 //    d8-d15  preserved       (aka s16-s31, q4-q7)
 //    d16-d31 not preserved   (aka q8-q15)
 
-bool ABIMacOSX_arm::RegisterIsVolatile(const RegisterInfo *reg_info) {
+bool ABIMacOSX_arm::RegisterIsVolatile(RegisterContext &reg_ctx,
+                                       const RegisterInfo *reg_info,
+                                       FrameState frame_state,
+                                       const UnwindPlan *unwind_plan) {
   if (reg_info) {
     // Volatile registers are: r0, r1, r2, r3, r9, r12, r13 (aka sp)
     const char *name = reg_info->name;

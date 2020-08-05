@@ -43,6 +43,12 @@ operator==(const UnwindPlan::Row::RegisterLocation &rhs) const {
         return !memcmp(m_location.expr.opcodes, rhs.m_location.expr.opcodes,
                        m_location.expr.length);
       break;
+
+    case registerOverlay:
+      return m_location.overlay.base_reg_num ==
+                 rhs.m_location.overlay.base_reg_num &&
+             m_location.overlay.overlay_reg_num ==
+                 rhs.m_location.overlay.overlay_reg_num;
     }
   }
   return false;
@@ -152,6 +158,29 @@ void UnwindPlan::Row::RegisterLocation::Dump(Stream &s,
         thread);
     if (m_type == atDWARFExpression)
       s.PutChar(']');
+  } break;
+
+  case registerOverlay: {
+    const RegisterInfo *base_reg_info = nullptr;
+    if (unwind_plan)
+      base_reg_info =
+          unwind_plan->GetRegisterInfo(thread, m_location.overlay.base_reg_num);
+    const RegisterInfo *overlay_reg_info = nullptr;
+    if (unwind_plan)
+      overlay_reg_info = unwind_plan->GetRegisterInfo(
+          thread, m_location.overlay.overlay_reg_num);
+
+    s.Printf("=<overlay>(base=");
+    if (base_reg_info)
+      s.Printf("%s", base_reg_info->name);
+    else
+      s.Printf("reg(%u)", m_location.overlay.base_reg_num);
+    s.Printf(", overlay=");
+    if (overlay_reg_info)
+      s.Printf("%s", overlay_reg_info->name);
+    else
+      s.Printf("reg(%u)", m_location.overlay.overlay_reg_num);
+    s.PutChar(')');
   } break;
   }
 }

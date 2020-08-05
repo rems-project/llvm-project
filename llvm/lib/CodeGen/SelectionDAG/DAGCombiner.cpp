@@ -1949,6 +1949,49 @@ static ConstantSDNode *getAsNonOpaqueConstant(SDValue N) {
   return Const != nullptr && !Const->isOpaque() ? Const : nullptr;
 }
 
+SDValue DAGCombiner::visitPTRADD(SDNode *N) {
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+
+  // Canocalize if need be
+  if (isa<ConstantSDNode>(N0) && !isa<ConstantSDNode>(N1))
+    std::swap(N0, N1);
+
+  if (!isa<ConstantSDNode>(N1))
+    return SDValue();
+
+  // Add/Ptradd Ptr, 0 -> Ptr
+  if (isNullConstant(N1) && !N1.getValueType().isFatPointer())
+    return N0;
+
+  if (N0.isUndef() || N1.isUndef())
+    return DAG.getUNDEF(N->getValueType(0));
+
+  if (N0.getOpcode() != ISD::PTRADD && N0.getOpcode() != ISD::ADD)
+    return SDValue();
+
+  // fold (ptradd ((ptr?)add ptr, C0), C1) -> (ptradd ptr, (C0+C1))
+
+  // Shortcut the trivial case where C1 == 0, no mattter the number of uses
+  if (isNullConstant(N1) && N0->getOpcode() == ISD::PTRADD)
+    return N0;
+
+  SDValue N0_0 = N0->getOperand(0);
+  SDValue N0_1 = N0->getOperand(1);
+
+  if (isa<ConstantSDNode>(N0_0) && !isa<ConstantSDNode>(N0_1))
+    std::swap(N0_0, N0_1);
+
+  if (!isa<ConstantSDNode>(N0_1))
+    return SDValue();
+
+  SDValue Cste =
+      DAG.getConstant(cast<ConstantSDNode>(N1)->getAPIntValue() +
+                          cast<ConstantSDNode>(N0_1)->getAPIntValue(),
+                      SDLoc(N), N1.getValueType());
+  return DAG.getNode(ISD::PTRADD, SDLoc(N), N0.getValueType(), N0_0, Cste);
+}
+
 SDValue DAGCombiner::foldBinOpIntoSelect(SDNode *BO) {
   assert(TLI.isBinOp(BO->getOpcode()) && BO->getNumValues() == 1 &&
          "Unexpected binary operator");
@@ -2064,17 +2107,6 @@ static SDValue foldAddSubBoolOfMaskedVal(SDNode *N, SelectionDAG &DAG) {
   SDValue C1 = IsAdd ? DAG.getConstant(CN->getAPIntValue() + 1, DL, VT) :
                        DAG.getConstant(CN->getAPIntValue() - 1, DL, VT);
   return DAG.getNode(IsAdd ? ISD::SUB : ISD::ADD, DL, VT, C1, LowBit);
-}
-
-SDValue DAGCombiner::visitPTRADD(SDNode *N) {
-  SDValue N0 = N->getOperand(0);
-  SDValue N1 = N->getOperand(1);
-  // fold (ptradd x, 0) -> 0
-  // This needs to be done separately from normal addition, because pointer
-  // addition is not commutative.
-  if (isNullConstant(N1))
-    return N0;
-  return SDValue();
 }
 
 /// Try to fold a 'not' shifted sign-bit with add/sub with constant operand into
@@ -13744,7 +13776,11 @@ static bool canFoldInAddressingMode(SDNode *N, SDNode *Use,
     return false;
 
   TargetLowering::AddrMode AM;
-  if (N->getOpcode() == ISD::ADD) {
+  switch (N->getOpcode()) {
+  default:
+    break;
+  case ISD::PTRADD:
+  case ISD::ADD: {
     AM.HasBaseReg = true;
     ConstantSDNode *Offset = dyn_cast<ConstantSDNode>(N->getOperand(1));
     if (Offset)
@@ -13753,7 +13789,9 @@ static bool canFoldInAddressingMode(SDNode *N, SDNode *Use,
     else
       // [reg +/- reg]
       AM.Scale = 1;
-  } else if (N->getOpcode() == ISD::SUB) {
+    break;
+  }
+  case ISD::SUB: {
     AM.HasBaseReg = true;
     ConstantSDNode *Offset = dyn_cast<ConstantSDNode>(N->getOperand(1));
     if (Offset)
@@ -13762,8 +13800,9 @@ static bool canFoldInAddressingMode(SDNode *N, SDNode *Use,
     else
       // [reg +/- reg]
       AM.Scale = 1;
-  } else
-    return false;
+    break;
+  }
+  }
 
   return TLI.isLegalAddressingMode(DAG.getDataLayout(), AM,
                                    VT.getTypeForEVT(*DAG.getContext()), AS);
@@ -13828,9 +13867,10 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
                                 Ptr, TLI))
     return false;
 
-  // If the pointer is not an add/sub, or if it doesn't have multiple uses, bail
+  // If the pointer is not an add/sub/ptradd, or if it doesn't have multiple uses, bail
   // out.  There is no reason to make this a preinc/predec.
-  if ((Ptr.getOpcode() != ISD::ADD && Ptr.getOpcode() != ISD::SUB) ||
+  unsigned PtrOpc = Ptr.getOpcode();
+  if ((PtrOpc != ISD::ADD && PtrOpc != ISD::SUB && PtrOpc != ISD::PTRADD) ||
       Ptr.getNode()->hasOneUse())
     return false;
 
@@ -13904,7 +13944,8 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
         continue;
 
       if (Use.getUser()->getOpcode() != ISD::ADD &&
-          Use.getUser()->getOpcode() != ISD::SUB) {
+          Use.getUser()->getOpcode() != ISD::SUB &&
+          Use.getUser()->getOpcode() != ISD::PTRADD) {
         OtherUses.clear();
         break;
       }
@@ -14008,8 +14049,6 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
     X1 = (AM == ISD::PRE_DEC && !Swapped) ? -1 : 1;
     Y1 = (AM == ISD::PRE_DEC && Swapped) ? -1 : 1;
 
-    unsigned Opcode = (Y0 * Y1 < 0) ? ISD::SUB : ISD::ADD;
-
     APInt CNV = Offset0;
     if (X0 < 0) CNV = -CNV;
     if (X1 * Y0 * Y1 < 0) CNV = CNV + Offset1;
@@ -14018,12 +14057,9 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
     SDLoc DL(OtherUses[i]);
 
     // We can now generate the new expression.
-    SDValue NewOp1 = DAG.getConstant(CNV, DL, CN->getValueType(0));
-    SDValue NewOp2 = Result.getValue(IsLoad ? 1 : 0);
+    SDValue NewOp = Result.getValue(IsLoad ? 1 : 0);
 
-    SDValue NewUse = DAG.getNode(Opcode,
-                                 DL,
-                                 OtherUses[i]->getValueType(0), NewOp1, NewOp2);
+    SDValue NewUse = DAG.getPointerAdd(DL, NewOp, CNV);
     DAG.ReplaceAllUsesOfValueWith(SDValue(OtherUses[i], 0), NewUse);
     deleteAndRecombine(OtherUses[i]);
   }
@@ -14056,7 +14092,8 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
 
   for (SDNode *Op : Ptr.getNode()->uses()) {
     if (Op == N ||
-        (Op->getOpcode() != ISD::ADD && Op->getOpcode() != ISD::SUB))
+        (Op->getOpcode() != ISD::ADD && Op->getOpcode() != ISD::SUB &&
+         Op->getOpcode() != ISD::PTRADD))
       continue;
 
     SDValue BasePtr;
@@ -14085,7 +14122,8 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
 
         // If all the uses are load / store addresses, then don't do the
         // transformation.
-        if (Use->getOpcode() == ISD::ADD || Use->getOpcode() == ISD::SUB) {
+        if (Use->getOpcode() == ISD::ADD || Use->getOpcode() == ISD::SUB ||
+            Use->getOpcode() == ISD::PTRADD) {
           bool RealUse = false;
           for (SDNode *UseUse : Use->uses()) {
             if (!canFoldInAddressingMode(Use, UseUse, DAG, TLI))
@@ -14169,9 +14207,11 @@ SDValue DAGCombiner::SplitIndexingFromLoad(LoadSDNode *LD) {
                           ConstInc->getValueType(0));
   }
 
-  unsigned Opc =
-      (AM == ISD::PRE_INC || AM == ISD::POST_INC ? ISD::ADD : ISD::SUB);
-  return DAG.getNode(Opc, SDLoc(LD), BP.getSimpleValueType(), BP, Inc);
+  if (AM == ISD::PRE_INC || AM == ISD::POST_INC)
+    return DAG.getPointerAdd(SDLoc(LD), BP, Inc);
+
+  APInt Imm = -cast<ConstantSDNode>(Inc)->getAPIntValue();
+  return DAG.getPointerAdd(SDLoc(LD), BP, Imm);
 }
 
 static inline int numVectorEltsOrZero(EVT T) {
@@ -14690,10 +14730,8 @@ struct LoadedSlice {
     assert(Offset >= 0 && "Offset too big to fit in int64_t!");
     if (Offset) {
       // BaseAddr = BaseAddr + Offset.
-      EVT ArithType = BaseAddr.getValueType();
       SDLoc DL(Origin);
-      BaseAddr = DAG->getNode(ISD::ADD, DL, ArithType, BaseAddr,
-                              DAG->getConstant(Offset, DL, ArithType));
+      BaseAddr = DAG->getPointerAdd(SDLoc(Origin), BaseAddr, Offset);
     }
 
     // Create the type of the loaded slice according to its size.
@@ -15236,6 +15274,7 @@ SDValue DAGCombiner::ReduceLoadOpStoreWidth(SDNode *N) {
           DAG.getLoad(NewVT, SDLoc(N0), LD->getChain(), NewPtr,
                       LD->getPointerInfo().getWithOffset(PtrOff), NewAlign,
                       LD->getMemOperand()->getFlags(), LD->getAAInfo());
+
       SDValue NewVal = DAG.getNode(Opc, SDLoc(Value), NewVT, NewLD,
                                    DAG.getConstant(NewImm, SDLoc(Value),
                                                    NewVT));
@@ -17102,7 +17141,7 @@ SDValue DAGCombiner::scalarizeExtractedVectorLoad(SDNode *EVE, EVT InVecVT,
 
   SDValue NewPtr = OriginalLoad->getBasePtr();
   SDValue Offset;
-  EVT PtrType = NewPtr.getValueType();
+  EVT PtrType = TLI.getPointerRangeTy(DAG.getDataLayout());
   MachinePointerInfo MPI;
   SDLoc DL(EVE);
   if (auto *ConstEltNo = dyn_cast<ConstantSDNode>(EltNo)) {

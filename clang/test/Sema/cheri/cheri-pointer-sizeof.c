@@ -1,5 +1,5 @@
-// RUN: %cheri256_cc1 "-target-abi" "purecap" -fsyntax-only -triple cheri-unknown-freebsd %s -verify
 // RUN: %cheri128_cc1 "-target-abi" "purecap" -fsyntax-only -triple cheri-unknown-freebsd %s -verify
+// RUN: %cheri256_cc1 "-target-abi" "purecap" -fsyntax-only -triple cheri-unknown-freebsd %s -verify
 // expected-no-diagnostics
 _Pragma("pointer_interpretation push")
 _Pragma("pointer_interpretation integer")

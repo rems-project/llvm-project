@@ -110,10 +110,15 @@ public:
 
   bool requiresVirtualBaseRegisters(const MachineFunction &MF) const override;
   bool hasBasePointer(const MachineFunction &MF) const;
-  unsigned getBaseRegister() const;
+  unsigned getBaseRegister(const MachineFunction &MF) const;
+  Register getStackPointerRegister(const MachineFunction &MF) const;
+  Register getFramePointerRegister(const MachineFunction &MF) const;
+  Register getLinkRegister(const MachineFunction &MF) const;
 
   // Debug information queries.
   Register getFrameRegister(const MachineFunction &MF) const override;
+
+  MCCFIProcType getCFIProcType(const MachineFunction &MF) const override;
 
   unsigned getRegPressureLimit(const TargetRegisterClass *RC,
                                MachineFunction &MF) const override;

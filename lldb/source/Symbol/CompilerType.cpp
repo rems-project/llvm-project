@@ -400,23 +400,25 @@ CompilerType CompilerType::GetPointeeType() const {
   return CompilerType();
 }
 
-CompilerType CompilerType::GetPointerType() const {
+CompilerType CompilerType::GetPointerType(AddressSpace address_space) const {
   if (IsValid()) {
-    return m_type_system->GetPointerType(m_type);
+    return m_type_system->GetPointerType(m_type, address_space);
   }
   return CompilerType();
 }
 
-CompilerType CompilerType::GetLValueReferenceType() const {
+CompilerType
+CompilerType::GetLValueReferenceType(AddressSpace address_space) const {
   if (IsValid())
-    return m_type_system->GetLValueReferenceType(m_type);
+    return m_type_system->GetLValueReferenceType(m_type, address_space);
   else
     return CompilerType();
 }
 
-CompilerType CompilerType::GetRValueReferenceType() const {
+CompilerType
+CompilerType::GetRValueReferenceType(AddressSpace address_space) const {
   if (IsValid())
-    return m_type_system->GetRValueReferenceType(m_type);
+    return m_type_system->GetRValueReferenceType(m_type, address_space);
   else
     return CompilerType();
 }
@@ -499,6 +501,12 @@ lldb::Encoding CompilerType::GetEncoding(uint64_t &count) const {
     return lldb::eEncodingInvalid;
 
   return m_type_system->GetEncoding(m_type, count);
+}
+
+MemoryContentType CompilerType::GetMemoryContentType() const {
+  if (IsValid())
+    return m_type_system->GetMemoryContentType(m_type);
+  return eMemoryContentNormal;
 }
 
 lldb::Format CompilerType::GetFormat() const {
@@ -799,6 +807,7 @@ bool CompilerType::GetValueAsScalar(const lldb_private::DataExtractor &data,
     case lldb::eEncodingVector:
       break;
     case lldb::eEncodingUint:
+    case lldb::eEncodingCapability:
       if (*byte_size <= sizeof(unsigned long long)) {
         uint64_t uval64 = data.GetMaxU64(&offset, *byte_size);
         if (*byte_size <= sizeof(unsigned int)) {

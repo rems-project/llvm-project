@@ -16,6 +16,8 @@
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
+#include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
@@ -139,7 +141,9 @@ void DwarfCFIException::beginFragment(const MachineBasicBlock *MBB,
     hasEmittedCFISections = true;
   }
 
-  Asm->OutStreamer->EmitCFIStartProc(/*IsSimple=*/false);
+  const TargetRegisterInfo *TRI =
+      MBB->getParent()->getSubtarget().getRegisterInfo();
+  Asm->OutStreamer->EmitCFIStartProc(TRI->getCFIProcType(*MBB->getParent()));
 
   // Indicate personality routine, if any.
   if (!shouldEmitPersonality)

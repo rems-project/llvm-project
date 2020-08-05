@@ -307,6 +307,13 @@ GDBRemoteCommunicationServerCommon::Handle_qHostInfo(
   }
 #endif // #if defined(__APPLE__)
 
+  s = HostInfo::GetTargetFeatures();
+  if (!s.empty()) {
+    response.PutCString("features:");
+    response.PutStringAsRawHex8(s);
+    response.PutChar(';');
+  }
+
   if (g_default_packet_timeout_sec > 0)
     response.Printf("default_packet_timeout:%u;", g_default_packet_timeout_sec);
 
@@ -846,8 +853,16 @@ GDBRemoteCommunicationServerCommon::Handle_qSupported(
 #if defined(__linux__) || defined(__NetBSD__)
   response.PutCString(";QPassSignals+");
   response.PutCString(";qXfer:auxv:read+");
+#if defined(__arm64__) || defined(__aarch64__)
+  // The packet currently makes sense only on AArch64 so report it is available
+  // only there.
+  response.PutCString(";qXfer:capa:read+");
+#endif // defined(__arm64__) || defined(__aarch64__)
   response.PutCString(";qXfer:libraries-svr4:read+");
-#endif
+#endif // defined(__linux__) || defined(__NetBSD__)
+#if defined(__linux__)
+  response.PutCString(";qXfer:siginfo:read+");
+#endif // defined(__linux__)
 
   return SendPacketNoLock(response.GetString());
 }

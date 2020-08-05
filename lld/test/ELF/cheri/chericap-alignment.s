@@ -1,3 +1,4 @@
+# REQUIRES: mips
 
 # RUN: %cheri256_purecap_llvm-mc %s -filetype=obj -defsym=FIRST=1 -o %t1.o
 # RUN: %cheri256_purecap_llvm-mc %s -filetype=obj -defsym=FIRST=0 -o %t2.o

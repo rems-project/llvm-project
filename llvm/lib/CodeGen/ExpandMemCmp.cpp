@@ -266,13 +266,14 @@ void MemCmpExpansion::createResultBlock() {
 Value *MemCmpExpansion::getPtrToElementAtOffset(Value *Source,
                                                 Type *LoadSizeType,
                                                 uint64_t OffsetBytes) {
+  unsigned AS = cast<PointerType>(Source->getType())->getAddressSpace();
   if (OffsetBytes > 0) {
     auto *ByteType = Type::getInt8Ty(CI->getContext());
     Source = Builder.CreateConstGEP1_64(
-        ByteType, Builder.CreateBitCast(Source, ByteType->getPointerTo()),
+        ByteType, Builder.CreateBitCast(Source, ByteType->getPointerTo(AS)),
         OffsetBytes);
   }
-  return Builder.CreateBitCast(Source, LoadSizeType->getPointerTo());
+  return Builder.CreateBitCast(Source, LoadSizeType->getPointerTo(AS));
 }
 
 // This function creates the IR instructions for loading and comparing 1 byte.
@@ -571,11 +572,14 @@ Value *MemCmpExpansion::getMemCmpOneBlock() {
   Value *Source1 = CI->getArgOperand(0);
   Value *Source2 = CI->getArgOperand(1);
 
+  unsigned AS1 = cast<PointerType>(Source1->getType())->getAddressSpace();
+  unsigned AS2 = cast<PointerType>(Source2->getType())->getAddressSpace();
+
   // Cast source to LoadSizeType*.
   if (Source1->getType() != LoadSizeType)
-    Source1 = Builder.CreateBitCast(Source1, LoadSizeType->getPointerTo());
+    Source1 = Builder.CreateBitCast(Source1, LoadSizeType->getPointerTo(AS1));
   if (Source2->getType() != LoadSizeType)
-    Source2 = Builder.CreateBitCast(Source2, LoadSizeType->getPointerTo());
+    Source2 = Builder.CreateBitCast(Source2, LoadSizeType->getPointerTo(AS2));
 
   // Load LoadSizeType from the base address.
   Value *LoadSrc1 = Builder.CreateLoad(LoadSizeType, Source1);

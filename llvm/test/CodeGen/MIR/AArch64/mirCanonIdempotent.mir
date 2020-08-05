@@ -120,6 +120,6 @@ body: |
 
     %42:gpr32 = LDRWui %stack.0, 0 :: (dereferenceable load 8)
     $w0 = COPY %42
-    RET_ReallyLR implicit $w0
+    RET_ReallyLR 0, implicit $w0
 
 ...

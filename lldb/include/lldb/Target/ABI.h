@@ -25,6 +25,12 @@ namespace lldb_private {
 
 class ABI : public PluginInterface {
 public:
+  enum FrameState {
+    eFrameStateSimple,    // None/single frame state.
+    eFrameStateExecutive, // Executive state.
+    eFrameStateRestricted // Restricted state.
+  };
+
   struct CallArgument {
     enum eType {
       HostPointer = 0, /* pointer to host data */
@@ -99,11 +105,129 @@ public:
 
   virtual bool CreateDefaultUnwindPlan(UnwindPlan &unwind_plan) = 0;
 
-  virtual bool RegisterIsVolatile(const RegisterInfo *reg_info) = 0;
+  virtual bool RegisterIsVolatile(RegisterContext &reg_ctx,
+                                  const RegisterInfo *reg_info,
+                                  FrameState frame_state,
+                                  const UnwindPlan *unwind_plan) = 0;
 
-  virtual bool
-  GetFallbackRegisterLocation(const RegisterInfo *reg_info,
-                              UnwindPlan::Row::RegisterLocation &unwind_regloc);
+  virtual bool GetFallbackRegisterLocation(
+      RegisterContext &reg_ctx, const RegisterInfo *reg_info,
+      FrameState frame_state, const UnwindPlan *unwind_plan,
+      lldb::RegisterKind &unwind_registerkind,
+      UnwindPlan::Row::RegisterLocation &unwind_regloc);
+
+  //------------------------------------------------------------------
+  /// Get a register that aliases and extends a specified base
+  /// register.
+  ///
+  /// The unwinder can use this information to obtain a value of the
+  /// original register from the extended one.
+  ///
+  /// @param[in] reg_ctx
+  ///     A frame that is being unwound.
+  ///
+  /// @param[in] lldb_regnum
+  ///     A register number of the base register in the
+  ///     eRegisterKindLLDB scheme.
+  ///
+  /// @return
+  ///     The first (smallest) extended register, or
+  ///     LLDB_INVALID_REGNUM if no such register exists.
+  //------------------------------------------------------------------
+  virtual uint32_t GetExtendedRegisterForUnwind(RegisterContext &reg_ctx,
+                                                uint32_t lldb_regnum) const;
+
+  //------------------------------------------------------------------
+  /// Get a promordial register that aliases a given register and has
+  /// a requested size.
+  ///
+  /// @param[in] reg_ctx
+  ///     A frame that is being unwound.
+  ///
+  /// @param[in] lldb_regnum
+  ///     A register number of the extended register in the
+  ///     eRegisterKindLLDB scheme.
+  ///
+  /// @return
+  ///     The alias register that has the requested size, or
+  ///     LLDB_INVALID_REGNUM if no such register exists.
+  //------------------------------------------------------------------
+  virtual uint32_t GetPrimordialRegisterForUnwind(RegisterContext &reg_ctx,
+                                                  uint32_t lldb_regnum,
+                                                  uint32_t byte_size) const;
+
+  //------------------------------------------------------------------
+  /// Get a return address register that should be searched for by the
+  /// unwinder to obtain a value of a program counter register when
+  /// the code uses a specified RA register.
+  ///
+  /// @param[in] reg_ctx
+  ///     A frame that is being unwound.
+  ///
+  /// @param[in] pc_lldb_regnum
+  ///     A register number of the program counter register in the
+  ///     eRegisterKindLLDB scheme.
+  ///
+  /// @param[in] ra_lldb_regnum
+  ///     A register number of the input return address register in
+  ///     the eRegisterKindLLDB scheme.
+  ///
+  /// @return
+  ///     The output return address register that should be searched
+  ///     for by the unwinder, or LLDB_INVALID_REGNUM in case of an
+  ///     error or if no such register exists.
+  //------------------------------------------------------------------
+  virtual uint32_t GetReturnRegisterForUnwind(RegisterContext &reg_ctx,
+                                              uint32_t pc_lldb_regnum,
+                                              uint32_t ra_lldb_regnum) const;
+
+  //------------------------------------------------------------------
+  /// Get a frame state from a specified register context.
+  ///
+  /// @param[in] reg_ctx
+  ///     A frame for which the state should be determined.
+  ///
+  /// @param[out] state
+  ///     The resulting frame state.
+  ///
+  /// @return
+  ///     \b true on success, \b false otherwise.
+  //------------------------------------------------------------------
+  virtual bool GetFrameState(RegisterContext &reg_ctx, FrameState &state) const;
+
+  //------------------------------------------------------------------
+  /// Determine for a location of which register a callee frame should
+  /// be asked when searching for caller's register.
+  ///
+  /// This allows to handle a situation when a register with one name
+  /// is different in the caller and callee. For instance, if a caller
+  /// on AArch64 is in the executive state and needs to ask the callee
+  /// frame for a location of its (caller's) CSP register, the ABI
+  /// will translate this register to specifically CSP_EL0. This is
+  /// required because simple CSP could map either to CSP_EL0 or RCSP_EL0
+  /// in the callee depending on its own state.
+  ///
+  /// @param[in] reg_ctx
+  ///     A frame that is being unwound.
+  ///
+  /// @param[in] lldb_regnum
+  ///     A register number of the original caller register in the
+  ///     eRegisterKindLLDB scheme.
+  ///
+  /// @param[in] caller_frame_state
+  ///     The caller frame state.
+  ///
+  /// @param[out] search_lldb_regnum
+  ///     A register number of the resulting register that a callee
+  ///     should be asked for, in the eRegisterKindLLDB scheme.
+  ///
+  /// @return
+  ///     \b true on success, \b false otherwise.
+  //------------------------------------------------------------------
+  virtual bool GetCalleeRegisterToSearch(RegisterContext &reg_ctx,
+                                         uint32_t lldb_regnum,
+                                         FrameState caller_frame_state,
+                                         uint32_t &search_lldb_regnum) const;
 
   // Should take a look at a call frame address (CFA) which is just the stack
   // pointer value upon entry to a function. ABIs usually impose alignment
@@ -130,7 +254,40 @@ public:
 
   virtual bool GetPointerReturnRegister(const char *&name) { return false; }
 
+  //------------------------------------------------------------------
+  /// Create a siginfo value from specified data.
+  ///
+  /// @param[in] target
+  ///     A target used to resolve the siginfo type.
+  ///
+  /// @param[in] data
+  ///     A data extractor that contains the raw siginfo bytes. The
+  ///     information is stored in an ABI-specific way.
+  ///
+  /// @param[out] error
+  ///     An error descriptor if the method failed to construct the
+  ///     siginfo value.
+  ///
+  /// @return
+  ///     The shared pointer to the resulting siginfo value which can
+  ///     contain nullptr if the value could not be constructed.
+  //------------------------------------------------------------------
+  virtual lldb::ValueObjectSP
+  CreateSigInfoValueObject(Target &target, const lldb::DataBufferSP &data_sp,
+                           Status &error) const;
+
   static lldb::ABISP FindPlugin(lldb::ProcessSP process_sp, const ArchSpec &arch);
+
+  //------------------------------------------------------------------
+  /// Get a name for a frame state.
+  ///
+  /// @param[in] frame_state
+  ///     The frame state.
+  ///
+  /// @return
+  ///     The human-readable name for \a frame_state.
+  //------------------------------------------------------------------
+  static const char *GetFrameStateAsCString(FrameState frame_state);
 
 protected:
   ABI(lldb::ProcessSP process_sp, std::unique_ptr<llvm::MCRegisterInfo> info_up)
@@ -150,6 +307,25 @@ protected:
 
   lldb::ProcessWP m_process_wp;
   std::unique_ptr<llvm::MCRegisterInfo> m_mc_register_info_up;
+
+  //------------------------------------------------------------------
+  /// Create a siginfo compiler type for a target ABI.
+  ///
+  /// @param[in] target
+  ///     A target used to resolve the siginfo type.
+  ///
+  /// @param[in] ast_ctx
+  ///     An AST context to use for defining the structure.
+  ///
+  /// @param[in] type_name
+  ///     A name of the resulting type.
+  ///
+  /// @return
+  ///     The siginfo compiler type.
+  //------------------------------------------------------------------
+  virtual CompilerType GetSigInfoCompilerType(const Target &target,
+                                              ClangASTContext &ast_ctx,
+                                              llvm::StringRef type_name) const;
 
 private:
   DISALLOW_COPY_AND_ASSIGN(ABI);

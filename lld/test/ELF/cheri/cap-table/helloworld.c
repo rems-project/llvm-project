@@ -1,5 +1,6 @@
 // RUN: mkdir -p %T/helloworld_src
-// RUN: tar xJf %S/Inputs/helloworld.tar.xz -C %T/helloworld_src
+// RUN: unxz -c %S/Inputs/helloworld.tar.xz > %T/helloworld_src/helloworld_src.tar
+// RUN: tar -xf %T/helloworld_src/helloworld_src.tar -C %T/helloworld_src
 // RUN: cd %T/helloworld_src/reproduce && ld.lld @%T/helloworld_src/reproduce/response.txt -o %t.exe
 // RUN: llvm-objdump -t -cap-relocs %t.exe | FileCheck %s
 

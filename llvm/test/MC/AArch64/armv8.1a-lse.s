@@ -1235,82 +1235,82 @@
   // CHECK-ERROR:          ^
 
   casp b0, b1, [x2]
-  // CHECK-ERROR: error: expected first even register of a consecutive same-size even/odd register pair
+  // CHECK-ERROR: error: invalid operand for instruction
   // CHECK-ERROR:   casp b0, b1, [x2]
   // CHECK-ERROR:         ^
 
   casp b2, b3, [sp]
-  // CHECK-ERROR: error: expected first even register of a consecutive same-size even/odd register pair
+  // CHECK-ERROR: error: invalid operand for instruction
   // CHECK-ERROR:   casp b2, b3, [sp]
   // CHECK-ERROR:         ^
 
   casp h0, h1, [x2]
-  // CHECK-ERROR: error: expected first even register of a consecutive same-size even/odd register pair
+  // CHECK-ERROR: error: invalid operand for instruction
   // CHECK-ERROR:   casp h0, h1, [x2]
   // CHECK-ERROR:         ^
 
   casp h2, h3, [sp]
-  // CHECK-ERROR: error: expected first even register of a consecutive same-size even/odd register pair
+  // CHECK-ERROR: error: invalid operand for instruction
   // CHECK-ERROR:   casp h2, h3, [sp]
   // CHECK-ERROR:         ^
 
   caspa b0, b1, [x2]
-  // CHECK-ERROR: error: expected first even register of a consecutive same-size even/odd register pair
+  // CHECK-ERROR: error: invalid operand for instruction
   // CHECK-ERROR:   caspa b0, b1, [x2]
   // CHECK-ERROR:         ^
 
   caspa b2, b3, [sp]
-  // CHECK-ERROR: error: expected first even register of a consecutive same-size even/odd register pair
+  // CHECK-ERROR: error: invalid operand for instruction
   // CHECK-ERROR:   caspa b2, b3, [sp]
   // CHECK-ERROR:         ^
 
   caspa h0, h1, [x2]
-  // CHECK-ERROR: error: expected first even register of a consecutive same-size even/odd register pair
+  // CHECK-ERROR: error: invalid operand for instruction
   // CHECK-ERROR:   caspa h0, h1, [x2]
   // CHECK-ERROR:         ^
 
   caspa h2, h3, [sp]
-  // CHECK-ERROR: error: expected first even register of a consecutive same-size even/odd register pair
+  // CHECK-ERROR: error: invalid operand for instruction
   // CHECK-ERROR:   caspa h2, h3, [sp]
   // CHECK-ERROR:         ^
 
   caspl b0, b1, [x2]
-  // CHECK-ERROR: error: expected first even register of a consecutive same-size even/odd register pair
+  // CHECK-ERROR: error: invalid operand for instruction
   // CHECK-ERROR:   caspl b0, b1, [x2]
   // CHECK-ERROR:         ^
 
   caspl b2, b3, [sp]
-  // CHECK-ERROR: error: expected first even register of a consecutive same-size even/odd register pair
+  // CHECK-ERROR: error: invalid operand for instruction
   // CHECK-ERROR:   caspl b2, b3, [sp]
   // CHECK-ERROR:         ^
 
   caspl h0, h1, [x2]
-  // CHECK-ERROR: error: expected first even register of a consecutive same-size even/odd register pair
+  // CHECK-ERROR: error: invalid operand for instruction
   // CHECK-ERROR:   caspl h0, h1, [x2]
   // CHECK-ERROR:         ^
 
   caspl h2, h3, [sp]
-  // CHECK-ERROR: error: expected first even register of a consecutive same-size even/odd register pair
+  // CHECK-ERROR: error: invalid operand for instruction
   // CHECK-ERROR:   caspl h2, h3, [sp]
   // CHECK-ERROR:         ^
 
   caspal b0, b1, [x2]
-  // CHECK-ERROR: error: expected first even register of a consecutive same-size even/odd register pair
+  // CHECK-ERROR: error: invalid operand for instruction
   // CHECK-ERROR:   caspal b0, b1, [x2]
   // CHECK-ERROR:         ^
 
   caspal b2, b3, [sp]
-  // CHECK-ERROR: error: expected first even register of a consecutive same-size even/odd register pair
+  // CHECK-ERROR: error: invalid operand for instruction
   // CHECK-ERROR:   caspal b2, b3, [sp]
   // CHECK-ERROR:         ^
 
   caspal h0, h1, [x2]
-  // CHECK-ERROR: error: expected first even register of a consecutive same-size even/odd register pair
+  // CHECK-ERROR: error: invalid operand for instruction
   // CHECK-ERROR:   caspal h0, h1, [x2]
   // CHECK-ERROR:         ^
 
   caspal h2, h3, [sp]
-  // CHECK-ERROR: error: expected first even register of a consecutive same-size even/odd register pair
+  // CHECK-ERROR: error: invalid operand for instruction
   // CHECK-ERROR:   caspal h2, h3, [sp]
   // CHECK-ERROR:         ^
 

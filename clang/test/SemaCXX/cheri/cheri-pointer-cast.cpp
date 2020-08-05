@@ -22,6 +22,8 @@ int foo;
   dest reinterpretCast = reinterpret_cast<dest>(value); \
 } while(false)
 
+void * CAP get_random_capability();
+
 int main() {
   void* CAP x = (int* CAP)&foo;
   DO_CASTS(ulong, x); //expected-error-re {{static_cast from 'void *{{( __capability)?}}' to 'ulong' (aka 'unsigned long') is not allowed}}
@@ -78,7 +80,7 @@ T offset_set(T x, long off) {
   // expected-warning@-1 {{cast from capability type 'void * __capability' to non-capability, non-address type 'long'}}
   // expected-warning@-2 {{cast from provenance-free integer type to pointer type will give pointer that can not be dereferenced}} expected-note@-2 {{insert cast to intptr_t to silence this warning}}
 #ifndef __CHERI_PURE_CAPABILITY__
-  // expected-error@-4 {{cast from capability type 'void * __capability' to non-capability type 'x *'}}
+  // expected-error@-4 {{cast from capability type 'void * __capability' to non-capability type 'x *' is most likely an error; use __cheri_fromcap to convert between pointers and capabilities}}
 #endif
 }
 

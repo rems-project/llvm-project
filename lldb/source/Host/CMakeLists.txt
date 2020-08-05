@@ -174,6 +174,7 @@ add_lldb_library(lldbHost
 
   LINK_LIBS
     lldbUtility
+    lldbTarget
     ${EXTRA_LIBS}
     ${LLDBObjCLibs}
     ${LLDB_LIBEDIT_LIBS}

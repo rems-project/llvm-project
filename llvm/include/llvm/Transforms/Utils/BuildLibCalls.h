@@ -95,7 +95,7 @@ namespace llvm {
   /// the Len and ObjSize have type 'intptr_t' and Dst/Src are pointers.
   Value *emitMemCpyChk(Value *Dst, Value *Src, Value *Len, Value *ObjSize,
                        IRBuilder<> &B, const DataLayout &DL,
-                       const TargetLibraryInfo *TLI);
+                       const TargetLibraryInfo *TLI, bool HasCap);
 
   /// Emit a call to the memchr function. This assumes that Ptr is a pointer,
   /// Val is an i32 value, and Len is an 'intptr_t' value.

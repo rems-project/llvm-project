@@ -8,11 +8,13 @@
 
 #include "ABISysV_arm64.h"
 
+#include <cstring>
 #include <vector>
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Triple.h"
 
+#include "Plugins/ABI/Utility/LinuxSigInfo.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Value.h"
@@ -29,6 +31,7 @@
 #include "lldb/Utility/Status.h"
 
 #include "Utility/ARM64_DWARF_Registers.h"
+#include "Utility/ARM64_ehframe_Registers.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -1627,11 +1630,370 @@ static RegisterInfo g_register_infos[] = {
      nullptr,
      nullptr,
      nullptr,
+     0},
+
+    {"c0",
+     nullptr,
+     17,
+     0,
+     eEncodingCapability,
+     eFormatHex,
+     {arm64_ehframe::c0, arm64_dwarf::c0, LLDB_INVALID_REGNUM,
+      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM},
+     nullptr,
+     nullptr,
+     nullptr,
+     0},
+    {"c1",
+     nullptr,
+     17,
+     0,
+     eEncodingCapability,
+     eFormatHex,
+     {arm64_ehframe::c1, arm64_dwarf::c1, LLDB_INVALID_REGNUM,
+      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM},
+     nullptr,
+     nullptr,
+     nullptr,
+     0},
+    {"c2",
+     nullptr,
+     17,
+     0,
+     eEncodingCapability,
+     eFormatHex,
+     {arm64_ehframe::c2, arm64_dwarf::c2, LLDB_INVALID_REGNUM,
+      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM},
+     nullptr,
+     nullptr,
+     nullptr,
+     0},
+    {"c3",
+     nullptr,
+     17,
+     0,
+     eEncodingCapability,
+     eFormatHex,
+     {arm64_ehframe::c3, arm64_dwarf::c3, LLDB_INVALID_REGNUM,
+      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM},
+     nullptr,
+     nullptr,
+     nullptr,
+     0},
+    {"c4",
+     nullptr,
+     17,
+     0,
+     eEncodingCapability,
+     eFormatHex,
+     {arm64_ehframe::c4, arm64_dwarf::c4, LLDB_INVALID_REGNUM,
+      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM},
+     nullptr,
+     nullptr,
+     nullptr,
+     0},
+    {"c5",
+     nullptr,
+     17,
+     0,
+     eEncodingCapability,
+     eFormatHex,
+     {arm64_ehframe::c5, arm64_dwarf::c5, LLDB_INVALID_REGNUM,
+      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM},
+     nullptr,
+     nullptr,
+     nullptr,
+     0},
+    {"c6",
+     nullptr,
+     17,
+     0,
+     eEncodingCapability,
+     eFormatHex,
+     {arm64_ehframe::c6, arm64_dwarf::c6, LLDB_INVALID_REGNUM,
+      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM},
+     nullptr,
+     nullptr,
+     nullptr,
+     0},
+    {"c7",
+     nullptr,
+     17,
+     0,
+     eEncodingCapability,
+     eFormatHex,
+     {arm64_ehframe::c7, arm64_dwarf::c7, LLDB_INVALID_REGNUM,
+      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM},
+     nullptr,
+     nullptr,
+     nullptr,
+     0},
+    {"c24",
+     nullptr,
+     17,
+     0,
+     eEncodingCapability,
+     eFormatHex,
+     {arm64_ehframe::c24, arm64_dwarf::c24, LLDB_INVALID_REGNUM,
+      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM},
+     nullptr,
+     nullptr,
+     nullptr,
+     0},
+    {"c25",
+     nullptr,
+     17,
+     0,
+     eEncodingCapability,
+     eFormatHex,
+     {arm64_ehframe::c25, arm64_dwarf::c25, LLDB_INVALID_REGNUM,
+      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM},
+     nullptr,
+     nullptr,
+     nullptr,
+     0},
+    {"c26",
+     nullptr,
+     17,
+     0,
+     eEncodingCapability,
+     eFormatHex,
+     {arm64_ehframe::c26, arm64_dwarf::c26, LLDB_INVALID_REGNUM,
+      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM},
+     nullptr,
+     nullptr,
+     nullptr,
+     0},
+    {"c27",
+     nullptr,
+     17,
+     0,
+     eEncodingCapability,
+     eFormatHex,
+     {arm64_ehframe::c27, arm64_dwarf::c27, LLDB_INVALID_REGNUM,
+      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM},
+     nullptr,
+     nullptr,
+     nullptr,
+     0},
+    {"c28",
+     nullptr,
+     17,
+     0,
+     eEncodingCapability,
+     eFormatHex,
+     {arm64_ehframe::c28, arm64_dwarf::c28, LLDB_INVALID_REGNUM,
+      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM},
+     nullptr,
+     nullptr,
+     nullptr,
+     0},
+    {"cfp",
+     "c29",
+     17,
+     0,
+     eEncodingCapability,
+     eFormatHex,
+     {arm64_ehframe::cfp, arm64_dwarf::cfp, LLDB_REGNUM_GENERIC_CFP,
+      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM},
+     nullptr,
+     nullptr,
+     nullptr,
+     0},
+    {"clr",
+     "c30",
+     17,
+     0,
+     eEncodingCapability,
+     eFormatHex,
+     {arm64_ehframe::clr, arm64_dwarf::clr, LLDB_REGNUM_GENERIC_RAC,
+      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM},
+     nullptr,
+     nullptr,
+     nullptr,
+     0},
+    {"csp",
+     "c31",
+     17,
+     0,
+     eEncodingCapability,
+     eFormatHex,
+     {arm64_ehframe::csp, arm64_dwarf::csp, LLDB_REGNUM_GENERIC_CSP,
+      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM},
+     nullptr,
+     nullptr,
+     nullptr,
+     0},
+    {"pcc",
+     nullptr,
+     17,
+     0,
+     eEncodingCapability,
+     eFormatHex,
+     {LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_REGNUM_GENERIC_PCC,
+      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM},
+     nullptr,
+     nullptr,
+     nullptr,
+     0},
+    {"ddc",
+     nullptr,
+     17,
+     0,
+     eEncodingCapability,
+     eFormatHex,
+     {arm64_ehframe::ddc, arm64_dwarf::ddc, LLDB_INVALID_REGNUM,
+      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM},
+     nullptr,
+     nullptr,
+     nullptr,
+     0},
+
+    {"sp_el0",
+     nullptr,
+     8,
+     0,
+     eEncodingUint,
+     eFormatHex,
+     {arm64_ehframe::sp_el0, arm64_dwarf::sp_el0, LLDB_INVALID_REGNUM,
+      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM},
+     nullptr,
+     nullptr,
+     nullptr,
+     0},
+    {"rsp_el0",
+     nullptr,
+     8,
+     0,
+     eEncodingUint,
+     eFormatHex,
+     {arm64_ehframe::rsp_el0, arm64_dwarf::rsp_el0, LLDB_INVALID_REGNUM,
+      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM},
+     nullptr,
+     nullptr,
+     nullptr,
+     0},
+    {"csp_el0",
+     nullptr,
+     17,
+     0,
+     eEncodingCapability,
+     eFormatHex,
+     {arm64_ehframe::csp_el0, arm64_dwarf::csp_el0, LLDB_INVALID_REGNUM,
+      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM},
+     nullptr,
+     nullptr,
+     nullptr,
+     0},
+    {"rcsp_el0",
+     nullptr,
+     17,
+     0,
+     eEncodingCapability,
+     eFormatHex,
+     {arm64_ehframe::rcsp_el0, arm64_dwarf::rcsp_el0, LLDB_INVALID_REGNUM,
+      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM},
+     nullptr,
+     nullptr,
+     nullptr,
+     0},
+    {"ddc_el0",
+     nullptr,
+     17,
+     0,
+     eEncodingCapability,
+     eFormatHex,
+     {arm64_ehframe::ddc_el0, arm64_dwarf::ddc_el0, LLDB_INVALID_REGNUM,
+      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM},
+     nullptr,
+     nullptr,
+     nullptr,
+     0},
+    {"rddc_el0",
+     nullptr,
+     17,
+     0,
+     eEncodingCapability,
+     eFormatHex,
+     {arm64_ehframe::rddc_el0, arm64_dwarf::rddc_el0, LLDB_INVALID_REGNUM,
+      LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM},
+     nullptr,
+     nullptr,
+     nullptr,
      0}};
 
 static const uint32_t k_num_register_infos =
     llvm::array_lengthof(g_register_infos);
 static bool g_register_info_names_constified = false;
+
+static uint32_t GetCRegFromXRegForUnwind(RegisterContext &reg_ctx,
+                                         uint32_t lldb_regnum) {
+  // Convert the register number to the DWARF numbering to allow a sensible
+  // lookup.
+  uint32_t dwarf_regnum;
+  if (!reg_ctx.ConvertBetweenRegisterKinds(eRegisterKindLLDB, lldb_regnum,
+                                           eRegisterKindDWARF, dwarf_regnum))
+    return LLDB_INVALID_REGNUM;
+
+  // See if it is an Xn register and get its Cn alias.
+  uint32_t extended_dwarf_regnum;
+  if (dwarf_regnum >= arm64_dwarf::x0 && dwarf_regnum <= arm64_dwarf::x30)
+    extended_dwarf_regnum = arm64_dwarf::c0 + (dwarf_regnum - arm64_dwarf::x0);
+  else if (dwarf_regnum == arm64_dwarf::sp)
+    extended_dwarf_regnum = arm64_dwarf::csp;
+  else
+    return LLDB_INVALID_REGNUM;
+
+  // Convert the Cn register to the internal numbering.
+  uint32_t extended_lldb_regnum;
+  if (!reg_ctx.ConvertBetweenRegisterKinds(
+          eRegisterKindDWARF, extended_dwarf_regnum, eRegisterKindLLDB,
+          extended_lldb_regnum))
+    return LLDB_INVALID_REGNUM;
+
+  return extended_lldb_regnum;
+}
+
+static uint32_t GetXRegFromCRegForUnwind(RegisterContext &reg_ctx,
+                                         uint32_t lldb_regnum) {
+  // Convert the register number to the DWARF numbering to allow a sensible
+  // lookup.
+  uint32_t dwarf_regnum;
+  if (!reg_ctx.ConvertBetweenRegisterKinds(eRegisterKindLLDB, lldb_regnum,
+                                           eRegisterKindDWARF, dwarf_regnum))
+    return LLDB_INVALID_REGNUM;
+
+  // See if it is a Cn register and get its Xn alias.
+  uint32_t primordial_dwarf_regnum;
+  if (dwarf_regnum >= arm64_dwarf::c0 && dwarf_regnum <= arm64_dwarf::c30)
+    primordial_dwarf_regnum =
+        arm64_dwarf::x0 + (dwarf_regnum - arm64_dwarf::c0);
+  else if (dwarf_regnum == arm64_dwarf::csp)
+    primordial_dwarf_regnum = arm64_dwarf::sp;
+  else
+    return LLDB_INVALID_REGNUM;
+
+  // Convert the Xn register to the internal numbering.
+  uint32_t primordial_lldb_regnum;
+  if (!reg_ctx.ConvertBetweenRegisterKinds(
+          eRegisterKindDWARF, primordial_dwarf_regnum, eRegisterKindLLDB,
+          primordial_lldb_regnum))
+    return LLDB_INVALID_REGNUM;
+
+  return primordial_lldb_regnum;
+}
+
+static bool GetReturnRegisterType(RegisterContext &reg_ctx, RegisterKind kind,
+                                  uint32_t ra_regnum, bool &ra_is_capability) {
+  uint32_t ra_dwarf_regnum;
+  if (!reg_ctx.ConvertBetweenRegisterKinds(kind, ra_regnum, eRegisterKindDWARF,
+                                           ra_dwarf_regnum))
+    return false;
+
+  ra_is_capability =
+      ra_dwarf_regnum >= arm64_dwarf::c0 && ra_dwarf_regnum <= arm64_dwarf::c30;
+  return true;
+}
 
 const lldb_private::RegisterInfo *
 ABISysV_arm64::GetRegisterInfoArray(uint32_t &count) {
@@ -1997,9 +2359,58 @@ bool ABISysV_arm64::CreateDefaultUnwindPlan(UnwindPlan &unwind_plan) {
 // We treat x29 as callee preserved also, else the unwinder won't try to
 // retrieve fp saves.
 
-bool ABISysV_arm64::RegisterIsVolatile(const RegisterInfo *reg_info) {
+bool ABISysV_arm64::RegisterIsVolatile(RegisterContext &reg_ctx,
+                                       const RegisterInfo *reg_info,
+                                       FrameState frame_state,
+                                       const UnwindPlan *unwind_plan) {
   if (reg_info) {
     const char *name = reg_info->name;
+
+    // Handle special capability registers.
+    if (std::strcmp(name, "csp") == 0)
+      return true;
+
+    // Treat SP_EL0/CSP_EL0 as volatile unless in the restricted state which
+    // maps its SP/CSP to RSP_EL0/RCSP_EL0 and preserves SP_EL0/CSP_EL0 by
+    // default, and similarly for the executive state and RSP_EL0/RCSP_EL0.
+    if (std::strcmp(name, "sp_el0") == 0 || std::strcmp(name, "csp_el0") == 0)
+      return frame_state != eFrameStateRestricted;
+    if (std::strcmp(name, "rsp_el0") == 0 || std::strcmp(name, "rcsp_el0") == 0)
+      return frame_state != eFrameStateExecutive;
+
+    if (std::strcmp(name, "pcc") == 0)
+      return true;
+    if (std::strcmp(name, "ddc") == 0 || std::strcmp(name, "ddc_el0") == 0 ||
+        std::strcmp(name, "rddc_el0") == 0)
+      return false;
+
+    // Registers C19-C30 are volatile in the (base) AAPCS64 ABI but non-volatile
+    // in the pure capability ABI. Determine the ABI from the return address
+    // register that the code uses. If RA is a capability then the code uses the
+    // pure capability ABI, if it is not then AAPCS64 is used. In case the
+    // unwind plan is not available or an error occurs when determining the
+    // return address register treat C19-C30 defensively as volatile.
+    if (name[0] == 'c' &&
+        (std::strcmp(name + 1, "19") == 0 ||
+         (name[1] == '2' && name[3] == '\0') ||
+         std::strcmp(name + 1, "30") == 0 || std::strcmp(name + 1, "fp") == 0 ||
+         std::strcmp(name + 1, "lr") == 0)) {
+      bool is_purecap = false;
+      if (unwind_plan) {
+        bool ra_is_capability;
+        if (GetReturnRegisterType(reg_ctx, unwind_plan->GetRegisterKind(),
+                                  unwind_plan->GetReturnAddressRegister(),
+                                  ra_is_capability))
+          is_purecap = ra_is_capability;
+      }
+
+      return !is_purecap;
+    }
+
+    // Handle thread pointer registers.
+    if (std::strcmp(name, "tpidr_el0") == 0 ||
+        std::strcmp(name, "ctpidr_el0") == 0)
+      return false;
 
     // Sometimes we'll be called with the "alternate" name for these registers;
     // recognize them as non-volatile.
@@ -2076,6 +2487,235 @@ bool ABISysV_arm64::RegisterIsVolatile(const RegisterInfo *reg_info) {
       }
     }
   }
+  return true;
+}
+
+bool ABISysV_arm64::GetFallbackRegisterLocation(
+    RegisterContext &reg_ctx, const RegisterInfo *reg_info,
+    FrameState frame_state, const UnwindPlan *unwind_plan,
+    RegisterKind &unwind_registerkind,
+    UnwindPlan::Row::RegisterLocation &unwind_regloc) {
+  // Define caller's capability stack pointer to be same as this frame's
+  // capability CFA.
+  if (reg_info->kinds[eRegisterKindGeneric] == LLDB_REGNUM_GENERIC_CSP) {
+    unwind_regloc.SetIsCFAPlusOffset(0);
+    return true;
+  }
+
+  // Define caller's capability return register to be same as the current PCC
+  // value with the address part updated to caller's LR. This also allows to
+  // restore caller's PCC because the unwinder first does the PCC -> CLR
+  // translation and then can ask this code for the location of CLR.
+  if (reg_info->kinds[eRegisterKindGeneric] == LLDB_REGNUM_GENERIC_RAC) {
+    unwind_registerkind = eRegisterKindGeneric;
+    unwind_regloc.SetRegisterOverlay(LLDB_REGNUM_GENERIC_PCC,
+                                     LLDB_REGNUM_GENERIC_RA);
+    return true;
+  }
+
+  // Define caller's state-specific stack pointers.
+  uint32_t dwarf_regnum = reg_info->kinds[eRegisterKindDWARF];
+  if (dwarf_regnum == arm64_dwarf::sp_el0 ||
+      dwarf_regnum == arm64_dwarf::rsp_el0 ||
+      dwarf_regnum == arm64_dwarf::csp_el0 ||
+      dwarf_regnum == arm64_dwarf::rcsp_el0) {
+    switch (frame_state) {
+    case eFrameStateSimple:
+      unwind_regloc.SetUndefined();
+      return true;
+    case eFrameStateExecutive:
+    case eFrameStateRestricted: {
+      bool is_exec = frame_state == eFrameStateExecutive;
+      // If a callee is in the executive state then define SP_EL0 to be same as
+      // this frame's CFA, and similarly for the restricted state and RSP.
+      if ((is_exec && dwarf_regnum == arm64_dwarf::sp_el0) ||
+          (!is_exec && dwarf_regnum == arm64_dwarf::rsp_el0)) {
+        unwind_regloc.SetIsCFAPlusOffset(0);
+        return true;
+      }
+      // If a callee is in the executive state then define CSP_EL0 to be same as
+      // this frame's capability CFA, and similarly for the restricted state and
+      // RCSP_EL0.
+      if ((is_exec && dwarf_regnum == arm64_dwarf::csp_el0) ||
+          (!is_exec && dwarf_regnum == arm64_dwarf::rcsp_el0)) {
+        unwind_regloc.SetIsCFAPlusOffset(0);
+        return true;
+      }
+      break;
+    }
+    }
+  }
+
+  return ABI::GetFallbackRegisterLocation(reg_ctx, reg_info, frame_state,
+                                          unwind_plan, unwind_registerkind,
+                                          unwind_regloc);
+}
+
+uint32_t
+ABISysV_arm64::GetExtendedRegisterForUnwind(RegisterContext &reg_ctx,
+                                            uint32_t lldb_regnum) const {
+  return GetCRegFromXRegForUnwind(reg_ctx, lldb_regnum);
+}
+
+uint32_t ABISysV_arm64::GetPrimordialRegisterForUnwind(
+    RegisterContext &reg_ctx, uint32_t lldb_regnum, uint32_t byte_size) const {
+  // All primordial registers on AArch64 have size of 8 bytes.
+  if (byte_size != 8)
+    return LLDB_INVALID_REGNUM;
+
+  return GetXRegFromCRegForUnwind(reg_ctx, lldb_regnum);
+}
+
+uint32_t
+ABISysV_arm64::GetReturnRegisterForUnwind(RegisterContext &reg_ctx,
+                                          uint32_t pc_lldb_regnum,
+                                          uint32_t ra_lldb_regnum) const {
+  // Convert the PC register to the generic numbering.
+  uint32_t pc_generic_regnum;
+  if (!reg_ctx.ConvertBetweenRegisterKinds(eRegisterKindLLDB, pc_lldb_regnum,
+                                           eRegisterKindGeneric,
+                                           pc_generic_regnum))
+    return LLDB_INVALID_REGNUM;
+
+  // Determine a return address type.
+  bool ra_is_capability;
+  if (!GetReturnRegisterType(reg_ctx, eRegisterKindLLDB, ra_lldb_regnum,
+                             ra_is_capability))
+    return LLDB_INVALID_REGNUM;
+
+  // Calculate the output search register:
+  // +------+-----------+--------+
+  // | Case |   Input   | Output |
+  // |      | PC  | RA  | search |
+  // +======+=====+=====+========+
+  // | (1)  | PCC | CLR |  CLR   |
+  // | (2)  | PCC | LR  |  CLR   |
+  // | (3)  | PC  | CLR |  LR    |
+  // | (4)  | PC  | LR  |  LR    |
+  // +------+-----+-----+--------+
+  //
+  // 1) Value of the PCC register is requested and the unwind plan specifies CLR
+  //    (or generally any other capability register) as RA. The latter means
+  //    the code preserves the complete CLR value which implies the following:
+  //    * Value of PCC should be obtained by searching directly for CLR.
+  //    * In the 0th frame, if an unwind rule is missing for CLR it means the
+  //      register was not saved yet anywhere and its value can be grabbed from
+  //      the live context.
+  // 2) Value of the PCC register is requested and the unwind plan specifies LR
+  //    (or generally any non-capability register) as RA. The latter means that
+  //    it cannot be assumed that the code preserves the complete CLR value,
+  //    which implies the following:
+  //    * Value of PCC should be still obtained by searching for CLR. If the
+  //      unwind plan actually specifies any rule for this register it should be
+  //      used, if it is missing then a fallback rule that CLR in a previous
+  //      frame is the current PCC with its address part overwritten by the
+  //      restored LR gets used.
+  //    * In the 0th frame, if an unwind rule is missing for CLR its value
+  //      cannot be obtained from the live register context because its tag and
+  //      attributes might have been trashed by capability-unaware instructions.
+  // 3) Value of the PC register is requested and the unwind plan specifies CLR
+  //    as RA. This implies:
+  //    * Value of PC should be obtained by searching for LR.
+  //    * In the 0th frame, if an unwind rule is missing for LR its value should
+  //      be obtained through alias search for CLR. If that for some reason
+  //      fails then the value should be treated as unavailable.
+  // 4) Value of the PC register is requested and the unwind plan specifies LR
+  //    as RA. This implies:
+  //    * Value of PC should be obtained by searching for LR.
+  //    * In the 0th frame, if an unwind rule is missing for LR it should be
+  //      first checked whether it is not possible to get its rule through alias
+  //      search for CLR. If not then the value can be grabbed from the live
+  //      context.
+  if (pc_generic_regnum == LLDB_REGNUM_GENERIC_PCC) {
+    if (ra_is_capability)
+      return ra_lldb_regnum;
+    else
+      return GetCRegFromXRegForUnwind(reg_ctx, ra_lldb_regnum);
+  } else if (pc_generic_regnum == LLDB_REGNUM_GENERIC_PC) {
+    if (ra_is_capability)
+      return GetXRegFromCRegForUnwind(reg_ctx, ra_lldb_regnum);
+    else
+      return ra_lldb_regnum;
+  } else
+    return LLDB_INVALID_REGNUM;
+}
+
+bool ABISysV_arm64::GetFrameState(RegisterContext &reg_ctx,
+                                  FrameState &state) const {
+  // Check whether the target has PCC. If not then it does not support
+  // capabilities and has only one state.
+  uint32_t pcc_regnum = reg_ctx.ConvertRegisterKindToRegisterNumber(
+      eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PCC);
+  if (pcc_regnum == LLDB_INVALID_REGNUM) {
+    state = eFrameStateSimple;
+    return true;
+  }
+
+  // Read the PCC register.
+  const RegisterInfo *pcc_info = reg_ctx.GetRegisterInfoAtIndex(pcc_regnum);
+  RegisterValue pcc_value;
+  if (!reg_ctx.ReadRegister(pcc_info, pcc_value))
+    return false;
+
+  // Determine the frame capability state.
+  bool is_executive;
+  if (!pcc_value.IsBitSet(arm64_dwarf::pcc_executive_bit, is_executive))
+    return false;
+
+  state = is_executive ? eFrameStateExecutive : eFrameStateRestricted;
+  return true;
+}
+
+bool ABISysV_arm64::GetCalleeRegisterToSearch(
+    RegisterContext &reg_ctx, uint32_t lldb_regnum,
+    FrameState caller_frame_state, uint32_t &search_lldb_regnum) const {
+  // By default, the searched register remains unchanged.
+  search_lldb_regnum = lldb_regnum;
+
+  uint32_t dwarf_regnum;
+  if (!reg_ctx.ConvertBetweenRegisterKinds(eRegisterKindLLDB, lldb_regnum,
+                                           eRegisterKindDWARF, dwarf_regnum))
+    return true;
+
+  // Check whether the register value depends on the state.
+  if (dwarf_regnum != arm64_dwarf::sp && dwarf_regnum != arm64_dwarf::csp &&
+      dwarf_regnum != arm64_dwarf::ddc)
+    return true;
+
+  switch (caller_frame_state) {
+  case eFrameStateSimple:
+    if (dwarf_regnum == arm64_dwarf::sp)
+      return true;
+    // Registers csp and ddc always depend on the state.
+    return false;
+  case eFrameStateExecutive:
+  case eFrameStateRestricted:
+    break;
+  }
+
+  bool is_exec = caller_frame_state == eFrameStateExecutive;
+  uint32_t search_dwarf_regnum;
+  switch (dwarf_regnum) {
+  case arm64_dwarf::sp:
+    search_dwarf_regnum = is_exec ? arm64_dwarf::sp_el0 : arm64_dwarf::rsp_el0;
+    break;
+  case arm64_dwarf::csp:
+    search_dwarf_regnum =
+        is_exec ? arm64_dwarf::csp_el0 : arm64_dwarf::rcsp_el0;
+    break;
+  case arm64_dwarf::ddc:
+    search_dwarf_regnum =
+        is_exec ? arm64_dwarf::ddc_el0 : arm64_dwarf::rddc_el0;
+    break;
+  default:
+    llvm_unreachable("Unexpected register number.");
+  }
+
+  if (!reg_ctx.ConvertBetweenRegisterKinds(
+          eRegisterKindDWARF, search_dwarf_regnum, eRegisterKindLLDB,
+          search_lldb_regnum))
+    return false;
+
   return true;
 }
 
@@ -2397,6 +3037,15 @@ ValueObjectSP ABISysV_arm64::GetReturnValueObjectImpl(
     }
   }
   return return_valobj_sp;
+}
+
+CompilerType
+ABISysV_arm64::GetSigInfoCompilerType(const Target &target,
+                                      ClangASTContext &ast_ctx,
+                                      llvm::StringRef type_name) const {
+  if (target.GetArchitecture().GetTriple().isOSLinux())
+    return GetLinuxSigInfoCompilerType(ast_ctx, type_name);
+  return CompilerType();
 }
 
 void ABISysV_arm64::Initialize() {

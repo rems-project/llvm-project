@@ -532,6 +532,10 @@ Status Value::GetValueAsData(ExecutionContext *exe_ctx, DataExtractor &data,
 
   uint8_t *dst = const_cast<uint8_t *>(data.PeekData(0, byte_size));
   if (dst != nullptr) {
+    MemoryContentType content_type = eMemoryContentNormal;
+    if (ast_type.IsValid())
+      content_type = ast_type.GetMemoryContentType();
+
     if (address_type == eAddressTypeHost) {
       // The address is an address in this process, so just copy it.
       if (address == 0) {
@@ -539,10 +543,17 @@ Status Value::GetValueAsData(ExecutionContext *exe_ctx, DataExtractor &data,
             "trying to read from host address of 0.");
         return error;
       }
+      if (content_type != eMemoryContentNormal) {
+        error.SetErrorStringWithFormat(
+            "invalid read of %s from host address 0x%" PRIx64,
+            GetMemoryContentTypeAsCString(content_type), address);
+        return error;
+      }
+
       memcpy(dst, reinterpret_cast<uint8_t *>(address), byte_size);
     } else if ((address_type == eAddressTypeLoad) ||
                (address_type == eAddressTypeFile)) {
-      if (file_so_addr.IsValid()) {
+      if (file_so_addr.IsValid() && content_type == eMemoryContentNormal) {
         // We have a file address that we were able to translate into a section
         // offset address so we might be able to read this from the object
         // files if we don't have a live process. Lets always try and read from
@@ -564,11 +575,22 @@ Status Value::GetValueAsData(ExecutionContext *exe_ctx, DataExtractor &data,
 
         if (process) {
           const size_t bytes_read =
-              process->ReadMemory(address, dst, byte_size, error);
+              process->ReadMemory(address, dst, byte_size, error, content_type);
           if (bytes_read != byte_size)
             error.SetErrorStringWithFormat(
                 "read memory from 0x%" PRIx64 " failed (%u of %u bytes read)",
                 (uint64_t)address, (uint32_t)bytes_read, (uint32_t)byte_size);
+
+          // Convert tagged memory data into an actual value.
+          //
+          // TODO Morello: Instead of using ArchSpec::GetCapabilityByteOrder(),
+          // it would be better if the endianness came from the type
+          // information, i.e. from DW_AT_endianity in DWARF.
+          if (error.Success() && IsTaggedMemoryContentType(content_type))
+            TaggedMemory::TransformDataToValue(
+                data, content_type,
+                process->GetTarget().GetArchitecture().GetCapabilityByteOrder(),
+                error);
         } else {
           error.SetErrorStringWithFormat("read memory from 0x%" PRIx64
                                          " failed (invalid process)",

@@ -223,11 +223,93 @@ static inline bool atomicBarrierDroppedOnZero(unsigned Opcode) {
   case AArch64::SWPAW:     case AArch64::SWPAX:
   case AArch64::SWPALB:    case AArch64::SWPALH:
   case AArch64::SWPALW:    case AArch64::SWPALX:
+  // And C64 opcodes.
+  case AArch64::ALDADDAB:   case AArch64::ALDADDAH:
+  case AArch64::ALDADDAW:   case AArch64::ALDADDAX:
+  case AArch64::ALDADDALB:  case AArch64::ALDADDALH:
+  case AArch64::ALDADDALW:  case AArch64::ALDADDALX:
+  case AArch64::ALDCLRAB:   case AArch64::ALDCLRAH:
+  case AArch64::ALDCLRAW:   case AArch64::ALDCLRAX:
+  case AArch64::ALDCLRALB:  case AArch64::ALDCLRALH:
+  case AArch64::ALDCLRALW:  case AArch64::ALDCLRALX:
+  case AArch64::ALDEORAB:   case AArch64::ALDEORAH:
+  case AArch64::ALDEORAW:   case AArch64::ALDEORAX:
+  case AArch64::ALDEORALB:  case AArch64::ALDEORALH:
+  case AArch64::ALDEORALW:  case AArch64::ALDEORALX:
+  case AArch64::ALDSETAB:   case AArch64::ALDSETAH:
+  case AArch64::ALDSETAW:   case AArch64::ALDSETAX:
+  case AArch64::ALDSETALB:  case AArch64::ALDSETALH:
+  case AArch64::ALDSETALW:  case AArch64::ALDSETALX:
+  case AArch64::ALDSMAXAB:  case AArch64::ALDSMAXAH:
+  case AArch64::ALDSMAXAW:  case AArch64::ALDSMAXAX:
+  case AArch64::ALDSMAXALB: case AArch64::ALDSMAXALH:
+  case AArch64::ALDSMAXALW: case AArch64::ALDSMAXALX:
+  case AArch64::ALDSMINAB:  case AArch64::ALDSMINAH:
+  case AArch64::ALDSMINAW:  case AArch64::ALDSMINAX:
+  case AArch64::ALDSMINALB: case AArch64::ALDSMINALH:
+  case AArch64::ALDSMINALW: case AArch64::ALDSMINALX:
+  case AArch64::ALDUMAXAB:  case AArch64::ALDUMAXAH:
+  case AArch64::ALDUMAXAW:  case AArch64::ALDUMAXAX:
+  case AArch64::ALDUMAXALB: case AArch64::ALDUMAXALH:
+  case AArch64::ALDUMAXALW: case AArch64::ALDUMAXALX:
+  case AArch64::ALDUMINAB:  case AArch64::ALDUMINAH:
+  case AArch64::ALDUMINAW:  case AArch64::ALDUMINAX:
+  case AArch64::ALDUMINALB: case AArch64::ALDUMINALH:
+  case AArch64::ALDUMINALW: case AArch64::ALDUMINALX:
+  case AArch64::ASWPAB:     case AArch64::ASWPAH:
+  case AArch64::ASWPAW:     case AArch64::ASWPAX:
+  case AArch64::ASWPALB:    case AArch64::ASWPALH:
+  case AArch64::ASWPALW:    case AArch64::ASWPALX:
     return true;
   }
   return false;
 }
 
+namespace AArch64SealForm {
+  enum SealForm {
+    Invalid = 0,
+    RB   = 0b01,
+    LPB  = 0b10,
+    LB   = 0b11,
+  };
+
+inline static const char *getCapSealFormName(SealForm Perm) {
+  switch (Perm) {
+  case RB: return "rb";
+  case LPB: return "lpb";
+  case LB: return "lb";
+  default: llvm_unreachable("Unknown capability permission");
+  }
+}
+};
+
+namespace AArch64CapPerm {
+  enum CapPerm {
+    None = 0b000,
+    X   = 0b001,
+    W   = 0b010,
+    WX  = 0b011,
+    R   = 0b100,
+    RX  = 0b101,
+    RW  = 0b110,
+    RWX = 0b111
+  };
+
+inline static const char *getCapPermName(CapPerm Perm) {
+  switch (Perm) {
+  case None: return "#0";
+  case X: return "x";
+  case W: return "w";
+  case WX: return "wx";
+  case R: return "r";
+  case RX: return "rx";
+  case RW: return "rw";
+  case RWX: return "rwx";
+  }
+  llvm_unreachable("Unknown capability permission");
+}
+
+};
 namespace AArch64CC {
 
 // The CondCodes constants map directly to the 4-bit encoding of the condition
@@ -523,6 +605,48 @@ AArch64StringToVectorLayout(StringRef LayoutStr) {
              .Case(".s", AArch64Layout::VL_S)
              .Case(".d", AArch64Layout::VL_D)
              .Default(AArch64Layout::Invalid);
+}
+
+namespace AArch64CSysReg {
+  struct CSysReg {
+    const char *Name;
+    unsigned Encoding;
+    FeatureBitset FeaturesRequired;
+
+    bool haveFeatures(FeatureBitset ActiveFeatures) const {
+      return (FeaturesRequired & ActiveFeatures) == FeaturesRequired;
+    }
+  };
+
+  #define GET_CSYSREG_DECL
+  #include "AArch64GenSystemOperands.inc"
+
+  const CSysReg *lookupSysRegByName(StringRef);
+  const CSysReg *lookupSysRegByEncoding(uint16_t);
+
+  uint32_t parseGenericRegister(StringRef Name);
+  std::string genericRegisterString(uint32_t Bits);
+}
+
+namespace AArch64MorelloCSysReg {
+  struct MorelloCSysReg {
+    const char *Name;
+    unsigned Encoding;
+    FeatureBitset FeaturesRequired;
+
+    bool haveFeatures(FeatureBitset ActiveFeatures) const {
+      return (FeaturesRequired & ActiveFeatures) == FeaturesRequired;
+    }
+  };
+
+  #define GET_MORELLOCSYSREG_DECL
+  #include "AArch64GenSystemOperands.inc"
+
+  const MorelloCSysReg *lookupSysRegByName(StringRef);
+  const MorelloCSysReg *lookupSysRegByEncoding(uint16_t);
+
+  uint32_t parseGenericRegister(StringRef Name);
+  std::string genericRegisterString(uint32_t Bits);
 }
 
 namespace AArch64SysReg {

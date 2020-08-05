@@ -82,6 +82,7 @@ bool RegisterContextMacOSXFrameBackchain::ReadRegister(
 
   case eEncodingUint:
   case eEncodingSint:
+  case eEncodingCapability:
     value.SetUInt(reg_value, reg_info->byte_size);
     return true;
 

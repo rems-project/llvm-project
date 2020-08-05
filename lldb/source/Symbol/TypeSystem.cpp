@@ -80,12 +80,14 @@ CompilerType TypeSystem::GetArrayType(lldb::opaque_compiler_type_t type,
 }
 
 CompilerType
-TypeSystem::GetLValueReferenceType(lldb::opaque_compiler_type_t type) {
+TypeSystem::GetLValueReferenceType(lldb::opaque_compiler_type_t type,
+                                   lldb::AddressSpace address_space) {
   return CompilerType();
 }
 
 CompilerType
-TypeSystem::GetRValueReferenceType(lldb::opaque_compiler_type_t type) {
+TypeSystem::GetRValueReferenceType(lldb::opaque_compiler_type_t type,
+                                   lldb::AddressSpace address_space) {
   return CompilerType();
 }
 

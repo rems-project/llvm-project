@@ -1,3 +1,5 @@
+# REQUIRES: mips
+
 # Check that we don't emit relocations against a symbol if -Bsymbolic is used
 # All relocations should be load address plus offset and not preemptible!
 # This was a problem with __cap_relocs and was found building RTLD

@@ -323,7 +323,7 @@ handleTlsRelocation(RelType type, Symbol &sym, InputSectionBase &c,
 
         // If the symbol is preemptible we need the dynamic linker to write
         // the offset too.
-        uint64_t offsetOff = off + config->wordsize;
+        uint64_t offsetOff = off + config->gotEntrySize;
         if (sym.isPreemptible)
           mainPart->relaDyn->addReloc(target->tlsOffsetRel, in.got, offsetOff,
                                   &sym);
@@ -1126,17 +1126,36 @@ static void addGotEntry(Symbol &sym) {
   bool isLinkTimeConstant =
       !sym.isPreemptible && (!config->isPic || isAbsolute(sym));
   if (isLinkTimeConstant) {
-    in.got->relocations.push_back({expr, target->symbolicRel, off, 0, &sym});
+    if (config->morelloC64Plt)
+      // Even if there is a link time constant we cannot statically initialize
+      // a capability. When dynamic linking the dynamic loader creates the
+      // capability, when static linking the function adds an entry to the
+      // __cap_relocs table.
+      addMorelloC64GotRelocation(target->relativeRel, &sym, off);
+    else
+      in.got->relocations.push_back({expr, target->symbolicRel, off, 0, &sym});
     return;
   }
 
   // Otherwise, we emit a dynamic relocation to .rel[a].dyn so that
   // the GOT slot will be fixed at load-time.
   if (!sym.isTls() && !sym.isPreemptible && config->isPic && !isAbsolute(sym)) {
-    addRelativeReloc(in.got, off, &sym, 0, R_ABS, target->symbolicRel);
+    if (config->morelloC64Plt)
+      // As well as writing the Relative relocation there are additional
+      // static relocations needed to initialize the GOT entry. Delegate this
+      // to addMorelloC64GotRelocation.
+      addMorelloC64GotRelocation(target->relativeRel, &sym, off);
+    else
+      addRelativeReloc(in.got, off, &sym, 0, R_ABS, target->symbolicRel);
     return;
   }
-  mainPart->relaDyn->addReloc(
+  if (config->morelloC64Plt && !sym.isTls())
+    // As with the Relative relocation there are additional static relocations
+    // needed to initialize the GOT entry. We do not do this for TLS symbols as
+    // the GOT generating TLS relocation is not a capability (offset from TP).
+    addMorelloC64GotRelocation(target->gotRel, &sym, off);
+  else
+    mainPart->relaDyn->addReloc(
       sym.isTls() ? target->tlsGotRel : target->gotRel, in.got, off, &sym, 0,
       sym.isPreemptible ? R_ADDEND : R_ABS, target->symbolicRel);
 }
@@ -1462,6 +1481,16 @@ static void scanReloc(InputSectionBase &sec, OffsetGetter &getOffset, RelTy *&i,
     in.cheriCapTable->addEntry(sym, expr, &sec, offset);
     // Write out the index into the instruction
     sec.relocations.push_back({expr, type, offset, addend, &sym});
+    return;
+  }
+  if (config->emachine == EM_AARCH64 && !config->morelloC64Plt &&
+      (needsGot(expr) || needsPlt(expr)) &&
+      (type == R_MORELLO_CALL26 || type == R_MORELLO_JUMP26 ||
+       type == R_MORELLO_LD128_GOT_LO12_NC)) {
+    // We require 16-byte GOT entries and a different PLT sequence, we
+    // need --morello-c64-plt to choose these prior to this point.
+    error("Morello PLT/GOT generating relocation " + toString(type) +
+          " requires --morello-c64-plt");
     return;
   }
 

@@ -1,5 +1,8 @@
 // RUN: %cheri_purecap_cc1 -O2 -masm-verbose -mframe-pointer=none -fcxx-exceptions -fexceptions %s -emit-obj -o %t.o
 // RUN: llvm-readobj -r %t.o | FileCheck %s --check-prefix=OBJ-RELOCS
+
+// REQUIRES: mips
+
 /// Should have two relocations against _Z4testll
 // OBJ-RELOCS:      Section ({{.+}}) .rela.gcc_except_table {
 // OBJ-RELOCS-NEXT:   R_MIPS_CHERI_CAPABILITY/R_MIPS_NONE/R_MIPS_NONE _Z4testll

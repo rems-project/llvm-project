@@ -53,7 +53,7 @@ body:             |
     $p15 = IMPLICIT_DEF
 
     $p0 = COPY %0
-    RET_ReallyLR
+    RET_ReallyLR 0
 ...
 ---
 name: spills_fills_stack_id_zpr
@@ -88,5 +88,5 @@ body:             |
     $z28_z29_z30_z31 = IMPLICIT_DEF
 
     $z0 = COPY %0
-    RET_ReallyLR
+    RET_ReallyLR 0
 ...

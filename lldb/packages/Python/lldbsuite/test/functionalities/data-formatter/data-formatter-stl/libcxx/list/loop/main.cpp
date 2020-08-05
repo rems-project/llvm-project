@@ -4,8 +4,15 @@
 #define protected public
 
 #include <list>
+#include <type_traits>
+
 #include <stdio.h>
 #include <assert.h>
+
+// Internals of the std::list implementation in libcxx changed on "Wed Dec 30
+// 20:57:59 2015" in commit "[libcxx] Fix for ALL undefined behavior in <list>".
+// The following code makes the test work across older libcxx list and newer one
+// simultaneously.
 
 typedef std::list<int> int_list;
 

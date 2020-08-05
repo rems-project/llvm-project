@@ -621,6 +621,26 @@ int64_t DataExtractor::GetMaxS64Bitfield(offset_t *offset_ptr, size_t size,
   return sval64;
 }
 
+llvm::APInt DataExtractor::GetAPInt(offset_t *offset_ptr,
+                                    size_t byte_size) const {
+  llvm::APInt res(8 * byte_size, 0);
+  const uint8_t *data =
+      static_cast<const uint8_t *>(GetData(offset_ptr, byte_size));
+  if (!data)
+    return res;
+
+  if (m_byte_order == eByteOrderLittle)
+    for (size_t i = 0; i < byte_size; ++i)
+      res = (res << 8) | data[byte_size - 1 - i];
+  else {
+    assert(m_byte_order == eByteOrderBig);
+    for (size_t i = 0; i < byte_size; ++i)
+      res = (res << 8) | data[i];
+  }
+
+  return res;
+}
+
 float DataExtractor::GetFloat(offset_t *offset_ptr) const {
   typedef float float_type;
   float_type val = 0.0;

@@ -1,5 +1,5 @@
 // check that it doesn't crash
-// RUN: %cheri_purecap_cc1 -w -emit-obj -O2 -std=gnu99 -o /dev/null %s
+// RXUN: %cheri_purecap_cc1 -w -emit-obj -O2 -std=gnu99 -o /dev/null %s
 // next check that it emits sensible IR:
 // RUN: %cheri_purecap_cc1 -w -O2 -std=gnu99 -o - -emit-llvm %s -mllvm -cheri-cap-table-abi=legacy | FileCheck %s -check-prefix LEGACY
 // RUN: %cheri_purecap_cc1 -w -O2 -std=gnu99 -DNEW_ABI -o - -emit-llvm %s -mllvm -cheri-cap-table-abi=pcrel | FileCheck %s -check-prefix PCREL

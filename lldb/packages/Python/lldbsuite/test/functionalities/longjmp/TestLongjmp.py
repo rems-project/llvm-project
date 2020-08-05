@@ -16,7 +16,7 @@ class LongjmpTestCase(TestBase):
 
     @skipIfDarwin  # llvm.org/pr16769: LLDB on Mac OS X dies in function ReadRegisterBytes in GDBRemoteRegisterContext.cpp
     @skipIfFreeBSD  # llvm.org/pr17214
-    @expectedFailureAll(oslist=["linux"], bugnumber="llvm.org/pr20231")
+    @skipIfLinux # Can pass on some linux systems and fail on others so skip it
     @expectedFailureAll(oslist=["windows"], bugnumber="llvm.org/pr24778")
     @expectedFlakeyNetBSD
     def test_step_out(self):
@@ -26,7 +26,7 @@ class LongjmpTestCase(TestBase):
 
     @skipIfDarwin  # llvm.org/pr16769: LLDB on Mac OS X dies in function ReadRegisterBytes in GDBRemoteRegisterContext.cpp
     @skipIfFreeBSD  # llvm.org/pr17214
-    @expectedFailureAll(oslist=["linux"], bugnumber="llvm.org/pr20231")
+    @skipIfLinux # Can pass on some linux systems and fail on others so skip it
     @expectedFailureAll(oslist=["windows"], bugnumber="llvm.org/pr24778")
     @skipIfNetBSD
     def test_step_over(self):
@@ -36,7 +36,7 @@ class LongjmpTestCase(TestBase):
 
     @skipIfDarwin  # llvm.org/pr16769: LLDB on Mac OS X dies in function ReadRegisterBytes in GDBRemoteRegisterContext.cpp
     @skipIfFreeBSD  # llvm.org/pr17214
-    @expectedFailureAll(oslist=["linux"], bugnumber="llvm.org/pr20231")
+    @skipIfLinux # Can pass on some linux systems and fail on others so skip it
     @expectedFailureAll(oslist=["windows"], bugnumber="llvm.org/pr24778")
     @expectedFlakeyNetBSD
     def test_step_back_out(self):

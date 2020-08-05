@@ -1,4 +1,4 @@
-// REQUIRES: clang
+// REQUIRES: clang, mips
 
 // RUN: %cheri256_purecap_cc1 -mllvm -cheri-cap-table-abi=legacy -emit-obj %S/Inputs/external_lib_user.c -o %t.o
 // RUN: %cheri256_purecap_cc1 -mllvm -cheri-cap-table-abi=legacy -emit-obj %S/Inputs/external_lib.c -o %t-externs.o

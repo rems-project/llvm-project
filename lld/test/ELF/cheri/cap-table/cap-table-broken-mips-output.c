@@ -1,3 +1,4 @@
+// REQUIRES: mips
 // Previously, lld would create a broken _CHERI_CAPABILITY_TABLE_ symbol even if
 // the output doesn't contain a CHERI captable
 // This previously caused the following error in llvm-objdump: index past the end of the symbol table

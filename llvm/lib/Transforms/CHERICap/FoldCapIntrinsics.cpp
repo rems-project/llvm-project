@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/InitializePasses.h"
@@ -31,6 +32,7 @@
 #include "llvm/IR/Verifier.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/CHERICap.h"
@@ -40,6 +42,11 @@
 
 using namespace llvm;
 using namespace PatternMatch;
+
+static cl::opt<bool>
+FoldIntrinsics("fold-cheri-intrinsics",
+         cl::desc("Enable folding of CHERI intrinsics"),
+         cl::init(true));
 
 namespace {
 class CHERICapFoldIntrinsics : public ModulePass {
@@ -80,11 +87,11 @@ class CHERICapFoldIntrinsics : public ModulePass {
 
   void foldGetIntrinisics(Module *M) {
     foldGet(M, Intrinsic::cheri_cap_offset_get, {CapSizeTy},
-            [this](Value *V, CallInst *CI, int) {
+            [this](Value *V, CallInst *CI, bool) {
               return inferCapabilityOffset(V, CI, CI->getType());
             });
     foldGet(M, Intrinsic::cheri_cap_address_get, {CapAddrTy},
-            [this](Value *V, CallInst *CI, int) {
+            [this](Value *V, CallInst *CI, bool) {
               return inferCapabilityAddress(V, CI, CI->getType());
             });
     // For all other capability fields we can only infer a value when the
@@ -106,7 +113,15 @@ class CHERICapFoldIntrinsics : public ModulePass {
     foldGet(M, Intrinsic::cheri_cap_sealed_get, {}, inferOther);
     // CGetType and CGetLen on a null capability now return -1
     foldGet(M, Intrinsic::cheri_cap_length_get, {CapSizeTy}, inferOther, -1);
-    foldGet(M, Intrinsic::cheri_cap_type_get, {CapSizeTy}, inferOther, -1);
+    int NullCase = -1;
+    if (Function *F = M->getFunction(
+        Intrinsic::getName(Intrinsic::cheri_cap_type_get, {CapSizeTy}))) {
+      // Null derived capabilities can have a different type value depending
+      // on the architecture.
+      auto *TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(*F);
+      NullCase = TTI->getCheriIntrinsicNullCaseValue();
+    }
+    foldGet(M, Intrinsic::cheri_cap_type_get, {CapSizeTy}, inferOther, NullCase);
   }
 
   Constant* getIntToPtrSourceValue(Value* V) {
@@ -132,7 +147,8 @@ class CHERICapFoldIntrinsics : public ModulePass {
     return nullptr;
   }
 
-  Value *inferCapabilityNonOffsetField(Value *V, CallInst *Call, int NullValue,
+  Value *inferCapabilityNonOffsetField(Value *V, CallInst *Call,
+                                       int NullValue,
                                        bool OnlyIfRootWasNull = false) {
     // Calling an llvm.cheri.cap.$INTRIN.get() on a null value or
     // an integer stored in a capability always returns 0 or -1 (for CGetLen and
@@ -140,8 +156,11 @@ class CHERICapFoldIntrinsics : public ModulePass {
     // int value)
     if (isa<ConstantPointerNull>(V) || getIntToPtrSourceValue(V)) {
       Type *Ty = Call->getType();
-      return NullValue == 0 ? llvm::Constant::getNullValue(Ty)
-                            : llvm::Constant::getAllOnesValue(Ty);
+      if (!NullValue)
+        return llvm::Constant::getNullValue(Ty);
+
+      assert((NullValue == 0 || NullValue == -1) && "Unexpected null case");
+      return llvm::Constant::getAllOnesValue(Ty);
     }
     Value *Arg = nullptr;
     // We can ignore all setoffset/incoffset/setaddr operations if called on
@@ -157,7 +176,8 @@ class CHERICapFoldIntrinsics : public ModulePass {
       return inferCapabilityNonOffsetField(Arg, Call, NullValue, true);
     } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
       if (CE->getOpcode() == Instruction::GetElementPtr) {
-        return inferCapabilityNonOffsetField(CE->getOperand(0), Call, NullValue, true);
+        return inferCapabilityNonOffsetField(CE->getOperand(0), Call,
+                                             NullValue, true);
       }
     }
     // TODO: is there anything else we can infer?
@@ -205,6 +225,7 @@ class CHERICapFoldIntrinsics : public ModulePass {
         *BaseCap = V;
       return llvm::Constant::getNullValue(IntTy);
     }
+
     // For inttoptr values both getoffset and getaddr return the integer value
     if (Constant* IntToPtr = getIntToPtrSourceValue(V)) {
       if (BaseCap)
@@ -407,7 +428,7 @@ public:
     return "CHERI fold capability intrinsics";
   }
   bool runOnModule(Module &M) override {
-    if (skipModule(M))
+    if (skipModule(M) || !FoldIntrinsics)
       return false;
 
     GetTLI = [this](Function &F) -> const TargetLibraryInfo & {
@@ -463,12 +484,16 @@ public:
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<TargetLibraryInfoWrapperPass>();
     AU.setPreservesCFG();
+    AU.addRequired<TargetTransformInfoWrapperPass>();
   }
 };
 } // namespace
 
 char CHERICapFoldIntrinsics::ID = 0;
-INITIALIZE_PASS(CHERICapFoldIntrinsics, DEBUG_TYPE,
+INITIALIZE_PASS_BEGIN(CHERICapFoldIntrinsics, DEBUG_TYPE,
+                "Remove redundant capability instructions", false, false)
+INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
+INITIALIZE_PASS_END(CHERICapFoldIntrinsics, DEBUG_TYPE,
                 "Remove redundant capability instructions", false, false)
 
 Pass *llvm::createCHERICapFoldIntrinsicsPass() {

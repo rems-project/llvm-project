@@ -653,12 +653,14 @@ bool ABISysV_s390x::CreateDefaultUnwindPlan(UnwindPlan &unwind_plan) {
 }
 
 bool ABISysV_s390x::GetFallbackRegisterLocation(
-    const RegisterInfo *reg_info,
+    RegisterContext &reg_ctx, const RegisterInfo *reg_info,
+    FrameState frame_state, const UnwindPlan *unwind_plan,
+    RegisterKind &unwind_registerkind,
     UnwindPlan::Row::RegisterLocation &unwind_regloc) {
   // If a volatile register is being requested, we don't want to forward the
   // next frame's register contents up the stack -- the register is not
   // retrievable at this frame.
-  if (RegisterIsVolatile(reg_info)) {
+  if (RegisterIsVolatile(reg_ctx, reg_info, frame_state, unwind_plan)) {
     unwind_regloc.SetUndefined();
     return true;
   }
@@ -666,7 +668,10 @@ bool ABISysV_s390x::GetFallbackRegisterLocation(
   return false;
 }
 
-bool ABISysV_s390x::RegisterIsVolatile(const RegisterInfo *reg_info) {
+bool ABISysV_s390x::RegisterIsVolatile(RegisterContext &reg_ctx,
+                                       const RegisterInfo *reg_info,
+                                       FrameState frame_state,
+                                       const UnwindPlan *unwind_plan) {
   return !RegisterIsCalleeSaved(reg_info);
 }
 

@@ -83,7 +83,8 @@ public:
         bool prefix_with_altname = (bool)m_command_options.alternate_name;
         bool prefix_with_name = !prefix_with_altname;
         DumpRegisterValue(reg_value, &strm, reg_info, prefix_with_name,
-                          prefix_with_altname, m_format_options.GetFormat(), 8);
+                          prefix_with_altname, m_format_options.GetFormat(), 8,
+                          &exe_ctx);
         if ((reg_info->encoding == eEncodingUint) ||
             (reg_info->encoding == eEncodingSint)) {
           Process *process = exe_ctx.GetProcessPtr();

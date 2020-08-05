@@ -51,6 +51,8 @@ public:
 
   Status RemoveHardwareBreakpoint(lldb::addr_t addr) override;
 
+  Status GetSigInfoTargetData(lldb::DataBufferSP &data_sp) override;
+
 private:
   // Interface for friend classes
 

@@ -7,6 +7,8 @@ add_lldb_unittest(ObjectFileELFTests
     lldbCore
     lldbUtilityHelpers
     LLVMTestingSupport
+  LINK_COMPONENTS
+    RuntimeDyld
   )
 
 set(test_inputs

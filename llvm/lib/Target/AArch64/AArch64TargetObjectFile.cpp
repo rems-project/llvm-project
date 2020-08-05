@@ -8,12 +8,15 @@
 
 #include "AArch64TargetObjectFile.h"
 #include "AArch64TargetMachine.h"
+#include "MCTargetDesc/AArch64TargetStreamer.h"
 #include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/IR/Mangler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCValue.h"
+#include "llvm/CodeGen/AsmPrinter.h"
+
 using namespace llvm;
 using namespace dwarf;
 
@@ -24,6 +27,21 @@ void AArch64_ELFTargetObjectFile::Initialize(MCContext &Ctx,
   // AARCH64 ELF ABI does not define static relocation type for TLS offset
   // within a module.  Do not generate AT_location for TLS variables.
   SupportDebugThreadLocalLocation = false;
+}
+
+TailPaddingAmount AArch64_ELFTargetObjectFile::
+getTailPaddingForPreciseBounds(uint64_t Size) const {
+  uint64_t Pad = AArch64TargetStreamer::getTargetSizeAlignReq(Size).first - Size;
+  return static_cast<TailPaddingAmount>(Pad);
+}
+
+Align AArch64_ELFTargetObjectFile::
+getAlignmentForPreciseBounds(uint64_t Size) const {
+  unsigned LogAlign =
+      AArch64TargetStreamer::getTargetSizeAlignReq(Size).second;
+  if (!LogAlign)
+    return Align::None();
+  return Align(1 << LogAlign);
 }
 
 AArch64_MachoTargetObjectFile::AArch64_MachoTargetObjectFile()

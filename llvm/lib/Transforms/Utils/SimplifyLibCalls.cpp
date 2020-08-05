@@ -1125,6 +1125,7 @@ Value *LibCallSimplifier::optimizeMemCpy(CallInst *CI, IRBuilder<> &B) {
   CallInst *NewCI = B.CreateMemCpy(CI->getArgOperand(0), Align::None(),
                                    CI->getArgOperand(1), Align::None(), Size);
   NewCI->setAttributes(CI->getAttributes());
+  NewCI->setPreservesTags();
   return CI->getArgOperand(0);
 }
 
@@ -1188,6 +1189,7 @@ Value *LibCallSimplifier::optimizeMemMove(CallInst *CI, IRBuilder<> &B) {
   CallInst *NewCI = B.CreateMemMove(CI->getArgOperand(0), Align::None(),
                                     CI->getArgOperand(1), Align::None(), Size);
   NewCI->setAttributes(CI->getAttributes());
+  NewCI->setPreservesTags();
   return CI->getArgOperand(0);
 }
 
@@ -3295,6 +3297,7 @@ Value *FortifiedLibCallSimplifier::optimizeMemCpyChk(CallInst *CI,
                                      CI->getArgOperand(1), Align::None(),
                                      CI->getArgOperand(2));
     NewCI->setAttributes(CI->getAttributes());
+    NewCI->setPreservesTags();
     return CI->getArgOperand(0);
   }
   return nullptr;
@@ -3307,6 +3310,7 @@ Value *FortifiedLibCallSimplifier::optimizeMemMoveChk(CallInst *CI,
                                       CI->getArgOperand(1), Align::None(),
                                       CI->getArgOperand(2));
     NewCI->setAttributes(CI->getAttributes());
+    NewCI->setPreservesTags();
     return CI->getArgOperand(0);
   }
   return nullptr;
@@ -3363,7 +3367,7 @@ Value *FortifiedLibCallSimplifier::optimizeStrpCpyChk(CallInst *CI,
 
   Type *SizeTTy = DL.getIntPtrType(CI->getContext());
   Value *LenV = ConstantInt::get(SizeTTy, Len);
-  Value *Ret = emitMemCpyChk(Dst, Src, LenV, ObjSize, B, DL, TLI);
+  Value *Ret = emitMemCpyChk(Dst, Src, LenV, ObjSize, B, DL, TLI, false);
   // If the function was an __stpcpy_chk, and we were able to fold it into
   // a __memcpy_chk, we still need to return the correct end pointer.
   if (Ret && Func == LibFunc_stpcpy_chk)

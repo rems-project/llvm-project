@@ -892,6 +892,77 @@ TEST_F(ScalarEvolutionsTest, SCEVExitLimitForgetLoop) {
   EXPECT_EQ(cast<SCEVConstant>(NewARAtLoopExit)->getAPInt().getLimitedValue(),
             2004u);
 }
+// Test exapnsion of fat pointer expressions. These should avoid inttoptr
+// on anything except constant expressions.
+// FIXME: At some point fat pointers should be a type of non-integral pointer,
+// but there are actually more constraints here. These are maintaining provenance
+// and not taking the pointer too much outside the bounds.
+// Solving the provenance issue likely requires new expression types, so
+// everything here will probably change anyway at some point.
+TEST_F(ScalarEvolutionsTest, SCEVExpandFatPointer) {
+  // Create a module with non-integral pointers in it's datalayout
+  Module NIM("fatptr", Context);
+  std::string DataLayout = M.getDataLayoutStr();
+  DataLayout = "e-m:e-pf200:128:128-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200";
+  NIM.setDataLayout(DataLayout);
+
+  Type *T_int1 = Type::getInt1Ty(Context);
+  Type *T_int64 = Type::getInt64Ty(Context);
+  Type *T_pint64 = T_int64->getPointerTo(200);
+  Type *T_pint1 = T_int1->getPointerTo(200);
+
+  FunctionType *FTy =
+      FunctionType::get(Type::getVoidTy(Context), {T_pint64, T_pint1}, false);
+  Function *F = Function::Create(FTy, Function::ExternalLinkage, "foo", NIM);
+
+  Argument *Arg0 = &*F->arg_begin();
+  Argument *Arg1 = &*(F->arg_begin()+1);
+
+  BasicBlock *Top = BasicBlock::Create(Context, "top", F);
+  BasicBlock *LPh = BasicBlock::Create(Context, "L.ph", F);
+  BasicBlock *L = BasicBlock::Create(Context, "L", F);
+  BasicBlock *Post = BasicBlock::Create(Context, "post", F);
+
+  IRBuilder<> Builder(Top);
+  Builder.CreateBr(LPh);
+
+  Builder.SetInsertPoint(LPh);
+  Builder.CreateBr(L);
+
+  Builder.SetInsertPoint(L);
+  PHINode *Phi = Builder.CreatePHI(T_int64, 2);
+  Value *Add = Builder.CreateAdd(Phi, ConstantInt::get(T_int64, 1), "add");
+  Builder.CreateCondBr(UndefValue::get(T_int1), L, Post);
+  Phi->addIncoming(ConstantInt::get(T_int64, 0), LPh);
+  Phi->addIncoming(Add, L);
+
+  Builder.SetInsertPoint(Post);
+  Value *GepBase = Builder.CreateGEP(Arg0, ConstantInt::get(T_int64, 1));
+  Instruction *Ret = Builder.CreateRetVoid();
+
+  ScalarEvolution SE = buildSE(*F);
+  auto *AddRec =
+      SE.getAddRecExpr(SE.getUnknown(GepBase), SE.getConstant(T_int64, 1),
+                       LI->getLoopFor(L), SCEV::FlagNUW);
+
+  SCEVExpander Exp(SE, NIM.getDataLayout(), "expander");
+  Exp.disableCanonicalMode();
+  auto *Val = Exp.expandCodeFor(AddRec, T_pint64, Ret);
+  auto *SMax =
+      SE.getSMaxExpr(SE.getUnknown(Val), SE.getSCEV(Arg1));
+  Exp.expandCodeFor(SMax, T_pint64, Ret);
+  auto *UMax =
+      SE.getUMaxExpr(SE.getUnknown(Val), SE.getSCEV(Arg1));
+  Exp.expandCodeFor(UMax, T_pint64, Ret);
+
+  for (BasicBlock &BB : *F) {
+    for (Instruction &Inst : BB) {
+      EXPECT_FALSE(isa<IntToPtrInst>(&Inst));
+    }
+  }
+
+  EXPECT_FALSE(verifyFunction(*F, &errs()));
+}
 
 // Make sure that SCEV invalidates exit limits after invalidating the values it
 // depends on when we forget a value.

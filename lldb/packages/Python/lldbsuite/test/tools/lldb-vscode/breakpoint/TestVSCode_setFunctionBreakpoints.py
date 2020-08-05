@@ -107,6 +107,7 @@ class TestVSCode_setFunctionBreakpoints(
                             "expect %u source breakpoints" % (len(functions)))
 
     @skipIfWindows
+    @skipIfLinux # test hangs on linux under heavy load
     def test_functionality(self):
         '''Tests hitting breakpoints and the functionality of a single
            breakpoint, like 'conditions' and 'hitCondition' settings.'''

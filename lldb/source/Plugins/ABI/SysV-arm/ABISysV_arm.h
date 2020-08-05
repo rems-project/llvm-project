@@ -34,7 +34,10 @@ public:
 
   bool CreateDefaultUnwindPlan(lldb_private::UnwindPlan &unwind_plan) override;
 
-  bool RegisterIsVolatile(const lldb_private::RegisterInfo *reg_info) override;
+  bool RegisterIsVolatile(lldb_private::RegisterContext &reg_ctx,
+                          const lldb_private::RegisterInfo *reg_info,
+                          FrameState frame_state,
+                          const lldb_private::UnwindPlan *unwind_plan) override;
 
   bool CallFrameAddressIsValid(lldb::addr_t cfa) override {
     // Make sure the stack call frame addresses are are 4 byte aligned
@@ -83,6 +86,11 @@ protected:
   lldb::ValueObjectSP
   GetReturnValueObjectImpl(lldb_private::Thread &thread,
                            lldb_private::CompilerType &ast_type) const override;
+
+  lldb_private::CompilerType
+  GetSigInfoCompilerType(const lldb_private::Target &target,
+                         lldb_private::ClangASTContext &ast_ctx,
+                         llvm::StringRef type_name) const override;
 
 private:
   ABISysV_arm(lldb::ProcessSP process_sp,

@@ -63,7 +63,7 @@ body:             |
   ; CHECK: bb.1:
   ; CHECK:   successors:
   ; CHECK: bb.2:
-  ; CHECK:   RET_ReallyLR
+  ; CHECK:   RET_ReallyLR 0
   bb.1:
     %0:_(s128) = G_IMPLICIT_DEF
     %1:_(s128) = G_CONSTANT i128 79228162514264337593543950336
@@ -77,6 +77,6 @@ body:             |
 
 
   bb.3:
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...

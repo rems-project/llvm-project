@@ -1,3 +1,4 @@
+// REQUIRES: mips-registered-target
 // RUN: %cheri_cc1 -o - -O0 %s
 // RUN: %cheri_cc1 -o - -O2 %s
 // RUN: %cheri_cc1 -o - -O3 %s

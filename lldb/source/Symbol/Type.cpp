@@ -33,6 +33,16 @@
 using namespace lldb;
 using namespace lldb_private;
 
+static const char *GetAddressSpaceAsCString(AddressSpace address_space) {
+  switch (address_space) {
+  case eAddressSpaceNormal:
+    return "normal";
+  case eAddressSpaceCapability:
+    return "capability";
+  }
+  return "???";
+}
+
 bool lldb_private::contextMatches(llvm::ArrayRef<CompilerContext> context_chain,
                                   llvm::ArrayRef<CompilerContext> pattern) {
   auto ctx = context_chain.begin();
@@ -143,7 +153,7 @@ Type::Type(lldb::user_id_t uid, SymbolFile *symbol_file, ConstString name,
            llvm::Optional<uint64_t> byte_size, SymbolContextScope *context,
            user_id_t encoding_uid, EncodingDataType encoding_uid_type,
            const Declaration &decl, const CompilerType &compiler_type,
-           ResolveState compiler_type_resolve_state)
+           ResolveState compiler_type_resolve_state, AddressSpace address_space)
     : std::enable_shared_from_this<Type>(), UserID(uid), m_name(name),
       m_symbol_file(symbol_file), m_context(context), m_encoding_type(nullptr),
       m_encoding_uid(encoding_uid), m_encoding_uid_type(encoding_uid_type),
@@ -151,7 +161,8 @@ Type::Type(lldb::user_id_t uid, SymbolFile *symbol_file, ConstString name,
       m_compiler_type_resolve_state(
           compiler_type ? compiler_type_resolve_state
                         : ResolveState::Unresolved),
-      m_is_complete_objc_class(false) {
+      m_is_complete_objc_class(false),
+      m_address_space(address_space) {
   if (byte_size) {
     m_byte_size = *byte_size;
     m_byte_size_has_value = true;
@@ -165,7 +176,8 @@ Type::Type()
     : std::enable_shared_from_this<Type>(), UserID(0), m_name("<INVALID TYPE>"),
       m_symbol_file(nullptr), m_context(nullptr), m_encoding_type(nullptr),
       m_encoding_uid(LLDB_INVALID_UID), m_encoding_uid_type(eEncodingInvalid),
-      m_compiler_type_resolve_state(ResolveState::Unresolved) {
+      m_compiler_type_resolve_state(ResolveState::Unresolved),
+      m_address_space(eAddressSpaceNormal) {
   m_byte_size = 0;
   m_byte_size_has_value = false;
 }
@@ -189,6 +201,9 @@ void Type::GetDescription(Stream *s, lldb::DescriptionLevel level,
   // Call the get byte size accesor so we resolve our byte size
   if (GetByteSize())
     s->Printf(", byte-size = %" PRIu64, m_byte_size);
+  if (m_address_space != 0)
+    s->Printf(", address-space = %s",
+              GetAddressSpaceAsCString(m_address_space));
   bool show_fullpaths = (level == lldb::eDescriptionLevelVerbose);
   m_decl.Dump(s, show_fullpaths);
 
@@ -244,6 +259,9 @@ void Type::Dump(Stream *s, bool show_context) {
 
   if (m_byte_size_has_value)
     s->Printf(", size = %" PRIu64, m_byte_size);
+  if (m_address_space != 0)
+    s->Printf(", address-space = %s",
+              GetAddressSpaceAsCString(m_address_space));
 
   if (show_context && m_context != nullptr) {
     s->PutCString(", context = ( ");
@@ -512,17 +530,20 @@ bool Type::ResolveClangType(ResolveState compiler_type_resolve_state) {
 
       case eEncodingIsPointerUID:
         m_compiler_type =
-            encoding_type->GetForwardCompilerType().GetPointerType();
+            encoding_type->GetForwardCompilerType().GetPointerType(
+                m_address_space);
         break;
 
       case eEncodingIsLValueReferenceUID:
         m_compiler_type =
-            encoding_type->GetForwardCompilerType().GetLValueReferenceType();
+            encoding_type->GetForwardCompilerType().GetLValueReferenceType(
+                m_address_space);
         break;
 
       case eEncodingIsRValueReferenceUID:
         m_compiler_type =
-            encoding_type->GetForwardCompilerType().GetRValueReferenceType();
+            encoding_type->GetForwardCompilerType().GetRValueReferenceType(
+                m_address_space);
         break;
 
       default:
@@ -568,15 +589,17 @@ bool Type::ResolveClangType(ResolveState compiler_type_resolve_state) {
           break;
 
         case eEncodingIsPointerUID:
-          m_compiler_type = void_compiler_type.GetPointerType();
+          m_compiler_type = void_compiler_type.GetPointerType(m_address_space);
           break;
 
         case eEncodingIsLValueReferenceUID:
-          m_compiler_type = void_compiler_type.GetLValueReferenceType();
+          m_compiler_type =
+              void_compiler_type.GetLValueReferenceType(m_address_space);
           break;
 
         case eEncodingIsRValueReferenceUID:
-          m_compiler_type = void_compiler_type.GetRValueReferenceType();
+          m_compiler_type =
+              void_compiler_type.GetRValueReferenceType(m_address_space);
           break;
 
         default:
@@ -915,14 +938,14 @@ ConstString TypeImpl::GetDisplayTypeName() const {
   return ConstString();
 }
 
-TypeImpl TypeImpl::GetPointerType() const {
+TypeImpl TypeImpl::GetPointerType(AddressSpace address_space) const {
   ModuleSP module_sp;
   if (CheckModule(module_sp)) {
     if (m_dynamic_type.IsValid()) {
-      return TypeImpl(m_static_type.GetPointerType(),
-                      m_dynamic_type.GetPointerType());
+      return TypeImpl(m_static_type.GetPointerType(address_space),
+                      m_dynamic_type.GetPointerType(address_space));
     }
-    return TypeImpl(m_static_type.GetPointerType());
+    return TypeImpl(m_static_type.GetPointerType(address_space));
   }
   return TypeImpl();
 }
@@ -939,14 +962,14 @@ TypeImpl TypeImpl::GetPointeeType() const {
   return TypeImpl();
 }
 
-TypeImpl TypeImpl::GetReferenceType() const {
+TypeImpl TypeImpl::GetReferenceType(AddressSpace address_space) const {
   ModuleSP module_sp;
   if (CheckModule(module_sp)) {
     if (m_dynamic_type.IsValid()) {
-      return TypeImpl(m_static_type.GetLValueReferenceType(),
-                      m_dynamic_type.GetLValueReferenceType());
+      return TypeImpl(m_static_type.GetLValueReferenceType(address_space),
+                      m_dynamic_type.GetLValueReferenceType(address_space));
     }
-    return TypeImpl(m_static_type.GetLValueReferenceType());
+    return TypeImpl(m_static_type.GetLValueReferenceType(address_space));
   }
   return TypeImpl();
 }

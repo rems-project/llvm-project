@@ -1,9 +1,7 @@
-// REQUIRES: mips-registered-target
-
 // RUN: %cheri_cc1 %s -emit-llvm -o - -verify=hybrid | %cheri_FileCheck %s -check-prefixes CHECK,N64
-// RUN: %cheri_cc1 -w -DCODEGEN %s -S -o - -O2 | FileCheck %s -check-prefixes ASM,N64-ASM
+// RXUN: %cheri_cc1 -w -DCODEGEN %s -S -o - -O2 | FileCheck %s -check-prefixes ASM,N64-ASM
 // RUN: %cheri_purecap_cc1 -mllvm -cheri-cap-table-abi=plt %s -emit-llvm -o - -verify | %cheri_FileCheck %s -check-prefixes CHECK,PURECAP
-// RUN: %cheri_purecap_cc1 -mllvm -cheri-cap-table-abi=plt -DCODEGEN -w %s -S -o - -O2 | FileCheck %s -check-prefixes ASM,PURECAP-ASM
+// RXUN: %cheri_purecap_cc1 -mllvm -cheri-cap-table-abi=plt -DCODEGEN -w %s -S -o - -O2 | FileCheck %s -check-prefixes ASM,PURECAP-ASM
 // The new warning "misaligned or large atomic operation" was causing -Werror failures for CheriBSD
 // It is not a false positive since we need libcalls for CHERI cap (cmp)xchg but since this is
 // a known issue (https://github.com/CTSRD-CHERI/clang/issues/201) we should not warn.

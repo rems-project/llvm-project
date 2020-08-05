@@ -133,6 +133,10 @@ public:
   size_t DoReadMemory(lldb::addr_t addr, void *buf, size_t size,
                       Status &error) override;
 
+  size_t DoReadTaggedMemory(lldb::addr_t addr, void *buf, size_t size,
+                            lldb::MemoryContentType type,
+                            Status &error) override;
+
   Status
   WriteObjectFile(std::vector<ObjectFile::LoadableData> entries) override;
 
@@ -329,6 +333,19 @@ protected:
   DataExtractor GetAuxvData() override;
 
   StructuredData::ObjectSP GetExtendedInfoForThread(lldb::tid_t tid);
+
+  //------------------------------------------------------------------
+  /// Obtain siginfo data describing the last signal received by a
+  /// specified thread.
+  ///
+  /// @param[in] tid
+  ///     The thread for which the information should be received.
+  ///
+  /// @return
+  ///     A shared pointer to the resulting siginfo data which can
+  ///     contain nullptr if the value could not be obtained.
+  //------------------------------------------------------------------
+  lldb::DataBufferSP GetSigInfoDataForThread(lldb::tid_t tid);
 
   void GetMaxMemorySize();
 

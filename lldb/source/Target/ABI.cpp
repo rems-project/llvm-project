@@ -6,10 +6,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/AST/DeclCXX.h"
+
 #include "lldb/Target/ABI.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Core/ValueObjectConstResult.h"
+#include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Expression/ExpressionVariable.h"
 #include "lldb/Symbol/CompilerType.h"
 #include "lldb/Symbol/TypeSystem.h"
@@ -37,6 +40,18 @@ ABI::FindPlugin(lldb::ProcessSP process_sp, const ArchSpec &arch) {
   }
   abi_sp.reset();
   return abi_sp;
+}
+
+const char *ABI::GetFrameStateAsCString(FrameState frame_state) {
+  switch (frame_state) {
+  case eFrameStateSimple:
+    return "none/single state";
+  case eFrameStateExecutive:
+    return "executive state";
+  case eFrameStateRestricted:
+    return "restricted state";
+  }
+  return "???";
 }
 
 ABI::~ABI() = default;
@@ -173,7 +188,9 @@ bool ABI::PrepareTrivialCall(Thread &thread, lldb::addr_t sp,
 }
 
 bool ABI::GetFallbackRegisterLocation(
-    const RegisterInfo *reg_info,
+    RegisterContext &reg_ctx, const RegisterInfo *reg_info,
+    FrameState frame_state, const UnwindPlan *unwind_plan,
+    RegisterKind &unwind_registerkind,
     UnwindPlan::Row::RegisterLocation &unwind_regloc) {
   // Did the UnwindPlan fail to give us the caller's stack pointer? The stack
   // pointer is defined to be the same as THIS frame's CFA, so return the CFA
@@ -187,12 +204,87 @@ bool ABI::GetFallbackRegisterLocation(
   // If a volatile register is being requested, we don't want to forward the
   // next frame's register contents up the stack -- the register is not
   // retrievable at this frame.
-  if (RegisterIsVolatile(reg_info)) {
+  if (RegisterIsVolatile(reg_ctx, reg_info, frame_state, unwind_plan)) {
     unwind_regloc.SetUndefined();
     return true;
   }
 
   return false;
+}
+
+uint32_t ABI::GetExtendedRegisterForUnwind(RegisterContext &reg_ctx,
+                                           uint32_t lldb_regnum) const {
+  // By default, return that the register does not have any extended register
+  // that would alias it.
+  return LLDB_INVALID_REGNUM;
+}
+
+uint32_t ABI::GetPrimordialRegisterForUnwind(RegisterContext &reg_ctx,
+                                             uint32_t lldb_regnum,
+                                             uint32_t byte_size) const {
+  // By default, return that the register does not have any primordial register
+  // that would alias it.
+  return LLDB_INVALID_REGNUM;
+}
+
+uint32_t ABI::GetReturnRegisterForUnwind(RegisterContext &reg_ctx,
+                                         uint32_t pc_lldb_regnum,
+                                         uint32_t ra_lldb_regnum) const {
+  // By default, the searched RA register remains unchanged.
+  return ra_lldb_regnum;
+}
+
+bool ABI::GetFrameState(RegisterContext &reg_ctx, FrameState &state) const {
+  // By default, treat the target as having only one frame state.
+  state = eFrameStateSimple;
+  return true;
+}
+
+bool ABI::GetCalleeRegisterToSearch(RegisterContext &reg_ctx,
+                                    uint32_t lldb_regnum,
+                                    FrameState caller_frame_state,
+                                    uint32_t &search_lldb_regnum) const {
+  // By default, the searched register remains unchanged.
+  search_lldb_regnum = lldb_regnum;
+  return true;
+}
+
+ValueObjectSP ABI::CreateSigInfoValueObject(Target &target,
+                                            const DataBufferSP &data_sp,
+                                            Status &error) const {
+  ClangASTContext *ast_ctx = ClangASTContext::GetScratch(target);
+  if (ast_ctx == nullptr) {
+    error.SetErrorString(
+        "failed to obtain Clang AST context to get hold of the siginfo type");
+    return ValueObjectSP();
+  }
+
+  ConstString lldb_siginfo("__lldb_siginfo");
+  CompilerType siginfo_type =
+      ast_ctx->GetTypeForIdentifier<clang::CXXRecordDecl>(lldb_siginfo);
+
+  // The type does not exist yet, create it.
+  if (!siginfo_type) {
+    siginfo_type =
+        GetSigInfoCompilerType(target, *ast_ctx, lldb_siginfo.GetStringRef());
+    if (!siginfo_type) {
+      error.SetErrorString(
+          "the siginfo type for the current target is not available");
+      return ValueObjectSP();
+    }
+  }
+  assert(siginfo_type);
+
+  return ValueObjectConstResult::Create(
+      &target, siginfo_type, ConstString("siginfo"), data_sp,
+      target.GetArchitecture().GetByteOrder(),
+      target.GetArchitecture().GetAddressByteSize());
+}
+
+CompilerType ABI::GetSigInfoCompilerType(const Target &target,
+                                         ClangASTContext &ast_ctx,
+                                         llvm::StringRef type_name) const {
+  return CompilerType();
 }
 
 std::unique_ptr<llvm::MCRegisterInfo> ABI::MakeMCRegisterInfo(const ArchSpec &arch) {

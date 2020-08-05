@@ -153,7 +153,8 @@ void DWARFExpression::GetDescription(Stream *s, lldb::DescriptionLevel level,
 static bool ReadRegisterValueAsScalar(RegisterContext *reg_ctx,
                                       lldb::RegisterKind reg_kind,
                                       uint32_t reg_num, Status *error_ptr,
-                                      Value &value) {
+                                      Value &value,
+                                      uint32_t address_byte_size = 0) {
   if (reg_ctx == nullptr) {
     if (error_ptr)
       error_ptr->SetErrorStringWithFormat("No register context in frame.\n");
@@ -172,6 +173,12 @@ static bool ReadRegisterValueAsScalar(RegisterContext *reg_ctx,
       RegisterValue reg_value;
       if (reg_ctx->ReadRegister(reg_info, reg_value)) {
         if (reg_value.GetScalarValue(value.GetScalar())) {
+          // Truncate the value to the generic-type element size.
+          if (address_byte_size != 0)
+            value.GetScalar().Promote(
+                Scalar::GetValueTypeForUnsignedIntegerWithByteSize(
+                    address_byte_size));
+
           value.SetValueType(Value::eValueTypeScalar);
           value.SetContext(Value::eContextTypeRegisterInfo,
                            const_cast<RegisterInfo *>(reg_info));
@@ -1984,8 +1991,8 @@ bool DWARFExpression::Evaluate(
     case DW_OP_breg31: {
       reg_num = op - DW_OP_breg0;
 
-      if (ReadRegisterValueAsScalar(reg_ctx, reg_kind, reg_num, error_ptr,
-                                    tmp)) {
+      if (ReadRegisterValueAsScalar(reg_ctx, reg_kind, reg_num, error_ptr, tmp,
+                                    opcodes.GetAddressByteSize())) {
         int64_t breg_offset = opcodes.GetSLEB128(&offset);
         tmp.ResolveValue(exe_ctx) += (uint64_t)breg_offset;
         tmp.ClearContext();
@@ -2003,8 +2010,8 @@ bool DWARFExpression::Evaluate(
     case DW_OP_bregx: {
       reg_num = opcodes.GetULEB128(&offset);
 
-      if (ReadRegisterValueAsScalar(reg_ctx, reg_kind, reg_num, error_ptr,
-                                    tmp)) {
+      if (ReadRegisterValueAsScalar(reg_ctx, reg_kind, reg_num, error_ptr, tmp,
+                                    opcodes.GetAddressByteSize())) {
         int64_t breg_offset = opcodes.GetSLEB128(&offset);
         tmp.ResolveValue(exe_ctx) += (uint64_t)breg_offset;
         tmp.ClearContext();

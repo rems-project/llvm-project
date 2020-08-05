@@ -24,19 +24,19 @@ define void @maxArray(double* noalias nocapture %x, double* noalias nocapture re
 ; JAG:       vector.body:
 ; JAG-NEXT:    [[LSR_IV:%.*]] = phi i64 [ [[LSR_IV_NEXT:%.*]], [[VECTOR_BODY]] ], [ -524288, [[ENTRY:%.*]] ]
 ; JAG-NEXT:    [[UGLYGEP7:%.*]] = getelementptr i8, i8* [[X3]], i64 [[LSR_IV]]
-; JAG-NEXT:    [[UGLYGEP78:%.*]] = bitcast i8* [[UGLYGEP7]] to <2 x double>*
-; JAG-NEXT:    [[SCEVGEP9:%.*]] = getelementptr <2 x double>, <2 x double>* [[UGLYGEP78]], i64 32768
+; JAG-NEXT:    [[SCEVGEP9:%.*]] = getelementptr i8, i8* [[UGLYGEP7]], i64 524288
+; JAG-NEXT:    [[UGLYGEP78:%.*]] = bitcast i8* [[SCEVGEP9]] to <2 x double>*
 ; JAG-NEXT:    [[UGLYGEP:%.*]] = getelementptr i8, i8* [[Y1]], i64 [[LSR_IV]]
-; JAG-NEXT:    [[UGLYGEP2:%.*]] = bitcast i8* [[UGLYGEP]] to <2 x double>*
-; JAG-NEXT:    [[SCEVGEP:%.*]] = getelementptr <2 x double>, <2 x double>* [[UGLYGEP2]], i64 32768
-; JAG-NEXT:    [[XVAL:%.*]] = load <2 x double>, <2 x double>* [[SCEVGEP9]], align 8
-; JAG-NEXT:    [[YVAL:%.*]] = load <2 x double>, <2 x double>* [[SCEVGEP]], align 8
+; JAG-NEXT:    [[SCEVGEP:%.*]] = getelementptr i8, i8* [[UGLYGEP]], i64 524288
+; JAG-NEXT:    [[UGLYGEP2:%.*]] = bitcast i8* [[SCEVGEP]] to <2 x double>*
+; JAG-NEXT:    [[XVAL:%.*]] = load <2 x double>, <2 x double>* [[UGLYGEP78]], align 8
+; JAG-NEXT:    [[YVAL:%.*]] = load <2 x double>, <2 x double>* [[UGLYGEP2]], align 8
 ; JAG-NEXT:    [[CMP:%.*]] = fcmp ogt <2 x double> [[YVAL]], [[XVAL]]
 ; JAG-NEXT:    [[MAX:%.*]] = select <2 x i1> [[CMP]], <2 x double> [[YVAL]], <2 x double> [[XVAL]]
 ; JAG-NEXT:    [[UGLYGEP4:%.*]] = getelementptr i8, i8* [[X3]], i64 [[LSR_IV]]
-; JAG-NEXT:    [[UGLYGEP45:%.*]] = bitcast i8* [[UGLYGEP4]] to <2 x double>*
-; JAG-NEXT:    [[SCEVGEP6:%.*]] = getelementptr <2 x double>, <2 x double>* [[UGLYGEP45]], i64 32768
-; JAG-NEXT:    store <2 x double> [[MAX]], <2 x double>* [[SCEVGEP6]], align 8
+; JAG-NEXT:    [[SCEVGEP6:%.*]] = getelementptr i8, i8* [[UGLYGEP4]], i64 524288
+; JAG-NEXT:    [[UGLYGEP45:%.*]] = bitcast i8* [[SCEVGEP6]] to <2 x double>*
+; JAG-NEXT:    store <2 x double> [[MAX]], <2 x double>* [[UGLYGEP45]], align 8
 ; JAG-NEXT:    [[LSR_IV_NEXT]] = add nsw i64 [[LSR_IV]], 16
 ; JAG-NEXT:    [[DONE:%.*]] = icmp eq i64 [[LSR_IV_NEXT]], 0
 ; JAG-NEXT:    br i1 [[DONE]], label [[EXIT:%.*]], label [[VECTOR_BODY]]

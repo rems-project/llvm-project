@@ -24,6 +24,8 @@
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InstVisitor.h"
+#include "llvm/IR/PatternMatch.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/LLVMContext.h"
@@ -33,6 +35,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 
 using namespace llvm;
+using namespace PatternMatch;
 
 namespace {
 class CHERICapDirectCalls : public FunctionPass,
@@ -86,6 +89,7 @@ public:
       assert(CalledValue->getNumUses() == 0 && "Unexpected uses");
     }
   }
+
   bool runOnFunction(Function &F) override {
     Modified = false;
     DeadInstructions.clear();
@@ -94,6 +98,7 @@ public:
       RecursivelyDeleteTriviallyDeadInstructions(V);
     return Modified;
   }
+
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
   }
@@ -101,7 +106,8 @@ public:
 }
 
 char CHERICapDirectCalls::ID = 0;
-INITIALIZE_PASS(CHERICapDirectCalls, "cheri-direct-calls",
+INITIALIZE_PASS_BEGIN(CHERICapDirectCalls, "cheri-direct-calls",
                 "Eliminate PCC-relative calls", false, false)
-
+INITIALIZE_PASS_END(CHERICapDirectCalls, "cheri-direct-calls",
+                "Eliminate PCC-relative calls", false, false)
 Pass *llvm::createCHERICapDirectCallsPass() { return new CHERICapDirectCalls(); }

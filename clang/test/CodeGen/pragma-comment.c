@@ -28,5 +28,5 @@
 // ELF: ![[kernel32]] = !{!"kernel32"}
 // ELF: ![[USER32]] = !{!"USER32.LIB"}
 // ELF: ![[space]] = !{!"with space"}
-// ELF-NOT: bar
-// ELF-NOT: foo
+// ELF-NOT: /bar
+// ELF-NOT: /foo

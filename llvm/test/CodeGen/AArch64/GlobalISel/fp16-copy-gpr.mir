@@ -56,7 +56,7 @@ body:             |
     ; CHECK: [[BFMWri1:%[0-9]+]]:gpr32 = BFMWri [[BFMWri]], [[COPY3]], 16, 15
     ; CHECK: [[COPY4:%[0-9]+]]:gpr64sp = COPY $x0
     ; CHECK: STRWui [[BFMWri1]], [[COPY4]], 0 :: (store 4 into %ir.addr, align 2)
-    ; CHECK: RET_ReallyLR
+    ; CHECK: RET_ReallyLR 0
     %1:fpr(s16) = COPY $h0
     %2:fpr(s16) = COPY $h1
     %3:gpr(s32) = G_IMPLICIT_DEF
@@ -67,7 +67,7 @@ body:             |
     %0:gpr(s32) = COPY %5(s32)
     %6:gpr(p0) = COPY $x0
     G_STORE %0(s32), %6(p0) :: (store 4 into %ir.addr, align 2)
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 
@@ -91,12 +91,12 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:fpr32 = COPY [[COPY]]
     ; CHECK: [[COPY2:%[0-9]+]]:fpr16 = COPY [[COPY1]].hsub
     ; CHECK: $h0 = COPY [[COPY2]]
-    ; CHECK: RET_ReallyLR implicit $h0
+    ; CHECK: RET_ReallyLR 0, implicit $h0
     %0:gpr(s32) = COPY $w0
     %1:gpr(s16) = G_TRUNC %0(s32)
     %2:fpr(s16) = COPY %1(s16)
     $h0 = COPY %2(s16)
-    RET_ReallyLR implicit $h0
+    RET_ReallyLR 0, implicit $h0
 
 ...
 ---
@@ -118,10 +118,10 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:fpr32 = COPY [[COPY]]
     ; CHECK: [[COPY2:%[0-9]+]]:fpr16 = COPY [[COPY1]].hsub
     ; CHECK: $h0 = COPY [[COPY2]]
-    ; CHECK: RET_ReallyLR implicit $h0
+    ; CHECK: RET_ReallyLR 0, implicit $h0
     %0:gpr(s32) = COPY $w0
     %1:gpr(s16) = G_TRUNC %0(s32)
     $h0 = COPY %1(s16)
-    RET_ReallyLR implicit $h0
+    RET_ReallyLR 0, implicit $h0
 
 ...

@@ -1,0 +1,11 @@
+add_lldb_unittest(AArch64DisassemblerTests
+  TestArm64Disassembly.cpp
+  LINK_LIBS
+    lldbCore
+    lldbSymbol
+    lldbTarget
+    lldbPluginDisassemblerLLVM
+    lldbPluginProcessUtility
+  LINK_COMPONENTS
+    Support
+    ${LLVM_TARGETS_TO_BUILD})

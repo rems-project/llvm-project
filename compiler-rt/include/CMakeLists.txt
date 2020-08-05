@@ -42,6 +42,7 @@ set(COMPILER_RT_HEADERS
 
 set(output_dir ${COMPILER_RT_OUTPUT_DIR}/include)
 
+if (${COMPILER_RT_BUILD_SANITIZERS})
 # Copy compiler-rt headers to the build tree.
 set(out_files)
 foreach( f ${COMPILER_RT_HEADERS} )
@@ -63,16 +64,21 @@ install(FILES ${SANITIZER_HEADERS}
   COMPONENT compiler-rt-headers
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
   DESTINATION ${COMPILER_RT_INSTALL_PATH}/include/sanitizer)
+endif (${COMPILER_RT_BUILD_SANITIZERS})
+
 # Install fuzzer headers.
 install(FILES ${FUZZER_HEADERS}
   COMPONENT compiler-rt-headers
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
   DESTINATION ${COMPILER_RT_INSTALL_PATH}/include/fuzzer)
+if (${COMPILER_RT_BUILD_XRAY})
 # Install xray headers.
 install(FILES ${XRAY_HEADERS}
   COMPONENT compiler-rt-headers
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
   DESTINATION ${COMPILER_RT_INSTALL_PATH}/include/xray)
+endif (${COMPILER_RT_BUILD_XRAY})
+
 # Install profile headers.
 install(FILES ${PROFILE_HEADERS}
   COMPONENT compiler-rt-headers

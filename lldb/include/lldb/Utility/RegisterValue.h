@@ -9,6 +9,7 @@
 #ifndef LLDB_UTILITY_REGISTERVALUE_H
 #define LLDB_UTILITY_REGISTERVALUE_H
 
+#include "lldb/Core/Capability.h"
 #include "lldb/Utility/Endian.h"
 #include "lldb/Utility/Scalar.h"
 #include "lldb/Utility/Status.h"
@@ -16,6 +17,7 @@
 #include "lldb/lldb-types.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringRef.h"
+#include <string>
 #include <cstdint>
 #include <cstring>
 
@@ -35,10 +37,15 @@ public:
     eTypeUInt32,
     eTypeUInt64,
     eTypeUInt128,
+    eTypeUInt256,
     eTypeFloat,
     eTypeDouble,
     eTypeLongDouble,
-    eTypeBytes
+    eTypeBytes,
+
+    // Tagged 128-bit capability. The tag information is tracked as bit 128, the
+    // underlying container is a 256-bit unsigned scalar.
+    eTypeCapability128
   };
 
   RegisterValue()
@@ -58,7 +65,7 @@ public:
     m_scalar = inst;
   }
 
-  explicit RegisterValue(llvm::APInt inst) : m_type(eTypeUInt128) {
+  explicit RegisterValue(llvm::APInt inst) : m_type(eTypeUInt256) {
     m_scalar = llvm::APInt(inst);
   }
 
@@ -99,8 +106,16 @@ public:
                            Status &error) const;
 
   uint32_t SetFromMemoryData(const RegisterInfo *reg_info, const void *src,
+                             uint32_t src_len,
+                             lldb::MemoryContentType src_content_type,
+                             lldb::ByteOrder src_byte_order, Status &error);
+
+  uint32_t SetFromMemoryData(const RegisterInfo *reg_info, const void *src,
                              uint32_t src_len, lldb::ByteOrder src_byte_order,
-                             Status &error);
+                             Status &error) {
+    return SetFromMemoryData(reg_info, src, src_len, lldb::eMemoryContentNormal,
+                             src_byte_order, error);
+  }
 
   bool GetScalarValue(Scalar &scalar) const;
 
@@ -136,11 +151,19 @@ public:
   long double GetAsLongDouble(long double fail_value = 0.0,
                               bool *success_ptr = nullptr) const;
 
+  Capability GetAsCapability(lldb::CapabilityType type,
+                             Capability fail_value = Capability(),
+                             bool *success_ptr = nullptr) const;
+
+  std::string GetAsHexValueString() const;
+
   void SetValueToInvalid() { m_type = eTypeInvalid; }
 
   bool ClearBit(uint32_t bit);
 
   bool SetBit(uint32_t bit);
+
+  bool IsBitSet(uint32_t bit, bool &is_set);
 
   bool operator==(const RegisterValue &rhs) const;
 
@@ -167,7 +190,7 @@ public:
   }
 
   void operator=(llvm::APInt uint) {
-    m_type = eTypeUInt128;
+    m_type = eTypeUInt256;
     m_scalar = llvm::APInt(uint);
   }
 
@@ -211,7 +234,22 @@ public:
     m_scalar = uint;
   }
 
+  void SetUInt256(llvm::APInt uint) {
+    m_type = eTypeUInt256;
+    m_scalar = uint;
+  }
+
   bool SetUInt(uint64_t uint, uint32_t byte_size);
+
+  bool SetUInt(llvm::APInt uint, uint32_t byte_size, Status &error);
+
+  void SetCapability128(llvm::APInt uint) {
+    assert(uint.getBitWidth() == 129);
+    m_type = eTypeCapability128;
+    m_scalar = uint.zext(256);
+  }
+
+  bool SetCapability(llvm::APInt uint, uint32_t byte_size, Status &error);
 
   void SetFloat(float f) {
     m_type = eTypeFloat;
@@ -240,6 +278,15 @@ public:
   Status SetValueFromData(const RegisterInfo *reg_info, DataExtractor &data,
                           lldb::offset_t offset, bool partial_data_ok);
 
+  // Overwrite the lowest bits of the value with another register value.
+  bool Overlay(const RegisterValue &overlay_value);
+
+  // The default value of 0 for reg_name_right_align_at means no alignment at
+  // all.
+  bool Dump(Stream *s, const RegisterInfo *reg_info, bool prefix_with_name,
+            bool prefix_with_alt_name, lldb::Format format,
+            uint32_t reg_name_right_align_at = 0) const;
+
   const void *GetBytes() const;
 
   lldb::ByteOrder GetByteOrder() const {
@@ -248,6 +295,7 @@ public:
     return endian::InlHostByteOrder();
   }
 
+  uint32_t GetBitSize() const;
   uint32_t GetByteSize() const;
 
   static uint32_t GetMaxByteSize() { return kMaxRegisterByteSize; }

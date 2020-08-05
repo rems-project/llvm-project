@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-// UNSUPPORTED: c++98, c++03, c++11, c++14, libcpp-no-rtti
+// UNSUPPORTED: c++98, c++03, c++11, c++14, libcpp-no-rtti, libcpp-has-newlib
 
 // XFAIL: dylib-has-no-bad_variant_access && !libcpp-no-exceptions
 

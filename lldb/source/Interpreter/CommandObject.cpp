@@ -1090,6 +1090,7 @@ CommandObject::ArgumentTableEntry CommandObject::g_arguments_data[] = {
     { eArgTypeStartAddress, "start-address", CommandCompletions::eNoCompletion, { nullptr, false }, "Help text goes here." },
     { eArgTypeSummaryString, "summary-string", CommandCompletions::eNoCompletion, { SummaryStringHelpTextCallback, true }, nullptr },
     { eArgTypeSymbol, "symbol", CommandCompletions::eSymbolCompletion, { nullptr, false }, "Any symbol name (function name, variable, argument, etc.)" },
+    { eArgTypeTaggedMemory, "tagged-memory-type", CommandCompletions::eNoCompletion, { nullptr, false }, "A tagged memory type." },
     { eArgTypeThreadID, "thread-id", CommandCompletions::eNoCompletion, { nullptr, false }, "Thread ID number." },
     { eArgTypeThreadIndex, "thread-index", CommandCompletions::eNoCompletion, { nullptr, false }, "Index into the process' list of threads." },
     { eArgTypeThreadName, "thread-name", CommandCompletions::eNoCompletion, { nullptr, false }, "The thread's name." },

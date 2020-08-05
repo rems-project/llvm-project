@@ -52,6 +52,6 @@
 // RUN:   -target cheri-pc-freebsd11 -mabi=purecap %s -fsanitize=fuzzer -cheri=64 \
 // RUN:   --sysroot=%S/Inputs/basic_cheribsd_libcheri_tree -### 2>&1 | FileCheck --check-prefix=CHECK-FUZZER-PURECAP64 %s
 
-// CHECK-FUZZER-PURECAP64: "/usr/bin/ld"
+// CHECK-FUZZER-PURECAP64: "{{.*}}/ld"
 // CHECK-FUZZER-PURECAP64: "--whole-archive" "{{.+}}/lib/freebsd/libclang_rt.fuzzer-mips64c64.a" "--no-whole-archive"
 // CHECK-FUZZER-PURECAP64: "--whole-archive" "{{.+}}/lib/freebsd/libclang_rt.ubsan_standalone-mips64c64.a" "--no-whole-archive"

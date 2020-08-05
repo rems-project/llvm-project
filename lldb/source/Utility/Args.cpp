@@ -419,6 +419,7 @@ lldb::Encoding Args::StringToEncoding(llvm::StringRef s,
       .Case("sint", eEncodingSint)
       .Case("ieee754", eEncodingIEEE754)
       .Case("vector", eEncodingVector)
+      .Case("capability", eEncodingCapability)
       .Default(fail_value);
 }
 
@@ -439,6 +440,10 @@ uint32_t Args::StringToGenericRegister(llvm::StringRef s) {
                         .Case("arg6", LLDB_REGNUM_GENERIC_ARG6)
                         .Case("arg7", LLDB_REGNUM_GENERIC_ARG7)
                         .Case("arg8", LLDB_REGNUM_GENERIC_ARG8)
+                        .Case("pcc", LLDB_REGNUM_GENERIC_PCC)
+                        .Case("csp", LLDB_REGNUM_GENERIC_CSP)
+                        .Case("cfp", LLDB_REGNUM_GENERIC_CFP)
+                        .Cases("rac", "clr", LLDB_REGNUM_GENERIC_RAC)
                         .Default(LLDB_INVALID_REGNUM);
   return result;
 }

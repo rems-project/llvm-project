@@ -93,15 +93,6 @@ static TLSModel::Model getSelectedTLSModel(const GlobalValue *GV) {
 
 bool TargetMachine::shouldAssumeDSOLocal(const Module &M,
                                          const GlobalValue *GV) const {
-  // If the IR producer requested that this GV be treated as dso local, obey.
-  if (GV && GV->isDSOLocal())
-    return true;
-
-  // If we are not supossed to use a PLT, we cannot assume that intrinsics are
-  // local since the linker can convert some direct access to access via plt.
-  if (M.getRtLibUseGOT() && !GV)
-    return false;
-
   // According to the llvm language reference, we should be able to
   // just return false in here if we have a GV, as we know it is
   // dso_preemptable.  At this point in time, the various IR producers
@@ -115,9 +106,21 @@ bool TargetMachine::shouldAssumeDSOLocal(const Module &M,
   // generated code.
   // FIXME: Add a module level metadata for whether intrinsics should be assumed
   // local.
-
   Reloc::Model RM = getRelocationModel();
   const Triple &TT = getTargetTriple();
+
+  if (isPositionIndependent() && TT.isOSBinFormatELF() && GV &&
+      GV->hasProtectedVisibility())
+    return false;
+
+  // If the IR producer requested that this GV be treated as dso local, obey.
+  if (GV && GV->isDSOLocal())
+    return true;
+
+  // If we are not supossed to use a PLT, we cannot assume that intrinsics are
+  // local since the linker can convert some direct access to access via plt.
+  if (M.getRtLibUseGOT() && !GV)
+    return false;
 
   // DLLImport explicitly marks the GV as external.
   if (GV && GV->hasDLLImportStorageClass())

@@ -1,3 +1,5 @@
+; REQUIRES: mips-registered-target
+
 ; RUN: %cheri_opt -S -cheri-fold-intrisics -instcombine %s -o %t.ll
 ; RUN: FileCheck %s -input-file %t.ll
 ; Check that the dynamic GEP is folded properly

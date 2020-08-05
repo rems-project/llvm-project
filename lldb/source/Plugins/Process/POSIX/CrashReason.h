@@ -22,6 +22,7 @@ enum class CrashReason {
   eInvalidAddress,
   ePrivilegedAddress,
   eBoundViolation,
+  eCapabilityError,
 
   // SIGILL crash reasons.
   eIllegalOpcode,

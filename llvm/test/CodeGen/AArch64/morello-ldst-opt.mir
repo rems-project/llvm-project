@@ -1,0 +1,32 @@
+# RUN: llc -mtriple=aarch64--linux-gnu -mattr=+c64,+morello -run-pass=aarch64-ldst-opt %s -verify-machineinstrs -o - | FileCheck %s
+---
+name: unscaled-load-postindex
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $c0
+
+    $q0 = ALDURQi $c0, 1
+    $c0 = CapAddImm killed $c0, 16, 0
+...
+# Don't try to postindex an unscaled load
+# CHECK-LABEL: name: unscaled-load-postindex
+# CHECK: ALDURQi $c0, 1
+# CHECK: CapAddImm killed $c0, 16, 0
+# CHECK-NOT: ALDRQpost
+---
+name: unscaled-load-preindex
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $c0
+
+    $c0 = CapAddImm killed $c0, 16, 0
+    $q0 = ALDURQi $c0, 1
+...
+# Don't try to preindex an unscaled load
+# CHECK-LABEL: name: unscaled-load-preindex
+# CHECK: CapAddImm killed $c0, 16, 0
+# CHECK: ALDURQi $c0, 1
+# CHECK-NOT: ALDRQpre
+---

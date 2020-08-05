@@ -1,4 +1,5 @@
 // RUN: %cheri_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +morello -fsyntax-only -verify %s
 
 struct cheri_object_wrong
 {

@@ -78,11 +78,13 @@ public:
   virtual Status GetMemoryRegionInfo(lldb::addr_t load_addr,
                                      MemoryRegionInfo &range_info);
 
-  virtual Status ReadMemory(lldb::addr_t addr, void *buf, size_t size,
-                            size_t &bytes_read) = 0;
+  virtual Status
+  ReadMemory(lldb::addr_t addr, void *buf, size_t size, size_t &bytes_read,
+             lldb::MemoryContentType type = lldb::eMemoryContentNormal) = 0;
 
-  Status ReadMemoryWithoutTrap(lldb::addr_t addr, void *buf, size_t size,
-                               size_t &bytes_read);
+  Status ReadMemoryWithoutTrap(
+      lldb::addr_t addr, void *buf, size_t size, size_t &bytes_read,
+      lldb::MemoryContentType type = lldb::eMemoryContentNormal);
 
   /// Reads a null terminated string from memory.
   ///

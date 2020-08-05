@@ -99,6 +99,21 @@ bool MCTargetStreamer::useLegacyCapRelocs() const {
   return LegacyCheriCapRelocs;
 }
 
+void MCTargetStreamer::emitCHERICapability(const MCSymbol *Symbol, int64_t Offset,
+                                           unsigned CapSize, SMLoc Loc) {
+  getStreamer().EmitCheriCapability(Symbol, Offset, CapSize, Loc);
+}
+
+void MCTargetStreamer::emitCHERICapability(const MCSymbol *Symbol,
+                                           const MCExpr * Addend,
+                                           unsigned CapSize, SMLoc Loc) {
+  getStreamer().EmitCheriCapability(Symbol, Addend, CapSize, Loc);
+}
+
+void MCTargetStreamer::emitCheriIntcap(int64_t Value, unsigned CapSize, SMLoc Loc) {
+  getStreamer().EmitCheriIntcap(Value, CapSize, Loc);
+}
+
 MCStreamer::MCStreamer(MCContext &Ctx)
     : Context(Ctx), CurrentWinFrameInfo(nullptr),
       UseAssemblerInfoForParsing(false) {
@@ -495,23 +510,24 @@ void MCStreamer::EmitCFISections(bool EH, bool Debug) {
   assert(EH || Debug);
 }
 
-void MCStreamer::EmitCFIStartProc(bool IsSimple, SMLoc Loc) {
+void MCStreamer::EmitCFIStartProc(MCCFIProcType Type, SMLoc Loc) {
   if (hasUnfinishedDwarfFrameInfo())
     return getContext().reportError(
         Loc, "starting new .cfi frame before finishing the previous one");
 
   MCDwarfFrameInfo Frame;
-  Frame.IsSimple = IsSimple;
+  Frame.Type = Type;
   EmitCFIStartProcImpl(Frame);
 
   const MCAsmInfo* MAI = Context.getAsmInfo();
   if (MAI) {
-    for (const MCCFIInstruction& Inst : MAI->getInitialFrameState()) {
+    for (const MCCFIInstruction& Inst : MAI->getInitialFrameState(Frame.Type)) {
       if (Inst.getOperation() == MCCFIInstruction::OpDefCfa ||
           Inst.getOperation() == MCCFIInstruction::OpDefCfaRegister) {
         Frame.CurrentCfaRegister = Inst.getRegister();
       }
     }
+    Frame.RAReg = MAI->getInitialRARegister(Type);
   }
 
   DwarfFrameInfos.push_back(Frame);
@@ -1038,10 +1054,10 @@ void MCStreamer::Finish() {
 
   if (!FatRelocs.empty()) {
     MCSection *DefaultRelocSection = Context.getELFSection("__cap_relocs",
-        ELF::SHT_PROGBITS, ELF::SHF_ALLOC);
+        ELF::SHT_PROGBITS, ELF::SHF_ALLOC | ELF::SHF_WRITE);
     DefaultRelocSection->setAlignment(llvm::Align(8));
     for (auto &R : FatRelocs) {
-      MCSymbol *Sym;
+      const MCSymbol *Sym;
       const MCExpr *Value;
       MCSection *RelocSection;
       StringRef GroupName;
@@ -1059,16 +1075,19 @@ void MCStreamer::Finish() {
       SwitchSection(RelocSection);
 
       EmitValue(MCSymbolRefExpr::create(Sym, Context), 8);
-      if (const MCSymbolRefExpr *Sym = dyn_cast<MCSymbolRefExpr>(Value)) {
-        EmitValue(Sym, 8);
+      if (const MCSymbolRefExpr *S = dyn_cast<MCSymbolRefExpr>(Value)) {
+        EmitValue(S, 8);
         EmitZeros(8);
+        Sym = &S->getSymbol();
       } else {
         const MCBinaryExpr *Bin = cast<MCBinaryExpr>(Value);
-        EmitValue(cast<MCSymbolRefExpr>(Bin->getLHS()), 8);
+        S = cast<MCSymbolRefExpr>(Bin->getLHS());
+        EmitValue(S, 8);
         EmitValue(Bin->getRHS(), 8);
+        Sym = &S->getSymbol();
       }
-      // TODO: Emit size / perms here.
-      EmitZeros(16);
+      EmitZeros(8);
+      EmitZeros(8);
     }
   }
 

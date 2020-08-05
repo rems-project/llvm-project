@@ -233,7 +233,8 @@ private:
 /// Some attributes are relevant for all kinds of types (declaration), while
 /// others are only meaningful to a specific type (is_virtual)
 struct ParsedDWARFTypeAttributes {
-  explicit ParsedDWARFTypeAttributes(const DWARFDIE &die);
+  explicit ParsedDWARFTypeAttributes(const DWARFDIE &die,
+                                     lldb_private::ClangASTContext &m_ast);
 
   lldb::AccessType accessibility = lldb::eAccessNone;
   bool is_artificial = false;
@@ -262,6 +263,7 @@ struct ParsedDWARFTypeAttributes {
   uint32_t bit_stride = 0;
   uint32_t byte_stride = 0;
   uint32_t encoding = 0;
+  lldb::AddressSpace address_space = lldb::eAddressSpaceNormal;
 };
 
 #endif // SymbolFileDWARF_DWARFASTParserClang_h_

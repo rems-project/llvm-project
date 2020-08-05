@@ -1,0 +1,6 @@
+# RUN: llvm-mc -triple=arm64 -mattr=+morello -disassemble < %s |& FileCheck %s
+
+# A seal immediate instruction with type 0.
+
+      0x00,0x10,0xc3,0xc2
+# CHECK: invalid instruction encoding

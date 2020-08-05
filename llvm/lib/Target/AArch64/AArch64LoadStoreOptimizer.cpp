@@ -213,6 +213,10 @@ static bool isNarrowStore(unsigned Opc) {
   case AArch64::STURBBi:
   case AArch64::STRHHui:
   case AArch64::STURHHi:
+  case AArch64::ASTRBBui:
+  case AArch64::ASTURBBi:
+  case AArch64::ASTRHHui:
+  case AArch64::ASTURHHi:
     return true;
   }
 }
@@ -228,6 +232,13 @@ static bool isTagStore(const MachineInstr &MI) {
   case AArch64::ST2GOffset:
   case AArch64::STZ2GOffset:
     return true;
+  }
+}
+
+static unsigned getPairImmediateBits(const MachineInstr &MI) {
+  switch (MI.getOpcode()) {
+  default:
+    return 6;
   }
 }
 
@@ -264,11 +275,47 @@ static unsigned getMatchingNonSExtOpcode(unsigned Opc,
   case AArch64::STURSi:
   case AArch64::LDRSui:
   case AArch64::LDURSi:
+  case AArch64::ASTRDui:
+  case AArch64::ASTURDi:
+  case AArch64::ASTRQui:
+  case AArch64::ASTURQi:
+  case AArch64::ASTRBBui:
+  case AArch64::ASTURBBi:
+  case AArch64::ASTRHHui:
+  case AArch64::ASTURHHi:
+  case AArch64::ASTRWui:
+  case AArch64::ASTURWi:
+  case AArch64::ASTRXui:
+  case AArch64::ASTURXi:
+  case AArch64::ALDRDui:
+  case AArch64::ALDURDi:
+  case AArch64::ALDRQui:
+  case AArch64::ALDURQi:
+  case AArch64::ALDRWui:
+  case AArch64::ALDURWi:
+  case AArch64::ALDRXui:
+  case AArch64::ALDURXi:
+  case AArch64::ASTRSui:
+  case AArch64::ASTURSi:
+  case AArch64::ALDRSui:
+  case AArch64::ALDURSi:
+  case AArch64::PCapStoreImmPre:
+  case AArch64::PCapLoadImmPre:
+  case AArch64::CapStoreImmPre:
+  case AArch64::CapLoadImmPre:
+  case AArch64::CapLoadUnscaledImm:
+  case AArch64::CapStoreUnscaledImm:
+  case AArch64::PCapLoadUnscaledImm:
+  case AArch64::PCapStoreUnscaledImm:
     return Opc;
   case AArch64::LDRSWui:
     return AArch64::LDRWui;
   case AArch64::LDURSWi:
     return AArch64::LDURWi;
+  case AArch64::ALDRSWui:
+    return AArch64::ALDRWui;
+  case AArch64::ALDURSWi:
+    return AArch64::ALDURWi;
   }
 }
 
@@ -288,6 +335,18 @@ static unsigned getMatchingWideOpcode(unsigned Opc) {
     return AArch64::STURXi;
   case AArch64::STRWui:
     return AArch64::STRXui;
+  case AArch64::ASTRBBui:
+    return AArch64::ASTRHHui;
+  case AArch64::ASTRHHui:
+    return AArch64::ASTRWui;
+  case AArch64::ASTURBBi:
+    return AArch64::ASTURHHi;
+  case AArch64::ASTURHHi:
+    return AArch64::ASTURWi;
+  case AArch64::ASTURWi:
+    return AArch64::ASTURXi;
+  case AArch64::ASTRWui:
+    return AArch64::ASTRXui;
   }
 }
 
@@ -328,6 +387,51 @@ static unsigned getMatchingPairOpcode(unsigned Opc) {
   case AArch64::LDRSWui:
   case AArch64::LDURSWi:
     return AArch64::LDPSWi;
+  case AArch64::ASTRSui:
+  case AArch64::ASTURSi:
+    return AArch64::ASTPSi;
+  case AArch64::ASTRDui:
+  case AArch64::ASTURDi:
+    return AArch64::ASTPDi;
+  case AArch64::ASTRQui:
+  case AArch64::ASTURQi:
+    return AArch64::ASTPQi;
+  case AArch64::ASTRWui:
+  case AArch64::ASTURWi:
+    return AArch64::ASTPWi;
+  case AArch64::ASTRXui:
+  case AArch64::ASTURXi:
+    return AArch64::ASTPXi;
+  case AArch64::ALDRSui:
+  case AArch64::ALDURSi:
+    return AArch64::ALDPSi;
+  case AArch64::ALDRDui:
+  case AArch64::ALDURDi:
+    return AArch64::ALDPDi;
+  case AArch64::ALDRQui:
+  case AArch64::ALDURQi:
+    return AArch64::ALDPQi;
+  case AArch64::ALDRWui:
+  case AArch64::ALDURWi:
+    return AArch64::ALDPWi;
+  case AArch64::ALDRXui:
+  case AArch64::ALDURXi:
+    return AArch64::ALDPXi;
+  case AArch64::ALDRSWui:
+  case AArch64::ALDURSWi:
+    return AArch64::ALDPSWi;
+  case AArch64::PCapStoreImmPre:
+  case AArch64::PCapStoreUnscaledImm:
+    return AArch64::PCapStorePairImmPre;
+  case AArch64::PCapLoadImmPre:
+  case AArch64::PCapLoadUnscaledImm:
+    return AArch64::PCapLoadPairImmPre;
+  case AArch64::CapStoreImmPre:
+  case AArch64::CapStoreUnscaledImm:
+    return AArch64::CapStorePairImmPre;
+  case AArch64::CapLoadUnscaledImm:
+  case AArch64::CapLoadImmPre:
+    return AArch64::CapLoadPairImmPre;
   }
 }
 
@@ -358,6 +462,26 @@ static unsigned isMatchingStore(MachineInstr &LoadInst,
     return StOpc == AArch64::STRXui;
   case AArch64::LDURXi:
     return StOpc == AArch64::STURXi;
+  case AArch64::ALDRBBui:
+    return StOpc == AArch64::ASTRBBui || StOpc == AArch64::ASTRHHui ||
+           StOpc == AArch64::ASTRWui || StOpc == AArch64::ASTRXui;
+  case AArch64::ALDURBBi:
+    return StOpc == AArch64::ASTURBBi || StOpc == AArch64::ASTURHHi ||
+           StOpc == AArch64::ASTURWi || StOpc == AArch64::ASTURXi;
+  case AArch64::ALDRHHui:
+    return StOpc == AArch64::ASTRHHui || StOpc == AArch64::ASTRWui ||
+           StOpc == AArch64::ASTRXui;
+  case AArch64::ALDURHHi:
+    return StOpc == AArch64::ASTURHHi || StOpc == AArch64::ASTURWi ||
+           StOpc == AArch64::ASTURXi;
+  case AArch64::ALDRWui:
+    return StOpc == AArch64::ASTRWui || StOpc == AArch64::ASTRXui;
+  case AArch64::ALDURWi:
+    return StOpc == AArch64::ASTURWi || StOpc == AArch64::ASTURXi;
+  case AArch64::ALDRXui:
+    return StOpc == AArch64::ASTRXui;
+  case AArch64::ALDURXi:
+    return StOpc == AArch64::ASTURXi;
   }
 }
 
@@ -421,6 +545,74 @@ static unsigned getPreIndexedOpcode(unsigned Opc) {
     return AArch64::STPWpre;
   case AArch64::STPXi:
     return AArch64::STPXpre;
+  case AArch64::ASTRSui:
+    return AArch64::ASTRSpre;
+  case AArch64::ASTRDui:
+    return AArch64::ASTRDpre;
+  case AArch64::ASTRQui:
+    return AArch64::ASTRQpre;
+  case AArch64::ASTRBBui:
+    return AArch64::ASTRBBpre;
+  case AArch64::ASTRHHui:
+    return AArch64::ASTRHHpre;
+  case AArch64::ASTRWui:
+    return AArch64::ASTRWpre;
+  case AArch64::ASTRXui:
+    return AArch64::ASTRXpre;
+  case AArch64::ALDRSui:
+    return AArch64::ALDRSpre;
+  case AArch64::ALDRDui:
+    return AArch64::ALDRDpre;
+  case AArch64::ALDRQui:
+    return AArch64::ALDRQpre;
+  case AArch64::ALDRBBui:
+    return AArch64::ALDRBBpre;
+  case AArch64::ALDRHHui:
+    return AArch64::ALDRHHpre;
+  case AArch64::ALDRWui:
+    return AArch64::ALDRWpre;
+  case AArch64::ALDRXui:
+    return AArch64::ALDRXpre;
+  case AArch64::ALDRSWui:
+    return AArch64::ALDRSWpre;
+  case AArch64::ALDPSi:
+    return AArch64::ALDPSpre;
+  case AArch64::ALDPSWi:
+    return AArch64::ALDPSWpre;
+  case AArch64::ALDPDi:
+    return AArch64::ALDPDpre;
+  case AArch64::ALDPQi:
+    return AArch64::ALDPQpre;
+  case AArch64::ALDPWi:
+    return AArch64::ALDPWpre;
+  case AArch64::ALDPXi:
+    return AArch64::ALDPXpre;
+  case AArch64::ASTPSi:
+    return AArch64::ASTPSpre;
+  case AArch64::ASTPDi:
+    return AArch64::ASTPDpre;
+  case AArch64::ASTPQi:
+    return AArch64::ASTPQpre;
+  case AArch64::ASTPWi:
+    return AArch64::ASTPWpre;
+  case AArch64::ASTPXi:
+    return AArch64::ASTPXpre;
+  case AArch64::PCapLoadImmPre:
+    return AArch64::PCapLoadImmPreW;
+  case AArch64::PCapLoadPairImmPre:
+    return AArch64::PCapLoadPairImmPreW;
+  case AArch64::PCapStoreImmPre:
+    return AArch64::PCapStoreImmPreW;
+  case AArch64::PCapStorePairImmPre:
+    return AArch64::PCapStorePairImmPreW;
+  case AArch64::CapLoadImmPre:
+    return AArch64::CapLoadImmPreW;
+  case AArch64::CapLoadPairImmPre:
+    return AArch64::CapLoadPairImmPreW;
+  case AArch64::CapStoreImmPre:
+    return AArch64::CapStoreImmPreW;
+  case AArch64::CapStorePairImmPre:
+    return AArch64::CapStorePairImmPreW;
   case AArch64::STGOffset:
     return AArch64::STGPreIndex;
   case AArch64::STZGOffset:
@@ -510,6 +702,153 @@ static unsigned getPostIndexedOpcode(unsigned Opc) {
     return AArch64::STZ2GPostIndex;
   case AArch64::STGPi:
     return AArch64::STGPpost;
+  case AArch64::ASTRSui:
+    return AArch64::ASTRSpost;
+  case AArch64::ASTRDui:
+    return AArch64::ASTRDpost;
+  case AArch64::ASTRQui:
+    return AArch64::ASTRQpost;
+  case AArch64::ASTRBBui:
+    return AArch64::ASTRBBpost;
+  case AArch64::ASTRHHui:
+    return AArch64::ASTRHHpost;
+  case AArch64::ASTRWui:
+    return AArch64::ASTRWpost;
+  case AArch64::ASTRXui:
+    return AArch64::ASTRXpost;
+  case AArch64::ALDRSui:
+    return AArch64::ALDRSpost;
+  case AArch64::ALDRDui:
+    return AArch64::ALDRDpost;
+  case AArch64::ALDRQui:
+    return AArch64::ALDRQpost;
+  case AArch64::ALDRBBui:
+    return AArch64::ALDRBBpost;
+  case AArch64::ALDRHHui:
+    return AArch64::ALDRHHpost;
+  case AArch64::ALDRWui:
+    return AArch64::ALDRWpost;
+  case AArch64::ALDRXui:
+    return AArch64::ALDRXpost;
+  case AArch64::ALDRSWui:
+    return AArch64::ALDRSWpost;
+  case AArch64::ALDPSi:
+    return AArch64::ALDPSpost;
+  case AArch64::ALDPSWi:
+    return AArch64::ALDPSWpost;
+  case AArch64::ALDPDi:
+    return AArch64::ALDPDpost;
+  case AArch64::ALDPQi:
+    return AArch64::ALDPQpost;
+  case AArch64::ALDPWi:
+    return AArch64::ALDPWpost;
+  case AArch64::ALDPXi:
+    return AArch64::ALDPXpost;
+  case AArch64::ASTPSi:
+    return AArch64::ASTPSpost;
+  case AArch64::ASTPDi:
+    return AArch64::ASTPDpost;
+  case AArch64::ASTPQi:
+    return AArch64::ASTPQpost;
+  case AArch64::ASTPWi:
+    return AArch64::ASTPWpost;
+  case AArch64::ASTPXi:
+    return AArch64::ASTPXpost;
+  case AArch64::PCapLoadImmPre:
+  case AArch64::PCapLoadUnscaledImm:
+    return AArch64::PCapLoadImmPost;
+  case AArch64::PCapLoadPairImmPre:
+    return AArch64::PCapLoadPairImmPost;
+  case AArch64::PCapStoreImmPre:
+  case AArch64::PCapStoreUnscaledImm:
+    return AArch64::PCapStoreImmPost;
+  case AArch64::PCapStorePairImmPre:
+    return AArch64::PCapStorePairImmPost;
+  case AArch64::CapLoadImmPre:
+  case AArch64::CapLoadUnscaledImm:
+    return AArch64::CapLoadImmPost;
+  case AArch64::CapLoadPairImmPre:
+    return AArch64::CapLoadPairImmPost;
+  case AArch64::CapStoreImmPre:
+  case AArch64::CapStoreUnscaledImm:
+    return AArch64::CapStoreImmPost;
+  case AArch64::CapStorePairImmPre:
+    return AArch64::CapStorePairImmPost;
+  }
+}
+
+static unsigned getUnscaledOpcode(unsigned Opc) {
+  switch (Opc) {
+  default:
+    llvm_unreachable("Opcode has no unscaled equivalent!");
+  case AArch64::STRSui:
+    return AArch64::STURSi;
+  case AArch64::STRDui:
+    return AArch64::STURDi;
+  case AArch64::STRQui:
+    return AArch64::STURQi;
+  case AArch64::STRBBui:
+    return AArch64::STURBBi;
+  case AArch64::STRHHui:
+    return AArch64::STURHHi;
+  case AArch64::STRWui:
+    return AArch64::STURWi;
+  case AArch64::STRXui:
+    return AArch64::STURXi;
+  case AArch64::LDRSui:
+    return AArch64::LDURSi;
+  case AArch64::LDRDui:
+    return AArch64::LDURDi;
+  case AArch64::LDRQui:
+    return AArch64::LDURQi;
+  case AArch64::LDRBBui:
+    return AArch64::LDURBBi;
+  case AArch64::LDRHHui:
+    return AArch64::LDURHHi;
+  case AArch64::LDRWui:
+    return AArch64::LDURWi;
+  case AArch64::LDRXui:
+    return AArch64::LDURXi;
+  case AArch64::LDRSWui:
+    return AArch64::LDURSWi;
+  case AArch64::ASTRSui:
+    return AArch64::ASTURSi;
+  case AArch64::ASTRDui:
+    return AArch64::ASTURDi;
+  case AArch64::ASTRQui:
+    return AArch64::ASTURQi;
+  case AArch64::ASTRBBui:
+    return AArch64::ASTURBBi;
+  case AArch64::ASTRHHui:
+    return AArch64::ASTURHHi;
+  case AArch64::ASTRWui:
+    return AArch64::ASTURWi;
+  case AArch64::ASTRXui:
+    return AArch64::ASTURXi;
+  case AArch64::ALDRSui:
+    return AArch64::ALDURSi;
+  case AArch64::ALDRDui:
+    return AArch64::ALDURDi;
+  case AArch64::ALDRQui:
+    return AArch64::ALDURQi;
+  case AArch64::ALDRBBui:
+    return AArch64::ALDURBBi;
+  case AArch64::ALDRHHui:
+    return AArch64::ALDURHHi;
+  case AArch64::ALDRWui:
+    return AArch64::ALDURWi;
+  case AArch64::ALDRXui:
+    return AArch64::ALDURXi;
+  case AArch64::ALDRSWui:
+    return AArch64::ALDURSWi;
+  case AArch64::CapLoadImmPre:
+    return AArch64::CapLoadUnscaledImm;
+  case AArch64::CapStoreImmPre:
+    return AArch64::CapStoreUnscaledImm;
+  case AArch64::PCapLoadImmPre:
+    return AArch64::PCapLoadUnscaledImm;
+  case AArch64::PCapStoreImmPre:
+    return AArch64::PCapStoreUnscaledImm;
   }
 }
 
@@ -529,8 +868,39 @@ static bool isPairedLdSt(const MachineInstr &MI) {
   case AArch64::STPWi:
   case AArch64::STPXi:
   case AArch64::STGPi:
+  case AArch64::ALDPSi:
+  case AArch64::ALDPSWi:
+  case AArch64::ALDPDi:
+  case AArch64::ALDPQi:
+  case AArch64::ALDPWi:
+  case AArch64::ALDPXi:
+  case AArch64::ASTPSi:
+  case AArch64::ASTPDi:
+  case AArch64::ASTPQi:
+  case AArch64::ASTPWi:
+  case AArch64::ASTPXi:
+  case AArch64::PCapLoadPairImmPre:
+  case AArch64::PCapStorePairImmPre:
+  case AArch64::CapLoadPairImmPre:
+  case AArch64::CapStorePairImmPre:
     return true;
   }
+}
+
+static bool isMorelloCapabilityLdSt(unsigned Opc) {
+  switch (Opc) {
+  default:
+    return false;
+  case AArch64::PCapLoadImmPre:
+  case AArch64::PCapStoreImmPre:
+  case AArch64::CapLoadImmPre:
+  case AArch64::CapStoreImmPre:
+    return true;
+  }
+}
+
+static bool isCapabilityLdSt(unsigned Opc) {
+  return isMorelloCapabilityLdSt(Opc);
 }
 
 // Returns the scale and offset range of pre/post indexed variants of MI.
@@ -538,14 +908,16 @@ static void getPrePostIndexedMemOpInfo(const MachineInstr &MI, int &Scale,
                                        int &MinOffset, int &MaxOffset) {
   bool IsPaired = isPairedLdSt(MI);
   bool IsTagStore = isTagStore(MI);
+  bool IsCap = isCapabilityLdSt(MI.getOpcode());
   // ST*G and all paired ldst have the same scale in pre/post-indexed variants
   // as in the "unsigned offset" variant.
   // All other pre/post indexed ldst instructions are unscaled.
-  Scale = (IsTagStore || IsPaired) ? AArch64InstrInfo::getMemScale(MI) : 1;
+  Scale = (IsTagStore || IsPaired || IsCap) ? AArch64InstrInfo::getMemScale(MI) : 1;
 
   if (IsPaired) {
-    MinOffset = -64;
-    MaxOffset = 63;
+    unsigned NumBits = getPairImmediateBits(MI);
+    MinOffset = -(1 << NumBits);
+    MaxOffset = (1 << NumBits) - 1;
   } else {
     MinOffset = -256;
     MaxOffset = 255;
@@ -588,6 +960,7 @@ static bool isLdOffsetInRangeOfSt(MachineInstr &LoadInst,
 static bool isPromotableZeroStoreInst(MachineInstr &MI) {
   unsigned Opc = MI.getOpcode();
   return (Opc == AArch64::STRWui || Opc == AArch64::STURWi ||
+          Opc == AArch64::ASTRWui || Opc == AArch64::ASTURWi ||
           isNarrowStore(Opc)) &&
          getLdStRegOp(MI).getReg() == AArch64::WZR;
 }
@@ -601,11 +974,19 @@ static bool isPromotableLoadFromStore(MachineInstr &MI) {
   case AArch64::LDRHHui:
   case AArch64::LDRWui:
   case AArch64::LDRXui:
+  case AArch64::ALDRBBui:
+  case AArch64::ALDRHHui:
+  case AArch64::ALDRWui:
+  case AArch64::ALDRXui:
   // Unscaled instructions.
   case AArch64::LDURBBi:
   case AArch64::LDURHHi:
   case AArch64::LDURWi:
   case AArch64::LDURXi:
+  case AArch64::ALDURBBi:
+  case AArch64::ALDURHHi:
+  case AArch64::ALDURWi:
+  case AArch64::ALDURXi:
     return true;
   }
 }
@@ -630,6 +1011,24 @@ static bool isMergeableLdStUpdate(MachineInstr &MI) {
   case AArch64::LDRWui:
   case AArch64::LDRHHui:
   case AArch64::LDRBBui:
+  case AArch64::ASTRSui:
+  case AArch64::ASTRDui:
+  case AArch64::ASTRQui:
+  case AArch64::ASTRXui:
+  case AArch64::ASTRWui:
+  case AArch64::ASTRHHui:
+  case AArch64::ASTRBBui:
+  case AArch64::ALDRSui:
+  case AArch64::ALDRDui:
+  case AArch64::ALDRQui:
+  case AArch64::ALDRXui:
+  case AArch64::ALDRWui:
+  case AArch64::ALDRHHui:
+  case AArch64::ALDRBBui:
+  case AArch64::PCapLoadImmPre:
+  case AArch64::PCapStoreImmPre:
+  case AArch64::CapLoadImmPre:
+  case AArch64::CapStoreImmPre:
   case AArch64::STGOffset:
   case AArch64::STZGOffset:
   case AArch64::ST2GOffset:
@@ -646,6 +1045,16 @@ static bool isMergeableLdStUpdate(MachineInstr &MI) {
   case AArch64::LDURQi:
   case AArch64::LDURWi:
   case AArch64::LDURXi:
+  case AArch64::ASTURSi:
+  case AArch64::ASTURDi:
+  case AArch64::ASTURQi:
+  case AArch64::ASTURWi:
+  case AArch64::ASTURXi:
+  case AArch64::ALDURSi:
+  case AArch64::ALDURDi:
+  case AArch64::ALDURQi:
+  case AArch64::ALDURWi:
+  case AArch64::ALDURXi:
   // Paired instructions.
   case AArch64::LDPSi:
   case AArch64::LDPSWi:
@@ -658,6 +1067,21 @@ static bool isMergeableLdStUpdate(MachineInstr &MI) {
   case AArch64::STPQi:
   case AArch64::STPWi:
   case AArch64::STPXi:
+  case AArch64::ALDPSi:
+  case AArch64::ALDPSWi:
+  case AArch64::ALDPDi:
+  case AArch64::ALDPQi:
+  case AArch64::ALDPWi:
+  case AArch64::ALDPXi:
+  case AArch64::ASTPSi:
+  case AArch64::ASTPDi:
+  case AArch64::ASTPQi:
+  case AArch64::ASTPWi:
+  case AArch64::ASTPXi:
+  case AArch64::PCapLoadPairImmPre:
+  case AArch64::PCapStorePairImmPre:
+  case AArch64::CapLoadPairImmPre:
+  case AArch64::CapStorePairImmPre:
     // Make sure this is a reg+imm (as opposed to an address reloc).
     if (!getLdStOffsetOp(MI).isImm())
       return false;
@@ -1119,7 +1543,8 @@ AArch64LoadStoreOpt::promoteLoadFromStore(MachineBasicBlock::iterator LoadI,
   return NextI;
 }
 
-static bool inBoundsForPair(bool IsUnscaled, int Offset, int OffsetStride) {
+static bool inBoundsForPair(bool IsUnscaled, int Offset, int OffsetStride,
+                            MachineInstr &MI) {
   // Convert the byte-offset used by unscaled into an "element" offset used
   // by the scaled pair load/store instructions.
   if (IsUnscaled) {
@@ -1129,7 +1554,11 @@ static bool inBoundsForPair(bool IsUnscaled, int Offset, int OffsetStride) {
       return false;
     Offset /= OffsetStride;
   }
-  return Offset <= 63 && Offset >= -64;
+
+  unsigned Bits = getPairImmediateBits(MI);
+  int MinOffset = -(1 << Bits);
+  int MaxOffset = (1 << Bits) - 1;
+  return Offset <= MaxOffset && Offset >= MinOffset;
 }
 
 // Do alignment, specialized to power of 2 and for signed ints,
@@ -1510,7 +1939,7 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
           // insns have a 12-bit unsigned offset field.  If the resultant
           // immediate offset of merging these instructions is out of range for
           // a pairwise instruction, bail and keep looking.
-          if (!inBoundsForPair(IsUnscaled, MinOffset, OffsetStride)) {
+          if (!inBoundsForPair(IsUnscaled, MinOffset, OffsetStride, MI)) {
             LiveRegUnits::accumulateUsedDefed(MI, ModifiedRegUnits,
                                               UsedRegUnits, TRI);
             MemInsns.push_back(&MI);
@@ -1614,7 +2043,9 @@ AArch64LoadStoreOpt::mergeUpdateInsn(MachineBasicBlock::iterator I,
                                      MachineBasicBlock::iterator Update,
                                      bool IsPreIdx) {
   assert((Update->getOpcode() == AArch64::ADDXri ||
-          Update->getOpcode() == AArch64::SUBXri) &&
+          Update->getOpcode() == AArch64::SUBXri ||
+          Update->getOpcode() == AArch64::CapAddImm ||
+          Update->getOpcode() == AArch64::CapSubImm) &&
          "Unexpected base register update instruction to merge!");
   MachineBasicBlock::iterator NextI = I;
   // Return the instruction following the merged instruction, which is
@@ -1626,34 +2057,49 @@ AArch64LoadStoreOpt::mergeUpdateInsn(MachineBasicBlock::iterator I,
   int Value = Update->getOperand(2).getImm();
   assert(AArch64_AM::getShiftValue(Update->getOperand(3).getImm()) == 0 &&
          "Can't merge 1 << 12 offset into pre-/post-indexed load / store");
-  if (Update->getOpcode() == AArch64::SUBXri)
+  if (Update->getOpcode() == AArch64::SUBXri ||
+      Update->getOpcode() == AArch64::CapSubImm)
     Value = -Value;
 
-  unsigned NewOpc = IsPreIdx ? getPreIndexedOpcode(I->getOpcode())
-                             : getPostIndexedOpcode(I->getOpcode());
-  MachineInstrBuilder MIB;
+  // We need to use writeback only when the base register is used afterwards.
+  bool UseWriteback = !getLdStBaseOp(*I).isKill();
+  if (isMorelloCapabilityLdSt(I->getOpcode()) && Value < 0)
+    // We could use an uscaled instruction here if the offset is right,
+    // but for now simply use the writeback instruction instead.
+    UseWriteback = true;
+
+  unsigned NewOpc;
+  if (UseWriteback) {
+    NewOpc = IsPreIdx ? getPreIndexedOpcode(I->getOpcode())
+                      : getPostIndexedOpcode(I->getOpcode());
+  } else {
+    assert(IsPreIdx);
+    if (isPairedLdSt(*I) || isCapabilityLdSt(I->getOpcode())) {
+      // The non-writeback instruction has the same allowed offsets as the
+      // writeback instructions, so we can just use that.
+      NewOpc = I->getOpcode();
+    } else {
+      // The non-writeback instruction has a different range of allowed offsets
+      // than the writeback instructions, so we switch to the unscaled
+      // instruction as that does have the same range of allowed offsets.
+      NewOpc = getUnscaledOpcode(I->getOpcode());
+    }
+  }
+
   int Scale, MinOffset, MaxOffset;
   getPrePostIndexedMemOpInfo(*I, Scale, MinOffset, MaxOffset);
-  if (!isPairedLdSt(*I)) {
-    // Non-paired instruction.
-    MIB = BuildMI(*I->getParent(), I, I->getDebugLoc(), TII->get(NewOpc))
-              .add(getLdStRegOp(*Update))
-              .add(getLdStRegOp(*I))
-              .add(getLdStBaseOp(*I))
-              .addImm(Value / Scale)
-              .setMemRefs(I->memoperands())
-              .setMIFlags(I->mergeFlagsWith(*Update));
-  } else {
-    // Paired instruction.
-    MIB = BuildMI(*I->getParent(), I, I->getDebugLoc(), TII->get(NewOpc))
-              .add(getLdStRegOp(*Update))
-              .add(getLdStRegOp(*I, 0))
-              .add(getLdStRegOp(*I, 1))
-              .add(getLdStBaseOp(*I))
-              .addImm(Value / Scale)
-              .setMemRefs(I->memoperands())
-              .setMIFlags(I->mergeFlagsWith(*Update));
-  }
+  MachineInstrBuilder MIB = BuildMI(*I->getParent(), I, I->getDebugLoc(),
+                                    TII->get(NewOpc));
+  if (UseWriteback)
+    MIB.add(getLdStRegOp(*Update));
+  if (isPairedLdSt(*I))
+    MIB.add(getLdStRegOp(*I, 0)).add(getLdStRegOp(*I, 1));
+  else
+    MIB.add(getLdStRegOp(*I));
+  MIB.add(getLdStBaseOp(*I))
+        .addImm(Value / Scale)
+        .setMemRefs(I->memoperands())
+        .setMIFlags(I->mergeFlagsWith(*Update));
   (void)MIB;
 
   if (IsPreIdx) {
@@ -1686,6 +2132,8 @@ bool AArch64LoadStoreOpt::isMatchingUpdateInsn(MachineInstr &MemMI,
     break;
   case AArch64::SUBXri:
   case AArch64::ADDXri:
+  case AArch64::CapAddImm:
+  case AArch64::CapSubImm:
     // Make sure it's a vanilla immediate operand, not a relocation or
     // anything else we can't handle.
     if (!MI.getOperand(2).isImm())
@@ -1701,7 +2149,8 @@ bool AArch64LoadStoreOpt::isMatchingUpdateInsn(MachineInstr &MemMI,
       break;
 
     int UpdateOffset = MI.getOperand(2).getImm();
-    if (MI.getOpcode() == AArch64::SUBXri)
+    if (MI.getOpcode() == AArch64::SUBXri ||
+        MI.getOpcode() == AArch64::CapSubImm)
       UpdateOffset = -UpdateOffset;
 
     // The immediate must be a multiple of the scaling factor of the pre/post
@@ -1793,14 +2242,20 @@ MachineBasicBlock::iterator AArch64LoadStoreOpt::findMatchingUpdateInsnBackward(
 
   Register BaseReg = getLdStBaseOp(MemMI).getReg();
   int Offset = getLdStOffsetOp(MemMI).getImm();
+  bool UseWriteback = !getLdStBaseOp(MemMI).isKill();
+
+  // Morello capability loads/stores with writeback are scaled, so they can't
+  // always be replaced with a non-writeback variant. Assume writeback here.
+  if (isMorelloCapabilityLdSt(MemMI.getOpcode()))
+    UseWriteback = true;
 
   // If the load/store is the first instruction in the block, there's obviously
   // not any matching update. Ditto if the memory offset isn't zero.
   if (MBBI == B || Offset != 0)
     return E;
-  // If the base register overlaps a destination register, we can't
-  // merge the update.
-  if (!isTagStore(MemMI)) {
+  // If the base register overlaps a destination register, and we need to use
+  // writeback, then we can't merge the update.
+  if (UseWriteback && !isTagStore(MemMI)) {
     bool IsPairedInsn = isPairedLdSt(MemMI);
     for (unsigned i = 0, e = IsPairedInsn ? 2 : 1; i != e; ++i) {
       Register DestReg = getLdStRegOp(MemMI, i).getReg();
@@ -1907,7 +2362,7 @@ bool AArch64LoadStoreOpt::tryToPairLdStInst(MachineBasicBlock::iterator &MBBI) {
   // Allow one more for offset.
   if (Offset > 0)
     Offset -= OffsetStride;
-  if (!inBoundsForPair(IsUnscaled, Offset, OffsetStride))
+  if (!inBoundsForPair(IsUnscaled, Offset, OffsetStride, MI))
     return false;
 
   // Look ahead up to LdStLimit instructions for a pairable instruction.

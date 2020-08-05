@@ -57,6 +57,7 @@
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/ABI.h"
 #include "lldb/Target/DynamicLoader.h"
+#include "lldb/Target/Memory.h"
 #include "lldb/Target/MemoryRegionInfo.h"
 #include "lldb/Target/SystemRuntime.h"
 #include "lldb/Target/Target.h"
@@ -146,6 +147,12 @@ public:
   FileSpec GetTargetDefinitionFile() const {
     const uint32_t idx = ePropertyTargetDefinitionFile;
     return m_collection_sp->GetPropertyAtIndexAsFileSpec(nullptr, idx);
+  }
+
+  bool GetTargetDefinitionAArch64MorelloBuiltIn() const {
+    const uint32_t idx = ePropertyTargetDefinitionAArch64MorelloBuiltIn;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean(
+        NULL, idx, g_processgdbremote_properties[idx].default_uint_value);
   }
 
   bool GetUseSVR4() const {
@@ -455,6 +462,26 @@ void ProcessGDBRemote::BuildDynamicRegisterInfo(bool force) {
   if (!arch_to_use.IsValid())
     arch_to_use = target_arch;
 
+  // Hardcode the AArch64-Morello register set to speed up the process of
+  // getting register info on Android/Linux running under FastModel.
+  // TODO Morello: Remove this hack.
+  if (arch_to_use.IsValid() &&
+      target_arch.GetMachine() == llvm::Triple::aarch64 &&
+      m_gdb_comm.HasHostAddressCapabilityFeature() &&
+      GetGlobalPluginProperties()->GetTargetDefinitionAArch64MorelloBuiltIn()) {
+    StreamSP stream_sp = GetTarget().GetDebugger().GetAsyncOutputStream();
+    stream_sp->Printf(
+        "WARNING: Using client-hardcoded information about AArch64-Morello "
+        "register set. Set gdb-remote setting '%s' to false to "
+        "disable the optimization.\n",
+        g_processgdbremote_properties
+            [ePropertyTargetDefinitionAArch64MorelloBuiltIn]
+                .name);
+    m_register_info.HardcodeAArch64MorelloRegisters();
+    m_register_info.Finalize(arch_to_use);
+    return;
+  }
+
   if (GetGDBServerRegisterInfo(arch_to_use))
     return;
 
@@ -508,7 +535,7 @@ void ProcessGDBRemote::BuildDynamicRegisterInfo(bool force) {
             alt_name.SetString(value);
           } else if (name.equals("bitsize")) {
             value.getAsInteger(0, reg_info.byte_size);
-            reg_info.byte_size /= CHAR_BIT;
+            reg_info.byte_size = (reg_info.byte_size + CHAR_BIT - 1) / CHAR_BIT;
           } else if (name.equals("offset")) {
             if (value.getAsInteger(0, reg_offset))
               reg_offset = UINT32_MAX;
@@ -1132,6 +1159,12 @@ void ProcessGDBRemote::DidLaunchOrAttach(ArchSpec &process_arch) {
         GetTarget().SetArchitecture(process_arch);
       }
     }
+
+    // Disable use of JIT if the target has support for address capabilities. It
+    // cannot be currently used because JIT does not know how to establish a
+    // capability to execute its code.
+    if (m_gdb_comm.HasHostAddressCapabilityFeature())
+      SetCanJIT(false);
 
     // Find out which StructuredDataPlugins are supported by the debug monitor.
     // These plugins transmit data over async $J packets.
@@ -2752,6 +2785,69 @@ size_t ProcessGDBRemote::DoReadMemory(addr_t addr, void *buf, size_t size,
   return 0;
 }
 
+size_t ProcessGDBRemote::DoReadTaggedMemory(lldb::addr_t addr, void *buf,
+                                            size_t size, MemoryContentType type,
+                                            Status &error) {
+  switch (type) {
+  case eMemoryContentNormal:
+    break;
+  case eMemoryContentCap128: {
+    if (!m_gdb_comm.GetQXferCapaReadSupported()) {
+      error.SetErrorStringWithFormat("reading %s using the GDB remote protocol "
+                                     "is not supported by the target",
+                                     GetMemoryContentTypeAsCString(type));
+      return 0;
+    }
+
+    uint32_t base_byte_size = TaggedMemory::GetBaseByteSize(type);
+    uint32_t tagged_byte_size = TaggedMemory::GetTaggedByteSize(type);
+    uint8_t *bytes = static_cast<uint8_t *>(buf);
+    size_t i;
+    for (i = 0; i + tagged_byte_size <= size; i += tagged_byte_size) {
+      // Build the request.
+      char packet[64];
+      int packet_len;
+      packet_len =
+          ::snprintf(packet, sizeof(packet), "qXfer:capa:read:%" PRIx64 ":",
+                     static_cast<uint64_t>(addr));
+      assert(packet_len + 1 < static_cast<int>(sizeof(packet)));
+      UNUSED_IF_ASSERT_DISABLED(packet_len);
+
+      // Send the packet and obtain a response.
+      std::string response_string;
+      if (m_gdb_comm.SendPacketsAndConcatenateResponses(packet,
+                                                        response_string) !=
+          GDBRemoteCommunication::PacketResult::Success) {
+        error.SetErrorStringWithFormat("reading %s failed for 0x%" PRIx64,
+                                       GetMemoryContentTypeAsCString(type),
+                                       addr);
+        return i;
+      }
+
+      // Check that the received data have the expected size.
+      size_t bytes_received = response_string.length();
+      if (bytes_received != tagged_byte_size) {
+        error.SetErrorStringWithFormat(
+            "received %" PRIu64 " bytes instead of %" PRIu32
+            " when reading %s for 0x%" PRIx64,
+            static_cast<uint64_t>(bytes_received), tagged_byte_size,
+            GetMemoryContentTypeAsCString(type), addr);
+        return i;
+      }
+
+      // Copy the received data into the output buffer.
+      memcpy(bytes, response_string.c_str(), tagged_byte_size);
+
+      addr += base_byte_size;
+      bytes += tagged_byte_size;
+    }
+    return i;
+  }
+  }
+  llvm_unreachable("Unhandled read of tagged memory.");
+  return 0;
+}
+
 Status ProcessGDBRemote::WriteObjectFile(
     std::vector<ObjectFile::LoadableData> entries) {
   Status error;
@@ -4036,6 +4132,19 @@ ProcessGDBRemote::GetExtendedInfoForThread(lldb::tid_t tid) {
     }
   }
   return object_sp;
+}
+
+DataBufferSP ProcessGDBRemote::GetSigInfoDataForThread(lldb::tid_t tid) {
+  DataBufferSP buf;
+  if (m_gdb_comm.GetQXferSigInfoReadSupported()) {
+    std::string response_string;
+    if (m_gdb_comm.SendThreadSpecificPacketsAndConcatenateResponses(
+            tid, "qXfer:siginfo:read::", response_string) ==
+        GDBRemoteCommunication::PacketResult::Success)
+      buf.reset(new DataBufferHeap(response_string.c_str(),
+                                   response_string.length()));
+  }
+  return buf;
 }
 
 StructuredData::ObjectSP ProcessGDBRemote::GetLoadedDynamicLibrariesInfos(

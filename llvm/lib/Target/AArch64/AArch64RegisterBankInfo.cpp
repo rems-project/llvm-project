@@ -257,6 +257,8 @@ AArch64RegisterBankInfo::getRegBankFromRegClass(const TargetRegisterClass &RC,
   case AArch64::tcGPR64RegClassID:
   case AArch64::WSeqPairsClassRegClassID:
   case AArch64::XSeqPairsClassRegClassID:
+  case AArch64::WSeqPairsAllClassRegClassID:
+  case AArch64::XSeqPairsAllClassRegClassID:
     return getRegBank(AArch64::GPRRegBankID);
   case AArch64::CCRRegClassID:
     return getRegBank(AArch64::CCRegBankID);

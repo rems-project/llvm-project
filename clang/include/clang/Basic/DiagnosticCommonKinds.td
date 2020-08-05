@@ -255,6 +255,7 @@ def err_target_unsupported_cpu_for_micromips : Error<
   "micromips is not supported for target CPU '%0'">;
 def err_target_unknown_abi : Error<"unknown target ABI '%0'">;
 def err_target_unsupported_abi : Error<"ABI '%0' is not supported on CPU '%1'">;
+def err_target_feature_unsupported_abi : Error<"ABI '%0' is not supported without feature '%1'">;
 def err_target_unsupported_abi_for_triple : Error<
   "ABI '%0' is not supported for '%1'">;
 def err_unsupported_abi_for_opt : Error<"'%0' can only be used with the '%1' ABI">;

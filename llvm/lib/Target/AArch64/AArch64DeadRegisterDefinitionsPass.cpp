@@ -108,6 +108,40 @@ static bool atomicReadDroppedOnZero(unsigned Opcode) {
     case AArch64::LDUMINW:    case AArch64::LDUMINX:
     case AArch64::LDUMINLB:   case AArch64::LDUMINLH:
     case AArch64::LDUMINLW:   case AArch64::LDUMINLX:
+    // And C64 opcodes.
+    case AArch64::ALDADDB:     case AArch64::ALDADDH:
+    case AArch64::ALDADDW:     case AArch64::ALDADDX:
+    case AArch64::ALDADDLB:    case AArch64::ALDADDLH:
+    case AArch64::ALDADDLW:    case AArch64::ALDADDLX:
+    case AArch64::ALDCLRB:     case AArch64::ALDCLRH:
+    case AArch64::ALDCLRW:     case AArch64::ALDCLRX:
+    case AArch64::ALDCLRLB:    case AArch64::ALDCLRLH:
+    case AArch64::ALDCLRLW:    case AArch64::ALDCLRLX:
+    case AArch64::ALDEORB:     case AArch64::ALDEORH:
+    case AArch64::ALDEORW:     case AArch64::ALDEORX:
+    case AArch64::ALDEORLB:    case AArch64::ALDEORLH:
+    case AArch64::ALDEORLW:    case AArch64::ALDEORLX:
+    case AArch64::ALDSETB:     case AArch64::ALDSETH:
+    case AArch64::ALDSETW:     case AArch64::ALDSETX:
+    case AArch64::ALDSETLB:    case AArch64::ALDSETLH:
+    case AArch64::ALDSETLW:    case AArch64::ALDSETLX:
+    case AArch64::ALDSMAXB:    case AArch64::ALDSMAXH:
+    case AArch64::ALDSMAXW:    case AArch64::ALDSMAXX:
+    case AArch64::ALDSMAXLB:   case AArch64::ALDSMAXLH:
+    case AArch64::ALDSMAXLW:   case AArch64::ALDSMAXLX:
+    case AArch64::ALDSMINB:    case AArch64::ALDSMINH:
+    case AArch64::ALDSMINW:    case AArch64::ALDSMINX:
+    case AArch64::ALDSMINLB:   case AArch64::ALDSMINLH:
+    case AArch64::ALDSMINLW:   case AArch64::ALDSMINLX:
+    case AArch64::ALDUMAXB:    case AArch64::ALDUMAXH:
+    case AArch64::ALDUMAXW:    case AArch64::ALDUMAXX:
+    case AArch64::ALDUMAXLB:   case AArch64::ALDUMAXLH:
+    case AArch64::ALDUMAXLW:   case AArch64::ALDUMAXLX:
+    case AArch64::ALDUMINB:    case AArch64::ALDUMINH:
+    case AArch64::ALDUMINW:    case AArch64::ALDUMINX:
+    case AArch64::ALDUMINLB:   case AArch64::ALDUMINLH:
+    case AArch64::ALDUMINLW:   case AArch64::ALDUMINLX:
+
     return true;
   }
   return false;

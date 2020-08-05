@@ -43,6 +43,9 @@ class Executor(object):
         """
         raise NotImplementedError
 
+    def getExecArgs(self):
+        return []
+
     def merge_environments(self, current_env, updated_env):
         """Merges two execution environments.
 
@@ -74,6 +77,25 @@ class LocalExecutor(Executor):
         out, err, rc = executeCommand(cmd, cwd=work_dir, env=env)
         return (cmd, out, err, rc)
 
+class MorelloModelExecutor(Executor):
+    def __init__(self):
+        super(MorelloModelExecutor, self).__init__()
+
+    def run(self, exe_path, cmd=None, work_dir='.', file_deps=None, env=None):
+      if cmd:
+          run_model_cmd = ['run-model.sh', '-mx']
+          cmd = run_model_cmd + cmd
+      if env:
+          env = self.merge_environments(os.environ, env)
+      if work_dir == '.':
+          work_dir = os.getcwd()
+      out, err, rc = executeCommand(cmd, cwd=work_dir, env=env)
+      return (cmd, out, err, rc)
+
+    def getExecArgs(self):
+        return ['env', 'FVP_MORELLO_HOME=' + os.environ.get('FVP_MORELLO_HOME'),
+                'FVP_MORELLO_PLUGIN_HOME=' + os.environ.get('FVP_MORELLO_PLUGIN_HOME'),
+                'run-model.sh', '-mx']
 
 class CompileOnlyExecutor(Executor):
     def run(self, exe_path, cmd, local_cwd, file_deps=None, env=None):

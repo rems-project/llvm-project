@@ -1665,6 +1665,14 @@ public:
                                unsigned(TCK));
   }
 
+  bool preservesTags() const {
+    return hasFnAttr("must-preserve-cheri-tags");
+  }
+  void setPreservesTags(){
+    addAttribute(AttributeList::FunctionIndex,
+                 Attribute::get(getContext(), "must-preserve-cheri-tags"));
+  }
+
   /// Return true if the call can return twice
   bool canReturnTwice() const { return hasFnAttr(Attribute::ReturnsTwice); }
   void setCanReturnTwice() {

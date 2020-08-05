@@ -125,6 +125,7 @@ def CHERIIntCapArithmetic : DiagGroup<"cheri-intcap-arithmetic">;
 def CHERIImplicitConversion : DiagGroup<"cheri-implicit-conversion">;
 def CHERIImplicitConversionSign : DiagGroup<"cheri-implicit-conversion-sign">;
 def CHERIPointerConversion : DiagGroup<"cheri-pointer-conversion", [CHERIImplicitConversionSign, CHERIImplicitConversion]>;
+def CHERIMissingFeatures : DiagGroup<"cheri-unimplemented-features">;
 def MIPSCHERIPrototypes: DiagGroup<"mips-cheri-prototypes">;
 def MIPSCHERIPrototypesStrict: DiagGroup<"mips-cheri-prototypes-strict">;
 // Remarks about setting/not setting subobject bounds

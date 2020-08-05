@@ -58,7 +58,11 @@ int main(int, char**)
       const T* p = c.data();
       LIBCPP_ASSERT(p != nullptr);
       std::uintptr_t pint = reinterpret_cast<std::uintptr_t>(p);
+#ifdef __CHERI__
+      assert(__builtin_is_aligned(pint, TEST_ALIGNOF(std::max_align_t)));
+#else
       assert(pint % TEST_ALIGNOF(std::max_align_t) == 0);
+#endif
     }
     {
       typedef NoDefault T;

@@ -32,7 +32,12 @@
 #include <ccomplex>
 #include <cctype>
 #include <cerrno>
+
+#if !defined(_NEWLIB_VERSION)
+// newlib doesn't have fenv.h
 #include <cfenv>
+#endif
+
 #include <cfloat>
 #include <charconv>
 #include <chrono>

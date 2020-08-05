@@ -58,7 +58,7 @@ namespace RTLIB {
 
   /// Return the SYNC_FETCH_AND_* value for the given opcode and type, or
   /// UNKNOWN_LIBCALL if there is none.
-  Libcall getSYNC(unsigned Opc, MVT VT);
+  Libcall getSYNC(unsigned Opc, MVT VT, bool FatPtr = false);
 
   /// getMEMCPY_ELEMENT_UNORDERED_ATOMIC - Return
   /// MEMCPY_ELEMENT_UNORDERED_ATOMIC_* value for the given element size or

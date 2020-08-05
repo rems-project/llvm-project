@@ -1,6 +1,8 @@
 // There was a bug where CheriBSD would invoke hybrid clang with a -purecap triple suffix.
 // This should result in an error instead of nonsense output (it broke the debug info by emitting C17 as the return register!)
 
+// REQUIRES: mips-registered-target
+
 // First check that -cc1 gives errors:
 // RUN: not %clang -cc1 -triple cheri-unknown-freebsd-purecap -cheri-size 128 -target-cpu mips4 -target-abi n64 %s -emit-llvm -o - 2>&1 | FileCheck %s --check-prefix N64-ABI-WITH-PURECAP-TRIPLE
 // RUN: not %clang -cc1as -triple cheri-unknown-freebsd-purecap -cheri-size 128 -target-cpu mips4 -target-abi n64 %s -o - 2>&1 | FileCheck %s --check-prefix N64-ABI-WITH-PURECAP-TRIPLE

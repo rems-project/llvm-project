@@ -285,6 +285,11 @@ StringExtractorGDBRemote::GetServerPacketType() const {
       break;
 
     case 'X':
+      // FIXME: these should be folded into the above.
+      if (PACKET_STARTS_WITH("qXfer:capa:read:"))
+        return eServerPacketType_qXfer_capa_read;
+      if (PACKET_STARTS_WITH("qXfer:siginfo:read::"))
+        return eServerPacketType_qXfer_siginfo_read;
       if (PACKET_STARTS_WITH("qXfer:"))
         return eServerPacketType_qXfer;
       break;

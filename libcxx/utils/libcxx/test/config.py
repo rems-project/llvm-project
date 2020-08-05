@@ -58,7 +58,7 @@ class Configuration(object):
     # pylint: disable=redefined-outer-name
     def __init__(self, lit_config, config):
         if sys.version_info < (3, 3):
-            raise RuntimeError("Cannot run tests with python < 3.3")
+            lit_config.warning("There might be issues with timeouts with python < 3.3")
         self.lit_config = lit_config
         self.config = config
         self.cxx = None
@@ -802,7 +802,9 @@ class Configuration(object):
 
         # Configure libraries
         if self.cxx_stdlib_under_test == 'libc++':
-            self.cxx.link_flags += ['-nodefaultlibs']
+            use_default_libs = self.get_lit_bool('use_default_libs', False)
+            if not use_default_libs:
+                self.cxx.link_flags += ['-nodefaultlibs']
             # FIXME: Handle MSVCRT as part of the ABI library handling.
             if self.target_info.is_windows():
                 self.cxx.link_flags += ['-nostdlib']
@@ -981,7 +983,12 @@ class Configuration(object):
         # team using the test suite; They enable the warnings below and
         # expect the test suite to be clean.
         self.cxx.addWarningFlagIfSupported('-Wsign-compare')
-        self.cxx.addWarningFlagIfSupported('-Wunused-variable')
+        # Temporarily disable the unused-variable warning, since the
+        # test suite has a lot of these around.
+        #self.cxx.addWarningFlagIfSupported('-Wunused-variable')
+        self.cxx.addWarningFlagIfSupported('-Wno-unused-variable')
+        self.cxx.addWarningFlagIfSupported('-Wno-self-assign-overloaded')
+
         self.cxx.addWarningFlagIfSupported('-Wunused-parameter')
         self.cxx.addWarningFlagIfSupported('-Wunreachable-code')
         std = self.get_lit_conf('std', None)
@@ -1063,6 +1070,7 @@ class Configuration(object):
             if '__cpp_coroutines' not in macros:
                 self.lit_config.warning('-fcoroutines-ts is supported but '
                     '__cpp_coroutines is not defined')
+                return
             # Consider coroutines supported only when the feature test macro
             # reflects a recent value.
             if intMacroValue(macros['__cpp_coroutines']) >= 201703:
@@ -1077,7 +1085,7 @@ class Configuration(object):
         if enable_modules and not supports_modules:
             self.lit_config.fatal(
                 '-fmodules is enabled but not supported by the compiler')
-        if not supports_modules:
+        if not supports_modules or not enable_modules:
             return
         self.config.available_features.add('modules-support')
         exec_str = self.get_lit_conf('modules', "None")

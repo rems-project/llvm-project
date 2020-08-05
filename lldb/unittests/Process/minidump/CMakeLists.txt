@@ -13,6 +13,7 @@ add_lldb_unittest(LLDBMinidumpTests
   LINK_COMPONENTS
     ObjectYAML
     Support
+    RuntimeDyld
   )
 
 set(test_inputs

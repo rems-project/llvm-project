@@ -69,6 +69,7 @@ static constexpr FormatInfo g_format_infos[] = {
     {eFormatAddressInfo, 'A', "address"},
     {eFormatHexFloat, '\0', "hex float"},
     {eFormatInstruction, 'i', "instruction"},
+    {eFormatCapability, '\0', "capability"},
     {eFormatVoid, 'v', "void"},
     {eFormatUnicode8, 'u', "unicode8"},
 };

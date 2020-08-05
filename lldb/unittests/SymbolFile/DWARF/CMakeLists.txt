@@ -13,6 +13,7 @@ add_lldb_unittest(SymbolFileDWARFTests
   LINK_COMPONENTS
     Support
     DebugInfoPDB
+    RuntimeDyld
   )
 
 set(test_inputs

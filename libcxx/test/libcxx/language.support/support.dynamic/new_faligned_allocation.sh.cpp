@@ -59,25 +59,41 @@ int main(int, char**) {
   {
     void *ptr = ::operator new(1, std::align_val_t(128));
     assert(ptr);
+#ifdef __CHERI__
+    assert(__builtin_is_aligned(ptr, 128));
+#else
     assert(reinterpret_cast<std::uintptr_t>(ptr) % 128 == 0);
+#endif
     ::operator delete(ptr, std::align_val_t(128));
   }
   {
     void *ptr = ::operator new(1, std::align_val_t(128), std::nothrow);
     assert(ptr);
+#ifdef __CHERI__
+    assert(__builtin_is_aligned(ptr, 128));
+#else
     assert(reinterpret_cast<std::uintptr_t>(ptr) % 128 == 0);
+#endif
     ::operator delete(ptr, std::align_val_t(128), std::nothrow);
   }
   {
     void *ptr = ::operator new[](1, std::align_val_t(128));
     assert(ptr);
+#ifdef __CHERI__
+    assert(__builtin_is_aligned(ptr, 128));
+#else
     assert(reinterpret_cast<std::uintptr_t>(ptr) % 128 == 0);
+#endif
     ::operator delete[](ptr, std::align_val_t(128));
   }
   {
     void *ptr = ::operator new[](1, std::align_val_t(128), std::nothrow);
     assert(ptr);
+#ifdef __CHERI__
+    assert(__builtin_is_aligned(ptr, 128));
+#else
     assert(reinterpret_cast<std::uintptr_t>(ptr) % 128 == 0);
+#endif
     ::operator delete[](ptr, std::align_val_t(128), std::nothrow);
   }
 #ifndef TEST_HAS_NO_RTTI

@@ -54,6 +54,7 @@ public:
         // Name                           Offset (bits) Size (bits)     Flags
         {"fixup_aarch64_pcrel_adr_imm21", 0, 32, PCRelFlagVal},
         {"fixup_aarch64_pcrel_adrp_imm21", 0, 32, PCRelFlagVal},
+        {"fixup_aarch64_pcrel_adrp_imm20", 0, 32, PCRelFlagVal},
         {"fixup_aarch64_add_imm12", 10, 12, 0},
         {"fixup_aarch64_ldst_imm12_scale1", 10, 12, 0},
         {"fixup_aarch64_ldst_imm12_scale2", 10, 12, 0},
@@ -61,11 +62,14 @@ public:
         {"fixup_aarch64_ldst_imm12_scale8", 10, 12, 0},
         {"fixup_aarch64_ldst_imm12_scale16", 10, 12, 0},
         {"fixup_aarch64_ldr_pcrel_imm19", 5, 19, PCRelFlagVal},
+        {"fixup_aarch64_ldr_pcrel_imm17_scale16", 5, 17, PCRelFlagVal},
         {"fixup_aarch64_movw", 5, 16, 0},
         {"fixup_aarch64_pcrel_branch14", 5, 14, PCRelFlagVal},
         {"fixup_aarch64_pcrel_branch19", 5, 19, PCRelFlagVal},
         {"fixup_aarch64_pcrel_branch26", 0, 26, PCRelFlagVal},
         {"fixup_aarch64_pcrel_call26", 0, 26, PCRelFlagVal},
+        {"fixup_morello_pcrel_branch26", 0, 26, PCRelFlagVal },
+        {"fixup_morello_pcrel_call26", 0, 26, PCRelFlagVal },
         {"fixup_aarch64_tlsdesc_call", 0, 0, 0}};
 
     if (Kind < FirstTargetFixupKind)
@@ -129,12 +133,16 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   case AArch64::fixup_aarch64_ldst_imm12_scale16:
   case AArch64::fixup_aarch64_ldr_pcrel_imm19:
   case AArch64::fixup_aarch64_pcrel_branch19:
+  case AArch64::fixup_aarch64_ldr_pcrel_imm17_scale16:
     return 3;
 
   case AArch64::fixup_aarch64_pcrel_adr_imm21:
   case AArch64::fixup_aarch64_pcrel_adrp_imm21:
+  case AArch64::fixup_aarch64_pcrel_adrp_imm20:
   case AArch64::fixup_aarch64_pcrel_branch26:
   case AArch64::fixup_aarch64_pcrel_call26:
+  case AArch64::fixup_morello_pcrel_branch26:
+  case AArch64::fixup_morello_pcrel_call26:
   case FK_Data_4:
   case FK_SecRel_4:
     return 4;
@@ -315,6 +323,8 @@ static uint64_t adjustFixupValue(const MCFixup &Fixup, const MCValue &Target,
     return (Value >> 2) & 0x3fff;
   case AArch64::fixup_aarch64_pcrel_branch26:
   case AArch64::fixup_aarch64_pcrel_call26:
+  case AArch64::fixup_morello_pcrel_branch26:
+  case AArch64::fixup_morello_pcrel_call26:
     // Signed 28-bit immediate
     if (SignedValue > 134217727 || SignedValue < -134217728)
       Ctx.reportError(Fixup.getLoc(), "fixup value out of range");
@@ -374,8 +384,12 @@ unsigned AArch64AsmBackend::getFixupKindContainereSizeInBytes(unsigned Kind) con
   case AArch64::fixup_aarch64_pcrel_branch19:
   case AArch64::fixup_aarch64_pcrel_adr_imm21:
   case AArch64::fixup_aarch64_pcrel_adrp_imm21:
+  case AArch64::fixup_aarch64_pcrel_adrp_imm20:
   case AArch64::fixup_aarch64_pcrel_branch26:
   case AArch64::fixup_aarch64_pcrel_call26:
+  case AArch64::fixup_morello_pcrel_branch26:
+  case AArch64::fixup_morello_pcrel_call26:
+  case AArch64::fixup_aarch64_ldr_pcrel_imm17_scale16:
     // Instructions are always little endian
     return 0;
   }
@@ -489,8 +503,35 @@ bool AArch64AsmBackend::shouldForceRelocation(const MCAssembler &Asm,
   // same page as the ADRP and the instruction should encode 0x0. Assuming the
   // section isn't 0x1000-aligned, we therefore need to delegate this decision
   // to the linker -- a relocation!
-  if (Kind == AArch64::fixup_aarch64_pcrel_adrp_imm21)
+  if (Kind == AArch64::fixup_aarch64_pcrel_adrp_imm21 ||
+      Kind == AArch64::fixup_aarch64_pcrel_adrp_imm20)
     return true;
+
+  // We need to know the value of PC mod 16 in order to apply a fixup.
+  if (Kind == AArch64::fixup_aarch64_ldr_pcrel_imm17_scale16)
+    return true;
+
+  const MCSymbolRefExpr *A = Target.getSymA();
+  const MCSymbol *SymA = A ? &A->getSymbol() : nullptr;
+  const MCSymbolRefExpr *B = Target.getSymB();
+  const MCSymbol *SymB = B ? &B->getSymbol() : nullptr;
+
+  // If the fixup uses C64 symbols, leave this up to the linker.
+  if (SymA && Asm.isThumbFunc(SymA))
+    return true;
+  if (SymB && Asm.isThumbFunc(SymB))
+    return true;
+
+  // Check if we would need interworking between A64 and C64.
+  if (SymA && SymA->isELF()) {
+    unsigned Type = cast<MCSymbolELF>(SymA)->getType();
+    if (((Type == ELF::STT_FUNC || Type == ELF::STT_GNU_IFUNC)) &&
+      ((Kind == AArch64::fixup_morello_pcrel_call26 && !Asm.isThumbFunc(SymA)) ||
+      (Kind == AArch64::fixup_morello_pcrel_branch26 && !Asm.isThumbFunc(SymA)) ||
+      (Kind == AArch64::fixup_aarch64_pcrel_call26 && Asm.isThumbFunc(SymA)) ||
+      (Kind == AArch64::fixup_aarch64_pcrel_branch26 && Asm.isThumbFunc(SymA))))
+    return true;
+  }
 
   AArch64MCExpr::VariantKind RefKind =
       static_cast<AArch64MCExpr::VariantKind>(Target.getRefKind());

@@ -25,6 +25,9 @@ add_lldb_unittest(HostTests
   ${FILES}
   LINK_LIBS
     lldbHost
-    lldbUtilityHelpers
     LLVMTestingSupport
+    lldbUtilityHelpers
+    lldbTarget
+  LINK_COMPONENTS
+    RuntimeDyld
   )

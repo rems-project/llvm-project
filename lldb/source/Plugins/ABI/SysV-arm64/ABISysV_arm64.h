@@ -35,7 +35,37 @@ public:
 
   bool CreateDefaultUnwindPlan(lldb_private::UnwindPlan &unwind_plan) override;
 
-  bool RegisterIsVolatile(const lldb_private::RegisterInfo *reg_info) override;
+  bool RegisterIsVolatile(lldb_private::RegisterContext &reg_ctx,
+                          const lldb_private::RegisterInfo *reg_info,
+                          FrameState state,
+                          const lldb_private::UnwindPlan *unwind_plan) override;
+
+  bool GetFallbackRegisterLocation(
+      lldb_private::RegisterContext &reg_ctx,
+      const lldb_private::RegisterInfo *reg_info, FrameState frame_state,
+      const lldb_private::UnwindPlan *unwind_plan,
+      lldb::RegisterKind &unwind_registerkind,
+      lldb_private::UnwindPlan::Row::RegisterLocation &unwind_regloc) override;
+
+  uint32_t GetExtendedRegisterForUnwind(lldb_private::RegisterContext &reg_ctx,
+                                        uint32_t lldb_regnum) const override;
+
+  uint32_t
+  GetPrimordialRegisterForUnwind(lldb_private::RegisterContext &reg_ctx,
+                                 uint32_t lldb_regnum,
+                                 uint32_t byte_size) const override;
+
+  uint32_t GetReturnRegisterForUnwind(lldb_private::RegisterContext &reg_ctx,
+                                      uint32_t pc_lldb_regnum,
+                                      uint32_t ra_lldb_regnum) const override;
+
+  bool GetFrameState(lldb_private::RegisterContext &reg_ctx,
+                     FrameState &state) const override;
+
+  bool GetCalleeRegisterToSearch(lldb_private::RegisterContext &reg_ctx,
+                                 uint32_t lldb_regnum,
+                                 FrameState caller_frame_state,
+                                 uint32_t &search_lldb_regnum) const override;
 
   // The arm64 ABI requires that stack frames be 16 byte aligned.
   // When there is a trap handler on the stack, e.g. _sigtramp in userland
@@ -58,11 +88,19 @@ public:
   }
 
   bool CodeAddressIsValid(lldb::addr_t pc) override {
-    if (pc & (4ull - 1ull))
+    // Bit zero distinguishes A64 (0) and C64 (1). Enforce that the address is
+    // 4-byte aligned without taking this bit into account.
+    if ((pc & 2) != 0)
       return false; // Not 4 byte aligned
 
     // Anything else if fair game..
     return true;
+  }
+
+  lldb::addr_t FixCodeAddress(lldb::addr_t pc) override {
+    // Clear bit zero in the address as it is used to signify use of the C64
+    // instruction set.
+    return pc & ~(lldb::addr_t)1;
   }
 
   const lldb_private::RegisterInfo *
@@ -90,6 +128,11 @@ protected:
   lldb::ValueObjectSP
   GetReturnValueObjectImpl(lldb_private::Thread &thread,
                            lldb_private::CompilerType &ast_type) const override;
+
+  lldb_private::CompilerType
+  GetSigInfoCompilerType(const lldb_private::Target &target,
+                         lldb_private::ClangASTContext &ast_ctx,
+                         llvm::StringRef type_name) const override;
 
 private:
   ABISysV_arm64(lldb::ProcessSP process_sp,

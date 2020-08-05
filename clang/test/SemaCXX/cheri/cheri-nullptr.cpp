@@ -1,6 +1,8 @@
 // RUN: %cheri_cc1 -std=c++11 -target-abi purecap -fsyntax-only -verify %s
 // RUN: %cheri_cc1 -std=c++11 -target-abi n64 -fsyntax-only -verify %s
 // RUN: %clang_cc1 -triple x86_64-unknown-freebsd -std=c++11 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple aarch64-none-elf -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel -std=c++11 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple aarch64-none-elf -target-feature +morello -std=c++11 -fsyntax-only -verify %s
 
 // expected-no-diagnostics
 typedef decltype(nullptr) nullptr_t;
@@ -25,7 +27,11 @@ int main() {
   nullptr_t nt2 = __null;
   nullptr_t nt3 = 0;
 #ifdef __CHERI_PURE_CAPABILITY__
+#if defined(__aarch64__)
+#define NULLPTR_SIZE 16
+#else
 #define NULLPTR_SIZE (_MIPS_SZCAP / 8)
+#endif
 #define GNU_NULL_TYPE __intcap_t
 #else
 #define NULLPTR_SIZE 8

@@ -1054,6 +1054,36 @@ void CodeGenFunction::EmitReturnOfRValue(RValue RV, QualType Ty) {
   EmitBranchThroughCleanup(ReturnBlock);
 }
 
+// Those are the only cases where there is an implicit conversion from a
+// capability to a pointer.
+static bool needsImplicitCapabilityToPointerConversion(QualType FnRetTy,
+                                                       const Expr *RV,
+                                                       const ASTContext &Ctxt) {
+  // For now, the only possibility for a reference to actually be a capability
+  // is to be in sandbox mode.
+  // FIXME: this assumption will have to be revisited when support for the
+  // "T& __capability" syntax is added.
+  if (FnRetTy->isCHERICapabilityType(Ctxt))
+    return false;
+
+  if (auto ICE = dyn_cast<ImplicitCastExpr>(RV))
+    if (ICE->getCastKind() == CK_NoOp)
+      RV = ICE->getSubExpr();
+
+  RV = RV->IgnoreParens();
+
+  if (auto UO = dyn_cast<UnaryOperator>(RV))
+    if (UO->getOpcode() == UO_Deref &&
+        UO->getSubExpr()->getType()->isCHERICapabilityType(Ctxt))
+      return true;
+
+  if (auto ASE = dyn_cast<ArraySubscriptExpr>(RV))
+    if (ASE->getBase()->getType()->isCHERICapabilityType(Ctxt))
+      return true;
+
+  return false;
+}
+
 /// EmitReturnStmt - Note that due to GCC extensions, this can have an operand
 /// if the function returns void, or may be missing one if the function returns
 /// non-void.  Fun stuff :).
@@ -1111,8 +1141,11 @@ void CodeGenFunction::EmitReturnStmt(const ReturnStmt &S) {
   } else if (FnRetTy->isReferenceType()) {
     // If this function returns a reference, take the address of the expression
     // rather than the value.
-    RValue Result = EmitReferenceBindingToExpr(RV);
-    Builder.CreateStore(Result.getScalarVal(), ReturnValue);
+    llvm::Value *Result = EmitReferenceBindingToExpr(RV).getScalarVal();
+    if (needsImplicitCapabilityToPointerConversion(FnRetTy, RV, getContext()))
+      Result = CGM.getTargetCodeGenInfo().getPointerFromCapability(
+                *this, Result, ReturnValue.getElementType());
+    Builder.CreateStore(Result, ReturnValue);
   } else if (TEK_Scalar == getEvaluationKind(RV->getType())) {
     llvm::Value *RetV = EmitScalarExpr(RV);
     QualType Ty = RV->getType();

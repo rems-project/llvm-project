@@ -345,6 +345,12 @@ public:
     or thread-stop-format (stop_format = true).") GetDescription;
     bool GetDescription(lldb::SBStream &description, bool stop_format) const;
 
+    %feature("docstring", "
+    Return a siginfo value describing the last signal received by the thread.
+    ") GetSigInfo;
+    lldb::SBValue
+    GetSigInfo(SBError &sb_error) const;
+
     bool
     GetStatus (lldb::SBStream &status) const;
 

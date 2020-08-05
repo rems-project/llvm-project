@@ -55,6 +55,7 @@ option(LIBCXXABI_ENABLE_STATIC_UNWINDER "Statically link the LLVM unwinder." OFF
 option(LIBCXXABI_USE_COMPILER_RT "Use compiler-rt instead of libgcc" OFF)
 option(LIBCXXABI_ENABLE_THREADS "Build with threads enabled" ON)
 option(LIBCXXABI_HAS_PTHREAD_API "Ignore auto-detection and force use of pthread API" OFF)
+option(LIBCXXABI_USE_NEWLIB "Build against newlib" OFF)
 option(LIBCXXABI_HAS_EXTERNAL_THREAD_API
   "Build libc++abi with an externalized threading API.
   This option may only be set to ON when LIBCXXABI_ENABLE_THREADS=ON." OFF)
@@ -113,6 +114,8 @@ cmake_dependent_option(LIBCXXABI_STATICALLY_LINK_UNWINDER_IN_STATIC_LIBRARY
 cmake_dependent_option(LIBCXXABI_STATICALLY_LINK_UNWINDER_IN_SHARED_LIBRARY
   "Statically link the LLVM unwinder to shared library" ON
   "LIBCXXABI_ENABLE_STATIC_UNWINDER;LIBCXXABI_ENABLE_SHARED" OFF)
+
+option(LIBCXXABI_HAS_NO_RTTI_FLAG "Disable RTTI" OFF)
 
 option(LIBCXXABI_BAREMETAL "Build libc++abi for baremetal targets." OFF)
 # The default terminate handler attempts to demangle uncaught exceptions, which
@@ -319,6 +322,10 @@ if (WIN32 AND LIBCXXABI_ENABLE_STATIC AND NOT LIBCXXABI_ENABLE_SHARED)
   add_definitions(-D_LIBCXXABI_DISABLE_VISIBILITY_ANNOTATIONS)
 endif()
 
+if (LIBCXXABI_USE_NEWLIB)
+  list(APPEND LIBCXXABI_COMPILE_FLAGS "-D_GNU_SOURCE")
+endif()
+
 add_compile_flags_if_supported(-Werror=return-type)
 
 # Get warning flags
@@ -354,6 +361,11 @@ endif()
 
 # Get feature flags.
 add_compile_flags_if_supported(-fstrict-aliasing)
+
+if (LIBCXXABI_HAS_NO_RTTI_FLAG )
+  list(APPEND LIBCXXABI_CXX_FLAGS -fno-rtti)
+  add_definitions(-D_LIBCXXABI_HAS_NO_RTTI)
+endif()
 
 # Exceptions
 if (LIBCXXABI_ENABLE_EXCEPTIONS)

@@ -25,5 +25,5 @@ body: |
     %5:_(s192) = G_INSERT %4, %3, 0
     %6:_(s64), %7:_(s64), %8:_(s64) = G_UNMERGE_VALUES %5
     $x0 = COPY %6
-    RET_ReallyLR
+    RET_ReallyLR 0
 ...

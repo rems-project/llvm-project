@@ -99,6 +99,11 @@ public:
 
   virtual bool HardwareSingleStep(bool enable);
 
+  // TODO Morello: This code is unused by LLDB and not updated to have proper
+  // support for capabilities. It is commented out to make sure it does not get
+  // used in the future. It needs to be checked with upstream if it can be
+  // actually removed.
+#if 0
   virtual Status
   ReadRegisterValueFromMemory(const lldb_private::RegisterInfo *reg_info,
                               lldb::addr_t src_addr, size_t src_len,
@@ -108,6 +113,7 @@ public:
   WriteRegisterValueToMemory(const lldb_private::RegisterInfo *reg_info,
                              lldb::addr_t dst_addr, size_t dst_len,
                              const RegisterValue &reg_value);
+#endif
 
   // Subclasses should not override these
   virtual lldb::tid_t GetThreadID() const;

@@ -64,6 +64,7 @@ typedef signed char s8;
 typedef signed short s16;
 typedef signed int s32;
 typedef signed long long s64;
+typedef unsigned long usize;
 
 // The following two functions have platform specific implementations.
 void outputRaw(const char *Buffer);

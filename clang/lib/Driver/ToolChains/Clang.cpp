@@ -1670,8 +1670,14 @@ void Clang::RenderTargetOptions(const llvm::Triple &EffectiveTriple,
   }
 }
 
+static void addMorelloFlags(const ArgList &Args, ArgStringList &CmdArgs,
+                          StringRef ABIName) {
+  CmdArgs.push_back("-mllvm");
+  CmdArgs.push_back(Args.MakeArgString("-cheri-cap-table-abi=pcrel"));
+}
+
 namespace {
-void RenderAArch64ABI(const llvm::Triple &Triple, const ArgList &Args,
+StringRef RenderAArch64ABI(const llvm::Triple &Triple, const ArgList &Args,
                       ArgStringList &CmdArgs) {
   const char *ABIName = nullptr;
   if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ))
@@ -1683,6 +1689,7 @@ void RenderAArch64ABI(const llvm::Triple &Triple, const ArgList &Args,
 
   CmdArgs.push_back("-target-abi");
   CmdArgs.push_back(ABIName);
+  return ABIName;
 }
 }
 
@@ -1699,7 +1706,7 @@ void Clang::AddAArch64TargetArgs(const ArgList &Args,
                     options::OPT_mno_implicit_float, true))
     CmdArgs.push_back("-no-implicit-float");
 
-  RenderAArch64ABI(Triple, Args, CmdArgs);
+  auto ABIName = RenderAArch64ABI(Triple, Args, CmdArgs);
 
   if (Arg *A = Args.getLastArg(options::OPT_mfix_cortex_a53_835769,
                                options::OPT_mno_fix_cortex_a53_835769)) {
@@ -1759,6 +1766,8 @@ void Clang::AddAArch64TargetArgs(const ArgList &Args,
     if (IndirectBranches)
       CmdArgs.push_back("-mbranch-target-enforce");
   }
+
+  addMorelloFlags(Args, CmdArgs, ABIName);
 }
 
 static void addCheriFlags(const ArgList &Args, ArgStringList &CmdArgs,
@@ -1796,9 +1805,9 @@ static void addCheriFlags(const ArgList &Args, ArgStringList &CmdArgs,
   }
   bool MxCapTable = Args.hasFlag(options::OPT_cheri_large_cap_table,
                                  options::OPT_no_cheri_large_cap_table, false);
-  if (IsCapTable) {
+  if (IsCapTable && MxCapTable) {
     CmdArgs.push_back("-mllvm");
-    CmdArgs.push_back(MxCapTable ? "-mxcaptable=true" : "-mxcaptable=false");
+    CmdArgs.push_back("-mxcaptable=true");
   }
 
   if (Arg *A = Args.getLastArg(options::OPT_cheri_cap_tls_abi)) {
@@ -4848,6 +4857,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                   options::OPT_cheri_comparison_exact);
 
   Args.AddLastArg(CmdArgs, options::OPT_cheri_conversion_error);
+  Args.AddLastArg(CmdArgs, options::OPT_cheri_inline_memops);
 
   RenderARCMigrateToolOptions(D, Args, CmdArgs);
 
@@ -5806,6 +5816,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (Args.hasFlag(options::OPT_cheri_linker, options::OPT_no_cheri_linker, true))
     CmdArgs.push_back("-cheri-linker");
+
+  if (getToolChain().getArch() == llvm::Triple::aarch64)
+    if (Args.hasArg(options::OPT_external_capsizefix,
+                    options::OPT_no_capsizefix, false)) {
+      CmdArgs.push_back("-mllvm");
+      CmdArgs.push_back("-emit-no-morello-relocations");
+    }
 
   if (Args.hasArg(options::OPT_fretain_comments_from_system_headers))
     CmdArgs.push_back("-fretain-comments-from-system-headers");

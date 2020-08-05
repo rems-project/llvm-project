@@ -15,14 +15,14 @@ body:             |
     ; CHECK: [[C:%[0-9]+]]:_(s64) = G_CONSTANT i64 16
     ; CHECK: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s64)
     ; CHECK: $x0 = COPY [[PTR_ADD]](p0)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %0:_(p0) = COPY $x0
     %1:_(s64) = G_CONSTANT i64 4
     %2:_(s64) = G_CONSTANT i64 12
     %3:_(p0) = G_PTR_ADD %0(p0), %1
     %4:_(p0) = G_PTR_ADD %3(p0), %2
     $x0 = COPY %4(p0)
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 ---
 name: ptradd_chain_2
@@ -36,7 +36,7 @@ body:             |
     ; CHECK: [[C:%[0-9]+]]:_(s64) = G_CONSTANT i64 28
     ; CHECK: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s64)
     ; CHECK: $x0 = COPY [[PTR_ADD]](p0)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %0:_(p0) = COPY $x0
     %1:_(s64) = G_CONSTANT i64 4
     %2:_(s64) = G_CONSTANT i64 12
@@ -44,7 +44,7 @@ body:             |
     %4:_(p0) = G_PTR_ADD %3(p0), %2
     %5:_(p0) = G_PTR_ADD %4(p0), %2
     $x0 = COPY %5(p0)
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 ---
 name: ptradd_chain_lookthough
@@ -58,7 +58,7 @@ body:             |
     ; CHECK: [[C:%[0-9]+]]:_(s64) = G_CONSTANT i64 28
     ; CHECK: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s64)
     ; CHECK: $x0 = COPY [[PTR_ADD]](p0)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %0:_(p0) = COPY $x0
     %1:_(s64) = G_CONSTANT i64 4
     %2:_(s64) = G_CONSTANT i64 12
@@ -68,5 +68,5 @@ body:             |
     %4:_(p0) = G_PTR_ADD %3(p0), %2
     %5:_(p0) = G_PTR_ADD %4(p0), %7
     $x0 = COPY %5(p0)
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...

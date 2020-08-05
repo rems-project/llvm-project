@@ -5,6 +5,7 @@ add_lldb_library(lldbPluginABISysV_arm64 PLUGIN
     lldbCore
     lldbSymbol
     lldbTarget
+    lldbPluginABIUtility
   LINK_COMPONENTS
     Support
   )

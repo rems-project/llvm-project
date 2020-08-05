@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 // UNSUPPORTED: c++98, c++03
 // UNSUPPORTED: windows
+// UNSUPPORTED: libcpp-has-newlib
 
 // MODULES_DEFINES: _LIBCPP_DEBUG=1
 

@@ -2749,6 +2749,20 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
       Args.hasFlag(OPT_cheri_comparison_exact, OPT_cheri_comparison_address,
                    Opts.CheriCompareExact);
 
+  // Handle the CHERI memops inlining language option.
+  if (const Arg *A = Args.getLastArg(OPT_cheri_inline_memops)) {
+    auto MemCpyMode =
+        llvm::StringSwitch<LangOptions::CheriMemopsInlineBehaviourMode>(A->getValue())
+            .Case("legacy", LangOptions::CheriMemopsInlineBehaviour_Legacy)
+            .Case("new", LangOptions::CheriMemopsInlineBehaviour_New)
+            .Default((LangOptions::CheriMemopsInlineBehaviourMode)-1);
+    if (MemCpyMode == (LangOptions::CheriMemopsInlineBehaviourMode)-1) {
+      Diags.Report(diag::err_drv_invalid_value)
+          << A->getAsString(Args) << A->getValue();
+    } else
+      Opts.setCheriMemopsInlineBehaviour(MemCpyMode);
+  }
+
   // Parse the -cheri-bounds= option to determine whether we should set more
   // bounds on capabilities (e.g. when passing subobject references to
   // functions)
@@ -2858,6 +2872,11 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
     && Opts.OpenCLVersion == 200);
   Opts.BlocksRuntimeOptional = Args.hasArg(OPT_fblocks_runtime_optional);
   Opts.Coroutines = Opts.CPlusPlus2a || Args.hasArg(OPT_fcoroutines_ts);
+  if (TargetOpts.ABI == "purecap") {
+    Opts.Coroutines = false;
+    if (Args.hasArg(OPT_fcoroutines_ts))
+      Diags.Report(diag::warn_coro_cheri_purecap);
+  }
 
   Opts.ConvergentFunctions = Opts.OpenCL || (Opts.CUDA && Opts.CUDAIsDevice) ||
     Args.hasArg(OPT_fconvergent_functions);

@@ -130,7 +130,9 @@ int main(int, char**)
 {
     test<float>();
     test<double>();
+#ifndef _LIBCPP_HAS_NEWLIB
     test<long double>();
+#endif // ! _LIBCPP_HAS_NEWLIB
     test_edges();
 
   return 0;

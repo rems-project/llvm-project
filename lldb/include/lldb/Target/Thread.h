@@ -467,7 +467,25 @@ public:
                                bool stop_format);
 
   bool GetDescription(Stream &s, lldb::DescriptionLevel level,
-                      bool print_json_thread, bool print_json_stopinfo);
+                      bool print_json_thread, bool print_json_stopinfo,
+                      bool print_siginfo);
+
+  //------------------------------------------------------------------
+  /// Return a siginfo value describing the last signal received by
+  /// the thread.
+  ///
+  /// This method is not meant to be overridden by Thread subclasses,
+  /// they should implement Thread::FetchSigInfoData() instead.
+  ///
+  /// @param[out] error
+  ///     An error descriptor if the method failed to obtain the
+  ///     siginfo value.
+  ///
+  /// @return
+  ///     A shared pointer to the resulting siginfo value which can
+  ///     contain nullptr if the value could not be obtained.
+  //------------------------------------------------------------------
+  lldb::ValueObjectSP GetSigInfo(Status &error) const;
 
   /// Default implementation for stepping into.
   ///
@@ -1207,6 +1225,21 @@ protected:
   // thread should fill
   virtual lldb_private::StructuredData::ObjectSP FetchThreadExtendedInfo() {
     return StructuredData::ObjectSP();
+  }
+
+  //------------------------------------------------------------------
+  /// Fetch siginfo data describing the last signal received by the
+  /// thread.
+  ///
+  /// Subclasses that have a way to get the siginfo data for this
+  /// thread should override this method.
+  ///
+  /// @return
+  ///     A shared pointer to the resulting siginfo data which can
+  ///     contain nullptr if the value could not be obtained.
+  //------------------------------------------------------------------
+  virtual lldb::DataBufferSP FetchSigInfoData() const {
+    return lldb::DataBufferSP();
   }
 
   lldb::StackFrameListSP GetStackFrameList();

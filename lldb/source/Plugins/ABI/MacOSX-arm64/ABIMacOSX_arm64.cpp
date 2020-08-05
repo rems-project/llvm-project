@@ -2026,7 +2026,10 @@ bool ABIMacOSX_arm64::CreateDefaultUnwindPlan(UnwindPlan &unwind_plan) {
 // We treat x29 as callee preserved also, else the unwinder won't try to
 // retrieve fp saves.
 
-bool ABIMacOSX_arm64::RegisterIsVolatile(const RegisterInfo *reg_info) {
+bool ABIMacOSX_arm64::RegisterIsVolatile(RegisterContext &reg_ctx,
+                                         const RegisterInfo *reg_info,
+                                         FrameState frame_state,
+                                         const UnwindPlan *unwind_plan) {
   if (reg_info) {
     const char *name = reg_info->name;
 

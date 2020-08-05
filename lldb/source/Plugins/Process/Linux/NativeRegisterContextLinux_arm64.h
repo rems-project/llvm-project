@@ -99,6 +99,9 @@ private:
     uint32_t num_registers;
     uint32_t num_gpr_registers;
     uint32_t num_fpr_registers;
+    uint32_t num_cap_registers;
+    uint32_t num_state_registers;
+    uint32_t num_thread_registers;
 
     uint32_t last_gpr;
     uint32_t first_fpr;
@@ -106,6 +109,15 @@ private:
 
     uint32_t first_fpr_v;
     uint32_t last_fpr_v;
+
+    uint32_t first_cap;
+    uint32_t last_cap;
+
+    uint32_t first_state;
+    uint32_t last_state;
+
+    uint32_t first_thread;
+    uint32_t last_thread;
 
     uint32_t gpr_flags;
   };
@@ -157,9 +169,26 @@ private:
 
   bool IsFPR(unsigned reg) const;
 
+  bool IsCapR(unsigned reg) const;
+
+  bool IsStateR(unsigned reg) const;
+
+  bool IsThreadR(unsigned reg) const;
+
   Status ReadHardwareDebugInfo();
 
   Status WriteHardwareDebugRegs(int hwbType);
+
+  Status GetRegSetFromKernel(int regset, void *reg_state, size_t len);
+
+  void SetCapabilityRegisterValue(uint8_t *value, uint64_t tag,
+                                  RegisterValue &reg_value);
+
+  Status ReadCapabilityRegister(uint32_t regnum, RegisterValue &reg_value);
+
+  Status ReadStateRegister(uint32_t regnum, RegisterValue &reg_value);
+
+  Status ReadThreadRegister(uint32_t regnum, RegisterValue &reg_value);
 
   uint32_t CalculateFprOffset(const RegisterInfo *reg_info) const;
 };

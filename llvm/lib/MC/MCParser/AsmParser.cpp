@@ -4077,14 +4077,21 @@ bool AsmParser::parseDirectiveCFISections() {
 }
 
 /// parseDirectiveCFIStartProc
-/// ::= .cfi_startproc [simple]
+/// ::= .cfi_startproc [simple|purecap]
 bool AsmParser::parseDirectiveCFIStartProc() {
-  StringRef Simple;
+  MCCFIProcType Type = MCCFIProcType::Normal;
   if (!parseOptionalToken(AsmToken::EndOfStatement)) {
-    if (check(parseIdentifier(Simple) || Simple != "simple",
+    StringRef TypeString;
+    if (check(parseIdentifier(TypeString) ||
+                  (TypeString != "simple" && TypeString != "purecap"),
               "unexpected token") ||
         parseToken(AsmToken::EndOfStatement))
       return addErrorSuffix(" in '.cfi_startproc' directive");
+
+    if (TypeString == "purecap")
+      Type = MCCFIProcType::PureCap;
+    else
+      Type = MCCFIProcType::Simple;
   }
 
   // TODO(kristina): Deal with a corner case of incorrect diagnostic context
@@ -4092,7 +4099,7 @@ bool AsmParser::parseDirectiveCFIStartProc() {
   // expansion which can *ONLY* happen if Clang's cc1as is the API consumer.
   // Tools like llvm-mc on the other hand are not affected by it, and report
   // correct context information.
-  getStreamer().EmitCFIStartProc(!Simple.empty(), Lexer.getLoc());
+  getStreamer().EmitCFIStartProc(Type, Lexer.getLoc());
   return false;
 }
 

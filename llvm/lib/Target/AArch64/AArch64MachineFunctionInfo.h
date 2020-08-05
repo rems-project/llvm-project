@@ -16,6 +16,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -79,6 +80,10 @@ class AArch64FunctionInfo final : public MachineFunctionInfo {
   /// registers.
   unsigned VarArgsGPRSize = 0;
 
+  /// Offset from the start of the stack slot where the geberal purpose
+  /// registers are stored.
+  unsigned VarArgsGPROffset = 0;
+
   /// FrameIndex for start of varargs area for arguments passed in
   /// floating-point registers.
   int VarArgsFPRIndex = 0;
@@ -98,6 +103,8 @@ class AArch64FunctionInfo final : public MachineFunctionInfo {
   /// True when the callee-save stack area has unused gaps that may be used for
   /// other stack allocations.
   bool CalleeSaveStackHasFreeSpace = false;
+
+  unsigned FrameRecordSize = 16;
 
   /// SRetReturnReg - sret lowering includes returning the value of the
   /// returned struct in a register. This field holds the virtual register into
@@ -258,11 +265,17 @@ public:
   unsigned getVarArgsGPRSize() const { return VarArgsGPRSize; }
   void setVarArgsGPRSize(unsigned Size) { VarArgsGPRSize = Size; }
 
+  unsigned getVarArgsGPROffset() const { return VarArgsGPROffset; }
+  void setVarArgsGPROffset(unsigned Offset) { VarArgsGPROffset = Offset; }
+
   int getVarArgsFPRIndex() const { return VarArgsFPRIndex; }
   void setVarArgsFPRIndex(int Index) { VarArgsFPRIndex = Index; }
 
   unsigned getVarArgsFPRSize() const { return VarArgsFPRSize; }
   void setVarArgsFPRSize(unsigned Size) { VarArgsFPRSize = Size; }
+
+  unsigned getFrameRecordSize() const { return FrameRecordSize; }
+  void setFrameRecordSize(unsigned Size) { FrameRecordSize = Size; }
 
   unsigned getSRetReturnReg() const { return SRetReturnReg; }
   void setSRetReturnReg(unsigned Reg) { SRetReturnReg = Reg; }

@@ -53,6 +53,8 @@ public:
   uint32_t size() override { return 16; }
   void writeTo(uint8_t *buf) override;
   void addSymbols(ThunkSection &isec) override;
+  bool isCompatibleWith(const InputSection &isec,
+                        const Relocation &rel) const override;
 };
 
 class AArch64ADRPThunk final : public Thunk {
@@ -61,6 +63,28 @@ public:
   uint32_t size() override { return 12; }
   void writeTo(uint8_t *buf) override;
   void addSymbols(ThunkSection &isec) override;
+  bool isCompatibleWith(const InputSection &isec,
+                        const Relocation &rel) const override;
+};
+
+class C64ADRPThunk : public Thunk {
+public:
+  C64ADRPThunk(Symbol &dest, int64_t addend) : Thunk(dest, addend) {}
+  uint32_t size() override { return 12; }
+  void writeTo(uint8_t *buf) override;
+  void addSymbols(ThunkSection &isec) override;
+  bool isCompatibleWith(const InputSection &isec,
+                        const Relocation &rel) const override;
+};
+
+class A64ToC64Thunk final : public C64ADRPThunk {
+public:
+  A64ToC64Thunk(Symbol &dest, int64_t addend) : C64ADRPThunk(dest, addend) {}
+  uint32_t size() override { return 16; }
+  void writeTo(uint8_t *buf) override;
+  void addSymbols(ThunkSection &isec) override;
+  bool isCompatibleWith(const InputSection &isec,
+                        const Relocation &rel) const override;
 };
 
 // Base class for ARM thunks.
@@ -355,6 +379,12 @@ void AArch64ABSLongThunk::addSymbols(ThunkSection &isec) {
   addSymbol("$d", STT_NOTYPE, 8, isec);
 }
 
+bool AArch64ABSLongThunk::isCompatibleWith(const InputSection &isec,
+                                           const Relocation &rel) const {
+  // AArch64 branch relocations can't use C64 Thunks
+  return rel.type != R_MORELLO_JUMP26 && rel.type != R_MORELLO_CALL26;
+}
+
 // This Thunk has a maximum range of 4Gb, this is sufficient for all programs
 // using the small code model, including pc-relative ones. At time of writing
 // clang and gcc do not support the large code model for position independent
@@ -378,6 +408,68 @@ void AArch64ADRPThunk::addSymbols(ThunkSection &isec) {
   addSymbol(saver.save("__AArch64ADRPThunk_" + destination.getName()), STT_FUNC,
             0, isec);
   addSymbol("$x", STT_NOTYPE, 0, isec);
+}
+
+bool AArch64ADRPThunk::isCompatibleWith(const InputSection &is,
+                                        const Relocation &rel) const {
+  // AArch64 branch relocations can't use C64 Thunks
+  return rel.type != R_MORELLO_JUMP26 && rel.type != R_MORELLO_CALL26;
+}
+
+// This Thunk has a maximum range of 4Gb, this is sufficient for all programs
+// using the small code model, including pc-relative ones.
+void C64ADRPThunk::writeTo(uint8_t *buf) {
+  const uint8_t data[] = {
+      0x10, 0x00, 0x80, 0x90, // adrp c16, dest R_MORELLO_ADR_PREL_PG_HI20(Dest)
+      0x10, 0x02, 0x00, 0x02, // add  c16, c16, R_AARCH64_ADD_ABS_LO12_NC(Dest)
+      0x00, 0x12, 0xc2, 0xc2, // br   c16
+  };
+  uint64_t s = getAArch64ThunkDestVA(destination, addend);
+  uint64_t p = getThunkTargetSym()->getVA();
+  memcpy(buf, data, sizeof(data));
+  target->relocateNoSym(buf, R_MORELLO_ADR_PREL_PG_HI20,
+                        getAArch64Page(s) - getAArch64Page(p));
+  target->relocateNoSym(buf + 4, R_AARCH64_ADD_ABS_LO12_NC, s);
+}
+
+void A64ToC64Thunk::writeTo(uint8_t *buf) {
+  const uint8_t data[] = {
+      0xe0, 0x73, 0xc2, 0xc2, // bx   #4
+      0x10, 0x00, 0x80, 0x90, // adrp c16, dest R_MORELLO_ADR_PREL_PG_HI20(Dest)
+      0x10, 0x02, 0x00, 0x02, // add  c16, c16, R_AARCH64_ADD_ABS_LO12_NC(Dest)
+      0x00, 0x12, 0xc2, 0xc2, // br   c16
+  };
+  uint64_t s = getAArch64ThunkDestVA(destination, addend);
+  uint64_t p = getThunkTargetSym()->getVA();
+  memcpy(buf, data, sizeof(data));
+  target->relocateNoSym(buf + 4, R_MORELLO_ADR_PREL_PG_HI20,
+                        getAArch64Page(s) - getAArch64Page(p));
+  target->relocateNoSym(buf + 8, R_AARCH64_ADD_ABS_LO12_NC, s);
+}
+void A64ToC64Thunk::addSymbols(ThunkSection &isec) {
+  // The first instruction in the thunk, bx #4, is in A64 state
+  // so clear bit 0 of __A64ToC64Thunk_ and add an A64 mapping symbol ($x).
+  addSymbol(saver.save("__A64ToC64Thunk_" + destination.getName()), STT_FUNC, 0,
+            isec);
+  addSymbol("$x", STT_NOTYPE, 0, isec);
+  addSymbol("$c", STT_NOTYPE, 4, isec);
+}
+bool A64ToC64Thunk::isCompatibleWith(const InputSection &isec,
+                                    const Relocation &rel) const {
+  // C64 branch relocations can't use AArch64 Thunks
+  return rel.type == R_AARCH64_JUMP26 || rel.type == R_AARCH64_CALL26;
+}
+
+void C64ADRPThunk::addSymbols(ThunkSection &isec) {
+  addSymbol(saver.save("__C64ADRPThunk_" + destination.getName()), STT_FUNC, 1,
+            isec);
+  addSymbol("$c", STT_NOTYPE, 0, isec);
+}
+
+bool C64ADRPThunk::isCompatibleWith(const InputSection &isec,
+                                    const Relocation &rel) const {
+  // C64 branch relocations can't use AArch64 Thunks
+  return rel.type != R_AARCH64_JUMP26 && rel.type != R_AARCH64_CALL26;
 }
 
 // ARM Target Thunks
@@ -805,8 +897,18 @@ Thunk::Thunk(Symbol &d, int64_t a) : destination(d), addend(a), offset(0) {}
 Thunk::~Thunk() = default;
 
 static Thunk *addThunkAArch64(RelType type, Symbol &s, int64_t a) {
-  if (type != R_AARCH64_CALL26 && type != R_AARCH64_JUMP26)
+  if (type != R_AARCH64_CALL26 && type != R_AARCH64_JUMP26 &&
+      type != R_MORELLO_CALL26 && type != R_MORELLO_JUMP26)
     fatal("unrecognized relocation type");
+  if (type == R_MORELLO_CALL26 || type == R_MORELLO_JUMP26)
+    return make<C64ADRPThunk>(s, a);
+
+  // If bit 0 is set then our target is in C64 state,
+  // so create a A64->C64 interworking thunk
+  uint64_t dst = s.getVA();
+  if ((dst & 1) == 1)
+    return make<A64ToC64Thunk>(s, a);
+
   if (config->picThunk)
     return make<AArch64ADRPThunk>(s, a);
   return make<AArch64ABSLongThunk>(s, a);

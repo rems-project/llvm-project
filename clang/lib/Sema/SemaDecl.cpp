@@ -15970,7 +15970,19 @@ void Sema::ActOnTagFinishDefinition(Scope *S, Decl *TagD,
         unsigned Padding = 0;
         const ASTRecordLayout &Layout = Context.getASTRecordLayout(RD);
         unsigned BitEnd = 0;
-        for (auto F : RD->fields()) {
+        if (RD->isUnion()) {
+          for (auto F : RD->fields()) {
+            NumFields++;
+            if (F->isBitField()) {
+              BitEnd = F->getBitWidthValue(Context);
+              LastFieldEnd = std::max(LastFieldEnd,
+                                      (BitEnd + (CharBitNum - 1)) / CharBitNum);
+              continue;
+            }
+            unsigned FSize = Context.getTypeSizeInChars(F->getType()).getQuantity();
+            LastFieldEnd = std::max(LastFieldEnd, FSize);
+          }
+        } else for (auto F : RD->fields()) {
           unsigned Offset = Layout.getFieldOffset(NumFields);
           NumFields++;
           // Count the bits in a bitfield.

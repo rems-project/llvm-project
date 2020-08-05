@@ -20,6 +20,14 @@ def int_cheri_cap_base_get :
   Intrinsic<[llvm_anyint_ty],
             [llvm_fatptr_ty],
             [IntrNoMem, IntrWillReturn]>;
+def int_cheri_cap_copy_from_high :
+  Intrinsic<[llvm_anyint_ty],
+            [llvm_fatptr_ty],
+            [IntrNoMem, IntrWillReturn]>;
+def int_cheri_cap_copy_to_high :
+  Intrinsic<[llvm_fatptr_ty],
+            [llvm_fatptr_ty, llvm_anyint_ty],
+            [IntrNoMem, IntrWillReturn]>;
 
 def int_cheri_cap_perms_and :
   Intrinsic<[llvm_fatptr_ty],
@@ -99,6 +107,10 @@ def int_cheri_cap_type_check :
   GCCBuiltin<"__builtin_cheri_type_check">,
   Intrinsic<[], [llvm_fatptr_ty, llvm_fatptr_ty],
             [IntrNoMem, IntrHasSideEffects, IntrWillReturn]>;
+def int_cheri_cap_bit_equals :
+  GCCBuiltin<"__builtin_cheri_bit_equals">,
+  Intrinsic<[llvm_i1_ty], [llvm_fatptr_ty, llvm_fatptr_ty],
+  [IntrNoMem, IntrWillReturn ]>;
 def int_cheri_cap_subset_test:
   GCCBuiltin<"__builtin_cheri_subset_test">,
   Intrinsic<[llvm_i1_ty], [llvm_fatptr_ty, llvm_fatptr_ty], [IntrNoMem, IntrWillReturn]>;
@@ -139,6 +151,9 @@ def int_cheri_cap_to_pointer:
   Intrinsic<[llvm_anyint_ty], [llvm_fatptr_ty, llvm_fatptr_ty], [IntrNoMem, IntrWillReturn]>;
 def int_cheri_cap_from_pointer:
   Intrinsic<[llvm_fatptr_ty], [llvm_fatptr_ty, llvm_anyint_ty], [IntrNoMem, IntrWillReturn]>;
+
+def int_cheri_cap_from_pointer_nonnull_zero:
+  Intrinsic<[llvm_fatptr_ty], [llvm_fatptr_ty, llvm_anyint_ty], [IntrNoMem, IntrWillReturn]>;
 def int_cheri_cap_from_ddc:
   Intrinsic<[llvm_fatptr_ty], [llvm_anyint_ty], [IntrNoMem, IntrWillReturn]>;
 
@@ -156,7 +171,7 @@ def int_cheri_cap_type_copy:
 // Tag memory accessor functions
 ////////////////////////////////////////////////////////////////////////////////
 def int_cheri_cap_load_tags:
-  Intrinsic<[llvm_anyint_ty], [llvm_fatptr_ty], [IntrReadMem]>;
+  Intrinsic<[llvm_anyint_ty], [llvm_anyptr_ty], [IntrReadMem]>;
 
 /// Round length to compressed capability precision:
 def int_cheri_round_representable_length :

@@ -19,13 +19,13 @@ body:             |
     ; CHECK: $x2 = COPY [[ZEXT]](s64)
     ; CHECK: BL &memcpy, csr_aarch64_aapcs, implicit-def $lr, implicit $sp, implicit $x0, implicit $x1, implicit $x2
     ; CHECK: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
-    ; CHECK: RET_ReallyLR
+    ; CHECK: RET_ReallyLR 0
     %0:_(p0) = COPY $x0
     %1:_(p0) = COPY $x1
     %2:_(s32) = COPY $w2
     %3:_(s64) = G_ZEXT %2(s32)
     G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.memcpy), %0(p0), %1(p0), %3(s64), 0
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -50,7 +50,7 @@ body:             |
     %2:_(s32) = COPY $w2
     %3:_(s64) = G_ZEXT %2(s32)
     G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.memcpy), %0(p0), %1(p0), %3(s64), 1
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -78,7 +78,7 @@ body:             |
     %2:_(s32) = COPY $w2
     %3:_(s64) = G_ZEXT %2(s32)
     G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.memmove), %0(p0), %1(p0), %3(s64), 0
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -108,7 +108,7 @@ body:             |
     %3:_(s8) = G_TRUNC %1(s32)
     %4:_(s64) = G_ZEXT %2(s32)
     G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.memset), %0(p0), %3(s8), %4(s64), 0
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -131,14 +131,14 @@ body:             |
     ; CHECK: BL &memcpy, csr_aarch64_aapcs, implicit-def $lr, implicit $sp, implicit $x0, implicit $x1, implicit $x2
     ; CHECK: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK: $x0 = COPY [[ZEXT]](s64)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %0:_(p0) = COPY $x0
     %1:_(p0) = COPY $x1
     %2:_(s32) = COPY $w2
     %3:_(s64) = G_ZEXT %2(s32)
     G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.memcpy), %0(p0), %1(p0), %3(s64), 1
     $x0 = COPY %3
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 
 ...
 ---

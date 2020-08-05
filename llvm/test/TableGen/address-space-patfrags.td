@@ -57,6 +57,7 @@ def inst_d : Instruction {
 // SDAG-NEXT: if (AddrSpace != 123 && AddrSpace != 455)
 // SDAG-NEXT: return false;
 // SDAG-NEXT: if (cast<MemSDNode>(N)->getMemoryVT() != MVT::i32) return false;
+// SDAG-NEXT: if (accessesMemoryViaCapability(N)) return false;
 // SDAG-NEXT: return true;
 
 
@@ -84,6 +85,7 @@ def : Pat <
 // SDAG-NEXT: if (cast<MemSDNode>(N)->getAlignment() < 2)
 // SDAG-NEXT: return false;
 // SDAG-NEXT: if (cast<MemSDNode>(N)->getMemoryVT() != MVT::i32) return false;
+// SDAG-NEXT: if (accessesMemoryViaCapability(N)) return false;
 // SDAG-NEXT: return true;
 
 // GISEL: GIM_Try, /*On fail goto*//*Label 1*/ {{[0-9]+}}, // Rule ID 1 //

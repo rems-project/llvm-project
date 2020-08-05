@@ -1,0 +1,25 @@
+#RUN: llc -mtriple=aarch64-- -mattr=+morello  -run-pass prologepilog %s -o - | FileCheck %s
+# Make sure that we can convert scaled capability loads/stores to unscaled variants,
+# otherwise we can trigger the "Emergency spill slot is out of reach" assert"
+---
+name: hugeStack
+# CHECK-LABEL: name: hugeStack
+tracksRegLiveness: true
+frameInfo:
+  localFrameSize:  256
+stack:
+  - { id: 0, type: variable-sized,  alignment: 1 }
+  - { id: 1, name: '', size: 16, alignment: 16 }
+  - { id: 2, name: '', size: 16, alignment: 16 }
+  - { id: 3, name: '', size: 32761, alignment: 8 }
+body: |
+  bb.0:
+    B %bb.1
+  bb.1:
+    liveins: $c0, $c1, $c2, $c3, $c4, $c5, $c6, $c7, $c8, $c9, $c10, $c11, $c12, $c13, $c14, $c15, $c16, $c17, $c18, $c19, $c20, $c21, $c22, $c23, $c24, $c25, $c26, $c27, $c28, $clr, $sp, $fp
+    ; CHECK: $c8 = CapLoadUnscaledImm $fp, -48
+    $c8 = CapLoadImmPre %stack.2, 0
+    ; CHECK: CapStoreUnscaledImm $c8, $fp, -48
+    CapStoreImmPre $c8, %stack.2, 0
+    CapStoreImmPre $clr, %stack.1, 0
+    RET_ReallyLR 0, implicit $c0, implicit $c1, implicit $c2, implicit $c3, implicit $c4, implicit $c5, implicit $c6, implicit $c7, implicit $c8, implicit $c9, implicit $c10, implicit $c11, implicit $c12, implicit $c13, implicit $c14, implicit $c15, implicit $c16, implicit $c17, implicit $c18, implicit $c19, implicit $c20, implicit $c21, implicit $c22, implicit $c23, implicit $c24, implicit $c25, implicit $c26, implicit $c27, implicit $c28, implicit $clr

@@ -35,6 +35,7 @@ public:
   ~GDBRemoteDynamicRegisterInfo() override = default;
 
   void HardcodeARMRegisters(bool from_scratch);
+  void HardcodeAArch64MorelloRegisters();
 };
 
 class GDBRemoteRegisterContext : public RegisterContext {

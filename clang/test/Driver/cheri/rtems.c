@@ -47,9 +47,9 @@
 // RUN: %clang %s -### --target=mips64-unknown-rtems5 --sysroot=%S/platform 2>&1 | FileCheck \
 // RUN:   -check-prefixes=NO-QRTEMS %s -implicit-check-not start.o
 
-// QRTEMS: {{.+}}bin/ld.lld"
+// QRTEMS: {{.+}}ld.lld"
 // QRTEMS-SAME: "-Tlinkcmds" "-lrtemsbsp" "-lrtemscpu"
-// NO-QRTEMS: {{.+}}bin/ld.lld"
+// NO-QRTEMS: {{.+}}ld.lld"
 // NO-QRTEMS-SAME: lib/crt0.o"
 // NO-QRTEMS-NOT: "-lrtemsbsp"
 // NO-QRTEMS-NOT: "-lrtemscpu"

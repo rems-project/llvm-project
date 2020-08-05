@@ -1,3 +1,4 @@
+// REQUIRES: mips-registered-target
 // Check that we emit sensible code for constants casted through intcap_t to a void* in hybrid mode
 // See the extremely confusing behaviour in https://github.com/CTSRD-CHERI/cheribsd/commit/0ad6f6cceb44636c6c08f816953600ba53779df5 (SIG_DFL == SIG_IGN)
 // Simplified test case for the error we had in hybrid mode comparing values to SIG_IGN (works fine in purecap)

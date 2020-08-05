@@ -707,6 +707,46 @@ uint32_t ArchSpec::GetCodeByteSize() const {
   return 1;
 }
 
+bool ArchSpec::HasTaggedMemorySupport() const {
+  switch (m_triple.getArch()) {
+  case llvm::Triple::aarch64:
+  case llvm::Triple::aarch64_be:
+    return true;
+  default:
+    return false;
+  }
+}
+
+MemoryContentType ArchSpec::GetDefaultTaggedMemoryType() const {
+  switch (m_triple.getArch()) {
+  case llvm::Triple::aarch64:
+  case llvm::Triple::aarch64_be:
+    return eMemoryContentCap128;
+  default:
+    return eMemoryContentNormal;
+  }
+}
+
+ByteOrder ArchSpec::GetCapabilityByteOrder() const {
+  switch (m_triple.getArch()) {
+  case llvm::Triple::aarch64:
+  case llvm::Triple::aarch64_be:
+    return eByteOrderLittle;
+  default:
+    return GetByteOrder();
+  }
+}
+
+CapabilityType ArchSpec::GetCapabilityType() const {
+  switch (m_triple.getArch()) {
+  case llvm::Triple::aarch64:
+  case llvm::Triple::aarch64_be:
+    return eCapabilityMorello_128;
+  default:
+    return eCapabilityInvalid;
+  }
+}
+
 llvm::Triple::ArchType ArchSpec::GetMachine() const {
   const CoreDefinition *core_def = FindCoreDefinition(m_core);
   if (core_def)

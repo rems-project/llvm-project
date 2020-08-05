@@ -131,11 +131,13 @@ public:
 
   bool IsAnonymousType();
 
-  lldb::SBType GetPointerType();
+  lldb::SBType
+  GetPointerType(lldb::AddressSpace address_space = lldb::eAddressSpaceNormal);
 
   lldb::SBType GetPointeeType();
 
-  lldb::SBType GetReferenceType();
+  lldb::SBType GetReferenceType(
+      lldb::AddressSpace address_space = lldb::eAddressSpaceNormal);
 
   lldb::SBType GetTypedefedType();
 

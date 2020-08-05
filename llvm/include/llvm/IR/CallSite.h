@@ -37,6 +37,7 @@
 #include "llvm/IR/Use.h"
 #include "llvm/IR/User.h"
 #include "llvm/IR/Value.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/Support/Casting.h"
 #include <cassert>
 #include <cstdint>

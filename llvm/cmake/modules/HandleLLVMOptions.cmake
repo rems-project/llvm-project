@@ -117,7 +117,7 @@ else(WIN32)
       set(LLVM_HAVE_LINK_VERSION_SCRIPT 1)
     endif()
   else(FUCHSIA OR UNIX)
-    MESSAGE(SEND_ERROR "Unable to determine platform")
+    MESSAGE(WARNING "Unable to determine platform")
   endif(FUCHSIA OR UNIX)
 endif(WIN32)
 

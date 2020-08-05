@@ -128,9 +128,9 @@ bool AArch64RedundantCopyElimination::knownRegValInBlock(
 
   // Check if the current basic block is the target block to which the
   // CBZ/CBNZ instruction jumps when its Wt/Xt is zero.
-  if (((Opc == AArch64::CBZW || Opc == AArch64::CBZX) &&
+  if (((Opc == AArch64::CBZW || Opc == AArch64::CBZX || Opc == AArch64::CBZC) &&
        MBB == CondBr.getOperand(1).getMBB()) ||
-      ((Opc == AArch64::CBNZW || Opc == AArch64::CBNZX) &&
+      ((Opc == AArch64::CBNZW || Opc == AArch64::CBNZX || Opc == AArch64::CBNZC) &&
        MBB != CondBr.getOperand(1).getMBB())) {
     FirstUse = CondBr;
     KnownRegs.push_back(RegImm(CondBr.getOperand(0).getReg(), 0));
@@ -383,7 +383,8 @@ bool AArch64RedundantCopyElimination::optimizeBlock(MachineBasicBlock *MBB) {
       Register SrcReg = IsCopy ? MI->getOperand(1).getReg() : Register();
       int64_t SrcImm = IsMoveImm ? MI->getOperand(1).getImm() : 0;
       if (!MRI->isReserved(DefReg) &&
-          ((IsCopy && (SrcReg == AArch64::XZR || SrcReg == AArch64::WZR)) ||
+          ((IsCopy && (SrcReg == AArch64::XZR || SrcReg == AArch64::WZR ||
+                       SrcReg == AArch64::CZR)) ||
            IsMoveImm)) {
         for (RegImm &KnownReg : KnownRegs) {
           if (KnownReg.Reg != DefReg &&

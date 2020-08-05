@@ -549,6 +549,12 @@ static uint64_t getAArch64UndefinedRelativeWeakVA(uint64_t type, uint64_t a,
   switch (type) {
   // Unresolved branch relocations to weak references resolve to next
   // instruction, this is 4 bytes on from P.
+  case R_MORELLO_CALL26:
+  case R_MORELLO_JUMP26:
+    // FIXME: return 5 rather than 4 bytes so that the relocation code
+    // identifies the address as C64 and not AArch64. When relocateNoSym() can
+    // examine the Symbol type we can remove this line.
+    return p + 5 + a;
   case R_AARCH64_CALL26:
   case R_AARCH64_CONDBR19:
   case R_AARCH64_JUMP26:
@@ -680,6 +686,8 @@ static uint64_t getRelocTargetVA(const InputFile *file, RelType type, int64_t a,
   case R_RELAX_TLS_LD_TO_LE_ABS:
   case R_RELAX_GOT_PC_NOPIC:
   case R_RISCV_ADD:
+    if (config->emachine == EM_AARCH64 && sym.isFunc())
+      return sym.getAArch64FuncVA(a);
     return sym.getVA(a);
   case R_ADDEND:
     return a;
@@ -885,6 +893,12 @@ static uint64_t getRelocTargetVA(const InputFile *file, RelType type, int64_t a,
   case R_MIPS_CHERI_CAPTAB_TPREL:
     assert(a == 0 && "capability table index relocs should not have addends");
     return in.cheriCapTable->getTlsOffset(sym);
+  case R_MORELLO_CAPFRAG_SIZE_AND_PERM:
+    return getMorelloSizeAndPermissions(a, sym, isec, offset);
+  case R_MORELLO_VADREF:
+    if (sym.isUndefWeak())
+      return a;
+    return sym.getVA(a) - (p & ~0xF);
   default:
     llvm_unreachable("invalid expression");
   }
@@ -1062,6 +1076,9 @@ void InputSectionBase::relocateAlloc(uint8_t *buf, uint8_t *bufEnd) {
         write32(bufLoc + 4, 0xe8410018); // ld %r2, 24(%r1)
       }
       target->relocate(bufLoc, rel, targetVA);
+      break;
+    case R_MORELLO_CAPFRAG_SIZE_AND_PERM:
+      target->writeFragmentSizeAndPermissions(bufLoc, targetVA);
       break;
     default:
       target->relocate(bufLoc, rel, targetVA);

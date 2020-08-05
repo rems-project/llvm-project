@@ -1113,6 +1113,7 @@ private:
 };
 
 // Can only be forward declared here since it depends on SyntheticSection
+class MorelloCapRelocsSection;
 template <class ELFT> class CheriCapRelocsSection;
 class CheriCapTableSection;
 class CheriCapTableMappingSection;
@@ -1195,6 +1196,7 @@ struct InStruct {
   InputSection *armAttributes;
   BssSection *bss;
   BssSection *bssRelRo;
+  MorelloCapRelocsSection *capRelocs;
   GotSection *got;
   GotPltSection *gotPlt;
   IgotPltSection *igotPlt;

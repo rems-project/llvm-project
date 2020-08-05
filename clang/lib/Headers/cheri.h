@@ -22,10 +22,16 @@
  * THE SOFTWARE.
  *
 \*===----------------------------------------------------------------------===*/
+#ifndef _CHERI_H
+#define _CHERI_H
 
 #pragma once
 
+#ifdef __aarch64__
+typedef unsigned int cheri_perms_t;
+#else
 typedef unsigned short cheri_perms_t;
+#endif
 typedef unsigned short cheri_flags_t;
 typedef unsigned __INT32_TYPE__ cheri_type_t;
 #ifdef __cplusplus
@@ -108,17 +114,63 @@ void * __capability cheri_unseal(const void * __capability __cap,
 }
 
 static inline
+void * __capability cheri_bounds_set(const void *__capability __cap,
+                                   __SIZE_TYPE__ __bounds) {
+  return __IF_CAPS(__builtin_cheri_bounds_set(__cap, __bounds), (void*)__cap);
+}
+
+static inline
+__SIZE_TYPE__ cheri_round_representable_length(__SIZE_TYPE__ __length) {
+  return __IF_CAPS(__builtin_cheri_round_representable_length(__length), __length);
+}
+
+static inline
+__SIZE_TYPE__ cheri_round_representable_mask(__SIZE_TYPE__ __mask) {
+  return __IF_CAPS(__builtin_cheri_representable_alignment_mask(__mask), __mask);
+}
+
+static inline
+__SIZE_TYPE__ cheri_copy_from_high(const void *__capability __cap) {
+  return __IF_CAPS(__builtin_cheri_copy_from_high(__cap), __SIZE_MAX__);
+}
+
+static inline
 void * __capability
-cheri_cap_from_pointer(const void * __capability __cap, const void *__ptr) {
+cheri_copy_to_high(const void *__capability __cap, __SIZE_TYPE__ __high) {
+  return __IF_CAPS(__builtin_cheri_copy_to_high(__cap, __high), (void*)__cap);
+}
+
+static inline __SIZE_TYPE__ cheri_bit_equals(const void * __capability __cap_a,
+                                                const void * __capability __cap_b) {
+  return __IF_CAPS(__builtin_cheri_bit_equals(__cap_a, __cap_b), 0);
+}
+
+static inline __SIZE_TYPE__ cheri_subset_test(const void * __capability __cap_a,
+                                              const void * __capability __cap_b) {
+  return __IF_CAPS(__builtin_cheri_subset_test(__cap_a, __cap_b), 0);
+}
+
+#ifdef __aarch64__
+static inline
+void *__capability
+cheri_cap_from_pointer_nonnull_zero(const void* __capability  __cap, __SIZE_TYPE__ __ptr) {
+  return __IF_CAPS(__builtin_cheri_cap_from_pointer_nonnull_zero(__cap, __ptr),
+                   (void *)__ptr);
+}
+#endif
+
+static inline
+void * __capability
+cheri_cap_from_pointer(const void * __capability __cap, __SIZE_TYPE__ __ptr) {
   return __IF_CAPS(__builtin_cheri_cap_from_pointer(__cap, __ptr),
                    (void *)__ptr);
 }
 
 static inline
-void * cheri_cap_to_pointer(const void * __capability __cap,
-                            const void * __capability __offset) {
+__SIZE_TYPE__ cheri_cap_to_pointer(const void * __capability __cap,
+                                   const void * __capability __offset) {
   return __IF_CAPS(__builtin_cheri_cap_to_pointer(__cap, __offset),
-                   (void *)__offset);
+                   (__SIZE_TYPE__)__offset);
 }
 
 static inline
@@ -281,3 +333,7 @@ __cheri_low_bits_clear(__UINTPTR_TYPE__ ptr, __SIZE_TYPE__ bits_mask) {
 #undef __CHERI_SET
 #undef __cheri_bool
 #undef __IF_CAPS
+
+#include <capability_cast.h>
+
+#endif /* _CHERI_H */

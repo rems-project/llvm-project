@@ -4,7 +4,7 @@ typedef void(*fnptr)(void);
 void cheri_codeptr(const fnptr ptr)
 {
   // Check that this cast is PCC-relative and not GDC-relative
-  // CHECK: llvm.mips.pcc.get
+  // CHECK: llvm.cheri.pcc.get
   c = (void (* __capability)(void))ptr;
 }
 

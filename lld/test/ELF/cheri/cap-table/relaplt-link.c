@@ -1,4 +1,4 @@
-// REQUIRES: clang
+// REQUIRES: clang, mips
 
 // Check x86_64 since MIPS n64 doesn't seem to use .rel.plt:
 // RUN: %clang_cc1 -triple=x86_64-unknown-freebsd -emit-obj -O2 %s -o %t-amd64.o

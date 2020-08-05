@@ -12,9 +12,9 @@ struct test {
 };
 
 void test_capptr_to_int(void* __capability a) {
-  vaddr_t v{a}; // expected-error {{type 'void * __capability' cannot be narrowed to 'vaddr_t' (aka 'unsigned long') in initializer list}}
-  v = vaddr_t{a}; // expected-error {{type 'void * __capability' cannot be narrowed to 'vaddr_t' (aka 'unsigned long') in initializer list}}
-  vaddr_t v2 = 0; v2 = {a}; // expected-error {{type 'void * __capability' cannot be narrowed to 'vaddr_t' (aka 'unsigned long') in initializer list}}
+  vaddr_t v{a}; // expected-error {{cannot initialize a variable of type 'vaddr_t' (aka 'unsigned long') with an lvalue of type 'void * __capability'}}
+  v = vaddr_t{a}; // expected-error {{cannot initialize a value of type 'vaddr_t' (aka 'unsigned long') with an lvalue of type 'void * __capability'}}
+  vaddr_t v2 = 0; v2 = {a}; // expected-error {{cannot initialize a value of type 'vaddr_t' (aka 'unsigned long') with an lvalue of type 'void * __capability'}}
 
   __uintcap_t uc{a}; // expected-error {{cannot initialize a variable of type '__uintcap_t' with an lvalue of type 'void * __capability'}}
   uc = __uintcap_t{a};  // expected-error {{cannot initialize a value of type '__uintcap_t' with an lvalue of type 'void * __capability'}}
@@ -24,13 +24,13 @@ void test_capptr_to_int(void* __capability a) {
   ic = __intcap_t{a};  // expected-error {{cannot initialize a value of type '__intcap_t' with an lvalue of type 'void * __capability'}}
   __intcap_t ic2 = 0; ic2 = {a}; // expected-error {{cannot initialize a value of type '__intcap_t' with an lvalue of type 'void * __capability'}}
 
-  long l{a}; // expected-error {{type 'void * __capability' cannot be narrowed to 'long' in initializer list}}
-  l = long{a};  // expected-error {{type 'void * __capability' cannot be narrowed to 'long' in initializer list}}
-  long l2 = 0; l2 = {a}; // expected-error {{type 'void * __capability' cannot be narrowed to 'long' in initializer list}}
+  long l{a}; // expected-error {{cannot initialize a variable of type 'long' with an lvalue of type 'void * __capability'}}
+  l = long{a};  // expected-error {{cannot initialize a value of type 'long' with an lvalue of type 'void * __capability'}}
+  long l2 = 0; l2 = {a}; // expected-error {{cannot initialize a value of type 'long' with an lvalue of type 'void * __capability'}}
 
-  int i{a}; // expected-error {{type 'void * __capability' cannot be narrowed to 'int' in initializer list}}
-  i = int{a};  // expected-error {{type 'void * __capability' cannot be narrowed to 'int' in initializer list}}
-  int i2 = 0; i2 = {a}; // expected-error {{type 'void * __capability' cannot be narrowed to 'int' in initializer list}}
+  int i{a}; // expected-error {{cannot initialize a variable of type 'int' with an lvalue of type 'void * __capability'}}
+  i = int{a};  // expected-error {{cannot initialize a value of type 'int' with an lvalue of type 'void * __capability'}}
+  int i2 = 0; i2 = {a}; // expected-error {{cannot initialize a value of type 'int' with an lvalue of type 'void * __capability'}}
 }
 
 void test_uintcap_to_int(__uintcap_t a) {
@@ -74,10 +74,10 @@ struct foo {
 };
 
 void test_cap_to_ptr(void* __capability a) {
-  void* non_cap{a}; // expected-error {{type 'void * __capability' cannot be narrowed to 'void *' in initializer list}}
-  void* non_cap2 = {a}; // expected-error {{type 'void * __capability' cannot be narrowed to 'void *' in initializer list}}
+  void* non_cap{a}; // expected-error {{cannot initialize a variable of type 'void *' with an lvalue of type 'void * __capability'}}
+  void* non_cap2 = {a}; // expected-error {{cannot initialize a variable of type 'void *' with an lvalue of type 'void * __capability'}}
   // TODO: These should warn as well
-  foo f{a, a}; // expected-error {{converting capability type 'void * __capability' to non-capability type 'void *' without an explicit cast}}
+  foo f{a, a}; // expected-error {{cannot initialize a member subobject of type 'void *' with an lvalue of type 'void * __capability'}}
   foo f2;
   f2 = {a, nullptr}; // this is fine
   // TODO: it would be nice if we could get a better error message here (see SemaOverload.cpp), it works fine for references
@@ -91,16 +91,16 @@ void test_cap_to_ptr(void* __capability a) {
 // check arrays:
 void test_arrays(void* __capability cap) {
   int* ptr = nullptr;
-  void* ptr_array[3] = { nullptr, cap, ptr }; // expected-error {{converting capability type 'void * __capability' to non-capability type 'void *' without an explicit cast}}
+  void* ptr_array[3] = { nullptr, cap, ptr }; // expected-error {{cannot initialize an array element of type 'void *' with an lvalue of type 'void * __capability'}}
   void* __capability cap_array[3] = { nullptr, cap, ptr }; // expected-error {{converting non-capability type 'int *' to capability type 'void * __capability' without an explicit cast}}
 
   struct foo foo_array1[3] = {
     {cap, nullptr}, // no-error
-    {cap, cap}, // expected-error {{converting capability type 'void * __capability' to non-capability type 'void *' without an explicit cast}}
+    {cap, cap}, // expected-error {{cannot initialize a member subobject of type 'void *' with an lvalue of type 'void * __capability'}}
     {.cap = nullptr, .ptr = nullptr} // no-error
   };
   struct foo foo_array2[2] = {
-    [1] = {.cap = cap, .ptr = cap} // expected-error {{converting capability type 'void * __capability' to non-capability type 'void *' without an explicit cast}}
+    [1] = {.cap = cap, .ptr = cap} // expected-error {{cannot initialize a member subobject of type 'void *' with an lvalue of type 'void * __capability'}}
     // expected-warning@-1 {{array designators are a C99 extension}}
   };
 }
@@ -111,7 +111,7 @@ union foo_union {
 };
 
 void test_union(void* __capability a) {
-  foo_union u{a}; // expected-error {{converting capability type 'void * __capability' to non-capability type 'void *' without an explicit cast}}
+  foo_union u{a}; // expected-error {{cannot initialize a member subobject of type 'void *' with an lvalue of type 'void * __capability'}}
 }
 
 #endif

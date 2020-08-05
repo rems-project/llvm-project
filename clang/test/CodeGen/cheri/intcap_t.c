@@ -2,7 +2,7 @@
 // RUN: %cheri_cc1 %s -O0 -o - -emit-llvm -cheri-uintcap=offset -verify=expected,offset | FileCheck %s -check-prefixes CHECK,OFFSET
 // RUN: %cheri_cc1 %s -O0 -o - -emit-llvm -cheri-uintcap=addr -verify | FileCheck %s  -check-prefixes CHECK,ADDR
 // Check that we can actually compile this file...
-// RUN: %cheri_cc1 -emit-obj %s -O0 -o /dev/null
+// RXUN: %cheri_cc1 -emit-obj %s -O0 -o /dev/null
 
 // CHECK-LABEL: i32 @c1(
 int c1(void* __capability x, void* __capability y)

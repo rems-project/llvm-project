@@ -9,6 +9,7 @@
 // UNSUPPORTED: c++98, c++03, c++11, c++14
 // UNSUPPORTED: windows
 // UNSUPPORTED: libcpp-no-if-constexpr
+// UNSUPPORTED: libcpp-has-newlib
 // MODULES_DEFINES: _LIBCPP_DEBUG=1
 
 // Can't test the system lib because this test enables debug mode

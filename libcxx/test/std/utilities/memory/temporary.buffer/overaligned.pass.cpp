@@ -31,7 +31,12 @@ int main(int, char**)
 {
     std::pair<A*, std::ptrdiff_t> ip = std::get_temporary_buffer<A>(5);
     assert(!(ip.first == nullptr) ^ (ip.second == 0));
+#ifdef __CHERI__
+    assert(__builtin_is_aligned(reinterpret_cast<uintptr_t>(ip.first),
+                                alignof(A)));
+#else
     assert(reinterpret_cast<uintptr_t>(ip.first) % alignof(A) == 0);
+#endif
     std::return_temporary_buffer(ip.first);
 
   return 0;

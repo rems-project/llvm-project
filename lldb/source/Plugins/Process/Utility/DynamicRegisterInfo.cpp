@@ -552,6 +552,14 @@ void DynamicRegisterInfo::Finalize(const ArchSpec &arch) {
           reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_SP;
         else if (strcmp(reg.name, "cpsr") == 0)
           reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_FLAGS;
+        else if (strcmp(reg.name, "pcc") == 0)
+          reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_PCC;
+        else if (strcmp(reg.name, "cfp") == 0 || strcmp(reg.name, "c29") == 0)
+          reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_CFP;
+        else if (strcmp(reg.name, "clr") == 0 || strcmp(reg.name, "c30") == 0)
+          reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_RAC;
+        else if (strcmp(reg.name, "csp") == 0 || strcmp(reg.name, "c31") == 0)
+          reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_CSP;
       }
       break;
 

@@ -332,9 +332,15 @@ Status RegisterContext::ReadRegisterValueFromMemory(
   if (process_sp) {
     uint8_t src[RegisterValue::kMaxRegisterByteSize];
 
+    MemoryContentType content_type;
+    ByteOrder byte_order;
+    if (!process_sp->GetRegisterSaveInformation(*reg_info, content_type,
+                                                byte_order, error))
+      return error;
+
     // Read the memory
     const uint32_t bytes_read =
-        process_sp->ReadMemory(src_addr, src, src_len, error);
+        process_sp->ReadMemory(src_addr, src, src_len, error, content_type);
 
     // Make sure the memory read succeeded...
     if (bytes_read != src_len) {
@@ -351,8 +357,8 @@ Status RegisterContext::ReadRegisterValueFromMemory(
     // TODO: we might need to add a parameter to this function in case the byte
     // order of the memory data doesn't match the process. For now we are
     // assuming they are the same.
-    reg_value.SetFromMemoryData(reg_info, src, src_len,
-                                process_sp->GetByteOrder(), error);
+    reg_value.SetFromMemoryData(reg_info, src, src_len, content_type,
+                                byte_order, error);
   } else
     error.SetErrorString("invalid process");
 

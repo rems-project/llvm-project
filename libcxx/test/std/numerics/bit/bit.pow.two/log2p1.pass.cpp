@@ -133,7 +133,9 @@ int main()
 	static_assert(constexpr_test<uint64_t>(),  "");
 	static_assert(constexpr_test<size_t>(),    "");
 	static_assert(constexpr_test<uintmax_t>(), "");
+#ifndef __CHERI_PURE_CAPABILITY__
 	static_assert(constexpr_test<uintptr_t>(), "");
+#endif
 
 #ifndef _LIBCPP_HAS_NO_INT128
 	static_assert(constexpr_test<__uint128_t>(),        "");

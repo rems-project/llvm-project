@@ -1693,6 +1693,56 @@ llvm::APInt Scalar::UInt128(const llvm::APInt &fail_value) const {
   return fail_value;
 }
 
+llvm::APInt Scalar::SInt256(llvm::APInt &fail_value) const {
+  switch (m_type) {
+  case e_void:
+    break;
+  case e_sint:
+  case e_uint:
+  case e_slong:
+  case e_ulong:
+  case e_slonglong:
+  case e_ulonglong:
+  case e_sint128:
+  case e_uint128:
+  case e_sint256:
+  case e_uint256:
+  case e_uint512:
+  case e_sint512:
+    return m_integer;
+  case e_float:
+  case e_double:
+  case e_long_double:
+    return m_float.bitcastToAPInt();
+  }
+  return fail_value;
+}
+
+llvm::APInt Scalar::UInt256(const llvm::APInt &fail_value) const {
+  switch (m_type) {
+  case e_void:
+    break;
+  case e_sint:
+  case e_uint:
+  case e_slong:
+  case e_ulong:
+  case e_slonglong:
+  case e_ulonglong:
+  case e_sint128:
+  case e_uint128:
+  case e_sint256:
+  case e_uint256:
+  case e_sint512:
+  case e_uint512:
+    return m_integer;
+  case e_float:
+  case e_double:
+  case e_long_double:
+    return m_float.bitcastToAPInt();
+  }
+  return fail_value;
+}
+
 float Scalar::Float(float fail_value) const {
   switch (m_type) {
   case e_void:
@@ -2520,6 +2570,10 @@ Status Scalar::SetValueFromCString(const char *value_str, Encoding encoding,
   case eEncodingVector:
     error.SetErrorString("vector encoding unsupported.");
     break;
+
+  case eEncodingCapability:
+    error.SetErrorString("capability encoding unsupported");
+    break;
   }
   if (error.Fail())
     m_type = e_void;
@@ -2647,6 +2701,9 @@ Status Scalar::SetValueFromData(DataExtractor &data, lldb::Encoding encoding,
       error.SetErrorStringWithFormat("unsupported float byte size: %" PRIu64 "",
                                      static_cast<uint64_t>(byte_size));
   } break;
+  case eEncodingCapability:
+    error.SetErrorString("capability encoding unsupported");
+    break;
   }
 
   return error;
@@ -2883,6 +2940,30 @@ bool Scalar::SetBit(uint32_t bit) {
   case e_sint512:
   case e_uint512:
     m_integer.setBit(bit);
+    return true;
+  case e_float:
+  case e_double:
+  case e_long_double:
+    break;
+  }
+  return false;
+}
+
+bool Scalar::IsBitSet(uint32_t bit, bool &is_set) {
+  switch (m_type) {
+  case e_void:
+    break;
+  case e_sint:
+  case e_uint:
+  case e_slong:
+  case e_ulong:
+  case e_slonglong:
+  case e_ulonglong:
+  case e_sint128:
+  case e_uint128:
+  case e_sint256:
+  case e_uint256:
+    is_set = m_integer[bit];
     return true;
   case e_float:
   case e_double:

@@ -615,13 +615,17 @@ public:
 
   CompilerType GetPointeeType(lldb::opaque_compiler_type_t type) override;
 
-  CompilerType GetPointerType(lldb::opaque_compiler_type_t type) override;
+  CompilerType GetPointerType(
+      lldb::opaque_compiler_type_t type,
+      lldb::AddressSpace address_space = lldb::eAddressSpaceNormal) override;
 
-  CompilerType
-  GetLValueReferenceType(lldb::opaque_compiler_type_t type) override;
+  CompilerType GetLValueReferenceType(
+      lldb::opaque_compiler_type_t type,
+      lldb::AddressSpace address_space = lldb::eAddressSpaceNormal) override;
 
-  CompilerType
-  GetRValueReferenceType(lldb::opaque_compiler_type_t type) override;
+  CompilerType GetRValueReferenceType(
+      lldb::opaque_compiler_type_t type,
+      lldb::AddressSpace address_space = lldb::eAddressSpaceNormal) override;
 
   CompilerType GetAtomicType(lldb::opaque_compiler_type_t type) override;
 
@@ -658,6 +662,9 @@ public:
 
   lldb::Encoding GetEncoding(lldb::opaque_compiler_type_t type,
                              uint64_t &count) override;
+
+  lldb::MemoryContentType
+  GetMemoryContentType(lldb::opaque_compiler_type_t type) override;
 
   lldb::Format GetFormat(lldb::opaque_compiler_type_t type) override;
 

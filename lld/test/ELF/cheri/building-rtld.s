@@ -1,5 +1,9 @@
+# REQUIRES: mips
 # RUN: %cheri128_purecap_llvm-mc -filetype=obj %s -o %t.o
 # RUN: not ld.lld -shared --building-freebsd-rtld %t.o -o /dev/null 2>&1 | FileCheck %s
+
+# REQUIRES: mips
+
 .text
 
 .global __start

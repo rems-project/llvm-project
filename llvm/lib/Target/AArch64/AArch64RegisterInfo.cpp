@@ -43,6 +43,11 @@ AArch64RegisterInfo::AArch64RegisterInfo(const Triple &TT)
 const MCPhysReg *
 AArch64RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   assert(MF && "Invalid MachineFunction pointer.");
+  bool hasCap = MF->getSubtarget<AArch64Subtarget>().hasMorello();
+  bool hasPureCap = MF->getSubtarget<AArch64Subtarget>().hasPureCap();
+  bool hasC64 = MF->getSubtarget<AArch64Subtarget>().hasC64();
+  bool use32CapRegs = !MF->getSubtarget<AArch64Subtarget>().use16CapRegs();
+
   if (MF->getFunction().getCallingConv() == CallingConv::CFGuard_Check)
     return CSR_Win_AArch64_CFGuard_Check_SaveList;
   if (MF->getSubtarget<AArch64Subtarget>().isTargetWindows())
@@ -52,7 +57,9 @@ AArch64RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     // used for passing STG regs around
     return CSR_AArch64_NoRegs_SaveList;
   if (MF->getFunction().getCallingConv() == CallingConv::AnyReg)
-    return CSR_AArch64_AllRegs_SaveList;
+    return hasCap ? (use32CapRegs ? CSR_AArch64_AllRegs_32Cap_SaveList
+                                  : CSR_AArch64_AllRegs_16Cap_SaveList)
+                  : CSR_AArch64_AllRegs_SaveList;
   if (MF->getFunction().getCallingConv() == CallingConv::AArch64_VectorCall)
     return CSR_AArch64_AAVPCS_SaveList;
   if (MF->getFunction().getCallingConv() == CallingConv::AArch64_SVE_VectorCall)
@@ -70,6 +77,16 @@ AArch64RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     return CSR_AArch64_RT_MostRegs_SaveList;
   if (MF->getSubtarget<AArch64Subtarget>().isTargetDarwin())
     return CSR_Darwin_AArch64_AAPCS_SaveList;
+  if (MF->getFunction().getCallingConv() == CallingConv::CHERI_CCall)
+    return hasPureCap == hasC64 ? CSR_AArch64_AAPCS_CCall_SaveList
+                                : CSR_AArch64_AAPCS_CCall_Alternate_SaveList;
+  if (hasPureCap != hasC64)
+    return hasC64 ? CSR_Darwin_AArch64_AAPCS_SaveList
+                  : (use32CapRegs ? CSR_AArch64_AAPCS_32Cap_Regs_Alternate_SaveList
+                                  : CSR_AArch64_AAPCS_16Cap_Regs_Alternate_SaveList);
+  if (hasPureCap)
+    return use32CapRegs ? CSR_AArch64_AAPCS_32Cap_Regs_SaveList
+                        : CSR_AArch64_AAPCS_16Cap_Regs_SaveList;
   return CSR_AArch64_AAPCS_SaveList;
 }
 
@@ -115,15 +132,27 @@ AArch64RegisterInfo::getSubClassWithSubReg(const TargetRegisterClass *RC,
 const uint32_t *
 AArch64RegisterInfo::getCallPreservedMask(const MachineFunction &MF,
                                           CallingConv::ID CC) const {
+  bool hasCap = MF.getSubtarget<AArch64Subtarget>().hasMorello();
+  bool hasPureCap = MF.getSubtarget<AArch64Subtarget>().hasPureCap();
+  bool hasC64 = MF.getSubtarget<AArch64Subtarget>().hasC64();
+  bool use32CapRegs = !MF.getSubtarget<AArch64Subtarget>().use16CapRegs();
   bool SCS = MF.getFunction().hasFnAttribute(Attribute::ShadowCallStack);
+
   if (CC == CallingConv::GHC)
     // This is academic because all GHC calls are (supposed to be) tail calls
     return SCS ? CSR_AArch64_NoRegs_SCS_RegMask : CSR_AArch64_NoRegs_RegMask;
+
   if (CC == CallingConv::AnyReg)
-    return SCS ? CSR_AArch64_AllRegs_SCS_RegMask : CSR_AArch64_AllRegs_RegMask;
+    return SCS ? CSR_AArch64_AllRegs_SCS_RegMask
+               : (hasCap ?
+                 (use32CapRegs ? CSR_AArch64_AllRegs_32Cap_RegMask
+                               : CSR_AArch64_AllRegs_16Cap_RegMask)
+                 : CSR_AArch64_AllRegs_RegMask);
+
   if (CC == CallingConv::CXX_FAST_TLS)
     return SCS ? CSR_AArch64_CXX_TLS_Darwin_SCS_RegMask
                : CSR_AArch64_CXX_TLS_Darwin_RegMask;
+
   if (CC == CallingConv::AArch64_VectorCall)
     return SCS ? CSR_AArch64_AAVPCS_SCS_RegMask : CSR_AArch64_AAVPCS_RegMask;
   if (CC == CallingConv::AArch64_SVE_VectorCall)
@@ -136,11 +165,24 @@ AArch64RegisterInfo::getCallPreservedMask(const MachineFunction &MF,
       MF.getFunction().getAttributes().hasAttrSomewhere(Attribute::SwiftError))
     return SCS ? CSR_AArch64_AAPCS_SwiftError_SCS_RegMask
                : CSR_AArch64_AAPCS_SwiftError_RegMask;
+
   if (CC == CallingConv::PreserveMost)
     return SCS ? CSR_AArch64_RT_MostRegs_SCS_RegMask
                : CSR_AArch64_RT_MostRegs_RegMask;
-  else
-    return SCS ? CSR_AArch64_AAPCS_SCS_RegMask : CSR_AArch64_AAPCS_RegMask;
+
+  if (CC == CallingConv::CHERI_CCall)
+    return hasPureCap == hasC64 ? CSR_AArch64_AAPCS_CCall_RegMask
+                                : CSR_AArch64_AAPCS_CCall_Alternate_RegMask;
+
+  if (hasPureCap != hasC64)
+    return hasC64 ? CSR_Darwin_AArch64_AAPCS_RegMask
+                  : (use32CapRegs ? CSR_AArch64_AAPCS_32Cap_Regs_Alternate_RegMask
+                                  : CSR_AArch64_AAPCS_16Cap_Regs_Alternate_RegMask);
+  if (hasPureCap)
+    return use32CapRegs ? CSR_AArch64_AAPCS_32Cap_Regs_RegMask
+                        : CSR_AArch64_AAPCS_16Cap_Regs_RegMask;
+
+  return SCS ? CSR_AArch64_AAPCS_SCS_RegMask : CSR_AArch64_AAPCS_RegMask;
 }
 
 const uint32_t *AArch64RegisterInfo::getTLSCallPreservedMask() const {
@@ -196,6 +238,8 @@ const uint32_t *AArch64RegisterInfo::getWindowsStackProbePreservedMask() const {
 BitVector
 AArch64RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   const AArch64FrameLowering *TFI = getFrameLowering(MF);
+  bool HasPureCap = MF.getSubtarget<AArch64Subtarget>().hasPureCap();
+  bool Use16CapRegs = MF.getSubtarget<AArch64Subtarget>().use16CapRegs();
 
   // FIXME: avoid re-calculating this every time.
   BitVector Reserved(getNumRegs());
@@ -205,13 +249,22 @@ AArch64RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   if (TFI->hasFP(MF) || TT.isOSDarwin())
     markSuperRegs(Reserved, AArch64::W29);
 
+  for (size_t i = 0; i < AArch64::CapcommonRegClass.getNumRegs(); ++i) {
+    if (MF.getSubtarget<AArch64Subtarget>().isCRegisterReserved(i))
+      markSuperRegs(Reserved, AArch64::CapcommonRegClass.getRegister(i));
+  }
+
   for (size_t i = 0; i < AArch64::GPR32commonRegClass.getNumRegs(); ++i) {
     if (MF.getSubtarget<AArch64Subtarget>().isXRegisterReserved(i))
       markSuperRegs(Reserved, AArch64::GPR32commonRegClass.getRegister(i));
   }
 
-  if (hasBasePointer(MF))
-    markSuperRegs(Reserved, AArch64::W19);
+  if (hasBasePointer(MF)) {
+    if (HasPureCap && Use16CapRegs)
+      markSuperRegs(Reserved, AArch64::W25);
+    else
+      markSuperRegs(Reserved, AArch64::W19);
+  }
 
   // SLH uses register W16/X16 as the taint register.
   if (MF.getFunction().hasFnAttribute(Attribute::SpeculativeLoadHardening))
@@ -245,13 +298,15 @@ bool AArch64RegisterInfo::isAsmClobberable(const MachineFunction &MF,
 }
 
 bool AArch64RegisterInfo::isConstantPhysReg(unsigned PhysReg) const {
-  return PhysReg == AArch64::WZR || PhysReg == AArch64::XZR;
+  return PhysReg == AArch64::WZR || PhysReg == AArch64::XZR ||
+         PhysReg == AArch64::CZR;
 }
 
 const TargetRegisterClass *
 AArch64RegisterInfo::getPointerRegClass(const MachineFunction &MF,
                                       unsigned Kind) const {
-  return &AArch64::GPR64spRegClass;
+  bool HasPureCap = MF.getSubtarget<AArch64Subtarget>().hasPureCap();
+  return HasPureCap ? &AArch64::CapRegClass :  &AArch64::GPR64spRegClass;
 }
 
 const TargetRegisterClass *
@@ -261,7 +316,11 @@ AArch64RegisterInfo::getCrossCopyRegClass(const TargetRegisterClass *RC) const {
   return RC;
 }
 
-unsigned AArch64RegisterInfo::getBaseRegister() const { return AArch64::X19; }
+unsigned AArch64RegisterInfo::getBaseRegister(const MachineFunction &MF) const {
+  bool HasPureCap = MF.getSubtarget<AArch64Subtarget>().hasPureCap();
+  bool Has16Caps = MF.getSubtarget<AArch64Subtarget>().use16CapRegs();
+  return HasPureCap ? (Has16Caps ? AArch64::C25 : AArch64::C19) : AArch64::X19;
+}
 
 bool AArch64RegisterInfo::hasBasePointer(const MachineFunction &MF) const {
   const MachineFrameInfo &MFI = MF.getFrameInfo();
@@ -289,11 +348,39 @@ bool AArch64RegisterInfo::hasBasePointer(const MachineFunction &MF) const {
 
   return false;
 }
+Register
+AArch64RegisterInfo::getLinkRegister(const MachineFunction &MF) const {
+  bool HasPureCap = MF.getSubtarget<AArch64Subtarget>().hasPureCap();
+  return HasPureCap ? AArch64::CLR : AArch64::LR;
+}
+
+Register
+AArch64RegisterInfo::getStackPointerRegister(const MachineFunction &MF) const {
+  bool HasPureCap = MF.getSubtarget<AArch64Subtarget>().hasPureCap();
+  return HasPureCap ? AArch64::CSP : AArch64::SP;
+}
+
+Register
+AArch64RegisterInfo::getFramePointerRegister(const MachineFunction &MF) const {
+  bool HasPureCap = MF.getSubtarget<AArch64Subtarget>().hasPureCap();
+  return HasPureCap ? AArch64::CFP : AArch64::FP;
+}
 
 Register
 AArch64RegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   const AArch64FrameLowering *TFI = getFrameLowering(MF);
-  return TFI->hasFP(MF) ? AArch64::FP : AArch64::SP;
+  bool HasPureCap = MF.getSubtarget<AArch64Subtarget>().hasPureCap();
+  if (HasPureCap)
+    return TFI->hasFP(MF) ? AArch64::CFP : AArch64::CSP;
+  else
+    return TFI->hasFP(MF) ? AArch64::FP : AArch64::SP;
+}
+
+MCCFIProcType
+AArch64RegisterInfo::getCFIProcType(const MachineFunction &MF) const {
+  if (MF.getSubtarget<AArch64Subtarget>().hasPureCap())
+    return MCCFIProcType::PureCap;
+  return MCCFIProcType::Normal;
 }
 
 bool AArch64RegisterInfo::requiresRegisterScavenging(
@@ -379,7 +466,8 @@ bool AArch64RegisterInfo::needsFrameBaseReg(MachineInstr *MI,
   // The FP is only available if there is no dynamic realignment. We
   // don't know for sure yet whether we'll need that, so we guess based
   // on whether there are any local variables that would trigger it.
-  if (TFI->hasFP(MF) && isFrameOffsetLegal(MI, AArch64::FP, FPOffset))
+  if (TFI->hasFP(MF) &&
+      isFrameOffsetLegal(MI, getFramePointerRegister(MF), FPOffset))
     return false;
 
   // If we can reference via the stack pointer or base pointer, try that.
@@ -387,11 +475,11 @@ bool AArch64RegisterInfo::needsFrameBaseReg(MachineInstr *MI,
   //        to only disallow SP relative references in the live range of
   //        the VLA(s). In practice, it's unclear how much difference that
   //        would make, but it may be worth doing.
-  if (isFrameOffsetLegal(MI, AArch64::SP, Offset))
+  if (isFrameOffsetLegal(MI, getStackPointerRegister(MF), Offset))
     return false;
 
   // If even offset 0 is illegal, we don't want a virtual base register.
-  if (!isFrameOffsetLegal(MI, AArch64::SP, 0))
+  if (!isFrameOffsetLegal(MI, getStackPointerRegister(MF), 0))
     return false;
 
   // The offset likely isn't legal; we want to allocate a virtual base register.
@@ -419,7 +507,11 @@ void AArch64RegisterInfo::materializeFrameBaseRegister(MachineBasicBlock *MBB,
   const MachineFunction &MF = *MBB->getParent();
   const AArch64InstrInfo *TII =
       MF.getSubtarget<AArch64Subtarget>().getInstrInfo();
-  const MCInstrDesc &MCID = TII->get(AArch64::ADDXri);
+  const bool HasPureCap = MF.getSubtarget<AArch64Subtarget>().hasPureCap();
+  unsigned Opc = HasPureCap ? AArch64::CapAddImm
+                            : AArch64::ADDXri;
+  const MCInstrDesc &MCID =
+      TII->get(Opc);
   MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
   MRI.constrainRegClass(BaseReg, TII->getRegClass(MCID, 0, this, MF));
   unsigned Shifter = AArch64_AM::getShifterImm(AArch64_AM::LSL, 0);
@@ -454,7 +546,8 @@ void AArch64RegisterInfo::resolveFrameIndex(MachineInstr &MI, unsigned BaseReg,
 // case it can also change the instruction opcode (but not the operands).
 static Register
 createScratchRegisterForInstruction(MachineInstr &MI,
-                                    const AArch64InstrInfo *TII) {
+                                    const AArch64InstrInfo *TII,
+                                    bool HasPureCap) {
   // ST*Gloop have a reserved scratch register in operand 1. Use it, and also
   // replace the instruction with the writeback variant because it will now
   // satisfy the operand constraints for it.
@@ -466,7 +559,7 @@ createScratchRegisterForInstruction(MachineInstr &MI,
     return MI.getOperand(1).getReg();
   } else {
     return MI.getMF()->getRegInfo().createVirtualRegister(
-        &AArch64::GPR64RegClass);
+        HasPureCap ? &AArch64::CapspRegClass : &AArch64::GPR64RegClass);
   }
 }
 
@@ -481,6 +574,7 @@ void AArch64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   const MachineFrameInfo &MFI = MF.getFrameInfo();
   const AArch64InstrInfo *TII =
       MF.getSubtarget<AArch64Subtarget>().getInstrInfo();
+  const bool HasPureCap = MF.getSubtarget<AArch64Subtarget>().hasPureCap();
   const AArch64FrameLowering *TFI = getFrameLowering(MF);
 
   int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
@@ -556,7 +650,7 @@ void AArch64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // If we get here, the immediate doesn't fit into the instruction.  We folded
   // as much as possible above.  Handle the rest, providing a register that is
   // SP+LargeImm.
-  Register ScratchReg = createScratchRegisterForInstruction(MI, TII);
+  Register ScratchReg = createScratchRegisterForInstruction(MI, TII, HasPureCap);
   emitFrameOffset(MBB, II, MI.getDebugLoc(), ScratchReg, FrameReg, Offset, TII);
   MI.getOperand(FIOperandNum).ChangeToRegister(ScratchReg, false, false, true);
 }
@@ -576,9 +670,11 @@ unsigned AArch64RegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
   case AArch64::GPR64RegClassID:
   case AArch64::GPR32commonRegClassID:
   case AArch64::GPR64commonRegClassID:
+  case AArch64::CapRegClassID:
     return 32 - 1                                   // XZR/SP
               - (TFI->hasFP(MF) || TT.isOSDarwin()) // FP
               - MF.getSubtarget<AArch64Subtarget>().getNumXRegisterReserved()
+              - MF.getSubtarget<AArch64Subtarget>().getNumCRegisterReserved()
               - hasBasePointer(MF);  // X19
   case AArch64::FPR8RegClassID:
   case AArch64::FPR16RegClassID:
@@ -604,8 +700,8 @@ unsigned AArch64RegisterInfo::getLocalAddressRegister(
   const MachineFunction &MF) const {
   const auto &MFI = MF.getFrameInfo();
   if (!MF.hasEHFunclets() && !MFI.hasVarSizedObjects())
-    return AArch64::SP;
+    return getStackPointerRegister(MF);
   else if (needsStackRealignment(MF))
-    return getBaseRegister();
+    return getBaseRegister(MF);
   return getFrameRegister(MF);
 }

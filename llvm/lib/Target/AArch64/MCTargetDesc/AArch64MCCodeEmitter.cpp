@@ -77,6 +77,12 @@ public:
                               SmallVectorImpl<MCFixup> &Fixups,
                               const MCSubtargetInfo &STI) const;
 
+  /// getScbndsImmOpValue - Return encoding for the 6-bit immediate value and
+  /// the 1-bit shift field.
+  uint32_t getScbndsImmOpValue(const MCInst &MI, unsigned OpIdx,
+                               SmallVectorImpl<MCFixup> &Fixups,
+                               const MCSubtargetInfo &STI) const;
+
   /// getAddSubImmOpValue - Return encoding for the 12-bit immediate value and
   /// the 2-bit shift field.
   uint32_t getAddSubImmOpValue(const MCInst &MI, unsigned OpIdx,
@@ -99,6 +105,10 @@ public:
   /// instruction: bit 0 is whether a shift is present, bit 1 is whether the
   /// operation is a sign extend (as opposed to a zero extend).
   uint32_t getMemExtendOpValue(const MCInst &MI, unsigned OpIdx,
+                               SmallVectorImpl<MCFixup> &Fixups,
+                               const MCSubtargetInfo &STI) const;
+
+  uint32_t getCMemExtendOpValue(const MCInst &MI, unsigned OpIdx,
                                SmallVectorImpl<MCFixup> &Fixups,
                                const MCSubtargetInfo &STI) const;
 
@@ -241,15 +251,46 @@ AArch64MCCodeEmitter::getAdrLabelOpValue(const MCInst &MI, unsigned OpIdx,
   assert(MO.isExpr() && "Unexpected target type!");
   const MCExpr *Expr = MO.getExpr();
 
-  MCFixupKind Kind = MI.getOpcode() == AArch64::ADR
-                         ? MCFixupKind(AArch64::fixup_aarch64_pcrel_adr_imm21)
-                         : MCFixupKind(AArch64::fixup_aarch64_pcrel_adrp_imm21);
+  MCFixupKind Kind;
+  switch(MI.getOpcode()) {
+  default:
+    llvm_unreachable("Unexpected opcode for adr label");
+  case AArch64::ADR:
+    Kind = MCFixupKind(AArch64::fixup_aarch64_pcrel_adr_imm21);
+    break;
+  case AArch64::ADRP:
+    Kind = MCFixupKind(AArch64::fixup_aarch64_pcrel_adrp_imm21);
+    break;
+  case AArch64::PADRP:
+    Kind = MCFixupKind(AArch64::fixup_aarch64_pcrel_adrp_imm20);
+    break;
+  }
   Fixups.push_back(MCFixup::create(0, Expr, Kind, MI.getLoc()));
 
   MCNumFixups += 1;
 
   // All of the information is in the fixup.
   return 0;
+}
+
+/// getScbndsImmOpValue - Return encoding for the 6-bit immediate value and
+/// the 1-bit shift field.  The shift field is stored in a separate operand
+/// as an integer (either 0 or 1).
+uint32_t
+AArch64MCCodeEmitter::getScbndsImmOpValue(const MCInst &MI, unsigned OpIdx,
+                                          SmallVectorImpl<MCFixup> &Fixups,
+                                          const MCSubtargetInfo &STI) const {
+  // Suboperands are [imm, shifter].
+  const MCOperand &MO = MI.getOperand(OpIdx);
+  const MCOperand &MO1 = MI.getOperand(OpIdx + 1);
+  assert(MO.isImm() && "Unable to encode MCOperand!");
+  assert(MO1.isImm() && "Unable to encode MCOperand!");
+  assert(AArch64_AM::getShiftType(MO1.getImm()) == AArch64_AM::LSL &&
+         "unexpected shift type for scbnds immediate");
+  unsigned ShiftVal = AArch64_AM::getShiftValue(MO1.getImm());
+  assert((ShiftVal == 0 || ShiftVal == 4) &&
+         "unexpected scbnds shift immediate");
+  return MO.getImm() | (ShiftVal == 0 ? 0 : (1 << 6));
 }
 
 /// getAddSubImmOpValue - Return encoding for the 12-bit immediate value and
@@ -324,13 +365,25 @@ AArch64MCCodeEmitter::getLoadLiteralOpValue(const MCInst &MI, unsigned OpIdx,
     return MO.getImm();
   assert(MO.isExpr() && "Unexpected target type!");
 
-  MCFixupKind Kind = MCFixupKind(AArch64::fixup_aarch64_ldr_pcrel_imm19);
+  MCFixupKind Kind = MI.getOpcode() != AArch64::CapLoadLiteral
+     ? MCFixupKind(AArch64::fixup_aarch64_ldr_pcrel_imm19)
+     : MCFixupKind(AArch64::fixup_aarch64_ldr_pcrel_imm17_scale16);
+
   Fixups.push_back(MCFixup::create(0, MO.getExpr(), Kind, MI.getLoc()));
 
   ++MCNumFixups;
 
   // All of the information is in the fixup.
   return 0;
+}
+
+uint32_t
+AArch64MCCodeEmitter::getCMemExtendOpValue(const MCInst &MI, unsigned OpIdx,
+                                          SmallVectorImpl<MCFixup> &Fixups,
+                                          const MCSubtargetInfo &STI) const {
+  unsigned SignExtend = MI.getOperand(OpIdx).getImm();
+  unsigned DoShift = MI.getOperand(OpIdx + 1).getImm();
+  return (DoShift << 1) | SignExtend;
 }
 
 uint32_t
@@ -394,9 +447,15 @@ AArch64MCCodeEmitter::getBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
     return MO.getImm();
   assert(MO.isExpr() && "Unexpected ADR target type!");
 
-  MCFixupKind Kind = MI.getOpcode() == AArch64::BL
+  MCFixupKind Kind;
+  if (!STI.getFeatureBits()[AArch64::FeatureC64])
+    Kind = MI.getOpcode() == AArch64::BL
                          ? MCFixupKind(AArch64::fixup_aarch64_pcrel_call26)
                          : MCFixupKind(AArch64::fixup_aarch64_pcrel_branch26);
+  else
+    Kind = MI.getOpcode() == AArch64::BL
+                         ? MCFixupKind(AArch64::fixup_morello_pcrel_call26)
+                         : MCFixupKind(AArch64::fixup_morello_pcrel_branch26);
   Fixups.push_back(MCFixup::create(0, MO.getExpr(), Kind, MI.getLoc()));
 
   ++MCNumFixups;

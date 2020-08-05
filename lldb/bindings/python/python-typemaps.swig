@@ -233,6 +233,10 @@
    free($1);
 }
 
+%typemap(typecheck) (void *buf, size_t size) {
+   $1 = (PyInt_Check($input) || PyLong_Check($input)) ? 1 : 0;
+}
+
 %{
 namespace {
 template <class T>

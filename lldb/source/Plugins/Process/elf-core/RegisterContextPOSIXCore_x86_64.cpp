@@ -74,7 +74,8 @@ bool RegisterContextCorePOSIX_x86_64::ReadRegister(const RegisterInfo *reg_info,
 
   Status error;
   value.SetFromMemoryData(reg_info, src + offset, reg_info->byte_size,
-                          lldb::eByteOrderLittle, error);
+                          lldb::eMemoryContentNormal, lldb::eByteOrderLittle,
+                          error);
 
   return error.Success();
 }

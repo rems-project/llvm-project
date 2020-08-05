@@ -115,6 +115,8 @@ public:
 
   bool ClearBit(uint32_t bit);
 
+  bool IsBitSet(uint32_t bit, bool &is_set);
+
   const void *GetBytes() const;
 
   size_t GetByteSize() const;
@@ -223,6 +225,10 @@ public:
   llvm::APInt SInt128(llvm::APInt &fail_value) const;
 
   llvm::APInt UInt128(const llvm::APInt &fail_value) const;
+
+  llvm::APInt SInt256(llvm::APInt &fail_value) const;
+
+  llvm::APInt UInt256(const llvm::APInt &fail_value) const;
 
   float Float(float fail_value = 0.0f) const;
 

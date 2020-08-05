@@ -68,7 +68,24 @@ public:
         isAFAPlusOffset,   // reg = AFA + offset
         inOtherRegister,   // reg = other reg
         atDWARFExpression, // reg = deref(eval(dwarf_expr))
-        isDWARFExpression  // reg = eval(dwarf_expr)
+        isDWARFExpression, // reg = eval(dwarf_expr)
+
+        // The register is partially updated through its smaller-size alias.
+        // Caller's value can be restored by overlaying the current content
+        // (callee's) of a base register with the restored (caller's) value of
+        // the alias.
+        //
+        // For instance, this allows to express on AArch64 that caller's CLR is
+        // formed from callee's PCC with update from the restored LR. In other
+        // words, the tag and attributes of CLR are obtained from callee's PCC
+        // and the address is set to the value of the restored LR.
+        //
+        // This case describes a situation when a callee works with PC, is
+        // unaware of it being aliased with PCC, but operations on PC by a valid
+        // program do not clear/modify the extended part (tag, attributes) of
+        // PCC. Using this knowledge allows the debugger to properly restore CLR
+        // and subsequently PCC.
+        registerOverlay
       };
 
       RegisterLocation() : m_type(unspecified), m_location() {}
@@ -105,6 +122,8 @@ public:
 
       bool IsDWARFExpression() const { return m_type == isDWARFExpression; }
 
+      bool IsRegisterOverlay() const { return m_type == registerOverlay; }
+
       void SetAtCFAPlusOffset(int32_t offset) {
         m_type = atCFAPlusOffset;
         m_location.offset = offset;
@@ -128,6 +147,12 @@ public:
       void SetInRegister(uint32_t reg_num) {
         m_type = inOtherRegister;
         m_location.reg_num = reg_num;
+      }
+
+      void SetRegisterOverlay(uint32_t base_reg_num, uint32_t overlay_reg_num) {
+        m_type = registerOverlay;
+        m_location.overlay.base_reg_num = base_reg_num;
+        m_location.overlay.overlay_reg_num = overlay_reg_num;
       }
 
       uint32_t GetRegisterNumber() const {
@@ -177,6 +202,18 @@ public:
         return 0;
       }
 
+      uint32_t GetBaseRegisterNumber() const {
+        if (m_type == registerOverlay)
+          return m_location.overlay.base_reg_num;
+        return LLDB_INVALID_REGNUM;
+      }
+
+      uint32_t GetOverlayRegisterNumber() const {
+        if (m_type == registerOverlay)
+          return m_location.overlay.overlay_reg_num;
+        return LLDB_INVALID_REGNUM;
+      }
+
       void Dump(Stream &s, const UnwindPlan *unwind_plan,
                 const UnwindPlan::Row *row, Thread *thread, bool verbose) const;
 
@@ -192,6 +229,11 @@ public:
           const uint8_t *opcodes;
           uint16_t length;
         } expr;
+        // For m_type = registerOverlay
+        struct {
+          uint32_t base_reg_num;
+          uint32_t overlay_reg_num;
+        } overlay;
       } m_location;
     };
 
@@ -425,7 +467,7 @@ public:
     m_return_addr_register = regnum;
   }
 
-  uint32_t GetReturnAddressRegister(void) { return m_return_addr_register; }
+  uint32_t GetReturnAddressRegister() const { return m_return_addr_register; }
 
   uint32_t GetInitialCFARegister() const {
     if (m_row_list.empty())

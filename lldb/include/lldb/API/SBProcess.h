@@ -182,7 +182,8 @@ public:
   ///   The stop event corresponding to stop ID.
   lldb::SBEvent GetStopEventForStopID(uint32_t stop_id);
 
-  size_t ReadMemory(addr_t addr, void *buf, size_t size, lldb::SBError &error);
+  size_t ReadMemory(addr_t addr, void *buf, size_t size, lldb::SBError &error,
+                    MemoryContentType type = eMemoryContentNormal);
 
   size_t WriteMemory(addr_t addr, const void *buf, size_t size,
                      lldb::SBError &error);

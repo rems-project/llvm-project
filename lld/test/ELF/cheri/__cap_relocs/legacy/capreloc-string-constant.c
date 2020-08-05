@@ -1,4 +1,4 @@
-// REQUIRES: clang
+// REQUIRES: clang, mips
 // REQUIRES: filecheck_new_syntax, D60389
 
 // RUN: %cheri_purecap_clang %legacy_caprelocs_flag %s -c -o %t.o

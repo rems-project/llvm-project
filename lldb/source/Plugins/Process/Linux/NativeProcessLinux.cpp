@@ -1432,7 +1432,19 @@ NativeProcessLinux::GetSoftwareBreakpointTrapOpcode(size_t size_hint) {
 }
 
 Status NativeProcessLinux::ReadMemory(lldb::addr_t addr, void *buf, size_t size,
-                                      size_t &bytes_read) {
+                                      size_t &bytes_read,
+                                      MemoryContentType type) {
+  if (IsTaggedMemoryContentType(type))
+    return DoReadTaggedMemory(addr, buf, size, bytes_read, type);
+  else if (type != eMemoryContentNormal) {
+    Status error;
+    error.SetErrorStringWithFormat(
+        "reading %s is not supported by the target process",
+        GetMemoryContentTypeAsCString(type));
+    return error;
+  }
+
+  // Normal memory read.
   if (ProcessVmReadvSupported()) {
     // The process_vm_readv path is about 50 times faster than ptrace api. We
     // want to use this syscall if it is supported.
@@ -1816,6 +1828,45 @@ Status NativeProcessLinux::PtraceWrapper(int req, lldb::pid_t pid, void *addr,
 
   if (error.Fail())
     LLDB_LOG(log, "ptrace() failed: {0}", error);
+
+  return error;
+}
+
+Status NativeProcessLinux::DoReadTaggedMemory(addr_t addr, void *buf,
+                                              size_t size, size_t &bytes_read,
+                                              MemoryContentType type) {
+  Log *log(ProcessPOSIXLog::GetLogIfAllCategoriesSet(POSIX_LOG_MEMORY));
+  LLDB_LOG(log, "addr = {0:x}, buf = {1:x}, size = {2}, type = {3}", addr, buf,
+           size, type);
+
+#if defined(__arm64__) || defined(__aarch64__)
+  if (type == eMemoryContentCap128) {
+    uint8_t *dst = static_cast<uint8_t *>(buf);
+    struct user_cap data;
+    for (bytes_read = 0; bytes_read < size; bytes_read += 17) {
+      memset(&data, 0, sizeof(data));
+      Status error = NativeProcessLinux::PtraceWrapper(
+          PTRACE_PEEKCAPDATA, GetID(), reinterpret_cast<void *>(addr),
+          static_cast<void *>(&data));
+      if (error.Fail())
+        return error;
+
+      // Extract the data into the passed buffer.
+      *dst = data.tag;
+      memcpy(dst + 1, &data.val, 16);
+
+      LLDB_LOG(log, "[{0:x}]:{1:@[x]}", addr, make_range(dst, dst + 17));
+      addr += 16;
+      dst += 17;
+    }
+    return Status();
+  }
+#endif // defined(__arm64__) || defined(__aarch64__)
+
+  Status error;
+  error.SetErrorStringWithFormat(
+      "reading %s is not supported by the target architecture",
+      GetMemoryContentTypeAsCString(eMemoryContentCap128));
 
   return error;
 }

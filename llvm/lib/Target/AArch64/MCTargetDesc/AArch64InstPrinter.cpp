@@ -693,6 +693,346 @@ static const LdStNInstrDesc LdStNInstInfo[] = {
   { AArch64::ST4Fourv8b_POST,   "st4",  ".8b",    1, false, 32 },
   { AArch64::ST4Fourv4h_POST,   "st4",  ".4h",    1, false, 32 },
   { AArch64::ST4Fourv2s_POST,   "st4",  ".2s",    1, false, 32 },
+  { AArch64::ALD1i8,             "ld1",  ".b",     1, true,  0  },
+  { AArch64::ALD1i16,            "ld1",  ".h",     1, true,  0  },
+  { AArch64::ALD1i32,            "ld1",  ".s",     1, true,  0  },
+  { AArch64::ALD1i64,            "ld1",  ".d",     1, true,  0  },
+  { AArch64::ALD1i8_POST,        "ld1",  ".b",     2, true,  1  },
+  { AArch64::ALD1i16_POST,       "ld1",  ".h",     2, true,  2  },
+  { AArch64::ALD1i32_POST,       "ld1",  ".s",     2, true,  4  },
+  { AArch64::ALD1i64_POST,       "ld1",  ".d",     2, true,  8  },
+  { AArch64::ALD1Rv16b,          "ld1r", ".16b",   0, false, 0  },
+  { AArch64::ALD1Rv8h,           "ld1r", ".8h",    0, false, 0  },
+  { AArch64::ALD1Rv4s,           "ld1r", ".4s",    0, false, 0  },
+  { AArch64::ALD1Rv2d,           "ld1r", ".2d",    0, false, 0  },
+  { AArch64::ALD1Rv8b,           "ld1r", ".8b",    0, false, 0  },
+  { AArch64::ALD1Rv4h,           "ld1r", ".4h",    0, false, 0  },
+  { AArch64::ALD1Rv2s,           "ld1r", ".2s",    0, false, 0  },
+  { AArch64::ALD1Rv1d,           "ld1r", ".1d",    0, false, 0  },
+  { AArch64::ALD1Rv16b_POST,     "ld1r", ".16b",   1, false, 1  },
+  { AArch64::ALD1Rv8h_POST,      "ld1r", ".8h",    1, false, 2  },
+  { AArch64::ALD1Rv4s_POST,      "ld1r", ".4s",    1, false, 4  },
+  { AArch64::ALD1Rv2d_POST,      "ld1r", ".2d",    1, false, 8  },
+  { AArch64::ALD1Rv8b_POST,      "ld1r", ".8b",    1, false, 1  },
+  { AArch64::ALD1Rv4h_POST,      "ld1r", ".4h",    1, false, 2  },
+  { AArch64::ALD1Rv2s_POST,      "ld1r", ".2s",    1, false, 4  },
+  { AArch64::ALD1Rv1d_POST,      "ld1r", ".1d",    1, false, 8  },
+  { AArch64::ALD1Onev16b,        "ld1",  ".16b",   0, false, 0  },
+  { AArch64::ALD1Onev8h,         "ld1",  ".8h",    0, false, 0  },
+  { AArch64::ALD1Onev4s,         "ld1",  ".4s",    0, false, 0  },
+  { AArch64::ALD1Onev2d,         "ld1",  ".2d",    0, false, 0  },
+  { AArch64::ALD1Onev8b,         "ld1",  ".8b",    0, false, 0  },
+  { AArch64::ALD1Onev4h,         "ld1",  ".4h",    0, false, 0  },
+  { AArch64::ALD1Onev2s,         "ld1",  ".2s",    0, false, 0  },
+  { AArch64::ALD1Onev1d,         "ld1",  ".1d",    0, false, 0  },
+  { AArch64::ALD1Onev16b_POST,   "ld1",  ".16b",   1, false, 16 },
+  { AArch64::ALD1Onev8h_POST,    "ld1",  ".8h",    1, false, 16 },
+  { AArch64::ALD1Onev4s_POST,    "ld1",  ".4s",    1, false, 16 },
+  { AArch64::ALD1Onev2d_POST,    "ld1",  ".2d",    1, false, 16 },
+  { AArch64::ALD1Onev8b_POST,    "ld1",  ".8b",    1, false, 8  },
+  { AArch64::ALD1Onev4h_POST,    "ld1",  ".4h",    1, false, 8  },
+  { AArch64::ALD1Onev2s_POST,    "ld1",  ".2s",    1, false, 8  },
+  { AArch64::ALD1Onev1d_POST,    "ld1",  ".1d",    1, false, 8  },
+  { AArch64::ALD1Twov16b,        "ld1",  ".16b",   0, false, 0  },
+  { AArch64::ALD1Twov8h,         "ld1",  ".8h",    0, false, 0  },
+  { AArch64::ALD1Twov4s,         "ld1",  ".4s",    0, false, 0  },
+  { AArch64::ALD1Twov2d,         "ld1",  ".2d",    0, false, 0  },
+  { AArch64::ALD1Twov8b,         "ld1",  ".8b",    0, false, 0  },
+  { AArch64::ALD1Twov4h,         "ld1",  ".4h",    0, false, 0  },
+  { AArch64::ALD1Twov2s,         "ld1",  ".2s",    0, false, 0  },
+  { AArch64::ALD1Twov1d,         "ld1",  ".1d",    0, false, 0  },
+  { AArch64::ALD1Twov16b_POST,   "ld1",  ".16b",   1, false, 32 },
+  { AArch64::ALD1Twov8h_POST,    "ld1",  ".8h",    1, false, 32 },
+  { AArch64::ALD1Twov4s_POST,    "ld1",  ".4s",    1, false, 32 },
+  { AArch64::ALD1Twov2d_POST,    "ld1",  ".2d",    1, false, 32 },
+  { AArch64::ALD1Twov8b_POST,    "ld1",  ".8b",    1, false, 16 },
+  { AArch64::ALD1Twov4h_POST,    "ld1",  ".4h",    1, false, 16 },
+  { AArch64::ALD1Twov2s_POST,    "ld1",  ".2s",    1, false, 16 },
+  { AArch64::ALD1Twov1d_POST,    "ld1",  ".1d",    1, false, 16 },
+  { AArch64::ALD1Threev16b,      "ld1",  ".16b",   0, false, 0  },
+  { AArch64::ALD1Threev8h,       "ld1",  ".8h",    0, false, 0  },
+  { AArch64::ALD1Threev4s,       "ld1",  ".4s",    0, false, 0  },
+  { AArch64::ALD1Threev2d,       "ld1",  ".2d",    0, false, 0  },
+  { AArch64::ALD1Threev8b,       "ld1",  ".8b",    0, false, 0  },
+  { AArch64::ALD1Threev4h,       "ld1",  ".4h",    0, false, 0  },
+  { AArch64::ALD1Threev2s,       "ld1",  ".2s",    0, false, 0  },
+  { AArch64::ALD1Threev1d,       "ld1",  ".1d",    0, false, 0  },
+  { AArch64::ALD1Threev16b_POST, "ld1",  ".16b",   1, false, 48 },
+  { AArch64::ALD1Threev8h_POST,  "ld1",  ".8h",    1, false, 48 },
+  { AArch64::ALD1Threev4s_POST,  "ld1",  ".4s",    1, false, 48 },
+  { AArch64::ALD1Threev2d_POST,  "ld1",  ".2d",    1, false, 48 },
+  { AArch64::ALD1Threev8b_POST,  "ld1",  ".8b",    1, false, 24 },
+  { AArch64::ALD1Threev4h_POST,  "ld1",  ".4h",    1, false, 24 },
+  { AArch64::ALD1Threev2s_POST,  "ld1",  ".2s",    1, false, 24 },
+  { AArch64::ALD1Threev1d_POST,  "ld1",  ".1d",    1, false, 24 },
+  { AArch64::ALD1Fourv16b,       "ld1",  ".16b",   0, false, 0  },
+  { AArch64::ALD1Fourv8h,        "ld1",  ".8h",    0, false, 0  },
+  { AArch64::ALD1Fourv4s,        "ld1",  ".4s",    0, false, 0  },
+  { AArch64::ALD1Fourv2d,        "ld1",  ".2d",    0, false, 0  },
+  { AArch64::ALD1Fourv8b,        "ld1",  ".8b",    0, false, 0  },
+  { AArch64::ALD1Fourv4h,        "ld1",  ".4h",    0, false, 0  },
+  { AArch64::ALD1Fourv2s,        "ld1",  ".2s",    0, false, 0  },
+  { AArch64::ALD1Fourv1d,        "ld1",  ".1d",    0, false, 0  },
+  { AArch64::ALD1Fourv16b_POST,  "ld1",  ".16b",   1, false, 64 },
+  { AArch64::ALD1Fourv8h_POST,   "ld1",  ".8h",    1, false, 64 },
+  { AArch64::ALD1Fourv4s_POST,   "ld1",  ".4s",    1, false, 64 },
+  { AArch64::ALD1Fourv2d_POST,   "ld1",  ".2d",    1, false, 64 },
+  { AArch64::ALD1Fourv8b_POST,   "ld1",  ".8b",    1, false, 32 },
+  { AArch64::ALD1Fourv4h_POST,   "ld1",  ".4h",    1, false, 32 },
+  { AArch64::ALD1Fourv2s_POST,   "ld1",  ".2s",    1, false, 32 },
+  { AArch64::ALD1Fourv1d_POST,   "ld1",  ".1d",    1, false, 32 },
+  { AArch64::ALD2i8,             "ld2",  ".b",     1, true,  0  },
+  { AArch64::ALD2i16,            "ld2",  ".h",     1, true,  0  },
+  { AArch64::ALD2i32,            "ld2",  ".s",     1, true,  0  },
+  { AArch64::ALD2i64,            "ld2",  ".d",     1, true,  0  },
+  { AArch64::ALD2i8_POST,        "ld2",  ".b",     2, true,  2  },
+  { AArch64::ALD2i16_POST,       "ld2",  ".h",     2, true,  4  },
+  { AArch64::ALD2i32_POST,       "ld2",  ".s",     2, true,  8  },
+  { AArch64::ALD2i64_POST,       "ld2",  ".d",     2, true,  16  },
+  { AArch64::ALD2Rv16b,          "ld2r", ".16b",   0, false, 0  },
+  { AArch64::ALD2Rv8h,           "ld2r", ".8h",    0, false, 0  },
+  { AArch64::ALD2Rv4s,           "ld2r", ".4s",    0, false, 0  },
+  { AArch64::ALD2Rv2d,           "ld2r", ".2d",    0, false, 0  },
+  { AArch64::ALD2Rv8b,           "ld2r", ".8b",    0, false, 0  },
+  { AArch64::ALD2Rv4h,           "ld2r", ".4h",    0, false, 0  },
+  { AArch64::ALD2Rv2s,           "ld2r", ".2s",    0, false, 0  },
+  { AArch64::ALD2Rv1d,           "ld2r", ".1d",    0, false, 0  },
+  { AArch64::ALD2Rv16b_POST,     "ld2r", ".16b",   1, false, 2  },
+  { AArch64::ALD2Rv8h_POST,      "ld2r", ".8h",    1, false, 4  },
+  { AArch64::ALD2Rv4s_POST,      "ld2r", ".4s",    1, false, 8  },
+  { AArch64::ALD2Rv2d_POST,      "ld2r", ".2d",    1, false, 16 },
+  { AArch64::ALD2Rv8b_POST,      "ld2r", ".8b",    1, false, 2  },
+  { AArch64::ALD2Rv4h_POST,      "ld2r", ".4h",    1, false, 4  },
+  { AArch64::ALD2Rv2s_POST,      "ld2r", ".2s",    1, false, 8  },
+  { AArch64::ALD2Rv1d_POST,      "ld2r", ".1d",    1, false, 16 },
+  { AArch64::ALD2Twov16b,        "ld2",  ".16b",   0, false, 0  },
+  { AArch64::ALD2Twov8h,         "ld2",  ".8h",    0, false, 0  },
+  { AArch64::ALD2Twov4s,         "ld2",  ".4s",    0, false, 0  },
+  { AArch64::ALD2Twov2d,         "ld2",  ".2d",    0, false, 0  },
+  { AArch64::ALD2Twov8b,         "ld2",  ".8b",    0, false, 0  },
+  { AArch64::ALD2Twov4h,         "ld2",  ".4h",    0, false, 0  },
+  { AArch64::ALD2Twov2s,         "ld2",  ".2s",    0, false, 0  },
+  { AArch64::ALD2Twov16b_POST,   "ld2",  ".16b",   1, false, 32 },
+  { AArch64::ALD2Twov8h_POST,    "ld2",  ".8h",    1, false, 32 },
+  { AArch64::ALD2Twov4s_POST,    "ld2",  ".4s",    1, false, 32 },
+  { AArch64::ALD2Twov2d_POST,    "ld2",  ".2d",    1, false, 32 },
+  { AArch64::ALD2Twov8b_POST,    "ld2",  ".8b",    1, false, 16 },
+  { AArch64::ALD2Twov4h_POST,    "ld2",  ".4h",    1, false, 16 },
+  { AArch64::ALD2Twov2s_POST,    "ld2",  ".2s",    1, false, 16 },
+  { AArch64::ALD3i8,             "ld3",  ".b",     1, true,  0  },
+  { AArch64::ALD3i16,            "ld3",  ".h",     1, true,  0  },
+  { AArch64::ALD3i32,            "ld3",  ".s",     1, true,  0  },
+  { AArch64::ALD3i64,            "ld3",  ".d",     1, true,  0  },
+  { AArch64::ALD3i8_POST,        "ld3",  ".b",     2, true,  3  },
+  { AArch64::ALD3i16_POST,       "ld3",  ".h",     2, true,  6  },
+  { AArch64::ALD3i32_POST,       "ld3",  ".s",     2, true,  12 },
+  { AArch64::ALD3i64_POST,       "ld3",  ".d",     2, true,  24 },
+  { AArch64::ALD3Rv16b,          "ld3r", ".16b",   0, false, 0  },
+  { AArch64::ALD3Rv8h,           "ld3r", ".8h",    0, false, 0  },
+  { AArch64::ALD3Rv4s,           "ld3r", ".4s",    0, false, 0  },
+  { AArch64::ALD3Rv2d,           "ld3r", ".2d",    0, false, 0  },
+  { AArch64::ALD3Rv8b,           "ld3r", ".8b",    0, false, 0  },
+  { AArch64::ALD3Rv4h,           "ld3r", ".4h",    0, false, 0  },
+  { AArch64::ALD3Rv2s,           "ld3r", ".2s",    0, false, 0  },
+  { AArch64::ALD3Rv1d,           "ld3r", ".1d",    0, false, 0  },
+  { AArch64::ALD3Rv16b_POST,     "ld3r", ".16b",   1, false, 3  },
+  { AArch64::ALD3Rv8h_POST,      "ld3r", ".8h",    1, false, 6  },
+  { AArch64::ALD3Rv4s_POST,      "ld3r", ".4s",    1, false, 12 },
+  { AArch64::ALD3Rv2d_POST,      "ld3r", ".2d",    1, false, 24 },
+  { AArch64::ALD3Rv8b_POST,      "ld3r", ".8b",    1, false, 3  },
+  { AArch64::ALD3Rv4h_POST,      "ld3r", ".4h",    1, false, 6  },
+  { AArch64::ALD3Rv2s_POST,      "ld3r", ".2s",    1, false, 12 },
+  { AArch64::ALD3Rv1d_POST,      "ld3r", ".1d",    1, false, 24 },
+  { AArch64::ALD3Threev16b,      "ld3",  ".16b",   0, false, 0  },
+  { AArch64::ALD3Threev8h,       "ld3",  ".8h",    0, false, 0  },
+  { AArch64::ALD3Threev4s,       "ld3",  ".4s",    0, false, 0  },
+  { AArch64::ALD3Threev2d,       "ld3",  ".2d",    0, false, 0  },
+  { AArch64::ALD3Threev8b,       "ld3",  ".8b",    0, false, 0  },
+  { AArch64::ALD3Threev4h,       "ld3",  ".4h",    0, false, 0  },
+  { AArch64::ALD3Threev2s,       "ld3",  ".2s",    0, false, 0  },
+  { AArch64::ALD3Threev16b_POST, "ld3",  ".16b",   1, false, 48 },
+  { AArch64::ALD3Threev8h_POST,  "ld3",  ".8h",    1, false, 48 },
+  { AArch64::ALD3Threev4s_POST,  "ld3",  ".4s",    1, false, 48 },
+  { AArch64::ALD3Threev2d_POST,  "ld3",  ".2d",    1, false, 48 },
+  { AArch64::ALD3Threev8b_POST,  "ld3",  ".8b",    1, false, 24 },
+  { AArch64::ALD3Threev4h_POST,  "ld3",  ".4h",    1, false, 24 },
+  { AArch64::ALD3Threev2s_POST,  "ld3",  ".2s",    1, false, 24 },
+  { AArch64::ALD4i8,             "ld4",  ".b",     1, true,  0  },
+  { AArch64::ALD4i16,            "ld4",  ".h",     1, true,  0  },
+  { AArch64::ALD4i32,            "ld4",  ".s",     1, true,  0  },
+  { AArch64::ALD4i64,            "ld4",  ".d",     1, true,  0  },
+  { AArch64::ALD4i8_POST,        "ld4",  ".b",     2, true,  4  },
+  { AArch64::ALD4i16_POST,       "ld4",  ".h",     2, true,  8  },
+  { AArch64::ALD4i32_POST,       "ld4",  ".s",     2, true,  16 },
+  { AArch64::ALD4i64_POST,       "ld4",  ".d",     2, true,  32 },
+  { AArch64::ALD4Rv16b,          "ld4r", ".16b",   0, false, 0  },
+  { AArch64::ALD4Rv8h,           "ld4r", ".8h",    0, false, 0  },
+  { AArch64::ALD4Rv4s,           "ld4r", ".4s",    0, false, 0  },
+  { AArch64::ALD4Rv2d,           "ld4r", ".2d",    0, false, 0  },
+  { AArch64::ALD4Rv8b,           "ld4r", ".8b",    0, false, 0  },
+  { AArch64::ALD4Rv4h,           "ld4r", ".4h",    0, false, 0  },
+  { AArch64::ALD4Rv2s,           "ld4r", ".2s",    0, false, 0  },
+  { AArch64::ALD4Rv1d,           "ld4r", ".1d",    0, false, 0  },
+  { AArch64::ALD4Rv16b_POST,     "ld4r", ".16b",   1, false, 4  },
+  { AArch64::ALD4Rv8h_POST,      "ld4r", ".8h",    1, false, 8  },
+  { AArch64::ALD4Rv4s_POST,      "ld4r", ".4s",    1, false, 16 },
+  { AArch64::ALD4Rv2d_POST,      "ld4r", ".2d",    1, false, 32 },
+  { AArch64::ALD4Rv8b_POST,      "ld4r", ".8b",    1, false, 4  },
+  { AArch64::ALD4Rv4h_POST,      "ld4r", ".4h",    1, false, 8  },
+  { AArch64::ALD4Rv2s_POST,      "ld4r", ".2s",    1, false, 16 },
+  { AArch64::ALD4Rv1d_POST,      "ld4r", ".1d",    1, false, 32 },
+  { AArch64::ALD4Fourv16b,       "ld4",  ".16b",   0, false, 0  },
+  { AArch64::ALD4Fourv8h,        "ld4",  ".8h",    0, false, 0  },
+  { AArch64::ALD4Fourv4s,        "ld4",  ".4s",    0, false, 0  },
+  { AArch64::ALD4Fourv2d,        "ld4",  ".2d",    0, false, 0  },
+  { AArch64::ALD4Fourv8b,        "ld4",  ".8b",    0, false, 0  },
+  { AArch64::ALD4Fourv4h,        "ld4",  ".4h",    0, false, 0  },
+  { AArch64::ALD4Fourv2s,        "ld4",  ".2s",    0, false, 0  },
+  { AArch64::ALD4Fourv16b_POST,  "ld4",  ".16b",   1, false, 64 },
+  { AArch64::ALD4Fourv8h_POST,   "ld4",  ".8h",    1, false, 64 },
+  { AArch64::ALD4Fourv4s_POST,   "ld4",  ".4s",    1, false, 64 },
+  { AArch64::ALD4Fourv2d_POST,   "ld4",  ".2d",    1, false, 64 },
+  { AArch64::ALD4Fourv8b_POST,   "ld4",  ".8b",    1, false, 32 },
+  { AArch64::ALD4Fourv4h_POST,   "ld4",  ".4h",    1, false, 32 },
+  { AArch64::ALD4Fourv2s_POST,   "ld4",  ".2s",    1, false, 32 },
+  { AArch64::AST1i8,             "st1",  ".b",     0, true,  0  },
+  { AArch64::AST1i16,            "st1",  ".h",     0, true,  0  },
+  { AArch64::AST1i32,            "st1",  ".s",     0, true,  0  },
+  { AArch64::AST1i64,            "st1",  ".d",     0, true,  0  },
+  { AArch64::AST1i8_POST,        "st1",  ".b",     1, true,  1  },
+  { AArch64::AST1i16_POST,       "st1",  ".h",     1, true,  2  },
+  { AArch64::AST1i32_POST,       "st1",  ".s",     1, true,  4  },
+  { AArch64::AST1i64_POST,       "st1",  ".d",     1, true,  8  },
+  { AArch64::AST1Onev16b,        "st1",  ".16b",   0, false, 0  },
+  { AArch64::AST1Onev8h,         "st1",  ".8h",    0, false, 0  },
+  { AArch64::AST1Onev4s,         "st1",  ".4s",    0, false, 0  },
+  { AArch64::AST1Onev2d,         "st1",  ".2d",    0, false, 0  },
+  { AArch64::AST1Onev8b,         "st1",  ".8b",    0, false, 0  },
+  { AArch64::AST1Onev4h,         "st1",  ".4h",    0, false, 0  },
+  { AArch64::AST1Onev2s,         "st1",  ".2s",    0, false, 0  },
+  { AArch64::AST1Onev1d,         "st1",  ".1d",    0, false, 0  },
+  { AArch64::AST1Onev16b_POST,   "st1",  ".16b",   1, false, 16 },
+  { AArch64::AST1Onev8h_POST,    "st1",  ".8h",    1, false, 16 },
+  { AArch64::AST1Onev4s_POST,    "st1",  ".4s",    1, false, 16 },
+  { AArch64::AST1Onev2d_POST,    "st1",  ".2d",    1, false, 16 },
+  { AArch64::AST1Onev8b_POST,    "st1",  ".8b",    1, false, 8  },
+  { AArch64::AST1Onev4h_POST,    "st1",  ".4h",    1, false, 8  },
+  { AArch64::AST1Onev2s_POST,    "st1",  ".2s",    1, false, 8  },
+  { AArch64::AST1Onev1d_POST,    "st1",  ".1d",    1, false, 8  },
+  { AArch64::AST1Twov16b,        "st1",  ".16b",   0, false, 0  },
+  { AArch64::AST1Twov8h,         "st1",  ".8h",    0, false, 0  },
+  { AArch64::AST1Twov4s,         "st1",  ".4s",    0, false, 0  },
+  { AArch64::AST1Twov2d,         "st1",  ".2d",    0, false, 0  },
+  { AArch64::AST1Twov8b,         "st1",  ".8b",    0, false, 0  },
+  { AArch64::AST1Twov4h,         "st1",  ".4h",    0, false, 0  },
+  { AArch64::AST1Twov2s,         "st1",  ".2s",    0, false, 0  },
+  { AArch64::AST1Twov1d,         "st1",  ".1d",    0, false, 0  },
+  { AArch64::AST1Twov16b_POST,   "st1",  ".16b",   1, false, 32 },
+  { AArch64::AST1Twov8h_POST,    "st1",  ".8h",    1, false, 32 },
+  { AArch64::AST1Twov4s_POST,    "st1",  ".4s",    1, false, 32 },
+  { AArch64::AST1Twov2d_POST,    "st1",  ".2d",    1, false, 32 },
+  { AArch64::AST1Twov8b_POST,    "st1",  ".8b",    1, false, 16 },
+  { AArch64::AST1Twov4h_POST,    "st1",  ".4h",    1, false, 16 },
+  { AArch64::AST1Twov2s_POST,    "st1",  ".2s",    1, false, 16 },
+  { AArch64::AST1Twov1d_POST,    "st1",  ".1d",    1, false, 16 },
+  { AArch64::AST1Threev16b,      "st1",  ".16b",   0, false, 0  },
+  { AArch64::AST1Threev8h,       "st1",  ".8h",    0, false, 0  },
+  { AArch64::AST1Threev4s,       "st1",  ".4s",    0, false, 0  },
+  { AArch64::AST1Threev2d,       "st1",  ".2d",    0, false, 0  },
+  { AArch64::AST1Threev8b,       "st1",  ".8b",    0, false, 0  },
+  { AArch64::AST1Threev4h,       "st1",  ".4h",    0, false, 0  },
+  { AArch64::AST1Threev2s,       "st1",  ".2s",    0, false, 0  },
+  { AArch64::AST1Threev1d,       "st1",  ".1d",    0, false, 0  },
+  { AArch64::AST1Threev16b_POST, "st1",  ".16b",   1, false, 48 },
+  { AArch64::AST1Threev8h_POST,  "st1",  ".8h",    1, false, 48 },
+  { AArch64::AST1Threev4s_POST,  "st1",  ".4s",    1, false, 48 },
+  { AArch64::AST1Threev2d_POST,  "st1",  ".2d",    1, false, 48 },
+  { AArch64::AST1Threev8b_POST,  "st1",  ".8b",    1, false, 24 },
+  { AArch64::AST1Threev4h_POST,  "st1",  ".4h",    1, false, 24 },
+  { AArch64::AST1Threev2s_POST,  "st1",  ".2s",    1, false, 24 },
+  { AArch64::AST1Threev1d_POST,  "st1",  ".1d",    1, false, 24 },
+  { AArch64::AST1Fourv16b,       "st1",  ".16b",   0, false, 0  },
+  { AArch64::AST1Fourv8h,        "st1",  ".8h",    0, false, 0  },
+  { AArch64::AST1Fourv4s,        "st1",  ".4s",    0, false, 0  },
+  { AArch64::AST1Fourv2d,        "st1",  ".2d",    0, false, 0  },
+  { AArch64::AST1Fourv8b,        "st1",  ".8b",    0, false, 0  },
+  { AArch64::AST1Fourv4h,        "st1",  ".4h",    0, false, 0  },
+  { AArch64::AST1Fourv2s,        "st1",  ".2s",    0, false, 0  },
+  { AArch64::AST1Fourv1d,        "st1",  ".1d",    0, false, 0  },
+  { AArch64::AST1Fourv16b_POST,  "st1",  ".16b",   1, false, 64 },
+  { AArch64::AST1Fourv8h_POST,   "st1",  ".8h",    1, false, 64 },
+  { AArch64::AST1Fourv4s_POST,   "st1",  ".4s",    1, false, 64 },
+  { AArch64::AST1Fourv2d_POST,   "st1",  ".2d",    1, false, 64 },
+  { AArch64::AST1Fourv8b_POST,   "st1",  ".8b",    1, false, 32 },
+  { AArch64::AST1Fourv4h_POST,   "st1",  ".4h",    1, false, 32 },
+  { AArch64::AST1Fourv2s_POST,   "st1",  ".2s",    1, false, 32 },
+  { AArch64::AST1Fourv1d_POST,   "st1",  ".1d",    1, false, 32 },
+  { AArch64::AST2i8,             "st2",  ".b",     0, true,  0  },
+  { AArch64::AST2i16,            "st2",  ".h",     0, true,  0  },
+  { AArch64::AST2i32,            "st2",  ".s",     0, true,  0  },
+  { AArch64::AST2i64,            "st2",  ".d",     0, true,  0  },
+  { AArch64::AST2i8_POST,        "st2",  ".b",     1, true,  2  },
+  { AArch64::AST2i16_POST,       "st2",  ".h",     1, true,  4  },
+  { AArch64::AST2i32_POST,       "st2",  ".s",     1, true,  8  },
+  { AArch64::AST2i64_POST,       "st2",  ".d",     1, true,  16 },
+  { AArch64::AST2Twov16b,        "st2",  ".16b",   0, false, 0  },
+  { AArch64::AST2Twov8h,         "st2",  ".8h",    0, false, 0  },
+  { AArch64::AST2Twov4s,         "st2",  ".4s",    0, false, 0  },
+  { AArch64::AST2Twov2d,         "st2",  ".2d",    0, false, 0  },
+  { AArch64::AST2Twov8b,         "st2",  ".8b",    0, false, 0  },
+  { AArch64::AST2Twov4h,         "st2",  ".4h",    0, false, 0  },
+  { AArch64::AST2Twov2s,         "st2",  ".2s",    0, false, 0  },
+  { AArch64::AST2Twov16b_POST,   "st2",  ".16b",   1, false, 32 },
+  { AArch64::AST2Twov8h_POST,    "st2",  ".8h",    1, false, 32 },
+  { AArch64::AST2Twov4s_POST,    "st2",  ".4s",    1, false, 32 },
+  { AArch64::AST2Twov2d_POST,    "st2",  ".2d",    1, false, 32 },
+  { AArch64::AST2Twov8b_POST,    "st2",  ".8b",    1, false, 16 },
+  { AArch64::AST2Twov4h_POST,    "st2",  ".4h",    1, false, 16 },
+  { AArch64::AST2Twov2s_POST,    "st2",  ".2s",    1, false, 16 },
+  { AArch64::AST3i8,             "st3",  ".b",     0, true,  0  },
+  { AArch64::AST3i16,            "st3",  ".h",     0, true,  0  },
+  { AArch64::AST3i32,            "st3",  ".s",     0, true,  0  },
+  { AArch64::AST3i64,            "st3",  ".d",     0, true,  0  },
+  { AArch64::AST3i8_POST,        "st3",  ".b",     1, true,  3  },
+  { AArch64::AST3i16_POST,       "st3",  ".h",     1, true,  6  },
+  { AArch64::AST3i32_POST,       "st3",  ".s",     1, true,  12 },
+  { AArch64::AST3i64_POST,       "st3",  ".d",     1, true,  24 },
+  { AArch64::AST3Threev16b,      "st3",  ".16b",   0, false, 0  },
+  { AArch64::AST3Threev8h,       "st3",  ".8h",    0, false, 0  },
+  { AArch64::AST3Threev4s,       "st3",  ".4s",    0, false, 0  },
+  { AArch64::AST3Threev2d,       "st3",  ".2d",    0, false, 0  },
+  { AArch64::AST3Threev8b,       "st3",  ".8b",    0, false, 0  },
+  { AArch64::AST3Threev4h,       "st3",  ".4h",    0, false, 0  },
+  { AArch64::AST3Threev2s,       "st3",  ".2s",    0, false, 0  },
+  { AArch64::AST3Threev16b_POST, "st3",  ".16b",   1, false, 48 },
+  { AArch64::AST3Threev8h_POST,  "st3",  ".8h",    1, false, 48 },
+  { AArch64::AST3Threev4s_POST,  "st3",  ".4s",    1, false, 48 },
+  { AArch64::AST3Threev2d_POST,  "st3",  ".2d",    1, false, 48 },
+  { AArch64::AST3Threev8b_POST,  "st3",  ".8b",    1, false, 24 },
+  { AArch64::AST3Threev4h_POST,  "st3",  ".4h",    1, false, 24 },
+  { AArch64::AST3Threev2s_POST,  "st3",  ".2s",    1, false, 24 },
+  { AArch64::AST4i8,             "st4",  ".b",     0, true,  0  },
+  { AArch64::AST4i16,            "st4",  ".h",     0, true,  0  },
+  { AArch64::AST4i32,            "st4",  ".s",     0, true,  0  },
+  { AArch64::AST4i64,            "st4",  ".d",     0, true,  0  },
+  { AArch64::AST4i8_POST,        "st4",  ".b",     1, true,  4  },
+  { AArch64::AST4i16_POST,       "st4",  ".h",     1, true,  8  },
+  { AArch64::AST4i32_POST,       "st4",  ".s",     1, true,  16 },
+  { AArch64::AST4i64_POST,       "st4",  ".d",     1, true,  32 },
+  { AArch64::AST4Fourv16b,       "st4",  ".16b",   0, false, 0  },
+  { AArch64::AST4Fourv8h,        "st4",  ".8h",    0, false, 0  },
+  { AArch64::AST4Fourv4s,        "st4",  ".4s",    0, false, 0  },
+  { AArch64::AST4Fourv2d,        "st4",  ".2d",    0, false, 0  },
+  { AArch64::AST4Fourv8b,        "st4",  ".8b",    0, false, 0  },
+  { AArch64::AST4Fourv4h,        "st4",  ".4h",    0, false, 0  },
+  { AArch64::AST4Fourv2s,        "st4",  ".2s",    0, false, 0  },
+  { AArch64::AST4Fourv16b_POST,  "st4",  ".16b",   1, false, 64 },
+  { AArch64::AST4Fourv8h_POST,   "st4",  ".8h",    1, false, 64 },
+  { AArch64::AST4Fourv4s_POST,   "st4",  ".4s",    1, false, 64 },
+  { AArch64::AST4Fourv2d_POST,   "st4",  ".2d",    1, false, 64 },
+  { AArch64::AST4Fourv8b_POST,   "st4",  ".8b",    1, false, 32 },
+  { AArch64::AST4Fourv4h_POST,   "st4",  ".4h",    1, false, 32 },
+  { AArch64::AST4Fourv2s_POST,   "st4",  ".2s",    1, false, 32 },
 };
 
 static const LdStNInstrDesc *getLdStNInstrDesc(unsigned Opcode) {
@@ -785,6 +1125,12 @@ bool AArch64InstPrinter::printSysAlias(const MCInst *MI,
   std::string Ins;
   std::string Name;
 
+  bool HasC64 = STI.getFeatureBits()[AArch64::FeatureC64] != 0;
+  bool HasMorello = STI.getFeatureBits()[AArch64::FeatureMorello] != 0;
+  bool Has16Caps = STI.getFeatureBits()[AArch64::FeatureUse16CapRegs] != 0;
+  bool UseCapForCacheVA = HasC64 && HasMorello;
+  bool UseCap = false;
+
   if (CnVal == 7) {
     switch (CmVal) {
     default: return false;
@@ -822,6 +1168,8 @@ bool AArch64InstPrinter::printSysAlias(const MCInst *MI,
       NeedsReg = IC->NeedsReg;
       Ins = "ic\t";
       Name = std::string(IC->Name);
+      if (Name == "IVAU")
+        UseCap = UseCapForCacheVA;
     }
     break;
     // DC aliases
@@ -834,6 +1182,14 @@ bool AArch64InstPrinter::printSysAlias(const MCInst *MI,
       NeedsReg = true;
       Ins = "dc\t";
       Name = std::string(DC->Name);
+      UseCap = UseCapForCacheVA && StringSwitch<bool>(Name)
+        .Case("ZVA", true)
+        .Case("IVAC", true)
+        .Case("CVAC", true)
+        .Case("CVAU", true)
+        .Case("CIVAC", true)
+        .Case("CVAP", true)
+        .Default(false);
     }
     break;
     // AT aliases
@@ -863,10 +1219,26 @@ bool AArch64InstPrinter::printSysAlias(const MCInst *MI,
 
   std::string Str = Ins + Name;
   std::transform(Str.begin(), Str.end(), Str.begin(), ::tolower);
+  unsigned Reg;
+
+  if (NeedsReg) {
+    Reg = MI->getOperand(4).getReg();
+    if (UseCap) {
+      // If we have 16 capability registers and we don't use a register
+      // that is supposed to have a capability super-register then
+      // pretend that we have no idea what this system instruction does
+      // and fall back to the general form.
+      if (Has16Caps && Reg > AArch64::X7 && Reg < AArch64::X24)
+        return false;
+      const MCRegisterClass &CapRC =
+          MRI.getRegClass(AArch64::CapRegClassID);
+      Reg = MRI.getMatchingSuperReg(Reg, AArch64::sub_64, &CapRC);
+    }
+  }
 
   O << '\t' << Str;
   if (NeedsReg)
-    O << ", " << getRegisterName(MI->getOperand(4).getReg());
+    O << ", " << getRegisterName(Reg);
 
   return true;
 }
@@ -928,6 +1300,24 @@ void AArch64InstPrinter::printSysCROperand(const MCInst *MI, unsigned OpNo,
   const MCOperand &Op = MI->getOperand(OpNo);
   assert(Op.isImm() && "System instruction C[nm] operands must be immediates!");
   O << "c" << Op.getImm();
+}
+
+void AArch64InstPrinter::printScbndsImm(const MCInst *MI, unsigned OpNum,
+                                        const MCSubtargetInfo &STI,
+                                        raw_ostream &O) {
+  const MCOperand &MO = MI->getOperand(OpNum);
+  assert(MI->getOperand(OpNum).isImm() && "Unexpected operand type");
+  assert(MI->getOperand(OpNum + 1).isImm() && "Unexpected operand type");
+  unsigned Val = (MO.getImm() & 0x3f);
+  assert(Val == MO.getImm() && "scbndse immediate out of range!");
+  unsigned Shift =
+      AArch64_AM::getShiftValue(MI->getOperand(OpNum + 1).getImm());
+  O << '#' << formatImm(Val);
+  if (Shift != 0)
+    printShifter(MI, OpNum + 1, STI, O);
+
+  if (CommentStream)
+    *CommentStream << '=' << formatImm(Val << Shift) << '\n';
 }
 
 void AArch64InstPrinter::printAddSubImm(const MCInst *MI, unsigned OpNum,
@@ -1028,6 +1418,37 @@ static void printMemExtendImpl(bool SignExtend, bool DoShift,
     O << " #" << Log2_32(Width / 8);
 }
 
+void AArch64InstPrinter::printCArithExtend(const MCInst *MI, unsigned OpNum,
+                                           raw_ostream &O, char SrcRegKind,
+                                           unsigned Shift) const {
+  unsigned SignExtend = MI->getOperand(OpNum).getImm();
+  unsigned DoShift = MI->getOperand(OpNum + 1).getImm();
+
+  // sxtw, sxtx, uxtw or lsl (== uxtx)
+  bool IsLSL = !SignExtend && SrcRegKind == 'x';
+  if (IsLSL) {
+    if (DoShift)
+      O << "lsl #" << Shift;
+  } else {
+    O << (SignExtend ? 's' : 'u') << "xt" << SrcRegKind << " #" << Shift;
+  }
+}
+
+void AArch64InstPrinter::printCMemExtend(const MCInst *MI, unsigned OpNum,
+                                         raw_ostream &O, char SrcRegKind,
+                                         unsigned Shift) const {
+  unsigned SignExtend = MI->getOperand(OpNum).getImm();
+  unsigned DoShift = MI->getOperand(OpNum + 1).getImm();
+  // sxtw, sxtx, uxtw or lsl (== uxtx)
+  bool IsLSL = !SignExtend && SrcRegKind == 'x';
+  if (IsLSL) {
+    O << "lsl #" << (DoShift ? Shift : 0);
+  } else {
+    O << (SignExtend ? 's' : 'u') << "xt" << SrcRegKind << " #" <<
+      (DoShift ? Shift : 0);
+  }
+}
+
 void AArch64InstPrinter::printMemExtend(const MCInst *MI, unsigned OpNum,
                                         raw_ostream &O, char SrcRegKind,
                                         unsigned Width) {
@@ -1090,6 +1511,22 @@ void AArch64InstPrinter::printUImm12Offset(const MCInst *MI, unsigned OpNum,
     assert(MO.isExpr() && "Unexpected operand type!");
     MO.getExpr()->print(O, &MAI);
   }
+}
+
+void AArch64InstPrinter::printC64CapToGPR(const MCInst *MI, unsigned OpNum,
+                                          const MCSubtargetInfo &STI,
+                                          raw_ostream &O) {
+  bool HasC64 = STI.getFeatureBits()[AArch64::FeatureC64] != 0;
+  bool HasMorello = STI.getFeatureBits()[AArch64::FeatureMorello] != 0;
+  bool Has16Caps = STI.getFeatureBits()[AArch64::FeatureUse16CapRegs] != 0;
+  unsigned Reg = MI->getOperand(OpNum).getReg();
+  bool UseXReg = (Reg > AArch64::X7 && Reg < AArch64::X24) && Has16Caps;
+  if (HasMorello && HasC64 && !UseXReg) {
+    const MCRegisterClass &CapRC =
+        MRI.getRegClass(AArch64::CapRegClassID);
+    Reg = MRI.getMatchingSuperReg(Reg, AArch64::sub_64, &CapRC);
+  }
+  O << getRegisterName(Reg);
 }
 
 void AArch64InstPrinter::printAMIndexedWB(const MCInst *MI, unsigned OpNum,
@@ -1334,6 +1771,7 @@ void AArch64InstPrinter::printVectorIndex(const MCInst *MI, unsigned OpNum,
   O << "[" << MI->getOperand(OpNum).getImm() << "]";
 }
 
+template <int Scale>
 void AArch64InstPrinter::printAlignedLabel(const MCInst *MI, unsigned OpNum,
                                            const MCSubtargetInfo &STI,
                                            raw_ostream &O) {
@@ -1342,7 +1780,7 @@ void AArch64InstPrinter::printAlignedLabel(const MCInst *MI, unsigned OpNum,
   // If the label has already been resolved to an immediate offset (say, when
   // we're running the disassembler), just print the immediate.
   if (Op.isImm()) {
-    O << "#" << formatImm(Op.getImm() * 4);
+    O << "#" << formatImm(Op.getImm() * Scale);
     return;
   }
 
@@ -1436,6 +1874,38 @@ void AArch64InstPrinter::printMSRSystemRegister(const MCInst *MI, unsigned OpNo,
     O << Reg->Name;
   else
     O << AArch64SysReg::genericRegisterString(Val);
+}
+
+void AArch64InstPrinter::printCapSealForm(const MCInst *MI, unsigned OpNo,
+                                          const MCSubtargetInfo &STI,
+                                          raw_ostream &O) {
+  unsigned Val = MI->getOperand(OpNo).getImm();
+  O << AArch64SealForm::getCapSealFormName((AArch64SealForm::SealForm)Val);
+}
+
+void AArch64InstPrinter::printCapPerm(const MCInst *MI, unsigned OpNo,
+                                      const MCSubtargetInfo &STI,
+                                      raw_ostream &O) {
+  unsigned Val = MI->getOperand(OpNo).getImm();
+  O << getCapPermName((AArch64CapPerm::CapPerm)Val);
+}
+void AArch64InstPrinter::printCapSystemRegister(const MCInst *MI, unsigned OpNo,
+                                                const MCSubtargetInfo &STI,
+                                                raw_ostream &O) {
+  unsigned Val = MI->getOperand(OpNo).getImm();
+  const AArch64MorelloCSysReg::MorelloCSysReg *Reg =
+      AArch64MorelloCSysReg::lookupMorelloCSysRegByEncoding(Val);
+
+  if (Reg)
+    O << Reg->Name;
+  else {
+    unsigned Op0 = (Val >> 14) & 3;
+    unsigned Op1 = (Val >> 11) & 7;
+    unsigned Cn = (Val >> 7) & 0xF;
+    unsigned Cm = (Val >> 3) & 0xF;
+    unsigned Op2 = Val & 7;
+    O << '#' << Op0 << ", #" << Op1 << ", #" << Cn << ", #" << Cm << ", #" << Op2;
+  }
 }
 
 void AArch64InstPrinter::printSystemPStateField(const MCInst *MI, unsigned OpNo,

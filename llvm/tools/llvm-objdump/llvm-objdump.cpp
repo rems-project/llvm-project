@@ -1032,7 +1032,6 @@ static bool shouldAdjustVA(const SectionRef &Section) {
   return false;
 }
 
-
 typedef std::pair<uint64_t, char> MappingSymbolPair;
 static char getMappingSymbolKind(ArrayRef<MappingSymbolPair> MappingSymbols,
                                  uint64_t Address) {
@@ -1127,6 +1126,8 @@ static void disassembleObject(const Target *TheTarget, const ObjectFile *Obj,
   bool PrimaryIsThumb = false;
   if (isArmElf(Obj))
     PrimaryIsThumb = STI->checkFeatures("+thumb-mode");
+  if (isAArch64Elf(Obj))
+    PrimaryIsThumb = STI->checkFeatures("+c64");
 
   std::map<SectionRef, std::vector<RelocationRef>> RelocMap;
   if (InlineRelocs)
@@ -1250,6 +1251,8 @@ static void disassembleObject(const Target *TheTarget, const ObjectFile *Obj,
           MappingSymbols.emplace_back(Address - SectionAddr, 'a');
         if (Name.startswith("$t"))
           MappingSymbols.emplace_back(Address - SectionAddr, 't');
+        if (Name.startswith("$c"))
+          MappingSymbols.emplace_back(Address - SectionAddr, 'c');
       }
     }
 
@@ -1292,7 +1295,7 @@ static void disassembleObject(const Target *TheTarget, const ObjectFile *Obj,
     if (shouldAdjustVA(Section))
       VMAAdjustment = AdjustVMA;
 
-    uint64_t Size = 0;
+    uint64_t Size;
     uint64_t Index;
     bool PrintedSection = false;
     std::vector<RelocationRef> Rels = RelocMap[Section];
@@ -1310,6 +1313,7 @@ static void disassembleObject(const Target *TheTarget, const ObjectFile *Obj,
         continue;
 
       uint64_t Start = std::get<0>(Symbols[SI]);
+
       if (Start < SectionAddr || StopAddress <= Start)
         continue;
       else
@@ -1418,10 +1422,12 @@ static void disassembleObject(const Target *TheTarget, const ObjectFile *Obj,
         }
 
         if (SecondarySTI) {
-          if (getMappingSymbolKind(MappingSymbols, Index) == 'a') {
+          if (getMappingSymbolKind(MappingSymbols, Index) == 'a' ||
+              getMappingSymbolKind(MappingSymbols, Index) == 'x') {
             STI = PrimaryIsThumb ? SecondarySTI : PrimarySTI;
             DisAsm = PrimaryIsThumb ? SecondaryDisAsm : PrimaryDisAsm;
-          } else if (getMappingSymbolKind(MappingSymbols, Index) == 't') {
+          } else if (getMappingSymbolKind(MappingSymbols, Index) == 't' ||
+                     getMappingSymbolKind(MappingSymbols, Index) == 'c') {
             STI = PrimaryIsThumb ? PrimarySTI : SecondarySTI;
             DisAsm = PrimaryIsThumb ? PrimaryDisAsm : SecondaryDisAsm;
           }
@@ -1744,6 +1750,17 @@ static void disassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
       Features.AddFeature("-thumb-mode");
     else
       Features.AddFeature("+thumb-mode");
+    SecondarySTI.reset(TheTarget->createMCSubtargetInfo(TripleName, MCPU,
+                                                        Features.getString()));
+    SecondaryDisAsm.reset(TheTarget->createMCDisassembler(*SecondarySTI, Ctx));
+  }
+  bool HasCapabilities = STI->checkFeatures("+morello");
+  if (isAArch64Elf(Obj) && HasCapabilities) {
+    if (STI->checkFeatures("+c64")) {
+      Features.AddFeature("-c64");
+    } else {
+      Features.AddFeature("+c64");
+    }
     SecondarySTI.reset(TheTarget->createMCSubtargetInfo(TripleName, MCPU,
                                                         Features.getString()));
     SecondaryDisAsm.reset(TheTarget->createMCDisassembler(*SecondarySTI, Ctx));

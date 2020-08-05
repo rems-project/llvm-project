@@ -50,11 +50,15 @@ add_llvm_target(AArch64CodeGen
   AArch64LoadStoreOptimizer.cpp
   AArch64MacroFusion.cpp
   AArch64MCInstLower.cpp
+  AArch64SandboxGlobalsOpt.cpp
+  AArch64SandboxMemOpLowering.cpp
+  MorelloRangeChecker.cpp
   AArch64PreLegalizerCombiner.cpp
   AArch64PromoteConstant.cpp
   AArch64PBQPRegAlloc.cpp
   AArch64RegisterBankInfo.cpp
   AArch64RegisterInfo.cpp
+  AArch64Sandbox.cpp
   AArch64SelectionDAGInfo.cpp
   AArch64SpeculationHardening.cpp
   AArch64StackTagging.cpp

@@ -411,14 +411,22 @@ private:
     }
 
     static bool is_max_aligned(void* p) {
+#ifdef __CHERI__
+        return __builtin_is_aligned(p, BlockSize);
+#else
         return reinterpret_cast<std::uintptr_t>(p) % BlockSize == 0;
+#endif
     }
 
     static bool is_min_aligned(void* p) {
         if (alignof(T) == BlockSize) {
             return is_max_aligned(p);
         } else {
+#ifdef __CHERI__
+            return __builtin_is_aligned((int8_t *)p - alignof(T), BlockSize);
+#else
             return reinterpret_cast<std::uintptr_t>(p) % BlockSize == alignof(T);
+#endif
         }
     }
 

@@ -39,6 +39,13 @@ public:
   ///     The host target triple.
   static llvm::Triple GetTargetTriple();
 
+  /// Gets the host features as a const string.
+  ///
+  /// \return
+  ///     A const string object containing the host features.
+  //------------------------------------------------------------------
+  static llvm::StringRef GetTargetFeatures();
+
   enum ArchitectureKind {
     eArchKindDefault, // The overall default architecture that applications will
                       // run on this host
@@ -103,6 +110,7 @@ protected:
 
   static void ComputeHostArchitectureSupport(ArchSpec &arch_32,
                                              ArchSpec &arch_64);
+  static std::string ComputeHostFeatures();
 };
 }
 

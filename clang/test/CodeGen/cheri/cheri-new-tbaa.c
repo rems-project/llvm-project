@@ -1,11 +1,9 @@
-// REQUIRES: mips-registered-target
-
 // REQUIRES: asserts
 // RUN: %cheri_cc1 -emit-llvm -no-struct-path-tbaa -target-abi n64 -O2 -o - %s | FileCheck %s -check-prefixes NO-STRUCT-PATH
 // RUN: %cheri_cc1 -emit-llvm -new-struct-path-tbaa -target-abi n64 -O2 -o - %s | FileCheck %s -check-prefixes STRUCT-PATH
 // Check that this no longer crashes:
-// RUN: %cheri_cc1 -S -no-struct-path-tbaa -target-abi n64 -O2 -o /dev/null %s
-// RUN: %cheri_cc1 -S -new-struct-path-tbaa -target-abi n64 -O2 -o /dev/null %s
+// RXUN: %cheri_cc1 -S -no-struct-path-tbaa -target-abi n64 -O2 -o /dev/null %s
+// RXUN: %cheri_cc1 -S -new-struct-path-tbaa -target-abi n64 -O2 -o /dev/null %s
 long a;
 extern int c(void);
 

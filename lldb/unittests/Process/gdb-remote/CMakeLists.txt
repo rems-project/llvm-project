@@ -16,4 +16,5 @@ add_lldb_unittest(ProcessGdbRemoteTests
 
   LINK_COMPONENTS
     Support
+    RuntimeDyld
   )

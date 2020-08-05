@@ -1,3 +1,5 @@
+# REQUIRES: mips
+
 # RUN: %cheri128_purecap_llvm-mc %s -filetype=obj -defsym=MAIN=1 -o %t.o
 
 # Linking with elf relocs should not work for static binaries

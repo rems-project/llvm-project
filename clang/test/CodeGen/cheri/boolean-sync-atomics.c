@@ -18,9 +18,11 @@ atomic_b_t value;
 // N64-NEXT:    [[TOBOOL:%.*]] = trunc i8 [[TMP0]] to i1
 // N64-NEXT:    [[TMP1:%.*]] = load i8, i8* [[DESIRED_ADDR]], align 1
 // N64-NEXT:    [[TOBOOL2:%.*]] = trunc i8 [[TMP1]] to i1
-// N64-NEXT:    [[FROMBOOL3:%.*]] = zext i1 [[TOBOOL]] to i8
-// N64-NEXT:    [[FROMBOOL4:%.*]] = zext i1 [[TOBOOL2]] to i8
-// N64-NEXT:    [[TMP2:%.*]] = cmpxchg i8* getelementptr inbounds (%struct.atomic_b_t, %struct.atomic_b_t* @value, i32 0, i32 0), i8 [[FROMBOOL3]], i8 [[FROMBOOL4]] seq_cst seq_cst
+// N64-NEXT:    [[FROMBOOL3:%.*]] = zext i1 [[TOBOOL2]] to i8
+// N64-NEXT:    [[TMP12:%.*]] = load i8, i8* [[EXPECTED_ADDR]], align 1
+// N64-NEXT:    [[TOBOOL3:%.*]] = trunc i8 [[TMP12]] to i1
+// N64-NEXT:    [[FROMBOOL4:%.*]] = zext i1 [[TOBOOL3]] to i8
+// N64-NEXT:    [[TMP2:%.*]] = cmpxchg i8* getelementptr inbounds (%struct.atomic_b_t, %struct.atomic_b_t* @value, i32 0, i32 0), i8 [[FROMBOOL4]], i8 [[FROMBOOL3]] seq_cst seq_cst
 // N64-NEXT:    [[TMP3:%.*]] = extractvalue { i8, i1 } [[TMP2]], 0
 // N64-NEXT:    [[TOBOOL5:%.*]] = trunc i8 [[TMP3]] to i1
 // N64-NEXT:    ret i1 [[TOBOOL5]]
@@ -37,9 +39,11 @@ atomic_b_t value;
 // PURECAP-NEXT:    [[TOBOOL:%.*]] = trunc i8 [[TMP0]] to i1
 // PURECAP-NEXT:    [[TMP1:%.*]] = load i8, i8 addrspace(200)* [[DESIRED_ADDR]], align 1
 // PURECAP-NEXT:    [[TOBOOL2:%.*]] = trunc i8 [[TMP1]] to i1
-// PURECAP-NEXT:    [[FROMBOOL3:%.*]] = zext i1 [[TOBOOL]] to i8
-// PURECAP-NEXT:    [[FROMBOOL4:%.*]] = zext i1 [[TOBOOL2]] to i8
-// PURECAP-NEXT:    [[TMP2:%.*]] = cmpxchg i8 addrspace(200)* getelementptr inbounds (%struct.atomic_b_t, [[STRUCT_ATOMIC_B_T:%.*]] addrspace(200)* @value, i32 0, i32 0), i8 [[FROMBOOL3]], i8 [[FROMBOOL4]] seq_cst seq_cst
+// PURECAP-NEXT:    [[FROMBOOL3:%.*]] = zext i1 [[TOBOOL2]] to i8
+// PURECAP-NEXT:    [[TMP2:%.*]] = load i8, i8 addrspace(200)* [[EXPECTED_ADDR]], align 1
+// PURECAP-NEXT:    [[TOBOOL3:%.*]] = trunc i8 [[TMP2]] to i1
+// PURECAP-NEXT:    [[FROMBOOL4:%.*]] = zext i1 [[TOBOOL3]] to i8
+// PURECAP-NEXT:    [[TMP2:%.*]] = cmpxchg i8 addrspace(200)* getelementptr inbounds (%struct.atomic_b_t, [[STRUCT_ATOMIC_B_T:%.*]] addrspace(200)* @value, i32 0, i32 0), i8 [[FROMBOOL4]], i8 [[FROMBOOL3]] seq_cst seq_cst
 // PURECAP-NEXT:    [[TMP3:%.*]] = extractvalue { i8, i1 } [[TMP2]], 0
 // PURECAP-NEXT:    [[TOBOOL5:%.*]] = trunc i8 [[TMP3]] to i1
 // PURECAP-NEXT:    ret i1 [[TOBOOL5]]

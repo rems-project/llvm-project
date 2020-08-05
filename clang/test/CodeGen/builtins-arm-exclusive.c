@@ -356,7 +356,7 @@ __int128 test_ldrex_128(__int128 *addr) {
 
   return __builtin_arm_ldrex(addr);
 // CHECK-ARM64: [[ADDR8:%.*]] = bitcast i128* %addr to i8*
-// CHECK-ARM64: [[STRUCTRES:%.*]] = call { i64, i64 } @llvm.aarch64.ldxp(i8* [[ADDR8]])
+// CHECK-ARM64: [[STRUCTRES:%.*]] = call { i64, i64 } @llvm.aarch64.ldxp.p0i8(i8* [[ADDR8]])
 // CHECK-ARM64: [[RESHI:%.*]] = extractvalue { i64, i64 } [[STRUCTRES]], 1
 // CHECK-ARM64: [[RESLO:%.*]] = extractvalue { i64, i64 } [[STRUCTRES]], 0
 // CHECK-ARM64: [[RESHI64:%.*]] = zext i64 [[RESHI]] to i128
@@ -376,7 +376,7 @@ int test_strex_128(__int128 *addr, __int128 val) {
 // CHECK-ARM64: [[LO:%.*]] = extractvalue { i64, i64 } [[LOHI]], 0
 // CHECK-ARM64: [[HI:%.*]] = extractvalue { i64, i64 } [[LOHI]], 1
 // CHECK-ARM64: [[ADDR8:%.*]] = bitcast i128* %addr to i8*
-// CHECK-ARM64: call i32 @llvm.aarch64.stxp(i64 [[LO]], i64 [[HI]], i8* [[ADDR8]])
+// CHECK-ARM64: call i32 @llvm.aarch64.stxp.p0i8(i64 [[LO]], i64 [[HI]], i8* [[ADDR8]])
 }
 
 __int128 test_ldaex_128(__int128 *addr) {
@@ -384,7 +384,7 @@ __int128 test_ldaex_128(__int128 *addr) {
 
   return __builtin_arm_ldaex(addr);
 // CHECK-ARM64: [[ADDR8:%.*]] = bitcast i128* %addr to i8*
-// CHECK-ARM64: [[STRUCTRES:%.*]] = call { i64, i64 } @llvm.aarch64.ldaxp(i8* [[ADDR8]])
+// CHECK-ARM64: [[STRUCTRES:%.*]] = call { i64, i64 } @llvm.aarch64.ldaxp.p0i8(i8* [[ADDR8]])
 // CHECK-ARM64: [[RESHI:%.*]] = extractvalue { i64, i64 } [[STRUCTRES]], 1
 // CHECK-ARM64: [[RESLO:%.*]] = extractvalue { i64, i64 } [[STRUCTRES]], 0
 // CHECK-ARM64: [[RESHI64:%.*]] = zext i64 [[RESHI]] to i128
@@ -404,7 +404,7 @@ int test_stlex_128(__int128 *addr, __int128 val) {
 // CHECK-ARM64: [[LO:%.*]] = extractvalue { i64, i64 } [[LOHI]], 0
 // CHECK-ARM64: [[HI:%.*]] = extractvalue { i64, i64 } [[LOHI]], 1
 // CHECK-ARM64: [[ADDR8:%.*]] = bitcast i128* %addr to i8*
-// CHECK-ARM64: [[RES:%.*]] = call i32 @llvm.aarch64.stlxp(i64 [[LO]], i64 [[HI]], i8* [[ADDR8]])
+// CHECK-ARM64: [[RES:%.*]] = call i32 @llvm.aarch64.stlxp.p0i8(i64 [[LO]], i64 [[HI]], i8* [[ADDR8]])
 }
 
 #endif

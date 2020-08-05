@@ -15,6 +15,9 @@
 //
 // REQUIRES: long_tests
 
+// newlib can't alloc 2GB of memory so mark this test as an xfail.
+// XFAIL: libcpp-has-newlib
+
 #include <sstream>
 #include <cassert>
 #include "test_macros.h"

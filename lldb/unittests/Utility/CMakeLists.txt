@@ -46,6 +46,7 @@ add_lldb_unittest(UtilityTests
       lldbUtility
       lldbUtilityHelpers
       LLVMTestingSupport
+      lldbCore
   LINK_COMPONENTS
     Support
   )

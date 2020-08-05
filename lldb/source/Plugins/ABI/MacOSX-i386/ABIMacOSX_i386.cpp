@@ -1060,7 +1060,10 @@ bool ABIMacOSX_i386::CreateDefaultUnwindPlan(UnwindPlan &unwind_plan) {
   return true;
 }
 
-bool ABIMacOSX_i386::RegisterIsVolatile(const RegisterInfo *reg_info) {
+bool ABIMacOSX_i386::RegisterIsVolatile(RegisterContext &reg_ctx,
+                                        const RegisterInfo *reg_info,
+                                        FrameState frame_state,
+                                        const UnwindPlan *unwind_plan) {
   return !RegisterIsCalleeSaved(reg_info);
 }
 

@@ -1,4 +1,5 @@
 // RUN: %cheri_cc1 -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple aarch64-none-elf -target-feature +morello -emit-llvm -o - %s | FileCheck %s
 
 __intcap_t g();
 

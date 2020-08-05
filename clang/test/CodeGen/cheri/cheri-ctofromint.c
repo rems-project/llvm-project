@@ -1,6 +1,7 @@
 // RUN: %cheri_purecap_cc1 %s -emit-llvm -Wall -o - -verify=expected,purecap | FileCheck --check-prefix=CHECK-PURECAP %s
 // RUN: %cheri_cc1 %s -emit-llvm -o - -Wall -verify=expected,hybrid
 // RUN: %cheri_cc1 %s -emit-llvm -o - -Wall -verify=expected,hybrid | FileCheck --check-prefix=CHECK-HYBRID %s
+// RUN: %clang_cc1 %s "-target-feature" "+c64" "-target-abi" "purecap" -emit-llvm -triple aarch64-linux-gnueabi -o - -mllvm -cheri-cap-table-abi=pcrel | FileCheck --check-prefix=CHECK-PURECAP %s
 
 void* __capability foo(void *__capability x){
   // CHECK-HYBRID:  [[ADDR:%.+]] = call i64 @llvm.cheri.cap.to.pointer.i64(i8 addrspace(200)* %1, i8 addrspace(200)* %0)

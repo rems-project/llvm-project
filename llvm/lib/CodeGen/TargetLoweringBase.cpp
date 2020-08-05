@@ -444,22 +444,24 @@ RTLIB::Libcall RTLIB::getUINTTOFP(EVT OpVT, EVT RetVT) {
   return UNKNOWN_LIBCALL;
 }
 
-RTLIB::Libcall RTLIB::getSYNC(unsigned Opc, MVT VT) {
+RTLIB::Libcall RTLIB::getSYNC(unsigned Opc, MVT VT, bool FatPtr) {
 #define OP_TO_LIBCALL(Name, Enum)                                              \
   case Name:                                                                   \
     switch (VT.SimpleTy) {                                                     \
     default:                                                                   \
       return UNKNOWN_LIBCALL;                                                  \
     case MVT::i8:                                                              \
-      return Enum##_1;                                                         \
+      return FatPtr ? Enum##_1##_C : Enum##_1;                                 \
     case MVT::i16:                                                             \
-      return Enum##_2;                                                         \
+      return FatPtr ? Enum##_2##_C : Enum##_2;                                 \
     case MVT::i32:                                                             \
-      return Enum##_4;                                                         \
+      return FatPtr ? Enum##_4##_C : Enum##_4;                                 \
     case MVT::i64:                                                             \
-      return Enum##_8;                                                         \
+      return FatPtr ? Enum##_8##_C : Enum##_8;                                 \
     case MVT::i128:                                                            \
-      return Enum##_16;                                                        \
+      return FatPtr ? Enum##_16##_C : Enum##_16;                               \
+    case MVT::iFATPTR128:                                                      \
+      return FatPtr ? Enum##_CAP##_C : Enum##_CAP;                             \
     }
 
   switch (Opc) {

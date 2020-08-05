@@ -503,7 +503,8 @@ uint64_t ELFObjectFile<ELFT>::getSymbolValueImpl(DataRefImpl Symb) const {
 
   const Elf_Ehdr *Header = EF.getHeader();
   // Clear the ARM/Thumb or microMIPS indicator flag.
-  if ((Header->e_machine == ELF::EM_ARM || Header->e_machine == ELF::EM_MIPS) &&
+  if ((Header->e_machine == ELF::EM_ARM || Header->e_machine == ELF::EM_MIPS ||
+       Header->e_machine == ELF::EM_AARCH64) &&
       ESym->getType() == ELF::STT_FUNC)
     Ret &= ~1;
 

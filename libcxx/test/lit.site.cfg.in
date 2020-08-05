@@ -27,7 +27,11 @@ config.test_compiler_flags      = "@LIBCXX_TEST_COMPILER_FLAGS@"
 config.slow_test_host           = "@LIBCXX_SLOW_TEST_HOST@"
 
 config.executor                 = "@LIBCXX_EXECUTOR@"
-config.llvm_unwinder            = @LIBCXXABI_USE_LLVM_UNWINDER@
+config.llvm_unwinder            = "@LIBCXXABI_USE_LLVM_UNWINDER@"
+config.compiler_rt              = "@LIBCXX_USE_COMPILER_RT@"
+config.compile_flags            = "@LIBCXX_CXX_FLAGS@"
+config.link_flags               = "@LIBCXX_CXX_FLAGS@"
+config.use_default_libs         = "@LIBCXX_USE_DEFAULT_LIBS@"
 config.builtins_library         = "@LIBCXX_BUILTINS_LIBRARY@"
 config.has_libatomic            = @LIBCXX_HAS_ATOMIC_LIB@
 config.use_libatomic            = @LIBCXX_HAVE_CXX_ATOMICS_WITH_LIB@

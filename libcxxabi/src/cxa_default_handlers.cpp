@@ -22,6 +22,7 @@
 _LIBCPP_SAFE_STATIC
 static const char* cause = "uncaught";
 
+#if !defined(LIBCXXABI_SILENT_TERMINATE)
 __attribute__((noreturn))
 static void demangling_terminate_handler()
 {
@@ -76,6 +77,7 @@ static void demangling_terminate_handler()
     // Else just note that we're terminating
     abort_message("terminating");
 }
+#endif
 
 __attribute__((noreturn))
 static void demangling_unexpected_handler()

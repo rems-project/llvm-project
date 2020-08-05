@@ -724,6 +724,9 @@ HANDLE_DW_ATE(0x10, UTF, 4, DWARF)
 // New in DWARF v5:
 HANDLE_DW_ATE(0x11, UCS, 5, DWARF)
 HANDLE_DW_ATE(0x12, ASCII, 5, DWARF)
+// Vendor extensions:
+HANDLE_DW_ATE(0xa0, CHERI_signed_intcap, 0, CHERI)
+HANDLE_DW_ATE(0xa1, CHERI_unsigned_intcap, 0, CHERI)
 
 // DWARF attribute endianity
 HANDLE_DW_END(0x00, default)

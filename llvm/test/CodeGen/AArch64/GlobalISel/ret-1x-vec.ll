@@ -11,6 +11,6 @@ define <1 x float> @foo(<1 x float> %v) {
   ; CHECK:   [[DEF:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
   ; CHECK:   [[BUILD_VECTOR:%[0-9]+]]:_(<2 x s32>) = G_BUILD_VECTOR [[COPY1]](s32), [[DEF]](s32)
   ; CHECK:   $d0 = COPY [[BUILD_VECTOR]](<2 x s32>)
-  ; CHECK:   RET_ReallyLR implicit $d0
+  ; CHECK:   RET_ReallyLR 0, implicit $d0
   ret <1 x float> %v
 }

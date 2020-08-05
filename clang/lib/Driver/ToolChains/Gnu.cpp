@@ -8,6 +8,7 @@
 
 #include "Gnu.h"
 #include "Arch/ARM.h"
+#include "Arch/AArch64.h"
 #include "Arch/Mips.h"
 #include "Arch/PPC.h"
 #include "Arch/RISCV.h"
@@ -412,6 +413,9 @@ void tools::gnutools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     if (CPU.empty() || CPU == "generic" || CPU == "cortex-a53")
       CmdArgs.push_back("--fix-cortex-a53-843419");
   }
+
+  if (Arch == llvm::Triple::aarch64)
+    aarch64::addMorelloLinkerFlags(Args, CmdArgs);
 
   // Android does not allow shared text relocations. Emit a warning if the
   // user's code contains any.

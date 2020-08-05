@@ -1335,6 +1335,25 @@ bool SBThread::GetDescription(SBStream &description, bool stop_format) const {
   return true;
 }
 
+SBValue SBThread::GetSigInfo(SBError &sb_error) const {
+  Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_API));
+  ValueObjectSP siginfo_valobj_sp;
+  std::unique_lock<std::recursive_mutex> lock;
+  ExecutionContext exe_ctx(m_opaque_sp.get(), lock);
+
+  if (exe_ctx.HasThreadScope())
+    siginfo_valobj_sp = exe_ctx.GetThreadPtr()->GetSigInfo(sb_error.ref());
+  else
+    sb_error.SetErrorString("this SBThread object is invalid");
+
+  if (log)
+    log->Printf("SBThread(%p)::GetSigInfo () => SBValue(%p)",
+                static_cast<void *>(exe_ctx.GetThreadPtr()),
+                static_cast<void *>(siginfo_valobj_sp.get()));
+
+  return SBValue(siginfo_valobj_sp);
+}
+
 SBThread SBThread::GetExtendedBacktraceThread(const char *type) {
   LLDB_RECORD_METHOD(lldb::SBThread, SBThread, GetExtendedBacktraceThread,
                      (const char *), type);

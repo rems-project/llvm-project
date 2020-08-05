@@ -37,6 +37,8 @@ public:
   RelType getDynRel(RelType type) const override;
   void writeGotPlt(uint8_t *buf, const Symbol &s) const override;
   void writePltHeader(uint8_t *buf) const override;
+  void writeFragmentSizeAndPermissions(uint8_t *buf,
+                                       uint64_t val) const override;
   void writePlt(uint8_t *buf, const Symbol &sym,
                 uint64_t pltEntryAddr) const override;
   bool needsThunk(RelExpr expr, RelType type, const InputFile *file,
@@ -123,6 +125,8 @@ RelExpr AArch64::getRelExpr(RelType type, const Symbol &s,
   case R_AARCH64_TLSLE_MOVW_TPREL_G1_NC:
   case R_AARCH64_TLSLE_MOVW_TPREL_G2:
     return R_TLS;
+  case R_MORELLO_CALL26:
+  case R_MORELLO_JUMP26:
   case R_AARCH64_CALL26:
   case R_AARCH64_CONDBR19:
   case R_AARCH64_JUMP26:
@@ -143,15 +147,23 @@ RelExpr AArch64::getRelExpr(RelType type, const Symbol &s,
     return R_PC;
   case R_AARCH64_ADR_PREL_PG_HI21:
   case R_AARCH64_ADR_PREL_PG_HI21_NC:
+  case R_MORELLO_ADR_PREL_PG_HI20:
+  case R_MORELLO_ADR_PREL_PG_HI20_NC:
     return R_AARCH64_PAGE_PC;
   case R_AARCH64_LD64_GOT_LO12_NC:
   case R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
+  case R_MORELLO_LD128_GOT_LO12_NC:
     return R_GOT;
   case R_AARCH64_ADR_GOT_PAGE:
+  case R_MORELLO_ADR_GOT_PAGE:
   case R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
     return R_AARCH64_GOT_PAGE_PC;
   case R_AARCH64_NONE:
     return R_NONE;
+  case R_MORELLO_CAPINIT:
+    return R_CHERI_CAPABILITY;
+  case R_MORELLO_LD_PREL_LO17:
+    return R_MORELLO_VADREF;
   default:
     error(getErrorLocation(loc) + "unknown relocation (" + Twine(type) +
           ") against symbol " + toString(s));
@@ -183,6 +195,7 @@ bool AArch64::usesOnlyLowPageBits(RelType type) const {
   case R_AARCH64_TLSDESC_ADD_LO12:
   case R_AARCH64_TLSDESC_LD64_LO12:
   case R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
+  case R_MORELLO_LD128_GOT_LO12_NC:
     return true;
   }
 }
@@ -245,10 +258,26 @@ bool AArch64::needsThunk(RelExpr expr, RelType type, const InputFile *file,
   // ELF for the ARM 64-bit architecture, section Call and Jump relocations
   // only permits range extension thunks for R_AARCH64_CALL26 and
   // R_AARCH64_JUMP26 relocation types.
-  if (type != R_AARCH64_CALL26 && type != R_AARCH64_JUMP26)
+  if (type != R_AARCH64_CALL26 && type != R_AARCH64_JUMP26 &&
+      type != R_MORELLO_CALL26 && type != R_MORELLO_JUMP26)
     return false;
-  uint64_t dst = expr == R_PLT_PC ? s.getPltVA() : s.getVA(a);
-  return !inBranchRange(type, branchAddr, dst);
+  uint64_t dst = (expr == R_PLT_PC) ? s.getPltVA() : s.getVA(a);
+
+  switch (type) {
+  case R_AARCH64_CALL26:
+  case R_AARCH64_JUMP26:
+    // Source is AArch64, need to interwork if a STT_FUNC Symbol has bit 0 set
+    // (C64).
+    return (s.isFunc() && (dst & 1) == 1) ||
+           !inBranchRange(type, branchAddr, dst);
+  case R_MORELLO_CALL26:
+  case R_MORELLO_JUMP26:
+    // Source is C64, need to interwork if a STT_FUNC Symbol has bit 0 clear
+    // (AArch64).
+    return (s.isFunc() && (dst & 1) == 0) ||
+           !inBranchRange(type, branchAddr, dst);
+  }
+  return false;
 }
 
 uint32_t AArch64::getThunkSectionSpacing() const {
@@ -259,8 +288,11 @@ uint32_t AArch64::getThunkSectionSpacing() const {
 }
 
 bool AArch64::inBranchRange(RelType type, uint64_t src, uint64_t dst) const {
-  if (type != R_AARCH64_CALL26 && type != R_AARCH64_JUMP26)
+  if (type != R_AARCH64_CALL26 && type != R_AARCH64_JUMP26 &&
+      type != R_MORELLO_CALL26 && type != R_MORELLO_JUMP26)
     return true;
+  // The bottom bit that determines whether C64 or AArch64 is not part of range.
+  dst &= ~0x1;
   // The AArch64 call and unconditional branch instructions have a range of
   // +/- 128 MiB.
   uint64_t range = 128 * 1024 * 1024;
@@ -272,10 +304,10 @@ bool AArch64::inBranchRange(RelType type, uint64_t src, uint64_t dst) const {
   return src - dst <= range;
 }
 
-static void write32AArch64Addr(uint8_t *l, uint64_t imm) {
+static void write32Addr(uint8_t *l, uint64_t imm, uint64_t himask) {
   uint32_t immLo = (imm & 0x3) << 29;
-  uint32_t immHi = (imm & 0x1FFFFC) << 3;
-  uint64_t mask = (0x3 << 29) | (0x1FFFFC << 3);
+  uint32_t immHi = (imm & himask) << 3;
+  uint64_t mask = (0x3 << 29) | (himask << 3);
   write32le(l, (read32le(l) & ~mask) | immLo | immHi);
 }
 
@@ -340,11 +372,33 @@ void AArch64::relocate(uint8_t *loc, const Relocation &rel,
     checkInt(loc, val, 33, rel);
     LLVM_FALLTHROUGH;
   case R_AARCH64_ADR_PREL_PG_HI21_NC:
-    write32AArch64Addr(loc, val >> 12);
+    write32Addr(loc, val >> 12, 0x1FFFFC);
+    break;
+  case R_MORELLO_ADR_GOT_PAGE:
+  case R_MORELLO_ADR_PREL_PG_HI20:
+    // FIXME: Although the diagnostic maximum range is 0x7FFFFFFF (2147483647),
+    // because the equation, Page (S + A) - Page (P), is 12-bit aligned the
+    // actual maximum range is 0x7FFFF000 (2147479552).
+    checkInt(loc, val, 32, rel);
+    LLVM_FALLTHROUGH;
+  case R_MORELLO_ADR_PREL_PG_HI20_NC:
+    write32Addr(loc, val >> 12, 0xFFFFC);
     break;
   case R_AARCH64_ADR_PREL_LO21:
     checkInt(loc, val, 21, rel);
-    write32AArch64Addr(loc, val);
+    write32Addr(loc, val, 0x1FFFFC);
+    break;
+  case R_MORELLO_CALL26:
+  case R_MORELLO_JUMP26:
+    // If bit 0 is clear then our target is in A64 state, interworking thunks
+    // are not implemented yet.
+    if ((val & 0x1) == 0x0)
+      // FIXME: These should be errors, work around for newlib that contains
+      // fini without STT_FUNC and the low bit set.
+      warn(getErrorLocation(loc) + "Interworking between C64 and A64 not "
+                                   "supported yet");
+    checkInt(loc, val, 28, rel);
+    or32le(loc, (val & 0x0FFFFFFC) >> 2);
     break;
   case R_AARCH64_JUMP26:
     // Normally we would just write the bits of the immediate field, however
@@ -361,10 +415,24 @@ void AArch64::relocate(uint8_t *loc, const Relocation &rel,
     or32le(loc, (val & 0x0FFFFFFC) >> 2);
     break;
   case R_AARCH64_CONDBR19:
+    // FIXME, the C64+purecap library contains a R_AARCH64_CONDBR19 relocation
+    // to a capability. This is technically not allowed, but R_MORELLO_CONDBR19
+    // is not implemented right now. Remove the next two lines when
+    // R_MORELLO_CONDBR19 is implemented.
+    val &= ~1;
+    LLVM_FALLTHROUGH;
   case R_AARCH64_LD_PREL_LO19:
     checkAlignment(loc, val, 4, rel);
     checkInt(loc, val, 21, rel);
     or32le(loc, (val & 0x1FFFFC) << 3);
+    break;
+  case R_MORELLO_LD_PREL_LO17:
+    // FIXME: The actual maximum range is 0xFFFF0 (1048560). However the
+    // diagnostic maximum range (1048575) is 15-bytes too large (unaligned
+    // values). The checkAlignment catches any use.
+    checkAlignment(loc, val, 16, rel);
+    checkInt(loc, val, 21, rel);
+    or32le(loc, (val & 0x1FFFF0) << 1);
     break;
   case R_AARCH64_LDST8_ABS_LO12_NC:
   case R_AARCH64_TLSLE_LDST8_TPREL_LO12_NC:
@@ -390,6 +458,7 @@ void AArch64::relocate(uint8_t *loc, const Relocation &rel,
     break;
   case R_AARCH64_LDST128_ABS_LO12_NC:
   case R_AARCH64_TLSLE_LDST128_TPREL_LO12_NC:
+  case R_MORELLO_LD128_GOT_LO12_NC:
     checkAlignment(loc, val, 16, rel);
     or32AArch64Imm(loc, getBits(val, 4, 11));
     break;
@@ -458,6 +527,19 @@ void AArch64::relocate(uint8_t *loc, const Relocation &rel,
   default:
     llvm_unreachable("unknown relocation");
   }
+}
+
+void AArch64::writeFragmentSizeAndPermissions(uint8_t *buf,
+                                              uint64_t val) const {
+  struct FragmentSizeAndPerms {
+    uint64_t length: 56;
+    uint64_t permissions: 8;
+  } sizeAndPerms;
+  assert(sizeof(sizeAndPerms) == 8 && "sizeAndPerms size not 8 bytes");
+
+  sizeAndPerms.permissions = getBits(val, 0, 7);
+  sizeAndPerms.length = getBits(val, 8, 63);
+  memcpy(buf, &sizeAndPerms, sizeof(sizeAndPerms));
 }
 
 void AArch64::relaxTlsGdToLe(uint8_t *loc, const Relocation &rel,
@@ -686,7 +768,74 @@ void AArch64BtiPac::writePlt(uint8_t *buf, const Symbol &sym,
     memcpy(buf + sizeof(addrInst) + sizeof(stdBr), nopData, sizeof(nopData));
 }
 
+namespace {
+class AArch64C64 final : public AArch64 {
+public:
+  AArch64C64();
+  void writePltHeader(uint8_t *buf) const override;
+  void writePlt(uint8_t *buf, const Symbol &sym,
+                uint64_t pltEntryAddr) const override;
+  void writeGotPlt(uint8_t *buf, const Symbol &s) const override;
+
+private:
+};
+} // namespace
+
+AArch64C64::AArch64C64() {
+  relativeRel = R_MORELLO_RELATIVE;
+  iRelativeRel = R_MORELLO_IRELATIVE;
+  gotRel = R_MORELLO_GLOB_DAT;
+  pltRel = R_MORELLO_JUMP_SLOT;
+}
+
+void AArch64C64::writePltHeader(uint8_t *buf) const {
+  const uint8_t pltData[] = {
+      0xf0, 0x7b, 0xbf, 0x62, // stp  c16, c30, [csp, #-32]!
+      0x10, 0x00, 0x80, 0x90, // adrp c16, Page(&(.plt.got[2]))
+      0x11, 0x0a, 0x40, 0xc2, // ldr  c17, [c16, Offset(&(.plt.got[2]))]
+      0x10, 0x82, 0x00, 0x02, // add  c16, c16, Offset(&(.plt.got[2]))
+      0x20, 0x12, 0xc2, 0xc2, // br c17
+      0x1f, 0x20, 0x03, 0xd5, // nop
+      0x1f, 0x20, 0x03, 0xd5, // nop
+      0x1f, 0x20, 0x03, 0xd5, // nop
+  };
+  memcpy(buf, pltData, sizeof(pltData));
+
+  uint64_t got = in.gotPlt->getVA();
+  uint64_t plt = in.plt->getVA();
+  relocateNoSym(buf + 4, R_MORELLO_ADR_PREL_PG_HI20,
+                getAArch64Page(got + 32) - getAArch64Page(plt + 4));
+  relocateNoSym(buf + 8, R_AARCH64_LDST128_ABS_LO12_NC, got + 32);
+  relocateNoSym(buf + 12, R_AARCH64_ADD_ABS_LO12_NC, got + 32);
+}
+
+void AArch64C64::writePlt(uint8_t *buf, const Symbol &sym,
+                          uint64_t pltEntryAddr) const {
+  const uint8_t pltData[] = {
+      0x10, 0x00, 0x80, 0x90, // adrp c16, PLTGOT + n * 16
+      0x10, 0x42, 0x00, 0x02, // add  c16, c16, Offset(&(.plt.got[n]))
+      0x11, 0x02, 0x40, 0xc2, // ldr  c17, [c16]
+      0x20, 0x12, 0xc2, 0xc2, // br   c17
+  };
+  memcpy(buf, pltData, sizeof(pltData));
+
+  uint64_t gotPltEntryAddr = sym.getGotPltVA();
+  relocateNoSym(buf + 0, R_MORELLO_ADR_PREL_PG_HI20,
+                getAArch64Page(gotPltEntryAddr) - getAArch64Page(pltEntryAddr));
+  relocateNoSym(buf + 4, R_AARCH64_ADD_ABS_LO12_NC, gotPltEntryAddr);
+}
+
+void AArch64C64::writeGotPlt(uint8_t *buf, const Symbol &) const {
+  // The PLT header is C64 and we transfer control to it via an indirect jump
+  // so we must set the bottom bit.
+  write64le(buf, in.plt->getVA() | 0x1);
+}
+
 static TargetInfo *getTargetInfo() {
+  if (config->morelloC64Plt) {
+    static AArch64C64 t;
+    return &t;
+  }
   if (config->andFeatures & (GNU_PROPERTY_AARCH64_FEATURE_1_BTI |
                              GNU_PROPERTY_AARCH64_FEATURE_1_PAC)) {
     static AArch64BtiPac t;

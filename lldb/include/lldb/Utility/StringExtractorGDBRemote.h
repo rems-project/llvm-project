@@ -124,6 +124,8 @@ public:
     eServerPacketType_qWatchpointSupportInfo,
     eServerPacketType_qWatchpointSupportInfoSupported,
     eServerPacketType_qXfer,
+    eServerPacketType_qXfer_capa_read,
+    eServerPacketType_qXfer_siginfo_read,
 
     eServerPacketType_jSignalsInfo,
     eServerPacketType_jModulesInfo,

@@ -11,4 +11,5 @@ add_lldb_library(lldbPluginObjectFileELF PLUGIN
     BinaryFormat
     Object
     Support
+    Object
   )

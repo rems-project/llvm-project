@@ -288,6 +288,11 @@ def cheri_conversion_error : Joined<["-"], "cheri-conversion-error=">, Flags<[Dr
   HelpText<"Don't emit errors for conversions between capabilities "
            "and pointers">,
   Values<"error,ignore">;
+def cheri_inline_memops : Joined<["-"], "cheri-inline-memops=">,
+  Flags<[DriverOption,CC1Option]>, Group<cheri_Group>,
+  HelpText<"Select behaviour for inlining memcpy/memmove">,
+  Values<"legacy,new">;
+
 def cheri_bounds_EQ : Joined<["-"], "cheri-bounds=">, Flags<[CC1Option, NoDriverOption]>, Group<cheri_Group>,
   HelpText<"Choose when to tighten bounds on capabilities. Choices are: "
            "'conservative' (only stack allocations, default), "
@@ -306,6 +311,8 @@ def cheri_comparison_exact : Flag<["-"], "cheri-comparison=exact">, Flags<[Drive
 
 def external_capsizefix : Flag<["-"], "external-capsizefix">, Flags<[CC1Option]>,
   Group<cheri_Group>, HelpText<"Use the external capsizefix tool instead of relying on the linker (deprecated)">;
+def capsizefix : Flag<["-"], "capsizefix">, Flags<[CC1Option]>,
+  Group<Link_Group>, HelpText<"Assume that the linker does not handles capabilities and invoke capsizefix">, Alias<external_capsizefix>;
 def no_capsizefix : Flag<["-"], "no-capsizefix">, Flags<[CC1Option]>,
   Group<cheri_Group>, HelpText<"Assume that the linker handles capabilities (don't use capsizefix)">;
 def verbose_capsizefix: Flag<["-"], "verbose-capsizefix">, Flags<[CC1Option]>,
@@ -2379,6 +2386,10 @@ def mcmse : Flag<["-"], "mcmse">, Group<m_arm_Features_Group>,
 
 def mgeneral_regs_only : Flag<["-"], "mgeneral-regs-only">, Group<m_aarch64_Features_Group>,
   HelpText<"Generate code which only uses the general purpose registers (AArch64 only)">;
+
+def m16_cap_regs : Flag<["-"], "m16-cap-regs">, Group<m_aarch64_Features_Group>,
+  HelpText<"Use 16 capability registers (aarch64 only)">;
+
 def mfix_cortex_a53_835769 : Flag<["-"], "mfix-cortex-a53-835769">,
   Group<m_aarch64_Features_Group>,
   HelpText<"Workaround Cortex-A53 erratum 835769 (AArch64 only)">;

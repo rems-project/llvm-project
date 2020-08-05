@@ -59,11 +59,18 @@ defm Tdata: Eq<"Tdata", "Same as --section-start with .data as the sectionname">
 
 defm Ttext: Eq<"Ttext", "Same as --section-start with .text as the sectionname">;
 
+def morello_c64_plt: F<"morello-c64-plt">,
+  HelpText<"Emit PLTs in c64 mode.">;
+
 def Ttext_segment: Separate<["-", "--"], "Ttext-segment">;
 
 defm allow_multiple_definition: B<"allow-multiple-definition",
     "Allow multiple definitions",
     "Do not allow multiple definitions (default)">;
+
+defm export_undefined_dynamic_syms: B<"export-undefined-dynamic-syms",
+    "Put undefined symbols from shared objects in the dynamic symbol table (default)",
+    "Do not put undefined symbols from shared objects in the dynamic symbol table">;
 
 defm allow_shlib_undefined: B<"allow-shlib-undefined",
     "Allow unresolved references in shared libraries (default when linking a shared library)",

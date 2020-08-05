@@ -145,7 +145,8 @@ enum Encoding {
   eEncodingUint,    ///< unsigned integer
   eEncodingSint,    ///< signed integer
   eEncodingIEEE754, ///< float
-  eEncodingVector   ///< vector registers
+  eEncodingVector,   ///< vector registers
+  eEncodingCapability ///< capability
 };
 
 /// Display format definitions.
@@ -194,6 +195,7 @@ enum Format {
                       ///< with file/line, symbol + offset, data, etc)
   eFormatHexFloat,    ///< ISO C99 hex float string
   eFormatInstruction, ///< Disassemble an opcode
+  eFormatCapability,
   eFormatVoid,        ///< Do not print this
   eFormatUnicode8,
   kNumFormats
@@ -574,6 +576,7 @@ enum CommandArgumentType {
   eArgTypeStartAddress,
   eArgTypeSummaryString,
   eArgTypeSymbol,
+  eArgTypeTaggedMemory,
   eArgTypeThreadID,
   eArgTypeThreadIndex,
   eArgTypeThreadName,
@@ -758,6 +761,8 @@ enum BasicType {
   eBasicTypeObjCClass,
   eBasicTypeObjCSel,
   eBasicTypeNullPtr,
+  eBasicTypeSignedIntCap,
+  eBasicTypeUnsignedIntCap,
   eBasicTypeOther
 };
 
@@ -1079,6 +1084,38 @@ enum TypeSummaryCapping {
   eTypeSummaryCapped = true,
   eTypeSummaryUncapped = false
 };
+
+//----------------------------------------------------------------------
+// Address space identifiers
+//----------------------------------------------------------------------
+enum AddressSpace {
+  eAddressSpaceNormal,    // Basic pointer type.
+  eAddressSpaceCapability // Capability pointer/reference.
+};
+
+//----------------------------------------------------------------------
+// Capability types
+//----------------------------------------------------------------------
+enum CapabilityType {
+  eCapabilityInvalid,
+
+  // Morello tagged 128-bit capability. Bit 128 of the value represents the tag.
+  eCapabilityMorello_128,
+
+  // Morello untagged 128-bit capability. This type is used only internally when
+  // the tag information is not available. The architecture does not define such
+  // a capability format.
+  eCapabilityMorello_128_untagged,
+};
+
+//----------------------------------------------------------------------
+// Types of memory content
+//----------------------------------------------------------------------
+enum MemoryContentType {
+  eMemoryContentNormal,
+  eMemoryContentCap128 // 1-byte tag associated with 16 bytes of data.
+};
+
 } // namespace lldb
 
 #endif // LLDB_lldb_enumerations_h_

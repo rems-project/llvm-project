@@ -7,9 +7,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "CommandObjectMemory.h"
+#include "lldb/Core/Capability.h"
 #include "lldb/Core/DumpDataExtractor.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/ValueObjectMemory.h"
+#include "lldb/DataFormatters/FormatManager.h"
 #include "lldb/Expression/ExpressionVariable.h"
 #include "lldb/Host/OptionParser.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
@@ -22,6 +24,7 @@
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Symbol/SymbolFile.h"
 #include "lldb/Symbol/TypeList.h"
+#include "lldb/Target/Memory.h"
 #include "lldb/Target/Language.h"
 #include "lldb/Target/MemoryHistory.h"
 #include "lldb/Target/MemoryRegionInfo.h"
@@ -41,14 +44,22 @@
 using namespace lldb;
 using namespace lldb_private;
 
+static constexpr OptionEnumValueElement g_tagged_memory_values[] = {
+    {eMemoryContentCap128, "cap128", "tagged 128-bit capability data"}};
+
+static constexpr OptionEnumValues TaggedMemoryValues() {
+  return OptionEnumValues(g_tagged_memory_values);
+}
+
 #define LLDB_OPTIONS_memory_read
 #include "CommandOptions.inc"
 
 class OptionGroupReadMemory : public OptionGroup {
 public:
   OptionGroupReadMemory()
-      : m_num_per_line(1, 1), m_output_as_binary(false), m_view_as_type(),
-        m_offset(0, 0), m_language_for_type(eLanguageTypeUnknown) {}
+      : m_num_per_line(1, 1), m_output_as_binary(false), m_tagged_read(false),
+        m_tagged_type(eMemoryContentNormal), m_view_as_type(), m_offset(0, 0),
+        m_language_for_type(eLanguageTypeUnknown) {}
 
   ~OptionGroupReadMemory() override = default;
 
@@ -72,6 +83,16 @@ public:
 
     case 'b':
       m_output_as_binary = true;
+      break;
+
+    case 'C':
+      m_tagged_read = true;
+      if (!option_value.empty()) {
+        auto enum_values =
+            GetDefinitions()[option_idx].enum_values;
+        m_tagged_type = static_cast<MemoryContentType>(OptionArgParser::ToOptionEnum(
+            option_value, enum_values, eMemoryContentNormal, error));
+      }
       break;
 
     case 't':
@@ -99,6 +120,8 @@ public:
   void OptionParsingStarting(ExecutionContext *execution_context) override {
     m_num_per_line.Clear();
     m_output_as_binary = false;
+    m_tagged_read = false;
+    m_tagged_type = eMemoryContentNormal;
     m_view_as_type.Clear();
     m_force = false;
     m_offset.Clear();
@@ -112,6 +135,37 @@ public:
     const bool byte_size_option_set = byte_size_value.OptionWasSet();
     const bool num_per_line_option_set = m_num_per_line.OptionWasSet();
     const bool count_option_set = format_options.GetCountValue().OptionWasSet();
+
+    // Process tagged read.
+    if (m_tagged_read) {
+      // Check that the target architecture has support for tagged memory.
+      if (!target->GetArchitecture().HasTaggedMemorySupport()) {
+        error.SetErrorString(
+            "target architecture does not have support for tagged memory");
+        return error;
+      }
+
+      // Check that the requested format is sensible.
+      switch (format_options.GetFormat()) {
+      case eFormatBytes:
+      case eFormatBytesWithASCII:
+      case eFormatCapability:
+        break;
+      default:
+        error.SetErrorStringWithFormat(
+            "display format \"%s\" is not supported when reading tagged memory",
+            FormatManager::GetFormatAsCString(format_options.GetFormat()));
+        return error;
+      }
+
+      // Resolve tagged memory type. Use the default type for the architecture
+      // if the user did not explicitly specify one.
+      if (m_tagged_type == eMemoryContentNormal)
+        m_tagged_type = target->GetArchitecture().GetDefaultTaggedMemoryType();
+      assert(IsTaggedMemoryContentType(m_tagged_type));
+
+      return error;
+    }
 
     switch (format_options.GetFormat()) {
     default:
@@ -260,18 +314,26 @@ public:
       if (!count_option_set)
         count_value = 4;
       break;
+    case eFormatCapability:
+      if (!byte_size_option_set)
+        byte_size_value = Capability::GetBaseByteSize(
+            target->GetArchitecture().GetCapabilityType());
+      break;
     }
     return error;
   }
 
   bool AnyOptionWasSet() const {
     return m_num_per_line.OptionWasSet() || m_output_as_binary ||
+           m_tagged_read || 
            m_view_as_type.OptionWasSet() || m_offset.OptionWasSet() ||
            m_language_for_type.OptionWasSet();
   }
 
   OptionValueUInt64 m_num_per_line;
   bool m_output_as_binary;
+  bool m_tagged_read;
+  MemoryContentType m_tagged_type;
   OptionValueString m_view_as_type;
   bool m_force;
   OptionValueUInt64 m_offset;
@@ -317,11 +379,11 @@ public:
     m_arguments.push_back(arg1);
     m_arguments.push_back(arg2);
 
-    // Add the "--format" and "--count" options to group 1 and 3
-    m_option_group.Append(&m_format_options,
-                          OptionGroupFormat::OPTION_GROUP_FORMAT |
-                              OptionGroupFormat::OPTION_GROUP_COUNT,
-                          LLDB_OPT_SET_1 | LLDB_OPT_SET_2 | LLDB_OPT_SET_3);
+    // Add the "--format" and "--count" options to all groups
+    m_option_group.Append(
+        &m_format_options, OptionGroupFormat::OPTION_GROUP_FORMAT |
+                               OptionGroupFormat::OPTION_GROUP_COUNT,
+        LLDB_OPT_SET_1 | LLDB_OPT_SET_2 | LLDB_OPT_SET_3 | LLDB_OPT_SET_5);
     m_option_group.Append(&m_format_options,
                           OptionGroupFormat::OPTION_GROUP_GDB_FMT,
                           LLDB_OPT_SET_1 | LLDB_OPT_SET_3);
@@ -331,7 +393,8 @@ public:
                           LLDB_OPT_SET_1 | LLDB_OPT_SET_2);
     m_option_group.Append(&m_memory_options);
     m_option_group.Append(&m_outfile_options, LLDB_OPT_SET_ALL,
-                          LLDB_OPT_SET_1 | LLDB_OPT_SET_2 | LLDB_OPT_SET_3);
+                          LLDB_OPT_SET_1 | LLDB_OPT_SET_2 | LLDB_OPT_SET_3 |
+                              LLDB_OPT_SET_5);
     m_option_group.Append(&m_varobj_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_3);
     m_option_group.Finalize();
   }
@@ -346,10 +409,60 @@ public:
   }
 
 protected:
+  bool AdjustToTaggedByteSize(MemoryContentType type, size_t *byte_size,
+                              CommandReturnObject &result) {
+    // Make sure the byte size is properly aligned for tagged read.
+    uint32_t base_byte_size = TaggedMemory::GetBaseByteSize(type);
+    if (*byte_size % base_byte_size != 0) {
+      size_t aligned = llvm::alignTo(*byte_size, base_byte_size);
+      // Align the size down if aligning it up resulted in an overflow.
+      if (aligned < *byte_size)
+        aligned = llvm::alignDown(*byte_size, base_byte_size);
+      result.AppendWarningWithFormat(
+          "base byte size %" PRIu64 " was aligned to %" PRIu64
+          " for tagged read.\n",
+          static_cast<uint64_t>(*byte_size), static_cast<uint64_t>(aligned));
+      *byte_size = aligned;
+    }
+
+    // Add tag bytes to the byte size.
+    size_t tags_byte_size =
+        *byte_size / base_byte_size * TaggedMemory::GetTagByteSize(type);
+    size_t tagged_byte_size = *byte_size + tags_byte_size;
+
+    // Detect an overflow.
+    if (tagged_byte_size < tags_byte_size) {
+      result.AppendErrorWithFormat(
+          "total byte size (%" PRIu64 " + %" PRIu64
+          ") of the requested tagged read is too large.\n",
+          static_cast<uint64_t>(*byte_size),
+          static_cast<uint64_t>(tags_byte_size));
+      result.SetStatus(eReturnStatusFailed);
+      return false;
+    }
+
+    *byte_size = tagged_byte_size;
+    return true;
+  }
+
+  ByteOrder GetDataByteOrder(const ArchSpec &arch, Format format) {
+    if (format == eFormatCapability)
+      return arch.GetCapabilityByteOrder();
+    return arch.GetByteOrder();
+  }
+
   bool DoExecute(Args &command, CommandReturnObject &result) override {
     // No need to check "target" for validity as eCommandRequiresTarget ensures
     // it is valid
     Target *target = m_exe_ctx.GetTargetPtr();
+
+    // Read of tagged memory requires a valid process.
+    Process *process = m_exe_ctx.GetProcessPtr();
+    if (m_memory_options.m_tagged_read && process == nullptr) {
+      result.AppendError(GetInvalidProcessDescription());
+      result.SetStatus(eReturnStatusFailed);
+      return false;
+    }
 
     const size_t argc = command.GetArgumentCount();
 
@@ -565,6 +678,25 @@ protected:
         m_outfile_options = m_prev_outfile_options;
         m_varobj_options = m_prev_varobj_options;
       }
+
+      // Adjust the size for tagged read.
+      if (m_memory_options.m_tagged_read &&
+          !AdjustToTaggedByteSize(m_memory_options.m_tagged_type,
+                                  &total_byte_size, result))
+        return false;
+    }
+
+    // Get byte sizes for tagged read.
+    size_t tag_read_base_byte_size = 0;
+    size_t tag_read_tag_byte_size = 0;
+    size_t tag_read_tagged_byte_size = 0;
+    if (m_memory_options.m_tagged_read) {
+      tag_read_base_byte_size =
+          TaggedMemory::GetBaseByteSize(m_memory_options.m_tagged_type);
+      tag_read_tag_byte_size =
+          TaggedMemory::GetTagByteSize(m_memory_options.m_tagged_type);
+      tag_read_tagged_byte_size =
+          TaggedMemory::GetTaggedByteSize(m_memory_options.m_tagged_type);
     }
 
     size_t item_count = m_format_options.GetCountValue().GetCurrentValue();
@@ -578,8 +710,10 @@ protected:
             ? target->GetArchitecture().GetDataByteSize()
             : m_format_options.GetByteSizeValue().GetCurrentValue();
 
-    const size_t num_per_line =
-        m_memory_options.m_num_per_line.GetCurrentValue();
+    // Tagged reads do not have any byte size option but instead the size is
+    // determined by the type of the read.
+    if (m_memory_options.m_tagged_read)
+      item_byte_size = tag_read_tagged_byte_size;
 
     if (total_byte_size == 0) {
       total_byte_size = item_count * item_byte_size;
@@ -596,6 +730,16 @@ protected:
       result.AppendError(error.AsCString());
       result.SetStatus(eReturnStatusFailed);
       return false;
+    }
+
+    // Make sure the start address is properly aligned if this is tagged read.
+    if (m_memory_options.m_tagged_read && addr % tag_read_base_byte_size != 0) {
+      lldb::addr_t aligned = llvm::alignDown(addr, tag_read_base_byte_size);
+      result.AppendWarningWithFormat(
+          "start address 0x%" PRIx64 " was aligned to 0x%" PRIx64
+          " for tagged read.\n",
+          static_cast<uint64_t>(addr), static_cast<uint64_t>(aligned));
+      addr = aligned;
     }
 
     if (argc == 2) {
@@ -623,6 +767,13 @@ protected:
       }
 
       total_byte_size = end_addr - addr;
+
+      // Adjust the size for tagged read.
+      if (m_memory_options.m_tagged_read &&
+          !AdjustToTaggedByteSize(m_memory_options.m_tagged_type,
+                                  &total_byte_size, result))
+        return false;
+
       item_count = total_byte_size / item_byte_size;
     }
 
@@ -669,9 +820,15 @@ protected:
         return false;
       }
 
-      Address address(addr, nullptr);
-      bytes_read = target->ReadMemory(address, false, data_sp->GetBytes(),
-                                      data_sp->GetByteSize(), error);
+      if (m_memory_options.m_tagged_read)
+        bytes_read = process->ReadMemory(addr, data_sp->GetBytes(),
+                                         data_sp->GetByteSize(), error,
+                                         m_memory_options.m_tagged_type);
+      else {
+        Address address(addr, nullptr);
+        bytes_read = target->ReadMemory(address, false, data_sp->GetBytes(),
+                                        data_sp->GetByteSize(), error);
+      }
       if (bytes_read == 0) {
         const char *error_cstr = error.AsCString();
         if (error_cstr && error_cstr[0]) {
@@ -752,8 +909,12 @@ protected:
           std::make_shared<DataBufferHeap>(data_sp->GetBytes(), bytes_read + 1);
     }
 
-    m_next_addr = addr + bytes_read;
-    m_prev_byte_size = bytes_read;
+    if (m_memory_options.m_tagged_read)
+      m_prev_byte_size =
+          bytes_read / tag_read_tagged_byte_size * tag_read_base_byte_size;
+    else
+      m_prev_byte_size = bytes_read;
+    m_next_addr = addr + m_prev_byte_size;
     m_prev_format_options = m_format_options;
     m_prev_memory_options = m_memory_options;
     m_prev_outfile_options = m_outfile_options;
@@ -840,11 +1001,6 @@ protected:
       return true;
     }
 
-    result.SetStatus(eReturnStatusSuccessFinishResult);
-    DataExtractor data(data_sp, target->GetArchitecture().GetByteOrder(),
-                       target->GetArchitecture().GetAddressByteSize(),
-                       target->GetArchitecture().GetDataByteSize());
-
     Format format = m_format_options.GetFormat();
     if (((format == eFormatChar) || (format == eFormatCharPrintable)) &&
         (item_byte_size != 1)) {
@@ -868,11 +1024,32 @@ protected:
       }
     }
 
+    size_t num_per_line = m_memory_options.m_num_per_line.GetCurrentValue();
+
+    // Tagged reads use item_byte_size that is equal to the size of the tagged
+    // value. When the bytes format is used, output the value as individual
+    // bytes with item_byte_size bytes per line.
+    if (m_memory_options.m_tagged_read &&
+        (format == eFormatBytes || format == eFormatBytesWithASCII)) {
+      item_count *= item_byte_size;
+      num_per_line = item_byte_size;
+      item_byte_size = 1;
+    }
+
+    result.SetStatus(eReturnStatusSuccessFinishResult);
+    DataExtractor data(data_sp,
+                       GetDataByteOrder(target->GetArchitecture(), format),
+                       target->GetArchitecture().GetAddressByteSize(),
+                       target->GetArchitecture().GetDataByteSize());
+
     assert(output_stream_p);
     size_t bytes_dumped = DumpDataExtractor(
         data, output_stream_p, 0, format, item_byte_size, item_count,
         num_per_line / target->GetArchitecture().GetDataByteSize(), addr, 0, 0,
-        exe_scope);
+        tag_read_tag_byte_size, tag_read_tagged_byte_size, exe_scope);
+    if (m_memory_options.m_tagged_read)
+      bytes_dumped =
+          bytes_dumped / tag_read_tagged_byte_size * tag_read_base_byte_size;
     m_next_addr = addr + bytes_dumped;
     output_stream_p->EOL();
     return true;
@@ -1426,6 +1603,7 @@ protected:
       case eFormatAddressInfo:
       case eFormatHexFloat:
       case eFormatInstruction:
+      case eFormatCapability:
       case eFormatVoid:
         result.AppendError("unsupported format for writing memory");
         result.SetStatus(eReturnStatusFailed);

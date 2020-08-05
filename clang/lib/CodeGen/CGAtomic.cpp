@@ -799,7 +799,8 @@ AddDirectArgument(CodeGenFunction &CGF, CallArgList &Args,
     // Coerce the value into an appropriately sized integer type.
     Args.add(RValue::get(Val), ValTy);
   } else {
-    if (false && ValTy->isCHERICapabilityType(CGF.getContext())) {
+    if (CGF.getTarget().hasCapabilityAtomicBuiltins() &&
+        ValTy->isCHERICapabilityType(CGF.getContext())) {
       // capabilities can be passed directly without casting to i8*
       Args.add(RValue::get(Val), ValTy);
     } else {
@@ -1797,10 +1798,14 @@ std::pair<RValue, llvm::Value *> AtomicInfo::EmitAtomicCompareExchange(
         Res);
   }
 
+  bool IsCapTy = getAtomicType()->isCHERICapabilityType(CGF.getContext());
+
   // If we've got a scalar value of the right size, try to avoid going
   // through memory.
-  auto *ExpectedVal = convertRValueToInt(Expected);
-  auto *DesiredVal = convertRValueToInt(Desired);
+  auto *ExpectedVal = IsCapTy ? Expected.getScalarVal()
+                              : convertRValueToInt(Expected);
+  auto *DesiredVal = IsCapTy ? Desired.getScalarVal()
+                             : convertRValueToInt(Desired);
   auto Res = EmitAtomicCompareExchangeOp(ExpectedVal, DesiredVal, Success,
                                          Failure, IsWeak);
   return std::make_pair(
@@ -2080,15 +2085,22 @@ void CodeGenFunction::EmitAtomicStore(RValue rvalue, LValue dest,
       emitAtomicLibcall(*this, "__atomic_store", getContext().VoidTy, args);
       return;
     }
+    bool IsCapTy = atomics.getAtomicType()->isCHERICapabilityType(getContext());
 
     // Okay, we're doing this natively.
-    llvm::Value *intValue = atomics.convertRValueToInt(rvalue);
+    llvm::Value *intValue = IsCapTy ?
+      rvalue.getScalarVal() : atomics.convertRValueToInt(rvalue);
 
     // Do the atomic store.
     Address addr =
         atomics.emitCastToAtomicIntPointer(atomics.getAtomicAddress());
-    intValue = Builder.CreateIntCast(
-        intValue, addr.getElementType(), /*isSigned=*/false);
+    if (!IsCapTy)
+      intValue = Builder.CreateIntCast(
+          intValue, addr.getElementType(), /*isSigned=*/false);
+    else
+      intValue = EmitPointerCast(intValue,
+          static_cast<llvm::PointerType*>(addr.getElementType()));
+
     llvm::StoreInst *store = Builder.CreateStore(intValue, addr);
 
     // Initializations don't need to be atomic.

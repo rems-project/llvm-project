@@ -610,6 +610,15 @@ public:
   }
 };
 
+/// CFI procedure type.
+enum class MCCFIProcType {
+  Normal,  ///< Default procedure type.
+  Simple,  ///< Procedure that does not use the initial CFI instructions defined
+           ///< by the target.
+  PureCap, ///< Procedure that uses the pure capability mode. Not available on
+           ///< all targets.
+};
+
 struct MCDwarfFrameInfo {
   MCDwarfFrameInfo() = default;
 
@@ -623,7 +632,7 @@ struct MCDwarfFrameInfo {
   unsigned LsdaEncoding = 0;
   uint32_t CompactUnwindEncoding = 0;
   bool IsSignalFrame = false;
-  bool IsSimple = false;
+  MCCFIProcType Type = MCCFIProcType::Normal;
   unsigned RAReg = static_cast<unsigned>(INT_MAX);
   bool IsBKeyFrame = false;
 };

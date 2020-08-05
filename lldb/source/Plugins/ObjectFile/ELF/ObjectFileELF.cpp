@@ -2111,6 +2111,11 @@ unsigned ObjectFileELF::ParseSymbols(Symtab *symtab, user_id_t start_id,
               // $x[.<any>]* - marks an A64 instruction sequence
               m_address_class_map[symbol.st_value] = AddressClass::eCode;
               break;
+            case 'c':
+              // $c[.<any>]* - marks a C64 instruction sequence
+              m_address_class_map[symbol.st_value] =
+                  AddressClass::eCodeAlternateISA;
+              break;
             case 'd':
               // $d[.<any>]* - marks a data item sequence (e.g. lit pool)
               m_address_class_map[symbol.st_value] = AddressClass::eData;
@@ -2122,9 +2127,15 @@ unsigned ObjectFileELF::ParseSymbols(Symtab *symtab, user_id_t start_id,
         }
       }
 
-      if (arch.GetMachine() == llvm::Triple::arm) {
+      if (arch.GetMachine() == llvm::Triple::arm ||
+          arch.GetMachine() == llvm::Triple::aarch64 ||
+          arch.GetMachine() == llvm::Triple::aarch64_be) {
         if (symbol_type == eSymbolTypeCode) {
           if (symbol.st_value & 1) {
+            // On 32-bit ARM, the lowest bit identifies that the symbol
+            // addresses a Thumb instruction. On 64-bit ARM (AArch64), it
+            // similarly identifies a C64 code.
+            //
             // Subtracting 1 from the address effectively unsets the low order
             // bit, which results in the address actually pointing to the
             // beginning of the symbol. This delta will be used below in
@@ -2134,7 +2145,8 @@ unsigned ObjectFileELF::ParseSymbols(Symtab *symtab, user_id_t start_id,
             m_address_class_map[symbol.st_value ^ 1] =
                 AddressClass::eCodeAlternateISA;
           } else {
-            // This address is ARM
+            // The symbol addresses an ARM instruction (32-bit ARM) or an A64
+            // instruction (64-bit ARM).
             m_address_class_map[symbol.st_value] = AddressClass::eCode;
           }
         }

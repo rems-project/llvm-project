@@ -78,3 +78,40 @@ TEST_F(TestArm64Disassembly, TestArmv81Instruction) {
     ASSERT_STREQ ("cas", mnemonic);
   }
 }
+
+TEST_F(TestArm64Disassembly, TestMorelloInstruction) {
+  ArchSpec arch("aarch64");
+
+  const unsigned num_of_instructions = 2;
+  uint8_t data[] = {
+      0xd9, 0x3c, 0xda, 0xc2, // Morello      :  csel   c25, c6, c26, lo
+      0xff, 0x43, 0x00, 0xd1, // Base AArch64 :  sub    sp, sp, #0x10
+  };
+
+  DisassemblerSP disass_sp;
+  Address start_addr(0x100);
+  disass_sp = Disassembler::DisassembleBytes(
+      arch, /*plugin_name=*/nullptr, /*flavor=*/nullptr, start_addr, &data,
+      sizeof(data), num_of_instructions, false);
+  ASSERT_NE(disass_sp, nullptr);
+
+  const InstructionList inst_list(disass_sp->GetInstructionList());
+  EXPECT_EQ(num_of_instructions, inst_list.GetSize());
+
+  InstructionSP inst_sp;
+  const char *mnemonic;
+  const char *operands;
+
+  ExecutionContext exe_ctx(nullptr, nullptr, nullptr);
+  inst_sp = inst_list.GetInstructionAtIndex(0);
+  mnemonic = inst_sp->GetMnemonic(&exe_ctx);
+  operands = inst_sp->GetOperands(&exe_ctx);
+  ASSERT_STREQ("csel", mnemonic);
+  ASSERT_STREQ("c25, c6, c26, lo", operands);
+
+  inst_sp = inst_list.GetInstructionAtIndex(1);
+  mnemonic = inst_sp->GetMnemonic(&exe_ctx);
+  operands = inst_sp->GetOperands(&exe_ctx);
+  ASSERT_STREQ("sub", mnemonic);
+  ASSERT_STREQ("sp, sp, #0x10", operands);
+}

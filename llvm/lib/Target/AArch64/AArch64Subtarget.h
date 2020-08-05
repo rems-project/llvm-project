@@ -130,6 +130,12 @@ protected:
   bool HasRCPC = false;
   bool HasAggressiveFMA = false;
 
+  // Morello extensions
+  bool Use16CapRegs = false;
+  bool HasMorello = false;
+  bool HasPureCap = false;
+  bool HasC64 = false;
+
   // Armv8.5-A Extensions
   bool HasAlternativeNZCV = false;
   bool HasFRInt3264 = false;
@@ -209,6 +215,9 @@ protected:
 
   // ReserveXRegister[i] - X#i is not available as a general purpose register.
   BitVector ReserveXRegister;
+
+  // ReserveCRegister[i] - C#i is not available as a capability register.
+  BitVector ReserveCRegister;
 
   // CustomCallUsedXRegister[i] - X#i call saved.
   BitVector CustomCallSavedXRegs;
@@ -302,7 +311,9 @@ public:
   }
 
   bool isXRegisterReserved(size_t i) const { return ReserveXRegister[i]; }
+  bool isCRegisterReserved(size_t i) const { return ReserveCRegister[i]; }
   unsigned getNumXRegisterReserved() const { return ReserveXRegister.count(); }
+  unsigned getNumCRegisterReserved() const { return ReserveCRegister.count(); }
   bool isXRegCustomCalleeSaved(size_t i) const {
     return CustomCallSavedXRegs[i];
   }
@@ -376,6 +387,11 @@ public:
   /// translation) and OS enables it.
   bool supportsAddressTopByteIgnored() const;
 
+  bool use16CapRegs() const { return  HasMorello && Use16CapRegs; }
+  bool hasCapGOT() const { return HasMorello && HasPureCap; }
+  bool hasPureCap() const { return HasMorello && HasPureCap; }
+  bool hasMorello() const { return HasMorello; }
+  bool hasC64() const { return HasMorello && HasC64; }
   bool hasPerfMon() const { return HasPerfMon; }
   bool hasFullFP16() const { return HasFullFP16; }
   bool hasFP16FML() const { return HasFP16FML; }
@@ -417,7 +433,7 @@ public:
 
   bool isTargetILP32() const { return TargetTriple.isArch32Bit(); }
 
-  bool useAA() const override { return UseAA; }
+  bool useAA() const override { return UseAA || HasMorello; }
 
   bool hasVH() const { return HasVH; }
   bool hasPAN() const { return HasPAN; }

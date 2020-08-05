@@ -246,13 +246,20 @@ public:
     %feature("autodoc", "
     Reads memory from the current process's address space and removes any
     traps that may have been inserted into the memory. It returns the byte
-    buffer in a Python string. Example:
+    buffer in a Python string. Examples:
 
     # Read 4 bytes from address 'addr' and assume error.Success() is True.
     content = process.ReadMemory(addr, 4, error)
-    new_bytes = bytearray(content)") ReadMemory;
+    new_bytes = bytearray(content)
+
+    # Read tagged capability data (1-byte tag + 16 bytes of memory) from
+    # address 'addr' and assume error.Success() is True.
+    content = process.ReadMemory(addr, 17, error, lldb.eMemoryContentCap128)
+    new_bytes = bytearray(content)
+    ") ReadMemory;
     size_t
-    ReadMemory (addr_t addr, void *buf, size_t size, lldb::SBError &error);
+    ReadMemory (addr_t addr, void *buf, size_t size, lldb::SBError &error,
+                lldb::MemoryContentType type = lldb::eMemoryContentNormal);
 
     %feature("autodoc", "
     Writes memory to the current process's address space and maintains any

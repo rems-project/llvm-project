@@ -73,7 +73,11 @@ public:
 
     /// EK_Custom32 - Each entry is a 32-bit value that is custom lowered by the
     /// TargetLowering::LowerCustomJumpTableEntry hook.
-    EK_Custom32
+    EK_Custom32,
+
+    /// EK_Custom64 - Each entry is a 64-bit value that is custom lowered by the
+    /// TargetLowering::LowerCustomJumpTableEntry hook.
+    EK_Custom64,
   };
 private:
   JTEntryKind EntryKind;

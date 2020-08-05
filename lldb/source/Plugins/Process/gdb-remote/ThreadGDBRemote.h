@@ -91,6 +91,8 @@ public:
 protected:
   friend class ProcessGDBRemote;
 
+  lldb::DataBufferSP FetchSigInfoData() const override;
+
   std::string m_thread_name;
   std::string m_dispatch_queue_name;
   lldb::addr_t m_thread_dispatch_qaddr;

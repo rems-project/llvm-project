@@ -14,7 +14,7 @@ define void @test_trivial_call() {
 ; CHECK: BL @simple_return_callee, csr_aarch64_aapcs, implicit-def $lr, implicit $sp, implicit-def $x0
 ; CHECK: [[RES:%[0-9]+]]:_(s64) = COPY $x0
 ; CHECK: $x0 = COPY [[RES]]
-; CHECK: RET_ReallyLR implicit $x0
+; CHECK: RET_ReallyLR 0, implicit $x0
 declare i64 @simple_return_callee()
 define i64 @test_simple_return() {
   %res = call i64 @simple_return_callee()
@@ -25,7 +25,7 @@ define i64 @test_simple_return() {
 ; CHECK: [[IN:%[0-9]+]]:_(s32) = COPY $w0
 ; CHECK: $w0 = COPY [[IN]]
 ; CHECK: BL @simple_arg_callee, csr_aarch64_aapcs, implicit-def $lr, implicit $sp, implicit $w0
-; CHECK: RET_ReallyLR
+; CHECK: RET_ReallyLR 0
 declare void @simple_arg_callee(i32 %in)
 define void @test_simple_arg(i32 %in) {
   call void @simple_arg_callee(i32 %in)
@@ -38,7 +38,7 @@ define void @test_simple_arg(i32 %in) {
 ; CHECK: - { id: [[FUNC:[0-9]+]], class: gpr64, preferred-register: '' }
 ; CHECK: %[[FUNC]]:gpr64(p0) = COPY $x0
 ; CHECK: BLR %[[FUNC]](p0), csr_aarch64_aapcs, implicit-def $lr, implicit $sp
-; CHECK: RET_ReallyLR
+; CHECK: RET_ReallyLR 0
 define void @test_indirect_call(void()* %func) {
   call void %func()
   ret void
@@ -50,7 +50,7 @@ define void @test_indirect_call(void()* %func) {
 ; CHECK: $w0 = COPY [[ANSWER]]
 ; CHECK: $x1 = COPY [[IN]]
 ; CHECK: BL @multiple_args_callee, csr_aarch64_aapcs, implicit-def $lr, implicit $sp, implicit $w0, implicit $x1
-; CHECK: RET_ReallyLR
+; CHECK: RET_ReallyLR 0
 declare void @multiple_args_callee(i32, i64)
 define void @test_multiple_args(i64 %in) {
   call void @multiple_args_callee(i32 42, i64 %in)
@@ -72,7 +72,7 @@ define void @test_multiple_args(i64 %in) {
 ; CHECK: [[CST2:%[0-9]+]]:_(s64) = G_CONSTANT i64 16
 ; CHECK: [[GEP2:%[0-9]+]]:_(p0) = G_PTR_ADD [[ADDR]], [[CST2]](s64)
 ; CHECK: G_STORE [[I8]](s8), [[GEP2]](p0) :: (store 1 into %ir.addr + 16, align 8)
-; CHECK: RET_ReallyLR
+; CHECK: RET_ReallyLR 0
 define void @test_struct_formal({double, i64, i8} %in, {double, i64, i8}* %addr) {
   store {double, i64, i8} %in, {double, i64, i8}* %addr
   ret void
@@ -93,7 +93,7 @@ define void @test_struct_formal({double, i64, i8} %in, {double, i64, i8}* %addr)
 ; CHECK: $d0 = COPY [[LD1]](s64)
 ; CHECK: $x0 = COPY [[LD2]](s64)
 ; CHECK: $w1 = COPY [[LD3]](s32)
-; CHECK: RET_ReallyLR implicit $d0, implicit $x0, implicit $w1
+; CHECK: RET_ReallyLR 0, implicit $d0, implicit $x0, implicit $w1
 define {double, i64, i32} @test_struct_return({double, i64, i32}* %addr) {
   %val = load {double, i64, i32}, {double, i64, i32}* %addr
   ret {double, i64, i32} %val
@@ -155,7 +155,7 @@ define void @test_abi_exts_call(i8* %addr) {
 ; CHECK: [[VAL:%[0-9]+]]:_(s8) = G_LOAD
 ; CHECK: [[SVAL:%[0-9]+]]:_(s32) = G_SEXT [[VAL]](s8)
 ; CHECK: $w0 = COPY [[SVAL]](s32)
-; CHECK: RET_ReallyLR implicit $w0
+; CHECK: RET_ReallyLR 0, implicit $w0
 define signext i8 @test_abi_sext_ret(i8* %addr) {
   %val = load i8, i8* %addr
   ret i8 %val
@@ -165,7 +165,7 @@ define signext i8 @test_abi_sext_ret(i8* %addr) {
 ; CHECK: [[VAL:%[0-9]+]]:_(s8) = G_LOAD
 ; CHECK: [[SVAL:%[0-9]+]]:_(s32) = G_ZEXT [[VAL]](s8)
 ; CHECK: $w0 = COPY [[SVAL]](s32)
-; CHECK: RET_ReallyLR implicit $w0
+; CHECK: RET_ReallyLR 0, implicit $w0
 define zeroext i8 @test_abi_zext_ret(i8* %addr) {
   %val = load i8, i8* %addr
   ret i8 %val

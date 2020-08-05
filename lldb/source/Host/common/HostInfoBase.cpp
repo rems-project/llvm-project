@@ -17,6 +17,7 @@
 #include "lldb/Utility/StreamString.h"
 
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/Path.h"
@@ -49,6 +50,7 @@ struct HostInfoBaseFields {
 
   llvm::once_flag m_host_triple_once;
   llvm::Triple m_host_triple;
+  std::string m_host_features;
 
   llvm::once_flag m_host_arch_once;
   ArchSpec m_host_arch_32;
@@ -88,6 +90,14 @@ llvm::Triple HostInfoBase::GetTargetTriple() {
         HostInfo::GetArchitecture().GetTriple();
   });
   return g_fields->m_host_triple;
+}
+
+llvm::StringRef HostInfoBase::GetTargetFeatures() {
+  static llvm::once_flag g_once_flag;
+  llvm::call_once(g_once_flag, []() {
+    g_fields->m_host_features = HostInfo::ComputeHostFeatures();
+  });
+  return g_fields->m_host_features;
 }
 
 const ArchSpec &HostInfoBase::GetArchitecture(ArchitectureKind arch_kind) {
@@ -346,4 +356,19 @@ void HostInfoBase::ComputeHostArchitectureSupport(ArchSpec &arch_32,
     arch_64.SetTriple(triple);
     break;
   }
+}
+
+std::string HostInfoBase::ComputeHostFeatures() {
+  llvm::Triple triple(llvm::sys::getProcessTriple());
+
+  if (triple.getArch() == llvm::Triple::aarch64 ||
+      triple.getArch() == llvm::Triple::aarch64_be) {
+    llvm::StringMap<bool> features;
+    llvm::sys::getHostCPUFeatures(features);
+
+    auto morello = features.find("morello");
+    if (morello != features.end() && morello->second)
+      return "addrcap";
+  }
+  return "";
 }

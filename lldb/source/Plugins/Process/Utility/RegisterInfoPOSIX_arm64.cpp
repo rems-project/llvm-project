@@ -25,14 +25,38 @@
   (LLVM_EXTENSION offsetof(RegisterInfoPOSIX_arm64::FPU, reg) +                \
    sizeof(RegisterInfoPOSIX_arm64::GPR))
 
+#define CAP_OFFSET(idx)                                                        \
+  ((idx)*17 + sizeof(RegisterInfoPOSIX_arm64::GPR) +                           \
+   sizeof(RegisterInfoPOSIX_arm64::FPU))
+
+#define STATE_OFFSET_NAME(reg)                                                 \
+  (LLVM_EXTENSION offsetof(RegisterInfoPOSIX_arm64::STATE, reg) +              \
+   sizeof(RegisterInfoPOSIX_arm64::GPR) +                                      \
+   sizeof(RegisterInfoPOSIX_arm64::FPU) +                                      \
+   sizeof(RegisterInfoPOSIX_arm64::CAP))
+
+#define THREAD_OFFSET_NAME(reg)                                                \
+  (LLVM_EXTENSION offsetof(RegisterInfoPOSIX_arm64::THREAD, reg) +             \
+   sizeof(RegisterInfoPOSIX_arm64::GPR) +                                      \
+   sizeof(RegisterInfoPOSIX_arm64::FPU) +                                      \
+   sizeof(RegisterInfoPOSIX_arm64::CAP) +                                      \
+   sizeof(RegisterInfoPOSIX_arm64::STATE))
+
 #define EXC_OFFSET_NAME(reg)                                                   \
   (LLVM_EXTENSION offsetof(RegisterInfoPOSIX_arm64::EXC, reg) +                \
    sizeof(RegisterInfoPOSIX_arm64::GPR) +                                      \
-   sizeof(RegisterInfoPOSIX_arm64::FPU))
+   sizeof(RegisterInfoPOSIX_arm64::FPU) +                                      \
+   sizeof(RegisterInfoPOSIX_arm64::CAP) +                                      \
+   sizeof(RegisterInfoPOSIX_arm64::STATE) +                                    \
+   sizeof(RegisterInfoPOSIX_arm64::THREAD))
+
 #define DBG_OFFSET_NAME(reg)                                                   \
   (LLVM_EXTENSION offsetof(RegisterInfoPOSIX_arm64::DBG, reg) +                \
    sizeof(RegisterInfoPOSIX_arm64::GPR) +                                      \
    sizeof(RegisterInfoPOSIX_arm64::FPU) +                                      \
+   sizeof(RegisterInfoPOSIX_arm64::CAP) +                                      \
+   sizeof(RegisterInfoPOSIX_arm64::STATE) +                                    \
+   sizeof(RegisterInfoPOSIX_arm64::THREAD) +                                   \
    sizeof(RegisterInfoPOSIX_arm64::EXC))
 
 #define DEFINE_DBG(reg, i)                                                     \
@@ -43,15 +67,21 @@
                                LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM,       \
                                dbg_##reg##i },                                 \
                                NULL, NULL, NULL, 0
+
 #define REG_CONTEXT_SIZE                                                       \
   (sizeof(RegisterInfoPOSIX_arm64::GPR) +                                      \
    sizeof(RegisterInfoPOSIX_arm64::FPU) +                                      \
+   sizeof(RegisterInfoPOSIX_arm64::CAP) +                                      \
+   sizeof(RegisterInfoPOSIX_arm64::STATE) +                                    \
+   sizeof(RegisterInfoPOSIX_arm64::THREAD) +                                   \
    sizeof(RegisterInfoPOSIX_arm64::EXC))
 
 // Include RegisterInfos_arm64 to declare our g_register_infos_arm64 structure.
 #define DECLARE_REGISTER_INFOS_ARM64_STRUCT
+#define DECLARE_CAPABILITY_REGISTER_INFOS
 #include "RegisterInfos_arm64.h"
 #undef DECLARE_REGISTER_INFOS_ARM64_STRUCT
+#undef DECLARE_CAPABILITY_REGISTER_INFOS
 
 static const lldb_private::RegisterInfo *
 GetRegisterInfoPtr(const lldb_private::ArchSpec &target_arch) {

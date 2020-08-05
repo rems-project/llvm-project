@@ -1191,13 +1191,17 @@ DisassemblerLLVMC::DisassemblerLLVMC(const ArchSpec &arch,
 
   // If any AArch64 variant, enable the ARMv8.5 ISA with SVE extensions so we
   // can disassemble newer instructions.
-  if (triple.getArch() == llvm::Triple::aarch64 || 
-      triple.getArch() == llvm::Triple::aarch64_32)
-    features_str += "+v8.5a,+sve2";
+  // This should have v8.5a,+sve2,+morello. However the encodings are
+  // incompatible with Morello at the moment, so just use the old values for
+  // now.
+  if (triple.getArch() == llvm::Triple::aarch64 ||
+      triple.getArch() == llvm::Triple::aarch64_32) {
+    features_str += "+v8.2a,+fp-armv8,+neon,+crypto,+fullfp16,+spe,+morello,";
+  }
 
   if ((triple.getArch() == llvm::Triple::aarch64 ||
-       triple.getArch() == llvm::Triple::aarch64_32)
-      && triple.getVendor() == llvm::Triple::Apple) {
+       triple.getArch() == llvm::Triple::aarch64_32) &&
+      triple.getVendor() == llvm::Triple::Apple) {
     cpu = "apple-latest";
   }
 
@@ -1216,6 +1220,15 @@ DisassemblerLLVMC::DisassemblerLLVMC(const ArchSpec &arch,
     m_alternate_disasm_up =
         MCDisasmInstance::Create(thumb_triple.c_str(), "", features_str.c_str(),
                                  flavor, *this);
+    if (!m_alternate_disasm_up)
+      m_disasm_up.reset();
+
+  } else if (triple.getArch() == llvm::Triple::aarch64 ||
+             triple.getArch() == llvm::Triple::aarch64_be) {
+    // Create alternate disassembler for C64.
+    std::string purecap = features_str + "+c64,";
+    m_alternate_disasm_up =
+        MCDisasmInstance::Create(triple_str, cpu, purecap.c_str(), flavor, *this);
     if (!m_alternate_disasm_up)
       m_disasm_up.reset();
 

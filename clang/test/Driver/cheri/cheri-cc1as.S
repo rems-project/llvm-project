@@ -1,4 +1,5 @@
 // Check that the ABI is forwarded to the assembler
+// REQUIRES: mips-registered-target
 // RUN: %plain_clang_cheri_triple_allowed -target cheri-unknown-freebsd -### -c %s -mabi=n64 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHERI-ABI-N64 %s
 // CHERI-ABI-N64: "-target-cpu" "{{cheri(128)?}}" {{.*}} "-target-abi" "n64"

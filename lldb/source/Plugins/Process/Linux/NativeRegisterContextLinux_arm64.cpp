@@ -13,6 +13,7 @@
 
 
 #include "lldb/Host/common/NativeProcessProtocol.h"
+#include "lldb/Host/linux/Ptrace.h"
 #include "lldb/Utility/DataBufferHeap.h"
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/RegisterValue.h"
@@ -95,9 +96,47 @@ static_assert(((sizeof g_fpu_regnums_arm64 / sizeof g_fpu_regnums_arm64[0]) -
                1) == k_num_fpr_registers_arm64,
               "g_fpu_regnums_arm64 has wrong number of register infos");
 
+// ARM64 capability registers.
+static const uint32_t g_cap_regnums_arm64[] = {
+    cap_c0_arm64,       cap_c1_arm64,  cap_c2_arm64,  cap_c3_arm64,
+    cap_c4_arm64,       cap_c5_arm64,  cap_c6_arm64,  cap_c7_arm64,
+    cap_c8_arm64,       cap_c9_arm64,  cap_c10_arm64, cap_c11_arm64,
+    cap_c12_arm64,      cap_c13_arm64, cap_c14_arm64, cap_c15_arm64,
+    cap_c16_arm64,      cap_c17_arm64, cap_c18_arm64, cap_c19_arm64,
+    cap_c20_arm64,      cap_c21_arm64, cap_c22_arm64, cap_c23_arm64,
+    cap_c24_arm64,      cap_c25_arm64, cap_c26_arm64, cap_c27_arm64,
+    cap_c28_arm64,      cap_cfp_arm64, cap_clr_arm64, cap_csp_arm64,
+    cap_pcc_arm64,      cap_ddc_arm64,
+    LLDB_INVALID_REGNUM // register sets need to end with this flag
+};
+static_assert(((sizeof g_cap_regnums_arm64 / sizeof g_cap_regnums_arm64[0]) -
+               1) == k_num_cap_registers_arm64,
+              "g_cap_regnums_arm64 has wrong number of register infos");
+
+// ARM64 state/backing registers.
+static const uint32_t g_state_regnums_arm64[] = {
+    state_sp_el0_arm64,   state_rsp_el0_arm64, state_csp_el0_arm64,
+    state_rcsp_el0_arm64, state_ddc_el0_arm64, state_rddc_el0_arm64,
+    LLDB_INVALID_REGNUM // register sets need to end with this flag
+};
+static_assert(((sizeof g_state_regnums_arm64 /
+                sizeof g_state_regnums_arm64[0]) -
+               1) == k_num_state_registers_arm64,
+              "g_state_regnums_arm64 has wrong number of register infos");
+
+// ARM64 thread pointer registers.
+static const uint32_t g_thread_regnums_arm64[] = {
+    thread_tpidr_el0_arm64, thread_ctpidr_el0_arm64,
+    LLDB_INVALID_REGNUM // register sets need to end with this flag
+};
+static_assert(((sizeof g_thread_regnums_arm64 /
+                sizeof g_thread_regnums_arm64[0]) -
+               1) == k_num_thread_registers_arm64,
+              "g_thread_regnums_arm64 has wrong number of register infos");
+
 namespace {
 // Number of register sets provided by this context.
-enum { k_num_register_sets = 2 };
+enum { k_num_register_sets = 5 };
 }
 
 // Register sets for ARM64.
@@ -105,7 +144,13 @@ static const RegisterSet g_reg_sets_arm64[k_num_register_sets] = {
     {"General Purpose Registers", "gpr", k_num_gpr_registers_arm64,
      g_gpr_regnums_arm64},
     {"Floating Point Registers", "fpu", k_num_fpr_registers_arm64,
-     g_fpu_regnums_arm64}};
+     g_fpu_regnums_arm64},
+    {"Capability Registers", "cap", k_num_cap_registers_arm64,
+     g_cap_regnums_arm64},
+    {"State Registers", "state", k_num_state_registers_arm64,
+     g_state_regnums_arm64},
+    {"Thread Pointer Registers", "state", k_num_thread_registers_arm64,
+     g_thread_regnums_arm64}};
 
 std::unique_ptr<NativeRegisterContextLinux>
 NativeRegisterContextLinux::CreateHostNativeRegisterContextLinux(
@@ -131,11 +176,20 @@ NativeRegisterContextLinux_arm64::NativeRegisterContextLinux_arm64(
     m_reg_info.num_registers = k_num_registers_arm64;
     m_reg_info.num_gpr_registers = k_num_gpr_registers_arm64;
     m_reg_info.num_fpr_registers = k_num_fpr_registers_arm64;
+    m_reg_info.num_cap_registers = k_num_cap_registers_arm64;
+    m_reg_info.num_state_registers = k_num_state_registers_arm64;
+    m_reg_info.num_thread_registers = k_num_thread_registers_arm64;
     m_reg_info.last_gpr = k_last_gpr_arm64;
     m_reg_info.first_fpr = k_first_fpr_arm64;
     m_reg_info.last_fpr = k_last_fpr_arm64;
     m_reg_info.first_fpr_v = fpu_v0_arm64;
     m_reg_info.last_fpr_v = fpu_v31_arm64;
+    m_reg_info.first_cap = k_first_cap_arm64;
+    m_reg_info.last_cap = k_last_cap_arm64;
+    m_reg_info.first_state = k_first_state_arm64;
+    m_reg_info.last_state = k_last_state_arm64;
+    m_reg_info.first_thread = k_first_thread_arm64;
+    m_reg_info.last_thread = k_last_thread_arm64;
     m_reg_info.gpr_flags = gpr_cpsr_arm64;
     break;
   default:
@@ -207,6 +261,12 @@ NativeRegisterContextLinux_arm64::ReadRegister(const RegisterInfo *reg_info,
     assert(offset < GetGPRSize());
     src = (uint8_t *)GetGPRBuffer() + offset;
 
+  } else if (IsCapR(reg)) {
+    return ReadCapabilityRegister(reg, reg_value);
+  } else if (IsStateR(reg)) {
+    return ReadStateRegister(reg, reg_value);
+  } else if (IsThreadR(reg)) {
+    return ReadThreadRegister(reg, reg_value);
   } else if (IsFPR(reg)) {
     if (!m_fpu_is_valid) {
 
@@ -222,7 +282,7 @@ NativeRegisterContextLinux_arm64::ReadRegister(const RegisterInfo *reg_info,
                   "write strategy unknown");
 
   reg_value.SetFromMemoryData(reg_info, src, reg_info->byte_size,
-                              eByteOrderLittle, error);
+                              eMemoryContentNormal, eByteOrderLittle, error);
 
   return error;
 }
@@ -297,6 +357,8 @@ Status NativeRegisterContextLinux_arm64::ReadAllRegisterValues(
   dst += GetGPRSize();
   ::memcpy(dst, GetFPRBuffer(), GetFPRSize());
 
+  // TODO Morello: Add capability registers.
+
   return error;
 }
 
@@ -349,6 +411,18 @@ bool NativeRegisterContextLinux_arm64::IsGPR(unsigned reg) const {
 
 bool NativeRegisterContextLinux_arm64::IsFPR(unsigned reg) const {
   return (m_reg_info.first_fpr <= reg && reg <= m_reg_info.last_fpr);
+}
+
+bool NativeRegisterContextLinux_arm64::IsCapR(unsigned reg) const {
+  return (m_reg_info.first_cap <= reg && reg <= m_reg_info.last_cap);
+}
+
+bool NativeRegisterContextLinux_arm64::IsStateR(unsigned reg) const {
+  return (m_reg_info.first_state <= reg && reg <= m_reg_info.last_state);
+}
+
+bool NativeRegisterContextLinux_arm64::IsThreadR(unsigned reg) const {
+  return (m_reg_info.first_thread <= reg && reg <= m_reg_info.last_thread);
 }
 
 uint32_t NativeRegisterContextLinux_arm64::NumSupportedHardwareBreakpoints() {
@@ -837,6 +911,197 @@ Status NativeRegisterContextLinux_arm64::WriteHardwareDebugRegs(int hwbType) {
 
   return NativeProcessLinux::PtraceWrapper(PTRACE_SETREGSET, m_thread.GetID(),
                                            &hwbType, &ioVec, ioVec.iov_len);
+}
+
+Status NativeRegisterContextLinux_arm64::GetRegSetFromKernel(int regset,
+                                                             void *reg_state,
+                                                             size_t len) {
+  // Read a specific register set from the kernel.
+  memset(reg_state, 0, len);
+
+  struct iovec ioVec;
+  ioVec.iov_base = reg_state;
+  ioVec.iov_len = len;
+
+  return NativeProcessLinux::PtraceWrapper(PTRACE_GETREGSET, m_thread.GetID(),
+                                           &regset, &ioVec, ioVec.iov_len);
+}
+
+void NativeRegisterContextLinux_arm64::SetCapabilityRegisterValue(
+    uint8_t *value, uint64_t tag, RegisterValue &reg_value) {
+  // Set the register value. Capabilities are always stored in the little-endian
+  // byte order.
+  llvm::APInt val(129, tag);
+  for (size_t i = 0; i < 16; ++i)
+    val = (val << 8) | value[15 - i];
+  reg_value.SetCapability128(val);
+}
+
+Status NativeRegisterContextLinux_arm64::ReadCapabilityRegister(
+    uint32_t regnum, RegisterValue &reg_value) {
+  assert(IsCapR(regnum));
+
+  struct user_cap_regs cap_state;
+  Status error =
+      GetRegSetFromKernel(NT_ARM_CAPS, &cap_state, sizeof(cap_state));
+  if (error.Fail())
+    return error;
+
+  // Get data for the right register.
+  uint8_t *value;
+  uint64_t tag;
+
+  constexpr __uint128_t MORELLO_PCC_EXECUTIVE_BIT_MASK = ((__uint128_t)1)
+                                                         << 111;
+
+  switch (regnum) {
+#define GET_CAP_DATA(lldb_name, kernel_name, bit)                              \
+  case cap_##lldb_name##_arm64:                                                \
+    value = reinterpret_cast<uint8_t *>(&cap_state.kernel_name);               \
+    tag = (cap_state.tag_map >> (bit)) & 1;                                    \
+    break;
+
+    GET_CAP_DATA(c0, c0, USER_C0_TAG);
+    GET_CAP_DATA(c1, c1, USER_C1_TAG);
+    GET_CAP_DATA(c2, c2, USER_C2_TAG);
+    GET_CAP_DATA(c3, c3, USER_C3_TAG);
+    GET_CAP_DATA(c4, c4, USER_C4_TAG);
+    GET_CAP_DATA(c5, c5, USER_C5_TAG);
+    GET_CAP_DATA(c6, c6, USER_C6_TAG);
+    GET_CAP_DATA(c7, c7, USER_C7_TAG);
+    GET_CAP_DATA(c8, c8, USER_C8_TAG);
+    GET_CAP_DATA(c9, c9, USER_C9_TAG);
+    GET_CAP_DATA(c10, c10, USER_C10_TAG);
+    GET_CAP_DATA(c11, c11, USER_C11_TAG);
+    GET_CAP_DATA(c12, c12, USER_C12_TAG);
+    GET_CAP_DATA(c13, c13, USER_C13_TAG);
+    GET_CAP_DATA(c14, c14, USER_C14_TAG);
+    GET_CAP_DATA(c15, c15, USER_C15_TAG);
+    GET_CAP_DATA(c16, c16, USER_C16_TAG);
+    GET_CAP_DATA(c17, c17, USER_C17_TAG);
+    GET_CAP_DATA(c18, c18, USER_C18_TAG);
+    GET_CAP_DATA(c19, c19, USER_C19_TAG);
+    GET_CAP_DATA(c20, c20, USER_C20_TAG);
+    GET_CAP_DATA(c21, c21, USER_C21_TAG);
+    GET_CAP_DATA(c22, c22, USER_C22_TAG);
+    GET_CAP_DATA(c23, c23, USER_C23_TAG);
+    GET_CAP_DATA(c24, c24, USER_C24_TAG);
+    GET_CAP_DATA(c25, c25, USER_C25_TAG);
+    GET_CAP_DATA(c26, c26, USER_C26_TAG);
+    GET_CAP_DATA(c27, c27, USER_C27_TAG);
+    GET_CAP_DATA(c28, c28, USER_C28_TAG);
+    GET_CAP_DATA(cfp, c29, USER_C29_TAG);
+    GET_CAP_DATA(clr, c30, USER_C30_TAG);
+    GET_CAP_DATA(pcc, pcc, USER_PCC_TAG);
+#undef GET_CAP_DATA
+
+  // Handle registers that depend on the state.
+  case cap_csp_arm64:
+    if (cap_state.pcc & MORELLO_PCC_EXECUTIVE_BIT_MASK) {
+      value = reinterpret_cast<uint8_t *>(&cap_state.csp_el0);
+      tag = (cap_state.tag_map >> USER_CSP_EL0_TAG) & 1;
+    } else {
+      value = reinterpret_cast<uint8_t *>(&cap_state.rcsp_el0);
+      tag = (cap_state.tag_map >> USER_RCSP_EL0_TAG) & 1;
+    }
+    break;
+  case cap_ddc_arm64:
+    if (cap_state.pcc & MORELLO_PCC_EXECUTIVE_BIT_MASK) {
+      value = reinterpret_cast<uint8_t *>(&cap_state.ddc_el0);
+      tag = (cap_state.tag_map >> USER_DDC_EL0_TAG) & 1;
+    } else {
+      value = reinterpret_cast<uint8_t *>(&cap_state.rddc_el0);
+      tag = (cap_state.tag_map >> USER_RDDC_EL0_TAG) & 1;
+    }
+    break;
+
+  default:
+    llvm_unreachable("Unhandled read of a capability register.");
+  }
+
+  SetCapabilityRegisterValue(value, tag, reg_value);
+  return error;
+}
+
+Status
+NativeRegisterContextLinux_arm64::ReadStateRegister(uint32_t regnum,
+                                                    RegisterValue &reg_value) {
+  assert(IsStateR(regnum));
+
+  struct user_cap_regs cap_state;
+  Status error =
+      GetRegSetFromKernel(NT_ARM_CAPS, &cap_state, sizeof(cap_state));
+  if (error.Fail())
+    return error;
+
+  // Handle primordial stack pointer registers first, or fall through to reading
+  // state-specific capability registers.
+  if (regnum == state_sp_el0_arm64) {
+    reg_value.SetUInt64(*reinterpret_cast<uint64_t *>(&cap_state.csp_el0));
+    return error;
+  }
+  if (regnum == state_rsp_el0_arm64) {
+    reg_value.SetUInt64(*reinterpret_cast<uint64_t *>(&cap_state.rcsp_el0));
+    return error;
+  }
+
+  // Get data for the right register.
+  uint8_t *value;
+  uint64_t tag;
+
+  switch (regnum) {
+#define GET_CAP_DATA(name, bit)                                                \
+  case state_##name##_arm64:                                                   \
+    value = reinterpret_cast<uint8_t *>(&cap_state.name);                      \
+    tag = (cap_state.tag_map >> (bit)) & 1;                                    \
+    break;
+
+    GET_CAP_DATA(csp_el0, USER_CSP_EL0_TAG);
+    GET_CAP_DATA(rcsp_el0, USER_RCSP_EL0_TAG);
+    GET_CAP_DATA(ddc_el0, USER_DDC_EL0_TAG);
+    GET_CAP_DATA(rddc_el0, USER_RDDC_EL0_TAG);
+#undef GET_CAP_DATA
+
+  default:
+    llvm_unreachable("Unhandled read of a state register.");
+  }
+
+  SetCapabilityRegisterValue(value, tag, reg_value);
+  return error;
+}
+
+Status
+NativeRegisterContextLinux_arm64::ReadThreadRegister(uint32_t regnum,
+                                                     RegisterValue &reg_value) {
+  assert(IsThreadR(regnum));
+
+  Status error;
+  switch (regnum) {
+  case thread_tpidr_el0_arm64: {
+    uint64_t tls_state;
+    error = GetRegSetFromKernel(NT_ARM_TLS, &tls_state, sizeof(tls_state));
+    if (error.Fail())
+      return error;
+
+    reg_value.SetUInt64(tls_state);
+  } break;
+
+  case thread_ctpidr_el0_arm64: {
+    struct user_cap_regs cap_state;
+    error = GetRegSetFromKernel(NT_ARM_CAPS, &cap_state, sizeof(cap_state));
+    if (error.Fail())
+      return error;
+
+    uint8_t *value = reinterpret_cast<uint8_t *>(&cap_state.ctpidr_el0);
+    uint64_t tag = (cap_state.tag_map >> USER_CTPIDR_EL0_TAG) & 1;
+    SetCapabilityRegisterValue(value, tag, reg_value);
+  } break;
+
+  default:
+    llvm_unreachable("Unhandled read of a thread pointer register.");
+  }
+
+  return error;
 }
 
 Status NativeRegisterContextLinux_arm64::ReadGPR() {

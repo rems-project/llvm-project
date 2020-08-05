@@ -149,6 +149,8 @@ public:
 
   bool getTgtMemIntrinsic(IntrinsicInst *Inst, MemIntrinsicInfo &Info);
 
+  int getCheriIntrinsicNullCaseValue();
+
   bool isLegalMaskedLoadStore(Type *DataType, MaybeAlign Alignment) {
     if (!isa<VectorType>(DataType) || !ST->hasSVE())
       return false;

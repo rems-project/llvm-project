@@ -81,6 +81,13 @@
   11 // The register that would contain pointer size or less argument 7 (if any)
 #define LLDB_REGNUM_GENERIC_ARG8                                               \
   12 // The register that would contain pointer size or less argument 8 (if any)
+
+// Generic register numbers for architectures that support capabilities.
+#define LLDB_REGNUM_GENERIC_PCC 13 // Program Counter Capability
+#define LLDB_REGNUM_GENERIC_CSP 14 // Capability Stack Pointer
+#define LLDB_REGNUM_GENERIC_CFP 15 // Capability Frame Pointer
+#define LLDB_REGNUM_GENERIC_RAC 16 // Return Address Capability
+
 /// Invalid value definitions
 #define LLDB_INVALID_ADDRESS UINT64_MAX
 #define LLDB_INVALID_INDEX32 UINT32_MAX

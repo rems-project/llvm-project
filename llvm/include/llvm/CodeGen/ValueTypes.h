@@ -143,6 +143,8 @@ namespace llvm {
 
     /// Return true if this is a fat pointer type.
     bool isFatPointer() const {
+      if (isVector())
+        return getScalarType().isFatPointer();
       return isSimple() ? V.isFatPointer() : false;
     }
 

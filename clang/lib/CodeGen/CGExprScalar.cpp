@@ -2211,19 +2211,23 @@ llvm::Value* CodeGenFunction::EmitPointerCast(llvm::Value *From,
   llvm::PointerType *toTy = cast<llvm::PointerType>(ConvertType(ToTy));
   unsigned ToAddrSpace = toTy->getAddressSpace();
   llvm::Value *result = EmitPointerCast(From, toTy);
-  if (Target.getTriple().isMIPS()) {
+  if (Target.SupportsCapabilities()) {
     if (ToAddrSpace != (unsigned)CGM.getTargetCodeGenInfo().getCHERICapabilityAS()) return result;
-    unsigned flags = 0xffff;
+    unsigned flags = CGM.getTargetCodeGenInfo().getAllPermMask();
     // Clear the store and store-capability flags
     if (ToTy->getPointeeType().getQualifiers().hasInput() &&
         !FromTy->getPointeeType().getQualifiers().hasInput())
-      flags &= 0xFFD7;
+      flags &= CGM.getTargetCodeGenInfo().getAllPermMask() &
+               ~(CGM.getTargetCodeGenInfo().getStorePerm() |
+                 CGM.getTargetCodeGenInfo().getStoreCapPerm());
     // Clear the load and load-capability flags
     if (ToTy->getPointeeType().getQualifiers().hasOutput() &&
         !FromTy->getPointeeType().getQualifiers().hasOutput())
-      flags &= 0xFFEB;
+      flags &= CGM.getTargetCodeGenInfo().getAllPermMask() &
+               ~(CGM.getTargetCodeGenInfo().getLoadPerm() |
+                 CGM.getTargetCodeGenInfo().getLoadCapPerm());
 
-    if (flags != 0xffff) {
+    if (flags != CGM.getTargetCodeGenInfo().getAllPermMask()) {
       llvm::Function *F = CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_perms_and, SizeTy);
       if (F->getFunctionType()->getParamType(0) != result->getType())
         result = Builder.CreateBitCast(result, F->getFunctionType()->getParamType(0));
@@ -2248,11 +2252,7 @@ static llvm::Value *createCToPtr(CodeGenFunction &CGF, llvm::Value *Cap,
                                  llvm::Type *LLVMTy, QualType Ty) {
   assert(llvm::isCheriPointer(Cap->getType(), &CGF.CGM.getDataLayout()));
   assert(LLVMTy->isIntegerTy());
-  auto DDC =
-      CGF.Builder.CreateIntrinsic(llvm::Intrinsic::cheri_ddc_get, {}, {});
-  auto CToPtr = CGF.Builder.CreateIntrinsic(
-      llvm::Intrinsic::cheri_cap_to_pointer, CGF.PtrDiffTy,
-      {DDC, CGF.Builder.CreatePointerCast(Cap, CGF.Int8CheriCapTy)});
+  auto CToPtr = CGF.getPointerFromCapability(Cap, LLVMTy);
   // sign extend if the target is a signed integer type otherwise zext.
   // This should only happen when assigning the result to a larger type:
   // i.e. __int128 or int64_t for CHERI64

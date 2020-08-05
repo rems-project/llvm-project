@@ -33,6 +33,26 @@
 #error FPU_OFFSET_NAME must be defined before including this header file
 #endif
 
+#ifdef DECLARE_CAPABILITY_REGISTER_INFOS
+#ifndef CAP_OFFSET
+#error CAP_OFFSET must be defined before including this header file
+#endif
+
+#ifndef STATE_OFFSET_NAME
+#error STATE_OFFSET_NAME must be defined before including this header file
+#endif
+
+#ifndef THREAD_OFFSET_NAME
+#error THREAD_OFFSET_NAME must be defined before including this header file
+#endif
+
+#else // DECLARE_CAPABILITY_REGISTER_INFOS
+#if defined(CAP_OFFSET) || defined(STATE_OFFSET_NAME) ||                       \
+    defined(THREAD_OFFSET_NAME)
+#error Please define DECLARE_CAPABILITY_REGISTER_INFOS if you wish to use capabilities
+#endif
+#endif // DECLARE_CAPABILITY_REGISTER_INFOS
+
 #ifndef EXC_OFFSET_NAME
 #error EXC_OFFSET_NAME must be defined before including this header file
 #endif
@@ -222,6 +242,54 @@ enum {
   fpu_fpsr,
   fpu_fpcr,
 
+  cap_c0,
+  cap_c1,
+  cap_c2,
+  cap_c3,
+  cap_c4,
+  cap_c5,
+  cap_c6,
+  cap_c7,
+  cap_c8,
+  cap_c9,
+  cap_c10,
+  cap_c11,
+  cap_c12,
+  cap_c13,
+  cap_c14,
+  cap_c15,
+  cap_c16,
+  cap_c17,
+  cap_c18,
+  cap_c19,
+  cap_c20,
+  cap_c21,
+  cap_c22,
+  cap_c23,
+  cap_c24,
+  cap_c25,
+  cap_c26,
+  cap_c27,
+  cap_c28,
+  cap_c29,
+  cap_cfp = cap_c29,
+  cap_c30,
+  cap_clr = cap_c30,
+  cap_c31,
+  cap_csp = cap_c31,
+  cap_pcc,
+  cap_ddc,
+
+  state_sp_el0,
+  state_rsp_el0,
+  state_csp_el0,
+  state_rcsp_el0,
+  state_ddc_el0,
+  state_rddc_el0,
+
+  thread_tpidr_el0,
+  thread_ctpidr_el0,
+
   exc_far,
   exc_esr,
   exc_exception,
@@ -326,6 +394,51 @@ static uint32_t g_contained_x25[] = {gpr_x25, LLDB_INVALID_REGNUM};
 static uint32_t g_contained_x26[] = {gpr_x26, LLDB_INVALID_REGNUM};
 static uint32_t g_contained_x27[] = {gpr_x27, LLDB_INVALID_REGNUM};
 static uint32_t g_contained_x28[] = {gpr_x28, LLDB_INVALID_REGNUM};
+
+// TODO Morello: LLDB in several places (NativeRegisterContextLinux_arm64.cpp,
+// NativeRegisterContextLinux.cpp, ...) assumes that if the invalidate_regs list
+// is not empty then the associated register is a sub-register of a different
+// register and it uses the first register from this list for the full
+// read/write. This is not desirable for the Xn and Cn registers and so their
+// invalidate lists always repeat the associated register at the first position
+// in the list. It seems LLDB should be really using value_regs instead of
+// invalidate_regs for this purpose but such a change is better to discuss and
+// implement upstream first.
+static uint32_t g_x0_invalidates[] = {gpr_x0, cap_c0, LLDB_INVALID_REGNUM};
+static uint32_t g_x1_invalidates[] = {gpr_x1, cap_c1, LLDB_INVALID_REGNUM};
+static uint32_t g_x2_invalidates[] = {gpr_x2, cap_c2, LLDB_INVALID_REGNUM};
+static uint32_t g_x3_invalidates[] = {gpr_x3, cap_c3, LLDB_INVALID_REGNUM};
+static uint32_t g_x4_invalidates[] = {gpr_x4, cap_c4, LLDB_INVALID_REGNUM};
+static uint32_t g_x5_invalidates[] = {gpr_x5, cap_c5, LLDB_INVALID_REGNUM};
+static uint32_t g_x6_invalidates[] = {gpr_x6, cap_c6, LLDB_INVALID_REGNUM};
+static uint32_t g_x7_invalidates[] = {gpr_x7, cap_c7, LLDB_INVALID_REGNUM};
+static uint32_t g_x8_invalidates[] = {gpr_x8, cap_c8, LLDB_INVALID_REGNUM};
+static uint32_t g_x9_invalidates[] = {gpr_x9, cap_c9, LLDB_INVALID_REGNUM};
+static uint32_t g_x10_invalidates[] = {gpr_x10, cap_c10, LLDB_INVALID_REGNUM};
+static uint32_t g_x11_invalidates[] = {gpr_x11, cap_c11, LLDB_INVALID_REGNUM};
+static uint32_t g_x12_invalidates[] = {gpr_x12, cap_c12, LLDB_INVALID_REGNUM};
+static uint32_t g_x13_invalidates[] = {gpr_x13, cap_c13, LLDB_INVALID_REGNUM};
+static uint32_t g_x14_invalidates[] = {gpr_x14, cap_c14, LLDB_INVALID_REGNUM};
+static uint32_t g_x15_invalidates[] = {gpr_x15, cap_c15, LLDB_INVALID_REGNUM};
+static uint32_t g_x16_invalidates[] = {gpr_x16, cap_c16, LLDB_INVALID_REGNUM};
+static uint32_t g_x17_invalidates[] = {gpr_x17, cap_c17, LLDB_INVALID_REGNUM};
+static uint32_t g_x18_invalidates[] = {gpr_x18, cap_c18, LLDB_INVALID_REGNUM};
+static uint32_t g_x19_invalidates[] = {gpr_x19, cap_c19, LLDB_INVALID_REGNUM};
+static uint32_t g_x20_invalidates[] = {gpr_x20, cap_c20, LLDB_INVALID_REGNUM};
+static uint32_t g_x21_invalidates[] = {gpr_x21, cap_c21, LLDB_INVALID_REGNUM};
+static uint32_t g_x22_invalidates[] = {gpr_x22, cap_c22, LLDB_INVALID_REGNUM};
+static uint32_t g_x23_invalidates[] = {gpr_x23, cap_c23, LLDB_INVALID_REGNUM};
+static uint32_t g_x24_invalidates[] = {gpr_x24, cap_c24, LLDB_INVALID_REGNUM};
+static uint32_t g_x25_invalidates[] = {gpr_x25, cap_c25, LLDB_INVALID_REGNUM};
+static uint32_t g_x26_invalidates[] = {gpr_x26, cap_c26, LLDB_INVALID_REGNUM};
+static uint32_t g_x27_invalidates[] = {gpr_x27, cap_c27, LLDB_INVALID_REGNUM};
+static uint32_t g_x28_invalidates[] = {gpr_x28, cap_c28, LLDB_INVALID_REGNUM};
+static uint32_t g_fp_invalidates[] = {gpr_fp, cap_cfp, LLDB_INVALID_REGNUM};
+static uint32_t g_lr_invalidates[] = {gpr_lr, cap_clr, LLDB_INVALID_REGNUM};
+static uint32_t g_sp_invalidates[] = {
+    gpr_sp,        cap_csp,        state_sp_el0,       state_rsp_el0,
+    state_csp_el0, state_rcsp_el0, LLDB_INVALID_REGNUM};
+static uint32_t g_pc_invalidates[] = {gpr_pc, cap_pcc, LLDB_INVALID_REGNUM};
 
 static uint32_t g_w0_invalidates[] = {gpr_x0, LLDB_INVALID_REGNUM};
 static uint32_t g_w1_invalidates[] = {gpr_x1, LLDB_INVALID_REGNUM};
@@ -456,6 +569,58 @@ static uint32_t g_d29_invalidates[] = {fpu_v29, fpu_s29, LLDB_INVALID_REGNUM};
 static uint32_t g_d30_invalidates[] = {fpu_v30, fpu_s30, LLDB_INVALID_REGNUM};
 static uint32_t g_d31_invalidates[] = {fpu_v31, fpu_s31, LLDB_INVALID_REGNUM};
 
+#ifdef DECLARE_CAPABILITY_REGISTER_INFOS
+static uint32_t g_c0_invalidates[] = {gpr_x0, LLDB_INVALID_REGNUM};
+static uint32_t g_c1_invalidates[] = {gpr_x1, LLDB_INVALID_REGNUM};
+static uint32_t g_c2_invalidates[] = {gpr_x2, LLDB_INVALID_REGNUM};
+static uint32_t g_c3_invalidates[] = {gpr_x3, LLDB_INVALID_REGNUM};
+static uint32_t g_c4_invalidates[] = {gpr_x4, LLDB_INVALID_REGNUM};
+static uint32_t g_c5_invalidates[] = {gpr_x5, LLDB_INVALID_REGNUM};
+static uint32_t g_c6_invalidates[] = {gpr_x6, LLDB_INVALID_REGNUM};
+static uint32_t g_c7_invalidates[] = {gpr_x7, LLDB_INVALID_REGNUM};
+static uint32_t g_c8_invalidates[] = {gpr_x8, LLDB_INVALID_REGNUM};
+static uint32_t g_c9_invalidates[] = {gpr_x9, LLDB_INVALID_REGNUM};
+static uint32_t g_c10_invalidates[] = {gpr_x10, LLDB_INVALID_REGNUM};
+static uint32_t g_c11_invalidates[] = {gpr_x11, LLDB_INVALID_REGNUM};
+static uint32_t g_c12_invalidates[] = {gpr_x12, LLDB_INVALID_REGNUM};
+static uint32_t g_c13_invalidates[] = {gpr_x13, LLDB_INVALID_REGNUM};
+static uint32_t g_c14_invalidates[] = {gpr_x14, LLDB_INVALID_REGNUM};
+static uint32_t g_c15_invalidates[] = {gpr_x15, LLDB_INVALID_REGNUM};
+static uint32_t g_c16_invalidates[] = {gpr_x16, LLDB_INVALID_REGNUM};
+static uint32_t g_c17_invalidates[] = {gpr_x17, LLDB_INVALID_REGNUM};
+static uint32_t g_c18_invalidates[] = {gpr_x18, LLDB_INVALID_REGNUM};
+static uint32_t g_c19_invalidates[] = {gpr_x19, LLDB_INVALID_REGNUM};
+static uint32_t g_c20_invalidates[] = {gpr_x20, LLDB_INVALID_REGNUM};
+static uint32_t g_c21_invalidates[] = {gpr_x21, LLDB_INVALID_REGNUM};
+static uint32_t g_c22_invalidates[] = {gpr_x22, LLDB_INVALID_REGNUM};
+static uint32_t g_c23_invalidates[] = {gpr_x23, LLDB_INVALID_REGNUM};
+static uint32_t g_c24_invalidates[] = {gpr_x24, LLDB_INVALID_REGNUM};
+static uint32_t g_c25_invalidates[] = {gpr_x25, LLDB_INVALID_REGNUM};
+static uint32_t g_c26_invalidates[] = {gpr_x26, LLDB_INVALID_REGNUM};
+static uint32_t g_c27_invalidates[] = {gpr_x27, LLDB_INVALID_REGNUM};
+static uint32_t g_c28_invalidates[] = {gpr_x28, LLDB_INVALID_REGNUM};
+static uint32_t g_cfp_invalidates[] = {gpr_fp, LLDB_INVALID_REGNUM};
+static uint32_t g_clr_invalidates[] = {gpr_lr, LLDB_INVALID_REGNUM};
+static uint32_t g_csp_invalidates[] = {gpr_sp,         state_sp_el0,
+                                       state_rsp_el0,  state_csp_el0,
+                                       state_rcsp_el0, LLDB_INVALID_REGNUM};
+static uint32_t g_pcc_invalidates[] = {gpr_pc, gpr_sp, cap_csp, cap_ddc,
+                                       LLDB_INVALID_REGNUM};
+static uint32_t g_ddc_invalidates[] = {state_ddc_el0, state_rddc_el0,
+                                       LLDB_INVALID_REGNUM};
+
+static uint32_t g_sp_el0_invalidates[] = {gpr_sp, cap_csp, state_csp_el0,
+                                          LLDB_INVALID_REGNUM};
+static uint32_t g_rsp_el0_invalidates[] = {gpr_sp, cap_csp, state_rcsp_el0,
+                                           LLDB_INVALID_REGNUM};
+static uint32_t g_csp_el0_invalidates[] = {gpr_sp, cap_csp, state_sp_el0,
+                                           LLDB_INVALID_REGNUM};
+static uint32_t g_rcsp_el0_invalidates[] = {gpr_sp, cap_csp, state_rsp_el0,
+                                            LLDB_INVALID_REGNUM};
+static uint32_t g_ddc_el0_invalidates[] = {cap_ddc, LLDB_INVALID_REGNUM};
+static uint32_t g_rddc_el0_invalidates[] = {cap_ddc, LLDB_INVALID_REGNUM};
+#endif // DECLARE_CAPABILITY_REGISTER_INFOS
+
 // Generates register kinds array for 64-bit general purpose registers
 #define GPR64_KIND(reg, generic_kind)                                          \
   {                                                                            \
@@ -488,11 +653,81 @@ static uint32_t g_d31_invalidates[] = {fpu_v31, fpu_s31, LLDB_INVALID_REGNUM};
 #define MISC_FPU_KIND(lldb_kind) MISC_KIND(lldb_kind)
 #define MISC_EXC_KIND(lldb_kind) MISC_KIND(lldb_kind)
 
+#ifdef DECLARE_CAPABILITY_REGISTER_INFOS
+// Generates register kinds array for capability general purpose registers
+#define CAP_KIND(reg, generic_kind)                                            \
+  {                                                                            \
+    arm64_ehframe::reg, arm64_dwarf::reg, generic_kind,                        \
+        LLDB_INVALID_REGNUM, cap_##reg                                         \
+  }
+
+// Defines a capability general purpose register
+#define DEFINE_CAP(reg, generic_kind)                                          \
+  {                                                                            \
+    #reg, nullptr, 17, CAP_OFFSET(cap_##reg - cap_c0),                         \
+        lldb::eEncodingCapability,                                             \
+        lldb::eFormatHex, CAP_KIND(reg, generic_kind), nullptr,                \
+        g_##reg##_invalidates, nullptr, 0                                      \
+  }
+
+#define DEFINE_CAP_PCC(reg, generic_kind)                                     \
+  {                                                                            \
+    #reg, nullptr, 17, CAP_OFFSET(cap_##reg - cap_c0),                         \
+        lldb::eEncodingCapability,                                             \
+        lldb::eFormatHex, MISC_KIND(cap_##reg), nullptr,    \
+        g_##reg##_invalidates, nullptr, 0                                      \
+  }
+
+#define DEFINE_CAP_ALT(reg, alt, generic_kind)                                 \
+  {                                                                            \
+    #reg, #alt, 17, CAP_OFFSET(cap_##reg - cap_c0),                            \
+        lldb::eEncodingCapability,                                             \
+        lldb::eFormatHex, CAP_KIND(reg, generic_kind), nullptr,                \
+        g_##reg##_invalidates, nullptr, 0                                      \
+  }
+
+// Generates register kinds array for state registers
+#define STATE_KIND(reg, generic_kind)                                          \
+  {                                                                            \
+    arm64_ehframe::reg, arm64_dwarf::reg, generic_kind,                        \
+        LLDB_INVALID_REGNUM, state_##reg                                       \
+  }
+
+// Defines a state capability register
+#define DEFINE_STATE_CAP(reg, generic_kind)                                    \
+  {                                                                            \
+    #reg, nullptr, 17, STATE_OFFSET_NAME(reg),                                 \
+        lldb::eEncodingCapability,                                             \
+        lldb::eFormatHex, STATE_KIND(reg, generic_kind), nullptr,              \
+        g_##reg##_invalidates, nullptr, 0                                      \
+  }
+
+// Defines a state GPR register
+#define DEFINE_STATE_GPR(reg, generic_kind)                                    \
+  {                                                                            \
+    #reg, nullptr, 8, STATE_OFFSET_NAME(reg),                                  \
+        lldb::eEncodingUint,                                                   \
+        lldb::eFormatHex, STATE_KIND(reg, generic_kind), nullptr,              \
+        g_##reg##_invalidates, nullptr, 0                                      \
+  }
+
+// Defines a thread pointer register
+#define DEFINE_TP_REG(reg, type, size)                           \
+  {                                                                            \
+    #reg, nullptr, size, THREAD_OFFSET_NAME(reg),                              \
+        type,                                                                  \
+        lldb::eFormatHex, MISC_KIND(thread_##reg), nullptr, \
+        nullptr, nullptr, 0                                      \
+  }
+
+#endif // DECLARE_CAPABILITY_REGISTER_INFOS
+
 // Defines a 64-bit general purpose register
 #define DEFINE_GPR64(reg, generic_kind)                                        \
   {                                                                            \
     #reg, nullptr, 8, GPR_OFFSET(gpr_##reg), lldb::eEncodingUint,              \
-        lldb::eFormatHex, GPR64_KIND(reg, generic_kind), nullptr, nullptr,     \
+        lldb::eFormatHex, GPR64_KIND(reg, generic_kind), nullptr,              \
+        g_##reg##_invalidates,                                                 \
         nullptr, 0                                                             \
   }
 
@@ -500,7 +735,8 @@ static uint32_t g_d31_invalidates[] = {fpu_v31, fpu_s31, LLDB_INVALID_REGNUM};
 #define DEFINE_GPR64_ALT(reg, alt, generic_kind)                               \
   {                                                                            \
     #reg, #alt, 8, GPR_OFFSET(gpr_##reg), lldb::eEncodingUint,                 \
-        lldb::eFormatHex, GPR64_KIND(reg, generic_kind), nullptr, nullptr,     \
+        lldb::eFormatHex, GPR64_KIND(reg, generic_kind), nullptr,              \
+        g_##reg##_invalidates,                                                 \
         nullptr, 0                                                             \
   }
 
@@ -712,6 +948,54 @@ static lldb_private::RegisterInfo g_register_infos_arm64_le[] = {
     // DEFINE_MISC_REGS(name, size, TYPE, lldb kind)
     DEFINE_MISC_REGS(fpsr, 4, FPU, fpu_fpsr),
     DEFINE_MISC_REGS(fpcr, 4, FPU, fpu_fpcr),
+
+#ifdef DECLARE_CAPABILITY_REGISTER_INFOS
+    DEFINE_CAP(c0, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c1, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c2, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c3, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c4, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c5, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c6, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c7, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c8, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c9, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c10, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c11, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c12, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c13, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c14, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c15, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c16, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c17, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c18, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c19, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c20, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c21, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c22, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c23, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c24, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c25, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c26, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c27, LLDB_INVALID_REGNUM),
+    DEFINE_CAP(c28, LLDB_INVALID_REGNUM),
+    DEFINE_CAP_ALT(cfp, c29, LLDB_REGNUM_GENERIC_CFP),
+    DEFINE_CAP_ALT(clr, c30, LLDB_REGNUM_GENERIC_RAC),
+    DEFINE_CAP_ALT(csp, c31, LLDB_REGNUM_GENERIC_CSP),
+    DEFINE_CAP_PCC(pcc, LLDB_REGNUM_GENERIC_PCC),
+    DEFINE_CAP(ddc, LLDB_INVALID_REGNUM),
+
+    DEFINE_STATE_GPR(sp_el0, LLDB_INVALID_REGNUM),
+    DEFINE_STATE_GPR(rsp_el0, LLDB_INVALID_REGNUM),
+    DEFINE_STATE_CAP(csp_el0, LLDB_INVALID_REGNUM),
+    DEFINE_STATE_CAP(rcsp_el0, LLDB_INVALID_REGNUM),
+    DEFINE_STATE_CAP(ddc_el0, LLDB_INVALID_REGNUM),
+    DEFINE_STATE_CAP(rddc_el0, LLDB_INVALID_REGNUM),
+
+    DEFINE_TP_REG(tpidr_el0, lldb::eEncodingUint, 8),
+    DEFINE_TP_REG(ctpidr_el0, lldb::eEncodingCapability, 17),
+#endif // DECLARE_CAPABILITY_REGISTER_INFOS
+
     DEFINE_MISC_REGS(far, 8, EXC, exc_far),
     DEFINE_MISC_REGS(esr, 4, EXC, exc_esr),
     DEFINE_MISC_REGS(exception, 4, EXC, exc_exception),

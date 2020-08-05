@@ -138,7 +138,7 @@ void MipsABIInfo::updateCheriInitialFrameStateHack(const MCAsmInfo &MAI,
   assert(MRI.getProgramCounter() == 0 && "Wrong PC register");
 
   // Update the value of the initial frame state (since C11 is set too late)
-  auto &InitialState = MAI.getInitialFrameState();
+  auto &InitialState = MAI.getInitialFrameState(MCCFIProcType::Normal);
   unsigned C11Dwarf = MRI.getDwarfRegNum(StackReg, true);
   for (const MCCFIInstruction &Inst : InitialState) {
     if (Inst.getOperation() == MCCFIInstruction::OpDefCfaRegister) {

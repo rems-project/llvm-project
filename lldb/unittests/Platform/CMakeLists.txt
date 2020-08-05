@@ -5,4 +5,5 @@ add_lldb_unittest(LLDBPlatformTests
     lldbPluginPlatformMacOSX
   LINK_COMPONENTS
     Support
+    RuntimeDyld
   )

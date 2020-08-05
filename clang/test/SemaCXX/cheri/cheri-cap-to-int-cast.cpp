@@ -36,7 +36,7 @@ void cast_vaddr() {
   v = static_cast<vaddr_t>(a); // expected-error {{static_cast from 'void * __capability' to 'vaddr_t' (aka 'unsigned long') is not allowed}}
   v = (vaddr_t)a;
   v = vaddr_t(a);
-  v = vaddr_t{a}; // expected-error {{type 'void * __capability' cannot be narrowed to 'vaddr_t' (aka 'unsigned long') in initializer list}}
+  v = vaddr_t{a}; // expected-error {{cannot initialize a value of type 'vaddr_t' (aka 'unsigned long') with an lvalue of type 'void * __capability'}}
 }
 
 void cast_vaddr2() {
@@ -58,7 +58,7 @@ void cast_long() {
   v = static_cast<long>(a);  // expected-error {{static_cast from 'void * __capability' to 'long' is not allowed}}
   v = (long)a;  // expected-warning {{cast from capability type 'void * __capability' to non-capability, non-address type 'long' is most likely an error}}
   v = long(a); // expected-warning {{cast from capability type 'void * __capability' to non-capability, non-address type 'long' is most likely an error}}
-  v = long{a}; // expected-error {{type 'void * __capability' cannot be narrowed to 'long' in initializer list}}
+  v = long{a}; // expected-error {{cannot initialize a value of type 'long' with an lvalue of type 'void * __capability'}}
 }
 
 
@@ -68,7 +68,7 @@ void cast_int() {
   v = static_cast<int>(a);  // expected-error {{static_cast from 'void * __capability' to 'int' is not allowed}}
   v = (int)a; // expected-error {{cast from capability to smaller type 'int' loses information}}
   v = int(a); // expected-error {{cast from capability to smaller type 'int' loses information}}
-  v = int{a}; // expected-error {{type 'void * __capability' cannot be narrowed to 'int' in initializer list}}
+  v = int{a}; // expected-error {{cannot initialize a value of type 'int' with an lvalue of type 'void * __capability'}}
 }
 
 void cast_uintcap() {
@@ -169,8 +169,8 @@ void cast_ptr() {
   using voidp = void*;
   DO_ALL_CASTS(voidp, a);
 #ifndef __CHERI_PURE_CAPABILITY__
-  // expected-error@-2 4 {{cast from capability type 'void * __capability' to non-capability type 'voidp' (aka 'void *') is most likely an error}}
-  // expected-error@-3 {{type 'void * __capability' cannot be narrowed to 'voidp' (aka 'void *') in initializer list}}
+  // expected-error@-2 4 {{cast from capability type 'void * __capability' to non-capability type 'voidp' (aka 'void *') is most likely an error; use __cheri_fromcap to convert between pointers and capabilities}}
+  // expected-error@-3 {{cannot initialize a value of type 'voidp' (aka 'void *') with an lvalue of type 'void * __capability'}}
   // expected-error@-4 {{const_cast from 'void * __capability' to 'voidp' (aka 'void *') is not allowed}}
 #endif
   // expected-error@-6 {{'void' is not a class}}
@@ -181,7 +181,7 @@ void cast_ptr() {
 
 #ifndef __CHERI_PURE_CAPABILITY__
   // expected-error@-3 4 {{cast from capability type 'void * __capability' to non-capability type 'wordp' (aka '__uintcap_t *') is most likely an error}}
-  // expected-error@-4 {{type 'void * __capability' cannot be narrowed to 'wordp' (aka '__uintcap_t *') in initializer list}}
+  // expected-error@-4 {{cannot initialize a value of type 'wordp' (aka '__uintcap_t *') with an lvalue of type 'void * __capability'}}
   // expected-error@-5 {{const_cast from 'void * __capability' to 'wordp' (aka '__uintcap_t *') is not allowed}}
 #else
   // expected-error@-7 {{const_cast from 'void * __capability' to 'wordp' (aka '__uintcap_t * __capability') is not allowed}}
@@ -196,7 +196,7 @@ void cast_ptr() {
   DO_ALL_CASTS(test_class_ptr, b);
 #ifndef __CHERI_PURE_CAPABILITY__
   // expected-error@-2 4 {{cast from capability type 'test_class * __capability' to non-capability type 'test_class_ptr' (aka 'test_class *') is most likely an error}}
-  // expected-error@-3 {{test_class * __capability' cannot be narrowed to 'test_class_ptr' (aka 'test_class *') in initializer list}}
+  // expected-error@-3 {{cannot initialize a value of type 'test_class_ptr' (aka 'test_class *') with an lvalue of type 'test_class * __capability'}}
   // expected-error@-4 {{static_cast from 'test_class * __capability' to 'test_class_ptr' (aka 'test_class *'), which are not related by inheritance, is not allowed}} // TODO: this should be a better error message
   // expected-error@-5 {{const_cast from 'test_class * __capability' to 'test_class_ptr' (aka 'test_class *') is not allowed}}
 #endif

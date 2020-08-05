@@ -864,22 +864,22 @@ const char *SBProcess::GetBroadcasterClass() {
 }
 
 size_t SBProcess::ReadMemory(addr_t addr, void *dst, size_t dst_len,
-                             SBError &sb_error) {
+                             SBError &sb_error, MemoryContentType type) {
   LLDB_RECORD_DUMMY(size_t, SBProcess, ReadMemory,
-                    (lldb::addr_t, void *, size_t, lldb::SBError &), addr, dst,
-                    dst_len, sb_error);
+                    (lldb::addr_t, void *, size_t, lldb::SBError &,
+                     MemoryContentType), addr, dst, dst_len, sb_error, type);
 
   size_t bytes_read = 0;
 
   ProcessSP process_sp(GetSP());
-
 
   if (process_sp) {
     Process::StopLocker stop_locker;
     if (stop_locker.TryLock(&process_sp->GetRunLock())) {
       std::lock_guard<std::recursive_mutex> guard(
           process_sp->GetTarget().GetAPIMutex());
-      bytes_read = process_sp->ReadMemory(addr, dst, dst_len, sb_error.ref());
+      bytes_read =
+          process_sp->ReadMemory(addr, dst, dst_len, sb_error.ref(), type);
     } else {
       sb_error.SetErrorString("process is running");
     }

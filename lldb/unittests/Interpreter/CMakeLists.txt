@@ -5,4 +5,6 @@ add_lldb_unittest(InterpreterTests
   LINK_LIBS
     lldbInterpreter
     lldbUtilityHelpers
+  LINK_COMPONENTS
+    RuntimeDyld
   )

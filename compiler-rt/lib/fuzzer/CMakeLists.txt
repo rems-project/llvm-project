@@ -142,7 +142,7 @@ if(OS_NAME MATCHES "Linux|Fuchsia" AND
     set(LIBCXX_${arch}_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/libcxx_fuzzer_${arch})
     add_custom_libcxx(libcxx_fuzzer_${arch} ${LIBCXX_${arch}_PREFIX}
       CFLAGS ${TARGET_CFLAGS}
-      CMAKE_ARGS -DCMAKE_CXX_COMPILER_WORKS=ON
+      CMAKE_ARGS -DLIBCXX_ENABLE_THREADS=ON -DCMAKE_CXX_COMPILER_WORKS=ON
                  -DCMAKE_POSITION_INDEPENDENT_CODE=ON
                  -DLIBCXXABI_ENABLE_EXCEPTIONS=OFF
                  -DLIBCXX_ABI_NAMESPACE=__Fuzzer)

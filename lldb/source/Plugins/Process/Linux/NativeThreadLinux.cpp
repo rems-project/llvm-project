@@ -8,6 +8,7 @@
 
 #include "NativeThreadLinux.h"
 
+#include <cstring>
 #include <signal.h>
 #include <sstream>
 
@@ -18,6 +19,7 @@
 #include "lldb/Host/HostNativeThread.h"
 #include "lldb/Host/linux/Ptrace.h"
 #include "lldb/Host/linux/Support.h"
+#include "lldb/Utility/DataBufferHeap.h"
 #include "lldb/Utility/LLDBAssert.h"
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/State.h"
@@ -201,6 +203,36 @@ Status NativeThreadLinux::RemoveHardwareBreakpoint(lldb::addr_t addr) {
   }
 
   return Status("Clearing hardware breakpoint failed.");
+}
+
+Status NativeThreadLinux::GetSigInfoTargetData(DataBufferSP &data_sp) {
+  // Check that the tracer (this program) and tracee (target) have the same
+  // siginfo layout. No translation of the data is currently supported.
+  Status error;
+  ArchSpec arch = GetProcess().GetArchitecture();
+  if (!arch.IsValid()) {
+    error.SetErrorString("architecture description is not available");
+    return error;
+  }
+
+  if (sizeof(void *) != arch.GetAddressByteSize()) {
+    error.SetErrorStringWithFormatv(
+        "translation of siginfo data from tracer's format with %d-byte address "
+        "size to target's layout with %d-byte address size is not supported",
+        sizeof(void *), arch.GetAddressByteSize());
+    return error;
+  }
+
+  // Obtain siginfo data.
+  siginfo_t data;
+  memset(&data, 0, sizeof(data));
+  error = NativeProcessLinux::PtraceWrapper(PTRACE_GETSIGINFO, GetID(), nullptr,
+                                            &data);
+  if (error.Fail())
+    return error;
+
+  data_sp.reset(new DataBufferHeap(&data, sizeof(data)));
+  return error;
 }
 
 Status NativeThreadLinux::Resume(uint32_t signo) {

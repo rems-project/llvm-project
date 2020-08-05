@@ -32,18 +32,18 @@ define void @foo(i32* nocapture readonly %x, i32* nocapture readonly %y, i32* no
 ; INSN:       for.body:
 ; INSN-NEXT:    [[LSR_IV:%.*]] = phi i64 [ [[LSR_IV_NEXT:%.*]], [[FOR_BODY]] ], [ -4096, [[ENTRY:%.*]] ]
 ; INSN-NEXT:    [[UGLYGEP8:%.*]] = getelementptr i8, i8* [[X7]], i64 [[LSR_IV]]
-; INSN-NEXT:    [[UGLYGEP89:%.*]] = bitcast i8* [[UGLYGEP8]] to i32*
-; INSN-NEXT:    [[SCEVGEP10:%.*]] = getelementptr i32, i32* [[UGLYGEP89]], i64 1024
-; INSN-NEXT:    [[TMP:%.*]] = load i32, i32* [[SCEVGEP10]], align 4
+; INSN-NEXT:    [[SCEVGEP10:%.*]] = getelementptr i8, i8* [[UGLYGEP8]], i64 4096
+; INSN-NEXT:    [[SCEVGEP11:%.*]] = bitcast i8* [[SCEVGEP10]] to i32*
+; INSN-NEXT:    [[TMP:%.*]] = load i32, i32* [[SCEVGEP11]], align 4
 ; INSN-NEXT:    [[UGLYGEP4:%.*]] = getelementptr i8, i8* [[Y3]], i64 [[LSR_IV]]
-; INSN-NEXT:    [[UGLYGEP45:%.*]] = bitcast i8* [[UGLYGEP4]] to i32*
-; INSN-NEXT:    [[SCEVGEP6:%.*]] = getelementptr i32, i32* [[UGLYGEP45]], i64 1024
-; INSN-NEXT:    [[TMP1:%.*]] = load i32, i32* [[SCEVGEP6]], align 4
+; INSN-NEXT:    [[SCEVGEP6:%.*]] = getelementptr i8, i8* [[UGLYGEP4]], i64 4096
+; INSN-NEXT:    [[UGLYGEP45:%.*]] = bitcast i8* [[SCEVGEP6]] to i32*
+; INSN-NEXT:    [[TMP1:%.*]] = load i32, i32* [[UGLYGEP45]], align 4
 ; INSN-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], [[TMP]]
 ; INSN-NEXT:    [[UGLYGEP:%.*]] = getelementptr i8, i8* [[Q1]], i64 [[LSR_IV]]
-; INSN-NEXT:    [[UGLYGEP2:%.*]] = bitcast i8* [[UGLYGEP]] to i32*
-; INSN-NEXT:    [[SCEVGEP:%.*]] = getelementptr i32, i32* [[UGLYGEP2]], i64 1024
-; INSN-NEXT:    store i32 [[ADD]], i32* [[SCEVGEP]], align 4
+; INSN-NEXT:    [[SCEVGEP:%.*]] = getelementptr i8, i8* [[UGLYGEP]], i64 4096
+; INSN-NEXT:    [[UGLYGEP2:%.*]] = bitcast i8* [[SCEVGEP]] to i32*
+; INSN-NEXT:    store i32 [[ADD]], i32* [[UGLYGEP2]], align 4
 ; INSN-NEXT:    [[LSR_IV_NEXT]] = add nsw i64 [[LSR_IV]], 4
 ; INSN-NEXT:    [[EXITCOND:%.*]] = icmp eq i64 [[LSR_IV_NEXT]], 0
 ; INSN-NEXT:    br i1 [[EXITCOND]], label [[FOR_COND_CLEANUP:%.*]], label [[FOR_BODY]]

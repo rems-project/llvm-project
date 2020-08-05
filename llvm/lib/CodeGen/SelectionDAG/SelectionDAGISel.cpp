@@ -2075,6 +2075,28 @@ bool SelectionDAGISel::CheckOrMask(SDValue LHS, ConstantSDNode *RHS,
   return false;
 }
 
+/// accessesMemoryViaCapability - True iff N accesses memory via a capability.
+/// Requirement: N must be a load or a store SDNode.
+bool SelectionDAGISel::accessesMemoryViaCapability(const SDNode *N) const {
+  if (!TII->supportsCapabilities())
+    return false;
+
+  auto LS = dyn_cast<MemSDNode>(N);
+  if (!LS)
+    llvm_unreachable("A load or a store SDNode was expected.");
+
+  unsigned AS = TII->getCapabilitiesAddressSpace();
+
+  // Memory accesses thru standard pointers get their address space annotated.
+  if (LS->getAddressSpace() == AS)
+    return true;
+
+  // But this is not the case with frameindexes for example. In this case,
+  // the pointer itself is to be queried.
+  EVT BasePtrVT = LS->getBasePtr().getValueType();
+  return BasePtrVT.isFatPointer();
+}
+
 /// SelectInlineAsmMemoryOperands - Calls to this are automatically generated
 /// by tblgen.  Others should not call it.
 void SelectionDAGISel::SelectInlineAsmMemoryOperands(std::vector<SDValue> &Ops,
