@@ -95,6 +95,10 @@ public:
 
   void SetDisableASLR(bool b);
 
+  bool GetInheritTCC() const;
+
+  void SetInheritTCC(bool b);
+
   bool GetDetachOnError() const;
 
   void SetDetachOnError(bool b);
@@ -235,6 +239,7 @@ private:
   void ErrorPathValueChangedCallback();
   void DetachOnErrorValueChangedCallback();
   void DisableASLRValueChangedCallback();
+  void InheritTCCValueChangedCallback();
   void DisableSTDIOValueChangedCallback();
 
   Environment ComputeEnvironment() const;
