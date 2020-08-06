@@ -645,7 +645,6 @@ void OptionsWithRaw::SetFromString(llvm::StringRef arg_string) {
   }
 
   bool found_suffix = false;
-
   while (!arg_string.empty()) {
     // The length of the prefix before parsing.
     std::size_t prev_prefix_length = original_args.size() - arg_string.size();
@@ -684,10 +683,8 @@ void OptionsWithRaw::SetFromString(llvm::StringRef arg_string) {
   }
 
   // If we didn't find a suffix delimiter, the whole string is the raw suffix.
-  if (!found_suffix) {
-    found_suffix = true;
+  if (!found_suffix)
     m_suffix = std::string(original_args);
-  }
 }
 
 void llvm::yaml::MappingTraits<Args::ArgEntry>::mapping(IO &io,
