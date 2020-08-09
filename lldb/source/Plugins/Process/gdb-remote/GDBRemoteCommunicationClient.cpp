@@ -1116,7 +1116,7 @@ void GDBRemoteCommunicationClient::MaybeEnableCompression(
   }
 #endif
 
-#if LLVM_ENABLE_ZLIB
+#if defined(HAVE_LIBZ)
   if (avail_type == CompressionType::None) {
     for (auto compression : supported_compressions) {
       if (compression == "zlib-deflate") {
