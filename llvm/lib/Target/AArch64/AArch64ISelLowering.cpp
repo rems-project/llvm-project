@@ -1150,6 +1150,7 @@ void AArch64TargetLowering::addTypeForFixedLengthSVE(MVT VT) {
   setOperationAction(ISD::MUL, VT, Custom);
   setOperationAction(ISD::OR, VT, Custom);
   setOperationAction(ISD::STORE, VT, Custom);
+  setOperationAction(ISD::SUB, VT, Custom);
   setOperationAction(ISD::TRUNCATE, VT, Custom);
   setOperationAction(ISD::XOR, VT, Custom);
 }
@@ -1510,6 +1511,7 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
     MAKE_CASE(AArch64ISD::SMIN_PRED)
     MAKE_CASE(AArch64ISD::SRA_PRED)
     MAKE_CASE(AArch64ISD::SRL_PRED)
+    MAKE_CASE(AArch64ISD::SUB_PRED)
     MAKE_CASE(AArch64ISD::UDIV_PRED)
     MAKE_CASE(AArch64ISD::UMAX_PRED)
     MAKE_CASE(AArch64ISD::UMIN_PRED)
@@ -4053,11 +4055,11 @@ SDValue AArch64TargetLowering::LowerOperation(SDValue Op,
       return LowerFixedLengthVectorLoadToSVE(Op, DAG);
     llvm_unreachable("Unexpected request to lower ISD::LOAD");
   case ISD::ADD:
-    if (useSVEForFixedLengthVectorVT(Op.getValueType()))
-      return LowerToPredicatedOp(Op, DAG, AArch64ISD::ADD_PRED);
-    llvm_unreachable("Unexpected request to lower ISD::ADD");
+    return LowerToPredicatedOp(Op, DAG, AArch64ISD::ADD_PRED);
   case ISD::AND:
     return LowerToScalableOp(Op, DAG);
+  case ISD::SUB:
+    return LowerToPredicatedOp(Op, DAG, AArch64ISD::SUB_PRED);
   }
 }
 
