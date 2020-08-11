@@ -1848,7 +1848,8 @@ void SelectionDAGBuilder::visitRet(const ReturnInst &I) {
     for (unsigned i = 0; i != NumValues; ++i) {
       // An aggregate return value cannot wrap around the address space, so
       // offsets to its parts don't wrap either.
-      SDValue Ptr = DAG.getObjectPtrOffset(getCurSDLoc(), RetPtr, Offsets[i]);
+      SDValue Ptr = DAG.getObjectPtrOffset(getCurSDLoc(), RetPtr,
+                                           TypeSize::Fixed(Offsets[i]));
 
       SDValue Val = RetOp.getValue(RetOp.getResNo() + i);
       if (MemVTs[i] != ValueVTs[i])
@@ -4071,7 +4072,8 @@ void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
       Root = Chain;
       ChainI = 0;
     }
-    SDValue A = DAG.getMemBasePlusOffset(Ptr, Offsets[i], dl, Flags);
+    SDValue A = DAG.getMemBasePlusOffset(Ptr, TypeSize::Fixed(Offsets[i]), dl,
+                                         Flags);
 
     SDValue L = DAG.getLoad(MemVTs[i], dl, Root, A,
                             MachinePointerInfo(SV, Offsets[i]), Alignment,
@@ -4214,7 +4216,8 @@ void SelectionDAGBuilder::visitStore(const StoreInst &I) {
       Root = Chain;
       ChainI = 0;
     }
-    SDValue Add = DAG.getMemBasePlusOffset(Ptr, Offsets[i], dl, Flags);
+    SDValue Add =
+        DAG.getMemBasePlusOffset(Ptr, TypeSize::Fixed(Offsets[i]), dl, Flags);
     SDValue Val = SDValue(Src.getNode(), Src.getResNo() + i);
     if (MemVTs[i] != ValueVTs[i])
       Val = DAG.getPtrExtOrTrunc(Val, dl, MemVTs[i]);

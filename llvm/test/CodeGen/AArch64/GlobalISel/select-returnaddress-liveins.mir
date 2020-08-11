@@ -82,7 +82,7 @@ body:             |
   ; CHECK: bb.1:
   ; CHECK:   $x0 = COPY [[COPY1]]
   ; CHECK:   [[COPY2:%[0-9]+]]:gpr64 = COPY [[COPY]]
-  ; CHECK:   RET_ReallyLR implicit [[COPY2]]
+  ; CHECK:   RET_ReallyLR 0, implicit [[COPY2]]
   bb.0:
     liveins: $w0, $x0, $lr
     %0:gpr(p0) = G_INTRINSIC intrinsic(@llvm.returnaddress), 0
@@ -90,5 +90,5 @@ body:             |
   bb.1:
     $x0 = COPY %0
     %1:gpr(p0) = G_INTRINSIC intrinsic(@llvm.returnaddress), 0
-    RET_ReallyLR implicit %1
+    RET_ReallyLR 0, implicit %1
 ...
