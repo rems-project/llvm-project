@@ -3158,6 +3158,7 @@ static const struct Extension {
   { "predres", {AArch64::FeaturePredRes}, {AArch64::FeaturePredRes} },
   { "ccdp", {AArch64::FeatureCacheDeepPersist}, {AArch64::FeatureCacheDeepPersist} },
   { "mte", {AArch64::FeatureMTE}, {AArch64::FeatureMTE} },
+  { "memtag", {AArch64::FeatureMTE}, {AArch64::FeatureMTE} },
   { "tlb-rmi", {AArch64::FeatureTLB_RMI}, {AArch64::FeatureTLB_RMI} },
   { "pan-rwv", {AArch64::FeaturePAN_RWV}, {AArch64::FeaturePAN_RWV} },
   { "ccpp", {AArch64::FeatureCCPP}, {AArch64::FeatureCCPP} },
