@@ -1,5 +1,3 @@
-include_directories(${LLDB_SOURCE_DIR}/source/Plugins/Process/POSIX)
-
 add_lldb_unittest(ProcessPOSIXTests
   CrashReasonTest.cpp
   NativeProcessELFTest.cpp
@@ -7,3 +5,6 @@ add_lldb_unittest(ProcessPOSIXTests
   LINK_LIBS
     lldbPluginProcessPOSIX
   )
+
+target_include_directories(ProcessPOSIXTests PRIVATE
+  ${LLDB_SOURCE_DIR}/source/Plugins/Process/POSIX)
