@@ -90,7 +90,7 @@ enum {
   // 96-127 reserved
 
   // C0-C7
-  c0 = 128,
+  c0 = 198,
   c1,
   c2,
   c3,
@@ -128,12 +128,12 @@ enum {
   ddc,
 
   // CSP, DDC variants
-  sp_el0 = 162,
+  sp_el0 = 232,
   rsp_el0,
   csp_el0,
   rcsp_el0,
   ddc_el0,
-  rddc_el0, // 167
+  rddc_el0, // 237
 };
 
 const int pcc_executive_bit = 111;

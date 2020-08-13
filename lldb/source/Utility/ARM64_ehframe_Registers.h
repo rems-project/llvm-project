@@ -88,7 +88,7 @@ enum {
 };
 
 enum {
-  c0 = 128,
+  c0 = 198,
   c1,
   c2,
   c3,
@@ -119,18 +119,18 @@ enum {
   c28,
   cfp, // aka c29
   clr, // aka c30
-  csp, // 159
-  pcc, // 160
-  ddc, // 161
+  csp, // 229
+  pcc, // 230
+  ddc, // 231
 };
 
 enum {
-  sp_el0 = 162,
+  sp_el0 = 232,
   rsp_el0,
   csp_el0,
   rcsp_el0,
   ddc_el0,
-  rddc_el0, // 167
+  rddc_el0, // 237
 };
 }
 
