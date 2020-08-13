@@ -36,10 +36,10 @@ define i32 @test_bittest(i16 %p) {
   ; CHECK:   G_BR %bb.4
   ; CHECK: bb.2.sw.epilog:
   ; CHECK:   $w0 = COPY [[C2]](s32)
-  ; CHECK:   RET_ReallyLR implicit $w0
+  ; CHECK:   RET_ReallyLR 0, implicit $w0
   ; CHECK: bb.3.cb1:
   ; CHECK:   $w0 = COPY [[C1]](s32)
-  ; CHECK:   RET_ReallyLR implicit $w0
+  ; CHECK:   RET_ReallyLR 0, implicit $w0
   switch i16 %p, label %sw.epilog [
     i16 58, label %cb1
     i16 59, label %cb1
@@ -158,10 +158,10 @@ define i32 @test_bittest_single_bt_only_with_fallthrough(i16 %p) {
   ; CHECK:   G_BRCOND [[ICMP1]](s1), %bb.3
   ; CHECK: bb.2.sw.epilog:
   ; CHECK:   $w0 = COPY [[C1]](s32)
-  ; CHECK:   RET_ReallyLR implicit $w0
+  ; CHECK:   RET_ReallyLR 0, implicit $w0
   ; CHECK: bb.3.cb1:
   ; CHECK:   $w0 = COPY [[C]](s32)
-  ; CHECK:   RET_ReallyLR implicit $w0
+  ; CHECK:   RET_ReallyLR 0, implicit $w0
   switch i16 %p, label %sw.epilog [
     i16 58, label %cb1
     i16 59, label %cb1

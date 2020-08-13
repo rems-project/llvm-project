@@ -177,10 +177,7 @@ static bool ReadRegisterValueAsScalar(RegisterContext *reg_ctx,
         if (reg_value.GetScalarValue(value.GetScalar())) {
           // Truncate the value to the generic-type element size.
           if (address_byte_size != 0)
-            value.GetScalar().Promote(
-                Scalar::GetValueTypeForUnsignedIntegerWithByteSize(
-                    address_byte_size));
-
+            value.GetScalar().IntegralPromote(address_byte_size * 8, false);
           value.SetValueType(Value::eValueTypeScalar);
           value.SetContext(Value::eContextTypeRegisterInfo,
                            const_cast<RegisterInfo *>(reg_info));

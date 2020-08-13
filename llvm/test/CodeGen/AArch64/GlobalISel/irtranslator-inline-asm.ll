@@ -251,7 +251,7 @@ define i64 @test_input_with_matching_constraint_to_physical_register() {
   ; CHECK:   INLINEASM &"", 0 /* attdialect */, 10 /* regdef */, implicit-def $x2, 2147483657 /* reguse tiedto:$0 */, [[C]](tied-def 3)(s64)
   ; CHECK:   [[COPY:%[0-9]+]]:_(s64) = COPY $x2
   ; CHECK:   $x0 = COPY [[COPY]](s64)
-  ; CHECK:   RET_ReallyLR implicit $x0
+  ; CHECK:   RET_ReallyLR 0, implicit $x0
   %1 = tail call i64 asm "", "={x2},0"(i64 0)
   ret i64 %1
 }

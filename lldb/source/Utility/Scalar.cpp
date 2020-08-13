@@ -444,16 +444,6 @@ llvm::APInt Scalar::SInt256(llvm::APInt &fail_value) const {
     break;
   case e_sint:
   case e_uint:
-  case e_slong:
-  case e_ulong:
-  case e_slonglong:
-  case e_ulonglong:
-  case e_sint128:
-  case e_uint128:
-  case e_sint256:
-  case e_uint256:
-  case e_uint512:
-  case e_sint512:
     return m_integer;
   case e_float:
   case e_double:
@@ -469,16 +459,6 @@ llvm::APInt Scalar::UInt256(const llvm::APInt &fail_value) const {
     break;
   case e_sint:
   case e_uint:
-  case e_slong:
-  case e_ulong:
-  case e_slonglong:
-  case e_ulonglong:
-  case e_sint128:
-  case e_uint128:
-  case e_sint256:
-  case e_uint256:
-  case e_sint512:
-  case e_uint512:
     return m_integer;
   case e_float:
   case e_double:
@@ -1084,16 +1064,6 @@ bool Scalar::IsBitSet(uint32_t bit, bool &is_set) {
     break;
   case e_sint:
   case e_uint:
-  case e_slong:
-  case e_ulong:
-  case e_slonglong:
-  case e_ulonglong:
-  case e_sint128:
-  case e_uint128:
-  case e_sint256:
-  case e_uint256:
-  case e_sint512:
-  case e_uint512:
     is_set = m_integer[bit];
     return true;
   case e_float:
