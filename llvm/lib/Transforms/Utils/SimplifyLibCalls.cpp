@@ -2538,10 +2538,11 @@ Value *LibCallSimplifier::optimizeSPrintFString(CallInst *CI,
     if (SrcLen) {
       B.CreateMemCpy(
           CI->getArgOperand(0), Align(1), CI->getArgOperand(2), Align(1),
-          ConstantInt::get(DL.getIntPtrType(CI->getContext()), SrcLen));
+          ConstantInt::get(DL.getIndexType(CI->getArgOperand(1)->getType()), SrcLen));
       // Returns total number of characters written without null-character.
-      return ConstantInt::get(DL.getIntPtrType(CI->getContext()), SrcLen - 1);
-    } else if (Value *V = emitStpCpy(CI->getArgOperand(0), CI->getArgOperand(2),
+      return ConstantInt::get(DL.getIndexType(CI->getArgOperand(1)->getType()),
+                              SrcLen - 1);
+    } else if (Value *V = emitStpCpy(CI->getArgOperand(0), CI->getArgOperand(1),
                                      B, TLI)) {
       // sprintf(dest, "%s", str) -> stpcpy(dest, str) - dest
       Value *PtrDiff = B.CreatePtrDiff(V, CI->getArgOperand(0));
