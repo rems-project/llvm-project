@@ -1158,6 +1158,8 @@ def InvalidOrNonExistentDirectory : DiagGroup<"invalid-or-nonexistent-directory"
 
 def OptionIgnored : DiagGroup<"option-ignored">;
 
+def SPPureCapIgnored : DiagGroup<"stack-protector-purecap-ignored">;
+
 def UnknownArgument : DiagGroup<"unknown-argument">;
 
 // A warning group for warnings about code that clang accepts when

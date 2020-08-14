@@ -25,7 +25,7 @@
 // RUN: %riscv64_cheri_purecap_clang -### -c -o /dev/null %s -fno-stack-protector 2>&1 | \
 // RUN:    FileCheck %s --implicit-check-not="-stack-protector" --check-prefix PURECAP-NOSSP
 
-// PURECAP-SSP: warning: ignoring 'fstack-protector{{(-strong|-all)?}}' option since stack protector is unnecessary when using pure-capability CHERI compilation [-Woption-ignored]
+// PURECAP-SSP: warning: ignoring 'fstack-protector{{(-strong|-all)?}}' option since stack protector is unnecessary when using pure-capability CHERI compilation [-Wstack-protector-purecap-ignored]
 // PURECAP-NOSSP-NOT: warning:
 // PURECAP-NOSSP-NOT: "-stack-protector":
 

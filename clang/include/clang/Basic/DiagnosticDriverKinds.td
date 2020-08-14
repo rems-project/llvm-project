@@ -416,7 +416,7 @@ def err_drv_unsupported_fpatchable_function_entry_argument : Error<
 def warn_drv_ignored_ssp_purecap : Warning<
   "ignoring '%0' option since stack protector is unnecessary when using "
   "pure-capability CHERI compilation">,
-  InGroup<OptionIgnored>;
+  InGroup<SPPureCapIgnored>;
 
 def warn_drv_unable_to_find_directory_expected : Warning<
   "unable to find %0 directory, expected to be in '%1'">,
