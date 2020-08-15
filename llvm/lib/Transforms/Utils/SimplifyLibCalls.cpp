@@ -2534,31 +2534,6 @@ Value *LibCallSimplifier::optimizeSPrintFString(CallInst *CI,
     if (!CI->getArgOperand(2)->getType()->isPointerTy())
       return nullptr;
 
-    if (CI->use_empty())
-      // sprintf(dest, "%s", str) -> strcpy(dest, str)
-      return emitStrCpy(CI->getArgOperand(0), CI->getArgOperand(2), B, TLI);
-
-    uint64_t SrcLen = GetStringLength(CI->getArgOperand(2));
-    if (SrcLen) {
-      B.CreateMemCpy(
-          CI->getArgOperand(0), Align(1), CI->getArgOperand(2), Align(1),
-          ConstantInt::get(DL.getIndexType(CI->getArgOperand(1)->getType()), SrcLen));
-      // Returns total number of characters written without null-character.
-      return ConstantInt::get(DL.getIndexType(CI->getArgOperand(1)->getType()),
-                              SrcLen - 1);
-    } else if (Value *V = emitStpCpy(CI->getArgOperand(0), CI->getArgOperand(1),
-                                     B, TLI)) {
-      // sprintf(dest, "%s", str) -> stpcpy(dest, str) - dest
-      Value *PtrDiff = B.CreatePtrDiff(V, CI->getArgOperand(0));
-      return B.CreateIntCast(PtrDiff, CI->getType(), false);
-    }
-
-    bool OptForSize = CI->getFunction()->hasOptSize() ||
-                      llvm::shouldOptimizeForSize(CI->getParent(), PSI, BFI,
-                                                  PGSOQueryType::IRPass);
-    if (OptForSize)
-      return nullptr;
-
     Value *Len = emitStrLen(CI->getArgOperand(2), B, DL, TLI);
     if (!Len)
       return nullptr;
