@@ -837,6 +837,7 @@ static uint64_t getRelocTargetVA(const InputFile *file, RelType type, int64_t a,
   case R_TLSDESC_PC:
     return in.got->getGlobalDynAddr(sym) + a - p;
   case R_AARCH64_TLSDESC_PAGE:
+  case R_MORELLO_TLSDESC_PAGE:
     return getAArch64Page(in.got->getGlobalDynAddr(sym) + a) -
            getAArch64Page(p);
   case R_TLSGD_GOT:

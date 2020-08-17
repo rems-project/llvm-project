@@ -221,9 +221,11 @@ handleTlsRelocation(RelType type, Symbol &sym, InputSectionBase &c,
   if (config->emachine == EM_MIPS)
     return handleMipsTlsRelocation(type, sym, c, offset, addend, expr);
 
-  if (oneof<R_AARCH64_TLSDESC_PAGE, R_TLSDESC, R_TLSDESC_CALL, R_TLSDESC_PC>(
-          expr) &&
-      config->shared) {
+  // AArch64 supports relaxation from General-Dynamic to Initial-Exec if the
+  // symbol is preemptible. This is not implemented for Morello at the moment.
+  if (oneof<R_AARCH64_TLSDESC_PAGE, R_TLSDESC, R_TLSDESC_CALL, R_TLSDESC_PC,
+      R_MORELLO_TLSDESC_PAGE>(expr) &&
+      (config->shared || (sym.isPreemptible && config->morelloC64Plt))) {
     if (in.got->addDynTlsEntry(sym)) {
       uint64_t off = in.got->getGlobalDynOffset(sym);
       mainPart->relaDyn->addReloc(
@@ -309,7 +311,8 @@ handleTlsRelocation(RelType type, Symbol &sym, InputSectionBase &c,
   }
 
   if (oneof<R_AARCH64_TLSDESC_PAGE, R_TLSDESC, R_TLSDESC_CALL, R_TLSDESC_PC,
-            R_TLSGD_GOT, R_TLSGD_GOTPLT, R_TLSGD_PC>(expr)) {
+            R_TLSGD_GOT, R_TLSGD_GOTPLT, R_TLSGD_PC, R_MORELLO_TLSDESC_PAGE>(
+          expr)) {
     if (!canRelax || config->shared) {
       if (in.got->addDynTlsEntry(sym)) {
         uint64_t off = in.got->getGlobalDynOffset(sym);
@@ -453,7 +456,8 @@ static bool isStaticLinkTimeConstant(RelExpr e, RelType type, const Symbol &sym,
             R_AARCH64_GOT_PAGE_PC, R_GOT_PC, R_GOTONLY_PC, R_GOTPLTONLY_PC,
             R_PLT_PC, R_TLSGD_GOT, R_TLSGD_GOTPLT, R_TLSGD_PC, R_PPC32_PLTREL,
             R_PPC64_CALL_PLT, R_PPC64_RELAX_TOC, R_RISCV_ADD, R_TLSDESC_CALL,
-            R_TLSDESC_PC, R_AARCH64_TLSDESC_PAGE, R_TLSLD_HINT, R_TLSIE_HINT>(
+            R_TLSDESC_PC, R_AARCH64_TLSDESC_PAGE, R_TLSLD_HINT, R_TLSIE_HINT,
+            R_MORELLO_TLSDESC_PAGE>(
           e))
     return true;
 

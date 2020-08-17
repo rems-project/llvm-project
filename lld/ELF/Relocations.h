@@ -109,7 +109,8 @@ enum RelExpr {
   R_MIPS_CHERI_CAPTAB_TPREL,
   R_CHERI_CAPABILITY,
   R_MORELLO_CAPFRAG_SIZE_AND_PERM,
-  R_MORELLO_VADREF
+  R_MORELLO_VADREF,
+  R_MORELLO_TLSDESC_PAGE
 };
 
 // Architecture-neutral representation of relocation.

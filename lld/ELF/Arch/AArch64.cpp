@@ -107,10 +107,14 @@ RelExpr AArch64::getRelExpr(RelType type, const Symbol &s,
     return R_ABS;
   case R_AARCH64_TLSDESC_ADR_PAGE21:
     return R_AARCH64_TLSDESC_PAGE;
+  case R_MORELLO_TLSDESC_ADR_PAGE20:
+    return R_MORELLO_TLSDESC_PAGE;
   case R_AARCH64_TLSDESC_LD64_LO12:
   case R_AARCH64_TLSDESC_ADD_LO12:
+  case R_MORELLO_TLSDESC_LD128_LO12:
     return R_TLSDESC;
   case R_AARCH64_TLSDESC_CALL:
+  case R_MORELLO_TLSDESC_CALL:
     return R_TLSDESC_CALL;
   case R_AARCH64_TLSLE_ADD_TPREL_HI12:
   case R_AARCH64_TLSLE_ADD_TPREL_LO12_NC:
@@ -196,6 +200,7 @@ bool AArch64::usesOnlyLowPageBits(RelType type) const {
   case R_AARCH64_TLSDESC_LD64_LO12:
   case R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
   case R_MORELLO_LD128_GOT_LO12_NC:
+  case R_MORELLO_TLSDESC_LD128_LO12:
     return true;
   }
 }
@@ -376,6 +381,7 @@ void AArch64::relocate(uint8_t *loc, const Relocation &rel,
     break;
   case R_MORELLO_ADR_GOT_PAGE:
   case R_MORELLO_ADR_PREL_PG_HI20:
+  case R_MORELLO_TLSDESC_ADR_PAGE20:
     // FIXME: Although the diagnostic maximum range is 0x7FFFFFFF (2147483647),
     // because the equation, Page (S + A) - Page (P), is 12-bit aligned the
     // actual maximum range is 0x7FFFF000 (2147479552).
@@ -459,6 +465,7 @@ void AArch64::relocate(uint8_t *loc, const Relocation &rel,
   case R_AARCH64_LDST128_ABS_LO12_NC:
   case R_AARCH64_TLSLE_LDST128_TPREL_LO12_NC:
   case R_MORELLO_LD128_GOT_LO12_NC:
+  case R_MORELLO_TLSDESC_LD128_LO12:
     checkAlignment(loc, val, 16, rel);
     or32AArch64Imm(loc, getBits(val, 4, 11));
     break;
@@ -601,7 +608,7 @@ void AArch64::relaxTlsGdToIe(uint8_t *loc, const Relocation &rel,
     relocateNoSym(loc, R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC, val);
     break;
   default:
-    llvm_unreachable("unsupported relocation for TLS GD to LE relaxation");
+    llvm_unreachable("unsupported relocation for TLS GD to IE relaxation");
   }
 }
 
@@ -776,6 +783,8 @@ public:
   void writePlt(uint8_t *buf, const Symbol &sym,
                 uint64_t pltEntryAddr) const override;
   void writeGotPlt(uint8_t *buf, const Symbol &s) const override;
+  void relaxTlsGdToLe(uint8_t *loc, const Relocation &rel,
+                      uint64_t val) const override;
 
 private:
 };
@@ -786,6 +795,7 @@ AArch64C64::AArch64C64() {
   iRelativeRel = R_MORELLO_IRELATIVE;
   gotRel = R_MORELLO_GLOB_DAT;
   pltRel = R_MORELLO_JUMP_SLOT;
+  tlsDescRel = R_MORELLO_TLSDESC;
 }
 
 void AArch64C64::writePltHeader(uint8_t *buf) const {
@@ -829,6 +839,50 @@ void AArch64C64::writeGotPlt(uint8_t *buf, const Symbol &) const {
   // The PLT header is C64 and we transfer control to it via an indirect jump
   // so we must set the bottom bit.
   write64le(buf, in.plt->getVA() | 0x1);
+}
+
+void AArch64C64::relaxTlsGdToLe(uint8_t *loc, const Relocation &rel,
+                             uint64_t val) const {
+  // Morello TLSDESC Global-Dynamic relocation are in the form:
+  //
+  //  The instruction sequence is:
+  //  nop
+  //  adrp     c0, :tlsdesc:v             [R_MORELLO_TLSDESC_ADR_PAGE20]
+  //  ldr      c1, [c0, #:tlsdesc_lo12:v] [R_MORELLO_TLSDESC_LD128_LO12]
+  //  add      c0, c0, #:tlsdesc_lo12:v   [R_AARCH64_TLSDESC_ADD_LO12]
+  //    .tlsdesccall v                    [R_MORELLO_TLSDESC_CALL]
+  //  blr      c1
+  //
+  // And it can optimized to:
+  //  mov x0, offset_imm0
+  //  movk x0, offset_imm1
+  //  mov x1, size_imm_0
+  //  movk x1, size_imm_1
+  //  add c0, c2, x0
+  checkUInt(loc, rel.sym->getVA(), 32, rel);
+  checkUInt(loc, rel.sym->getSize(), 32, rel);
+
+  switch (rel.type) {
+  case R_MORELLO_TLSDESC_ADR_PAGE20:
+    // mov x0, offset_imm0, lsl #16
+    write32le(loc-4, 0xd2a00000 | (((rel.sym->getVA() >> 16) & 0xffff) << 5));
+    // movk x0, offset_imm1
+    write32le(loc, 0xf2800000 | ((rel.sym->getVA() & 0xffff) << 5));
+    return;
+  case R_MORELLO_TLSDESC_LD128_LO12:
+    // mov x1, size_imm_0, lsl #16
+    write32le(loc, 0xd2a00001 | (((rel.sym->getSize() >> 16) & 0xffff) << 5));
+    return;
+  case R_AARCH64_TLSDESC_ADD_LO12:
+    // movk x1, size_imm_1
+    write32le(loc, 0xf2800001 | ((rel.sym->getSize() & 0xffff) << 5));
+    return;
+  case R_MORELLO_TLSDESC_CALL:
+    write32le(loc, 0xc2a06040); // add c0, c2, x0
+    return;
+  default:
+    llvm_unreachable("unsupported relocation for TLS GD to LE relaxation");
+  }
 }
 
 static TargetInfo *getTargetInfo() {
