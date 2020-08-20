@@ -321,7 +321,12 @@ static PrintfSpecifierResult ParsePrintfSpecifier(FormatStringHandler &H,
         k = ConversionSpecifier::nArg;
       break;
     case 'o': k = ConversionSpecifier::oArg; break;
-    case 'p': k = ConversionSpecifier::pArg; break;
+    case 'p':
+      if (Target.SupportsCapabilities())
+        k = ConversionSpecifier::CHERIpArg;
+      else
+        k = ConversionSpecifier::pArg;
+      break;
     case 's': k = ConversionSpecifier::sArg; break;
     case 'u': k = ConversionSpecifier::uArg; break;
     case 'x': k = ConversionSpecifier::xArg; break;
@@ -656,6 +661,7 @@ ArgType PrintfSpecifier::getScalarArgType(ASTContext &Ctx,
         return Ctx.IntTy;
       return ArgType(Ctx.WideCharTy, "wchar_t");
     case ConversionSpecifier::pArg:
+    case ConversionSpecifier::CHERIpArg:
     case ConversionSpecifier::PArg:
       return ArgType::CPointerTy;
     case ConversionSpecifier::ObjCObjArg:
@@ -979,10 +985,8 @@ bool PrintfSpecifier::hasValidAlternativeForm() const {
   case ConversionSpecifier::GArg:
   case ConversionSpecifier::FreeBSDrArg:
   case ConversionSpecifier::FreeBSDyArg:
-  // Allow alternate form for %p for CHERI
-  case ConversionSpecifier::pArg:
+  case ConversionSpecifier::CHERIpArg:
     return true;
-
 
   default:
     return false;
