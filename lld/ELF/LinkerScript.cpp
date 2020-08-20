@@ -185,7 +185,7 @@ void LinkerScript::addSymbol(SymbolAssignment *cmd) {
   // write expressions like this: `alignment = 16; . = ALIGN(., alignment)`.
   uint64_t symValue = value.sec ? 0 : value.getValue();
 
-  Defined newSym(nullptr, cmd->name, STB_GLOBAL, visibility, STT_NOTYPE,
+  Defined newSym(nullptr, cmd->name, STB_GLOBAL, visibility, value.type,
                  symValue, 0, sec);
 
   if (value.sec && value.val == 0 && isSectionStartSymbol(cmd->name)) {
@@ -327,6 +327,7 @@ void LinkerScript::assignSymbol(SymbolAssignment *cmd, bool inSec) {
     cmd->sym->section = v.sec;
     cmd->sym->value = v.getSectionOffset();
   }
+  cmd->sym->type = v.type;
 }
 
 static std::string getFilename(InputFile *file) {
@@ -1236,8 +1237,14 @@ ExprValue LinkerScript::getSymbolValue(StringRef name, const Twine &loc) {
   }
 
   if (Symbol *sym = symtab->find(name)) {
-    if (auto *ds = dyn_cast<Defined>(sym))
-      return {ds->section, false, ds->value, loc};
+    if (auto *ds = dyn_cast<Defined>(sym)) {
+      ExprValue v{ds->section, false, ds->value, loc};
+      // Retain the original st_type, so that the alias will get the same
+      // behavior in relocation processing. Any operation will reset st_type to
+      // STT_NOTYPE.
+      v.type = ds->type;
+      return v;
+    }
     if (isa<SharedSymbol>(sym))
       if (!errorOnMissingSection)
         return {nullptr, false, 0, loc};
