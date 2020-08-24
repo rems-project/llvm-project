@@ -2875,6 +2875,8 @@ void DAGTypeLegalizer::WidenVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::SSUBSAT:
   case ISD::SSHLSAT:
   case ISD::USHLSAT:
+  case ISD::ROTL:
+  case ISD::ROTR:
     Res = WidenVecRes_Binary(N);
     break;
 
