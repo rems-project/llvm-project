@@ -16,6 +16,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/InstVisitor.h"
+#include "llvm/Support/Cheri.h"
 
 using namespace llvm;
 
@@ -128,6 +129,9 @@ public:
     // Nothing to do if we are not in sandbox mode.
     const DataLayout &DL = M->getDataLayout();
     if (DL.getAllocaAddrSpace() != 200)
+      return false;
+
+    if (!useCHERICapLibFunc(true))
       return false;
 
     Modified = false;

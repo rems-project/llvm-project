@@ -1,9 +1,13 @@
-; RUN: llc -march=arm64 -mattr=+morello,+c64 -target-abi purecap -o - %s | FileCheck %s
+; RUN: llc -march=arm64 -mattr=+morello,+c64 -target-abi purecap -o - %s | FileCheck %s --check-prefix=ALL --check-prefix=CFUN
+; RUN: llc -march=arm64 -mattr=+morello,+c64 -target-abi purecap -o - -cheri-no-cap-libfunc %s | FileCheck %s --check-prefix=ALL --check-prefix=NOCFUN
+; RUN: llc -march=arm64 -mattr=+morello,+c64 -target-abi purecap -o - -cheri-no-pure-cap-libfunc %s | FileCheck %s --check-prefix=ALL --check-prefix=NOCFUN
 
 target datalayout = "e-m:e-pf200:128:128-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"
 
-; CHECK-LABEL: bar
-; CHECK: bl memcpy_c
+; ALL-LABEL: bar
+; CFUN: bl memcpy_c
+; NOCFUN-NOT: memcpy_c
+; NOCFUN: bl memcpy
 define void @bar(i8 addrspace(200)* %dst, i8 addrspace(200)* %src, i32 %size) addrspace(200) {
 entry:
   %conv.i = zext i32 %size to i64
@@ -12,24 +16,30 @@ entry:
   ret void
 }
 
-; CHECK-LABEL: baz
+; ALL-LABEL: baz
 define void @baz(i8 addrspace(200)* %dst, i8 addrspace(200)* %src) addrspace(200) {
 entry:
-; CHECK: bl memcpy_c
+; CFUN: bl memcpy_c
+; NOCFUN-NOT: memcpy_c
+; NOCFUN: bl memcpy
   %call.i = tail call i8 addrspace(200)* @__memcpy_chk(i8 addrspace(200)* %dst, i8 addrspace(200)* %src, i64 32, i64 32) #0
   ret void
 }
 
-; CHECK-LABEL: foo
-; CHECK: bl memcpy_c
+; ALLL-LABEL: foo
+; CFUN: bl memcpy_c
+; NOCFUN-NOT: memcpy_c
+; NOCFUN: bl memcpy
 define void @foo(i8 addrspace(200)* %dst, i8 addrspace(200)* %src, i32 %size) addrspace(200) {
 entry:
   %call.i = tail call i8 addrspace(200)* @__memcpy_chk(i8 addrspace(200)* %dst, i8 addrspace(200)* %src, i64 32, i64 32)
   ret void
 }
 
-; CHECK-LABEL: barmove
-; CHECK: bl memmove_c
+; ALL-LABEL: barmove
+; CFUN: bl memmove_c
+; NOCFUN-NOT: memmove_c
+; NOCFUN: bl memmove
 define void @barmove(i8 addrspace(200)* %dst, i8 addrspace(200)* %src, i32 %size) addrspace(200) {
 entry:
   %conv.i = zext i32 %size to i64
@@ -38,16 +48,20 @@ entry:
   ret void
 }
 
-; CHECK-LABEL: bazmove
+; ALL-LABEL: bazmove
 define void @bazmove(i8 addrspace(200)* %dst, i8 addrspace(200)* %src) addrspace(200) {
 entry:
-; CHECK: bl memmove_c
+; CFUN: bl memmove_c
+; NOCFUN-NOT: memmove_c
+; NOCFUN: bl memmove
   %call.i = tail call i8 addrspace(200)* @__memmove_chk(i8 addrspace(200)* %dst, i8 addrspace(200)* %src, i64 32, i64 32) #0
   ret void
 }
 
-; CHECK-LABEL: foomove
-; CHECK: bl memmove_c
+; ALL-LABEL: foomove
+; CFUN: bl memmove_c
+; NOCFUN-NOT: memmove_c
+; NOCFUN: bl memmove
 define void @foomove(i8 addrspace(200)* %dst, i8 addrspace(200)* %src, i32 %size) addrspace(200) {
 entry:
   %call.i = tail call i8 addrspace(200)* @__memmove_chk(i8 addrspace(200)* %dst, i8 addrspace(200)* %src, i64 32, i64 32)

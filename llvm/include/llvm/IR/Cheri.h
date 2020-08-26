@@ -51,6 +51,10 @@ inline bool isCheriPointer(Type *Ty, const DataLayout *DL) {
   return Ty->isPointerTy() && isCheriPointer(Ty->getPointerAddressSpace(), DL);
 }
 
+inline bool isPureCap(const DataLayout &DL) {
+  return DL.getGlobalsAddressSpace() == 200;
+}
+
 namespace cheri {
 /// Returns true if the value must be untagged (e.g. incoffset on NULL or result
 /// of a tag.clear intrinsic)

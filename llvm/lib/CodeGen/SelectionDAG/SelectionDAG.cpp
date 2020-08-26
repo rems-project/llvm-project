@@ -42,6 +42,7 @@
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/IR/Cheri.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
@@ -55,6 +56,7 @@
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/Cheri.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
@@ -6510,7 +6512,9 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, const SDLoc &dl, SDValue Dst,
   if (!Src.getValueType().isFatPointer())
     checkAddrSpaceIsValidForLibcall(TLI, SrcPtrInfo.getAddrSpace());
 
-  RTLIB::Libcall MemOp = Src.getValueType().isFatPointer() ?
+  bool UseCapFunc = Src.getValueType().isFatPointer() &&
+                    useCHERICapLibFunc(isPureCap(getDataLayout()));
+  RTLIB::Libcall MemOp = UseCapFunc ?
                          RTLIB::MEMCPY_C : RTLIB::MEMCPY;
 
   // FIXME: If the memcpy is volatile (isVol), lowering it to a plain libc
@@ -6629,7 +6633,9 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, const SDLoc &dl, SDValue Dst,
 
   // FIXME: If the memmove is volatile, lowering it to plain libc memmove may
   // not be safe.  See memcpy above for more details.
-  RTLIB::Libcall MemOp = Src.getValueType().isFatPointer() ?
+  bool UseCapFunc = Src.getValueType().isFatPointer() &&
+                    useCHERICapLibFunc(isPureCap(getDataLayout()));
+  RTLIB::Libcall MemOp = UseCapFunc ?
                          RTLIB::MEMMOVE_C : RTLIB::MEMMOVE;
 
   // Emit a library call.
@@ -6732,8 +6738,9 @@ SDValue SelectionDAG::getMemset(SDValue Chain, const SDLoc &dl, SDValue Dst,
   if (!Dst.getValueType().isFatPointer())
     checkAddrSpaceIsValidForLibcall(TLI, DstPtrInfo.getAddrSpace());
 
-  RTLIB::Libcall MemOp = Dst.getValueType().isFatPointer() ?
-                         RTLIB::MEMSET_C : RTLIB::MEMSET;
+  bool UseCapFunc = Dst.getValueType().isFatPointer() &&
+                    useCHERICapLibFunc(isPureCap(getDataLayout()));
+  RTLIB::Libcall MemOp = UseCapFunc ? RTLIB::MEMSET_C : RTLIB::MEMSET;
 
   // Emit a library call.
   TargetLowering::ArgListTy Args;
