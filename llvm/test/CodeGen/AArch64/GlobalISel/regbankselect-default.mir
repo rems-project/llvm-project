@@ -905,5 +905,5 @@ body: |
     ; CHECK: RET_ReallyLR
     %0:_(s64) = COPY $x16
     %1:_(s64) = COPY $x17
-    RET_ReallyLR
+    RET_ReallyLR 0
 ...

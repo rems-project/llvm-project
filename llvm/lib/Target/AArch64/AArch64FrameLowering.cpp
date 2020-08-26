@@ -1157,10 +1157,6 @@ static bool isTargetWindows(const MachineFunction &MF) {
   return MF.getSubtarget<AArch64Subtarget>().isTargetWindows();
 }
 
-static bool hasTopFrameRecord(const MachineFunction &MF) {
-  return isTargetDarwin(MF);
-}
-
 // Convenience function to determine whether I is an SVE callee save.
 static bool IsSVECalleeSave(MachineBasicBlock::iterator I) {
   switch (I->getOpcode()) {
@@ -1317,10 +1313,26 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
   // For funclets the FP belongs to the containing function.
   if (!IsFunclet && HasFP) {
     // Only set up FP if we actually need to.
-    bool HasTopFrameRecord = hasTopFrameRecord(MF);
-    int64_t FPOffset = HasTopFrameRecord ? (AFI->getCalleeSavedStackSize() -
-                                            AFI->getFrameRecordSize())
-                                         : 0;
+    int64_t FPOffset;
+
+    // The frame pointer needs to point to the location of the frame record
+    // (x28 and x29) within the callee saved register space.
+    if (isTargetDarwin(MF)) {
+      // On Darwin, these are located at the top of the CSR space.
+      FPOffset = (AFI->getCalleeSavedStackSize() - 16);
+    } else {
+      // On other systems, these are located in the middle of the CSR space,
+      // after the other GPRs and before the FPRs.
+      assert(MFI.isCalleeSavedInfoValid() && "CalleeSavedInfo not calculated");
+      if (MFI.getCalleeSavedInfo().empty()) {
+        FPOffset = 0;
+      } else {
+        FPOffset = AFI->getCalleeSavedStackSize(MFI, [](unsigned Reg) {
+          return AArch64::FPR64RegClass.contains(Reg) ||
+                 AArch64::FPR128RegClass.contains(Reg);
+        });
+      }
+    }
 
     if (CombineSPBump)
       FPOffset += AFI->getLocalStackSize();
@@ -1549,8 +1561,7 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
 
   if (needsFrameMoves) {
     const DataLayout &TD = MF.getDataLayout();
-    bool HasTopFrameRecord = hasTopFrameRecord(MF);
-    const int StackGrowth = HasTopFrameRecord
+    const int StackGrowth = isTargetDarwin(MF)
                                 ? (2 * -TD.getPointerSize(HasPureCap ? 200 : 0))
                                 : -AFI->getCalleeSavedStackSize();
     Register FramePtr = RegInfo->getFrameRegister(MF);
@@ -1928,9 +1939,8 @@ void AArch64FrameLowering::emitEpilogue(MachineFunction &MF,
   // non-post-indexed loads for the restores if we aren't actually going to
   // be able to save any instructions.
   if (!IsFunclet && (MFI.hasVarSizedObjects() || AFI->isStackRealigned())) {
-    bool HasTopFrameRecord = hasTopFrameRecord(MF);
     int64_t OffsetToFrameRecord =
-        HasTopFrameRecord ? (-(int64_t)AFI->getCalleeSavedStackSize() +
+        isTargetDarwin(MF) ? (-(int64_t)AFI->getCalleeSavedStackSize() +
                                        AFI->getFrameRecordSize()) : 0;
     emitFrameOffset(MBB, LastPopI, DL, SP, FP,
                     {OffsetToFrameRecord, MVT::i8},
@@ -1998,8 +2008,17 @@ static StackOffset getFPOffset(const MachineFunction &MF, int64_t ObjectOffset) 
 
   unsigned FixedObject =
       getFixedObjectSize(MF, AFI, IsWin64, /*IsFunclet=*/false);
-  unsigned FPAdjust = isTargetDarwin(MF) ?
-      AFI->getFrameRecordSize() : AFI->getCalleeSavedStackSize(MF.getFrameInfo());
+
+  // Compensate for the position of the frame record within the callee-saved
+  // register space.  On Darwin, this is a fixed offset.  On other systems,
+  // this is determined by the number of callee-saved GPRs, excluding FPRs.
+  unsigned FPAdjust =
+      isTargetDarwin(MF)
+          ? 16
+          : AFI->getCalleeSavedStackSize(MF.getFrameInfo(), [](unsigned Reg) {
+              return AArch64::GPR64RegClass.contains(Reg) ||
+                     AArch64::CapRegClass.contains(Reg);
+            });
   return {ObjectOffset + FixedObject + FPAdjust, MVT::i8};
 }
 
@@ -2831,7 +2850,7 @@ void AArch64FrameLowering::determineCalleeSaves(MachineFunction &MF,
   // capabilitiy ABI, as we are spilling capability registers first there).
   bool NeedsGPRPadding = false;
   bool HasCap = hasFP(MF);
-  if (HasPureCap && !hasTopFrameRecord(MF)) {
+  if (HasPureCap) {
     unsigned NumGPRs = 0;
     for (unsigned Reg : SavedRegs.set_bits()) {
       if (AArch64::GPR64RegClass.contains(Reg))
