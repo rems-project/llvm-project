@@ -142,10 +142,6 @@ class AArch64FunctionInfo final : public MachineFunctionInfo {
   /// e.g. Tail Call, Thunk, or Function if none apply.
   Optional<std::string> OutliningStyle;
 
-  // Offset from SP-after-callee-saved-spills (i.e. SP-at-entry minus
-  // CalleeSavedStackSize) to the address of the frame record.
-  int CalleeSaveBaseToFrameRecordOffset = 0;
-
 public:
   AArch64FunctionInfo() = default;
 
@@ -353,13 +349,6 @@ public:
   }
   void setTaggedBasePointerOffset(unsigned Offset) {
     TaggedBasePointerOffset = Offset;
-  }
-
-  int getCalleeSaveBaseToFrameRecordOffset() const {
-    return CalleeSaveBaseToFrameRecordOffset;
-  }
-  void setCalleeSaveBaseToFrameRecordOffset(int Offset) {
-    CalleeSaveBaseToFrameRecordOffset = Offset;
   }
 
 private:
