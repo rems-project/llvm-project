@@ -30,10 +30,10 @@ body:             |
     G_BRCOND %3(s1), %bb.3
 
   bb.2:
-    RET_ReallyLR
+    RET_ReallyLR 0
 
   bb.3:
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -68,9 +68,9 @@ body:             |
     G_BRCOND %3(s1), %bb.3
 
   bb.2:
-    RET_ReallyLR
+    RET_ReallyLR 0
 
   bb.3:
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
