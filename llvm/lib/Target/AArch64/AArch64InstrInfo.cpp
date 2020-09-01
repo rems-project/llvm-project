@@ -3964,8 +3964,8 @@ void llvm::emitFrameOffset(MachineBasicBlock &MBB,
   // First emit non-scalable frame offsets, or a simple 'mov'.
   if (Bytes || (!Offset && SrcReg != DestReg)) {
     assert(((DestReg != AArch64::SP && DestReg != AArch64::CSP) ||
-           Bytes % 8 == 0) &&
-           "SP increment/decrement not 8-byte aligned");
+           Bytes % 16 == 0) &&
+           "SP increment/decrement not 16-byte aligned");
 
     if (UsesCapabilities && SetNZCV)
       llvm_unreachable("Unable to set NZCV when emitting frame offset.");
