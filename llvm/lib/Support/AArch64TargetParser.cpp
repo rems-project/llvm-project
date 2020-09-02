@@ -103,6 +103,8 @@ bool AArch64::getExtensionFeatures(unsigned Extensions,
     Features.push_back("+sve2-bitperm");
   if (Extensions & AEK_RCPC)
     Features.push_back("+rcpc");
+  if (Extensions & AEK_SSBS)
+    Features.push_back("+ssbs");
 
   if (Extensions & AArch64::AEK_C64) {
     Features.push_back("+morello");

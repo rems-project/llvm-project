@@ -904,6 +904,13 @@ TEST(TargetParserTest, testAArch64CPU) {
       AArch64::AEK_RDM | AArch64::AEK_SIMD | AArch64::AEK_SSBS,
      "8.2-A"));
   EXPECT_TRUE(testAArch64CPU(
+     "rainier", "armv8.2-a", "crypto-neon-fp-armv8",
+      AArch64::AEK_CRC | AArch64::AEK_CRYPTO | AArch64::AEK_DOTPROD |
+      AArch64::AEK_FP | AArch64::AEK_FP16 | AArch64::AEK_LSE |
+      AArch64::AEK_PROFILE | AArch64::AEK_RAS | AArch64::AEK_RCPC |
+      AArch64::AEK_RDM | AArch64::AEK_SIMD | AArch64::AEK_SSBS |
+      AArch64::AEK_A64C,"8.2-A"));
+  EXPECT_TRUE(testAArch64CPU(
       "thunderx2t99", "armv8.1-a", "crypto-neon-fp-armv8",
       AArch64::AEK_CRC | AArch64::AEK_CRYPTO | AArch64::AEK_LSE |
       AArch64::AEK_RDM | AArch64::AEK_FP | AArch64::AEK_SIMD, "8.1-A"));
@@ -936,7 +943,7 @@ TEST(TargetParserTest, testAArch64CPU) {
       "8.2-A"));
 }
 
-static constexpr unsigned NumAArch64CPUArchs = 35;
+static constexpr unsigned NumAArch64CPUArchs = 36;
 
 TEST(TargetParserTest, testAArch64CPUArchList) {
   SmallVector<StringRef, NumAArch64CPUArchs> List;

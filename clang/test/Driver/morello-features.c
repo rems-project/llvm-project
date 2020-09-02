@@ -9,6 +9,12 @@
 // RUN: %clang -target aarch64-none-elf -march=morello -mabi=aapcs %s -### -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-A64CHYBRID %s
 
+// RUN: %clang -target aarch64-none-elf -mcpu=rainier %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-A64CHYBRID %s
+
+// RUN: %clang -target aarch64-none-elf -mcpu=rainier -march=morello+noa64c %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-A64 %s
+
 // RUN: %clang -target aarch64-none-elf -march=morello -mabi=purecap %s -### -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-A64CSANDBOX %s
 
@@ -34,14 +40,24 @@
 // CHECK-A64C: "-target-feature" "+morello"
 
 // CHECK-A64CHYBRID-NOT: "-target-abi" "purecap"
-// CHECK-A64CHYBRID: "-target-feature" "+v8.2a"
-// CHECK-A64CHYBRID: "-target-feature" "+fp-armv8"
-// CHECK-A64CHYBRID: "-target-feature" "+dotprod"
-// CHECK-A64CHYBRID: "-target-feature" "+fullfp16"
-// CHECK-A64CHYBRID: "-target-feature" "+spe"
-// CHECK-A64CHYBRID: "-target-feature" "+ssbs"
-// CHECK-A64CHYBRID: "-target-feature" "+rcpc"
-// CHECK-A64CHYBRID: "-target-feature" "+morello"
+// CHECK-A64CHYBRID-DAG: "-target-feature" "+v8.2a"
+// CHECK-A64CHYBRID-DAG: "-target-feature" "+fp-armv8"
+// CHECK-A64CHYBRID-DAG: "-target-feature" "+dotprod"
+// CHECK-A64CHYBRID-DAG: "-target-feature" "+fullfp16"
+// CHECK-A64CHYBRID-DAG: "-target-feature" "+spe"
+// CHECK-A64CHYBRID-DAG: "-target-feature" "+ssbs"
+// CHECK-A64CHYBRID-DAG: "-target-feature" "+rcpc"
+// CHECK-A64CHYBRID-DAG: "-target-feature" "+morello"
+
+// CHECK-A64-NOT: "-target-abi" "purecap"
+// CHECK-A64-NOT: "-target-feature" "+morello"
+// CHECK-A64-DAG: "-target-feature" "+v8.2a"
+// CHECK-A64-DAG: "-target-feature" "+fp-armv8"
+// CHECK-A64-DAG: "-target-feature" "+dotprod"
+// CHECK-A64-DAG: "-target-feature" "+fullfp16"
+// CHECK-A64-DAG: "-target-feature" "+spe"
+// CHECK-A64-DAG: "-target-feature" "+ssbs"
+// CHECK-A64-DAG: "-target-feature" "+rcpc"
 
 // CHECK-A64CSANDBOX: "-target-feature" "+v8.2a"
 // CHECK-A64CSANDBOX: "-target-feature" "+fp-armv8"

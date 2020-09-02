@@ -57,6 +57,7 @@ public:
     Kryo,
     NeoverseE1,
     NeoverseN1,
+    Rainier,
     Saphira,
     ThunderX2T99,
     ThunderX,

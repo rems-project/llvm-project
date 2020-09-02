@@ -127,6 +127,7 @@ void AArch64Subtarget::initializeProperties() {
     PrefFunctionLogAlignment = 3;
     break;
   case NeoverseN1:
+  case Rainier:
     PrefFunctionLogAlignment = 4;
     break;
   case Saphira:

@@ -70,6 +70,7 @@ static bool DecodeAArch64Features(const Driver &D, StringRef text,
       continue;
     }
     if (Feature == "noa64c") {
+      Features.push_back("-morello");
       if (UseA64C) {
         D.Diag(clang::diag::err_ambiguous_a64c_arch);
         return false;
