@@ -2630,13 +2630,9 @@ bool TargetLowering::SimplifyDemandedVectorElts(
                                      KnownZero, TLO, Depth + 1))
         return true;
 
-      KnownUndef.clearBit(Idx);
-      if (Scl.isUndef())
-        KnownUndef.setBit(Idx);
+      KnownUndef.setBitVal(Idx, Scl.isUndef());
 
-      KnownZero.clearBit(Idx);
-      if (isNullConstant(Scl) || isNullFPConstant(Scl))
-        KnownZero.setBit(Idx);
+      KnownZero.setBitVal(Idx, isNullConstant(Scl) || isNullFPConstant(Scl));
       break;
     }
 
