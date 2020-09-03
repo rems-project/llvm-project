@@ -255,6 +255,12 @@ static std::string computeDataLayout(const Triple &TT, StringRef FS,
   return Desc;
 }
 
+static StringRef computeDefaultCPU(const Triple &TT, StringRef CPU) {
+  if (CPU.empty() && TT.isArm64e())
+    return "apple-a12";
+  return CPU;
+}
+
 static Reloc::Model getEffectiveRelocModel(const Triple &TT,
                                            Optional<Reloc::Model> RM) {
   // AArch64 Darwin and Windows are always PIC.
@@ -311,7 +317,8 @@ AArch64TargetMachine::AArch64TargetMachine(const Target &T, const Triple &TT,
                                            bool LittleEndian)
     : LLVMTargetMachine(T,
                         computeDataLayout(TT, FS, Options.MCOptions, LittleEndian),
-                        TT, CPU, FS, Options, getEffectiveRelocModel(TT, RM),
+                        TT, computeDefaultCPU(TT, CPU), FS, Options,
+                        getEffectiveRelocModel(TT, RM),
                         getEffectiveAArch64CodeModel(TT, CM, JIT), OL),
       TLOF(createTLOF(getTargetTriple())), isLittle(LittleEndian),
       isPureCap(Options.MCOptions.getABIName() == "purecap"),
