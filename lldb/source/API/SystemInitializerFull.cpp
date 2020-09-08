@@ -41,6 +41,7 @@
 #include "Plugins/ABI/SysV-x86_64/ABISysV_x86_64.h"
 #include "Plugins/ABI/Windows-x86_64/ABIWindows_x86_64.h"
 #include "Plugins/Architecture/Arm/ArchitectureArm.h"
+#include "Plugins/Architecture/Arm64/ArchitectureArm64.h"
 #include "Plugins/Architecture/Mips/ArchitectureMips.h"
 #include "Plugins/Architecture/PPC64/ArchitecturePPC64.h"
 #include "Plugins/Disassembler/llvm/DisassemblerLLVMC.h"
@@ -223,6 +224,7 @@ llvm::Error SystemInitializerFull::Initialize() {
 #include "llvm/Config/Targets.def"
 
   ArchitectureArm::Initialize();
+  ArchitectureArm64::Initialize();
   ArchitectureMips::Initialize();
   ArchitecturePPC64::Initialize();
 
@@ -319,6 +321,7 @@ void SystemInitializerFull::Terminate() {
   ClangASTContext::Terminate();
 
   ArchitectureArm::Terminate();
+  ArchitectureArm64::Terminate();
   ArchitectureMips::Terminate();
   ArchitecturePPC64::Terminate();
 

@@ -219,9 +219,16 @@ class MorelloCapabilityOperationTestCase(CapabilityOperationTestBase):
                          '\x10\x00\x20\x40\x00\xc0\x50\xdf')
 
         # Test that software breakpoint opcodes are replaced with the original
-        # data.
-        breakpoint = process.GetTarget().BreakpointCreateByAddress(0x40e)
-        self.assertTrue(breakpoint, lldbtest.VALID_BREAKPOINT)
+        # data - 1. A64 address.
+        breakpointA64 = process.GetTarget().BreakpointCreateByAddress(0x40e)
+        self.assertTrue(breakpointA64, lldbtest.VALID_BREAKPOINT)
+        self.assertEqual(breakpointA64.GetNumLocations(), 1, lldbtest.VALID_BREAKPOINT)
+        locationA64 = breakpointA64.GetLocationAtIndex(0)
+        self.assertTrue(locationA64 and locationA64.IsEnabled(),
+                lldbtest.VALID_BREAKPOINT_LOCATION)
+        self.assertEqual(locationA64.GetLoadAddress(), 0x40e,
+                lldbtest.VALID_BREAKPOINT_LOCATION)
+
         content = process.ReadMemory(0x400, 34, error,
                                      lldb.eMemoryContentCap128)
         self.assertTrue(error.Success())
@@ -233,6 +240,34 @@ class MorelloCapabilityOperationTestCase(CapabilityOperationTestBase):
                          '\x01'
                          '\x08\x00\x00\x80\x00\x00\x00\x00'
                          '\x20\x00\x00\x40\x00\xc0\x50\xdf')
+        process.GetTarget().DeleteAllBreakpoints()
+
+        # Test that software breakpoint opcodes are replaced with the original
+        # data - 2. C64 address. In this case we also need to make sure that we
+        # strip the discriminating bit from the address before creating the
+        # breakpoint.
+        breakpointC64 = process.GetTarget().BreakpointCreateByAddress(0x40d)
+        self.assertTrue(breakpointC64, lldbtest.VALID_BREAKPOINT)
+        self.assertEqual(breakpointC64.GetNumLocations(), 1, lldbtest.VALID_BREAKPOINT)
+        locationC64 = breakpointC64.GetLocationAtIndex(0)
+        self.assertTrue(locationC64 and locationC64.IsEnabled(),
+                lldbtest.VALID_BREAKPOINT_LOCATION)
+        self.assertEqual(locationC64.GetLoadAddress(), 0x40c,
+                lldbtest.VALID_BREAKPOINT_LOCATION)
+
+        content = process.ReadMemory(0x400, 34, error,
+                                     lldb.eMemoryContentCap128)
+        self.assertTrue(error.Success())
+        self.assertEqual(len(content), 34)
+        self.assertEqual(content,
+                         '\x01'
+                         '\x10\x00\x00\x80\x00\x00\x00\x00'
+                         '\x20\x00\x00\x40\x00\xc0\x50\xdf'
+                         '\x01'
+                         '\x08\x00\x00\x80\x00\x00\x00\x00'
+                         '\x20\x00\x00\x40\x00\xc0\x50\xdf')
+        process.GetTarget().DeleteAllBreakpoints()
+
 
     @skipIfRemote
     def test_memory_read_command(self):
