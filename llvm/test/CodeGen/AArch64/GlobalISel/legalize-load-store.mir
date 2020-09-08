@@ -300,5 +300,5 @@ body:             |
     %0:_(p0) = COPY $x0
     %1:_(<8 x s8>) = COPY $d0
     G_STORE %1(<8 x s8>), %0(p0) :: (store 8)
-    RET_ReallyLR
+    RET_ReallyLR 0
 ...

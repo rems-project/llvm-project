@@ -89,10 +89,8 @@ public:
 
   void emitStartOfAsmFile(Module &M) override;
   void emitJumpTableInfo() override;
-  void emitJumpTableEntry(const MachineJumpTableInfo *MJTI,
-                          const MachineBasicBlock *MBB, unsigned JTI);
 
-  void LowerJumpTableDestSmall(MCStreamer &OutStreamer, const MachineInstr &MI);
+  void LowerJumpTableDest(MCStreamer &OutStreamer, const MachineInstr &MI);
 
   void LowerSTACKMAP(MCStreamer &OutStreamer, StackMaps &SM,
                      const MachineInstr &MI);
@@ -807,37 +805,25 @@ void AArch64AsmPrinter::emitJumpTableInfo() {
     emitAlignment(Align(Size));
     OutStreamer->emitLabel(GetJTISymbol(JTI));
 
-    for (auto *JTBB : JTBBs)
-      emitJumpTableEntry(MJTI, JTBB, JTI);
-  }
-}
-
-void AArch64AsmPrinter::emitJumpTableEntry(const MachineJumpTableInfo *MJTI,
-                                           const MachineBasicBlock *MBB,
-                                           unsigned JTI) {
-  const MCExpr *Value = MCSymbolRefExpr::create(MBB->getSymbol(), OutContext);
-  auto AFI = MF->getInfo<AArch64FunctionInfo>();
-  unsigned Size = AFI->getJumpTableEntrySize(JTI);
-
-  if (Size == 4) {
-    // .word LBB - LJTI or .word LBB - LJTI + 1 for C64
-    const TargetLowering *TLI = MF->getSubtarget().getTargetLowering();
-    const MCExpr *Base = TLI->getPICJumpTableRelocBaseExpr(MF, JTI, OutContext);
-    Value = MCBinaryExpr::createSub(Value, Base, OutContext);
-    if (STI->hasC64())
-      Value = MCBinaryExpr::createAdd(Value,
-                                      MCConstantExpr::create(1, OutContext),
-                                      OutContext);
-  } else {
-    // .byte (LBB - LBB) >> 2 (or .hword)
-    const MCSymbol *BaseSym = AFI->getJumpTableEntryPCRelSymbol(JTI);
+    const MCSymbol *BaseSym = AArch64FI->getJumpTableEntryPCRelSymbol(JTI);
     const MCExpr *Base = MCSymbolRefExpr::create(BaseSym, OutContext);
-    Value = MCBinaryExpr::createSub(Value, Base, OutContext);
-    Value = MCBinaryExpr::createLShr(
-        Value, MCConstantExpr::create(2, OutContext), OutContext);
-  }
 
-  OutStreamer->emitValue(Value, Size);
+    for (auto *JTBB : JTBBs) {
+      const MCExpr *Value =
+          MCSymbolRefExpr::create(JTBB->getSymbol(), OutContext);
+
+      // Each entry is:
+      //     .byte/.hword (LBB - Lbase)>>2
+      // or plain:
+      //     .word LBB - Lbase
+      Value = MCBinaryExpr::createSub(Value, Base, OutContext);
+      if (Size != 4)
+        Value = MCBinaryExpr::createLShr(
+            Value, MCConstantExpr::create(2, OutContext), OutContext);
+
+      OutStreamer->emitValue(Value, Size);
+    }
+  }
 }
 
 /// Small jump tables contain an unsigned byte or half, representing the offset
@@ -848,9 +834,9 @@ void AArch64AsmPrinter::emitJumpTableEntry(const MachineJumpTableInfo *MJTI,
 ///
 ///             adr xDest, .LBB0_0
 ///             ldrb wScratch, [xTable, xEntry]   (with "lsl #1" for ldrh).
-///             add xDest, xDest, xScratch, lsl #2
-void AArch64AsmPrinter::LowerJumpTableDestSmall(llvm::MCStreamer &OutStreamer,
-                                                const llvm::MachineInstr &MI) {
+///             add xDest, xDest, xScratch (with "lsl #2" for smaller entries)
+void AArch64AsmPrinter::LowerJumpTableDest(llvm::MCStreamer &OutStreamer,
+                                           const llvm::MachineInstr &MI) {
   Register DestReg = MI.getOperand(0).getReg();
   Register ScratchReg = MI.getOperand(1).getReg();
   Register ScratchRegW =
@@ -858,45 +844,67 @@ void AArch64AsmPrinter::LowerJumpTableDestSmall(llvm::MCStreamer &OutStreamer,
   Register TableReg = MI.getOperand(2).getReg();
   Register EntryReg = MI.getOperand(3).getReg();
   int JTIdx = MI.getOperand(4).getIndex();
-  bool IsByteEntry = (MI.getOpcode() == AArch64::JumpTableDest8 ||
-                      MI.getOpcode() == AArch64::MCJumpTableDest8);
+  int Size = AArch64FI->getJumpTableEntrySize(JTIdx);
 
   // This has to be first because the compression pass based its reachability
   // calculations on the start of the JumpTableDest instruction.
   auto Label =
       MF->getInfo<AArch64FunctionInfo>()->getJumpTableEntryPCRelSymbol(JTIdx);
-  // Adjust the LSB for C64.
-  const MCExpr *Value = MCSymbolRefExpr::create(Label, MF->getContext());
-  if (STI->hasC64())
-    Value = MCBinaryExpr::createAdd(Value,
-                                    MCConstantExpr::create(1, OutContext),
-                                    OutContext);
+
+  // If we don't already have a symbol to use as the base, use the ADR
+  // instruction itself.
+  if (!Label) {
+    Label = MF->getContext().createTempSymbol();
+    AArch64FI->setJumpTableEntryInfo(JTIdx, Size, Label);
+    OutStreamer.emitLabel(Label);
+  }
+
   unsigned AdrReg = DestReg;
-  if (STI->hasC64())
+  const MCExpr *LabelExpr = MCSymbolRefExpr::create(Label, MF->getContext());
+  if (STI->hasC64()) {
+    // Adjust the LSB for C64.
+    LabelExpr = MCBinaryExpr::createAdd(LabelExpr,
+                                        MCConstantExpr::create(1, OutContext),
+                                        OutContext);
     AdrReg = STI->getRegisterInfo()->getSubReg(DestReg, AArch64::sub_64);
+  }
   EmitToStreamer(OutStreamer, MCInstBuilder(AArch64::ADR)
                                   .addReg(AdrReg)
-                                  .addExpr(Value));
+                                  .addExpr(LabelExpr));
 
   // Load the number of instruction-steps to offset from the label.
-  unsigned LdrOpcode = IsByteEntry ? AArch64::LDRBBroX : AArch64::LDRHHroX;
-  if (STI->hasC64() && STI->hasPureCap())
-    LdrOpcode = IsByteEntry ? AArch64::ALDRBBroX
-                            : AArch64::ALDRHHroX;
+  unsigned LdrOpcode;
+  switch (Size) {
+  case 1:
+    LdrOpcode = STI->hasC64() ? AArch64::ALDRBBroX
+                              : AArch64::LDRBBroX;
+    break;
+  case 2:
+    LdrOpcode = STI->hasC64() ? AArch64::ALDRHHroX
+                              : AArch64::LDRHHroX;
+    break;
+  case 4:
+    LdrOpcode = STI->hasC64() ? AArch64::ALDRSWroX
+                              : AArch64::LDRSWroX;
+    break;
+  default:
+    llvm_unreachable("Unknown jump table size");
+  }
 
   EmitToStreamer(OutStreamer, MCInstBuilder(LdrOpcode)
-                                  .addReg(ScratchRegW)
+                                  .addReg(Size == 4 ? ScratchReg : ScratchRegW)
                                   .addReg(TableReg)
                                   .addReg(EntryReg)
                                   .addImm(0)
-                                  .addImm(IsByteEntry ? 0 : 1));
+                                  .addImm(Size == 1 ? 0 : 1));
 
-  // Multiply the steps by 4 and add to the already materialized base label
-  // address.
-  bool UseExtend = STI->hasC64();
-  unsigned AddOpc = UseExtend ? AArch64::CapAddRegX : AArch64::ADDXrs;
-  unsigned ShiftImm = UseExtend ?
-      AArch64_AM::getArithExtendImm(AArch64_AM::UXTX, 2) : 2;
+  // Add to the already materialized base label address, multiplying by 4 if
+  // compressed.
+  unsigned AddOpc = STI->hasC64() ? AArch64::CapAddRegX : AArch64::ADDXrs;
+  unsigned ShiftImm = (Size == 4 ? 0 : 2);
+  if (STI->hasC64())
+    ShiftImm =
+        AArch64_AM::getArithExtendImm(AArch64_AM::UXTX, ShiftImm);
   EmitToStreamer(OutStreamer, MCInstBuilder(AddOpc)
                                   .addReg(DestReg)
                                   .addReg(DestReg)
@@ -1365,40 +1373,13 @@ void AArch64AsmPrinter::emitInstruction(const MachineInstr *MI) {
     return;
   }
 
-  case AArch64::MCJumpTableDest32:
-  case AArch64::JumpTableDest32: {
-    // We want:
-    //     ldrsw xScratch, [xTable, xEntry, lsl #2]
-    //     add xDest, xTable, xScratch
-    unsigned DestReg = MI->getOperand(0).getReg(),
-             ScratchReg = MI->getOperand(1).getReg(),
-             TableReg = MI->getOperand(2).getReg(),
-             EntryReg = MI->getOperand(3).getReg();
-    unsigned LoadOpc = AArch64::LDRSWroX;
-    if (STI->hasC64() && STI->hasPureCap())
-      LoadOpc = AArch64::ALDRSWroX;
-    EmitToStreamer(*OutStreamer, MCInstBuilder(LoadOpc)
-                                     .addReg(ScratchReg)
-                                     .addReg(TableReg)
-                                     .addReg(EntryReg)
-                                     .addImm(0)
-                                     .addImm(1));
-    bool HasC64 = STI->hasC64();
-    unsigned AddOpc = (HasC64) ? AArch64::CapAddRegX : AArch64::ADDXrs;
-    unsigned ShiftImm = HasC64 ?
-        AArch64_AM::getArithExtendImm(AArch64_AM::UXTX, 0) : 0;
-    EmitToStreamer(*OutStreamer, MCInstBuilder(AddOpc)
-                                     .addReg(DestReg)
-                                     .addReg(TableReg)
-                                     .addReg(ScratchReg)
-                                     .addImm(ShiftImm));
-    return;
-  }
+  case AArch64::JumpTableDest32:
   case AArch64::JumpTableDest16:
   case AArch64::JumpTableDest8:
+  case AArch64::MCJumpTableDest32:
   case AArch64::MCJumpTableDest16:
   case AArch64::MCJumpTableDest8:
-    LowerJumpTableDestSmall(*OutStreamer, *MI);
+    LowerJumpTableDest(*OutStreamer, *MI);
     return;
 
   case AArch64::FMOVH0:

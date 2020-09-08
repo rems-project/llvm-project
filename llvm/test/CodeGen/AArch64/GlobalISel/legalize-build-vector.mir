@@ -70,5 +70,5 @@ body: |
     %1:_(s8) = G_IMPLICIT_DEF
     %2:_(<16 x s8>) = G_BUILD_VECTOR %0(s8), %1(s8), %0(s8), %1(s8), %0(s8), %1(s8), %0(s8), %1(s8), %0(s8), %1(s8), %0(s8), %1(s8), %0(s8), %1(s8), %0(s8), %1(s8)
     $q0 = COPY %2(<16 x s8>)
-    RET_ReallyLR
+    RET_ReallyLR 0
 ...

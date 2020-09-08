@@ -6981,17 +6981,19 @@ SDValue AArch64TargetLowering::LowerBR_JT(SDValue Op,
   SDValue Entry = Op.getOperand(2);
   int JTI = cast<JumpTableSDNode>(JT.getNode())->getIndex();
 
+  auto *AFI = DAG.getMachineFunction().getInfo<AArch64FunctionInfo>();
+  AFI->setJumpTableEntryInfo(JTI, 4, nullptr);
+
   SDNode *Dest = nullptr;
-  if (Subtarget->hasPureCap()) {
+  if (Subtarget->hasPureCap())
     Dest =
         DAG.getMachineNode(AArch64::MCJumpTableDest32, DL, MVT::iFATPTR128,
                            MVT::i64, JT, Entry,
                            DAG.getTargetJumpTable(JTI, MVT::i32));
-  } else
+  else
     Dest =
         DAG.getMachineNode(AArch64::JumpTableDest32, DL, MVT::i64, MVT::i64, JT,
                            Entry, DAG.getTargetJumpTable(JTI, MVT::i32));
-
   return DAG.getNode(ISD::BRIND, DL, MVT::Other, Op.getOperand(0),
                      SDValue(Dest, 0));
 }
