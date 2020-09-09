@@ -363,12 +363,9 @@ llvm::APInt Scalar::SInt256(llvm::APInt &fail_value) const {
   switch (m_type) {
   case e_void:
     break;
-  case e_sint:
-  case e_uint:
+  case e_int:
     return m_integer;
   case e_float:
-  case e_double:
-  case e_long_double:
     return m_float.bitcastToAPInt();
   }
   return fail_value;
@@ -378,12 +375,9 @@ llvm::APInt Scalar::UInt256(const llvm::APInt &fail_value) const {
   switch (m_type) {
   case e_void:
     break;
-  case e_sint:
-  case e_uint:
+  case e_int:
     return m_integer;
   case e_float:
-  case e_double:
-  case e_long_double:
     return m_float.bitcastToAPInt();
   }
   return fail_value;
@@ -932,13 +926,10 @@ bool Scalar::IsBitSet(uint32_t bit, bool &is_set) {
   switch (m_type) {
   case e_void:
     break;
-  case e_sint:
-  case e_uint:
+  case e_int:
     is_set = m_integer[bit];
     return true;
   case e_float:
-  case e_double:
-  case e_long_double:
     break;
   }
   return false;

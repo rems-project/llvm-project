@@ -99,6 +99,9 @@ public:
     return Undefs;
   }
 
+  // Get filename to use for linker script processing.
+  StringRef getNameForScript() const;
+
   // Filename of .a which contained this file. If this file was
   // not in an archive file, it is the empty string. We use this
   // string for creating error messages.
@@ -156,6 +159,9 @@ protected:
 
 private:
   const Kind fileKind;
+
+  // Cache for getNameForScript().
+  mutable std::string nameForScriptCache;
 };
 
 class ELFFileBase : public InputFile {

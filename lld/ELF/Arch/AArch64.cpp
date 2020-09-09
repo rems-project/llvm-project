@@ -99,7 +99,7 @@ bool AArch64::calcIsCheriAbi() const {
 }
 
 static uint32_t getEFlags(InputFile *f) {
-  return cast<ObjFile<llvm::object::ELF64LE>>(f)->getObj().getHeader()->e_flags;
+  return cast<ObjFile<llvm::object::ELF64LE>>(f)->getObj().getHeader().e_flags;
 }
 
 uint32_t AArch64::calcEFlags() const {
