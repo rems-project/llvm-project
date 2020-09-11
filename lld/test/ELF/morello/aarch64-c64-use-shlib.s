@@ -119,6 +119,22 @@ appdata: .xword 8
 // CHECK-PIE: Contents of section .data:
 // CHECK-PIE-NEXT:  30660 08000000 00000000
 
+// CHECK: Contents of section .got.plt:
+// CHECK-NEXT:  230670 00000000 00000000 00000000 00000000
+// CHECK-NEXT:  230680 00000000 00000000 00000000 00000000
+// CHECK-NEXT:  230690 00000000 00000000 00000000 00000000
+
+/// .got.plt[3] should be initialized to point to the PLT Header (00210470)
+// CHECK-NEXT:  2306a0 71042100 00000000 00000000 00000000
+
+// CHECK-PIE: Contents of section .got.plt:
+// CHECK-PIE-NEXT:  30670 00000000 00000000 00000000 00000000
+// CHECK-PIE-NEXT:  30680 00000000 00000000 00000000 00000000
+// CHECK-PIE-NEXT:  30690 00000000 00000000 00000000 00000000
+
+/// .got.plt[3] should be initialized to point to the PLT Header (00010470)
+// CHECK-PIE-NEXT:  306a0 71040100 00000000 00000000 00000000
+
 // CHECK: 0000000000210430 _start:
 // CHECK-NEXT:   210430:        bl      #0x60 <rodata+0x210490>
 // CHECK-NEXT:   210434:        adrp    c0, #0x10000
@@ -138,15 +154,18 @@ appdata: .xword 8
 // CHECK: 0000000000210468 from_app:
 // CHECK-NEXT:   210468:        ret
 
+/// Check that the PLT header points to .got.plt[2] (230690)
 // CHECK: 0000000000210470 .plt:
 // CHECK-NEXT:   210470:        stp     c16, c30, [csp, #-0x20]!
 // CHECK-NEXT:   210474:        adrp    c16, #0x20000
-// CHECK-NEXT:   210478:        ldr     c17, [c16, #0x6b0]
-// CHECK-NEXT:   21047c:        add     c16, c16, #0x6b0
+// CHECK-NEXT:   210478:        ldr     c17, [c16, #0x690]
+// CHECK-NEXT:   21047c:        add     c16, c16, #0x690
 // CHECK-NEXT:   210480:        br      c17
 // CHECK-NEXT:   210484:        nop
 // CHECK-NEXT:   210488:        nop
 // CHECK-NEXT:   21048c:        nop
+
+/// Check that the next PLT entry (.plt[3]) points to .got.plt[3] (2306a0)
 // CHECK-NEXT:   210490:        adrp    c16, #0x20000
 // CHECK-NEXT:   210494:        add     c16, c16, #0x6a0
 // CHECK-NEXT:   210498:        ldr     c17, [c16, #0x0]
@@ -171,15 +190,18 @@ appdata: .xword 8
 // CHECK-PIE: 0000000000010468 from_app:
 // CHECK-PIE-NEXT:    10468:            ret
 
+/// Check that the PLT header points to .got.plt[2] (30690)
 // CHECK-PIE: 0000000000010470 .plt:
 // CHECK-PIE-NEXT:    10470:            stp     c16, c30, [csp, #-0x20]!
 // CHECK-PIE-NEXT:    10474:            adrp    c16, #0x20000
-// CHECK-PIE-NEXT:    10478:            ldr     c17, [c16, #0x6b0]
-// CHECK-PIE-NEXT:    1047c:            add     c16, c16, #0x6b0
+// CHECK-PIE-NEXT:    10478:            ldr     c17, [c16, #0x690]
+// CHECK-PIE-NEXT:    1047c:            add     c16, c16, #0x690
 // CHECK-PIE-NEXT:    10480:            br      c17
 // CHECK-PIE-NEXT:    10484:            nop
 // CHECK-PIE-NEXT:    10488:            nop
 // CHECK-PIE-NEXT:    1048c:            nop
+
+/// Check that the next PLT entry (.plt[3]) points to .got.plt[3] (306a0)
 // CHECK-PIE-NEXT:    10490:            adrp    c16, #0x20000
 // CHECK-PIE-NEXT:    10494:            add     c16, c16, #0x6a0
 // CHECK-PIE-NEXT:    10498:            ldr     c17, [c16, #0x0]
