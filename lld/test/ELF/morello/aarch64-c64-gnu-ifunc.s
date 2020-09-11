@@ -45,7 +45,7 @@ _start:
 // CHECK-NEXT:   210258:        ldr     c17, [c16, #0x0]
 // CHECK-NEXT:   21025c:        br      c17
 // CHECK-NEXT:   210260:        adrp    c16, #0x10000
-// CHECK-NEXT:   210264:        add     c16, c16, #0x290
+// CHECK-NEXT:   210264:        add     c16, c16, #0x280
 // CHECK-NEXT:   210268:        ldr     c17, [c16, #0x0]
 // CHECK-NEXT:   21026c:        br      c17
 

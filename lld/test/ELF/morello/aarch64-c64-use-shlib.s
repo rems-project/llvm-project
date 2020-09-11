@@ -148,7 +148,7 @@ appdata: .xword 8
 // CHECK-NEXT:   210488:        nop
 // CHECK-NEXT:   21048c:        nop
 // CHECK-NEXT:   210490:        adrp    c16, #0x20000
-// CHECK-NEXT:   210494:        add     c16, c16, #0x6b0
+// CHECK-NEXT:   210494:        add     c16, c16, #0x6a0
 // CHECK-NEXT:   210498:        ldr     c17, [c16, #0x0]
 // CHECK-NEXT:   21049c:        br      c17
 
@@ -181,7 +181,7 @@ appdata: .xword 8
 // CHECK-PIE-NEXT:    10488:            nop
 // CHECK-PIE-NEXT:    1048c:            nop
 // CHECK-PIE-NEXT:    10490:            adrp    c16, #0x20000
-// CHECK-PIE-NEXT:    10494:            add     c16, c16, #0x6b0
+// CHECK-PIE-NEXT:    10494:            add     c16, c16, #0x6a0
 // CHECK-PIE-NEXT:    10498:            ldr     c17, [c16, #0x0]
 // CHECK-PIE-NEXT:    1049c:            br      c17
 

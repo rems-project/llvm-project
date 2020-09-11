@@ -218,7 +218,7 @@ caller:
 // CHECK-NEXT:    10628:        ldr     c17, [c16, #0x0]
 // CHECK-NEXT:    1062c:        br      c17
 // CHECK-NEXT:    10630:        adrp    c16, #0x20000
-// CHECK-NEXT:    10634:        add     c16, c16, #0x910
+// CHECK-NEXT:    10634:        add     c16, c16, #0x900
 // CHECK-NEXT:    10638:        ldr     c17, [c16, #0x0]
 // CHECK-NEXT:    1063c:        br      c17
 

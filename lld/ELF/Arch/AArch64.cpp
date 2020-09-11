@@ -813,7 +813,7 @@ void AArch64C64::writePlt(uint8_t *buf, const Symbol &sym,
                           uint64_t pltEntryAddr) const {
   const uint8_t pltData[] = {
       0x10, 0x00, 0x80, 0x90, // adrp c16, PLTGOT + n * 16
-      0x10, 0x42, 0x00, 0x02, // add  c16, c16, Offset(&(.plt.got[n]))
+      0x10, 0x02, 0x00, 0x02, // add  c16, c16, Offset(&(.plt.got[n]))
       0x11, 0x02, 0x40, 0xc2, // ldr  c17, [c16]
       0x20, 0x12, 0xc2, 0xc2, // br   c17
   };
