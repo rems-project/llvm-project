@@ -2,10 +2,10 @@
 // RUN: ld.lld --shared --soname=t.so --morello-c64-plt %t.o -o %t.so
 // RUN: llvm-mc --triple=aarch64-none-elf -mattr=+c64,+morello -filetype=obj %s -o %t.o
 // RUN: ld.lld --morello-c64-plt %t.so %t.o -o %t
-// RUN: llvm-objdump --no-show-raw-insn -s -d --triple=aarch64-none-elf -mattr=+morello %t | FileCheck %s
+// RUN: llvm-objdump --print-imm-hex --no-show-raw-insn -s -d --triple=aarch64-none-elf -mattr=+morello %t | FileCheck %s
 // RUN: llvm-readobj --relocations %t | FileCheck %s --check-prefix=RELS
 // RUN: ld.lld --pie --morello-c64-plt %t.so %t.o -o %tpie
-// RUN: llvm-objdump --no-show-raw-insn -s -d --triple=aarch64-none-elf -mattr=+morello %tpie | FileCheck %s --check-prefix=CHECK-PIE
+// RUN: llvm-objdump --print-imm-hex --no-show-raw-insn -s -d --triple=aarch64-none-elf -mattr=+morello %tpie | FileCheck %s --check-prefix=CHECK-PIE
 // RUN: llvm-readobj --relocations %tpie | FileCheck %s --check-prefix=RELS-PIE
 
 /// Application using a shared library. Expect to see dynamic
@@ -120,69 +120,69 @@ appdata: .xword 8
 // CHECK-PIE-NEXT:  30660 08000000 00000000
 
 // CHECK: 0000000000210430 _start:
-// CHECK-NEXT:   210430:        bl      #96 <rodata+0x210490>
-// CHECK-NEXT:   210434:        adrp    c0, #65536
-// CHECK-NEXT:   210438:        ldr     c0, [c0, #1536]
-// CHECK-NEXT:   21043c:        adrp    c1, #65536
-// CHECK-NEXT:   210440:        ldr     c1, [c1, #1552]
-// CHECK-NEXT:   210444:        adrp    c2, #65536
-// CHECK-NEXT:   210448:        ldr     c2, [c2, #1568]
-// CHECK-NEXT:   21044c:        adrp    c3, #65536
-// CHECK-NEXT:   210450:        ldr     c3, [c3, #1584]
-// CHECK-NEXT:   210454:        adrp    c4, #65536
-// CHECK-NEXT:   210458:        ldr     c4, [c4, #1600]
-// CHECK-NEXT:   21045c:        adrp    c5, #65536
-// CHECK-NEXT:   210460:        ldr     c5, [c5, #1616]
+// CHECK-NEXT:   210430:        bl      #0x60 <rodata+0x210490>
+// CHECK-NEXT:   210434:        adrp    c0, #0x10000
+// CHECK-NEXT:   210438:        ldr     c0, [c0, #0x600]
+// CHECK-NEXT:   21043c:        adrp    c1, #0x10000
+// CHECK-NEXT:   210440:        ldr     c1, [c1, #0x610]
+// CHECK-NEXT:   210444:        adrp    c2, #0x10000
+// CHECK-NEXT:   210448:        ldr     c2, [c2, #0x620]
+// CHECK-NEXT:   21044c:        adrp    c3, #0x10000
+// CHECK-NEXT:   210450:        ldr     c3, [c3, #0x630]
+// CHECK-NEXT:   210454:        adrp    c4, #0x10000
+// CHECK-NEXT:   210458:        ldr     c4, [c4, #0x640]
+// CHECK-NEXT:   21045c:        adrp    c5, #0x10000
+// CHECK-NEXT:   210460:        ldr     c5, [c5, #0x650]
 // CHECK-NEXT:   210464:        ret
 
 // CHECK: 0000000000210468 from_app:
 // CHECK-NEXT:   210468:        ret
 
 // CHECK: 0000000000210470 .plt:
-// CHECK-NEXT:   210470:        stp     c16, c30, [csp, #-32]!
-// CHECK-NEXT:   210474:        adrp    c16, #131072
-// CHECK-NEXT:   210478:        ldr     c17, [c16, #1712]
-// CHECK-NEXT:   21047c:        add     c16, c16, #1712
+// CHECK-NEXT:   210470:        stp     c16, c30, [csp, #-0x20]!
+// CHECK-NEXT:   210474:        adrp    c16, #0x20000
+// CHECK-NEXT:   210478:        ldr     c17, [c16, #0x6b0]
+// CHECK-NEXT:   21047c:        add     c16, c16, #0x6b0
 // CHECK-NEXT:   210480:        br      c17
 // CHECK-NEXT:   210484:        nop
 // CHECK-NEXT:   210488:        nop
 // CHECK-NEXT:   21048c:        nop
-// CHECK-NEXT:   210490:        adrp    c16, #131072
-// CHECK-NEXT:   210494:        add     c16, c16, #1712
-// CHECK-NEXT:   210498:        ldr     c17, [c16, #0]
+// CHECK-NEXT:   210490:        adrp    c16, #0x20000
+// CHECK-NEXT:   210494:        add     c16, c16, #0x6b0
+// CHECK-NEXT:   210498:        ldr     c17, [c16, #0x0]
 // CHECK-NEXT:   21049c:        br      c17
 
 // CHECK-PIE: 0000000000010430 _start:
-// CHECK-PIE-NEXT:    10430:            bl      #96 <rodata+0x10490>
-// CHECK-PIE-NEXT:    10434:            adrp    c0, #65536
-// CHECK-PIE-NEXT:    10438:            ldr     c0, [c0, #1536]
-// CHECK-PIE-NEXT:    1043c:            adrp    c1, #65536
-// CHECK-PIE-NEXT:    10440:            ldr     c1, [c1, #1552]
-// CHECK-PIE-NEXT:    10444:            adrp    c2, #65536
-// CHECK-PIE-NEXT:    10448:            ldr     c2, [c2, #1568]
-// CHECK-PIE-NEXT:    1044c:            adrp    c3, #65536
-// CHECK-PIE-NEXT:    10450:            ldr     c3, [c3, #1584]
-// CHECK-PIE-NEXT:    10454:            adrp    c4, #65536
-// CHECK-PIE-NEXT:    10458:            ldr     c4, [c4, #1600]
-// CHECK-PIE-NEXT:    1045c:            adrp    c5, #65536
-// CHECK-PIE-NEXT:    10460:            ldr     c5, [c5, #1616]
+// CHECK-PIE-NEXT:    10430:            bl      #0x60 <rodata+0x10490>
+// CHECK-PIE-NEXT:    10434:            adrp    c0, #0x10000
+// CHECK-PIE-NEXT:    10438:            ldr     c0, [c0, #0x600]
+// CHECK-PIE-NEXT:    1043c:            adrp    c1, #0x10000
+// CHECK-PIE-NEXT:    10440:            ldr     c1, [c1, #0x610]
+// CHECK-PIE-NEXT:    10444:            adrp    c2, #0x10000
+// CHECK-PIE-NEXT:    10448:            ldr     c2, [c2, #0x620]
+// CHECK-PIE-NEXT:    1044c:            adrp    c3, #0x10000
+// CHECK-PIE-NEXT:    10450:            ldr     c3, [c3, #0x630]
+// CHECK-PIE-NEXT:    10454:            adrp    c4, #0x10000
+// CHECK-PIE-NEXT:    10458:            ldr     c4, [c4, #0x640]
+// CHECK-PIE-NEXT:    1045c:            adrp    c5, #0x10000
+// CHECK-PIE-NEXT:    10460:            ldr     c5, [c5, #0x650]
 // CHECK-PIE-NEXT:    10464:            ret
 
 // CHECK-PIE: 0000000000010468 from_app:
 // CHECK-PIE-NEXT:    10468:            ret
 
 // CHECK-PIE: 0000000000010470 .plt:
-// CHECK-PIE-NEXT:    10470:            stp     c16, c30, [csp, #-32]!
-// CHECK-PIE-NEXT:    10474:            adrp    c16, #131072
-// CHECK-PIE-NEXT:    10478:            ldr     c17, [c16, #1712]
-// CHECK-PIE-NEXT:    1047c:            add     c16, c16, #1712
+// CHECK-PIE-NEXT:    10470:            stp     c16, c30, [csp, #-0x20]!
+// CHECK-PIE-NEXT:    10474:            adrp    c16, #0x20000
+// CHECK-PIE-NEXT:    10478:            ldr     c17, [c16, #0x6b0]
+// CHECK-PIE-NEXT:    1047c:            add     c16, c16, #0x6b0
 // CHECK-PIE-NEXT:    10480:            br      c17
 // CHECK-PIE-NEXT:    10484:            nop
 // CHECK-PIE-NEXT:    10488:            nop
 // CHECK-PIE-NEXT:    1048c:            nop
-// CHECK-PIE-NEXT:    10490:            adrp    c16, #131072
-// CHECK-PIE-NEXT:    10494:            add     c16, c16, #1712
-// CHECK-PIE-NEXT:    10498:            ldr     c17, [c16, #0]
+// CHECK-PIE-NEXT:    10490:            adrp    c16, #0x20000
+// CHECK-PIE-NEXT:    10494:            add     c16, c16, #0x6b0
+// CHECK-PIE-NEXT:    10498:            ldr     c17, [c16, #0x0]
 // CHECK-PIE-NEXT:    1049c:            br      c17
 
 // RELS: Relocations [

@@ -1,7 +1,7 @@
 // REQUIRES: aarch64
 // RUN: llvm-mc --triple=aarch64-none-elf -mattr=+c64,+morello -filetype=obj %s -o %t.o
 // RUN: ld.lld --shared --morello-c64-plt %t.o -o %t.so
-// RUN: llvm-objdump --no-show-raw-insn -d --triple=aarch64-none-elf -mattr=+morello -s %t.so | FileCheck %s
+// RUN: llvm-objdump --print-imm-hex --no-show-raw-insn -d --triple=aarch64-none-elf -mattr=+morello -s %t.so | FileCheck %s
 // RUN: llvm-readobj --relocations %t.so | FileCheck %s --check-prefix=RELS
 /// code for a shared library, using global, hidden, local, imported, .got,
 /// .got.plt and .capinit
@@ -184,42 +184,42 @@ caller:
 // CHECK-NEXT:    105a4:        ret
 
 // CHECK: 00000000000105a8 caller:
-// CHECK-NEXT:    105a8:        bl      #120 <importfunc+0x10620>
-// CHECK-NEXT:    105ac:        bl      #-36 <hiddenfunc>
-// CHECK-NEXT:    105b0:        bl      #-24 <localfunc>
-// CHECK-NEXT:    105b4:        bl      #124 <importfunc+0x10630>
+// CHECK-NEXT:    105a8:        bl      #0x78 <importfunc+0x10620>
+// CHECK-NEXT:    105ac:        bl      #-0x24 <hiddenfunc>
+// CHECK-NEXT:    105b0:        bl      #-0x18 <localfunc>
+// CHECK-NEXT:    105b4:        bl      #0x7c <importfunc+0x10630>
 // CHECK-NEXT:    105b8:        ret
-// CHECK-NEXT:    105bc:        adrp    c0, #65536
-// CHECK-NEXT:    105c0:        ldr     c0, [c0, #2096]
-// CHECK-NEXT:    105c4:        adrp    c1, #65536
-// CHECK-NEXT:    105c8:        ldr     c1, [c1, #2112]
-// CHECK-NEXT:    105cc:        adrp    c2, #65536
-// CHECK-NEXT:    105d0:        ldr     c2, [c2, #2128]
-// CHECK-NEXT:    105d4:        adrp    c3, #65536
-// CHECK-NEXT:    105d8:        ldr     c3, [c3, #2144]
-// CHECK-NEXT:    105dc:        adrp    c4, #65536
-// CHECK-NEXT:    105e0:        ldr     c4, [c4, #2160]
-// CHECK-NEXT:    105e4:        adrp    c5, #65536
-// CHECK-NEXT:    105e8:        ldr     c5, [c5, #2176]
-// CHECK-NEXT:    105ec:        adrp    c17, #65536
-// CHECK-NEXT:    105f0:        ldr     c17, [c17, #2192]
+// CHECK-NEXT:    105bc:        adrp    c0, #0x10000
+// CHECK-NEXT:    105c0:        ldr     c0, [c0, #0x830]
+// CHECK-NEXT:    105c4:        adrp    c1, #0x10000
+// CHECK-NEXT:    105c8:        ldr     c1, [c1, #0x840]
+// CHECK-NEXT:    105cc:        adrp    c2, #0x10000
+// CHECK-NEXT:    105d0:        ldr     c2, [c2, #0x850]
+// CHECK-NEXT:    105d4:        adrp    c3, #0x10000
+// CHECK-NEXT:    105d8:        ldr     c3, [c3, #0x860]
+// CHECK-NEXT:    105dc:        adrp    c4, #0x10000
+// CHECK-NEXT:    105e0:        ldr     c4, [c4, #0x870]
+// CHECK-NEXT:    105e4:        adrp    c5, #0x10000
+// CHECK-NEXT:    105e8:        ldr     c5, [c5, #0x880]
+// CHECK-NEXT:    105ec:        adrp    c17, #0x10000
+// CHECK-NEXT:    105f0:        ldr     c17, [c17, #0x890]
 
 // CHECK: 0000000000010600 .plt:
-// CHECK-NEXT:    10600:        stp     c16, c30, [csp, #-32]!
-// CHECK-NEXT:    10604:        adrp    c16, #131072
-// CHECK-NEXT:    10608:        ldr     c17, [c16, #2272]
-// CHECK-NEXT:    1060c:        add     c16, c16, #2272
+// CHECK-NEXT:    10600:        stp     c16, c30, [csp, #-0x20]!
+// CHECK-NEXT:    10604:        adrp    c16, #0x20000
+// CHECK-NEXT:    10608:        ldr     c17, [c16, #0x8e0]
+// CHECK-NEXT:    1060c:        add     c16, c16, #0x8e0
 // CHECK-NEXT:    10610:        br      c17
 // CHECK-NEXT:    10614:        nop
 // CHECK-NEXT:    10618:        nop
 // CHECK-NEXT:    1061c:        nop
-// CHECK-NEXT:    10620:        adrp    c16, #131072
-// CHECK-NEXT:    10624:        add     c16, c16, #2288
-// CHECK-NEXT:    10628:        ldr     c17, [c16, #0]
+// CHECK-NEXT:    10620:        adrp    c16, #0x20000
+// CHECK-NEXT:    10624:        add     c16, c16, #0x8f0
+// CHECK-NEXT:    10628:        ldr     c17, [c16, #0x0]
 // CHECK-NEXT:    1062c:        br      c17
-// CHECK-NEXT:    10630:        adrp    c16, #131072
-// CHECK-NEXT:    10634:        add     c16, c16, #2320
-// CHECK-NEXT:    10638:        ldr     c17, [c16, #0]
+// CHECK-NEXT:    10630:        adrp    c16, #0x20000
+// CHECK-NEXT:    10634:        add     c16, c16, #0x910
+// CHECK-NEXT:    10638:        ldr     c17, [c16, #0x0]
 // CHECK-NEXT:    1063c:        br      c17
 
 // RELS: Relocations [

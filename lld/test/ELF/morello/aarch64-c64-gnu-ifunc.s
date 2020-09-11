@@ -1,7 +1,7 @@
 // REQUIRES: aarch64
 // RUN: llvm-mc -filetype=obj -triple=aarch64-none-elf -mattr=+c64,+morello %s -o %t.o
 // RUN: ld.lld --morello-c64-plt -static %t.o -o %tout
-// RUN: llvm-objdump -s -d --no-show-raw-insn -triple=aarch64-none-elf -mattr=+morello %tout | FileCheck %s
+// RUN: llvm-objdump -s -d --print-imm-hex --no-show-raw-insn -triple=aarch64-none-elf -mattr=+morello %tout | FileCheck %s
 // RUN: llvm-readobj -r --symbols %tout | FileCheck %s --check-prefix=RELANDSYM
 .text
 .type foo STT_GNU_IFUNC
@@ -34,19 +34,19 @@ _start:
 // CHECK-NEXT:   210235:        <unknown>
 
 // CHECK: 0000000000210238 _start:
-// CHECK-NEXT:   210238:        bl      #24
-// CHECK-NEXT:   21023c:        bl      #36
-// CHECK-NEXT:   210240:        add     x2, x2, #512
-// CHECK-NEXT:   210244:        add     x2, x2, #560
+// CHECK-NEXT:   210238:        bl      #0x18
+// CHECK-NEXT:   21023c:        bl      #0x24
+// CHECK-NEXT:   210240:        add     x2, x2, #0x200
+// CHECK-NEXT:   210244:        add     x2, x2, #0x230
 
 // CHECK: 0000000000210250 .iplt:
-// CHECK-NEXT:   210250:        adrp    c16, #65536
-// CHECK-NEXT:   210254:        add     c16, c16, #624
-// CHECK-NEXT:   210258:        ldr     c17, [c16, #0]
+// CHECK-NEXT:   210250:        adrp    c16, #0x10000
+// CHECK-NEXT:   210254:        add     c16, c16, #0x270
+// CHECK-NEXT:   210258:        ldr     c17, [c16, #0x0]
 // CHECK-NEXT:   21025c:        br      c17
-// CHECK-NEXT:   210260:        adrp    c16, #65536
-// CHECK-NEXT:   210264:        add     c16, c16, #656
-// CHECK-NEXT:   210268:        ldr     c17, [c16, #0]
+// CHECK-NEXT:   210260:        adrp    c16, #0x10000
+// CHECK-NEXT:   210264:        add     c16, c16, #0x290
+// CHECK-NEXT:   210268:        ldr     c17, [c16, #0x0]
 // CHECK-NEXT:   21026c:        br      c17
 
 // RELANDSYM: Relocations [
