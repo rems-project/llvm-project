@@ -3139,11 +3139,11 @@ SDValue AArch64TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     return DAG.getNode(AArch64ISD::CapSealImm, dl, MVT::iFATPTR128,
                        Op.getOperand(1), DAG.getConstant(1, dl, MVT::i32));
   }
-  case Intrinsic::cheri_cap_bit_equals:
+  case Intrinsic::cheri_cap_equal_exact:
   case Intrinsic::cheri_cap_subset_test: {
     if (Subtarget->hasMorello()) {
       unsigned opcode, cond;
-      if (IntNo == Intrinsic::cheri_cap_bit_equals) {
+      if (IntNo == Intrinsic::cheri_cap_equal_exact) {
         opcode = AArch64ISD::CapCheckEquals;
         cond = AArch64CC::EQ;
       } else {
@@ -14055,7 +14055,7 @@ void AArch64TargetLowering::ReplaceNodeResults(
       return;
     case Intrinsic::cheri_cap_tag_get:
     case Intrinsic::cheri_cap_sealed_get:
-    case Intrinsic::cheri_cap_bit_equals:
+    case Intrinsic::cheri_cap_equal_exact:
     case Intrinsic::cheri_cap_subset_test:
     case Intrinsic::morello_subset_test_unseal: {
       Results.push_back(LowerINTRINSIC_WO_CHAIN(SDValue(N, 0), DAG));

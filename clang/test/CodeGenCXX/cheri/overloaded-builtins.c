@@ -476,7 +476,8 @@ void test_uintcap_t(__uintcap_t arg, __uintcap_t arg2) {
 // HYBRID-NEXT:    [[TMP19:%.*]] = call i8 addrspace(200)* @llvm.cheri.cap.unseal(i8 addrspace(200)* null, i8 addrspace(200)* null)
 // HYBRID-NEXT:    [[TMP20:%.*]] = call i8 addrspace(200)* @llvm.cheri.cap.conditional.seal(i8 addrspace(200)* null, i8 addrspace(200)* null)
 // HYBRID-NEXT:    [[TMP21:%.*]] = call i8 addrspace(200)* @llvm.cheri.cap.type.copy(i8 addrspace(200)* null, i8 addrspace(200)* null)
-// HYBRID-NEXT:    [[TMP22:%.*]] = call i8 addrspace(200)* @llvm.cheri.cap.build(i8 addrspace(200)* null, i8 addrspace(200)* null)
+// HYBRID-NEXT:    [[TMP22:%.*]] = call i8 addrspace(200)* @llvm.cheri.cap.address.set.i64(i8 addrspace(200)* null, i64 0)
+// HYBRID-NEXT:    [[TMP23:%.*]] = call i8 addrspace(200)* @llvm.cheri.cap.build(i8 addrspace(200)* null, i8 addrspace(200)* [[TMP22]])
 // HYBRID-NEXT:    call void @llvm.cheri.cap.perms.check.i64(i8 addrspace(200)* null, i64 1)
 // HYBRID-NEXT:    call void @llvm.cheri.cap.type.check(i8 addrspace(200)* null, i8 addrspace(200)* null)
 // HYBRID-NEXT:    ret void

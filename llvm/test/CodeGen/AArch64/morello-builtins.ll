@@ -48,7 +48,7 @@ define i32 @testEqualityCheck(i8 addrspace(200)* %foo, i8 addrspace(200)* %bar, 
 ; CHECK:      chkeq  c0, c1
 ; CHECK-NEXT: cset   [[reg:w[0-9]+]], eq
 ; CHECK-NEXT: and    {{w[0-9]+}}, [[reg]], w2
-  %1 = call i1 @llvm.cheri.cap.bit.equals(i8 addrspace(200)* %foo, i8 addrspace(200)* %bar)
+  %1 = call i1 @llvm.cheri.cap.equal.exact(i8 addrspace(200)* %foo, i8 addrspace(200)* %bar)
   %2 = zext i1 %1 to i32
   %3 = and i32 %2, %val
   ret i32 %3
@@ -76,7 +76,7 @@ declare i64 @llvm.cheri.cap.flags.get(i8 addrspace(200)*)
 declare i64 @llvm.cheri.round.representable.length.i64(i64)
 declare i64 @llvm.cheri.representable.alignment.mask.i64(i64)
 declare i64 @llvm.cheri.cap.copy.from.high.i64(i8 addrspace(200)*)
-declare i1 @llvm.cheri.cap.bit.equals(i8 addrspace(200)*, i8 addrspace(200)*)
+declare i1 @llvm.cheri.cap.equal.exact(i8 addrspace(200)*, i8 addrspace(200)*)
 declare i1 @llvm.cheri.cap.subset.test(i8 addrspace(200)*, i8 addrspace(200)*)
 declare i64 @llvm.morello.convert.to.ptr(i8 addrspace(200)*, i8 addrspace(200)*)
 

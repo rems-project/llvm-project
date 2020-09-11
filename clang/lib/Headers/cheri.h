@@ -139,9 +139,9 @@ cheri_copy_to_high(const void *__capability __cap, __SIZE_TYPE__ __high) {
   return __IF_CAPS(__builtin_cheri_copy_to_high(__cap, __high), (void*)__cap);
 }
 
-static inline __SIZE_TYPE__ cheri_bit_equals(const void * __capability __cap_a,
+static inline __SIZE_TYPE__ cheri_equal_exact(const void * __capability __cap_a,
     const void * __capability __cap_b) {
-  return __IF_CAPS(__builtin_cheri_bit_equals(__cap_a, __cap_b), 0);
+  return __IF_CAPS(__builtin_cheri_equal_exact(__cap_a, __cap_b), 0);
 }
 
 static inline __SIZE_TYPE__ cheri_subset_test(const void * __capability __cap_a,
@@ -150,15 +150,6 @@ static inline __SIZE_TYPE__ cheri_subset_test(const void * __capability __cap_a,
 }
 
 #ifndef __CHERI_PURE_CAPABILITY__
-#ifdef __aarch64__
-static inline
-void *__capability
-cheri_cap_from_pointer_nonnull_zero(const void* __capability  __cap, __SIZE_TYPE__ __ptr) {
-  return __IF_CAPS(__builtin_cheri_cap_from_pointer_nonnull_zero(__cap, __ptr),
-                   (void *)__ptr);
-}
-#endif
-
 static inline
 void * __capability
 cheri_cap_from_pointer(const void * __capability __cap, void *__ptr) {
@@ -167,12 +158,13 @@ cheri_cap_from_pointer(const void * __capability __cap, void *__ptr) {
 }
 
 static inline
-__SIZE_TYPE__ cheri_cap_to_pointer(const void * __capability __cap,
-                                   const void * __capability __offset) {
+void * cheri_cap_to_pointer(const void * __capability __cap,
+                            void * __capability __offset) {
   return __IF_CAPS(__builtin_cheri_cap_to_pointer(__cap, __offset),
-                   (__SIZE_TYPE__)__offset);
+                   (void *)__offset);
 }
 #endif
+
 static inline
 void cheri_perms_check(const void * __capability __cap, cheri_perms_t __perms) {
   __IF_CAPS(__builtin_cheri_perms_check(__cap, __perms), );
@@ -333,7 +325,5 @@ __cheri_low_bits_clear(__UINTPTR_TYPE__ ptr, __SIZE_TYPE__ bits_mask) {
 #undef __CHERI_SET
 #undef __cheri_bool
 #undef __IF_CAPS
-
-#include <capability_cast.h>
 
 #endif /* _CHERI_H */

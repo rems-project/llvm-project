@@ -194,7 +194,7 @@ void test(void *__capability cap, char *__capability cap2, void *ptr, __SIZE_TYP
   use_cap(cheri_seal(cap, cap2));
   use_cap(cheri_unseal(cap, cap2));
 
-  use_cap(cheri_cap_build(cap, cap2));
+  use_cap(cheri_cap_build(cap, (__intcap_t)cap2));
   use_cap(cheri_seal_conditionally(cap, cap2));
   use_cap(cheri_type_copy(cap, cap2));
 
