@@ -4161,7 +4161,7 @@ class LoadPreIdx<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
                      (outs GPR64sp:$wback, regtype:$Rt),
                      (ins GPR64sp:$Rn, simm9:$offset), asm,
                      "$Rn = $wback,@earlyclobber $wback", []>,
-      Sched<[WriteLD, WriteAdr]>;
+      Sched<[WriteAdr, WriteLD]>;
 
 let mayStore = 1, mayLoad = 0 in
 class StorePreIdx<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
@@ -4207,7 +4207,7 @@ class LoadPostIdx<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
                       (outs GPR64sp:$wback, regtype:$Rt),
                       (ins GPR64sp:$Rn, simm9:$offset),
                       asm, "$Rn = $wback,@earlyclobber $wback", []>,
-      Sched<[WriteLD, WriteAdr]>;
+      Sched<[WriteAdr, WriteLD]>;
 
 let mayStore = 1, mayLoad = 0 in
 class StorePostIdx<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
@@ -4303,7 +4303,7 @@ class LoadPairPreIdx<bits<2> opc, bit V, RegisterOperand regtype,
     : BaseLoadStorePairPreIdx<opc, V, 1,
                               (outs GPR64sp:$wback, regtype:$Rt, regtype:$Rt2),
                               (ins GPR64sp:$Rn, indextype:$offset), asm>,
-      Sched<[WriteLD, WriteLDHi, WriteAdr]>;
+      Sched<[WriteAdr, WriteLD, WriteLDHi]>;
 
 let mayStore = 1, mayLoad = 0 in
 class StorePairPreIdx<bits<2> opc, bit V, RegisterOperand regtype,
@@ -4344,7 +4344,7 @@ class LoadPairPostIdx<bits<2> opc, bit V, RegisterOperand regtype,
     : BaseLoadStorePairPostIdx<opc, V, 1,
                               (outs GPR64sp:$wback, regtype:$Rt, regtype:$Rt2),
                               (ins GPR64sp:$Rn, idxtype:$offset), asm>,
-      Sched<[WriteLD, WriteLDHi, WriteAdr]>;
+      Sched<[WriteAdr, WriteLD, WriteLDHi]>;
 
 let mayStore = 1, mayLoad = 0 in
 class StorePairPostIdx<bits<2> opc, bit V, RegisterOperand regtype,
