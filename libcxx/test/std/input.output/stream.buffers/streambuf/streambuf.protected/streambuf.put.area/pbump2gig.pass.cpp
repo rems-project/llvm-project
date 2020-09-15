@@ -18,6 +18,10 @@
 // newlib can't alloc 2GB of memory so mark this test as an xfail.
 // XFAIL: libcpp-has-newlib
 
+// Unsupported for no-exceptions builds because they have no way to report an
+// allocation failure when attempting to allocate the 2GiB string.
+// UNSUPPORTED: no-exceptions
+
 #include <sstream>
 #include <cassert>
 #include "test_macros.h"
@@ -31,18 +35,14 @@ struct SB : std::stringbuf
 
 int main(int, char**)
 {
-#ifndef TEST_HAS_NO_EXCEPTIONS
     try {
-#endif
         std::string str(2147483648, 'a');
         SB sb;
         sb.str(str);
         assert(sb.pubpbase() <= sb.pubpptr());
-#ifndef TEST_HAS_NO_EXCEPTIONS
     }
     catch (const std::length_error &) {} // maybe the string can't take 2GB
     catch (const std::bad_alloc    &) {} // maybe we don't have enough RAM
-#endif
 
   return 0;
 }
