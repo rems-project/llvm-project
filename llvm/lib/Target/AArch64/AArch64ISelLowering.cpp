@@ -3125,11 +3125,14 @@ SDValue AArch64TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       SDValue NonNullCap = DAG.getNode(AArch64ISD::CapCheckSubsetUnseal, dl,
                                        DAG.getVTList(MVT::iFATPTR128, MVT::i32),
                                        Op.getOperand(1), Op.getOperand(2));
-      SDValue NullCap = DAG.getRegister(AArch64::CZR, MVT::iFATPTR128);
       SDValue CCVal = DAG.getConstant(AArch64CC::MI, dl, MVT::i32);
-      return DAG.getNode(AArch64ISD::CSEL, dl, MVT::iFATPTR128,
-                         NonNullCap.getValue(0), NullCap,
-                         CCVal, NonNullCap.getValue(1));
+      SDValue TVal = DAG.getConstant(1, dl, MVT::i32);
+      SDValue FVal = DAG.getConstant(0, dl, MVT::i32);
+      SDValue Csel = DAG.getNode(AArch64ISD::CSEL, dl, MVT::i32, TVal, FVal,
+                                 CCVal, NonNullCap.getValue(1));
+      SDVTList VTs = DAG.getVTList(MVT::iFATPTR128, MVT::i32);
+      return DAG.getNode(ISD::MERGE_VALUES, dl, VTs, NonNullCap.getValue(0),
+                         Csel);
     }
     return SDValue();
   }
@@ -14056,9 +14059,14 @@ void AArch64TargetLowering::ReplaceNodeResults(
     case Intrinsic::cheri_cap_tag_get:
     case Intrinsic::cheri_cap_sealed_get:
     case Intrinsic::cheri_cap_equal_exact:
-    case Intrinsic::cheri_cap_subset_test:
-    case Intrinsic::morello_subset_test_unseal: {
+    case Intrinsic::cheri_cap_subset_test: {
       Results.push_back(LowerINTRINSIC_WO_CHAIN(SDValue(N, 0), DAG));
+      return;
+    }
+    case Intrinsic::morello_subset_test_unseal: {
+      SDValue Res = LowerINTRINSIC_WO_CHAIN(SDValue(N, 0), DAG);
+      Results.push_back(Res.getValue(0));
+      Results.push_back(Res.getValue(1));
       return;
     }
     case Intrinsic::aarch64_sve_clasta_n: {

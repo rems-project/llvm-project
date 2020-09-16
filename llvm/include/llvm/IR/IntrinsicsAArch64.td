@@ -623,8 +623,7 @@ def int_aarch64_neon_tbx4 : AdvSIMD_Tbx4_Intrinsic;
 // Morello specific
 //
 def int_morello_subset_test_unseal :
-  GCCBuiltin<"__builtin_morello_chkssu">,
-  Intrinsic<[llvm_fatptr_ty], [llvm_fatptr_ty, llvm_fatptr_ty], [IntrNoMem]>;
+  Intrinsic<[llvm_fatptr_ty, llvm_i1_ty], [llvm_fatptr_ty, llvm_fatptr_ty], [IntrNoMem]>;
 def int_morello_convert_to_ptr :
   GCCBuiltin<"__builtin_morello_cvt">,
   Intrinsic<[llvm_i64_ty], [llvm_fatptr_ty, llvm_fatptr_ty], [IntrNoMem]>;

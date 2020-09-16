@@ -93,7 +93,10 @@ entry:
 ; CHECK: scflgs	[[C7:c[0-9]+]], [[C3]], {{x[0-9]+}}
 ; CHECK: cthi	[[C8:c[0-9]+]], [[C7]], {{x[0-9]+}}
 ; CHECK: chkssu [[C9:c[0-9]+]], [[C8]], c0
-; CHECK: csel   [[C10:c[0-9]+]], [[C9]], czr, mi
+; CHECK: cset   [[sealed:w[0-9]+]], mi
+; CHECK: mov    x[[null:[0-9]+]], #0
+; CHECK: cmp    [[sealed]], #0
+; CHECK: csel   [[C10:c[0-9]+]], [[C9]], c[[null]], ne
 ; CHECK: cvtz   [[C11:c[0-9]+]], [[C10]], {{x[0-9]+}}
   %C0 = call i8 addrspace(200)* @llvm.cheri.cap.perms.and(i8 addrspace(200)* %foo, i64 12)
   %C1 = call i8 addrspace(200)* @llvm.cheri.cap.seal(i8 addrspace(200)* %foo, i8 addrspace(200)* %C0)
@@ -104,9 +107,12 @@ entry:
   %C6 = call i8 addrspace(200)* @llvm.cheri.cap.bounds.set.exact(i8 addrspace(200)* %C5, i64 11)
   %C7 = call i8 addrspace(200)* @llvm.cheri.cap.flags.set(i8 addrspace(200)* %C6, i64 10)
   %C8 = call i8 addrspace(200)* @llvm.cheri.cap.copy.to.high.i64(i8 addrspace(200)* %C7, i64 19)
-  %C9 = call i8 addrspace(200)* @llvm.morello.subset.test.unseal(i8 addrspace(200)* %C8, i8 addrspace(200)* %foo)
-  %C10 = call i8 addrspace(200)* @llvm.morello.convert.to.offset.null.cap.zero.semantics(i8 addrspace(200)* %C9, i64 4096)
-  ret i8 addrspace(200)* %C10
+  %C9 = call {i8 addrspace(200)*, i1} @llvm.morello.subset.test.unseal(i8 addrspace(200)* %C8, i8 addrspace(200)* %foo)
+  %C10 = extractvalue {i8 addrspace(200)*, i1} %C9, 0
+  %C11 = extractvalue {i8 addrspace(200)*, i1} %C9, 1
+  %C12 = select i1 %C11, i8 addrspace(200)* %C10, i8 addrspace(200)* null
+  %C13 = call i8 addrspace(200)* @llvm.morello.convert.to.offset.null.cap.zero.semantics(i8 addrspace(200)* %C12, i64 4096)
+  ret i8 addrspace(200)* %C13
 }
 
 declare i8 addrspace(200)* @llvm.cheri.cap.perms.and(i8 addrspace(200)*, i64)
@@ -118,7 +124,7 @@ declare i8 addrspace(200)* @llvm.cheri.cap.tag.clear(i8 addrspace(200)*)
 declare i8 addrspace(200)* @llvm.cheri.cap.offset.set(i8 addrspace(200)*, i64)
 declare i8 addrspace(200)* @llvm.cheri.cap.flags.set(i8 addrspace(200)*, i64)
 declare i8 addrspace(200)* @llvm.cheri.cap.copy.to.high.i64(i8 addrspace(200)*, i64)
-declare i8 addrspace(200)* @llvm.morello.subset.test.unseal(i8 addrspace(200)*, i8 addrspace(200)*)
+declare {i8 addrspace(200)*, i1} @llvm.morello.subset.test.unseal(i8 addrspace(200)*, i8 addrspace(200)*)
 declare i8 addrspace(200)* @llvm.morello.convert.to.offset.null.cap.zero.semantics(i8 addrspace(200)*, i64)
 
 ; CHECK-LABEL: @testGetProgramCounter

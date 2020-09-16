@@ -75,6 +75,7 @@ BUILTIN(__builtin_arm_jcvt, "Zid", "nc")
 // Morello specific
 //
 BUILTIN(__builtin_morello_chkssu, "v*mvC*mvC*m", "nc")
+BUILTIN(__builtin_morello_subset_test_unseal_or_null, "v*mvC*mvC*m", "nc")
 BUILTIN(__builtin_morello_cvt, "zvC*mvC*m", "nc")
 BUILTIN(__builtin_morello_cvtz, "v*mvC*mz", "nc")
 //

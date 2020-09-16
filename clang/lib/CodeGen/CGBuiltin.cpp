@@ -7859,6 +7859,22 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
     return EmitNounwindRuntimeCall(CGM.CreateRuntimeFunction(FTy, Name), Ops);
   }
 
+  if (BuiltinID == AArch64::BI__builtin_morello_chkssu ||
+      BuiltinID == AArch64::BI__builtin_morello_subset_test_unseal_or_null) {
+    Value *Arg0 = EmitScalarExpr(E->getArg(0));
+    Value *Arg1 = EmitScalarExpr(E->getArg(1));
+    Value *Call = Builder.CreateCall(
+        CGM.getIntrinsic(Intrinsic::morello_subset_test_unseal), {Arg0, Arg1});
+    Value *Val0 = Builder.CreateExtractValue(Call, 0);
+    Value *Val1 = Builder.CreateExtractValue(Call, 1);
+    if (BuiltinID == AArch64::BI__builtin_morello_chkssu)
+      return Val0;
+    // If Val1 is true we've unsealed the capability and we should return it,
+    // otherwise return null.
+    return Builder.CreateSelect(Val1, Val0,
+                                Constant::getNullValue(Val0->getType()));
+  }
+
   if ((BuiltinID == AArch64::BI__builtin_arm_ldrex ||
       BuiltinID == AArch64::BI__builtin_arm_ldaex) &&
       getContext().getTypeSize(E->getType()) == 128 &&
