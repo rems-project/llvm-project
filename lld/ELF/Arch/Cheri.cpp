@@ -994,7 +994,7 @@ static void addCapDynamicRelocation(RelType dynType, Symbol *sym,
   // The symbol VA is not used, so if the symbol is not in the dynamic symbol
   // table, and the relocation is relative, add nullptr as the symbol of the
   // dynamic relocation.
-  Symbol *dynsym = (!sym->includeInDynsym() && (dynType == target->relativeRel))
+  Symbol *dynsym = (!sym->includeInDynsym() && (dynType == R_MORELLO_RELATIVE))
                        ? nullptr
                        : sym;
   // Add the relocation directly rather than calling one of the helper methods
@@ -1017,7 +1017,7 @@ void addMorelloC64GotRelocation(RelType dynType, Symbol *sym, uint64_t offset) {
                               sym->isPreemptible, 0);
 }
 
-// For the .capinit R_AARCH64_CAPINIT relocation. Called from the
+// For the .capinit R_MORELLO_CAPINIT relocation. Called from the
 // CHERI entry point addCapabilityRelocation().
 static void addMorelloCapabilityRelocation(Symbol *sym, RelType type,
                                          InputSectionBase *sec, uint64_t offset,
@@ -1027,7 +1027,7 @@ static void addMorelloCapabilityRelocation(Symbol *sym, RelType type,
     // preemptible, otherwise we use R_MORELLO_RELATIVE.
     RelType dynType = (sym->includeInDynsym() && sym->isPreemptible)
                           ? R_MORELLO_CAPINIT
-                          : target->relativeRel;
+                          : R_MORELLO_RELATIVE;
     addCapDynamicRelocation(dynType, sym, sec, offset, addend);
   } else {
     in.capRelocs->addCapReloc({sec, offset, false}, {sym, 0u},
