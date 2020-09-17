@@ -1208,7 +1208,7 @@ TEST(TargetParserTest, testAArch64Extension) {
 }
 
 TEST(TargetParserTest, AArch64ExtensionFeatures) {
-  std::vector<unsigned> Extensions = {
+  std::vector<uint64_t> Extensions = {
     AArch64::AEK_CRC,      AArch64::AEK_CRYPTO,
     AArch64::AEK_FP,       AArch64::AEK_SIMD,
     AArch64::AEK_FP16,     AArch64::AEK_PROFILE,
@@ -1221,7 +1221,7 @@ TEST(TargetParserTest, AArch64ExtensionFeatures) {
 
   std::vector<StringRef> Features;
 
-  unsigned ExtVal = 0;
+  uint64_t ExtVal = 0;
   for (auto Ext : Extensions)
     ExtVal |= Ext;
 
