@@ -34,19 +34,19 @@ entry:
   %rv = add i32 %rv1, %rv2
   ret i32 %rv
 
-; CHECK:      sub csp, csp, #176
-; CHECK-NEXT: str c29, [csp, #48]
-; CHECK-NEXT: stp c30, c28, [csp, #64]
-; CHECK-NEXT: stp c27, c26, [csp, #96]
-; CHECK-NEXT: stp c25, c24, [csp, #128]
-; CHECK-NEXT: str x19, [csp, #160]
+; CHECK:      sub csp, csp, #160
+; CHECK-NEXT: str c29, [csp, #32]
+; CHECK-NEXT: stp c30, c28, [csp, #48]
+; CHECK-NEXT: stp c27, c26, [csp, #80]
+; CHECK-NEXT: stp c25, c24, [csp, #112]
+; CHECK-NEXT: str x19, [csp, #144]
 
-; CHECK: 	add	c0, csp, #40
-; CHECK-NEXT:	add	c1, csp, #36
-; CHECK-NEXT:	add	c2, csp, #32
-; CHECK-NEXT:	add	c3, csp, #28
-; CHECK-NEXT:	add	c4, csp, #16
-; CHECK-NEXT:	add	c5, csp, #12
+; CHECK: 	add	c0, csp, #152
+; CHECK-NEXT:	add	c1, csp, #28
+; CHECK-NEXT:	add	c2, csp, #24
+; CHECK-NEXT:	add	c3, csp, #20
+; CHECK-NEXT:	add	c4, csp, #8
+; CHECK-NEXT:	add	c5, csp, #4
 ; CHECK-NEXT:	scbnds	c24, c0, #8
 ; CHECK-NEXT:	scbnds	c25, c1, #4
 ; CHECK-NEXT:	scbnds	c26, c2, #2
@@ -79,10 +79,10 @@ entry:
 ; CHECK:	bl	baz
 ; CHECK-NEXT:	add	w0,
 
-; CHECK:      ldr x19, [csp, #160]
-; CHECK-NEXT: ldp c25, c24, [csp, #128]
-; CHECK-NEXT: ldp c27, c26, [csp, #96]
-; CHECK-NEXT: ldp c30, c28, [csp, #64]
-; CHECK-NEXT: ldr c29, [csp, #48]
-; CHECK-NEXT: add csp, csp, #176
+; CHECK:      ldr x19, [csp, #144]
+; CHECK-NEXT: ldp c25, c24, [csp, #112]
+; CHECK-NEXT: ldp c27, c26, [csp, #80]
+; CHECK-NEXT: ldp c30, c28, [csp, #48]
+; CHECK-NEXT: ldr c29, [csp, #32]
+; CHECK-NEXT: add csp, csp, #160
 }
