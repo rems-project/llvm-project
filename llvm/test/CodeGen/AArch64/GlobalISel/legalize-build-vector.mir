@@ -86,5 +86,5 @@ body: |
     %1:_(s8) = G_IMPLICIT_DEF
     %2:_(<8 x s8>) = G_BUILD_VECTOR %0(s8), %1(s8), %0(s8), %1(s8), %0(s8), %1(s8), %0(s8), %1(s8)
     $d0 = COPY %2(<8 x s8>)
-    RET_ReallyLR
+    RET_ReallyLR 0
 ...

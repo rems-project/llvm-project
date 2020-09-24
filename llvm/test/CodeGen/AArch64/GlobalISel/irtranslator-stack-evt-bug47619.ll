@@ -20,7 +20,7 @@ define i3 @bug47619(i64 %arg, i64 %arg1, i64 %arg2, i64 %arg3, i64 %arg4, i64 %a
   ; CHECK:   [[LOAD:%[0-9]+]]:_(s3) = G_LOAD [[FRAME_INDEX]](p0) :: (invariant load 4 from %fixed-stack.0, align 16)
   ; CHECK:   [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[LOAD]](s3)
   ; CHECK:   $w0 = COPY [[ANYEXT]](s32)
-  ; CHECK:   RET_ReallyLR implicit $w0
+  ; CHECK:   RET_ReallyLR 0, implicit $w0
 bb:
   ret i3 %arg8
 }

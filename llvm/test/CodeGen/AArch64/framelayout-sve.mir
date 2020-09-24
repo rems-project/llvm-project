@@ -812,5 +812,5 @@ body:             |
 
     STR_ZXI $z0, %stack.0, 0
 
-    RET_ReallyLR
+    RET_ReallyLR 0
 ---
