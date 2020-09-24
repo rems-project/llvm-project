@@ -852,6 +852,7 @@ void AArch64C64::relaxTlsGdToLe(uint8_t *loc, const Relocation &rel,
   //  add      c0, c0, #:tlsdesc_lo12:v   [R_AARCH64_TLSDESC_ADD_LO12]
   //    .tlsdesccall v                    [R_MORELLO_TLSDESC_CALL]
   //  blr      c1
+  //  scbnds  c0, c0, x1
   //
   // And it can optimized to:
   //  mov x0, offset_imm0
@@ -859,15 +860,16 @@ void AArch64C64::relaxTlsGdToLe(uint8_t *loc, const Relocation &rel,
   //  mov x1, size_imm_0
   //  movk x1, size_imm_1
   //  add c0, c2, x0
-  checkUInt(loc, rel.sym->getVA(), 32, rel);
+  //  scbnds  c0, c0, x1
+  checkUInt(loc, val, 32, rel);
   checkUInt(loc, rel.sym->getSize(), 32, rel);
 
   switch (rel.type) {
   case R_MORELLO_TLSDESC_ADR_PAGE20:
     // mov x0, offset_imm0, lsl #16
-    write32le(loc-4, 0xd2a00000 | (((rel.sym->getVA() >> 16) & 0xffff) << 5));
+    write32le(loc-4, 0xd2a00000 | (((val >> 16) & 0xffff) << 5));
     // movk x0, offset_imm1
-    write32le(loc, 0xf2800000 | ((rel.sym->getVA() & 0xffff) << 5));
+    write32le(loc, 0xf2800000 | ((val & 0xffff) << 5));
     return;
   case R_MORELLO_TLSDESC_LD128_LO12:
     // mov x1, size_imm_0, lsl #16
