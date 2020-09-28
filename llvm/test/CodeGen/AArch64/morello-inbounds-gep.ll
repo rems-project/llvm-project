@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=arm64-eabi -asm-verbose=false -verify-machineinstrs -mattr=+c64,+morello | FileCheck %s
+; RUN: llc < %s -mtriple=arm64-eabi -asm-verbose=false -verify-machineinstrs -mattr=+c64,+morello -target-abi purecap | FileCheck %s
 
 target datalayout = "e-m:e-pf200:128:128-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"
 

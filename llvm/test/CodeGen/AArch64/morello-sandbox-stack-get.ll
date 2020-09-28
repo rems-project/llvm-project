@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=aarch64-none-elf -mattr=+morello -target-abi purecap -o - %s \
+; RUN: llc -mtriple=aarch64-none-elf -mattr=+morello -o - %s \
 ; RUN:   | FileCheck %s
 ; RUN: llc -mtriple=aarch64-none-elf -mattr=+c64,+morello -target-abi purecap -o - %s \
 ; RUN:   | FileCheck %s

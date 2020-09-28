@@ -1,4 +1,4 @@
-# RUN: llc -mtriple=aarch64--linux-gnu -mattr=+c64,+morello -run-pass=aarch64-ldst-opt %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple=aarch64--linux-gnu -mattr=+c64,+morello -target-abi purecap -run-pass=aarch64-ldst-opt %s -verify-machineinstrs -o - | FileCheck %s
 ---
 name: unscaled-load-postindex
 tracksRegLiveness: true

@@ -1,4 +1,4 @@
-# RUN: llc -mtriple=aarch64-none-elf -mattr=+c64,+morello -start-after branch-folder -stop-after branch-folder -o - %s | FileCheck %s
+# RUN: llc -mtriple=aarch64-none-elf -mattr=+c64,+morello -target-abi purecap -start-after branch-folder -stop-after branch-folder -o - %s | FileCheck %s
 
 --- |
 

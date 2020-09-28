@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=+c64,+morello -aarch64-enable-atomic-cfg-tidy=0 -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=+c64,+morello -target-abi purecap -aarch64-enable-atomic-cfg-tidy=0 -verify-machineinstrs < %s | FileCheck %s
 
 @addr = global i8* blockaddress(@test_blockaddress, %block)
 

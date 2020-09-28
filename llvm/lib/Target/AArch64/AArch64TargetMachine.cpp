@@ -283,6 +283,15 @@ getEffectiveAArch64CodeModel(const Triple &TT, Optional<CodeModel::Model> CM,
   return CodeModel::Small;
 }
 
+static void checkC64AndABI(bool isC64, bool isPureCap) {
+  if (isC64 && !isPureCap)
+    report_fatal_error("C64 code generation only supported "
+                       "with the purecap ABI", false);
+  if (isPureCap && !isC64)
+    report_fatal_error("purecap ABI code generation only supported "
+                       "with C64", false);
+}
+
 /// Create an AArch64 architecture model.
 ///
 AArch64TargetMachine::AArch64TargetMachine(const Target &T, const Triple &TT,
@@ -301,6 +310,8 @@ AArch64TargetMachine::AArch64TargetMachine(const Target &T, const Triple &TT,
       isMorello(FS.find("+morello") != StringRef::npos),
       isC64(FS.find("+c64") != StringRef::npos) {
   initAsmInfo();
+
+  checkC64AndABI(isC64, isPureCap);
 
   if (TT.isOSBinFormatMachO()) {
     this->Options.TrapUnreachable = true;

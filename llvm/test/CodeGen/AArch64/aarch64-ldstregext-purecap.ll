@@ -1,4 +1,4 @@
-; RUN: llc -verify-machineinstrs -o - %s -mtriple=aarch64-linux-gnu -mattr=+c64,+morello | FileCheck %s
+; RUN: llc -verify-machineinstrs -o - %s -mtriple=aarch64-linux-gnu -mattr=+c64,+morello -target-abi purecap | FileCheck %s
 
 ; CHECK-LABEL: ld_8bit_X
 ; CHECK: ldrb w0, [c0, x1]

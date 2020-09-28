@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=aarch64-none-elf -mattr=+c64,+morello -verify-machineinstrs | FileCheck  %s
-; RUN: llc < %s -mtriple=aarch64-none-elf -mattr=+c64,+lse,+morello -verify-machineinstrs | FileCheck %s
+; RUN: llc < %s -mtriple=aarch64-none-elf -mattr=+c64,+morello -target-abi purecap -verify-machineinstrs | FileCheck  %s
+; RUN: llc < %s -mtriple=aarch64-none-elf -mattr=+c64,+lse,+morello -target-abi purecap -verify-machineinstrs | FileCheck %s
 
 target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128-pf200:128:128"
 
