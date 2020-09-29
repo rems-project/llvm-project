@@ -187,6 +187,8 @@ public:
 
   lldb::SBTypeMemberFunction GetMemberFunctionAtIndex(uint32_t idx);
 
+  lldb::SBModule GetModule();
+
   const char *GetName();
 
   const char *GetDisplayTypeName();
