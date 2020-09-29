@@ -11251,8 +11251,9 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
     return SDValue();
 
   auto AdjustBigEndianShift = [&](unsigned ShAmt) {
-    unsigned LVTStoreBits = LN0->getMemoryVT().getStoreSizeInBits();
-    unsigned EVTStoreBits = ExtVT.getStoreSizeInBits();
+    unsigned LVTStoreBits =
+        LN0->getMemoryVT().getStoreSizeInBits().getFixedSize();
+    unsigned EVTStoreBits = ExtVT.getStoreSizeInBits().getFixedSize();
     return LVTStoreBits - EVTStoreBits - ShAmt;
   };
 
