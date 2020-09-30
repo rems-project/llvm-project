@@ -256,7 +256,6 @@ def err_ambiguous_arch : Error<"Can only use one of +a64c and +c64 in arch strin
 def err_ambiguous_a64c_arch : Error<"Ambiguous use of +a64c in arch string">;
 def err_ambiguous_c64_arch : Error<"Ambiguous use +c64 in arch string">;
 def err_drv_invalid_omp_target : Error<"OpenMP target is invalid: '%0'">;
-def err_drv_incompatible_omp_arch : Error<"OpenMP target architecture '%0' pointer size is incompatible with host '%1'">;
 def err_drv_omp_host_ir_file_not_found : Error<
   "The provided host compiler IR file '%0' is required to generate code for OpenMP target regions but cannot be found.">;
 def err_drv_omp_host_target_not_supported : Error<
