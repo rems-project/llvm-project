@@ -1,4 +1,3 @@
-; RUN: llc -march=arm64 -mattr=+c64,-use-16-cap-regs,+morello -target-abi purecap -O0 -o - %s | FileCheck %s --check-prefix=CHECK-32-CAP-REGS
 ; RUN: llc -march=arm64 -mattr=+c64,+use-16-cap-regs,+morello -target-abi purecap -O0 -o - %s | FileCheck %s --check-prefix=CHECK-16-CAP-REGS
 
 target datalayout = "e-m:e-pf200:128:128:128:64-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"
@@ -18,8 +17,6 @@ $_Z3fooIiEvU3capP4NodeIT_ES3_S1_ = comdat any
 define weak_odr dso_local void @_Z3fooIiEvU3capP4NodeIT_ES3_S1_(%struct.Node addrspace(200)* %head, %struct.Node addrspace(200)* %tail, i32 %data) addrspace(200) #0 comdat {
 entry:
 
-; CHECK-32-CAP-REGS: str c10, [csp, #16]
-; CHECK-16-CAP-REGS: str c26, [csp, #16]
 ; CHECK-16-CAP-REGS-NOT: c([8,9]|1[0-9]|2[0-3])
 
   %head.addr = alloca %struct.Node addrspace(200)*, align 16, addrspace(200)

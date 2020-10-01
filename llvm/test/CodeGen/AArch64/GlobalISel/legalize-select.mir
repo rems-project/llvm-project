@@ -104,7 +104,7 @@ body:             |
     ; CHECK: [[AND1:%[0-9]+]]:_(<16 x s8>) = G_AND [[COPY]], [[XOR]]
     ; CHECK: [[OR:%[0-9]+]]:_(<16 x s8>) = G_OR [[AND]], [[AND1]]
     ; CHECK: $q0 = COPY [[OR]](<16 x s8>)
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %0:_(<16 x s8>) = COPY $q0
     %1:_(<16 x s8>) = COPY $q1
     %3:_(s8) = G_CONSTANT i8 0
@@ -112,5 +112,5 @@ body:             |
     %4:_(<16 x s1>) = G_ICMP intpred(sgt), %0(<16 x s8>), %2
     %5:_(<16 x s8>) = G_SELECT %4(<16 x s1>), %1, %0
     $q0 = COPY %5(<16 x s8>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 ...

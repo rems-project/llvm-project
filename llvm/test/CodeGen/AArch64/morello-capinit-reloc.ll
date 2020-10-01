@@ -11,7 +11,7 @@ target triple = "aarch64-none--elf"
 ; Don't emit symbols for the capinit relocations as offsets from the section start.
 
 ; CHECK: Relocations [
-; CHECK-NEXT:  Section (5) .rela.data {
+; CHECK-NEXT:  Section (4) .rela.data {
 ; CHECK-NEXT:    0x10 R_MORELLO_CAPINIT str 0x8
 ; CHECK-NEXT:    0x20 R_MORELLO_CAPINIT str 0x0
 ; CHECK-NEXT:  }

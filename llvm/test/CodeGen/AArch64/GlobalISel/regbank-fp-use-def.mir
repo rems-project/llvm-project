@@ -125,7 +125,7 @@ body:             |
   ; CHECK: bb.2:
   ; CHECK:   %phi:fpr(s32) = G_PHI %fpr_copy(s32), %bb.0, %load(s32), %bb.1
   ; CHECK:   $s0 = COPY %phi(s32)
-  ; CHECK:   RET_ReallyLR implicit $s0
+  ; CHECK:   RET_ReallyLR 0, implicit $s0
   bb.0:
     successors: %bb.1(0x40000000), %bb.2(0x40000000)
     liveins: $x0, $s0, $s1, $w0, $w1
@@ -142,7 +142,7 @@ body:             |
   bb.2:
     %phi:_(s32) = G_PHI %fpr_copy(s32), %bb.0, %load(s32), %bb.1
     $s0 = COPY %phi(s32)
-    RET_ReallyLR implicit $s0
+    RET_ReallyLR 0, implicit $s0
 
 ...
 ---
@@ -167,7 +167,7 @@ body:             |
   ; CHECK: bb.2:
   ; CHECK:   %phi:gpr(s32) = G_PHI %gpr_copy(s32), %bb.0, %load(s32), %bb.1
   ; CHECK:   $s0 = COPY %phi(s32)
-  ; CHECK:   RET_ReallyLR implicit $s0
+  ; CHECK:   RET_ReallyLR 0, implicit $s0
   bb.0:
     successors: %bb.1(0x40000000), %bb.2(0x40000000)
     liveins: $x0, $s0, $s1, $w0, $w1
@@ -184,7 +184,7 @@ body:             |
   bb.2:
     %phi:_(s32) = G_PHI %gpr_copy(s32), %bb.0, %load(s32), %bb.1
     $s0 = COPY %phi(s32)
-    RET_ReallyLR implicit $s0
+    RET_ReallyLR 0, implicit $s0
 
 ...
 ---
@@ -210,7 +210,7 @@ body:             |
   ; CHECK: bb.2:
   ; CHECK:   %phi:fpr(s32) = G_PHI %fpr_copy(s32), %bb.0, %select(s32), %bb.1
   ; CHECK:   $w0 = COPY %phi(s32)
-  ; CHECK:   RET_ReallyLR implicit $w0
+  ; CHECK:   RET_ReallyLR 0, implicit $w0
   ; The G_SELECT and G_PHI should end up with the same register bank.
   ;
   bb.0:
@@ -229,7 +229,7 @@ body:             |
   bb.2:
     %phi:_(s32) = G_PHI %fpr_copy(s32), %bb.0, %select(s32), %bb.1
     $w0 = COPY %phi(s32)
-    RET_ReallyLR implicit $w0
+    RET_ReallyLR 0, implicit $w0
 
 ...
 ---
@@ -255,7 +255,7 @@ body:             |
   ; CHECK: bb.2:
   ; CHECK:   %phi:gpr(s32) = G_PHI %gpr_copy(s32), %bb.0, %select(s32), %bb.1
   ; CHECK:   $s0 = COPY %phi(s32)
-  ; CHECK:   RET_ReallyLR implicit $s0
+  ; CHECK:   RET_ReallyLR 0, implicit $s0
   ; The G_SELECT and G_PHI should end up with the same register bank.
   ;
   bb.0:
@@ -274,7 +274,7 @@ body:             |
   bb.2:
     %phi:_(s32) = G_PHI %gpr_copy(s32), %bb.0, %select(s32), %bb.1
     $s0 = COPY %phi(s32)
-    RET_ReallyLR implicit $s0
+    RET_ReallyLR 0, implicit $s0
 
 
 ...
@@ -301,7 +301,7 @@ body:             |
   ; CHECK: bb.2:
   ; CHECK:   %phi:fpr(s32) = G_PHI %fpr_copy(s32), %bb.0, %unmerge_1(s32), %bb.1
   ; CHECK:   $s0 = COPY %phi(s32)
-  ; CHECK:   RET_ReallyLR implicit $s0
+  ; CHECK:   RET_ReallyLR 0, implicit $s0
   bb.0:
     successors: %bb.1(0x40000000), %bb.2(0x40000000)
     liveins: $x0, $s0, $s1, $w0, $w1
@@ -318,7 +318,7 @@ body:             |
   bb.2:
     %phi:_(s32) = G_PHI %fpr_copy(s32), %bb.0, %unmerge_1(s32), %bb.1
     $s0 = COPY %phi(s32)
-    RET_ReallyLR implicit $s0
+    RET_ReallyLR 0, implicit $s0
 
 ...
 ---
@@ -343,7 +343,7 @@ body:             |
   ; CHECK: bb.2:
   ; CHECK:   %phi:gpr(s32) = G_PHI %gpr_copy(s32), %bb.0, %unmerge_1(s32), %bb.1
   ; CHECK:   $s0 = COPY %phi(s32)
-  ; CHECK:   RET_ReallyLR implicit $s0
+  ; CHECK:   RET_ReallyLR 0, implicit $s0
   bb.0:
     successors: %bb.1(0x40000000), %bb.2(0x40000000)
     liveins: $x0, $s0, $s1, $w0, $w1
@@ -360,4 +360,4 @@ body:             |
   bb.2:
     %phi:_(s32) = G_PHI %gpr_copy(s32), %bb.0, %unmerge_1(s32), %bb.1
     $s0 = COPY %phi(s32)
-    RET_ReallyLR implicit $s0
+    RET_ReallyLR 0, implicit $s0

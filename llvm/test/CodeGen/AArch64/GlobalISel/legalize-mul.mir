@@ -84,12 +84,12 @@ body:             |
     ; CHECK: [[MUL1:%[0-9]+]]:_(s64) = G_MUL [[UV1]], [[UV3]]
     ; CHECK: [[BUILD_VECTOR:%[0-9]+]]:_(<2 x s64>) = G_BUILD_VECTOR [[MUL]](s64), [[MUL1]](s64)
     ; CHECK: $q0 = COPY [[BUILD_VECTOR]](<2 x s64>)
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %0:_(<2 x s64>) = COPY $q0
     %1:_(<2 x s64>) = COPY $q1
     %2:_(<2 x s64>) = G_MUL %0, %1
     $q0 = COPY %2(<2 x s64>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 ...
 ---
 name:            test_umulo_overflow_no_invalid_mir
@@ -134,7 +134,7 @@ body:             |
     ; CHECK: [[AND:%[0-9]+]]:_(s64) = G_AND [[ANYEXT]], [[C1]]
     ; CHECK: $x0 = COPY [[MUL]](s64)
     ; CHECK: $x1 = COPY [[AND]](s64)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %0:_(p0) = COPY $x0
     %1:_(s64) = COPY $x1
     %2:_(s64) = COPY $x2
@@ -152,6 +152,6 @@ body:             |
     %16:_(s64) = G_ZEXT %10(s1)
     $x0 = COPY %9(s64)
     $x1 = COPY %16(s64)
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 
 ...

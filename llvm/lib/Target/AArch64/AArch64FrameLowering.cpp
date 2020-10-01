@@ -1657,10 +1657,7 @@ void AArch64FrameLowering::emitEpilogue(MachineFunction &MF,
   bool NeedsWinCFI = needsWinCFI(MF);
   bool HasWinCFI = false;
   bool IsFunclet = false;
-  auto WinCFI = make_scope_exit([&]() {
-    if (!MF.hasWinCFI())
-      MF.setHasWinCFI(HasWinCFI);
-  });
+  auto WinCFI = make_scope_exit([&]() { assert(HasWinCFI == MF.hasWinCFI()); });
 
   if (MBB.end() != MBBI) {
     DL = MBBI->getDebugLoc();
@@ -1772,7 +1769,13 @@ void AArch64FrameLowering::emitEpilogue(MachineFunction &MF,
   unsigned SP = RegInfo->getStackPointerRegister(MF);
   unsigned FP = RegInfo->getFramePointerRegister(MF);
 
-  if (NeedsWinCFI) {
+  if (MF.hasWinCFI()) {
+    // If the prologue didn't contain any SEH opcodes and didn't set the
+    // MF.hasWinCFI() flag, assume the epilogue won't either, and skip the
+    // EpilogStart - to avoid generating CFI for functions that don't need it.
+    // (And as we didn't generate any prologue at all, it would be assymetrical
+    // to the epilogue.) By the end of the function, we assert that
+    // HasWinCFI is equal to MF.hasWinCFI(), to verify this assumption.
     HasWinCFI = true;
     BuildMI(MBB, LastPopI, DL, TII->get(AArch64::SEH_EpilogStart))
         .setMIFlag(MachineInstr::FrameDestroy);
@@ -1786,7 +1789,7 @@ void AArch64FrameLowering::emitEpilogue(MachineFunction &MF,
     emitFrameOffset(MBB, MBB.getFirstTerminator(), DL, SP, SP,
                     {NumBytes + (int64_t)AfterCSRPopSize, MVT::i8}, TII,
                     MachineInstr::FrameDestroy, false, NeedsWinCFI, &HasWinCFI);
-    if (NeedsWinCFI && HasWinCFI)
+    if (HasWinCFI)
       BuildMI(MBB, MBB.getFirstTerminator(), DL,
               TII->get(AArch64::SEH_EpilogEnd))
           .setMIFlag(MachineInstr::FrameDestroy);
@@ -1865,8 +1868,7 @@ void AArch64FrameLowering::emitEpilogue(MachineFunction &MF,
                     {StackRestoreBytes, MVT::i8}, TII,
                     MachineInstr::FrameDestroy, false, NeedsWinCFI, &HasWinCFI);
     if (Done) {
-      if (NeedsWinCFI) {
-        HasWinCFI = true;
+      if (HasWinCFI) {
         BuildMI(MBB, MBB.getFirstTerminator(), DL,
                 TII->get(AArch64::SEH_EpilogEnd))
             .setMIFlag(MachineInstr::FrameDestroy);
@@ -1913,7 +1915,7 @@ void AArch64FrameLowering::emitEpilogue(MachineFunction &MF,
                     {(int64_t)AfterCSRPopSize, MVT::i8}, TII,
                     MachineInstr::FrameDestroy, false, NeedsWinCFI, &HasWinCFI);
   }
-  if (NeedsWinCFI && HasWinCFI)
+  if (HasWinCFI)
     BuildMI(MBB, MBB.getFirstTerminator(), DL, TII->get(AArch64::SEH_EpilogEnd))
         .setMIFlag(MachineInstr::FrameDestroy);
 }

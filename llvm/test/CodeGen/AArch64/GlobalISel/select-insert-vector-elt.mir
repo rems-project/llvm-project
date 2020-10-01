@@ -16,14 +16,14 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:fpr128 = COPY $q1
     ; CHECK: [[INSvi16gpr:%[0-9]+]]:fpr128 = INSvi16gpr [[COPY1]], 1, [[COPY]]
     ; CHECK: $q0 = COPY [[INSvi16gpr]]
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %0:gpr(s32) = COPY $w0
     %trunc:gpr(s16) = G_TRUNC %0
     %1:fpr(<8 x s16>) = COPY $q1
     %3:gpr(s32) = G_CONSTANT i32 1
     %2:fpr(<8 x s16>) = G_INSERT_VECTOR_ELT %1, %trunc:gpr(s16), %3:gpr(s32)
     $q0 = COPY %2(<8 x s16>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 
 ...
 ---
@@ -44,13 +44,13 @@ body:             |
     ; CHECK: [[INSERT_SUBREG:%[0-9]+]]:fpr128 = INSERT_SUBREG [[DEF]], [[COPY]], %subreg.hsub
     ; CHECK: [[INSvi16lane:%[0-9]+]]:fpr128 = INSvi16lane [[COPY1]], 1, [[INSERT_SUBREG]], 0
     ; CHECK: $q0 = COPY [[INSvi16lane]]
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %0:fpr(s16) = COPY $h0
     %1:fpr(<8 x s16>) = COPY $q1
     %3:gpr(s32) = G_CONSTANT i32 1
     %2:fpr(<8 x s16>) = G_INSERT_VECTOR_ELT %1, %0(s16), %3(s32)
     $q0 = COPY %2(<8 x s16>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 
 ...
 ---

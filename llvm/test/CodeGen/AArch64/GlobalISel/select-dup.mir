@@ -239,12 +239,12 @@ body:             |
     ; CHECK: %copy:gpr32 = COPY $w0
     ; CHECK: %dup:fpr128 = DUPv8i16gpr %copy
     ; CHECK: $q0 = COPY %dup
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %copy:gpr(s32) = COPY $w0
     %trunc:gpr(s16) = G_TRUNC %copy
     %dup:fpr(<8 x s16>) = G_DUP %trunc(s16)
     $q0 = COPY %dup(<8 x s16>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 
 ...
 ---

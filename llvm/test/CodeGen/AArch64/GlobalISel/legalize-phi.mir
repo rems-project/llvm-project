@@ -622,5 +622,5 @@ body:             |
   bb.1:
     %3:_(<16 x s8>) = G_PHI %0(<16 x s8>), %bb.0
     $q0 = COPY %3(<16 x s8>)
-    RET_ReallyLR
+    RET_ReallyLR 0
 ...
