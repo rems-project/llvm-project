@@ -107,8 +107,8 @@ def int_cheri_cap_type_check :
   GCCBuiltin<"__builtin_cheri_type_check">,
   Intrinsic<[], [llvm_fatptr_ty, llvm_fatptr_ty],
             [IntrNoMem, IntrHasSideEffects, IntrWillReturn]>;
-def int_cheri_cap_bit_equals :
-  GCCBuiltin<"__builtin_cheri_bit_equals">,
+def int_cheri_cap_equal_exact :
+  GCCBuiltin<"__builtin_cheri_equal_exact">,
   Intrinsic<[llvm_i1_ty], [llvm_fatptr_ty, llvm_fatptr_ty],
   [IntrNoMem, IntrWillReturn ]>;
 def int_cheri_cap_subset_test:

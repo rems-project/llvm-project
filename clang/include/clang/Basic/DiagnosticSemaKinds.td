@@ -7977,6 +7977,8 @@ def err_cast_pointer_to_non_pointer_int : Error<
   "pointer cannot be cast to type %0">;
 def err_typecheck_expect_scalar_operand : Error<
   "operand of type %0 where arithmetic or pointer type is required">;
+def err_typecheck_expect_capability_operand : Error<
+  "operand of type %0 where capability is required">;
 def err_typecheck_cond_incompatible_operands : Error<
   "incompatible operand types%diff{ ($ and $)|}0,1">;
 def err_cast_selector_expr : Error<

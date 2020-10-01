@@ -29,45 +29,47 @@
 #error "This header requires CHERI capability support"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#else
+#include <stdbool.h>
+#endif
+
 /* Bump this on every incompatible change */
-#define CHERI_INIT_GLOBALS_VERSION 3
+#define CHERI_INIT_GLOBALS_VERSION 4
 #define CHERI_INIT_GLOBALS_NUM_ARGS 7
 #define CHERI_INIT_GLOBALS_SUPPORTS_CONSTANT_FLAG 1
 
 struct capreloc {
-    __SIZE_TYPE__ capability_location;
-    __SIZE_TYPE__ object;
-    __SIZE_TYPE__ offset;
-    __SIZE_TYPE__ size;
-    __SIZE_TYPE__ permissions;
+  __SIZE_TYPE__ capability_location;
+  __SIZE_TYPE__ object;
+  __SIZE_TYPE__ offset;
+  __SIZE_TYPE__ size;
+  __SIZE_TYPE__ permissions;
 };
-static const __SIZE_TYPE__ function_reloc_flag =
-   (__SIZE_TYPE__)1 << (__SIZE_WIDTH__ - 1);
+static const __SIZE_TYPE__ function_reloc_flag = (__SIZE_TYPE__)1
+                                                 << (__SIZE_WIDTH__ - 1);
 static const __SIZE_TYPE__ function_pointer_permissions_mask =
-    ~(__CHERI_CAP_PERMISSION_PERMIT_SEAL__ |
-      __CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__ |
-      __CHERI_CAP_PERMISSION_PERMIT_STORE__);
-static const __SIZE_TYPE__ constant_reloc_flag =
-   (__SIZE_TYPE__)1 << (__SIZE_WIDTH__ - 2);
+    ~(__SIZE_TYPE__)(__CHERI_CAP_PERMISSION_PERMIT_SEAL__ |
+                     __CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__ |
+                     __CHERI_CAP_PERMISSION_PERMIT_STORE__);
+static const __SIZE_TYPE__ constant_reloc_flag = (__SIZE_TYPE__)1
+                                                 << (__SIZE_WIDTH__ - 2);
 static const __SIZE_TYPE__ constant_pointer_permissions_mask =
-    ~(__CHERI_CAP_PERMISSION_PERMIT_SEAL__ |
-      __CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__ |
-      __CHERI_CAP_PERMISSION_PERMIT_STORE_LOCAL__ |
-      __CHERI_CAP_PERMISSION_PERMIT_STORE__ |
-      __CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+    ~(__SIZE_TYPE__)(__CHERI_CAP_PERMISSION_PERMIT_SEAL__ |
+                     __CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__ |
+                     __CHERI_CAP_PERMISSION_PERMIT_STORE_LOCAL__ |
+                     __CHERI_CAP_PERMISSION_PERMIT_STORE__ |
+                     __CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
 static const __SIZE_TYPE__ global_pointer_permissions_mask =
-    ~(__CHERI_CAP_PERMISSION_PERMIT_SEAL__|
-      __CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
+    ~(__SIZE_TYPE__)(__CHERI_CAP_PERMISSION_PERMIT_SEAL__ |
+                     __CHERI_CAP_PERMISSION_PERMIT_EXECUTE__);
 
-__attribute__((weak))
-extern struct capreloc __start___cap_relocs;
-__attribute__((weak))
-extern struct capreloc __stop___cap_relocs;
+__attribute__((weak)) extern struct capreloc __start___cap_relocs;
+__attribute__((weak)) extern struct capreloc __stop___cap_relocs;
 
-__attribute__((weak)) extern void *__capability
-__cap_table_start;
-__attribute__((weak)) extern void *__capability
-__cap_table_end;
+__attribute__((weak)) extern void *__capability __cap_table_start;
+__attribute__((weak)) extern void *__capability __cap_table_end;
 
 /*
  * Sandbox data segments are relocated by moving DDC, since they're compiled as
@@ -87,7 +89,9 @@ __cap_table_end;
 
 #define __STRINGIFY2(x) #x
 #define __STRINGIFY(x) __STRINGIFY2(x)
-#define CGP_PERMISSIONS __STRINGIFY((__CHERI_CAP_PERMISSION_PERMIT_LOAD_CAPABILITY__ | __CHERI_CAP_PERMISSION_PERMIT_LOAD__))
+#define CGP_PERMISSIONS                                                        \
+  __STRINGIFY((__CHERI_CAP_PERMISSION_PERMIT_LOAD_CAPABILITY__ |               \
+               __CHERI_CAP_PERMISSION_PERMIT_LOAD__))
 
 /* By default derive $cgp from $pcc on startup */
 #ifndef GET_GCP_BASE_CAPABILITY
@@ -97,8 +101,8 @@ __cap_table_end;
 
 #if defined(__mips__)
 
-#if !defined(__CHERI_CAPABILITY_TABLE__) || __CHERI_CAPABILITY_TABLE__ == 3
-/* No need to setup $cgp for pc-relative or legacy ABI: */
+#if !defined(__CHERI_PURE_CAPABILITY__) || __CHERI_CAPABILITY_TABLE__ == 3
+/* No need to setup $cgp for pc-relative or hybrid ABI: */
 #define INIT_CGP_REGISTER_ASM
 #else
 #define INIT_CGP_REGISTER_ASM                                                  \
@@ -148,79 +152,74 @@ __cap_table_end;
 #endif
 
 static __attribute__((always_inline)) void
-cheri_init_globals_impl(const struct capreloc *start_relocs,
-                        const struct capreloc *stop_relocs, void *data_cap,
-                        const void *code_cap, const void *rodata_cap,
-                        _Bool tight_code_bounds, __SIZE_TYPE__ base_addr) {
+cheri_init_globals_impl(const struct capreloc *__capability start_relocs,
+                        const struct capreloc *__capability stop_relocs,
+                        void *__capability data_cap,
+                        const void *__capability code_cap,
+                        const void *__capability rodata_cap,
+                        bool tight_code_bounds, __SIZE_TYPE__ base_addr) {
   data_cap =
       __builtin_cheri_perms_and(data_cap, global_pointer_permissions_mask);
   code_cap =
       __builtin_cheri_perms_and(code_cap, function_pointer_permissions_mask);
   rodata_cap =
       __builtin_cheri_perms_and(rodata_cap, constant_pointer_permissions_mask);
-  for (const struct capreloc *reloc = start_relocs; reloc < stop_relocs; reloc++) {
-    void **dest = cheri_address_or_offset_set(
-        data_cap, reloc->capability_location + base_addr);
+  for (const struct capreloc *__capability reloc = start_relocs;
+       reloc < stop_relocs; reloc++) {
+    const void *__capability *__capability dest =
+        (const void *__capability *__capability)cheri_address_or_offset_set(
+            data_cap, reloc->capability_location + base_addr);
     if (reloc->object == 0) {
       /* XXXAR: clang fills uninitialized capabilities with 0xcacaca..., so we
        * we need to explicitly write NULL here */
-      *dest = (void*)0;
+      *dest = (void *__capability)0;
       continue;
     }
-    const void *base_cap;
-    _Bool can_set_bounds = 1;
+    const void *__capability base_cap;
+    bool can_set_bounds = true;
     if ((reloc->permissions & function_reloc_flag) == function_reloc_flag) {
-      /* Do not set tight bounds for functions (unless we are in the plt/fndesc
-       * ABI */
-      can_set_bounds = tight_code_bounds; /* pc-relative ABI -> need large bounds on $pcc */
       base_cap = code_cap; /* code pointer */
+      /* Do not set tight bounds for functions (unless we are in the plt ABI) */
+      can_set_bounds = tight_code_bounds;
     } else if ((reloc->permissions & constant_reloc_flag) ==
                constant_reloc_flag) {
       base_cap = rodata_cap; /* read-only data pointer */
     } else {
       base_cap = data_cap; /* read-write data */
     }
-    void *src =
+    const void *__capability src =
         cheri_address_or_offset_set(base_cap, reloc->object + base_addr);
     if (can_set_bounds && (reloc->size != 0)) {
       src = __builtin_cheri_bounds_set(src, reloc->size);
     }
     src = __builtin_cheri_offset_increment(src, reloc->offset);
-    /* XXX: Permit on RISC-V once supported */
-#ifndef __riscv
-#if __has_builtin(__builtin_cheri_seal_entry)
     if ((reloc->permissions & function_reloc_flag) == function_reloc_flag) {
       /* Convert function pointers to sentries: */
       src = __builtin_cheri_seal_entry(src);
     }
-#else
-#warning "Sentries not supported, global function pointers will provide unnecessary privilege"
-#endif
-#endif
     *dest = src;
   }
 }
 
 static __attribute__((always_inline)) void
-cheri_init_globals_3(void *data_cap, const void *code_cap,
-                     const void *rodata_cap) {
-  struct capreloc *start_relocs;
-  struct capreloc *stop_relocs;
-#ifndef __CHERI_CAPABILITY_TABLE__
-
-  /* If we are not using the CHERI capability table we can just synthesize
-   * the capabilities for these using the GOT and $ddc */
-  start_relocs = &__start___cap_relocs;
-  stop_relocs = &__stop___cap_relocs;
-#else
+cheri_init_globals_3(void *__capability data_cap,
+                     const void *__capability code_cap,
+                     const void *__capability rodata_cap) {
+  const struct capreloc *__capability start_relocs;
+  const struct capreloc *__capability stop_relocs;
   __SIZE_TYPE__ start_addr, end_addr;
 #if defined(__mips__)
-  __asm__ (".option pic0\n\t"
-       "dla %0, __start___cap_relocs\n\t"
-       "dla %1, __stop___cap_relocs\n\t"
-       :"=r"(start_addr), "=r"(end_addr));
+  __asm__(".option pic0\n\t"
+          "dla %0, __start___cap_relocs\n\t"
+          "dla %1, __stop___cap_relocs\n\t"
+          : "=r"(start_addr), "=r"(end_addr));
 #elif defined(__riscv)
-  void * __capability tmp;
+#if !defined(__CHERI_PURE_CAPABILITY__)
+  __asm__("lla %0, __start___cap_relocs\n\t"
+          "lla %1, __stop___cap_relocs\n\t"
+          : "=r"(start_addr), "=r"(end_addr));
+#else
+  void *__capability tmp;
   __asm__ (
        "1: auipcc %2, %%pcrel_hi(__start___cap_relocs)\n\t"
        "cincoffset %2, %2, %%pcrel_lo(1b)\n\t"
@@ -229,6 +228,7 @@ cheri_init_globals_3(void *data_cap, const void *code_cap,
        "cincoffset %2, %2, %%pcrel_lo(2b)\n\t"
        cgetaddr_or_offset " %1, %2\n\t"
        :"=r"(start_addr), "=r"(end_addr), "=&C"(tmp));
+#endif
 #else
 #error Unknown architecture
 #endif
@@ -238,24 +238,23 @@ cheri_init_globals_3(void *data_cap, const void *code_cap,
    * rodata and rw data, too so we can access __cap_relocs, no matter where it
    * was placed.
    */
-  start_relocs = cheri_address_or_offset_set(
-      __builtin_cheri_program_counter_get(), start_addr);
+  start_relocs =
+      (const struct capreloc *__capability)cheri_address_or_offset_set(
+          __builtin_cheri_program_counter_get(), start_addr);
   start_relocs = __builtin_cheri_bounds_set(start_relocs, relocs_size);
   /*
    * Note: with imprecise capabilities start_relocs could have a non-zero offset
    * so we must not use setoffset!
    * TODO: use csetboundsexact and teach the linker to align __cap_relocs.
    */
-  stop_relocs =
-      (struct capreloc *)((__UINTPTR_TYPE__)start_relocs + relocs_size);
-#endif
+  stop_relocs = (const struct capreloc *__capability)(const void *__capability)(
+      (const char *__capability)start_relocs + relocs_size);
 
-#if !defined(__CHERI_CAPABILITY_TABLE__)
-  _Bool can_set_code_bounds = 0; /* legacy ABI -> need large bounds on $pcc */
-#elif __CHERI_CAPABILITY_TABLE__ == 3
-  _Bool can_set_code_bounds = 0; /* pc-relative ABI -> need large bounds on $pcc */
+#if !defined(__CHERI_PURE_CAPABILITY__) || __CHERI_CAPABILITY_TABLE__ == 3
+  /* pc-relative or hybrid ABI -> need large bounds on $pcc */
+  bool can_set_code_bounds = false;
 #else
-  _Bool can_set_code_bounds = 1; /* fn-desc/plt ABI -> tight bounds okay */
+  bool can_set_code_bounds = true; /* fn-desc/plt ABI -> tight bounds okay */
 #endif
   /*
    * We can assume that all relocations in the __cap_relocs section have already
@@ -267,12 +266,16 @@ cheri_init_globals_3(void *data_cap, const void *code_cap,
 }
 
 static __attribute__((always_inline, unused)) void
-cheri_init_globals_gdc(void *gdc) {
+cheri_init_globals_gdc(void *__capability gdc) {
   cheri_init_globals_3(gdc, __builtin_cheri_program_counter_get(), gdc);
 }
 
 #ifndef CHERI_INIT_GLOBALS_GDC_ONLY
 static __attribute__((always_inline, unused)) void cheri_init_globals(void) {
   cheri_init_globals_gdc(__builtin_cheri_global_data_get());
+}
+#endif
+
+#ifdef __cplusplus
 }
 #endif

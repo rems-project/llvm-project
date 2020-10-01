@@ -41,10 +41,10 @@
 // PTRS: ret i8*
 // PTRS: define i8* @cheri_bounds_set(i8* readnone returned{{.*}}, i32
 // PTRS: ret i8*
-// PTRS: define i8* @cheri_cap_from_pointer(i8* nocapture readnone %{{.*}}, i32 %{{.*}})
+// PTRS: define i8* @cheri_cap_from_pointer(i8* nocapture readnone %{{.*}}, i8* readnone returned %{{.*}})
 // PTRS: ret i8*
-// PTRS: define i32 @cheri_cap_to_pointer(i8* nocapture readnone %{{.*}}, i8* %{{.*}})
-// PTRS: ret i32
+// PTRS: define i8* @cheri_cap_to_pointer(i8* nocapture readnone %{{.*}}, i8* readnone returned %{{.*}})
+// PTRS: ret i8*
 // PTRS: define void @cheri_perms_check(i8* nocapture{{.*}}, i16
 // PTRS: ret void
 // PTRS: define void @cheri_type_check(i8* nocapture{{( %.+)?}}, i8* nocapture
@@ -83,12 +83,10 @@
 // PTRS-AARCH64: ret i8* %__cap
 // PTRS-AARCH64: define i8* @cheri_bounds_set(i8* readnone returned %__cap, i64 %__bounds)
 // PTRS-AARCH64: ret i8* %__cap
-// PTRS-AARCH64: define i8* @cheri_cap_from_pointer_nonnull_zero(i8* nocapture readnone %{{.*}}, i64 %{{.*}})
+// PTRS-AARCH64: define i8* @cheri_cap_from_pointer(i8* nocapture readnone %{{.*}}, i8* readnone returned %{{.*}})
 // PTRS-AARCH64: ret i8*
-// PTRS-AARCH64: define i8* @cheri_cap_from_pointer(i8* nocapture readnone %{{.*}}, i64 %{{.*}})
+// PTRS-AARCH64: define i8* @cheri_cap_to_pointer(i8* nocapture readnone %{{.*}}, i8* readnone returned %{{.*}})
 // PTRS-AARCH64: ret i8*
-// PTRS-AARCH64: define i64 @cheri_cap_to_pointer(i8* nocapture readnone %{{.*}}, i8* %{{.*}})
-// PTRS-AARCH64: ret i64
 // PTRS-AARCH64: define noalias i8* @cheri_global_data_get()
 // PTRS-AARCH64: ret i8* null
 // PTRS-AARCH64: define noalias i8* @cheri_program_counter_get()
@@ -125,9 +123,9 @@
 // CAPS: call i8 addrspace(200)* @llvm.cheri.cap.seal(i8 addrspace(200)*{{( %.+)?}}, i8 addrspace(200)*
 // CAPS: define i8 addrspace(200)* @cheri_unseal(i8 addrspace(200)* readnone{{( %.+)?}}, i8 addrspace(200)* readnone
 // CAPS: call i8 addrspace(200)* @llvm.cheri.cap.unseal(i8 addrspace(200)*{{( %.+)?}}, i8 addrspace(200)*
-// CAPS: define i8 addrspace(200)* @cheri_cap_from_pointer(i8 addrspace(200)* readnone{{( %.+)?}}, i64 zeroext {{(%.+)?}})
+// CAPS: define i8 addrspace(200)* @cheri_cap_from_pointer(i8 addrspace(200)* readnone{{( %.+)?}}, i8* {{(%.+)?}})
 // CAPS: call i8 addrspace(200)* @llvm.cheri.cap.from.pointer.i64(i8 addrspace(200)*{{( %.+)?}}, i64
-// CAPS: define i64 @cheri_cap_to_pointer(i8 addrspace(200)* readnone {{(%.+)?}}, i8 addrspace(200)* readnone {{(%.+)?}})
+// CAPS: define i8* @cheri_cap_to_pointer(i8 addrspace(200)* {{(%.+)?}}, i8 addrspace(200)* {{(%.+)?}})
 // CAPS: call i64 @llvm.cheri.cap.to.pointer.i64(i8 addrspace(200)*{{( %.+)?}}, i8 addrspace(200)*
 // CAPS: define void @cheri_perms_check(i8 addrspace(200)*{{( %.+)?}}, i16 zeroext
 // CAPS: call void @llvm.cheri.cap.perms.check.i64(i8 addrspace(200)*{{( %.+)?}}, i64
@@ -174,13 +172,11 @@
 // CAPS-AARCH64: call i64 @llvm.cheri.cap.copy.from.high.i64(i8 addrspace(200)* %__cap)
 // CAPS-AARCH64: define i8 addrspace(200)* @cheri_copy_to_high(i8 addrspace(200)* readnone %__cap, i64 %__high)
 // CAPS-AARCH64: call i8 addrspace(200)* @llvm.cheri.cap.copy.to.high.i64(i8 addrspace(200)* %__cap, i64 %__high)
-// CAPS-AARCH64: define i64 @cheri_bit_equals(i8 addrspace(200)* %__cap_a, i8 addrspace(200)* %__cap_b)
-// CAPS-AARCH64: call i1 @llvm.cheri.cap.bit.equals(i8 addrspace(200)* %__cap_a, i8 addrspace(200)* %__cap_b)
+// CAPS-AARCH64: define i64 @cheri_equal_exact(i8 addrspace(200)* %__cap_a, i8 addrspace(200)* %__cap_b)
+// CAPS-AARCH64: call i1 @llvm.cheri.cap.equal.exact(i8 addrspace(200)* %__cap_a, i8 addrspace(200)* %__cap_b)
 // CAPS-AARCH64: define i64 @cheri_subset_test(i8 addrspace(200)* %__cap_a, i8 addrspace(200)* %__cap_b)
 // CAPS-AARCH64: call i1 @llvm.cheri.cap.subset.test(i8 addrspace(200)* %__cap_a, i8 addrspace(200)* %__cap_b)
-// CAPS-AARCH64: define i8 addrspace(200)* @cheri_cap_from_pointer_nonnull_zero(i8 addrspace(200)* readnone %{{.*}}, i64 %{{.*}})
-// CAPS-AARCH64: call i8 addrspace(200)* @llvm.cheri.cap.from.pointer.nonnull.zero.i64(i8 addrspace(200)* %{{.*}}, i64
-// CAPS-AARCH64: define i8 addrspace(200)* @cheri_cap_from_pointer(i8 addrspace(200)* readnone %{{.*}}, i64 %{{.*}})
+// CAPS-AARCH64: define i8 addrspace(200)* @cheri_cap_from_pointer(i8 addrspace(200)* readnone %{{.*}}, i8* %{{.*}})
 // CAPS-AARCH64: call i8 addrspace(200)* @llvm.cheri.cap.from.pointer.i64(i8 addrspace(200)* %{{.*}}, i64
 // CAPS-AArch64: define i64 @cheri_cap_to_pointer(i8 addrspace(200)* readnone %{{.*}}, i8 addrspace(200)* readnone %{{.*}})
 // CAPS-AARCH64: call i64 @llvm.cheri.cap.to.pointer.i64(i8 addrspace(200)*

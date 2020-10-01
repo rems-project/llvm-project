@@ -6456,9 +6456,9 @@ QualType Sema::FindCompositePointerType(SourceLocation Loc,
       Composite2 = Ptr2->getPointeeType();
       if (Ptr1->isCHERICapability() != Ptr2->isCHERICapability())
         return QualType();
-      Steps.emplace_back(Step(Step::Pointer, nullptr,
+      Steps.emplace_back(Step::Pointer, nullptr,
                          Ptr1->isCHERICapability() ? ASTContext::PIK_Capability
-                                                   : ASTContext::PIK_Integer));
+                                                   : ASTContext::PIK_Integer);
       continue;
     }
 

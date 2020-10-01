@@ -1853,7 +1853,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     case Builtin::BI__builtin_ceilf:
     case Builtin::BI__builtin_ceilf16:
     case Builtin::BI__builtin_ceill:
-      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E, 
+      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E,
                                    Intrinsic::ceil,
                                    Intrinsic::experimental_constrained_ceil));
 
@@ -1874,7 +1874,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     case Builtin::BI__builtin_cosf:
     case Builtin::BI__builtin_cosf16:
     case Builtin::BI__builtin_cosl:
-      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E, 
+      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E,
                                    Intrinsic::cos,
                                    Intrinsic::experimental_constrained_cos));
 
@@ -1885,7 +1885,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     case Builtin::BI__builtin_expf:
     case Builtin::BI__builtin_expf16:
     case Builtin::BI__builtin_expl:
-      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E, 
+      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E,
                                    Intrinsic::exp,
                                    Intrinsic::experimental_constrained_exp));
 
@@ -1896,7 +1896,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     case Builtin::BI__builtin_exp2f:
     case Builtin::BI__builtin_exp2f16:
     case Builtin::BI__builtin_exp2l:
-      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E, 
+      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E,
                                    Intrinsic::exp2,
                                    Intrinsic::experimental_constrained_exp2));
 
@@ -1917,7 +1917,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     case Builtin::BI__builtin_floorf:
     case Builtin::BI__builtin_floorf16:
     case Builtin::BI__builtin_floorl:
-      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E, 
+      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E,
                                    Intrinsic::floor,
                                    Intrinsic::experimental_constrained_floor));
 
@@ -1928,7 +1928,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     case Builtin::BI__builtin_fmaf:
     case Builtin::BI__builtin_fmaf16:
     case Builtin::BI__builtin_fmal:
-      return RValue::get(emitTernaryMaybeConstrainedFPBuiltin(*this, E, 
+      return RValue::get(emitTernaryMaybeConstrainedFPBuiltin(*this, E,
                                    Intrinsic::fma,
                                    Intrinsic::experimental_constrained_fma));
 
@@ -1939,7 +1939,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     case Builtin::BI__builtin_fmaxf:
     case Builtin::BI__builtin_fmaxf16:
     case Builtin::BI__builtin_fmaxl:
-      return RValue::get(emitBinaryMaybeConstrainedFPBuiltin(*this, E, 
+      return RValue::get(emitBinaryMaybeConstrainedFPBuiltin(*this, E,
                                    Intrinsic::maxnum,
                                    Intrinsic::experimental_constrained_maxnum));
 
@@ -1950,7 +1950,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     case Builtin::BI__builtin_fminf:
     case Builtin::BI__builtin_fminf16:
     case Builtin::BI__builtin_fminl:
-      return RValue::get(emitBinaryMaybeConstrainedFPBuiltin(*this, E, 
+      return RValue::get(emitBinaryMaybeConstrainedFPBuiltin(*this, E,
                                    Intrinsic::minnum,
                                    Intrinsic::experimental_constrained_minnum));
 
@@ -1975,7 +1975,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     case Builtin::BI__builtin_logf:
     case Builtin::BI__builtin_logf16:
     case Builtin::BI__builtin_logl:
-      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E, 
+      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E,
                                    Intrinsic::log,
                                    Intrinsic::experimental_constrained_log));
 
@@ -1986,7 +1986,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     case Builtin::BI__builtin_log10f:
     case Builtin::BI__builtin_log10f16:
     case Builtin::BI__builtin_log10l:
-      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E, 
+      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E,
                                    Intrinsic::log10,
                                    Intrinsic::experimental_constrained_log10));
 
@@ -1997,7 +1997,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     case Builtin::BI__builtin_log2f:
     case Builtin::BI__builtin_log2f16:
     case Builtin::BI__builtin_log2l:
-      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E, 
+      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E,
                                    Intrinsic::log2,
                                    Intrinsic::experimental_constrained_log2));
 
@@ -2007,7 +2007,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     case Builtin::BI__builtin_nearbyint:
     case Builtin::BI__builtin_nearbyintf:
     case Builtin::BI__builtin_nearbyintl:
-      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E, 
+      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E,
                                 Intrinsic::nearbyint,
                                 Intrinsic::experimental_constrained_nearbyint));
 
@@ -2018,7 +2018,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     case Builtin::BI__builtin_powf:
     case Builtin::BI__builtin_powf16:
     case Builtin::BI__builtin_powl:
-      return RValue::get(emitBinaryMaybeConstrainedFPBuiltin(*this, E, 
+      return RValue::get(emitBinaryMaybeConstrainedFPBuiltin(*this, E,
                                    Intrinsic::pow,
                                    Intrinsic::experimental_constrained_pow));
 
@@ -2029,7 +2029,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     case Builtin::BI__builtin_rintf:
     case Builtin::BI__builtin_rintf16:
     case Builtin::BI__builtin_rintl:
-      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E, 
+      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E,
                                    Intrinsic::rint,
                                    Intrinsic::experimental_constrained_rint));
 
@@ -2040,7 +2040,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     case Builtin::BI__builtin_roundf:
     case Builtin::BI__builtin_roundf16:
     case Builtin::BI__builtin_roundl:
-      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E, 
+      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E,
                                    Intrinsic::round,
                                    Intrinsic::experimental_constrained_round));
 
@@ -2051,7 +2051,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     case Builtin::BI__builtin_sinf:
     case Builtin::BI__builtin_sinf16:
     case Builtin::BI__builtin_sinl:
-      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E, 
+      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E,
                                    Intrinsic::sin,
                                    Intrinsic::experimental_constrained_sin));
 
@@ -2062,7 +2062,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     case Builtin::BI__builtin_sqrtf:
     case Builtin::BI__builtin_sqrtf16:
     case Builtin::BI__builtin_sqrtl:
-      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E, 
+      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E,
                                    Intrinsic::sqrt,
                                    Intrinsic::experimental_constrained_sqrt));
 
@@ -2073,7 +2073,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     case Builtin::BI__builtin_truncf:
     case Builtin::BI__builtin_truncf16:
     case Builtin::BI__builtin_truncl:
-      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E, 
+      return RValue::get(emitUnaryMaybeConstrainedFPBuiltin(*this, E,
                                    Intrinsic::trunc,
                                    Intrinsic::experimental_constrained_trunc));
 
@@ -3964,7 +3964,12 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
   case Builtin::BI__builtin_cheri_cap_from_pointer_nonnull_zero:
   case Builtin::BI__builtin_cheri_cap_from_pointer: {
     Value *GlobalCap = EmitScalarExpr(E->getArg(0));
-    Value *Ptr = Builder.CreatePtrToInt(EmitScalarExpr(E->getArg(1)), IntPtrTy);
+    Value *PtrArg = EmitScalarExpr(E->getArg(1));
+    if (PtrArg->getType()->isIntegerTy())
+      PtrArg = Builder.CreateIntCast(
+          PtrArg, IntPtrTy, E->getArg(1)->getType()->isSignedIntegerType());
+    else
+      PtrArg = Builder.CreatePtrToInt(PtrArg, IntPtrTy);
     unsigned CapFromPointerIntr;
     switch (BuiltinID) {
     case Builtin::BI__builtin_cheri_cap_from_pointer: {
@@ -3977,83 +3982,123 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     default:
       llvm_unreachable("Unknown vector element type!");
     }
-    return RValue::get(Builder.CreateCall(
-        CGM.getIntrinsic(CapFromPointerIntr, IntPtrTy),
-        {GlobalCap, Ptr}));
+    return RValue::get(Builder.CreateBitCast(
+        Builder.CreateIntrinsic(CapFromPointerIntr, {IntPtrTy},
+            {EmitCastToVoidPtr(GlobalCap), PtrArg}),
+        ConvertType(E->getType())));
   }
   case Builtin::BI__builtin_cheri_cap_to_pointer: {
     Value *GlobalCap = EmitScalarExpr(E->getArg(0));
     Value *Cap = EmitScalarExpr(E->getArg(1));
-    Value *Ptr = nullptr;
-    Ptr = Builder.CreateCall(
-          CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_to_pointer, IntPtrTy),
-          {GlobalCap, Cap});
-    return RValue::get(Builder.CreateIntToPtr(Ptr, ConvertType(E->getType())));
+    Value *Ptr = Builder.CreateIntrinsic(
+        llvm::Intrinsic::cheri_cap_to_pointer, {IntPtrTy},
+        {EmitCastToVoidPtr(GlobalCap), EmitCastToVoidPtr(Cap)});
+    auto *ResultTy = ConvertType(E->getType());
+    if (ResultTy->isIntegerTy())
+      return RValue::get(Builder.CreateIntCast(
+          Ptr, ResultTy, E->getType()->isSignedIntegerType()));
+    else
+      return RValue::get(Builder.CreateIntToPtr(Ptr, ResultTy));
   }
 
-  case Builtin::BI__builtin_cheri_bounds_set:
-    return RValue::get(Builder.CreateCall(
-        CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_bounds_set, SizeTy),
-        {EmitScalarExpr(E->getArg(0)), EmitScalarExpr(E->getArg(1))}));
-  case Builtin::BI__builtin_cheri_bounds_set_exact:
-    return RValue::get(Builder.CreateCall(
-        CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_bounds_set_exact, SizeTy),
-        {EmitScalarExpr(E->getArg(0)), EmitScalarExpr(E->getArg(1))}));
-  case Builtin::BI__builtin_cheri_length_get:
-    return RValue::get(Builder.CreateCall(
-        CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_length_get, SizeTy),
-        {EmitScalarExpr(E->getArg(0))}));
+  case Builtin::BI__builtin_cheri_address_get:
+    return RValue::get(Builder.CreateIntrinsic(
+        llvm::Intrinsic::cheri_cap_address_get, {IntPtrTy},
+        {EmitCastToVoidPtr(EmitScalarExpr(E->getArg(0)))}));
+  case Builtin::BI__builtin_cheri_address_set: {
+    Value *Cap = EmitScalarExpr(E->getArg(0));
+    Value *Address = EmitScalarExpr(E->getArg(1));
+    return RValue::get(
+        Builder.CreateIntrinsic(llvm::Intrinsic::cheri_cap_address_set,
+                                {IntPtrTy}, {EmitCastToVoidPtr(Cap), Address}));
+  }
   case Builtin::BI__builtin_cheri_base_get:
-    return RValue::get(Builder.CreateCall(
-        CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_base_get, IntPtrTy),
-        {EmitScalarExpr(E->getArg(0))}));
-  case Builtin::BI__builtin_cheri_perms_and:
-    return RValue::get(Builder.CreateCall(
-        CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_perms_and, SizeTy),
-        {EmitScalarExpr(E->getArg(0)), EmitScalarExpr(E->getArg(1))}));
-  case Builtin::BI__builtin_cheri_perms_get:
-    return RValue::get(Builder.CreateCall(
-        CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_perms_get, SizeTy),
-        {EmitScalarExpr(E->getArg(0))}));
-  case Builtin::BI__builtin_cheri_flags_set:
-    return RValue::get(Builder.CreateCall(
-        CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_flags_set, SizeTy),
-        {EmitScalarExpr(E->getArg(0)), EmitScalarExpr(E->getArg(1))}));
+    return RValue::get(Builder.CreateIntrinsic(
+        llvm::Intrinsic::cheri_cap_base_get, {SizeTy},
+        {EmitCastToVoidPtr(EmitScalarExpr(E->getArg(0)))}));
+  case Builtin::BI__builtin_cheri_bounds_set: {
+    Value *Cap = EmitScalarExpr(E->getArg(0));
+    Value *Length = EmitScalarExpr(E->getArg(1));
+    return RValue::get(Builder.CreateBitCast(
+        Builder.CreateIntrinsic(llvm::Intrinsic::cheri_cap_bounds_set, {SizeTy},
+                                {EmitCastToVoidPtr(Cap), Length}),
+        Cap->getType()));
+  }
+  case Builtin::BI__builtin_cheri_bounds_set_exact: {
+    Value *Cap = EmitScalarExpr(E->getArg(0));
+    Value *Length = EmitScalarExpr(E->getArg(1));
+    return RValue::get(Builder.CreateBitCast(
+        Builder.CreateIntrinsic(llvm::Intrinsic::cheri_cap_bounds_set_exact,
+                                {SizeTy}, {EmitCastToVoidPtr(Cap), Length}),
+        Cap->getType()));
+  }
   case Builtin::BI__builtin_cheri_flags_get:
-    return RValue::get(Builder.CreateCall(
-        CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_flags_get, SizeTy),
-        {EmitScalarExpr(E->getArg(0))}));
-  case Builtin::BI__builtin_cheri_type_get:
-    return RValue::get(Builder.CreateCall(
-        CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_type_get, IntPtrTy),
-        {EmitScalarExpr(E->getArg(0))}));
-  case Builtin::BI__builtin_cheri_perms_check:
-    return RValue::get(Builder.CreateCall(
-        CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_perms_check, SizeTy),
-        {EmitScalarExpr(E->getArg(0)), EmitScalarExpr(E->getArg(1))}));
-  case Builtin::BI__builtin_cheri_offset_increment:
-    return RValue::get(Builder.CreateGEP(EmitScalarExpr(E->getArg(0)),
-                                         EmitScalarExpr(E->getArg(1)),
-                                         "__builtin_cheri_offset_increment"));
-  case Builtin::BI__builtin_cheri_offset_set:
-    return RValue::get(Builder.CreateCall(
-        CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_offset_set, SizeTy),
-        {EmitScalarExpr(E->getArg(0)), EmitScalarExpr(E->getArg(1))}));
+    return RValue::get(Builder.CreateIntrinsic(
+        llvm::Intrinsic::cheri_cap_flags_get, {SizeTy},
+        {EmitCastToVoidPtr(EmitScalarExpr(E->getArg(0)))}));
+  case Builtin::BI__builtin_cheri_flags_set: {
+    Value *Cap = EmitScalarExpr(E->getArg(0));
+    Value *Flags = EmitScalarExpr(E->getArg(1));
+    return RValue::get(Builder.CreateBitCast(
+        Builder.CreateIntrinsic(llvm::Intrinsic::cheri_cap_flags_set, {SizeTy},
+                                {EmitCastToVoidPtr(Cap), Flags}),
+        Cap->getType()));
+  }
+  case Builtin::BI__builtin_cheri_length_get:
+    return RValue::get(Builder.CreateIntrinsic(
+        llvm::Intrinsic::cheri_cap_length_get, {SizeTy},
+        {EmitCastToVoidPtr(EmitScalarExpr(E->getArg(0)))}));
+  case Builtin::BI__builtin_cheri_perms_and: {
+    Value *Cap = EmitScalarExpr(E->getArg(0));
+    Value *Perms = EmitScalarExpr(E->getArg(1));
+    return RValue::get(Builder.CreateBitCast(
+        Builder.CreateIntrinsic(llvm::Intrinsic::cheri_cap_perms_and, {SizeTy},
+                                {EmitCastToVoidPtr(Cap), Perms}),
+        Cap->getType()));
+  }
   case Builtin::BI__builtin_cheri_offset_get:
-    return RValue::get(Builder.CreateCall(
-        CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_offset_get, SizeTy),
-        {EmitScalarExpr(E->getArg(0))}));
+    return RValue::get(Builder.CreateIntrinsic(
+        llvm::Intrinsic::cheri_cap_offset_get, {SizeTy},
+        {EmitCastToVoidPtr(EmitScalarExpr(E->getArg(0)))}));
+  case Builtin::BI__builtin_cheri_offset_increment: {
+    Value *Cap = EmitScalarExpr(E->getArg(0));
+    Value *Increment = EmitScalarExpr(E->getArg(1));
+    return RValue::get(Builder.CreateGEP(EmitCastToVoidPtr(Cap), Increment,
+                                         "__builtin_cheri_offset_increment"));
+  }
+  case Builtin::BI__builtin_cheri_offset_set: {
+    Value *Cap = EmitScalarExpr(E->getArg(0));
+    Value *Offset = EmitScalarExpr(E->getArg(1));
+    return RValue::get(
+        Builder.CreateIntrinsic(llvm::Intrinsic::cheri_cap_offset_set, {SizeTy},
+                                {EmitCastToVoidPtr(Cap), Offset}));
+  }
+  case Builtin::BI__builtin_cheri_perms_get:
+    return RValue::get(Builder.CreateIntrinsic(
+        llvm::Intrinsic::cheri_cap_perms_get, {SizeTy},
+        {EmitCastToVoidPtr(EmitScalarExpr(E->getArg(0)))}));
 
+  case Builtin::BI__builtin_cheri_type_get:
+    return RValue::get(Builder.CreateIntrinsic(
+        llvm::Intrinsic::cheri_cap_type_get, {IntPtrTy},
+        {EmitCastToVoidPtr(EmitScalarExpr(E->getArg(0)))}));
+  case Builtin::BI__builtin_cheri_perms_check: {
+    Value *Cap = EmitScalarExpr(E->getArg(0));
+    Value *Perms = EmitScalarExpr(E->getArg(1));
+    return RValue::get(
+        Builder.CreateIntrinsic(llvm::Intrinsic::cheri_cap_perms_check,
+                                {SizeTy}, {EmitCastToVoidPtr(Cap), Perms}));
+  }
   // Round to capability precision:
   // TODO: should we handle targets that don't have any precision constraints
   // here or in the backend?
   case Builtin::BI__builtin_cheri_round_representable_length:
-    return RValue::get(Builder.CreateCall(
-        CGM.getIntrinsic(llvm::Intrinsic::cheri_round_representable_length, {SizeTy}),
+    return RValue::get(Builder.CreateIntrinsic(
+        llvm::Intrinsic::cheri_round_representable_length, {SizeTy},
         {EmitScalarExpr(E->getArg(0))}));
   case Builtin::BI__builtin_cheri_representable_alignment_mask:
-    return RValue::get(Builder.CreateCall(
-        CGM.getIntrinsic(llvm::Intrinsic::cheri_representable_alignment_mask, {SizeTy}),
+    return RValue::get(Builder.CreateIntrinsic(
+        llvm::Intrinsic::cheri_representable_alignment_mask, {SizeTy},
         {EmitScalarExpr(E->getArg(0))}));
   case Builtin::BI__builtin_cheri_copy_from_high:
     return RValue::get(Builder.CreateCall(
@@ -4089,20 +4134,10 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     Struct = Builder.CreateInsertValue(Struct, MethodNum, {1});
     return RValue::get(Struct);
   }
-
-  case Builtin::BI__builtin_cheri_address_get:
-    return RValue::get(Builder.CreateCall(
-        CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_address_get, IntPtrTy),
-        {EmitScalarExpr(E->getArg(0))}));
-  case Builtin::BI__builtin_cheri_address_set:
-    return RValue::get(Builder.CreateCall(
-        CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_address_set, IntPtrTy),
-        {EmitScalarExpr(E->getArg(0)), EmitScalarExpr(E->getArg(1))}));
   case Builtin::BI__builtin_cheri_cap_load_tags: {
     Value *Ptr = EmitScalarExpr(E->getArg(0));
     llvm::Type *Types[] = { SizeTy, Ptr->getType() };
-    return RValue::get(Builder.CreateCall(
-        CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_load_tags, Types),
+    return RValue::get(Builder.CreateIntrinsic(llvm::Intrinsic::cheri_cap_load_tags, Types,
         {Ptr}));
   }
 
@@ -13089,10 +13124,13 @@ Value *CodeGenFunction::EmitMIPSBuiltinExpr(unsigned BuiltinID,
     return Builder.CreateCall(
         CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_base_get, IntPtrTy),
         {EmitScalarExpr(E->getArg(0))});
-  case Mips::BI__builtin_mips_cheri_and_cap_perms:
+  case Mips::BI__builtin_mips_cheri_and_cap_perms: {
+    Value *Cap = EmitScalarExpr(E->getArg(0));
+    Value *Perms = EmitScalarExpr(E->getArg(1));
     return Builder.CreateCall(
         CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_perms_and, SizeTy),
-        {EmitScalarExpr(E->getArg(0)), EmitScalarExpr(E->getArg(1))});
+        {Cap, Perms});
+  }
   case Mips::BI__builtin_mips_cheri_get_cap_perms:
     return Builder.CreateCall(
         CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_perms_get, SizeTy),
@@ -13101,18 +13139,26 @@ Value *CodeGenFunction::EmitMIPSBuiltinExpr(unsigned BuiltinID,
     return Builder.CreateCall(
         CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_type_get, IntPtrTy),
         {EmitScalarExpr(E->getArg(0))});
-  case Mips::BI__builtin_mips_cheri_check_perms:
+  case Mips::BI__builtin_mips_cheri_check_perms: {
+    Value *Cap = EmitScalarExpr(E->getArg(0));
+    Value *Perms = EmitScalarExpr(E->getArg(1));
     return Builder.CreateCall(
         CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_perms_check, SizeTy),
-        {EmitScalarExpr(E->getArg(0)), EmitScalarExpr(E->getArg(1))});
-  case Mips::BI__builtin_mips_cheri_cap_offset_increment:
-    return Builder.CreateGEP(EmitScalarExpr(E->getArg(0)),
-                             EmitScalarExpr(E->getArg(1)),
+        {Cap, Perms});
+  }
+  case Mips::BI__builtin_mips_cheri_cap_offset_increment: {
+    Value *Cap = EmitScalarExpr(E->getArg(0));
+    Value *Increment = EmitScalarExpr(E->getArg(1));
+    return Builder.CreateGEP(Cap, Increment,
                              "__builtin_mips_cheri_cap_offset_increment");
-  case Mips::BI__builtin_mips_cheri_cap_offset_set:
+  }
+  case Mips::BI__builtin_mips_cheri_cap_offset_set: {
+    Value *Cap = EmitScalarExpr(E->getArg(0));
+    Value *Offset = EmitScalarExpr(E->getArg(1));
     return Builder.CreateCall(
         CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_offset_set, SizeTy),
-        {EmitScalarExpr(E->getArg(0)), EmitScalarExpr(E->getArg(1))});
+        {Cap, Offset});
+  }
   case Mips::BI__builtin_mips_cheri_cap_offset_get:
     return Builder.CreateCall(
         CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_offset_get, SizeTy),
