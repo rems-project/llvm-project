@@ -181,7 +181,7 @@ declare i64 @llvm.cheri.cap.diff(i8 addrspace(200)*, i8 addrspace(200)*)
 ; CHECK-LABEL: @buildcap
 define i8 addrspace(200) *@buildcap(i8 addrspace(200)* %auth, i8 addrspace(200)* %bits) {
 entry:
-; CHECK: build c1, c0, c1
+; CHECK: build c1, c1, c0
 ; CHECK-NEXT: cpytype c1, c1, c0
 ; CHECK-NEXT: cseal c0, c1, c0
   %newcap = call i8 addrspace(200)* @llvm.cheri.cap.build(i8 addrspace(200)* %auth, i8 addrspace(200)* %bits)

@@ -230,6 +230,7 @@ let isBarrier = 1, Defs = [CFP], isReturn = 1, isTerminator = 1 in
 def CapRoundRepresentableLength : CapRoundRepresentableLengthFmt<(outs GPR64:$Rd), (ins GPR64:$Rn), "rrlen", "\t$Rd, $Rn", []>;
 def CapRoundRepresentableMask : CapRoundRepresentableMaskFmt<(outs GPR64:$Rd), (ins GPR64:$Rn), "rrmask", "\t$Rd, $Rn", []>;
 def CapSeal : CapSealFmt<(outs Cap:$Cd), (ins Cap:$Cn, Cap:$Cm), "seal", "\t$Cd, $Cn, $Cm", []>;
+let Defs = [NZCV] in
 def CapSealCond : CapSealCondFmt<(outs Capsp:$Cd), (ins Capsp:$Cn, Capsp:$Cm), "cseal", "\t$Cd, $Cn, $Cm", []>;
 def CapSealImm : CapSealImmFmt<(outs Cap:$Cd), (ins Cap:$Cn, sealform:$form), "seal", "\t$Cd, $Cn, $form", []>;
 def CapSetBounds : CapSetBoundsFmt<(outs Capsp:$Cd), (ins Capsp:$Cn, GPR64:$Rm), "scbnds", "\t$Cd, $Cn, $Rm", []>;
@@ -705,7 +706,7 @@ def : Pat<(int_cheri_cap_bounds_set_exact Capsp:$Cn, scbnds_imm:$imm),
 def : Pat<(int_cheri_cap_bounds_set Capsp:$Cn, GPR64:$Rm),
           (CapSetBounds Capsp:$Cn, GPR64:$Rm)>;
 def : Pat<(int_cheri_cap_build Capsp:$Cn, Capsp:$Cm),
-          (CapBuildCap Capsp:$Cn, Capsp:$Cm)>;
+          (CapBuildCap Capsp:$Cm, Capsp:$Cn)>;
 def : Pat<(int_cheri_cap_bounds_set_exact Capsp:$Cn, GPR64:$Rm),
           (CapSetBoundsExact Capsp:$Cn, GPR64:$Rm)>;
 def : Pat<(int_cheri_cap_offset_set Capsp:$Cn, GPR64:$Rm),
