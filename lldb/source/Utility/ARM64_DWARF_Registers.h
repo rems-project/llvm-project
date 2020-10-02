@@ -87,9 +87,9 @@ enum {
   v30,
   v31,
 
-  // 96-127 reserved
+  // 96-197 reserved
 
-  // C0-C7
+  // Capability registers
   c0 = 198,
   c1,
   c2,
