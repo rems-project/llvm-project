@@ -49,6 +49,280 @@ llvm::APInt Add(const llvm::APInt &value, int64_t offset) {
   return value + offset;
 }
 
+// Morello-specific capability encoding details.
+struct MorelloCapabilityEncoding {
+  enum MorelloAddressPerm {
+    eAddressPermGlobal = 1 << 0,
+    eAddressPermExecutive = 1 << 1,
+    eAddressPermUser0 = 1 << 2,
+    eAddressPermUser1 = 1 << 3,
+    eAddressPermUser2 = 1 << 4,
+    eAddressPermUser3 = 1 << 5,
+    eAddressPermMutableLoad = 1 << 6,
+    eAddressPermCompartmentID = 1 << 7,
+    eAddressPermBranchSealedPair = 1 << 8,
+    eAddressPermSystem = 1 << 9,
+    eAddressPermUnseal = 1 << 10,
+    eAddressPermSeal = 1 << 11,
+    eAddressPermStoreLocalCap = 1 << 12,
+    eAddressPermStoreCap = 1 << 13,
+    eAddressPermLoadCap = 1 << 14,
+    eAddressPermExecute = 1 << 15,
+    eAddressPermStore = 1 << 16,
+    eAddressPermLoad = 1 << 17
+  };
+
+  // Get an array of permissions that may be set for this capability.
+  static llvm::ArrayRef<PermNamePair>
+  GetPermissionNames(const llvm::APInt &value) {
+    static const PermNamePair perm_names[] = {
+        {eAddressPermGlobal, "Global"},
+        {eAddressPermExecutive, "Executive"},
+        {eAddressPermUser0, "User0"},
+        {eAddressPermUser1, "User1"},
+        {eAddressPermUser2, "User2"},
+        {eAddressPermUser3, "User3"},
+        {eAddressPermMutableLoad, "MutableLoad"},
+        {eAddressPermCompartmentID, "CompartmentID"},
+        {eAddressPermBranchSealedPair, "BranchSealedPair"},
+        {eAddressPermSystem, "System"},
+        {eAddressPermUnseal, "Unseal"},
+        {eAddressPermSeal, "Seal"},
+        {eAddressPermStoreLocalCap, "StoreLocalCap"},
+        {eAddressPermStoreCap, "StoreCap"},
+        {eAddressPermLoadCap, "LoadCap"},
+        {eAddressPermExecute, "Execute"},
+        {eAddressPermStore, "Store"},
+        {eAddressPermLoad, "Load"}};
+
+    return llvm::ArrayRef<PermNamePair>(perm_names);
+  }
+
+  // Get the value of the Permissions field in \p value.
+  static uint64_t DecodePermissions(const llvm::APInt &value) {
+    return value.extractBits(CAP_PERMS_NUM_BITS, CAP_PERMS_LO_BIT)
+        .getZExtValue();
+  }
+
+  // Return whether the capability is sealed.
+  static bool IsCapabilitySealed(const llvm::APInt &value) {
+    return DecodeCapabilityOType(value) != 0;
+  }
+
+  // Return the object type of the capability.
+  static uint64_t DecodeCapabilityOType(const llvm::APInt &value) {
+    return value.extractBits(CAP_OTYPE_NUM_BITS, CAP_OTYPE_LO_BIT)
+        .getZExtValue();
+  }
+
+  // Return the bounds of the capability in \p base and \p limit.
+  static void DecodeCapabilityAddressRange(const llvm::APInt &value,
+                                           llvm::APInt &base,
+                                           llvm::APInt &limit) {
+    Log *log(
+        lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_DATAFORMATTERS));
+
+    int exponent = CapGetEffectiveExponent(value);
+    LLDB_LOGF(log, "[DecodeCapabilityAddressRange] exponent = %" PRId32,
+              exponent);
+
+    assert(exponent >= 0 && "Exponent cannot be negative");
+    assert(exponent <= CAP_MAX_EXPONENT && "Exponent too large");
+
+    llvm::APInt bottom = CapGetBottom(value);
+    llvm::APInt top = CapGetTop(value);
+
+    assert(bottom.getBitWidth() == CAP_MW && "Invalid width for bottom");
+    assert(top.getBitWidth() == CAP_MW && "Invalid width for top");
+
+    base = llvm::APInt::getNullValue(CAP_BOUND_NUM_BITS + 1);
+    limit = llvm::APInt::getNullValue(CAP_BOUND_NUM_BITS + 1);
+
+    base.insertBits(bottom, exponent);
+    limit.insertBits(top, exponent);
+
+    llvm::APInt a(CAP_BOUND_NUM_BITS + 1, GetAddress(value));
+    llvm::APInt A3 = a.extractBits(3, exponent + CAP_MW - 3);
+    llvm::APInt B3 = bottom.extractBits(3, CAP_MW - 3);
+    llvm::APInt T3 = top.extractBits(3, CAP_MW - 3);
+    llvm::APInt R3 = B3 - 1;
+
+    LLDB_LOGF(log, "[DecodeCapabilityAddressRange] A3 = %" PRIx64,
+              A3.getZExtValue());
+    LLDB_LOGF(log, "[DecodeCapabilityAddressRange] B3 = %" PRIx64,
+              B3.getZExtValue());
+    LLDB_LOGF(log, "[DecodeCapabilityAddressRange] T3 = %" PRIx64,
+              T3.getZExtValue());
+    LLDB_LOGF(log, "[DecodeCapabilityAddressRange] R3 = %" PRIx64,
+              R3.getZExtValue());
+
+    assert(A3.getBitWidth() == 3 && "Wrong number of bits");
+    assert(B3.getBitWidth() == 3 && "Wrong number of bits");
+    assert(T3.getBitWidth() == 3 && "Wrong number of bits");
+    assert(R3.getBitWidth() == 3 && "Wrong number of bits");
+    assert((R3 < B3 || (B3 == 0 && R3 == 7)) && "Invalid R3");
+
+    int aHi = A3.ult(R3) ? 1 : 0;
+    int bHi = B3.ult(R3) ? 1 : 0;
+    int tHi = T3.ult(R3) ? 1 : 0;
+
+    int correction_base = bHi - aHi;
+    int correction_limit = tHi - aHi;
+
+    LLDB_LOGF(log, "[DecodeCapabilityAddressRange] aHi = %" PRId32, aHi);
+    LLDB_LOGF(log, "[DecodeCapabilityAddressRange] correction_base = %" PRId32,
+              correction_base);
+    LLDB_LOGF(log, "[DecodeCapabilityAddressRange] correction_limit = %" PRId32,
+              correction_limit);
+
+    if (exponent < CAP_MAX_EXPONENT) {
+      llvm::APInt atop = a.extractBits(
+          CAP_BOUND_NUM_BITS - CAP_MW - exponent + 1, CAP_MW + exponent);
+      LLDB_LOGF(log, "[DecodeCapabilityAddressRange] atop<63:0> = %" PRIx64,
+                atop.getZExtValue());
+      assert(atop.getBitWidth() + CAP_MW + exponent == CAP_BOUND_NUM_BITS + 1 &&
+             "Wrong width");
+      base.insertBits(atop + correction_base, CAP_MW + exponent);
+      limit.insertBits(atop + correction_limit, CAP_MW + exponent);
+    }
+
+    base.clearBit(64);
+    int NumBits = 2;
+    if (exponent < (CAP_MAX_EXPONENT - 1) &&
+        (limit.extractBits(NumBits, 63) - base.extractBits(NumBits, 63))
+            .ugt(1)) {
+      LLDB_LOGF(log,
+                "[DecodeCapabilityAddressRange] Performing final correction");
+      limit.flipBit(64);
+    }
+
+    limit = limit.trunc(CAP_BOUND_NUM_BITS);
+    base = base.trunc(CAP_BOUND_NUM_BITS);
+
+    assert(limit.getBitWidth() == CAP_BOUND_NUM_BITS &&
+           "Invalid width for limit");
+    assert(base.getBitWidth() == CAP_BOUND_NUM_BITS &&
+           "Invalid width for base");
+    assert(base.isSignBitClear() && "Top bit of base should be 0");
+  }
+
+private:
+  static constexpr int CAP_VALUE_NUM_BITS = 64;
+  static constexpr int CAP_MW = 16;
+  static constexpr int CAP_IE_BIT = 94;
+  static constexpr int CAP_MAX_EXPONENT = CAP_VALUE_NUM_BITS - CAP_MW + 2;
+  static constexpr int CAP_BASE_HI_BIT = 79;
+  static constexpr int CAP_BASE_MANTISSA_LO_BIT = 67;
+  static constexpr int CAP_BASE_EXP_HI_BIT = 66;
+  static constexpr int CAP_BASE_LO_BIT = 64;
+  static constexpr int CAP_LIMIT_HI_BIT = 93;
+  static constexpr int CAP_LIMIT_MANTISSA_LO_BIT = 83;
+  static constexpr int CAP_LIMIT_EXP_HI_BIT = 82;
+  static constexpr int CAP_LIMIT_LO_BIT = 80;
+  static constexpr int CAP_BOUND_NUM_BITS = 65;
+  static constexpr int CAP_OTYPE_HI_BIT = 109;
+  static constexpr int CAP_OTYPE_LO_BIT = 95;
+  static constexpr int CAP_OTYPE_NUM_BITS =
+      CAP_OTYPE_HI_BIT - CAP_OTYPE_LO_BIT + 1;
+  static constexpr int CAP_PERMS_HI_BIT = 127;
+  static constexpr int CAP_PERMS_LO_BIT = 110;
+  static constexpr int CAP_PERMS_NUM_BITS =
+      CAP_PERMS_HI_BIT - CAP_PERMS_LO_BIT + 1;
+
+  static int CapGetEffectiveExponent(const llvm::APInt &value) {
+    // Early return - if we don't have an internal exponent there's nothing to
+    // interpret.
+    if (!CapIsInternalExponent(value))
+      return 0;
+
+    Log *log(
+        lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_DATAFORMATTERS));
+
+    // Read exponent - this code is inlined from CapGetExponent.
+    int NumExpBitsLimit = CAP_LIMIT_EXP_HI_BIT - CAP_LIMIT_LO_BIT + 1;
+    llvm::APInt nexpLimit =
+        value.extractBits(NumExpBitsLimit, CAP_LIMIT_LO_BIT);
+    int NumExpBitsBase = CAP_BASE_EXP_HI_BIT - CAP_BASE_LO_BIT + 1;
+    llvm::APInt nexpBase = value.extractBits(NumExpBitsBase, CAP_BASE_LO_BIT);
+
+    LLDB_LOGF(log, "[CapGetEffectiveExponent] nexpBase = 0x%" PRIx64,
+              nexpBase.getZExtValue());
+    LLDB_LOGF(log, "[CapGetEffectiveExponent] nexpLimit = 0x%" PRIx64,
+              nexpLimit.getZExtValue());
+
+    llvm::APInt exp =
+        llvm::APInt::getNullValue(NumExpBitsBase + NumExpBitsLimit);
+    exp.insertBits(nexpLimit, NumExpBitsBase);
+    exp.insertBits(nexpBase, 0);
+    LLDB_LOGF(log, "[CapGetEffectiveExponent] negated exponent = 0x%" PRIx64,
+              exp.getZExtValue());
+    exp.flipAllBits();
+    LLDB_LOGF(log, "[CapGetEffectiveExponent] exponent = 0x%" PRIx64,
+              exp.getZExtValue());
+
+    // Clamp exponent.
+    if (exp.uge(CAP_MAX_EXPONENT))
+      return CAP_MAX_EXPONENT;
+    return exp.getZExtValue();
+  }
+
+  static bool CapIsInternalExponent(const llvm::APInt &value) {
+    return value[CAP_IE_BIT] == false;
+  }
+
+  static llvm::APInt CapGetBottom(const llvm::APInt &value) {
+    llvm::APInt b;
+    if (CapIsInternalExponent(value)) {
+      b = value.extractBits(CAP_BASE_HI_BIT - CAP_BASE_LO_BIT + 1,
+                            CAP_BASE_LO_BIT);
+      b.clearLowBits(CAP_BASE_MANTISSA_LO_BIT - CAP_BASE_LO_BIT);
+    } else {
+      b = value.extractBits(CAP_BASE_HI_BIT - CAP_BASE_LO_BIT + 1,
+                            CAP_BASE_LO_BIT);
+    }
+    assert(b.getBitWidth() == CAP_MW && "Wrong number of bits for b");
+    return b;
+  }
+
+  static llvm::APInt CapGetTop(const llvm::APInt &value) {
+    Log *log(
+        lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_DATAFORMATTERS));
+
+    llvm::APInt b = CapGetBottom(value);
+    llvm::APInt t;
+    int lmsb = 0;
+    if (CapIsInternalExponent(value)) {
+      lmsb = 1;
+      t = value.extractBits(CAP_LIMIT_HI_BIT - CAP_LIMIT_LO_BIT + 1,
+                            CAP_LIMIT_LO_BIT);
+      t.clearLowBits(CAP_LIMIT_MANTISSA_LO_BIT - CAP_LIMIT_LO_BIT);
+    } else {
+      t = value.extractBits(CAP_LIMIT_HI_BIT - CAP_LIMIT_LO_BIT + 1,
+                            CAP_LIMIT_LO_BIT);
+    }
+    assert(t.getBitWidth() == CAP_MW - 3 + 1 && "Wrong number of bits for t");
+
+    t = t.zext(CAP_MW);
+
+    LLDB_LOGF(log, "[CapGetTop] b = %" PRIx64, b.getZExtValue());
+
+    uint64_t bLow = b.extractBits(CAP_MW - 3 + 1, 0).getZExtValue();
+    uint64_t tLow = t.getZExtValue();
+    int lcarry = tLow < bLow ? 1 : 0;
+    llvm::APInt tHi = b.extractBits(2, CAP_MW - 2) + lcarry + lmsb;
+
+    assert(tHi.getBitWidth() == 2 && "Too many top bits");
+    t.insertBits(tHi, CAP_MW - 2);
+
+    LLDB_LOGF(log, "[CapGetTop] lmsb = %" PRId32, lmsb);
+    LLDB_LOGF(log, "[CapGetTop] lcarry = %" PRId32, lcarry);
+    LLDB_LOGF(log, "[CapGetTop] t = %" PRIx64, t.getZExtValue());
+
+    assert(t.getBitWidth() == CAP_MW && "Wrong number of bits for t");
+    return t;
+  }
+};
+
 bool GetCFARegisterValue(const llvm::APInt &value, bool has_tag,
                          const RegisterInfo &reg_info, int64_t offset,
                          RegisterValue &reg_value, Status &error) {
@@ -197,13 +471,10 @@ void Capability::Dump(Stream &s) const {
     s.PutCString("invalid capability");
     break;
   case eCapabilityMorello_128:
-  case eCapabilityMorello_128_untagged: {
-    // TODO: Interpret capability fields.
-    llvm::SmallString<33> str_value; // 32 hex digits + room for tag, if needed
-    m_value.toStringUnsigned(str_value, 16);
-    s << "0x" << str_value;
+  case eCapabilityMorello_128_untagged:
+    AArch64_128::Dump<AArch64_128::MorelloCapabilityEncoding>(
+        s, m_value, /*has_tag=*/m_type == eCapabilityMorello_128);
     break;
-  }
   }
 }
 

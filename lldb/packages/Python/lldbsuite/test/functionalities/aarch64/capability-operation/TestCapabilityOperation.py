@@ -140,21 +140,21 @@ class MorelloCapabilityOperationTestCase(CapabilityOperationTestBase):
         self.expect('register read c0',
                     substrs=["c0 = 0x01c0000000600010000000000000001000"])
         self.expect('register read -f capability c0',
-                    substrs=["c0 = 0x1C0000000600010000000000000001000"])
+                    substrs=["c0 = {tag = 1, address = 0x0000000000001000, attributes = {[Store Load], range = [0x1000-0x2000)}}"])
 
         self.expect('register read x9',
                     substrs=["x9 = 0x0000000000002000"])
         self.expect('register read c9',
                     substrs=["c9 = 0x01c0000000400010000000000000002000"])
         self.expect('register read -f capability c9',
-                    substrs=["c9 = 0x1C0000000400010000000000000002000"])
+                    substrs=["c9 = {tag = 1, address = 0x0000000000002000, attributes = {[Store Load], range = [0x1000-0x4000)}}"])
 
         self.expect('register read x23',
                     substrs=["x23 = 0x0000000000001000"])
         self.expect('register read c23',
                     substrs=["c23 = 0x00c0000000400010000000000000001000"])
         self.expect('register read -f capability c23',
-                    substrs=["c23 = 0xC0000000400010000000000000001000"])
+                    substrs=["c23 = {tag = 0, address = 0x0000000000001000, attributes = {[Store Load], range = [0x1000-0x4000)}}"])
 
         # Test register writes.
         # Write something with the tag 0.
@@ -164,7 +164,7 @@ class MorelloCapabilityOperationTestCase(CapabilityOperationTestBase):
         self.expect('register read c0',
                     substrs=["c0 = 0x00c0000000500030000000000000001004"])
         self.expect('register read -f capability c0',
-                    substrs=["c0 = 0xC0000000500030000000000000001004"])
+                    substrs=["c0 = {tag = 0, address = 0x0000000000001004, attributes = {[Store Load], range = [0x3000-0x5000)}}"])
 
         # Write something with the tag 1 in the same register.
         self.runCmd('register write c0 0x01c0000000400020000000000000001000')
@@ -173,7 +173,7 @@ class MorelloCapabilityOperationTestCase(CapabilityOperationTestBase):
         self.expect('register read c0',
                     substrs=["c0 = 0x01c0000000400020000000000000001000"])
         self.expect('register read -f capability c0',
-                    substrs=["c0 = 0x1C0000000400020000000000000001000"])
+                    substrs=["c0 = {tag = 1, address = 0x0000000000001000, attributes = {[Store Load], range = [0x2000-0x4000)}}"])
 
     # TODO: Test state registers
 
@@ -305,15 +305,14 @@ class MorelloCapabilityOperationTestCase(CapabilityOperationTestBase):
         # Test tagged read with data formatted as capabilities.
         self.expect(
             'memory read -C -f capability 0x400',
-            substrs=["0x00000400: 0x1DF50C000400000200000000080000010",
-                     "0x00000410: 0x1DF50C000400000200000000080000008",
-                     "0x00000420: 0xDF50C000400000200000000080000018",
-                     "0x00000430: 0x1DF50C000400000200000000080000020",
-                     "0x00000440: 0x1DF50C000400000200000000080000028",
-                     "0x00000450: 0x1DF50C000400000800000000080000040",
-                     "0x00000460: 0xDF50C000400002000000000080000100",
-                     "0x00000470: 0x1DF50C000402000100000000000000010",
-                    ])
+            substrs=["0x00000400: {tag = 1, address = 0x0000000080000010, attributes = {[Global Executive MutableLoad BranchSealedPair Unseal Seal StoreLocalCap StoreCap LoadCap Store Load], range = [0x80000020-0x80004000)}}",
+                     "0x00000410: {tag = 1, address = 0x0000000080000008, attributes = {[Global Executive MutableLoad BranchSealedPair Unseal Seal StoreLocalCap StoreCap LoadCap Store Load], range = [0x80000020-0x80004000)}}",
+                     "0x00000420: {tag = 0, address = 0x0000000080000018, attributes = {[Global Executive MutableLoad BranchSealedPair Unseal Seal StoreLocalCap StoreCap LoadCap Store Load], range = [0x80000020-0x80004000)}}",
+                     "0x00000430: {tag = 1, address = 0x0000000080000020, attributes = {[Global Executive MutableLoad BranchSealedPair Unseal Seal StoreLocalCap StoreCap LoadCap Store Load], range = [0x80000020-0x80004000)}}",
+                     "0x00000440: {tag = 1, address = 0x0000000080000028, attributes = {[Global Executive MutableLoad BranchSealedPair Unseal Seal StoreLocalCap StoreCap LoadCap Store Load], range = [0x80000020-0x80004000)}}",
+                     "0x00000450: {tag = 1, address = 0x0000000080000040, attributes = {[Global Executive MutableLoad BranchSealedPair Unseal Seal StoreLocalCap StoreCap LoadCap Store Load], range = [0x80000080-0x80004000)}}",
+                     "0x00000460: {tag = 0, address = 0x0000000080000100, attributes = {[Global Executive MutableLoad BranchSealedPair Unseal Seal StoreLocalCap StoreCap LoadCap Store Load], range = [0x80000200-0x80004000)}}",
+                     "0x00000470: {tag = 1, address = 0x0000000000000010, attributes = {[Global Executive MutableLoad BranchSealedPair Unseal Seal StoreLocalCap StoreCap LoadCap Store Load], range = [0x10-0x20)}}"])
 
         # Test that repeated tagged reads work correctly.
         self.expect(
@@ -381,7 +380,7 @@ class MorelloCapabilityOperationTestCase(CapabilityOperationTestBase):
                                                       cap_ptr_type)
         self.assertEqual(cap_ptr_value.GetTypeName(), "int * __capability")
         self.assertEqual(cap_ptr_value.GetValue(),
-                         "0x1DF50C000402000100000000000000010")
+                         "{tag = 1, address = 0x0000000000000010, attributes = {[Global Executive MutableLoad BranchSealedPair Unseal Seal StoreLocalCap StoreCap LoadCap Store Load], range = [0x10-0x20)}}")
         cap_ptr_value.SetFormat(lldb.eFormatHex)
         self.assertEqual(cap_ptr_value.GetValue(),
                          "0x01df50c000402000100000000000000010")
@@ -397,7 +396,7 @@ class MorelloCapabilityOperationTestCase(CapabilityOperationTestBase):
                                                       cap_ref_type)
         self.assertEqual(cap_ref_value.GetTypeName(), "int & __capability")
         self.assertEqual(cap_ref_value.GetValue(),
-                         "0x1DF50C000402000100000000000000010")
+                         "{tag = 1, address = 0x0000000000000010, attributes = {[Global Executive MutableLoad BranchSealedPair Unseal Seal StoreLocalCap StoreCap LoadCap Store Load], range = [0x10-0x20)}}")
         cap_ref_value.SetFormat(lldb.eFormatHex)
         self.assertEqual(cap_ref_value.GetValue(),
                          "0x01df50c000402000100000000000000010")
@@ -411,7 +410,7 @@ class MorelloCapabilityOperationTestCase(CapabilityOperationTestBase):
                                                      intcap_type)
         self.assertEqual(intcap_value.GetTypeName(), "__intcap_t")
         self.assertEqual(intcap_value.GetValue(),
-                         "0x1DF50C000402000100000000000000010")
+                         "{tag = 1, address = 0x0000000000000010, attributes = {[Global Executive MutableLoad BranchSealedPair Unseal Seal StoreLocalCap StoreCap LoadCap Store Load], range = [0x10-0x20)}}")
         intcap_value.SetFormat(lldb.eFormatHex)
         self.assertEqual(intcap_value.GetValue(),
                          "0x01df50c000402000100000000000000010")
@@ -422,7 +421,7 @@ class MorelloCapabilityOperationTestCase(CapabilityOperationTestBase):
                                                       uintcap_type)
         self.assertEqual(uintcap_value.GetTypeName(), "__uintcap_t")
         self.assertEqual(uintcap_value.GetValue(),
-                         "0x1DF50C000402000100000000000000010")
+                         "{tag = 1, address = 0x0000000000000010, attributes = {[Global Executive MutableLoad BranchSealedPair Unseal Seal StoreLocalCap StoreCap LoadCap Store Load], range = [0x10-0x20)}}")
         uintcap_value.SetFormat(lldb.eFormatHex)
         self.assertEqual(uintcap_value.GetValue(),
                          "0x01df50c000402000100000000000000010")
