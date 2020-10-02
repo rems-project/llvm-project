@@ -1846,7 +1846,7 @@ Status NativeProcessLinux::DoReadTaggedMemory(addr_t addr, void *buf,
     for (bytes_read = 0; bytes_read < size; bytes_read += 17) {
       memset(&data, 0, sizeof(data));
       Status error = NativeProcessLinux::PtraceWrapper(
-          PTRACE_PEEKCAPDATA, GetID(), reinterpret_cast<void *>(addr),
+          PTRACE_PEEKCAP, GetID(), reinterpret_cast<void *>(addr),
           static_cast<void *>(&data));
       if (error.Fail())
         return error;

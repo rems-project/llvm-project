@@ -24,6 +24,8 @@
 #include "Plugins/Process/POSIX/ProcessPOSIXLog.h"
 #include "Plugins/Process/Utility/RegisterInfoPOSIX_arm64.h"
 
+#include "Utility/ARM64_DWARF_Registers.h"
+//
 // System includes - They have to be included after framework includes because
 // they define some macros which collide with variable names in other modules
 #include <sys/socket.h>
@@ -927,6 +929,9 @@ Status NativeRegisterContextLinux_arm64::GetRegSetFromKernel(int regset,
                                            &regset, &ioVec, ioVec.iov_len);
 }
 
+constexpr __uint128_t MORELLO_PCC_EXECUTIVE_BIT_MASK =
+    ((__uint128_t)1) << arm64_dwarf::pcc_executive_bit;
+
 void NativeRegisterContextLinux_arm64::SetCapabilityRegisterValue(
     uint8_t *value, uint64_t tag, RegisterValue &reg_value) {
   // Set the register value. Capabilities are always stored in the little-endian
@@ -941,9 +946,9 @@ Status NativeRegisterContextLinux_arm64::ReadCapabilityRegister(
     uint32_t regnum, RegisterValue &reg_value) {
   assert(IsCapR(regnum));
 
-  struct user_cap_regs cap_state;
+  struct user_morello_state cap_state;
   Status error =
-      GetRegSetFromKernel(NT_ARM_CAPS, &cap_state, sizeof(cap_state));
+      GetRegSetFromKernel(NT_ARM_MORELLO, &cap_state, sizeof(cap_state));
   if (error.Fail())
     return error;
 
@@ -951,69 +956,70 @@ Status NativeRegisterContextLinux_arm64::ReadCapabilityRegister(
   uint8_t *value;
   uint64_t tag;
 
-  constexpr __uint128_t MORELLO_PCC_EXECUTIVE_BIT_MASK = ((__uint128_t)1)
-                                                         << 111;
-
   switch (regnum) {
-#define GET_CAP_DATA(lldb_name, kernel_name, bit)                              \
-  case cap_##lldb_name##_arm64:                                                \
-    value = reinterpret_cast<uint8_t *>(&cap_state.kernel_name);               \
-    tag = (cap_state.tag_map >> (bit)) & 1;                                    \
+#define GET_CAP_TAG(kernel_reg_name)                                           \
+  (cap_state.tag_map >> (MORELLO_PT_TAG_MAP_REG_BIT(kernel_reg_name))) & 1
+
+#define GET_CAP_DATA(lldb_reg_name, kernel_reg_name)                           \
+  case cap_##lldb_reg_name##_arm64:                                            \
+    value = reinterpret_cast<uint8_t *>(&cap_state.kernel_reg_name);           \
+    tag = GET_CAP_TAG(kernel_reg_name);                                        \
     break;
 
-    GET_CAP_DATA(c0, c0, USER_C0_TAG);
-    GET_CAP_DATA(c1, c1, USER_C1_TAG);
-    GET_CAP_DATA(c2, c2, USER_C2_TAG);
-    GET_CAP_DATA(c3, c3, USER_C3_TAG);
-    GET_CAP_DATA(c4, c4, USER_C4_TAG);
-    GET_CAP_DATA(c5, c5, USER_C5_TAG);
-    GET_CAP_DATA(c6, c6, USER_C6_TAG);
-    GET_CAP_DATA(c7, c7, USER_C7_TAG);
-    GET_CAP_DATA(c8, c8, USER_C8_TAG);
-    GET_CAP_DATA(c9, c9, USER_C9_TAG);
-    GET_CAP_DATA(c10, c10, USER_C10_TAG);
-    GET_CAP_DATA(c11, c11, USER_C11_TAG);
-    GET_CAP_DATA(c12, c12, USER_C12_TAG);
-    GET_CAP_DATA(c13, c13, USER_C13_TAG);
-    GET_CAP_DATA(c14, c14, USER_C14_TAG);
-    GET_CAP_DATA(c15, c15, USER_C15_TAG);
-    GET_CAP_DATA(c16, c16, USER_C16_TAG);
-    GET_CAP_DATA(c17, c17, USER_C17_TAG);
-    GET_CAP_DATA(c18, c18, USER_C18_TAG);
-    GET_CAP_DATA(c19, c19, USER_C19_TAG);
-    GET_CAP_DATA(c20, c20, USER_C20_TAG);
-    GET_CAP_DATA(c21, c21, USER_C21_TAG);
-    GET_CAP_DATA(c22, c22, USER_C22_TAG);
-    GET_CAP_DATA(c23, c23, USER_C23_TAG);
-    GET_CAP_DATA(c24, c24, USER_C24_TAG);
-    GET_CAP_DATA(c25, c25, USER_C25_TAG);
-    GET_CAP_DATA(c26, c26, USER_C26_TAG);
-    GET_CAP_DATA(c27, c27, USER_C27_TAG);
-    GET_CAP_DATA(c28, c28, USER_C28_TAG);
-    GET_CAP_DATA(cfp, c29, USER_C29_TAG);
-    GET_CAP_DATA(clr, c30, USER_C30_TAG);
-    GET_CAP_DATA(pcc, pcc, USER_PCC_TAG);
+    GET_CAP_DATA(c0, cregs[0]);
+    GET_CAP_DATA(c1, cregs[1]);
+    GET_CAP_DATA(c2, cregs[2]);
+    GET_CAP_DATA(c3, cregs[3]);
+    GET_CAP_DATA(c4, cregs[4]);
+    GET_CAP_DATA(c5, cregs[5]);
+    GET_CAP_DATA(c6, cregs[6]);
+    GET_CAP_DATA(c7, cregs[7]);
+    GET_CAP_DATA(c8, cregs[8]);
+    GET_CAP_DATA(c9, cregs[9]);
+    GET_CAP_DATA(c10, cregs[10]);
+    GET_CAP_DATA(c11, cregs[11]);
+    GET_CAP_DATA(c12, cregs[12]);
+    GET_CAP_DATA(c13, cregs[13]);
+    GET_CAP_DATA(c14, cregs[14]);
+    GET_CAP_DATA(c15, cregs[15]);
+    GET_CAP_DATA(c16, cregs[16]);
+    GET_CAP_DATA(c17, cregs[17]);
+    GET_CAP_DATA(c18, cregs[18]);
+    GET_CAP_DATA(c19, cregs[19]);
+    GET_CAP_DATA(c20, cregs[20]);
+    GET_CAP_DATA(c21, cregs[21]);
+    GET_CAP_DATA(c22, cregs[22]);
+    GET_CAP_DATA(c23, cregs[23]);
+    GET_CAP_DATA(c24, cregs[24]);
+    GET_CAP_DATA(c25, cregs[25]);
+    GET_CAP_DATA(c26, cregs[26]);
+    GET_CAP_DATA(c27, cregs[27]);
+    GET_CAP_DATA(c28, cregs[28]);
+    GET_CAP_DATA(cfp, cregs[29]);
+    GET_CAP_DATA(clr, cregs[30]);
+    GET_CAP_DATA(pcc, pcc);
 #undef GET_CAP_DATA
 
   // Handle registers that depend on the state.
   case cap_csp_arm64:
     if (cap_state.pcc & MORELLO_PCC_EXECUTIVE_BIT_MASK) {
-      value = reinterpret_cast<uint8_t *>(&cap_state.csp_el0);
-      tag = (cap_state.tag_map >> USER_CSP_EL0_TAG) & 1;
+      value = reinterpret_cast<uint8_t *>(&cap_state.csp);
+      tag = GET_CAP_TAG(csp);
     } else {
-      value = reinterpret_cast<uint8_t *>(&cap_state.rcsp_el0);
-      tag = (cap_state.tag_map >> USER_RCSP_EL0_TAG) & 1;
+      value = reinterpret_cast<uint8_t *>(&cap_state.rcsp);
+      tag = GET_CAP_TAG(rcsp);
     }
     break;
   case cap_ddc_arm64:
     if (cap_state.pcc & MORELLO_PCC_EXECUTIVE_BIT_MASK) {
-      value = reinterpret_cast<uint8_t *>(&cap_state.ddc_el0);
-      tag = (cap_state.tag_map >> USER_DDC_EL0_TAG) & 1;
+      value = reinterpret_cast<uint8_t *>(&cap_state.ddc);
+      tag = GET_CAP_TAG(ddc);
     } else {
-      value = reinterpret_cast<uint8_t *>(&cap_state.rddc_el0);
-      tag = (cap_state.tag_map >> USER_RDDC_EL0_TAG) & 1;
+      value = reinterpret_cast<uint8_t *>(&cap_state.rddc);
+      tag = GET_CAP_TAG(rddc);
     }
     break;
+#undef GET_CAP_TAG
 
   default:
     llvm_unreachable("Unhandled read of a capability register.");
@@ -1028,20 +1034,20 @@ NativeRegisterContextLinux_arm64::ReadStateRegister(uint32_t regnum,
                                                     RegisterValue &reg_value) {
   assert(IsStateR(regnum));
 
-  struct user_cap_regs cap_state;
+  struct user_morello_state cap_state;
   Status error =
-      GetRegSetFromKernel(NT_ARM_CAPS, &cap_state, sizeof(cap_state));
+      GetRegSetFromKernel(NT_ARM_MORELLO, &cap_state, sizeof(cap_state));
   if (error.Fail())
     return error;
 
   // Handle primordial stack pointer registers first, or fall through to reading
   // state-specific capability registers.
   if (regnum == state_sp_el0_arm64) {
-    reg_value.SetUInt64(*reinterpret_cast<uint64_t *>(&cap_state.csp_el0));
+    reg_value.SetUInt64(*reinterpret_cast<uint64_t *>(&cap_state.csp));
     return error;
   }
   if (regnum == state_rsp_el0_arm64) {
-    reg_value.SetUInt64(*reinterpret_cast<uint64_t *>(&cap_state.rcsp_el0));
+    reg_value.SetUInt64(*reinterpret_cast<uint64_t *>(&cap_state.rcsp));
     return error;
   }
 
@@ -1050,17 +1056,21 @@ NativeRegisterContextLinux_arm64::ReadStateRegister(uint32_t regnum,
   uint64_t tag;
 
   switch (regnum) {
-#define GET_CAP_DATA(name, bit)                                                \
-  case state_##name##_arm64:                                                   \
-    value = reinterpret_cast<uint8_t *>(&cap_state.name);                      \
-    tag = (cap_state.tag_map >> (bit)) & 1;                                    \
+#define GET_CAP_TAG(kernel_reg_name)                                           \
+  (cap_state.tag_map >> (MORELLO_PT_TAG_MAP_REG_BIT(kernel_reg_name))) & 1
+
+#define GET_CAP_DATA(lldb_reg_name, kernel_reg_name)                           \
+  case state_##lldb_reg_name##_arm64:                                          \
+    value = reinterpret_cast<uint8_t *>(&cap_state.kernel_reg_name);           \
+    tag = GET_CAP_TAG(kernel_reg_name);                                        \
     break;
 
-    GET_CAP_DATA(csp_el0, USER_CSP_EL0_TAG);
-    GET_CAP_DATA(rcsp_el0, USER_RCSP_EL0_TAG);
-    GET_CAP_DATA(ddc_el0, USER_DDC_EL0_TAG);
-    GET_CAP_DATA(rddc_el0, USER_RDDC_EL0_TAG);
+    GET_CAP_DATA(csp_el0, csp);
+    GET_CAP_DATA(rcsp_el0, rcsp);
+    GET_CAP_DATA(ddc_el0, ddc);
+    GET_CAP_DATA(rddc_el0, rddc);
 #undef GET_CAP_DATA
+#undef GET_CAP_TAG
 
   default:
     llvm_unreachable("Unhandled read of a state register.");
@@ -1087,13 +1097,24 @@ NativeRegisterContextLinux_arm64::ReadThreadRegister(uint32_t regnum,
   } break;
 
   case thread_ctpidr_el0_arm64: {
-    struct user_cap_regs cap_state;
-    error = GetRegSetFromKernel(NT_ARM_CAPS, &cap_state, sizeof(cap_state));
+    struct user_morello_state cap_state;
+    error = GetRegSetFromKernel(NT_ARM_MORELLO, &cap_state, sizeof(cap_state));
     if (error.Fail())
       return error;
 
-    uint8_t *value = reinterpret_cast<uint8_t *>(&cap_state.ctpidr_el0);
-    uint64_t tag = (cap_state.tag_map >> USER_CTPIDR_EL0_TAG) & 1;
+#define GET_CAP_TAG(kernel_reg_name)                                           \
+  (cap_state.tag_map >> (MORELLO_PT_TAG_MAP_REG_BIT(kernel_reg_name))) & 1
+
+    uint8_t *value;
+    uint64_t tag;
+    if (cap_state.pcc & MORELLO_PCC_EXECUTIVE_BIT_MASK) {
+      value = reinterpret_cast<uint8_t *>(&cap_state.ctpidr);
+      tag = GET_CAP_TAG(ctpidr);
+    } else {
+      value = reinterpret_cast<uint8_t *>(&cap_state.rctpidr);
+      tag = GET_CAP_TAG(rctpidr);
+    }
+#undef GET_CAP_TAG
     SetCapabilityRegisterValue(value, tag, reg_value);
   } break;
 
