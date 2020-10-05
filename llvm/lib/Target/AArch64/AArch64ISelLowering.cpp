@@ -1163,6 +1163,13 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
       setOperationAction(ISD::UMAX, MVT::v2i64, Custom);
       setOperationAction(ISD::UMIN, MVT::v1i64, Custom);
       setOperationAction(ISD::UMIN, MVT::v2i64, Custom);
+      setOperationAction(ISD::VECREDUCE_AND, MVT::v8i8, Custom);
+      setOperationAction(ISD::VECREDUCE_AND, MVT::v16i8, Custom);
+      setOperationAction(ISD::VECREDUCE_AND, MVT::v4i16, Custom);
+      setOperationAction(ISD::VECREDUCE_AND, MVT::v8i16, Custom);
+      setOperationAction(ISD::VECREDUCE_AND, MVT::v2i32, Custom);
+      setOperationAction(ISD::VECREDUCE_AND, MVT::v4i32, Custom);
+      setOperationAction(ISD::VECREDUCE_AND, MVT::v2i64, Custom);
       setOperationAction(ISD::VECREDUCE_SMAX, MVT::v2i64, Custom);
       setOperationAction(ISD::VECREDUCE_SMIN, MVT::v2i64, Custom);
       setOperationAction(ISD::VECREDUCE_UMAX, MVT::v2i64, Custom);
@@ -1304,6 +1311,7 @@ void AArch64TargetLowering::addTypeForFixedLengthSVE(MVT VT) {
   setOperationAction(ISD::UMAX, VT, Custom);
   setOperationAction(ISD::UMIN, VT, Custom);
   setOperationAction(ISD::VECREDUCE_ADD, VT, Custom);
+  setOperationAction(ISD::VECREDUCE_AND, VT, Custom);
   setOperationAction(ISD::VECREDUCE_FMAX, VT, Custom);
   setOperationAction(ISD::VECREDUCE_FMIN, VT, Custom);
   setOperationAction(ISD::VECREDUCE_SMAX, VT, Custom);
@@ -4341,6 +4349,7 @@ SDValue AArch64TargetLowering::LowerOperation(SDValue Op,
   case ISD::STORE:
     return LowerSTORE(Op, DAG);
   case ISD::VECREDUCE_ADD:
+  case ISD::VECREDUCE_AND:
   case ISD::VECREDUCE_SMAX:
   case ISD::VECREDUCE_SMIN:
   case ISD::VECREDUCE_UMAX:
@@ -10496,12 +10505,15 @@ SDValue AArch64TargetLowering::LowerVECREDUCE(SDValue Op,
 
   // Try to lower fixed length reductions to SVE.
   EVT SrcVT = Src.getValueType();
-  bool OverrideNEON = Op.getOpcode() != ISD::VECREDUCE_ADD &&
-                      SrcVT.getVectorElementType() == MVT::i64;
+  bool OverrideNEON = Op.getOpcode() == ISD::VECREDUCE_AND ||
+                      (Op.getOpcode() != ISD::VECREDUCE_ADD &&
+                       SrcVT.getVectorElementType() == MVT::i64);
   if (useSVEForFixedLengthVectorVT(SrcVT, OverrideNEON)) {
     switch (Op.getOpcode()) {
     case ISD::VECREDUCE_ADD:
       return LowerFixedLengthReductionToSVE(AArch64ISD::UADDV_PRED, Op, DAG);
+    case ISD::VECREDUCE_AND:
+      return LowerFixedLengthReductionToSVE(AArch64ISD::ANDV_PRED, Op, DAG);
     case ISD::VECREDUCE_SMAX:
       return LowerFixedLengthReductionToSVE(AArch64ISD::SMAXV_PRED, Op, DAG);
     case ISD::VECREDUCE_SMIN:
