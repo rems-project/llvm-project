@@ -12930,7 +12930,12 @@ static QualType chooseRecoveryType(OverloadCandidateSet &CS,
     for (const auto &C : CS)
       ConsiderCandidate(C);
 
-  return Result.getValueOr(QualType());
+  if (!Result)
+    return QualType();
+  auto Value = Result.getValue();
+  if (Value.isNull() || Value->isUndeducedType())
+    return QualType();
+  return Value;
 }
 
 /// FinishOverloadedCallExpr - given an OverloadCandidateSet, builds and returns
