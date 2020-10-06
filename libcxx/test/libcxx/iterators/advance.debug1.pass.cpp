@@ -6,12 +6,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-// Can't test the system lib because this test enables debug mode
 // UNSUPPORTED: c++03
 // UNSUPPORTED: windows
+<<<<<<< HEAD
 // UNSUPPORTED: with_system_cxx_lib=macosx
 // UNSUPPORTED: libcpp-has-newlib
+=======
+>>>>>>> a0cf56438526776a7cf9553397bc456820cf1dc4
 // ADDITIONAL_COMPILE_FLAGS: -D_LIBCPP_DEBUG=0
+// UNSUPPORTED: libcxx-no-debug-mode
 
 // <list>
 
