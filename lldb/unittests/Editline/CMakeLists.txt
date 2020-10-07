@@ -6,4 +6,5 @@ add_lldb_unittest(EditlineTests
     lldbUtility
   LINK_COMPONENTS
     RuntimeDyld
+    LLVMTestingSupport
   )
