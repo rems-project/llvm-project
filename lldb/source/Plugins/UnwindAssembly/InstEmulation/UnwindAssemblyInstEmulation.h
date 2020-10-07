@@ -23,10 +23,9 @@ public:
       lldb_private::AddressRange &func, lldb_private::Thread &thread,
       lldb_private::UnwindPlan &unwind_plan) override;
 
-  bool
-  GetNonCallSiteUnwindPlanFromAssembly(lldb_private::AddressRange &func,
-                                       uint8_t *opcode_data, size_t opcode_size,
-                                       lldb_private::UnwindPlan &unwind_plan);
+  bool GetNonCallSiteUnwindPlanFromAssembly(
+      lldb_private::AddressRange &func, const uint8_t *opcode_data,
+      size_t opcode_size, lldb_private::UnwindPlan &unwind_plan);
 
   bool
   AugmentUnwindPlanFromCallSite(lldb_private::AddressRange &func,
@@ -79,12 +78,14 @@ private:
   static size_t
   ReadMemory(lldb_private::EmulateInstruction *instruction, void *baton,
              const lldb_private::EmulateInstruction::Context &context,
-             lldb::addr_t addr, void *dst, size_t length);
+             lldb::addr_t addr, void *dst, size_t length,
+             lldb::MemoryContentType type);
 
   static size_t
   WriteMemory(lldb_private::EmulateInstruction *instruction, void *baton,
               const lldb_private::EmulateInstruction::Context &context,
-              lldb::addr_t addr, const void *dst, size_t length);
+              lldb::addr_t addr, const void *dst, size_t length,
+              lldb::MemoryContentType type);
 
   static bool ReadRegister(lldb_private::EmulateInstruction *instruction,
                            void *baton,
@@ -106,7 +107,8 @@ private:
 
   size_t WriteMemory(lldb_private::EmulateInstruction *instruction,
                      const lldb_private::EmulateInstruction::Context &context,
-                     lldb::addr_t addr, const void *dst, size_t length);
+                     lldb::addr_t addr, const void *dst, size_t length,
+                     lldb::MemoryContentType type);
 
   bool ReadRegister(lldb_private::EmulateInstruction *instruction,
                     const lldb_private::RegisterInfo *reg_info,

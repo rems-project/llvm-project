@@ -37,6 +37,68 @@ public:
   //  virtual void TearDown() override { }
 
 protected:
+  UnwindPlan GetUnwindPlan(llvm::StringRef triple, const uint8_t *data,
+                           size_t data_size) const {
+    ArchSpec arch(triple);
+    std::unique_ptr<UnwindAssemblyInstEmulation> engine(
+        static_cast<UnwindAssemblyInstEmulation *>(
+            UnwindAssemblyInstEmulation::CreateInstance(arch)));
+
+    UnwindPlan unwind_plan(eRegisterKindLLDB);
+    AddressRange sample_range = AddressRange(0x1000, data_size);
+
+    EXPECT_TRUE(engine->GetNonCallSiteUnwindPlanFromAssembly(
+        sample_range, data, data_size, unwind_plan));
+
+    return unwind_plan;
+  }
+
+  /// Helper class for checking expectations on a row from an unwind plan.
+  /// It wraps over an UnwindPlan::RowSP and provides some convenience methods
+  /// for checking the location of the CFA or of various registers.
+  struct RowExpectations {
+    UnwindPlan::RowSP row_sp;
+
+    RowExpectations(UnwindPlan unwind_plan, uint32_t function_offset) {
+      // : row_sp(unwind_plan.GetRowForFunctionOffset(function_offset)) {
+      row_sp = unwind_plan.GetRowForFunctionOffset(function_offset);
+      EXPECT_EQ(row_sp->GetOffset(), function_offset);
+    }
+
+    /// Expect the CFA for this row to be at \p reg + \p offset.
+    const RowExpectations &ShouldHaveCFA(uint32_t reg, int32_t offset) const {
+      EXPECT_EQ(row_sp->GetCFAValue().GetRegisterNumber(), reg);
+      EXPECT_TRUE(row_sp->GetCFAValue().IsRegisterPlusOffset());
+      EXPECT_EQ(row_sp->GetCFAValue().GetOffset(), offset);
+
+      return *this;
+    }
+
+    /// Expect register \p reg to be at CFA + \p offset.
+    const RowExpectations &ShouldHaveRegAtCFAPlusOffset(uint32_t reg,
+                                                        int32_t offset) const {
+      UnwindPlan::Row::RegisterLocation regloc;
+      EXPECT_TRUE(row_sp->GetRegisterInfo(reg, regloc));
+      EXPECT_TRUE(regloc.IsAtCFAPlusOffset());
+      EXPECT_EQ(regloc.GetOffset(), offset);
+
+      return *this;
+    }
+
+    /// Expect register \p reg to have the location <same>.
+    const RowExpectations &ShouldHaveRegSame(uint32_t reg) const {
+      UnwindPlan::Row::RegisterLocation regloc;
+      EXPECT_TRUE(row_sp->GetRegisterInfo(reg, regloc));
+      EXPECT_TRUE(regloc.IsSame());
+
+      return *this;
+    }
+  };
+
+  static RowExpectations UnwindPlanForFunctionOffset(UnwindPlan unwind_plan,
+                                                     uint32_t function_offset) {
+    return RowExpectations(unwind_plan, function_offset);
+  }
 };
 
 void TestArm64InstEmulation::SetUpTestCase() {
@@ -677,5 +739,219 @@ TEST_F(TestArm64InstEmulation, TestRegisterDoubleSpills) {
   }
   if (row_sp->GetRegisterInfo(gpr_x28_arm64, regloc)) {
     EXPECT_TRUE(regloc.IsSame());
+  }
+}
+
+TEST_F(TestArm64InstEmulation, TestSUB) {
+  uint8_t data[] = {
+      0xff, 0x13, 0xc0, 0x02, //  0: sub csp, csp, #4, lsl #12
+  };
+
+  UnwindPlan unwind_plan =
+      GetUnwindPlan("aarch64-none-elf", data, sizeof(data));
+
+  {
+    SCOPED_TRACE(" 0: CFA = sp + 0 =>");
+    UnwindPlanForFunctionOffset(unwind_plan, 0).ShouldHaveCFA(gpr_sp_arm64, 0);
+  }
+
+  {
+    SCOPED_TRACE(" 4: CFA = sp + 16384");
+    UnwindPlanForFunctionOffset(unwind_plan, 4)
+        .ShouldHaveCFA(gpr_sp_arm64, 16384);
+  }
+}
+
+TEST_F(TestArm64InstEmulation, TestADD) {
+  uint8_t data[] = {
+      0xff, 0x13, 0x40, 0x02, //  0: add csp, csp, #4, lsl #12
+  };
+
+  UnwindPlan unwind_plan =
+      GetUnwindPlan("aarch64-none-elf", data, sizeof(data));
+
+  {
+    SCOPED_TRACE(" 0: CFA = sp + 0 =>");
+    UnwindPlanForFunctionOffset(unwind_plan, 0).ShouldHaveCFA(gpr_sp_arm64, 0);
+  }
+
+  {
+    SCOPED_TRACE(" 4: CFA = sp - 16384");
+    UnwindPlanForFunctionOffset(unwind_plan, 4)
+        .ShouldHaveCFA(gpr_sp_arm64, -16384);
+  }
+}
+
+TEST_F(TestArm64InstEmulation, TestSTPLDP_Post) {
+  uint8_t data[] = {
+      0xfd, 0x7b, 0xbf, 0x22, //  0: stp c29, c30, [csp], #-32
+      0xfd, 0x7b, 0xc1, 0x22, //  4: ldp c29, c30, [csp], #32
+  };
+
+  UnwindPlan unwind_plan =
+      GetUnwindPlan("aarch64-none-elf", data, sizeof(data));
+
+  {
+    SCOPED_TRACE(" 0: CFA = sp + 0 =>");
+    UnwindPlanForFunctionOffset(unwind_plan, 0).ShouldHaveCFA(gpr_sp_arm64, 0);
+  }
+
+  {
+    SCOPED_TRACE(" 4: CFA = sp + 32 => (c)fp = [CFA], (c)lr = [CFA + 16]");
+    UnwindPlanForFunctionOffset(unwind_plan, 4)
+        .ShouldHaveCFA(gpr_sp_arm64, 32)
+        .ShouldHaveRegAtCFAPlusOffset(gpr_fp_arm64, 0)
+        .ShouldHaveRegAtCFAPlusOffset(gpr_lr_arm64, 16)
+        .ShouldHaveRegAtCFAPlusOffset(cap_cfp_arm64, 0)
+        .ShouldHaveRegAtCFAPlusOffset(cap_clr_arm64, 16);
+  }
+
+  {
+    SCOPED_TRACE(" 8: CFA = sp => (c)fp = [CFA], (c)lr = [CFA + 16]");
+    UnwindPlanForFunctionOffset(unwind_plan, 8)
+        .ShouldHaveCFA(gpr_sp_arm64, 0)
+        .ShouldHaveRegAtCFAPlusOffset(gpr_fp_arm64, 0)
+        .ShouldHaveRegAtCFAPlusOffset(gpr_lr_arm64, 16)
+        .ShouldHaveRegAtCFAPlusOffset(cap_cfp_arm64, 0)
+        .ShouldHaveRegAtCFAPlusOffset(cap_clr_arm64, 16);
+  }
+}
+
+TEST_F(TestArm64InstEmulation, TestSTPLDP_Pre) {
+  uint8_t data[] = {
+      0xfd, 0xfb, 0xbf, 0x62, //  0: stp c29, c30, [csp, #-16]!
+      0xfd, 0xfb, 0xc0, 0x62, //  4: ldp c29, c30, [csp, #16]!
+  };
+
+  UnwindPlan unwind_plan =
+      GetUnwindPlan("aarch64-none-elf", data, sizeof(data));
+
+  {
+    SCOPED_TRACE(" 0: CFA = sp + 0 =>");
+    UnwindPlanForFunctionOffset(unwind_plan, 0).ShouldHaveCFA(gpr_sp_arm64, 0);
+  }
+
+  {
+    SCOPED_TRACE(" 4: CFA = sp + 16 => (c)fp = [CFA-16], (c)lr = [CFA]");
+    RowExpectations(unwind_plan, 4)
+        .ShouldHaveCFA(gpr_sp_arm64, 16)
+        .ShouldHaveRegAtCFAPlusOffset(gpr_fp_arm64, -16)
+        .ShouldHaveRegAtCFAPlusOffset(gpr_lr_arm64, 0)
+        .ShouldHaveRegAtCFAPlusOffset(cap_cfp_arm64, -16)
+        .ShouldHaveRegAtCFAPlusOffset(cap_clr_arm64, 0);
+  }
+
+  {
+    SCOPED_TRACE(" 8: CFA = sp => (c)fp = [CFA-16], (c)lr = [CFA]");
+    RowExpectations(unwind_plan, 8)
+        .ShouldHaveCFA(gpr_sp_arm64, 0)
+        .ShouldHaveRegAtCFAPlusOffset(gpr_fp_arm64, -16)
+        .ShouldHaveRegAtCFAPlusOffset(gpr_lr_arm64, 0)
+        .ShouldHaveRegAtCFAPlusOffset(cap_cfp_arm64, -16)
+        .ShouldHaveRegAtCFAPlusOffset(cap_clr_arm64, 0);
+  }
+}
+
+TEST_F(TestArm64InstEmulation, TestSTP_Off) {
+  uint8_t data[] = {
+      0xfd, 0xfb, 0x80, 0x42, //  0: stp c29, c30, [csp, #16]
+  };
+
+  UnwindPlan unwind_plan =
+      GetUnwindPlan("aarch64-none-elf", data, sizeof(data));
+
+  {
+    SCOPED_TRACE(" 0: CFA = sp + 0 =>");
+    UnwindPlanForFunctionOffset(unwind_plan, 0).ShouldHaveCFA(gpr_sp_arm64, 0);
+  }
+
+  {
+    SCOPED_TRACE(" 4: CFA = sp => (c)fp = [CFA+16], (c)lr = [CFA+32]");
+    RowExpectations(unwind_plan, 4)
+        .ShouldHaveCFA(gpr_sp_arm64, 0)
+        .ShouldHaveRegAtCFAPlusOffset(gpr_fp_arm64, 16)
+        .ShouldHaveRegAtCFAPlusOffset(gpr_lr_arm64, 32)
+        .ShouldHaveRegAtCFAPlusOffset(cap_cfp_arm64, 16)
+        .ShouldHaveRegAtCFAPlusOffset(cap_clr_arm64, 32);
+  }
+}
+
+TEST_F(TestArm64InstEmulation, TestSimpleC64PurecapFunction) {
+  // Simple function assembled for C64 and the purecap ABI.
+  uint8_t data[] = {
+      0xff, 0xc3, 0x80, 0x02, //  0: sub csp, csp, #48
+      0xfd, 0xfb, 0x80, 0x42, //  4: stp c29, c30, [csp, #16]
+      0xfd, 0x43, 0x00, 0x02, //  8: add c29, csp, #16
+
+      0xfd, 0xfb, 0xc0, 0x42, // 12: ldp c29, c30, [csp, #16]
+      0xff, 0xc3, 0x00, 0x02, // 16: add csp, csp, #48
+      0xc0, 0x53, 0xc2, 0xc2, // 20: ret c30
+  };
+
+  UnwindPlan unwind_plan =
+      GetUnwindPlan("aarch64-none-elf", data, sizeof(data));
+
+  // UnwindPlan we expect:
+  //   0: CFA=sp +0 =>
+  //   4: CFA=sp+48 =>
+  //   8: CFA=sp+48 => fp=[CFA-32] lr=[CFA-16] cfp=[CFA-32] clr=[CFA-16]
+  //  12: CFA=fp+32 => fp=[CFA-32] lr=[CFA-16] cfp=[CFA-32] clr=[CFA-16]
+  //  16: CFA=sp+48 => fp= <same> lr= <same> cfp= <same> clr= <same>
+  //  20: CFA=sp +0 => fp= <same> lr= <same> cfp= <same> clr= <same>
+  UnwindPlan::RowSP row_sp;
+  UnwindPlan::Row::RegisterLocation regloc;
+
+  {
+    SCOPED_TRACE("   0: CFA=sp +0 =>");
+    UnwindPlanForFunctionOffset(unwind_plan, 0).ShouldHaveCFA(gpr_sp_arm64, 0);
+  }
+
+  {
+    SCOPED_TRACE("   4: CFA=sp+48 =>");
+    UnwindPlanForFunctionOffset(unwind_plan, 4).ShouldHaveCFA(gpr_sp_arm64, 48);
+  }
+
+  {
+    SCOPED_TRACE(
+        "   8: CFA=sp+48 => fp=[CFA-32] lr=[CFA-16] cfp=[CFA-32] clr=[CFA-16]");
+    UnwindPlanForFunctionOffset(unwind_plan, 8)
+        .ShouldHaveCFA(gpr_sp_arm64, 48)
+        .ShouldHaveRegAtCFAPlusOffset(gpr_fp_arm64, -32)
+        .ShouldHaveRegAtCFAPlusOffset(gpr_lr_arm64, -16)
+        .ShouldHaveRegAtCFAPlusOffset(cap_cfp_arm64, -32)
+        .ShouldHaveRegAtCFAPlusOffset(cap_clr_arm64, -16);
+  }
+
+  {
+    SCOPED_TRACE(
+        "  12: CFA=fp+32 => fp=[CFA-32] lr=[CFA-16] cfp=[CFA-32] clr=[CFA-16]");
+    UnwindPlanForFunctionOffset(unwind_plan, 12)
+        .ShouldHaveCFA(gpr_fp_arm64, 32)
+        .ShouldHaveRegAtCFAPlusOffset(gpr_fp_arm64, -32)
+        .ShouldHaveRegAtCFAPlusOffset(gpr_lr_arm64, -16)
+        .ShouldHaveRegAtCFAPlusOffset(cap_cfp_arm64, -32)
+        .ShouldHaveRegAtCFAPlusOffset(cap_clr_arm64, -16);
+  }
+
+  {
+    SCOPED_TRACE(
+        "  16: CFA=sp+48 => fp= <same> lr= <same> cfp= <same> clr= <same>");
+    UnwindPlanForFunctionOffset(unwind_plan, 16)
+        .ShouldHaveCFA(gpr_sp_arm64, 48)
+        .ShouldHaveRegSame(gpr_fp_arm64)
+        .ShouldHaveRegSame(gpr_lr_arm64)
+        .ShouldHaveRegSame(cap_cfp_arm64)
+        .ShouldHaveRegSame(cap_clr_arm64);
+  }
+
+  {
+    SCOPED_TRACE(
+        "  20: CFA=sp +0 => fp= <same> lr= <same> cfp= <same> clr= <same>");
+    UnwindPlanForFunctionOffset(unwind_plan, 20)
+        .ShouldHaveCFA(gpr_sp_arm64, 0)
+        .ShouldHaveRegSame(gpr_fp_arm64)
+        .ShouldHaveRegSame(gpr_lr_arm64)
+        .ShouldHaveRegSame(cap_cfp_arm64)
+        .ShouldHaveRegSame(cap_clr_arm64);
   }
 }

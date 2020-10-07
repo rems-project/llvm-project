@@ -13,6 +13,7 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Symbol/UnwindPlan.h"
+#include "lldb/Target/Memory.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/StackFrame.h"
@@ -155,10 +156,11 @@ bool EmulateInstruction::WriteRegisterUnsigned(const Context &context,
 }
 
 size_t EmulateInstruction::ReadMemory(const Context &context, lldb::addr_t addr,
-                                      void *dst, size_t dst_len) {
+                                      void *dst, size_t dst_len,
+                                      MemoryContentType type) {
   if (m_read_mem_callback != nullptr)
-    return m_read_mem_callback(this, m_baton, context, addr, dst, dst_len) ==
-           dst_len;
+    return m_read_mem_callback(this, m_baton, context, addr, dst, dst_len,
+                               type) == dst_len;
   return false;
 }
 
@@ -171,8 +173,8 @@ uint64_t EmulateInstruction::ReadMemoryUnsigned(const Context &context,
   bool success = false;
   if (byte_size <= 8) {
     uint8_t buf[sizeof(uint64_t)];
-    size_t bytes_read =
-        m_read_mem_callback(this, m_baton, context, addr, buf, byte_size);
+    size_t bytes_read = m_read_mem_callback(this, m_baton, context, addr, buf,
+                                            byte_size, eMemoryContentNormal);
     if (bytes_read == byte_size) {
       lldb::offset_t offset = 0;
       DataExtractor data(buf, byte_size, GetByteOrder(), GetAddressByteSize());
@@ -196,15 +198,17 @@ bool EmulateInstruction::WriteMemoryUnsigned(const Context &context,
   strm.PutMaxHex64(uval, uval_byte_size);
 
   size_t bytes_written = m_write_mem_callback(
-      this, m_baton, context, addr, strm.GetString().data(), uval_byte_size);
+      this, m_baton, context, addr, strm.GetString().data(), uval_byte_size,
+      eMemoryContentNormal);
   return (bytes_written == uval_byte_size);
 }
 
 bool EmulateInstruction::WriteMemory(const Context &context, lldb::addr_t addr,
-                                     const void *src, size_t src_len) {
+                                     const void *src, size_t src_len,
+                                     MemoryContentType type) {
   if (m_write_mem_callback != nullptr)
-    return m_write_mem_callback(this, m_baton, context, addr, src, src_len) ==
-           src_len;
+    return m_write_mem_callback(this, m_baton, context, addr, src, src_len,
+                                type) == src_len;
   return false;
 }
 
@@ -248,7 +252,8 @@ void EmulateInstruction::SetWriteRegCallback(
 size_t EmulateInstruction::ReadMemoryFrame(EmulateInstruction *instruction,
                                            void *baton, const Context &context,
                                            lldb::addr_t addr, void *dst,
-                                           size_t dst_len) {
+                                           size_t dst_len,
+                                           MemoryContentType type) {
   if (baton == nullptr || dst == nullptr || dst_len == 0)
     return 0;
 
@@ -257,7 +262,7 @@ size_t EmulateInstruction::ReadMemoryFrame(EmulateInstruction *instruction,
   ProcessSP process_sp(frame->CalculateProcess());
   if (process_sp) {
     Status error;
-    return process_sp->ReadMemory(addr, dst, dst_len, error);
+    return process_sp->ReadMemory(addr, dst, dst_len, error, type);
   }
   return 0;
 }
@@ -265,7 +270,8 @@ size_t EmulateInstruction::ReadMemoryFrame(EmulateInstruction *instruction,
 size_t EmulateInstruction::WriteMemoryFrame(EmulateInstruction *instruction,
                                             void *baton, const Context &context,
                                             lldb::addr_t addr, const void *src,
-                                            size_t src_len) {
+                                            size_t src_len,
+                                            MemoryContentType type) {
   if (baton == nullptr || src == nullptr || src_len == 0)
     return 0;
 
@@ -274,6 +280,7 @@ size_t EmulateInstruction::WriteMemoryFrame(EmulateInstruction *instruction,
   ProcessSP process_sp(frame->CalculateProcess());
   if (process_sp) {
     Status error;
+    // TODO Morello: Implement tagged (typed) write.
     return process_sp->WriteMemory(addr, src, src_len, error);
   }
 
@@ -302,30 +309,26 @@ bool EmulateInstruction::WriteRegisterFrame(EmulateInstruction *instruction,
   return frame->GetRegisterContext()->WriteRegister(reg_info, reg_value);
 }
 
-size_t EmulateInstruction::ReadMemoryDefault(EmulateInstruction *instruction,
-                                             void *baton,
-                                             const Context &context,
-                                             lldb::addr_t addr, void *dst,
-                                             size_t length) {
+size_t EmulateInstruction::ReadMemoryDefault(
+    EmulateInstruction *instruction, void *baton, const Context &context,
+    lldb::addr_t addr, void *dst, size_t length, MemoryContentType type) {
   StreamFile strm(stdout, false);
   strm.Printf("    Read from Memory (address = 0x%" PRIx64 ", length = %" PRIu64
-              ", context = ",
-              addr, (uint64_t)length);
+              ", type = %s, context = ",
+              addr, (uint64_t)length, GetMemoryContentTypeAsCString(type));
   context.Dump(strm, instruction);
   strm.EOL();
   *((uint64_t *)dst) = 0xdeadbeef;
   return length;
 }
 
-size_t EmulateInstruction::WriteMemoryDefault(EmulateInstruction *instruction,
-                                              void *baton,
-                                              const Context &context,
-                                              lldb::addr_t addr,
-                                              const void *dst, size_t length) {
+size_t EmulateInstruction::WriteMemoryDefault(
+    EmulateInstruction *instruction, void *baton, const Context &context,
+    lldb::addr_t addr, const void *dst, size_t length, MemoryContentType type) {
   StreamFile strm(stdout, false);
   strm.Printf("    Write to Memory (address = 0x%" PRIx64 ", length = %" PRIu64
-              ", context = ",
-              addr, (uint64_t)length);
+              ", type = %s, context = ",
+              addr, (uint64_t)length, GetMemoryContentTypeAsCString(type));
   context.Dump(strm, instruction);
   strm.EOL();
   return length;

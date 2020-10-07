@@ -143,8 +143,8 @@ uint32_t EmulationStateARM::ReadFromPseudoAddress(lldb::addr_t p_address,
 size_t EmulationStateARM::ReadPseudoMemory(
     EmulateInstruction *instruction, void *baton,
     const EmulateInstruction::Context &context, lldb::addr_t addr, void *dst,
-    size_t length) {
-  if (!baton)
+    size_t length, MemoryContentType type) {
+  if (!baton || type != eMemoryContentNormal)
     return 0;
 
   bool success = true;
@@ -184,8 +184,8 @@ size_t EmulationStateARM::ReadPseudoMemory(
 size_t EmulationStateARM::WritePseudoMemory(
     EmulateInstruction *instruction, void *baton,
     const EmulateInstruction::Context &context, lldb::addr_t addr,
-    const void *dst, size_t length) {
-  if (!baton)
+    const void *dst, size_t length, MemoryContentType type) {
+  if (!baton || type != eMemoryContentNormal)
     return 0;
 
   EmulationStateARM *pseudo_state = (EmulationStateARM *)baton;

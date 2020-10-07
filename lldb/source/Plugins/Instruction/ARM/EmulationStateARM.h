@@ -41,12 +41,14 @@ public:
   static size_t
   ReadPseudoMemory(lldb_private::EmulateInstruction *instruction, void *baton,
                    const lldb_private::EmulateInstruction::Context &context,
-                   lldb::addr_t addr, void *dst, size_t length);
+                   lldb::addr_t addr, void *dst, size_t length,
+                   lldb::MemoryContentType type);
 
   static size_t
   WritePseudoMemory(lldb_private::EmulateInstruction *instruction, void *baton,
                     const lldb_private::EmulateInstruction::Context &context,
-                    lldb::addr_t addr, const void *dst, size_t length);
+                    lldb::addr_t addr, const void *dst, size_t length,
+                    lldb::MemoryContentType type);
 
   static bool ReadPseudoRegister(lldb_private::EmulateInstruction *instruction,
                                  void *baton,

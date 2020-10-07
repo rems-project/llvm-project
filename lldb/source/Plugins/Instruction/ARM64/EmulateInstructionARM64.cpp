@@ -26,6 +26,9 @@
 #define GPR_OFFSET_NAME(reg) 0
 #define FPU_OFFSET(idx) ((idx)*16)
 #define FPU_OFFSET_NAME(reg) 0
+#define CAP_OFFSET(idx) ((idx)*17)
+#define STATE_OFFSET_NAME(reg) 0
+#define THREAD_OFFSET_NAME(reg) 0
 #define EXC_OFFSET_NAME(reg) 0
 #define DBG_OFFSET_NAME(reg) 0
 #define DBG_OFFSET_NAME(reg) 0
@@ -36,6 +39,7 @@
       nullptr, nullptr, nullptr, 0
 
 #define DECLARE_REGISTER_INFOS_ARM64_STRUCT
+#define DECLARE_CAPABILITY_REGISTER_INFOS
 
 #include "Plugins/Process/Utility/RegisterInfos_arm64.h"
 
@@ -69,6 +73,12 @@ static bool LLDBTableGetRegisterInfo(uint32_t reg_num, RegisterInfo &reg_info) {
 #define bit bool
 #define boolean bool
 #define integer int64_t
+
+static uint32_t GetCRegNum(integer encoded) {
+  if (encoded >= 0 && encoded <= 30)
+    return cap_c0_arm64 + encoded;
+  return LLDB_INVALID_REGNUM;
+}
 
 static inline bool IsZero(uint64_t x) { return x == 0; }
 
@@ -382,6 +392,37 @@ EmulateInstructionARM64::GetOpcodeForInstruction(const uint32_t opcode) {
       {0x7f000000, 0x37000000, No_VFP, &EmulateInstructionARM64::EmulateTBZ,
        "TBNZ <R><t>, #<imm>, <label>"},
 
+      // Instructions operating on capabilities.
+      {0xff000000, 0x02000000, No_VFP,
+       &EmulateInstructionARM64::EmulateCapabilityADDSUBImm,
+       "SUB  <Cd|CSP>, <Cn|CSP>, #<imm> {, <shift>}"},
+      {0xff000000, 0x02000000, No_VFP,
+       &EmulateInstructionARM64::EmulateCapabilityADDSUBImm,
+       "ADD  <Cd|SP>, <Cn|CSP>, #<imm> {, <shift>}"},
+
+      // The following STP and LDP instructions use <Cn|CSP> instead of <Xn|SP>
+      // as the base register in C64.
+      {0xffc00000, 0x42800000, No_VFP,
+       &EmulateInstructionARM64::EmulateCapabilityLDPSTP<AddrMode_OFF>,
+       "STP  <Ct>, <Ct2>, [<Xn|SP>{, #<imm>}]"},
+      {0xffc00000, 0x62800000, No_VFP,
+       &EmulateInstructionARM64::EmulateCapabilityLDPSTP<AddrMode_PRE>,
+       "STP  <Ct>, <Ct2>, [<Xn|SP>, #<imm>]!"},
+      {0xffc00000, 0x22800000, No_VFP,
+       &EmulateInstructionARM64::EmulateCapabilityLDPSTP<AddrMode_POST>,
+       "STP  <Ct>, <Ct2>, [<Xn|SP>], #<imm>"},
+
+      {0xffc00000, 0x42c00000, No_VFP,
+       &EmulateInstructionARM64::EmulateCapabilityLDPSTP<AddrMode_OFF>,
+       "LDP  <Ct>, <Ct2>, [<Xn|SP>{, #<imm>}]"},
+      {0xffc00000, 0x62c00000, No_VFP,
+       &EmulateInstructionARM64::EmulateCapabilityLDPSTP<AddrMode_PRE>,
+       "LDP  <Ct>, <Ct2>, [<Xn|SP>, #<imm>]!"},
+      {0xffc00000, 0x22c00000, No_VFP,
+       &EmulateInstructionARM64::EmulateCapabilityLDPSTP<AddrMode_POST>,
+       "LDP  <Ct>, <Ct2>, [<Xn|SP>], #<imm>"},
+
+      // FIXME (Morello): Add support for more instructions.
   };
   static const size_t k_num_arm_opcodes = llvm::array_lengthof(g_opcodes);
 
@@ -1191,6 +1232,248 @@ bool EmulateInstructionARM64::EmulateTBZ(const uint32_t opcode) {
     context.type = EmulateInstruction::eContextRelativeBranchImmediate;
     context.SetImmediateSigned(offset);
     if (!BranchTo(context, 64, pc + offset))
+      return false;
+  }
+  return true;
+}
+
+bool EmulateInstructionARM64::EmulateCapabilityADDSUBImm(
+    const uint32_t opcode) {
+  // TODO Morello: Add support for actual capability read/writes.
+
+  uint32_t op = Bit32(opcode, 23);
+  uint32_t sh = Bit32(opcode, 22);
+  uint32_t imm12 = Bits32(opcode, 21, 10);
+  uint32_t Cn = Bits32(opcode, 9, 5);
+  uint32_t Cd = Bits32(opcode, 4, 0);
+
+  integer d = UInt(Cd);
+  integer n = UInt(Cn);
+  integer offset = UInt(imm12);
+  integer shift = UInt(sh);
+  boolean sub_op = op == 1;
+
+  bool success = false;
+  uint64_t result;
+  uint64_t operand1 =
+      ReadRegisterUnsigned(eRegisterKindLLDB, gpr_x0_arm64 + n, 0, &success);
+  if (!success)
+    return false;
+  uint64_t operand2 = offset << (12 * shift);
+  if (sub_op)
+    operand2 = -operand2;
+
+  result = operand1 + operand2;
+
+  RegisterInfo reg_info_Rn;
+  if (!GetRegisterInfo(eRegisterKindLLDB, n, reg_info_Rn))
+    return false;
+
+  Context context;
+  context.SetRegisterPlusOffset(reg_info_Rn, operand2);
+
+  if ((n == gpr_sp_arm64 || n == GetFramePointerRegisterNumber()) &&
+      d == gpr_sp_arm64)
+    context.type = eContextAdjustStackPointer;
+  else if (d == GetFramePointerRegisterNumber() && n == gpr_sp_arm64)
+    context.type = eContextSetFramePointer;
+  else
+    context.type = eContextImmediate;
+
+  if (!WriteRegisterUnsigned(context, eRegisterKindLLDB, gpr_x0_arm64 + d,
+                             result))
+    return false;
+
+  return true;
+}
+
+template <EmulateInstructionARM64::AddrMode a_mode>
+bool EmulateInstructionARM64::EmulateCapabilityLDPSTP(const uint32_t opcode) {
+  uint32_t L = Bit32(opcode, 22);
+  uint32_t imm7 = Bits32(opcode, 21, 15);
+  uint32_t Ct2 = Bits32(opcode, 14, 10);
+  uint32_t Rn = Bits32(opcode, 9, 5);
+  uint32_t Ct = Bits32(opcode, 4, 0);
+
+  integer t = UInt(Ct);
+  integer t2 = UInt(Ct2);
+  integer n = UInt(Rn);
+  uint64_t offset = llvm::SignExtend64<11>(imm7 << 4);
+
+  MemOp memop = L == 1 ? MemOp_LOAD : MemOp_STORE;
+  boolean wback = a_mode != AddrMode_OFF;
+
+  RegisterInfo reg_info_base;
+  RegisterInfo reg_info_Rt;
+  RegisterInfo reg_info_Rt2;
+  RegisterInfo reg_info_Ct;
+  RegisterInfo reg_info_Ct2;
+  if (!GetRegisterInfo(eRegisterKindLLDB, gpr_x0_arm64 + n, reg_info_base))
+    return false;
+  if (!GetRegisterInfo(eRegisterKindLLDB, gpr_x0_arm64 + t, reg_info_Rt))
+    return false;
+  if (!GetRegisterInfo(eRegisterKindLLDB, gpr_x0_arm64 + t2, reg_info_Rt2))
+    return false;
+  if (!GetRegisterInfo(eRegisterKindLLDB, GetCRegNum(t), reg_info_Ct))
+    return false;
+  if (!GetRegisterInfo(eRegisterKindLLDB, GetCRegNum(t2), reg_info_Ct2))
+    return false;
+
+  uint64_t address;
+  bool success = false;
+  if (n == 31)
+    address =
+        ReadRegisterUnsigned(eRegisterKindLLDB, gpr_sp_arm64, 0, &success);
+  else
+    address =
+        ReadRegisterUnsigned(eRegisterKindLLDB, gpr_x0_arm64 + n, 0, &success);
+  if (!success)
+    return false;
+
+  uint64_t wb_address = address + offset;
+  if (a_mode != AddrMode_POST)
+    address = wb_address;
+
+  Context context_Rt;
+  Context context_Rt2;
+  Context context_Ct;
+  Context context_Ct2;
+
+  RegisterValue data_Rt;
+  RegisterValue data_Rt2;
+  RegisterValue data_Ct;
+  RegisterValue data_Ct2;
+
+  uint8_t buffer[RegisterValue::kMaxRegisterByteSize];
+  Status error;
+
+  switch (memop) {
+  case MemOp_STORE:
+    if (n == 31 || n == GetFramePointerRegisterNumber()) {
+      context_Rt.type = eContextPushRegisterOnStack;
+      context_Rt2.type = eContextPushRegisterOnStack;
+      context_Ct.type = eContextPushRegisterOnStack;
+      context_Ct2.type = eContextPushRegisterOnStack;
+    } else {
+      context_Rt.type = eContextRegisterStore;
+      context_Rt2.type = eContextRegisterStore;
+      context_Ct.type = eContextRegisterStore;
+      context_Ct2.type = eContextRegisterStore;
+    }
+    context_Rt.SetRegisterToRegisterPlusOffset(reg_info_Rt, reg_info_base, 0);
+    context_Rt2.SetRegisterToRegisterPlusOffset(reg_info_Rt2, reg_info_base,
+                                                16);
+    context_Ct.SetRegisterToRegisterPlusOffset(reg_info_Ct, reg_info_base, 0);
+    context_Ct2.SetRegisterToRegisterPlusOffset(reg_info_Ct2, reg_info_base,
+                                                16);
+
+    // Aliased 64-bit registers.
+    if (!ReadRegister(&reg_info_Rt, data_Rt))
+      return false;
+    if (data_Rt.GetAsMemoryData(&reg_info_Rt, buffer, reg_info_Rt.byte_size,
+                                eByteOrderLittle, error) == 0)
+      return false;
+    if (!WriteMemory(context_Rt, address + 0, buffer, reg_info_Rt.byte_size))
+      return false;
+
+    if (!ReadRegister(&reg_info_Rt2, data_Rt2))
+      return false;
+    if (data_Rt2.GetAsMemoryData(&reg_info_Rt2, buffer, reg_info_Rt2.byte_size,
+                                 eByteOrderLittle, error) == 0)
+      return false;
+    if (!WriteMemory(context_Rt2, address + 16, buffer, reg_info_Rt2.byte_size))
+      return false;
+
+    // Complete capability registers.
+    if (!ReadRegister(&reg_info_Ct, data_Ct))
+      return false;
+    if (data_Ct.GetAsMemoryData(&reg_info_Ct, buffer, reg_info_Ct.byte_size,
+                                eByteOrderLittle, error) == 0)
+      return false;
+    if (!WriteMemory(context_Ct, address + 0, buffer, reg_info_Ct.byte_size,
+                     eMemoryContentCap128))
+      return false;
+
+    if (!ReadRegister(&reg_info_Ct2, data_Ct2))
+      return false;
+    if (data_Ct2.GetAsMemoryData(&reg_info_Ct2, buffer, reg_info_Ct2.byte_size,
+                                 eByteOrderLittle, error) == 0)
+      return false;
+    if (!WriteMemory(context_Ct2, address + 16, buffer, reg_info_Ct2.byte_size,
+                     eMemoryContentCap128))
+      return false;
+    break;
+
+  case MemOp_LOAD:
+    if (n == 31 || n == GetFramePointerRegisterNumber()) {
+      context_Rt.type = eContextPopRegisterOffStack;
+      context_Rt2.type = eContextPopRegisterOffStack;
+      context_Ct.type = eContextPopRegisterOffStack;
+      context_Ct2.type = eContextPopRegisterOffStack;
+    } else {
+      context_Rt.type = eContextRegisterLoad;
+      context_Rt2.type = eContextRegisterLoad;
+      context_Ct.type = eContextRegisterLoad;
+      context_Ct2.type = eContextRegisterLoad;
+    }
+    context_Rt.SetAddress(address);
+    context_Rt2.SetAddress(address + 16);
+    context_Ct.SetAddress(address);
+    context_Ct2.SetAddress(address + 16);
+
+    // Aliased 64-bit registers.
+    if (!ReadMemory(context_Rt, address, buffer, reg_info_Rt.byte_size))
+      return false;
+    if (data_Rt.SetFromMemoryData(&reg_info_Rt, buffer, reg_info_Rt.byte_size,
+                                  eMemoryContentNormal, eByteOrderLittle,
+                                  error) == 0)
+      return false;
+    if (!WriteRegister(context_Rt, &reg_info_Rt, data_Rt))
+      return false;
+
+    if (!ReadMemory(context_Rt2, address + 16, buffer, reg_info_Rt2.byte_size))
+      return false;
+    if (data_Rt2.SetFromMemoryData(&reg_info_Rt2, buffer,
+                                   reg_info_Rt2.byte_size, eMemoryContentNormal,
+                                   eByteOrderLittle, error) == 0)
+      return false;
+    if (!WriteRegister(context_Rt2, &reg_info_Rt2, data_Rt2))
+      return false;
+
+    // Complete capability registers.
+    if (!ReadMemory(context_Ct, address, buffer, reg_info_Ct.byte_size,
+                    eMemoryContentCap128))
+      return false;
+    if (data_Ct.SetFromMemoryData(&reg_info_Ct, buffer, reg_info_Ct.byte_size,
+                                  eMemoryContentCap128, eByteOrderLittle,
+                                  error) == 0)
+      return false;
+    if (!WriteRegister(context_Ct, &reg_info_Ct, data_Ct))
+      return false;
+
+    if (!ReadMemory(context_Ct2, address + 16, buffer, reg_info_Ct2.byte_size,
+                    eMemoryContentCap128))
+      return false;
+    if (data_Ct2.SetFromMemoryData(&reg_info_Ct2, buffer,
+                                   reg_info_Ct2.byte_size, eMemoryContentCap128,
+                                   eByteOrderLittle, error) == 0)
+      return false;
+    if (!WriteRegister(context_Ct2, &reg_info_Ct2, data_Ct2))
+      return false;
+    break;
+
+  default:
+    llvm_unreachable("Unexpected MemOp value.");
+  }
+
+  if (wback) {
+    Context context;
+    context.SetImmediateSigned(offset);
+    if (n == 31)
+      context.type = eContextAdjustStackPointer;
+    else
+      context.type = eContextAdjustBaseRegister;
+    if (!WriteRegisterUnsigned(context, &reg_info_base, wb_address))
       return false;
   }
   return true;

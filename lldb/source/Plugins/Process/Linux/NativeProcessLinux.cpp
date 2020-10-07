@@ -877,7 +877,9 @@ struct EmulatorBaton {
 
 static size_t ReadMemoryCallback(EmulateInstruction *instruction, void *baton,
                                  const EmulateInstruction::Context &context,
-                                 lldb::addr_t addr, void *dst, size_t length) {
+                                 lldb::addr_t addr, void *dst, size_t length,
+                                 MemoryContentType type) {
+  // TODO Morello: Handle the type.
   EmulatorBaton *emulator_baton = static_cast<EmulatorBaton *>(baton);
 
   size_t bytes_read;
@@ -925,7 +927,7 @@ static bool WriteRegisterCallback(EmulateInstruction *instruction, void *baton,
 static size_t WriteMemoryCallback(EmulateInstruction *instruction, void *baton,
                                   const EmulateInstruction::Context &context,
                                   lldb::addr_t addr, const void *dst,
-                                  size_t length) {
+                                  size_t length, MemoryContentType type) {
   return length;
 }
 

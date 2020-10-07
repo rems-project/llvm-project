@@ -326,12 +326,14 @@ public:
   typedef size_t (*ReadMemoryCallback)(EmulateInstruction *instruction,
                                        void *baton, const Context &context,
                                        lldb::addr_t addr, void *dst,
-                                       size_t length);
+                                       size_t length,
+                                       lldb::MemoryContentType type);
 
   typedef size_t (*WriteMemoryCallback)(EmulateInstruction *instruction,
                                         void *baton, const Context &context,
                                         lldb::addr_t addr, const void *dst,
-                                        size_t length);
+                                        size_t length,
+                                        lldb::MemoryContentType type);
 
   typedef bool (*ReadRegisterCallback)(EmulateInstruction *instruction,
                                        void *baton,
@@ -409,14 +411,16 @@ public:
                              uint64_t reg_value);
 
   size_t ReadMemory(const Context &context, lldb::addr_t addr, void *dst,
-                    size_t dst_len);
+                    size_t dst_len,
+                    lldb::MemoryContentType type = lldb::eMemoryContentNormal);
 
   uint64_t ReadMemoryUnsigned(const Context &context, lldb::addr_t addr,
                               size_t byte_size, uint64_t fail_value,
                               bool *success_ptr);
 
   bool WriteMemory(const Context &context, lldb::addr_t addr, const void *src,
-                   size_t src_len);
+                   size_t src_len,
+                   lldb::MemoryContentType type = lldb::eMemoryContentNormal);
 
   bool WriteMemoryUnsigned(const Context &context, lldb::addr_t addr,
                            uint64_t uval, size_t uval_byte_size);
@@ -433,11 +437,13 @@ public:
 
   static size_t ReadMemoryFrame(EmulateInstruction *instruction, void *baton,
                                 const Context &context, lldb::addr_t addr,
-                                void *dst, size_t length);
+                                void *dst, size_t length,
+                                lldb::MemoryContentType type);
 
   static size_t WriteMemoryFrame(EmulateInstruction *instruction, void *baton,
                                  const Context &context, lldb::addr_t addr,
-                                 const void *dst, size_t length);
+                                 const void *dst, size_t length,
+                                 lldb::MemoryContentType type);
 
   static bool ReadRegisterFrame(EmulateInstruction *instruction, void *baton,
                                 const RegisterInfo *reg_info,
@@ -450,11 +456,13 @@ public:
 
   static size_t ReadMemoryDefault(EmulateInstruction *instruction, void *baton,
                                   const Context &context, lldb::addr_t addr,
-                                  void *dst, size_t length);
+                                  void *dst, size_t length,
+                                  lldb::MemoryContentType type);
 
   static size_t WriteMemoryDefault(EmulateInstruction *instruction, void *baton,
                                    const Context &context, lldb::addr_t addr,
-                                   const void *dst, size_t length);
+                                   const void *dst, size_t length,
+                                   lldb::MemoryContentType type);
 
   static bool ReadRegisterDefault(EmulateInstruction *instruction, void *baton,
                                   const RegisterInfo *reg_info,

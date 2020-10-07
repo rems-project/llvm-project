@@ -15,6 +15,7 @@
 #include "lldb/Core/FormatEntity.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/Memory.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
@@ -48,7 +49,7 @@ bool UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly(
 }
 
 bool UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly(
-    AddressRange &range, uint8_t *opcode_data, size_t opcode_size,
+    AddressRange &range, const uint8_t *opcode_data, size_t opcode_size,
     UnwindPlan &unwind_plan) {
   if (opcode_data == nullptr || opcode_size == 0)
     return false;
@@ -360,15 +361,15 @@ bool UnwindAssemblyInstEmulation::GetRegisterValue(const RegisterInfo &reg_info,
 size_t UnwindAssemblyInstEmulation::ReadMemory(
     EmulateInstruction *instruction, void *baton,
     const EmulateInstruction::Context &context, lldb::addr_t addr, void *dst,
-    size_t dst_len) {
+    size_t dst_len, MemoryContentType type) {
   Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_UNWIND));
 
   if (log && log->GetVerbose()) {
     StreamString strm;
     strm.Printf(
         "UnwindAssemblyInstEmulation::ReadMemory    (addr = 0x%16.16" PRIx64
-        ", dst = %p, dst_len = %" PRIu64 ", context = ",
-        addr, dst, (uint64_t)dst_len);
+        ", dst = %p, dst_len = %" PRIu64 ", type = %s, context = ",
+        addr, dst, (uint64_t)dst_len, GetMemoryContentTypeAsCString(type));
     context.Dump(strm, instruction);
     log->PutString(strm.GetString());
   }
@@ -379,16 +380,17 @@ size_t UnwindAssemblyInstEmulation::ReadMemory(
 size_t UnwindAssemblyInstEmulation::WriteMemory(
     EmulateInstruction *instruction, void *baton,
     const EmulateInstruction::Context &context, lldb::addr_t addr,
-    const void *dst, size_t dst_len) {
+    const void *dst, size_t dst_len, MemoryContentType type) {
   if (baton && dst && dst_len)
     return ((UnwindAssemblyInstEmulation *)baton)
-        ->WriteMemory(instruction, context, addr, dst, dst_len);
+        ->WriteMemory(instruction, context, addr, dst, dst_len, type);
   return 0;
 }
 
 size_t UnwindAssemblyInstEmulation::WriteMemory(
     EmulateInstruction *instruction, const EmulateInstruction::Context &context,
-    lldb::addr_t addr, const void *dst, size_t dst_len) {
+    lldb::addr_t addr, const void *dst, size_t dst_len,
+    MemoryContentType type) {
   DataExtractor data(dst, dst_len,
                      instruction->GetArchitecture().GetByteOrder(),
                      instruction->GetArchitecture().GetAddressByteSize());
@@ -401,7 +403,7 @@ size_t UnwindAssemblyInstEmulation::WriteMemory(
     strm.PutCString("UnwindAssemblyInstEmulation::WriteMemory   (");
     DumpDataExtractor(data, &strm, 0, eFormatBytes, 1, dst_len, UINT32_MAX,
                       addr, 0, 0);
-    strm.PutCString(", context = ");
+    strm.Printf(", type = %s, context = ", GetMemoryContentTypeAsCString(type));
     context.Dump(strm, instruction);
     log->PutString(strm.GetString());
   }
@@ -595,6 +597,25 @@ bool UnwindAssemblyInstEmulation::WriteRegister(
           m_curr_row->SetRegisterLocationToSame(reg_num,
                                                 false /*must_replace*/);
           m_curr_row_modified = true;
+
+          // If FP is being restored and CFA is currently using this register
+          // then work out a new CFA value that uses the initial CFA register.
+          if (generic_regnum == LLDB_REGNUM_GENERIC_FP && m_fp_is_cfa) {
+            uint32_t cfa_reg_num = m_unwind_plan_ptr->GetInitialCFARegister();
+            if (cfa_reg_num != LLDB_INVALID_REGNUM) {
+              RegisterInfo reg_info;
+              m_inst_emulator_up->GetRegisterInfo(
+                  m_unwind_plan_ptr->GetRegisterKind(), cfa_reg_num, reg_info);
+
+              RegisterValue reg_value;
+              if (GetRegisterValue(reg_info, reg_value)) {
+                m_fp_is_cfa = false;
+                m_cfa_reg_info = reg_info;
+                m_curr_row->GetCFAValue().SetIsRegisterPlusOffset(
+                    cfa_reg_num, m_initial_sp - reg_value.GetAsUInt64());
+              }
+            }
+          }
         }
         break;
       case EmulateInstruction::eInfoTypeISA:
