@@ -39,6 +39,9 @@ public:
   /// Callback used to implement the .inst directive.
   virtual void emitInst(uint32_t Inst, const MCSubtargetInfo &STI);
 
+  /// Callback used to implement the .variant_pcs directive.
+  virtual void emitDirectiveVariantPCS(MCSymbol *Symbol) {};
+
   virtual void EmitARM64WinCFIAllocStack(unsigned Size) {}
   virtual void EmitARM64WinCFISaveR19R20X(int Offset) {}
   virtual void EmitARM64WinCFISaveFPLR(int Offset) {}
@@ -77,6 +80,7 @@ private:
 
   void emitInst(uint32_t Inst, const MCSubtargetInfo &STI) override;
   void emitLabel(MCSymbol *Symbol) override;
+  void emitDirectiveVariantPCS(MCSymbol *Symbol) override;
 
 public:
   AArch64TargetELFStreamer(MCStreamer &S, const MCSubtargetInfo &STI);

@@ -52,6 +52,10 @@ class AArch64TargetAsmStreamer : public AArch64TargetStreamer {
 
   void emitInst(uint32_t Inst, const MCSubtargetInfo &STI) override;
 
+  void emitDirectiveVariantPCS(MCSymbol *Symbol) override {
+    OS << "\t.variant_pcs " << Symbol->getName() << "\n";
+  }
+
   void EmitARM64WinCFIAllocStack(unsigned Size) override {
     OS << "\t.seh_stackalloc " << Size << "\n";
   }
@@ -349,6 +353,10 @@ void AArch64TargetELFStreamer::emitLabel(MCSymbol *Symbol) {
   unsigned Type = cast<MCSymbolELF>(Symbol)->getType();
   if (Type == ELF::STT_FUNC || Type == ELF::STT_GNU_IFUNC)
     Streamer.SetCurrentLabel(Symbol);
+}
+
+void AArch64TargetELFStreamer::emitDirectiveVariantPCS(MCSymbol *Symbol) {
+  cast<MCSymbolELF>(Symbol)->setOther(ELF::STO_AARCH64_VARIANT_PCS);
 }
 
 MCTargetStreamer *createAArch64AsmTargetStreamer(MCStreamer &S,
