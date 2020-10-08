@@ -1163,24 +1163,16 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
       setOperationAction(ISD::UMAX, MVT::v2i64, Custom);
       setOperationAction(ISD::UMIN, MVT::v1i64, Custom);
       setOperationAction(ISD::UMIN, MVT::v2i64, Custom);
-      setOperationAction(ISD::VECREDUCE_AND, MVT::v8i8, Custom);
-      setOperationAction(ISD::VECREDUCE_AND, MVT::v16i8, Custom);
-      setOperationAction(ISD::VECREDUCE_AND, MVT::v4i16, Custom);
-      setOperationAction(ISD::VECREDUCE_AND, MVT::v8i16, Custom);
-      setOperationAction(ISD::VECREDUCE_AND, MVT::v2i32, Custom);
-      setOperationAction(ISD::VECREDUCE_AND, MVT::v4i32, Custom);
-      setOperationAction(ISD::VECREDUCE_AND, MVT::v2i64, Custom);
-      setOperationAction(ISD::VECREDUCE_OR, MVT::v8i8, Custom);
-      setOperationAction(ISD::VECREDUCE_OR, MVT::v16i8, Custom);
-      setOperationAction(ISD::VECREDUCE_OR, MVT::v4i16, Custom);
-      setOperationAction(ISD::VECREDUCE_OR, MVT::v8i16, Custom);
-      setOperationAction(ISD::VECREDUCE_OR, MVT::v2i32, Custom);
-      setOperationAction(ISD::VECREDUCE_OR, MVT::v4i32, Custom);
-      setOperationAction(ISD::VECREDUCE_OR, MVT::v2i64, Custom);
       setOperationAction(ISD::VECREDUCE_SMAX, MVT::v2i64, Custom);
       setOperationAction(ISD::VECREDUCE_SMIN, MVT::v2i64, Custom);
       setOperationAction(ISD::VECREDUCE_UMAX, MVT::v2i64, Custom);
       setOperationAction(ISD::VECREDUCE_UMIN, MVT::v2i64, Custom);
+      for (auto VT : {MVT::v8i8, MVT::v16i8, MVT::v4i16, MVT::v8i16,
+                      MVT::v2i32, MVT::v4i32, MVT::v2i64}) {
+        setOperationAction(ISD::VECREDUCE_AND, VT, Custom);
+        setOperationAction(ISD::VECREDUCE_OR, VT, Custom);
+        setOperationAction(ISD::VECREDUCE_XOR, VT, Custom);
+      }
     }
   }
 
@@ -1334,6 +1326,7 @@ void AArch64TargetLowering::addTypeForFixedLengthSVE(MVT VT) {
   setOperationAction(ISD::VECREDUCE_SMIN, VT, Custom);
   setOperationAction(ISD::VECREDUCE_UMAX, VT, Custom);
   setOperationAction(ISD::VECREDUCE_UMIN, VT, Custom);
+  setOperationAction(ISD::VECREDUCE_XOR, VT, Custom);
   setOperationAction(ISD::VSELECT, VT, Custom);
   setOperationAction(ISD::XOR, VT, Custom);
   setOperationAction(ISD::ZERO_EXTEND, VT, Custom);
@@ -4367,6 +4360,7 @@ SDValue AArch64TargetLowering::LowerOperation(SDValue Op,
   case ISD::VECREDUCE_ADD:
   case ISD::VECREDUCE_AND:
   case ISD::VECREDUCE_OR:
+  case ISD::VECREDUCE_XOR:
   case ISD::VECREDUCE_SMAX:
   case ISD::VECREDUCE_SMIN:
   case ISD::VECREDUCE_UMAX:
@@ -10524,6 +10518,7 @@ SDValue AArch64TargetLowering::LowerVECREDUCE(SDValue Op,
   EVT SrcVT = Src.getValueType();
   bool OverrideNEON = Op.getOpcode() == ISD::VECREDUCE_AND ||
                       Op.getOpcode() == ISD::VECREDUCE_OR ||
+                      Op.getOpcode() == ISD::VECREDUCE_XOR ||
                       (Op.getOpcode() != ISD::VECREDUCE_ADD &&
                        SrcVT.getVectorElementType() == MVT::i64);
   if (useSVEForFixedLengthVectorVT(SrcVT, OverrideNEON)) {
@@ -10542,6 +10537,8 @@ SDValue AArch64TargetLowering::LowerVECREDUCE(SDValue Op,
       return LowerFixedLengthReductionToSVE(AArch64ISD::UMAXV_PRED, Op, DAG);
     case ISD::VECREDUCE_UMIN:
       return LowerFixedLengthReductionToSVE(AArch64ISD::UMINV_PRED, Op, DAG);
+    case ISD::VECREDUCE_XOR:
+      return LowerFixedLengthReductionToSVE(AArch64ISD::EORV_PRED, Op, DAG);
     case ISD::VECREDUCE_FMAX:
       return LowerFixedLengthReductionToSVE(AArch64ISD::FMAXNMV_PRED, Op, DAG);
     case ISD::VECREDUCE_FMIN:
