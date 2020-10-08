@@ -174,5 +174,3 @@
 #ifdef assert
 #error "Do not include cassert or assert.h in standard header files"
 #endif
-
-int main() { }

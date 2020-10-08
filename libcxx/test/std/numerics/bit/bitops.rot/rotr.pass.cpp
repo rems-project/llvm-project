@@ -84,7 +84,7 @@ void runtime_test()
     assert( std::rotr(val, 7) == T((val >> 7) +  uppers[7]));
 }
 
-int main()
+int main(int, char**)
 {
 
     {
@@ -184,4 +184,6 @@ int main()
     assert( std::rotr(val, 166) ==  84);
     }
 #endif
+
+    return 0;
 }

@@ -287,5 +287,3 @@ TEST_MACROS();
 TEST_MACROS();
 #include <ext/hash_set>
 TEST_MACROS();
-
-int main() { }
