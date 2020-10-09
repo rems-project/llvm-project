@@ -72,10 +72,10 @@ public:
   Status WriteMemory(lldb::addr_t addr, const void *buf, size_t size,
                      size_t &bytes_written) override;
 
-  Status AllocateMemory(size_t size, uint32_t permissions,
-                        lldb::addr_t &addr) override;
+  llvm::Expected<lldb::addr_t> AllocateMemory(size_t size,
+                                              uint32_t permissions) override;
 
-  Status DeallocateMemory(lldb::addr_t addr) override;
+  llvm::Error DeallocateMemory(lldb::addr_t addr) override;
 
   size_t UpdateThreads() override;
 
@@ -95,6 +95,7 @@ public:
                             lldb::addr_t &load_addr) override;
 
   NativeThreadLinux *GetThreadByID(lldb::tid_t id);
+  NativeThreadLinux *GetCurrentThread();
 
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>>
   GetAuxvData() const override {
@@ -128,6 +129,8 @@ protected:
   llvm::Expected<llvm::ArrayRef<uint8_t>>
   GetSoftwareBreakpointTrapOpcode(size_t size_hint) override;
 
+  llvm::Expected<uint64_t> Syscall(llvm::ArrayRef<uint64_t> args);
+
 private:
   MainLoop::SignalHandleUP m_sigchld_handle;
   ArchSpec m_arch;
@@ -140,6 +143,9 @@ private:
   // List of thread ids stepping with a breakpoint with the address of
   // the relevan breakpoint
   std::map<lldb::tid_t, lldb::addr_t> m_threads_stepping_with_breakpoint;
+
+  /// Inferior memory (allocated by us) and its size.
+  llvm::DenseMap<lldb::addr_t, lldb::addr_t> m_allocated_memory;
 
   // Private Instance Methods
   NativeProcessLinux(::pid_t pid, int terminal_fd, NativeDelegate &delegate,
