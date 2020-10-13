@@ -16919,6 +16919,9 @@ Value *AArch64TargetLowering::emitStoreConditional(IRBuilder<> &Builder,
 
 bool AArch64TargetLowering::functionArgumentNeedsConsecutiveRegisters(
     Type *Ty, CallingConv::ID CallConv, bool isVarArg) const {
+  if (Ty->isArrayTy())
+    return true;
+
   if (StructType *StrTy = dyn_cast<StructType>(Ty)) {
     if (StrTy->isOpaque())
       return false;
@@ -16942,7 +16945,12 @@ bool AArch64TargetLowering::functionArgumentNeedsConsecutiveRegisters(
     if (HasCapabilities)
       return true;
   }
-  return Ty->isArrayTy();
+
+  const TypeSize &TySize = Ty->getPrimitiveSizeInBits();
+  if (TySize.isScalable() && TySize.getKnownMinSize() > 128)
+    return true;
+
+  return false;
 }
 
 bool AArch64TargetLowering::shouldNormalizeToSelectSequence(LLVMContext &,
