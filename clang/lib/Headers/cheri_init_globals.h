@@ -53,8 +53,20 @@ static const __SIZE_TYPE__ function_pointer_permissions_mask =
     ~(__SIZE_TYPE__)(__CHERI_CAP_PERMISSION_PERMIT_SEAL__ |
                      __CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__ |
                      __CHERI_CAP_PERMISSION_PERMIT_STORE__);
+#ifdef __aarch64__
+/*
+ * Morello capreloc permission encoding (inverse of capability
+ * permisisons for use with clearperm):
+ *   Executable       0x8000000000013DBCULL
+ *   Read-Write Data  0x8FBEULL
+ *   Read-Only Data   0x1BFBEULL
+ */
+static const __SIZE_TYPE__ constant_reloc_flag =
+    __CHERI_CAP_PERMISSION_PERMIT_STORE__;
+#else
 static const __SIZE_TYPE__ constant_reloc_flag = (__SIZE_TYPE__)1
                                                  << (__SIZE_WIDTH__ - 2);
+#endif
 static const __SIZE_TYPE__ constant_pointer_permissions_mask =
     ~(__SIZE_TYPE__)(__CHERI_CAP_PERMISSION_PERMIT_SEAL__ |
                      __CHERI_CAP_PERMISSION_PERMIT_STORE_CAPABILITY__ |
@@ -147,6 +159,8 @@ __attribute__((weak)) extern void *__capability __cap_table_end;
 #elif defined(__riscv)
 /* No DEFINE_CHERI_START_FUNCTION needed; everything is currently PC-relative
  * using AUIPCC. */
+#elif defined(__aarch64__)
+/* No DEFINE_CHERI_START_FUNCTION needed. */
 #else
 #error Unknown architecture
 #endif
@@ -169,12 +183,15 @@ cheri_init_globals_impl(const struct capreloc *__capability start_relocs,
     const void *__capability *__capability dest =
         (const void *__capability *__capability)cheri_address_or_offset_set(
             data_cap, reloc->capability_location + base_addr);
+#ifndef __aarch64__
+    /* Morello uses object == 0 for functions */
     if (reloc->object == 0) {
       /* XXXAR: clang fills uninitialized capabilities with 0xcacaca..., so we
        * we need to explicitly write NULL here */
       *dest = (void *__capability)0;
       continue;
     }
+#endif
     const void *__capability base_cap;
     bool can_set_bounds = true;
     if ((reloc->permissions & function_reloc_flag) == function_reloc_flag) {
@@ -228,6 +245,23 @@ cheri_init_globals_3(void *__capability data_cap,
        "cincoffset %2, %2, %%pcrel_lo(2b)\n\t"
        cgetaddr_or_offset " %1, %2\n\t"
        :"=r"(start_addr), "=r"(end_addr), "=&C"(tmp));
+#endif
+#elif defined(__aarch64__)
+#ifdef __CHERI_PURE_CAPABILITY__
+  void *__capability start_cap;
+  void *__capability end_cap;
+#endif
+  __asm__ (
+       "adrp %0, __start___cap_relocs\n\t"
+       "add %0, %0, :lo12:__start___cap_relocs\n\t"
+       "adrp %1, __stop___cap_relocs\n\t"
+       "add %1, %1, :lo12:__stop___cap_relocs\n\t"
+#ifdef __CHERI_PURE_CAPABILITY__
+       : "=C"(start_cap), "=C"(end_cap));
+  start_addr = (__cheri_addr __SIZE_TYPE__)start_cap;
+  end_addr = (__cheri_addr __SIZE_TYPE__)end_cap;
+#else
+       : "=r"(start_addr), "=r"(end_addr));
 #endif
 #else
 #error Unknown architecture
