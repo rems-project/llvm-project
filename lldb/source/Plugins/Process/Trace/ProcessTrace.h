@@ -64,7 +64,7 @@ public:
   bool WarnBeforeDetach() const override { return false; }
 
   size_t ReadMemory(lldb::addr_t addr, void *buf, size_t size,
-                    Status &error) override;
+                    Status &error, lldb::MemoryContentType type) override;
 
   size_t DoReadMemory(lldb::addr_t addr, void *buf, size_t size,
                       Status &error) override;

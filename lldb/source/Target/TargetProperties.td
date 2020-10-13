@@ -23,6 +23,10 @@ let Definition = "target" in {
   def ForceExpressionEvaluation: Property<"force-expr-evaluation", "Boolean">,
     DefaultFalse,
     Desc<"Force evaluation of expressions even on targets where it is disabled">;
+  def ExprErrorLimit: Property<"expr-error-limit", "UInt64">,
+    DefaultUnsignedValue<5>,
+    Desc<"The maximum amount of errors to emit while parsing an expression. "
+         "A value of 0 means to always continue parsing if possible.">;
   def PreferDynamic: Property<"prefer-dynamic-value", "Enum">,
     DefaultEnumValue<"eDynamicDontRunTarget">,
     EnumValues<"OptionEnumValues(g_dynamic_value_types)">,

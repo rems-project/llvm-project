@@ -7126,17 +7126,12 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-mllvm");
       CmdArgs.push_back("-aarch64-mark-bti-property");
     }
+    RenderAArch64ABI(Triple, Args, CmdArgs);
     break;
 
   case llvm::Triple::riscv32:
   case llvm::Triple::riscv64:
     AddRISCVTargetArgs(Args, CmdArgs);
-    break;
-
-  case llvm::Triple::aarch64:
-  case llvm::Triple::aarch64_32:
-  case llvm::Triple::aarch64_be:
-    RenderAArch64ABI(Triple, Args, CmdArgs);
     break;
   }
 
