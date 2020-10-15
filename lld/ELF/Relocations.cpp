@@ -1135,7 +1135,7 @@ static void addGotEntry(Symbol &sym) {
       // a capability. When dynamic linking the dynamic loader creates the
       // capability, when static linking the function adds an entry to the
       // __cap_relocs table.
-      addMorelloC64GotRelocation(target->relativeRel, &sym, off);
+      addMorelloC64GotRelocation(target->relativeRel, &sym, in.got, off);
     else
       in.got->relocations.push_back({expr, target->symbolicRel, off, 0, &sym});
     return;
@@ -1148,7 +1148,7 @@ static void addGotEntry(Symbol &sym) {
       // As well as writing the Relative relocation there are additional
       // static relocations needed to initialize the GOT entry. Delegate this
       // to addMorelloC64GotRelocation.
-      addMorelloC64GotRelocation(target->relativeRel, &sym, off);
+      addMorelloC64GotRelocation(target->relativeRel, &sym, in.got, off);
     else
       addRelativeReloc(in.got, off, &sym, 0, R_ABS, target->symbolicRel);
     return;
@@ -1157,7 +1157,7 @@ static void addGotEntry(Symbol &sym) {
     // As with the Relative relocation there are additional static relocations
     // needed to initialize the GOT entry. We do not do this for TLS symbols as
     // the GOT generating TLS relocation is not a capability (offset from TP).
-    addMorelloC64GotRelocation(target->gotRel, &sym, off);
+    addMorelloC64GotRelocation(target->gotRel, &sym, in.got, off);
   else
     mainPart->relaDyn->addReloc(
       sym.isTls() ? target->tlsGotRel : target->gotRel, in.got, off, &sym, 0,

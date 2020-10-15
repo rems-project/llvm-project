@@ -418,7 +418,7 @@ void addCapabilityRelocation(Symbol *sym, RelType type, InputSectionBase *sec,
 
 // Emit either a dynamic relocation or __cap_reloc entry to initialize a
 // GOT slot.
-void addMorelloC64GotRelocation(RelType dynType, Symbol *sym, uint64_t offset);
+void addMorelloC64GotRelocation(RelType dynType, Symbol *sym, InputSectionBase *sec, uint64_t offset);
 
 // Calculate the size of linker defined capabilities such as the PCC
 // capability. These lengths may result in increased alignment requirements

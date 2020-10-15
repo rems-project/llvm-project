@@ -1009,11 +1009,11 @@ static void addCapDynamicRelocation(RelType dynType, Symbol *sym,
 
 // Relocation arising from addGotEntry() this can happen for both static and
 // dynamic linking as capabilities can only be initialized at run-time.
-void addMorelloC64GotRelocation(RelType dynType, Symbol *sym, uint64_t offset) {
+void addMorelloC64GotRelocation(RelType dynType, Symbol *sym, InputSectionBase *sec, uint64_t offset) {
   if (config->hasDynSymTab)
-    addCapDynamicRelocation(dynType, sym, in.got, offset, 0);
+    addCapDynamicRelocation(dynType, sym, sec, offset, 0);
   else
-    in.capRelocs->addCapReloc({in.got, offset, false}, {sym, 0u},
+    in.capRelocs->addCapReloc({sec, offset, false}, {sym, 0u},
                               sym->isPreemptible, 0);
 }
 
