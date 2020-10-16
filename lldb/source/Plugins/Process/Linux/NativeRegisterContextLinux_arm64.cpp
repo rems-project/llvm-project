@@ -933,12 +933,11 @@ constexpr __uint128_t MORELLO_PCC_EXECUTIVE_BIT_MASK =
     ((__uint128_t)1) << arm64_dwarf::pcc_executive_bit;
 
 void NativeRegisterContextLinux_arm64::SetCapabilityRegisterValue(
-    uint8_t *value, uint64_t tag, RegisterValue &reg_value) {
+    uint64_t val_hi, uint64_t val_lo, uint64_t tag, RegisterValue &reg_value) {
   // Set the register value. Capabilities are always stored in the little-endian
   // byte order.
-  llvm::APInt val(129, tag);
-  for (size_t i = 0; i < 16; ++i)
-    val = (val << 8) | value[15 - i];
+  uint64_t words[] = {tag, val_hi, val_lo};
+  llvm::APInt val(129, words);
   reg_value.SetCapability128(val);
 }
 
@@ -953,7 +952,8 @@ Status NativeRegisterContextLinux_arm64::ReadCapabilityRegister(
     return error;
 
   // Get data for the right register.
-  uint8_t *value;
+  uint64_t val_hi;
+  uint64_t val_lo;
   uint64_t tag;
 
   switch (regnum) {
@@ -962,7 +962,8 @@ Status NativeRegisterContextLinux_arm64::ReadCapabilityRegister(
 
 #define GET_CAP_DATA(lldb_reg_name, kernel_reg_name)                           \
   case cap_##lldb_reg_name##_arm64:                                            \
-    value = reinterpret_cast<uint8_t *>(&cap_state.kernel_reg_name);           \
+    val_hi = cap_state.kernel_reg_name >> 8;                                   \
+    val_lo = cap_state.kernel_reg_name;                                        \
     tag = GET_CAP_TAG(kernel_reg_name);                                        \
     break;
 
@@ -1001,31 +1002,33 @@ Status NativeRegisterContextLinux_arm64::ReadCapabilityRegister(
 #undef GET_CAP_DATA
 
   // Handle registers that depend on the state.
+#define GET_CAP_DATA(kernel_reg_name)                                          \
+  val_hi = cap_state.kernel_reg_name >> 8;                                     \
+  val_lo = cap_state.kernel_reg_name;                                          \
+  tag = GET_CAP_TAG(kernel_reg_name);
+
   case cap_csp_arm64:
     if (cap_state.pcc & MORELLO_PCC_EXECUTIVE_BIT_MASK) {
-      value = reinterpret_cast<uint8_t *>(&cap_state.csp);
-      tag = GET_CAP_TAG(csp);
+      GET_CAP_DATA(csp);
     } else {
-      value = reinterpret_cast<uint8_t *>(&cap_state.rcsp);
-      tag = GET_CAP_TAG(rcsp);
+      GET_CAP_DATA(rcsp);
     }
     break;
   case cap_ddc_arm64:
     if (cap_state.pcc & MORELLO_PCC_EXECUTIVE_BIT_MASK) {
-      value = reinterpret_cast<uint8_t *>(&cap_state.ddc);
-      tag = GET_CAP_TAG(ddc);
+      GET_CAP_DATA(ddc);
     } else {
-      value = reinterpret_cast<uint8_t *>(&cap_state.rddc);
-      tag = GET_CAP_TAG(rddc);
+      GET_CAP_DATA(rddc);
     }
     break;
+#undef GET_CAP_DATA
 #undef GET_CAP_TAG
 
   default:
     llvm_unreachable("Unhandled read of a capability register.");
   }
 
-  SetCapabilityRegisterValue(value, tag, reg_value);
+  SetCapabilityRegisterValue(val_hi, val_lo, tag, reg_value);
   return error;
 }
 
@@ -1043,16 +1046,17 @@ NativeRegisterContextLinux_arm64::ReadStateRegister(uint32_t regnum,
   // Handle primordial stack pointer registers first, or fall through to reading
   // state-specific capability registers.
   if (regnum == state_sp_el0_arm64) {
-    reg_value.SetUInt64(*reinterpret_cast<uint64_t *>(&cap_state.csp));
+    reg_value.SetUInt64(cap_state.csp);
     return error;
   }
   if (regnum == state_rsp_el0_arm64) {
-    reg_value.SetUInt64(*reinterpret_cast<uint64_t *>(&cap_state.rcsp));
+    reg_value.SetUInt64(cap_state.rcsp);
     return error;
   }
 
   // Get data for the right register.
-  uint8_t *value;
+  uint64_t val_hi;
+  uint64_t val_lo;
   uint64_t tag;
 
   switch (regnum) {
@@ -1061,7 +1065,8 @@ NativeRegisterContextLinux_arm64::ReadStateRegister(uint32_t regnum,
 
 #define GET_CAP_DATA(lldb_reg_name, kernel_reg_name)                           \
   case state_##lldb_reg_name##_arm64:                                          \
-    value = reinterpret_cast<uint8_t *>(&cap_state.kernel_reg_name);           \
+    val_hi = cap_state.kernel_reg_name >> 8;                                   \
+    val_lo = cap_state.kernel_reg_name;                                        \
     tag = GET_CAP_TAG(kernel_reg_name);                                        \
     break;
 
@@ -1076,7 +1081,7 @@ NativeRegisterContextLinux_arm64::ReadStateRegister(uint32_t regnum,
     llvm_unreachable("Unhandled read of a state register.");
   }
 
-  SetCapabilityRegisterValue(value, tag, reg_value);
+  SetCapabilityRegisterValue(val_hi, val_lo, tag, reg_value);
   return error;
 }
 
@@ -1105,17 +1110,22 @@ NativeRegisterContextLinux_arm64::ReadThreadRegister(uint32_t regnum,
 #define GET_CAP_TAG(kernel_reg_name)                                           \
   (cap_state.tag_map >> (MORELLO_PT_TAG_MAP_REG_BIT(kernel_reg_name))) & 1
 
-    uint8_t *value;
+#define GET_CAP_DATA(kernel_reg_name)                                          \
+  val_hi = cap_state.kernel_reg_name >> 8;                                     \
+  val_lo = cap_state.kernel_reg_name;                                          \
+  tag = GET_CAP_TAG(kernel_reg_name);
+
+    uint64_t val_hi;
+    uint64_t val_lo;
     uint64_t tag;
     if (cap_state.pcc & MORELLO_PCC_EXECUTIVE_BIT_MASK) {
-      value = reinterpret_cast<uint8_t *>(&cap_state.ctpidr);
-      tag = GET_CAP_TAG(ctpidr);
+      GET_CAP_DATA(ctpidr);
     } else {
-      value = reinterpret_cast<uint8_t *>(&cap_state.rctpidr);
-      tag = GET_CAP_TAG(rctpidr);
+      GET_CAP_DATA(rctpidr);
     }
 #undef GET_CAP_TAG
-    SetCapabilityRegisterValue(value, tag, reg_value);
+#undef GET_CAP_DATA
+    SetCapabilityRegisterValue(val_hi, val_lo, tag, reg_value);
   } break;
 
   default:

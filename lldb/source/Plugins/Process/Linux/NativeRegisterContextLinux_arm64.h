@@ -181,8 +181,8 @@ private:
 
   Status GetRegSetFromKernel(int regset, void *reg_state, size_t len);
 
-  void SetCapabilityRegisterValue(uint8_t *value, uint64_t tag,
-                                  RegisterValue &reg_value);
+  void SetCapabilityRegisterValue(uint64_t val_hi, uint64_t val_lo,
+                                  uint64_t tag, RegisterValue &reg_value);
 
   Status ReadCapabilityRegister(uint32_t regnum, RegisterValue &reg_value);
 
