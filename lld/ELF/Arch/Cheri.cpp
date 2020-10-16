@@ -737,38 +737,42 @@ struct Perm {
   uint64_t rw;
   uint64_t func;
 };
-// Static Permissions at index 0 (Config->HasDynSymTab == false),
-// Dynamic Permissions at index 1;
+// Static Permissions at index 0, Dynamic Permissions at index 1;
 struct Permissions {
-  static Perm perms[2];
-  static uint64_t rodata() {
-    return perms[config->hasDynSymTab].ro;
+  enum Type {
+    STATIC = 0,
+    DYNAMIC = 1,
+    MAX
   };
-  static uint64_t rwdata() {
-    return perms[config->hasDynSymTab].rw;
+  static Perm perms[Permissions::Type::MAX];
+  static uint64_t rodata(Permissions::Type idx) {
+    return perms[idx].ro;
   };
-  static uint64_t func() {
-    return perms[config->hasDynSymTab].func;
+  static uint64_t rwdata(Permissions::Type idx) {
+    return perms[idx].rw;
+  };
+  static uint64_t func(Permissions::Type idx) {
+    return perms[idx].func;
   };
 };
-static uint64_t getPermissions(const Symbol &sym) {
-  uint64_t permissions = Permissions::rwdata();
+static uint64_t getPermissions(const Symbol &sym, Permissions::Type type) {
+  uint64_t permissions = Permissions::rwdata(type);
   if (sym.isFunc())
-    permissions = Permissions::func();
+    permissions = Permissions::func(type);
   else if (auto os = sym.getOutputSection()) {
     assert(!sym.isTls());
     assert((os->flags & SHF_TLS) == 0);
     if (((os->flags & SHF_WRITE) == 0) || isRelroSection(os)) {
       if (os->flags & SHF_EXECINSTR)
-        permissions = Permissions::func();
+        permissions = Permissions::func(type);
       else
-        permissions = Permissions::rodata();
+        permissions = Permissions::rodata(type);
     } else if (os->flags & SHF_EXECINSTR) {
       warn("Non-function __cap_reloc against symbol in section with "
            "SHF_EXECINSTR (" +
            toString(os->name) + ") for symbol " + sym.getName().str());
     } else if (os->flags & SHF_WRITE) {
-      permissions = Permissions::rwdata();
+      permissions = Permissions::rwdata(type);
     }
   }
   return permissions;
@@ -792,7 +796,7 @@ static uint64_t getPermissions(const Symbol &sym) {
 // RO = ~(Load|LoadCap|MutableLoad|Global)
 // RW = ~(Load|Store|LoadCap|StoreCap|StoreLocalCap|MutableLoad|Global)
 // EXEC = MSB | ~(Load|Execute|LoadCap|System|MutableLoad|Executive|Global)
-Perm Permissions::perms[2] = {
+Perm Permissions::perms[Permissions::Type::MAX] = {
     {0x1bfbe, 0x8fbe, 0x8000000000013dbc},
     {0x1, 0x2, 0x4}};
 
@@ -813,10 +817,10 @@ void MorelloCapRelocsSection::writeTo(uint8_t *buf) {
     uint64_t targetSize = getMorelloTargetSize(
         location.section, location.offset, reloc.target.sym(), /*strict=*/true);
     uint64_t targetOffset = reloc.capabilityOffset;
-    uint64_t permissions = getPermissions(*reloc.target.sym());
+    uint64_t permissions = getPermissions(*reloc.target.sym(), Permissions::Type::STATIC);
 
     // Increase bounds of executable capabilities.
-    if (permissions == Permissions::func()) {
+    if (permissions == Permissions::func(Permissions::Type::STATIC)) {
       targetOffset += targetVA - morelloPCCBase;
       targetVA = morelloPCCBase;
       targetSize = morelloPCCLimit - morelloPCCBase;
@@ -857,15 +861,15 @@ void MorelloCapRelocsSection::writeTo(uint8_t *buf) {
 // | 56-bits size | 8-bits permission | of the inplace data layout.
 uint64_t getMorelloSizeAndPermissions(int64_t a, const Symbol &sym,
                                     InputSectionBase *isec, uint64_t offset) {
-  uint64_t sizeAndPerm = Permissions::rwdata();
+  uint64_t sizeAndPerm = Permissions::rwdata(Permissions::Type::DYNAMIC);
   if (const SharedSymbol *shared = dyn_cast<SharedSymbol>(&sym)) {
     // If the symbol is defined in a shared library then we can take the size
     // and permission information from the shared library.
     if (shared->isFunc())
-      sizeAndPerm = Permissions::func();
+      sizeAndPerm = Permissions::func(Permissions::Type::DYNAMIC);
     return sizeAndPerm | (shared->size << 8);
   } else if (const Defined *definedSym = dyn_cast<Defined>(&sym)) {
-    sizeAndPerm = getPermissions(*definedSym);
+    sizeAndPerm = getPermissions(*definedSym, Permissions::Type::DYNAMIC);
     uint64_t size = getMorelloTargetSize(isec, offset, &sym, /* strict */ true);
     return sizeAndPerm | (size << 8);
   }
