@@ -992,29 +992,38 @@ bool MorelloCapRelocsSection::linkerDefinedCapabilityAlign() {
 // | 64-bit Address | 56-bit size | 8-bit permissions |
 // We use 2 64-bit static relocations to accomplish this. The first for the
 // Address and the second for size and permissions.
+void addMorelloCapabilityFragment(InputSectionBase *sec, Symbol *sym,
+                                  uint64_t offset) {
+  sec->relocations.push_back({R_ABS, target->symbolicRel, offset, 0, sym});
+  sec->relocations.push_back(
+    {R_MORELLO_CAPFRAG_SIZE_AND_PERM, target->symbolicRel, offset + 8, 0, sym}
+  );
+}
 static void addCapDynamicRelocation(RelType dynType, Symbol *sym,
                                     InputSectionBase *sec, uint64_t offset,
                                     int64_t addend) {
   // The symbol VA is not used, so if the symbol is not in the dynamic symbol
   // table, and the relocation is relative, add nullptr as the symbol of the
   // dynamic relocation.
-  Symbol *dynsym = (!sym->includeInDynsym() && (dynType == R_MORELLO_RELATIVE))
+  Symbol *dynsym = (!sym->includeInDynsym() && (dynType == R_MORELLO_RELATIVE ||
+                                                dynType == R_MORELLO_IRELATIVE))
                        ? nullptr
                        : sym;
   // Add the relocation directly rather than calling one of the helper methods
   // this guarantees that we have control over what static relocation is
   // created.
   mainPart->relaDyn->addReloc({dynType, sec, offset, false, dynsym, addend});
-  sec->relocations.push_back({R_ABS, target->symbolicRel, offset, 0, sym});
-  sec->relocations.push_back(
-    {R_MORELLO_CAPFRAG_SIZE_AND_PERM, target->symbolicRel, offset + 8, 0, sym}
-  );
+  addMorelloCapabilityFragment(sec, sym, offset);
 }
 
-// Relocation arising from addGotEntry() this can happen for both static and
-// dynamic linking as capabilities can only be initialized at run-time.
+// Relocation arising from addGotEntry() or addPltEntry().
+// This can happen for both static and dynamic linking as capabilities can only
+// be initialized at run-time.
 void addMorelloC64GotRelocation(RelType dynType, Symbol *sym, InputSectionBase *sec, uint64_t offset) {
-  if (config->hasDynSymTab)
+  // If there is a Dynamic Symbol Table, there cannot be a caprelocs section.
+  // R_MORELLO_IRELATIVE can be present even without a Dynamic Symbol Table
+  // being present.
+  if (config->hasDynSymTab || dynType == R_MORELLO_IRELATIVE)
     addCapDynamicRelocation(dynType, sym, sec, offset, 0);
   else
     in.capRelocs->addCapReloc({sec, offset, false}, {sym, 0u},
