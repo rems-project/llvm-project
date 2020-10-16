@@ -1494,7 +1494,7 @@ static void scanReloc(InputSectionBase &sec, OffsetGetter &getOffset, RelTy *&i,
     // We require 16-byte GOT entries and a different PLT sequence, we
     // need --morello-c64-plt to choose these prior to this point.
     error("Morello PLT/GOT generating relocation " + toString(type) +
-          " requires --morello-c64-plt");
+          " requires --morello-c64-plt" + getLocation(sec, sym, offset));
     return;
   }
 
