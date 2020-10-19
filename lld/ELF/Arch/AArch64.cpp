@@ -862,20 +862,34 @@ void AArch64C64::relaxTlsGdToLe(uint8_t *loc, const Relocation &rel,
   //  add c0, c2, x0
   //  scbnds  c0, c0, x1
   checkUInt(loc, val, 32, rel);
-  checkUInt(loc, rel.sym->getSize(), 32, rel);
 
   switch (rel.type) {
+  case R_AARCH64_TLSDESC_CALL:
+    if (config->morelloC64Plt) {
+      // Overwrite the C64 instruction written for R_AARCH64_TLSDESC_ADD_LO12
+      // with the appropriate instruction for the AArch64 sequence
+      warn("AArch64 TLS GD to LE relaxation detected but --morello-c64-plt set");
+      write32le(loc-4, 0xd503201f); // nop
+    }
+    write32le(loc, 0xd503201f); // nop
+    return;
   case R_MORELLO_TLSDESC_ADR_PAGE20:
+    checkUInt(loc, rel.sym->getSize(), 32, rel);
     // mov x0, offset_imm0, lsl #16
     write32le(loc-4, 0xd2a00000 | (((val >> 16) & 0xffff) << 5));
     // movk x0, offset_imm1
     write32le(loc, 0xf2800000 | ((val & 0xffff) << 5));
     return;
   case R_MORELLO_TLSDESC_LD128_LO12:
+    checkUInt(loc, rel.sym->getSize(), 32, rel);
     // mov x1, size_imm_0, lsl #16
     write32le(loc, 0xd2a00001 | (((rel.sym->getSize() >> 16) & 0xffff) << 5));
     return;
   case R_AARCH64_TLSDESC_ADD_LO12:
+    // The instructions written here can be overwritten
+    // depending on what comes next:
+    // R_AARCH64_TLSDESC_CALL or R_MORELLO_TLSDESC_CALL
+    checkUInt(loc, rel.sym->getSize(), 32, rel);
     // movk x1, size_imm_1
     write32le(loc, 0xf2800001 | ((rel.sym->getSize() & 0xffff) << 5));
     return;
@@ -883,7 +897,7 @@ void AArch64C64::relaxTlsGdToLe(uint8_t *loc, const Relocation &rel,
     write32le(loc, 0xc2a06040); // add c0, c2, x0
     return;
   default:
-    llvm_unreachable("unsupported relocation for TLS GD to LE relaxation");
+    AArch64::relaxTlsGdToLe(loc, rel, val);
   }
 }
 

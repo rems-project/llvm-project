@@ -5,6 +5,10 @@
 # RUN: llvm-objdump -d --no-show-raw-insn %tout | FileCheck %s
 # RUN: llvm-readobj -r %tout | FileCheck -check-prefix=RELOC %s
 
+# RUN: ld.lld --morello-c64-plt %tmain.o %ttlsie.o -o %tout2 2>&1 | FileCheck --check-prefix=WARN %s
+# RUN: llvm-objdump -d --no-show-raw-insn %tout2 | FileCheck %s
+# RUN: llvm-readobj -r %tout2 | FileCheck -check-prefix=RELOC %s
+
 ## Local-Dynamic to Local-Exec relax creates no dynamic relocations.
 # RELOC:      Relocations [
 # RELOC-NEXT: ]
@@ -15,6 +19,8 @@
 # CHECK-NEXT:    2101cc: movk    x0, #16
 # CHECK-NEXT:    2101d0: nop
 # CHECK-NEXT:    2101d4: nop
+
+# WARN: warning: AArch64 TLS GD to LE relaxation detected but --morello-c64-plt set
 
 .globl _start
 _start:
