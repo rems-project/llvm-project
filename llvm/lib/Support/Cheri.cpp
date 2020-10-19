@@ -15,7 +15,7 @@ static llvm::cl::opt<bool>
 NoCapLibFuncs("cheri-no-cap-libfunc", llvm::cl::init(false), llvm::cl::Hidden);
 
 static llvm::cl::opt<bool>
-NoPureCapLibFuncs("cheri-no-pure-cap-libfunc", llvm::cl::init(false),
+NoPureCapLibFuncs("cheri-no-pure-cap-libfunc", llvm::cl::init(true),
                 llvm::cl::Hidden);
 
 namespace llvm {
