@@ -4,8 +4,17 @@
 /// Check that we error somewhat gracefully when --morello-c64-plt is missed out.
 
 // CHECK: error: Morello PLT/GOT generating relocation R_MORELLO_CALL26 requires --morello-c64-plt
-// CHECK-NEXT: error: Morello PLT/GOT generating relocation R_MORELLO_JUMP26 requires --morello-c64-plt
-// CHECK-NEXT: error: Morello PLT/GOT generating relocation R_MORELLO_LD128_GOT_LO12_NC requires --morello-c64-plt
+// CHECK-NEXT: >>> defined in {{.+}}aarch64-missing-morello-c64-plt-err.s.tmp.o
+// CHECK-NEXT: >>> referenced by {{.+}}aarch64-missing-morello-c64-plt-err.s.tmp.o:(.text+0x0)
+// CHECK-EMPTY:
+// CHECK: error: Morello PLT/GOT generating relocation R_MORELLO_JUMP26 requires --morello-c64-plt
+// CHECK-NEXT: >>> defined in {{.+}}aarch64-missing-morello-c64-plt-err.s.tmp.o
+// CHECK-NEXT: >>> referenced by {{.+}}aarch64-missing-morello-c64-plt-err.s.tmp.o:(.text+0x4)
+// CHECK-EMPTY:
+// CHECK: error: Morello PLT/GOT generating relocation R_MORELLO_LD128_GOT_LO12_NC requires --morello-c64-plt
+// CHECK-NEXT: >>> defined in {{.+}}aarch64-missing-morello-c64-plt-err.s.tmp.o
+// CHECK-NEXT: >>> referenced by {{.+}}aarch64-missing-morello-c64-plt-err.s.tmp.o:(.text+0xC)
+// CHECK-EMPTY:
 
  .text
  bl imported
