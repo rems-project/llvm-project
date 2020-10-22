@@ -11,7 +11,7 @@ body:             |
     ; CHECK-LABEL: name: positive_zero
     ; CHECK: [[FMOVH0_:%[0-9]+]]:fpr16 = FMOVH0
     ; CHECK: $h0 = COPY [[FMOVH0_]]
-    ; CHECK: RET_ReallyLR implicit $h0
+    ; CHECK: RET_ReallyLR 0, implicit $h0
     %0:fpr(s16) = G_FCONSTANT half 0.0
     $h0 = COPY %0(s16)
-    RET_ReallyLR implicit $h0
+    RET_ReallyLR 0, implicit $h0
