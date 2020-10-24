@@ -1133,7 +1133,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_SRL(SDNode *N) {
 SDValue DAGTypeLegalizer::PromoteIntRes_Rotate(SDNode *N) {
   // Lower the rotate to shifts and ORs which can be promoted.
   SDValue Res;
-  TLI.expandROT(N, Res, DAG);
+  TLI.expandROT(N, true /*AllowVectorOps*/, Res, DAG);
   ReplaceValueWith(SDValue(N, 0), Res);
   return SDValue();
 }
@@ -4092,7 +4092,7 @@ void DAGTypeLegalizer::ExpandIntRes_Rotate(SDNode *N,
                                            SDValue &Lo, SDValue &Hi) {
   // Lower the rotate to shifts and ORs which can be expanded.
   SDValue Res;
-  TLI.expandROT(N, Res, DAG);
+  TLI.expandROT(N, true /*AllowVectorOps*/, Res, DAG);
   SplitInteger(Res, Lo, Hi);
 }
 
