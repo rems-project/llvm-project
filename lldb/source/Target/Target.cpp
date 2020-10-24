@@ -2276,7 +2276,7 @@ Target::CreateUtilityFunction(std::string expression, std::string name,
     return llvm::make_error<llvm::StringError>(diagnostics.GetString(),
                                                llvm::inconvertibleErrorCode());
 
-  return utility_fn;
+  return std::move(utility_fn);
 }
 
 void Target::SettingsInitialize() { Process::SettingsInitialize(); }
