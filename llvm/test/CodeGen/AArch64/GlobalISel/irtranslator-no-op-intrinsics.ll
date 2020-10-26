@@ -23,8 +23,8 @@ define i8* @ptr_annotate(i8* %arg0, i8* %arg1, i8* %arg2, i32 %arg3) {
   ; CHECK:   [[COPY3:%[0-9]+]]:_(s32) = COPY $w3
   ; CHECK:   [[COPY4:%[0-9]+]]:_(p0) = COPY [[COPY]](p0)
   ; CHECK:   $x0 = COPY [[COPY4]](p0)
-  ; CHECK:   RET_ReallyLR 0, implicit $x0
-  %call = call i8* @llvm.ptr.annotation.p0i8(i8* %arg0, i8* %arg1, i8* %arg2, i32 %arg3)
+  ; CHECK:   RET_ReallyLR 0,  implicit $x0
+  %call = call i8* @llvm.ptr.annotation.p0i8(i8* %arg0, i8* %arg1, i8* %arg2, i32 %arg3, i8* null)
   ret i8* %call
 }
 
@@ -68,7 +68,7 @@ define i8* @strip_invariant_group(i8* %p) {
 }
 
 declare i64 @llvm.expect.i64(i64, i64) #0
-declare i8* @llvm.ptr.annotation.p0i8(i8*, i8*, i8*, i32) #1
+declare i8* @llvm.ptr.annotation.p0i8(i8*, i8*, i8*, i32, i8*) #1
 declare i32 @llvm.annotation.i32(i32, i8*, i8*, i32) #1
 declare i8* @llvm.launder.invariant.group.p0i8(i8*) #2
 declare i8* @llvm.strip.invariant.group.p0i8(i8*) #3
