@@ -936,7 +936,7 @@ void NativeRegisterContextLinux_arm64::SetCapabilityRegisterValue(
     uint64_t val_hi, uint64_t val_lo, uint64_t tag, RegisterValue &reg_value) {
   // Set the register value. Capabilities are always stored in the little-endian
   // byte order.
-  uint64_t words[] = {tag, val_hi, val_lo};
+  uint64_t words[] = {val_lo, val_hi, tag};
   llvm::APInt val(129, words);
   reg_value.SetCapability128(val);
 }
@@ -962,7 +962,7 @@ Status NativeRegisterContextLinux_arm64::ReadCapabilityRegister(
 
 #define GET_CAP_DATA(lldb_reg_name, kernel_reg_name)                           \
   case cap_##lldb_reg_name##_arm64:                                            \
-    val_hi = cap_state.kernel_reg_name >> 8;                                   \
+    val_hi = cap_state.kernel_reg_name >> 64;                                  \
     val_lo = cap_state.kernel_reg_name;                                        \
     tag = GET_CAP_TAG(kernel_reg_name);                                        \
     break;
@@ -1003,7 +1003,7 @@ Status NativeRegisterContextLinux_arm64::ReadCapabilityRegister(
 
   // Handle registers that depend on the state.
 #define GET_CAP_DATA(kernel_reg_name)                                          \
-  val_hi = cap_state.kernel_reg_name >> 8;                                     \
+  val_hi = cap_state.kernel_reg_name >> 64;                                    \
   val_lo = cap_state.kernel_reg_name;                                          \
   tag = GET_CAP_TAG(kernel_reg_name);
 
@@ -1065,7 +1065,7 @@ NativeRegisterContextLinux_arm64::ReadStateRegister(uint32_t regnum,
 
 #define GET_CAP_DATA(lldb_reg_name, kernel_reg_name)                           \
   case state_##lldb_reg_name##_arm64:                                          \
-    val_hi = cap_state.kernel_reg_name >> 8;                                   \
+    val_hi = cap_state.kernel_reg_name >> 64;                                  \
     val_lo = cap_state.kernel_reg_name;                                        \
     tag = GET_CAP_TAG(kernel_reg_name);                                        \
     break;
@@ -1111,7 +1111,7 @@ NativeRegisterContextLinux_arm64::ReadThreadRegister(uint32_t regnum,
   (cap_state.tag_map >> (MORELLO_PT_TAG_MAP_REG_BIT(kernel_reg_name))) & 1
 
 #define GET_CAP_DATA(kernel_reg_name)                                          \
-  val_hi = cap_state.kernel_reg_name >> 8;                                     \
+  val_hi = cap_state.kernel_reg_name >> 64;                                    \
   val_lo = cap_state.kernel_reg_name;                                          \
   tag = GET_CAP_TAG(kernel_reg_name);
 
