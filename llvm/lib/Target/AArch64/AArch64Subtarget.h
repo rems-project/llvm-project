@@ -65,14 +65,15 @@ public:
     NeoverseE1,
     NeoverseN1,
     Rainier,
+    NeoverseV1,
     Saphira,
     ThunderX2T99,
     ThunderX,
     ThunderXT81,
     ThunderXT83,
     ThunderXT88,
-    TSV110,
-    ThunderX3T110
+    ThunderX3T110,
+    TSV110
   };
 
 protected:

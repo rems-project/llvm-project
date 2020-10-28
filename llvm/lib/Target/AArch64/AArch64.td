@@ -948,6 +948,26 @@ def ProcRainier : SubtargetFeature<"rainier", "ARMProcFamily",
                                     FeatureMorello
                                     ]>;
 
+def ProcNeoverseV1 : SubtargetFeature<"neoversev1", "ARMProcFamily",
+                                      "NeoverseV1",
+                                      "Neoverse V1 ARM processors", [
+                                      HasV8_4aOps,
+                                      FeatureBF16,
+                                      FeatureCacheDeepPersist,
+                                      FeatureCrypto,
+                                      FeatureFPARMv8,
+                                      FeatureFP16FML,
+                                      FeatureFullFP16,
+                                      FeatureFuseAES,
+                                      FeatureMatMulInt8,
+                                      FeatureNEON,
+                                      FeaturePerfMon,
+                                      FeaturePostRAScheduler,
+                                      FeatureRandGen,
+                                      FeatureSPE,
+                                      FeatureSSBS,
+                                      FeatureSVE]>;
+
 def ProcSaphira  : SubtargetFeature<"saphira", "ARMProcFamily", "Saphira",
                                    "Qualcomm Saphira processors", [
                                    FeatureCrypto,
@@ -1090,6 +1110,7 @@ def : ProcessorModel<"cortex-x1", CortexA57Model, [ProcX1]>;
 def : ProcessorModel<"neoverse-e1", CortexA53Model, [ProcNeoverseE1]>;
 def : ProcessorModel<"neoverse-n1", CortexA57Model, [ProcNeoverseN1]>;
 def : ProcessorModel<"rainier", CortexA57Model, [ProcRainier]>;
+def : ProcessorModel<"neoverse-v1", CortexA57Model, [ProcNeoverseV1]>;
 def : ProcessorModel<"exynos-m3", ExynosM3Model, [ProcExynosM3]>;
 def : ProcessorModel<"exynos-m4", ExynosM4Model, [ProcExynosM4]>;
 def : ProcessorModel<"exynos-m5", ExynosM5Model, [ProcExynosM4]>;
