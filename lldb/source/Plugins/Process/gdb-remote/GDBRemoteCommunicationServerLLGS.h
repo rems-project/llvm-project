@@ -169,6 +169,8 @@ protected:
 
   PacketResult Handle_jTraceConfigRead(StringExtractorGDBRemote &packet);
 
+  PacketResult Handle_jLLDBTraceSupportedType(StringExtractorGDBRemote &packet);
+
   PacketResult Handle_QRestoreRegisterState(StringExtractorGDBRemote &packet);
 
   PacketResult Handle_vAttach(StringExtractorGDBRemote &packet);

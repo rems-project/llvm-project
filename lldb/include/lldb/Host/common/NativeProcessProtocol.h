@@ -394,6 +394,11 @@ public:
     return Status("Not implemented");
   }
 
+  /// \copydoc Process::GetSupportedTraceType()
+  virtual llvm::Expected<TraceTypeInfo> GetSupportedTraceType() {
+    return llvm::make_error<UnimplementedError>();
+  }
+
 protected:
   struct SoftwareBreakpoint {
     uint32_t ref_count;
