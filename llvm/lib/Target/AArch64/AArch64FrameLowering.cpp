@@ -2363,7 +2363,7 @@ static void computeCalleeSaveRegisterPairs(
     assert((!produceCompactUnwindFrame(MF) ||
             CC == CallingConv::PreserveMost ||
             (RPI.isPaired() &&
-             ((RPI.Reg1 == LR && RPI.Reg2 == FP) ||
+             ((RPI.Reg1 == AArch64::LR && RPI.Reg2 == AArch64::FP) ||
               RPI.Reg1 + 1 == RPI.Reg2))) &&
            "Callee-save registers not saved as adjacent register pair!");
 
