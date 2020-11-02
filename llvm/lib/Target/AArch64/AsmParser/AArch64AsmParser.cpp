@@ -2632,6 +2632,9 @@ unsigned AArch64AsmParser::matchRegisterNameAlias(StringRef Name,
                     .Case("lr",  AArch64::LR)
                     .Case("cfp", AArch64::CFP)
                     .Case("clr", AArch64::CLR)
+                    .Case("c31", AArch64::CZR)
+                    .Case("x31", AArch64::XZR)
+                    .Case("w31", AArch64::WZR)
                     .Default(0))
       return Kind == RegKind::Scalar ? RegNum : 0;
 
