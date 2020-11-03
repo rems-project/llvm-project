@@ -3959,6 +3959,47 @@ bool llvm::isNZCVTouchedInInstructionRange(const MachineInstr &DefMI,
                 });
 }
 
+void AArch64InstrInfo::decomposeStackOffsetForDwarfOffsets(
+    const StackOffset &Offset, int64_t &ByteSized, int64_t &VGSized) {
+  // The smallest scalable element supported by scaled SVE addressing
+  // modes are predicates, which are 2 scalable bytes in size. So the scalable
+  // byte offset must always be a multiple of 2.
+  assert(Offset.getScalable() % 2 == 0 && "Invalid frame offset");
+
+  // VGSized offsets are divided by '2', because the VG register is the
+  // the number of 64bit granules as opposed to 128bit vector chunks,
+  // which is how the 'n' in e.g. MVT::nxv1i8 is modelled.
+  // So, for a stack offset of 16 MVT::nxv1i8's, the size is n x 16 bytes.
+  // VG = n * 2 and the dwarf offset must be VG * 8 bytes.
+  ByteSized = Offset.getFixed();
+  VGSized = Offset.getScalable() / 2;
+}
+
+/// Returns the offset in parts to which this frame offset can be
+/// decomposed for the purpose of describing a frame offset.
+/// For non-scalable offsets this is simply its byte size.
+void AArch64InstrInfo::decomposeStackOffsetForFrameOffsets(
+    const StackOffset &Offset, int64_t &NumBytes, int64_t &NumPredicateVectors,
+    int64_t &NumDataVectors) {
+  // The smallest scalable element supported by scaled SVE addressing
+  // modes are predicates, which are 2 scalable bytes in size. So the scalable
+  // byte offset must always be a multiple of 2.
+  assert(Offset.getScalable() % 2 == 0 && "Invalid frame offset");
+
+  NumBytes = Offset.getFixed();
+  NumDataVectors = 0;
+  NumPredicateVectors = Offset.getScalable() / 2;
+  // This method is used to get the offsets to adjust the frame offset.
+  // If the function requires ADDPL to be used and needs more than two ADDPL
+  // instructions, part of the offset is folded into NumDataVectors so that it
+  // uses ADDVL for part of it, reducing the number of ADDPL instructions.
+  if (NumPredicateVectors % 8 == 0 || NumPredicateVectors < -64 ||
+      NumPredicateVectors > 62) {
+    NumDataVectors = NumPredicateVectors / 8;
+    NumPredicateVectors -= NumDataVectors * 8;
+  }
+}
+
 // Helper function to emit a frame offset adjustment from a given
 // pointer (SrcReg), stored into DestReg. This function is explicit
 // in that it requires the opcode.
@@ -4059,7 +4100,8 @@ void llvm::emitFrameOffset(MachineBasicBlock &MBB,
                            bool NeedsWinCFI, bool *HasWinCFI) {
   bool UsesCapabilities = AArch64::CapspRegClass.contains(SrcReg);
   int64_t Bytes, NumPredicateVectors, NumDataVectors;
-  Offset.getForFrameOffset(Bytes, NumPredicateVectors, NumDataVectors);
+  AArch64InstrInfo::decomposeStackOffsetForFrameOffsets(
+      Offset, Bytes, NumPredicateVectors, NumDataVectors);
 
   // First emit non-scalable frame offsets, or a simple 'mov'.
   if (Bytes || (!Offset && SrcReg != DestReg)) {
@@ -4385,7 +4427,7 @@ int llvm::isAArch64FrameOffsetLegal(const MachineInstr &MI,
   // Construct the complete offset.
   bool IsMulVL = ScaleValue.isScalable();
   unsigned Scale = ScaleValue.getKnownMinSize();
-  int64_t Offset = IsMulVL ? SOffset.getScalableBytes() : SOffset.getBytes();
+  int64_t Offset = IsMulVL ? SOffset.getScalable() : SOffset.getFixed();
 
   const MachineOperand &ImmOpnd =
       MI.getOperand(AArch64InstrInfo::getLoadStoreImmIdx(MI.getOpcode()));
@@ -4427,11 +4469,9 @@ int llvm::isAArch64FrameOffsetLegal(const MachineInstr &MI,
     *OutUnscaledOp = *UnscaledOp;
 
   if (IsMulVL)
-    SOffset = StackOffset(Offset, MVT::nxv1i8) +
-              StackOffset(SOffset.getBytes(), MVT::i8);
+    SOffset = StackOffset::get(SOffset.getFixed(), Offset);
   else
-    SOffset = StackOffset(Offset, MVT::i8) +
-              StackOffset(SOffset.getScalableBytes(), MVT::nxv1i8);
+    SOffset = StackOffset::get(Offset, SOffset.getScalable());
   return AArch64FrameOffsetCanUpdate |
          (SOffset ? 0 : AArch64FrameOffsetIsLegal);
 }
@@ -4444,7 +4484,7 @@ bool llvm::rewriteAArch64FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
 
   if (Opcode == AArch64::ADDSXri || Opcode == AArch64::ADDXri ||
       Opcode == AArch64::CapAddImm) {
-    Offset += StackOffset(MI.getOperand(ImmIdx).getImm(), MVT::i8);
+    Offset += StackOffset::getFixed(MI.getOperand(ImmIdx).getImm());
     emitFrameOffset(*MI.getParent(), MI, MI.getDebugLoc(),
                     MI.getOperand(0).getReg(), FrameReg, Offset, TII,
                     MachineInstr::NoFlags, (Opcode == AArch64::ADDSXri));

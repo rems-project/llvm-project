@@ -19,7 +19,7 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr128 = COPY $q0
     ; CHECK: [[FADDPv2i64p:%[0-9]+]]:fpr64 = FADDPv2i64p [[COPY]]
     ; CHECK: $d0 = COPY [[FADDPv2i64p]]
-    ; CHECK: RET_ReallyLR implicit $d0
+    ; CHECK: RET_ReallyLR 0, implicit $d0
     %0:fpr(<2 x s64>) = COPY $q0
     %6:gpr(s64) = G_CONSTANT i64 0
     %7:fpr(s64) = G_EXTRACT_VECTOR_ELT %0(<2 x s64>), %6(s64)
@@ -27,7 +27,7 @@ body:             |
     %9:fpr(s64) = G_EXTRACT_VECTOR_ELT %0(<2 x s64>), %8(s64)
     %4:fpr(s64) = G_FADD %7, %9
     $d0 = COPY %4(s64)
-    RET_ReallyLR implicit $d0
+    RET_ReallyLR 0, implicit $d0
 
 ...
 ---
@@ -49,7 +49,7 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr64 = COPY $d0
     ; CHECK: [[FADDPv2i32p:%[0-9]+]]:fpr32 = FADDPv2i32p [[COPY]]
     ; CHECK: $s0 = COPY [[FADDPv2i32p]]
-    ; CHECK: RET_ReallyLR implicit $s0
+    ; CHECK: RET_ReallyLR 0, implicit $s0
     %0:fpr(<2 x s32>) = COPY $d0
     %6:gpr(s64) = G_CONSTANT i64 0
     %7:fpr(s32) = G_EXTRACT_VECTOR_ELT %0(<2 x s32>), %6(s64)
@@ -57,6 +57,6 @@ body:             |
     %9:fpr(s32) = G_EXTRACT_VECTOR_ELT %0(<2 x s32>), %8(s64)
     %4:fpr(s32) = G_FADD %7, %9
     $s0 = COPY %4(s32)
-    RET_ReallyLR implicit $s0
+    RET_ReallyLR 0, implicit $s0
 
 ...
