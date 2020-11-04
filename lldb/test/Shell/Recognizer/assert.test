@@ -1,4 +1,5 @@
 # XFAIL: target-arm && linux-gnu
+# XFAIL: system-freebsd
 # UNSUPPORTED: system-windows
 # REQUIRES: python
 # RUN: %clang_host -g -O0 %S/Inputs/assert.c -o %t.out
