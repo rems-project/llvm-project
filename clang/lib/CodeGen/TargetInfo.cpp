@@ -7871,14 +7871,17 @@ MipsABIInfo::classifyArgumentType(QualType Ty, bool IsFixed,
     unsigned Threshold = IsO32 ? 16 : 64;
     const TargetInfo &Target = getContext().getTargetInfo();
     bool PassIndirect = false;
+    bool ByVal = true;
     if (Target.areAllPointersCapabilities()) {
       // assume we can pass structs up to 8 capabilities in size directly
       Threshold = 8 * (Target.getCHERICapabilityWidth() / 8);
     } else if (const auto *RT = Ty->getAs<RecordType>()) {
       // Aggregates containing capabilities are passed indirectly for hybrid
-      // varargs.
-      if (!IsFixed && getContext().containsCapabilities(RT->getDecl()))
+      // varargs, not just on the stack.
+      if (!IsFixed && getContext().containsCapabilities(RT->getDecl())) {
         PassIndirect = true;
+        ByVal = false;
+      }
     }
     if (getContext().getTypeSizeInChars(Ty) > CharUnits::fromQuantity(Threshold))
       PassIndirect = true;
@@ -7890,7 +7893,7 @@ MipsABIInfo::classifyArgumentType(QualType Ty, bool IsFixed,
              getContext().containsCapabilities(Ty))
       PassIndirect = true;
     if (PassIndirect)
-      return ABIArgInfo::getIndirect(CharUnits::fromQuantity(Align), true,
+      return ABIArgInfo::getIndirect(CharUnits::fromQuantity(Align), ByVal,
                                      getContext().getTypeAlign(Ty) / 8 > Align);
 
     // If we have reached here, aggregates are passed directly by coercing to
@@ -7930,9 +7933,10 @@ MipsABIInfo::classifyArgumentType(QualType Ty, bool IsFixed,
   }
 
   if (Ty->isCHERICapabilityType(getContext())) {
-    // Capabilities are passed indirectly for hybrid varargs.
+    // Capabilities are passed indirectly for hybrid varargs, not just on the
+    // stack.
     if (!IsFixed && !getContext().getTargetInfo().areAllPointersCapabilities())
-      return getNaturalAlignIndirect(Ty);
+      return getNaturalAlignIndirect(Ty, /*ByVal=*/false);
     else
       return ABIArgInfo::getDirect(CGT.ConvertType(Ty));
   }
