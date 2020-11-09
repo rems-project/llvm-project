@@ -66,7 +66,8 @@ add_lldb_library(lldbUtility
   StructuredData.cpp
   TildeExpressionResolver.cpp
   Timer.cpp
-  TraceOptions.cpp
+  TraceGDBRemotePackets.cpp
+  TraceIntelPTGDBRemotePackets.cpp
   UnimplementedError.cpp
   UUID.cpp
   UriParser.cpp
