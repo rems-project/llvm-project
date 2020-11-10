@@ -1219,9 +1219,9 @@ _LIBCPP_FUNC_VIS extern "C" void __sanitizer_annotate_contiguous_container(
 #  endif
 #endif
 
-#if defined(__BIONIC__) || defined(__CloudABI__) ||                            \
+#if defined(__BIONIC__) || defined(__CloudABI__) || \
     defined(__Fuchsia__) || defined(__wasi__) || defined(_LIBCPP_HAS_MUSL_LIBC) || \
-    defined(_LIBCPP_HAS_NEWLIB)
+    defined(__MVS__) || defined(_LIBCPP_HAS_NEWLIB)
 #define _LIBCPP_PROVIDES_DEFAULT_RUNE_TABLE
 #endif
 
