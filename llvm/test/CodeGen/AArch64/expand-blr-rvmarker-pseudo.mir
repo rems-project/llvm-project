@@ -17,5 +17,5 @@ body:             |
         liveins: $lr, $x0
 
         BLR_RVMARKER $x0, csr_aarch64_aapcs, implicit-def dead $lr, implicit $sp, implicit-def $sp, implicit-def dead $x0
-        RET_ReallyLR implicit killed $w0
+        RET_ReallyLR 0, implicit killed $w0
 ...

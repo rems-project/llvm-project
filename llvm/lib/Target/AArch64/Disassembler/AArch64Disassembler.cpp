@@ -294,23 +294,19 @@ DecodeStatus AArch64Disassembler::getInstruction(MCInst &MI, uint64_t &Size,
   uint32_t Insn =
       (Bytes[3] << 24) | (Bytes[2] << 16) | (Bytes[1] << 8) | (Bytes[0] << 0);
 
-  // Calling the auto-generated decoder function.
-  DecodeStatus Result = decodeInstruction(DecoderTableAArch64C6432,
-                                          MI, Insn, Address, this, STI);
-  if (Result != Fail)
-    return Result;
+  const uint8_t *Tables[] = {DecoderTableAArch64C6432,
+                             DecoderTableAArch64MorelloC6432,
+                             DecoderTableAArch64Morello32,
+                             DecoderTable32, DecoderTableFallback32};
 
-  Result = decodeInstruction(DecoderTableAArch64MorelloC6432, MI, Insn, Address, this,
-                             STI);
-  if (Result != Fail)
-    return Result;
+  for (auto Table : Tables) {
+    DecodeStatus Result =
+        decodeInstruction(Table, MI, Insn, Address, this, STI);
+    if (Result != MCDisassembler::Fail)
+      return Result;
+  }
 
-  Result = decodeInstruction(DecoderTableAArch64Morello32, MI, Insn, Address, this,
-                             STI);
-  if (Result != Fail)
-    return Result;
-
-  return decodeInstruction(DecoderTable32, MI, Insn, Address, this, STI);
+  return MCDisassembler::Fail;
 }
 
 static MCSymbolizer *

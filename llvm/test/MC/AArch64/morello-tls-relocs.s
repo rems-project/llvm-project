@@ -3,7 +3,7 @@
 
     .globl var
     .text
-// CHECK: adrp c0, #0
+// CHECK: adrp c0, 0x0
 // CHECK-NEXT: R_MORELLO_TLSDESC_ADR_PAGE20 var
 // CHECK: ldr c1, [c0, #0]
 // CHECK-NEXT: R_MORELLO_TLSDESC_LD128_LO12 var
