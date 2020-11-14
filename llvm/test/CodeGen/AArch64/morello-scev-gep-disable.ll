@@ -24,7 +24,7 @@ for.body:                                         ; preds = %for.body, %for.body
   %1 = mul nsw i64 %indvars.iv, %0
   %arrayidx = getelementptr inbounds i32, i32 addrspace(200)* %a, i64 %indvars.iv
 ; FATPTR_ENABLED: %arrayidx = getelementptr 
-; FATPTR_ENABLED-NEXT: -->  {%a,+,4}<nsw><%for.body>
+; FATPTR_ENABLED-NEXT: -->  {%a,+,4}<nuw><%for.body>
 ; FATPTR_DISABLED: %arrayidx = getelementptr 
 ; FATPTR_DISABLED-NEXT: -->  %arrayidx U:
   %2 = trunc i64 %1 to i32
