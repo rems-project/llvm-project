@@ -206,6 +206,12 @@ void AArch64TargetInfo::getTargetDefinesARMV86A(const LangOptions &Opts,
   getTargetDefinesARMV85A(Opts, Builder);
 }
 
+void AArch64TargetInfo::getTargetDefinesARMV87A(const LangOptions &Opts,
+                                                MacroBuilder &Builder) const {
+  // Also include the Armv8.6 defines
+  getTargetDefinesARMV86A(Opts, Builder);
+}
+
 void AArch64TargetInfo::getTargetDefines(const LangOptions &Opts,
                                          MacroBuilder &Builder) const {
   // Target identification.
@@ -428,6 +434,9 @@ void AArch64TargetInfo::getTargetDefines(const LangOptions &Opts,
   case llvm::AArch64::ArchKind::ARMV8_6A:
     getTargetDefinesARMV86A(Opts, Builder);
     break;
+  case llvm::AArch64::ArchKind::ARMV8_7A:
+    getTargetDefinesARMV87A(Opts, Builder);
+    break;
   }
 
   // All of the __sync_(bool|val)_compare_and_swap_(1|2|4|8) builtins work.
@@ -470,6 +479,7 @@ bool AArch64TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
   HasFP16FML = false;
   HasMTE = false;
   HasTME = false;
+  HasLS64 = false;
   HasMatMul = false;
   HasBFloat16 = false;
   HasSVE2 = false;
@@ -545,6 +555,8 @@ bool AArch64TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
       ArchKind = llvm::AArch64::ArchKind::ARMV8_5A;
     if (Feature == "+v8.6a")
       ArchKind = llvm::AArch64::ArchKind::ARMV8_6A;
+    if (Feature == "+v8.7a")
+      ArchKind = llvm::AArch64::ArchKind::ARMV8_7A;
     if (Feature == "+v8r")
       ArchKind = llvm::AArch64::ArchKind::ARMV8R;
     if (Feature == "+fullfp16")
@@ -563,6 +575,8 @@ bool AArch64TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
       HasBFloat16 = true;
     if (Feature == "+lse")
       HasLSE = true;
+    if (Feature == "+ls64")
+      HasLS64 = true;
     if (Feature == "+morello")
       Morello = true;
     if (Feature == "+c64") {
