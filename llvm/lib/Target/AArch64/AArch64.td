@@ -948,6 +948,18 @@ def ProcRainier : SubtargetFeature<"rainier", "ARMProcFamily",
                                     FeatureMorello
                                     ]>;
 
+def ProcNeoverseN2 : SubtargetFeature<"neoversen2", "ARMProcFamily",
+                                      "NeoverseN2",
+                                      "Neoverse N2 ARM processors", [
+                                      HasV8_5aOps,
+                                      FeatureBF16,
+                                      FeatureETE,
+                                      FeatureMatMulInt8,
+                                      FeatureMTE,
+                                      FeatureSVE2,
+                                      FeatureSVE2BitPerm,
+                                      FeatureTRBE]>;
+
 def ProcNeoverseV1 : SubtargetFeature<"neoversev1", "ARMProcFamily",
                                       "NeoverseV1",
                                       "Neoverse V1 ARM processors", [
@@ -1110,6 +1122,7 @@ def : ProcessorModel<"cortex-x1", CortexA57Model, [ProcX1]>;
 def : ProcessorModel<"neoverse-e1", CortexA53Model, [ProcNeoverseE1]>;
 def : ProcessorModel<"neoverse-n1", CortexA57Model, [ProcNeoverseN1]>;
 def : ProcessorModel<"rainier", CortexA57Model, [ProcRainier]>;
+def : ProcessorModel<"neoverse-n2", CortexA57Model, [ProcNeoverseN2]>;
 def : ProcessorModel<"neoverse-v1", CortexA57Model, [ProcNeoverseV1]>;
 def : ProcessorModel<"exynos-m3", ExynosM3Model, [ProcExynosM3]>;
 def : ProcessorModel<"exynos-m4", ExynosM4Model, [ProcExynosM4]>;
