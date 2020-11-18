@@ -30,4 +30,5 @@ add_lldb_library(lldbExpression
     Core
     ExecutionEngine
     Support
+    RuntimeDyld
   )

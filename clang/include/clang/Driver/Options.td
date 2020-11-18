@@ -328,7 +328,7 @@ def cheri_uintcap_addr : Flag<["-"], "cheri-uintcap=addr">, Flags<[NoXarchOption
 def cheri_data_dependent_provenance : Flag<["-"], "cheri-data-dependent-provenance">, Flags<[CC1Option]>, Group<cheri_Group>,
   HelpText<"Use the LHS or NULL provenance of a bitwise-and operation depending on the value of the RHS">;
 def cheri_inline_memops : Joined<["-"], "cheri-inline-memops=">,
-  Flags<[DriverOption,CC1Option]>, Group<cheri_Group>,
+  Flags<[CC1Option]>, Group<cheri_Group>,
   HelpText<"Select behaviour for inlining memcpy/memmove">,
   Values<"legacy,new">;
 
