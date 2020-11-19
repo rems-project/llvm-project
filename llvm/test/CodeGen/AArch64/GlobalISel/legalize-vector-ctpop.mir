@@ -13,10 +13,10 @@ body:             |
     ; CHECK: %copy:_(<2 x s64>) = COPY $q0
     ; CHECK: %ctpop:_(<2 x s64>) = G_CTPOP %copy(<2 x s64>)
     ; CHECK: $q0 = COPY %ctpop(<2 x s64>)
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %copy:_(<2 x s64>) = COPY $q0
     %ctpop:_(<2 x s64>) = G_CTPOP %copy(<2 x s64>)
     $q0 = COPY %ctpop(<2 x s64>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 
 ...

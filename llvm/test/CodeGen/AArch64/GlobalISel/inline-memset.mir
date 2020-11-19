@@ -255,4 +255,4 @@ body:             |
     %3:_(s64) = G_CONSTANT i64 16
     %2:_(s8) = G_TRUNC %1(s32)
     G_MEMSET %0(p0), %2(s8), %3(s64), 1 :: (store 1 into %ir.dst)
-    RET_ReallyLR
+    RET_ReallyLR 0
