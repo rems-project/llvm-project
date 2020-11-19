@@ -191,6 +191,7 @@ protected:
   // Future architecture extensions.
   bool HasETE = false;
   bool HasTRBE = false;
+  bool HasBRBE = false;
 
   // HasZeroCycleRegMove - Has zero-cycle register mov instructions.
   bool HasZeroCycleRegMove = false;
