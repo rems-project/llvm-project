@@ -192,8 +192,8 @@ class MorelloCapabilityOperationTestCase(CapabilityOperationTestBase):
         self.assertTrue(error.Success())
         self.assertEqual(len(content), 16)
         self.assertEqual(content,
-                         '\x10\x00\x00\x80\x00\x00\x00\x00'
-                         '\x20\x00\x00\x40\x00\xc0\x50\xdf')
+                         b'\x10\x00\x00\x80\x00\x00\x00\x00'
+                         b'\x20\x00\x00\x40\x00\xc0\x50\xdf')
 
         # Test read at the same address but this time as a tagged one.
         content = process.ReadMemory(0x400, 17, error,
@@ -201,9 +201,9 @@ class MorelloCapabilityOperationTestCase(CapabilityOperationTestBase):
         self.assertTrue(error.Success())
         self.assertEqual(len(content), 17)
         self.assertEqual(content,
-                         '\x01'
-                         '\x10\x00\x00\x80\x00\x00\x00\x00'
-                         '\x20\x00\x00\x40\x00\xc0\x50\xdf')
+                         b'\x01'
+                         b'\x10\x00\x00\x80\x00\x00\x00\x00'
+                         b'\x20\x00\x00\x40\x00\xc0\x50\xdf')
 
         # Test tagged read of more than one value.
         content = process.ReadMemory(0x460, 34, error,
@@ -211,12 +211,12 @@ class MorelloCapabilityOperationTestCase(CapabilityOperationTestBase):
         self.assertTrue(error.Success())
         self.assertEqual(len(content), 34)
         self.assertEqual(content,
-                         '\x00'
-                         '\x00\x01\x00\x80\x00\x00\x00\x00'
-                         '\x00\x02\x00\x40\x00\xc0\x50\xdf'
-                         '\x01'
-                         '\x10\x00\x00\x00\x00\x00\x00\x00'
-                         '\x10\x00\x20\x40\x00\xc0\x50\xdf')
+                         b'\x00'
+                         b'\x00\x01\x00\x80\x00\x00\x00\x00'
+                         b'\x00\x02\x00\x40\x00\xc0\x50\xdf'
+                         b'\x01'
+                         b'\x10\x00\x00\x00\x00\x00\x00\x00'
+                         b'\x10\x00\x20\x40\x00\xc0\x50\xdf')
 
         # Test that software breakpoint opcodes are replaced with the original
         # data - 1. A64 address.
@@ -234,12 +234,12 @@ class MorelloCapabilityOperationTestCase(CapabilityOperationTestBase):
         self.assertTrue(error.Success())
         self.assertEqual(len(content), 34)
         self.assertEqual(content,
-                         '\x01'
-                         '\x10\x00\x00\x80\x00\x00\x00\x00'
-                         '\x20\x00\x00\x40\x00\xc0\x50\xdf'
-                         '\x01'
-                         '\x08\x00\x00\x80\x00\x00\x00\x00'
-                         '\x20\x00\x00\x40\x00\xc0\x50\xdf')
+                         b'\x01'
+                         b'\x10\x00\x00\x80\x00\x00\x00\x00'
+                         b'\x20\x00\x00\x40\x00\xc0\x50\xdf'
+                         b'\x01'
+                         b'\x08\x00\x00\x80\x00\x00\x00\x00'
+                         b'\x20\x00\x00\x40\x00\xc0\x50\xdf')
         process.GetTarget().DeleteAllBreakpoints()
 
         # Test that software breakpoint opcodes are replaced with the original
@@ -260,12 +260,12 @@ class MorelloCapabilityOperationTestCase(CapabilityOperationTestBase):
         self.assertTrue(error.Success())
         self.assertEqual(len(content), 34)
         self.assertEqual(content,
-                         '\x01'
-                         '\x10\x00\x00\x80\x00\x00\x00\x00'
-                         '\x20\x00\x00\x40\x00\xc0\x50\xdf'
-                         '\x01'
-                         '\x08\x00\x00\x80\x00\x00\x00\x00'
-                         '\x20\x00\x00\x40\x00\xc0\x50\xdf')
+                         b'\x01'
+                         b'\x10\x00\x00\x80\x00\x00\x00\x00'
+                         b'\x20\x00\x00\x40\x00\xc0\x50\xdf'
+                         b'\x01'
+                         b'\x08\x00\x00\x80\x00\x00\x00\x00'
+                         b'\x20\x00\x00\x40\x00\xc0\x50\xdf')
         process.GetTarget().DeleteAllBreakpoints()
 
 

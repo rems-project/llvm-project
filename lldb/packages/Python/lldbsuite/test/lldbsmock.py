@@ -290,7 +290,7 @@ class Register(object):
             return b'E01'
 
         if byte_order == 'little':
-            hexvalue = ''.join(reversed(
+            hexvalue = b''.join(reversed(
                 [hexvalue[i:i + 2] for i in range(0, len(hexvalue), 2)]))
 
         self.write(int(hexvalue, 16))
