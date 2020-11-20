@@ -80,6 +80,8 @@ public:
 
   bool GetMoveToNearestCode() const;
 
+  bool GetForceExpressionEvaluation() const;
+
   lldb::DynamicValueType GetPreferDynamicValue() const;
 
   bool SetPreferDynamicValue(lldb::DynamicValueType d);
