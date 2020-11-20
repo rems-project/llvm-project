@@ -1175,7 +1175,7 @@ INSTANTIATE_TEST_CASE_P(
                              AArch64::AEK_LSE | AArch64::AEK_RDM,
                          "8.2-A")), );
 
-static constexpr unsigned NumAArch64CPUArchs = 46;
+static constexpr unsigned NumAArch64CPUArchs = 47;
 
 TEST(TargetParserTest, testAArch64CPUArchList) {
   SmallVector<StringRef, NumAArch64CPUArchs> List;
