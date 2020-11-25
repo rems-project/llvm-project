@@ -5974,7 +5974,7 @@ static void printNotesHelper(
                             typename ELFT::Addr)>
         StartNotesFn,
     llvm::function_ref<void(const typename ELFT::Note &)> ProcessNoteFn,
-    llvm::function_ref<void()> FinishNotesFn = []() {}) {
+    llvm::function_ref<void()> FinishNotesFn) {
   const ELFFile<ELFT> &Obj = *Dumper.getElfObject().getELFFile();
 
   ArrayRef<typename ELFT::Shdr> Sections = cantFail(Obj.sections());
@@ -6077,7 +6077,7 @@ template <class ELFT> void GNUStyle<ELFT>::printNotes() {
     }
   };
 
-  printNotesHelper(this->dumper(), PrintHeader, ProcessNote);
+  printNotesHelper(this->dumper(), PrintHeader, ProcessNote, []() {});
 }
 
 template <class ELFT> void GNUStyle<ELFT>::printELFLinkerOptions() {
