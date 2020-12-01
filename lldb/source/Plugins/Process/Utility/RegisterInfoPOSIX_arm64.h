@@ -29,6 +29,7 @@ public:
   };
 
   // based on RegisterContextDarwin_arm64.h
+  LLVM_PACKED_START
   struct GPR {
     uint64_t x[30]; // x0-x29
     uint64_t lr;    // x30
@@ -36,6 +37,7 @@ public:
     uint64_t pc;    // pc
     uint32_t cpsr;  // cpsr
   };
+  LLVM_PACKED_END
 
   // based on RegisterContextDarwin_arm64.h
   struct VReg {
