@@ -3230,6 +3230,7 @@ static const struct Extension {
   { "sve2-sha3", {AArch64::FeatureSVE2SHA3}, {AArch64::FeatureSVE2SHA3}},
   { "rcpc", {AArch64::FeatureRCPC}, {AArch64::FeatureRCPC}},
   { "sve2-bitperm", {AArch64::FeatureSVE2BitPerm}, {AArch64::FeatureSVE2BitPerm}},
+  { "ls64", {AArch64::FeatureLS64}, {AArch64::FeatureLS64}},
   { "xs", {AArch64::FeatureXS}, {AArch64::FeatureXS} },
   { "a64c", {AArch64::FeatureMorello},
             {AArch64::FeatureMorello, AArch64::FeatureC64} },
