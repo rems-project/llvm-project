@@ -7,35 +7,35 @@
 #define inline
 #include <cheri.h>
 
-// PTRS-AARCH64: define i64 @_Z16cheri_length_getPv(i8* nocapture readnone %__cap)
+// PTRS-AARCH64: define i64 @_Z16cheri_length_getPv(i8* nocapture readnone %{{.*}})
 // PTRS-AARCH64: ret i64 -1
-// PTRS-AARCH64: define i64 @_Z14cheri_base_getPv(i8* nocapture readnone %__cap)
+// PTRS-AARCH64: define i64 @_Z14cheri_base_getPv(i8* nocapture readnone %{{.*}})
 // PTRS-AARCH64: ret i64 -1
-// PTRS-AARCH64: define i64 @_Z16cheri_offset_getPv(i8* nocapture readnone %__cap)
+// PTRS-AARCH64: define i64 @_Z16cheri_offset_getPv(i8* nocapture readnone %{{.*}})
 // PTRS-AARCH64: ret i64 -1
-// PTRS-AARCH64: define i8* @_Z16cheri_offset_setPvm(i8* readnone returned %__cap, i64  %__val)
-// PTRS-AARCH64: ret i8* %__cap
-// PTRS-AARCH64: define i32 @_Z14cheri_type_getPv(i8* nocapture readnone %__cap)
+// PTRS-AARCH64: define i8* @_Z16cheri_offset_setPvm(i8* readnone returned %{{.*}}, i64  %{{.*}})
+// PTRS-AARCH64: ret i8* %{{.*}}
+// PTRS-AARCH64: define i32 @_Z14cheri_type_getPv(i8* nocapture readnone %{{.*}})
 // PTRS-AARCH64: ret i32 0
-// PTRS-AARCH64: define i32 @_Z15cheri_perms_getPv(i8* nocapture readnone %__cap)
+// PTRS-AARCH64: define i32 @_Z15cheri_perms_getPv(i8* nocapture readnone %{{.*}})
 // PTRS-AARCH64: ret i32 0
-// PTRS-AARCH64: define i8* @_Z15cheri_perms_andPvj(i8* readnone returned %__cap, i32 %__val)
-// PTRS-AARCH64: ret i8* %__cap
-// PTRS-AARCH64: define i1 @_Z13cheri_tag_getPv(i8* nocapture readnone %__cap)
+// PTRS-AARCH64: define i8* @_Z15cheri_perms_andPvj(i8* readnone returned %{{.*}}, i32 %{{.*}})
+// PTRS-AARCH64: ret i8* %{{.*}}
+// PTRS-AARCH64: define i1 @_Z13cheri_tag_getPv(i8* nocapture readnone %{{.*}})
 // PTRS-AARCH64: ret i1 false
-// PTRS-AARCH64: define i1 @_Z16cheri_sealed_getPv(i8* nocapture readnone %__cap)
+// PTRS-AARCH64: define i1 @_Z16cheri_sealed_getPv(i8* nocapture readnone %{{.*}})
 // PTRS-AARCH64: ret i1 false
-// PTRS-AARCH64: define i8* @_Z22cheri_offset_incrementPvl(i8* readnone %__cap, i64 %__offset)
-// PTRS-AARCH64: %add.ptr = getelementptr inbounds i8, i8* %__cap, i64 %__offset
-// PTRS-AARCH64: ret i8* %add.ptr
-// PTRS-AARCH64: define i8* @_Z15cheri_tag_clearPv(i8* readnone returned %__cap)
-// PTRS-AARCH64: ret i8* %__cap
-// PTRS-AARCH64: define i8* @_Z10cheri_sealPvPKv(i8* readnone returned %__cap, i8* nocapture readnone %__type)
-// PTRS-AARCH64: ret i8* %__cap
-// PTRS-AARCH64: define i8* @_Z12cheri_unsealPvPKv(i8* readnone returned %__cap, i8* nocapture readnone %__type)
-// PTRS-AARCH64: ret i8* %__cap
-// PTRS-AARCH64: define i8* @_Z16cheri_bounds_setPvm(i8* readnone returned %__cap, i64 %__bounds)
-// PTRS-AARCH64: ret i8* %__cap
+// PTRS-AARCH64: define i8* @_Z22cheri_offset_incrementPvl(i8* readnone %{{.*}}, i64 %{{.*}})
+// PTRS-AARCH64: %{{.*}} = getelementptr inbounds i8, i8* %{{.*}}, i64 %{{.*}}
+// PTRS-AARCH64: ret i8* %{{.*}}
+// PTRS-AARCH64: define i8* @_Z15cheri_tag_clearPv(i8* readnone returned %{{.*}})
+// PTRS-AARCH64: ret i8* %{{.*}}
+// PTRS-AARCH64: define i8* @_Z10cheri_sealPvPKv(i8* readnone returned %{{.*}}, i8* nocapture readnone %{{.*}})
+// PTRS-AARCH64: ret i8* %{{.*}}
+// PTRS-AARCH64: define i8* @_Z12cheri_unsealPvPKv(i8* readnone returned %{{.*}}, i8* nocapture readnone %{{.*}})
+// PTRS-AARCH64: ret i8* %{{.*}}
+// PTRS-AARCH64: define i8* @_Z16cheri_bounds_setPvm(i8* readnone returned %{{.*}}, i64 %{{.*}})
+// PTRS-AARCH64: ret i8* %{{.*}}
 // PTRS-AARCH64: define noalias i8* @_Z21cheri_global_data_getv()
 // PTRS-AARCH64: ret i8* null
 // PTRS-AARCH64: define noalias i8* @_Z25cheri_program_counter_getv()
@@ -78,34 +78,34 @@
 // CAPS: define i8 addrspace(200)* @_Z25cheri_program_counter_getv()
 // CAPS: call i8 addrspace(200)* @llvm.cheri.pcc.get()
 
-// CAPS-AARCH64: define i64 @_Z16cheri_length_getU3capPv(i8 addrspace(200)* readnone %__cap)
-// CAPS-AARCH64: call i64 @llvm.cheri.cap.length.get.i64(i8 addrspace(200)* %__cap)
-// CAPS-AARCH64: define i64 @_Z14cheri_base_getU3capPv(i8 addrspace(200)* readnone %__cap)
-// CAPS-AARCH64: call i64 @llvm.cheri.cap.base.get.i64(i8 addrspace(200)* %__cap)
-// CAPS-AARCH64: define i64 @_Z16cheri_offset_getU3capPv(i8 addrspace(200)* readnone %__cap)
-// CAPS-AARCH64: call i64 @llvm.cheri.cap.offset.get.i64(i8 addrspace(200)* %__cap)
-// CAPS-AARCH64: define i8 addrspace(200)* @_Z16cheri_offset_setU3capPvm(i8 addrspace(200)* readnone %__cap, i64 %__val)
-// CAPS-AARCH64: call i8 addrspace(200)* @llvm.cheri.cap.offset.set.i64(i8 addrspace(200)* %__cap, i64 %__val)
-// CAPS-AARCH64: define i32 @_Z14cheri_type_getU3capPv(i8 addrspace(200)* %__cap)
-// CAPS-AARCH64: call i64 @llvm.cheri.cap.type.get.i64(i8 addrspace(200)* %__cap)
-// CAPS-AARCH64: define i32 @_Z15cheri_perms_getU3capPv(i8 addrspace(200)* %__cap)
-// CAPS-AARCH64: call i64 @llvm.cheri.cap.perms.get.i64(i8 addrspace(200)* %__cap)
-// CAPS-AARCH64: define i8 addrspace(200)* @_Z15cheri_perms_andU3capPvj(i8 addrspace(200)* readnone %__cap, i32 %__val)
-// CAPS-AARCH64: call i8 addrspace(200)* @llvm.cheri.cap.perms.and.i64(i8 addrspace(200)* %__cap, i64
-// CAPS-AARCH64: define i1 @_Z13cheri_tag_getU3capPv(i8 addrspace(200)* readnone %__cap)
-// CAPS-AARCH64: call i1 @llvm.cheri.cap.tag.get(i8 addrspace(200)* %__cap)
-// CAPS-AARCH64: define i1 @_Z16cheri_sealed_getU3capPv(i8 addrspace(200)* readnone %__cap)
-// CAPS-AARCH64: call i1 @llvm.cheri.cap.sealed.get(i8 addrspace(200)* %__cap)
-// CAPS-AARCH64: define i8 addrspace(200)* @_Z22cheri_offset_incrementU3capPvl(i8 addrspace(200)* readnone %__cap, i64 %__offset)
+// CAPS-AARCH64: define i64 @_Z16cheri_length_getU3capPv(i8 addrspace(200)* readnone %{{.*}})
+// CAPS-AARCH64: call i64 @llvm.cheri.cap.length.get.i64(i8 addrspace(200)* %{{.*}})
+// CAPS-AARCH64: define i64 @_Z14cheri_base_getU3capPv(i8 addrspace(200)* readnone %{{.*}})
+// CAPS-AARCH64: call i64 @llvm.cheri.cap.base.get.i64(i8 addrspace(200)* %{{.*}})
+// CAPS-AARCH64: define i64 @_Z16cheri_offset_getU3capPv(i8 addrspace(200)* readnone %{{.*}})
+// CAPS-AARCH64: call i64 @llvm.cheri.cap.offset.get.i64(i8 addrspace(200)* %{{.*}})
+// CAPS-AARCH64: define i8 addrspace(200)* @_Z16cheri_offset_setU3capPvm(i8 addrspace(200)* readnone %{{.*}}, i64 %{{.*}})
+// CAPS-AARCH64: call i8 addrspace(200)* @llvm.cheri.cap.offset.set.i64(i8 addrspace(200)* %{{.*}}, i64 %{{.*}})
+// CAPS-AARCH64: define i32 @_Z14cheri_type_getU3capPv(i8 addrspace(200)* %{{.*}})
+// CAPS-AARCH64: call i64 @llvm.cheri.cap.type.get.i64(i8 addrspace(200)* %{{.*}})
+// CAPS-AARCH64: define i32 @_Z15cheri_perms_getU3capPv(i8 addrspace(200)* %{{.*}})
+// CAPS-AARCH64: call i64 @llvm.cheri.cap.perms.get.i64(i8 addrspace(200)* %{{.*}})
+// CAPS-AARCH64: define i8 addrspace(200)* @_Z15cheri_perms_andU3capPvj(i8 addrspace(200)* readnone %{{.*}}, i32 %{{.*}})
+// CAPS-AARCH64: call i8 addrspace(200)* @llvm.cheri.cap.perms.and.i64(i8 addrspace(200)* %{{.*}}, i64
+// CAPS-AARCH64: define i1 @_Z13cheri_tag_getU3capPv(i8 addrspace(200)* readnone %{{.*}})
+// CAPS-AARCH64: call i1 @llvm.cheri.cap.tag.get(i8 addrspace(200)* %{{.*}})
+// CAPS-AARCH64: define i1 @_Z16cheri_sealed_getU3capPv(i8 addrspace(200)* readnone %{{.*}})
+// CAPS-AARCH64: call i1 @llvm.cheri.cap.sealed.get(i8 addrspace(200)* %{{.*}})
+// CAPS-AARCH64: define i8 addrspace(200)* @_Z22cheri_offset_incrementU3capPvl(i8 addrspace(200)* readnone %{{.*}}, i64 %{{.*}})
 // CAPS-AARCH64:  getelementptr i8, i8 addrspace(200)* {{.*}}, i64
-// CAPS-AARCH64: define i8 addrspace(200)* @_Z15cheri_tag_clearU3capPv(i8 addrspace(200)* readnone %__cap)
-// CAPS-AARCH64: call i8 addrspace(200)* @llvm.cheri.cap.tag.clear(i8 addrspace(200)* %__cap)
-// CAPS-AARCH64: define i8 addrspace(200)* @_Z10cheri_sealU3capPvU3capPKv(i8 addrspace(200)* readnone %__cap, i8 addrspace(200)* readnone %__type)
-// CAPS-AARCH64: call i8 addrspace(200)* @llvm.cheri.cap.seal(i8 addrspace(200)* %__cap, i8 addrspace(200)* %__type)
-// CAPS-AARCH64: define i8 addrspace(200)* @_Z12cheri_unsealU3capPvU3capPKv(i8 addrspace(200)* readnone %__cap, i8 addrspace(200)* readnone %__type)
-// CAPS-AARCH64: call i8 addrspace(200)* @llvm.cheri.cap.unseal(i8 addrspace(200)* %__cap, i8 addrspace(200)* %__type)
-// CAPS-AARCH64: define i8 addrspace(200)* @_Z16cheri_bounds_setU3capPvm(i8 addrspace(200)* readnone %__cap, i64 %__bounds)
-// CAPS-AARCH64: call i8 addrspace(200)* @llvm.cheri.cap.bounds.set.i64(i8 addrspace(200)* %__cap, i64  %__bounds)
+// CAPS-AARCH64: define i8 addrspace(200)* @_Z15cheri_tag_clearU3capPv(i8 addrspace(200)* readnone %{{.*}})
+// CAPS-AARCH64: call i8 addrspace(200)* @llvm.cheri.cap.tag.clear(i8 addrspace(200)* %{{.*}})
+// CAPS-AARCH64: define i8 addrspace(200)* @_Z10cheri_sealU3capPvU3capPKv(i8 addrspace(200)* readnone %{{.*}}, i8 addrspace(200)* readnone %{{.*}})
+// CAPS-AARCH64: call i8 addrspace(200)* @llvm.cheri.cap.seal(i8 addrspace(200)* %{{.*}}, i8 addrspace(200)* %{{.*}})
+// CAPS-AARCH64: define i8 addrspace(200)* @_Z12cheri_unsealU3capPvU3capPKv(i8 addrspace(200)* readnone %{{.*}}, i8 addrspace(200)* readnone %{{.*}})
+// CAPS-AARCH64: call i8 addrspace(200)* @llvm.cheri.cap.unseal(i8 addrspace(200)* %{{.*}}, i8 addrspace(200)* %{{.*}})
+// CAPS-AARCH64: define i8 addrspace(200)* @_Z16cheri_bounds_setU3capPvm(i8 addrspace(200)* readnone %{{.*}}, i64 %{{.*}})
+// CAPS-AARCH64: call i8 addrspace(200)* @llvm.cheri.cap.bounds.set.i64(i8 addrspace(200)* %{{.*}}, i64  %{{.*}})
 // CAPS-AARCH64: define i8 addrspace(200)* @_Z21cheri_global_data_getv()
 // CAPS-AARCH64: call i8 addrspace(200)* @llvm.cheri.ddc.get()
 // CAPS-AARCH64: define i8 addrspace(200)* @_Z25cheri_program_counter_getv()

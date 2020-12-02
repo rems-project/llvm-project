@@ -1,4 +1,5 @@
 // RUN: %clang %s -fno-rtti -std=c++11 -target aarch64-none-elf -march=morello+c64 -mabi=purecap -o - -emit-llvm -S -fPIC | FileCheck %s
+// REQUIRES: asserts
 
 class A {
 public:

@@ -45,8 +45,9 @@ int f() {
 // TODO: add profiling support for arm-baremetal
 // CHECK-ARM-BAREMETAL-EABI-NOT: attributes #{{[0-9]+}} = { {{.*}}"instrument-function-entry-inlined"="\01mcount"{{.*}} }
 // CHECK-ARM-BAREMETAL-EABI-NOT: attributes #{{[0-9]+}} = { {{.*}}"instrument-function-entry-inlined"="\01__gnu_mcount_nc"{{.*}} }
-// CHECK-ARM64-BAREMETAL-EABI: attributes #{{[0-9]+}} = { {{.*}}"instrument-function-entry-inlined"="mcount"{{.*}} }
-// CHECK-ARM64-BAREMETAL-EABI-MEABI-GNU: attributes #{{[0-9]+}} = { {{.*}}"instrument-function-entry-inlined"="\01_mcount"{{.*}} }
+// AArch64 bare-metal toolchain currently doesn't support profiling
+// CHECK-ARM64-BAREMETAL-EABI-NOT: attributes #{{[0-9]+}} = { {{.*}}"instrument-function-entry-inlined"="mcount"{{.*}} }
+// CHECK-ARM64-BAREMETAL-EABI-MEABI-GNU-NOT: attributes #{{[0-9]+}} = { {{.*}}"instrument-function-entry-inlined"="\01_mcount"{{.*}} }
 // CHECK-ARM-IOS-NOT: attributes #{{[0-9]+}} = { {{.*}}"instrument-function-entry-inlined"="_mcount"{{.*}} }
 // CHECK-ARM-IOS-NOT: attributes #{{[0-9]+}} = { {{.*}}"instrument-function-entry-inlined"="\01__gnu_mcount_nc"{{.*}} }
 // CHECK-ARM-EABI: attributes #{{[0-9]+}} = { {{.*}}"instrument-function-entry-inlined"="\01mcount"{{.*}} }
