@@ -524,6 +524,12 @@ TEST_F(TestTypeSystemClang, TemplateArguments) {
   }
 }
 
+TEST_F(TestTypeSystemClang, OnlyPackName) {
+  TypeSystemClang::TemplateParameterInfos infos;
+  infos.pack_name = "A";
+  EXPECT_FALSE(infos.IsValid());
+}
+
 static QualType makeConstInt(clang::ASTContext &ctxt) {
   QualType result(ctxt.IntTy);
   result.addConst();
