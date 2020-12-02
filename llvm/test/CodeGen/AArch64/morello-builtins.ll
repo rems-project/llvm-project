@@ -24,22 +24,19 @@ entry:
   %and7 = and i64 %and4, %5
 ; CHECK-DAG: gcoff	{{x[0-9]+}}, c0
   %6 = call i64 @llvm.cheri.cap.offset.get(i8 addrspace(200)* %foo)
-  %and8 = and i64 %and7, %6
-; CHECK-DAG: gcflgs	{{x[0-9]+}}, c0
-  %7 = call i64 @llvm.cheri.cap.flags.get(i8 addrspace(200)* %foo)
-  %and9 = and i64 %and8, %7
+  %and9 = and i64 %and7, %6
 ; CHECK-DAG: rrlen	{{x[0-9]+}}, {{x[0-9]+}}
-  %8 = call i64 @llvm.cheri.round.representable.length.i64(i64 42)
-  %and10 =  and i64 %and9, %8
+  %7 = call i64 @llvm.cheri.round.representable.length.i64(i64 42)
+  %and10 =  and i64 %and9, %7
 ; CHECK-DAG: rrmask	{{x[0-9]+}}, {{x[0-9]+}}
-  %9 = call i64 @llvm.cheri.representable.alignment.mask.i64(i64 42)
-  %and11 =  and i64 %and10, %9
+  %8 = call i64 @llvm.cheri.representable.alignment.mask.i64(i64 42)
+  %and11 =  and i64 %and10, %8
 ; CHECK-DAG: cfhi	{{x[0-9]+}}, c0
-  %10 = call i64 @llvm.cheri.cap.copy.from.high.i64(i8 addrspace(200)* %foo)
-  %and12 =  and i64 %and11, %10
+  %9 = call i64 @llvm.cheri.cap.copy.from.high.i64(i8 addrspace(200)* %foo)
+  %and12 =  and i64 %and11, %9
 ; CHECK-DAG: cvt       {{x[0-9]+}}, c0, c1
-  %11 = call i64 @llvm.morello.convert.to.ptr(i8 addrspace(200)* %foo, i8 addrspace(200)* %bar)
-  %and13 = and i64 %and12, %11
+  %10 = call i64 @llvm.morello.convert.to.ptr(i8 addrspace(200)* %foo, i8 addrspace(200)* %bar)
+  %and13 = and i64 %and12, %10
   ret i64 %and13
 }
 
@@ -90,8 +87,7 @@ entry:
 ; CHECK: clrtag	[[C4:c[0-9]+]], [[C3]]
 ; CHECK: scoff	[[C5:c[0-9]+]], [[C4]], {{x[0-9]+}}
 ; CHECK: scbnds	[[C3:c[0-9]+]], [[C2]], #11
-; CHECK: scflgs	[[C7:c[0-9]+]], [[C3]], {{x[0-9]+}}
-; CHECK: cthi	[[C8:c[0-9]+]], [[C7]], {{x[0-9]+}}
+; CHECK: cthi	[[C8:c[0-9]+]], [[C3]], {{x[0-9]+}}
 ; CHECK: chkssu [[C9:c[0-9]+]], [[C8]], c0
 ; CHECK: cset   [[sealed:w[0-9]+]], mi
 ; CHECK: mov    x[[null:[0-9]+]], #0
@@ -105,14 +101,13 @@ entry:
   %C4 = call i8 addrspace(200)* @llvm.cheri.cap.tag.clear(i8 addrspace(200)* %C3)
   %C5 = call i8 addrspace(200)* @llvm.cheri.cap.offset.set(i8 addrspace(200)* %C4, i64 22)
   %C6 = call i8 addrspace(200)* @llvm.cheri.cap.bounds.set.exact(i8 addrspace(200)* %C5, i64 11)
-  %C7 = call i8 addrspace(200)* @llvm.cheri.cap.flags.set(i8 addrspace(200)* %C6, i64 10)
-  %C8 = call i8 addrspace(200)* @llvm.cheri.cap.copy.to.high.i64(i8 addrspace(200)* %C7, i64 19)
-  %C9 = call {i8 addrspace(200)*, i1} @llvm.morello.subset.test.unseal(i8 addrspace(200)* %C8, i8 addrspace(200)* %foo)
-  %C10 = extractvalue {i8 addrspace(200)*, i1} %C9, 0
-  %C11 = extractvalue {i8 addrspace(200)*, i1} %C9, 1
-  %C12 = select i1 %C11, i8 addrspace(200)* %C10, i8 addrspace(200)* null
-  %C13 = call i8 addrspace(200)* @llvm.morello.convert.to.offset.null.cap.zero.semantics(i8 addrspace(200)* %C12, i64 4096)
-  ret i8 addrspace(200)* %C13
+  %C7 = call i8 addrspace(200)* @llvm.cheri.cap.copy.to.high.i64(i8 addrspace(200)* %C6, i64 19)
+  %C8 = call {i8 addrspace(200)*, i1} @llvm.morello.subset.test.unseal(i8 addrspace(200)* %C7, i8 addrspace(200)* %foo)
+  %C9 = extractvalue {i8 addrspace(200)*, i1} %C8, 0
+  %C10 = extractvalue {i8 addrspace(200)*, i1} %C8, 1
+  %C11 = select i1 %C10, i8 addrspace(200)* %C9, i8 addrspace(200)* null
+  %C12 = call i8 addrspace(200)* @llvm.morello.convert.to.offset.null.cap.zero.semantics(i8 addrspace(200)* %C11, i64 4096)
+  ret i8 addrspace(200)* %C12
 }
 
 declare i8 addrspace(200)* @llvm.cheri.cap.perms.and(i8 addrspace(200)*, i64)
@@ -276,6 +271,22 @@ define i16 @load_tags16(i8* %ptr) {
 ; CHECK: ldct x0, [x0]
   %ret = call i16 @llvm.cheri.cap.load.tags.i16.p0i8(i8* %ptr)
   ret i16 %ret
+}
+
+; CHECK-LABEL: get_flags
+define i64 @get_flags(i8 addrspace(200)* %ptr) {
+  ; CHECK: mov x0, xzr
+  ; CHECK-NEXT: ret
+  %ret = call i64 @llvm.cheri.cap.flags.get(i8 addrspace(200)* %ptr)
+  ret i64 %ret
+}
+
+; CHECK-LABEL: set_flags
+define i8 addrspace(200)* @set_flags(i64 %val, i8 addrspace(200)* %ptr) {
+  ; CHECK: mov c0, c1
+  ; CHECK-NEXT: ret
+  %ret = call i8 addrspace(200)* @llvm.cheri.cap.flags.set(i8 addrspace(200)* %ptr, i64 %val)
+  ret i8 addrspace(200)* %ret
 }
 
 declare i16 @llvm.cheri.cap.load.tags.i16.p0i8(i8*)
