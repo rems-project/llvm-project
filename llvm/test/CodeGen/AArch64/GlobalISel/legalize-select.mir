@@ -146,7 +146,7 @@ body:             |
     ; CHECK: [[AND1:%[0-9]+]]:_(<4 x s32>) = G_AND [[BUILD_VECTOR]], [[XOR]]
     ; CHECK: [[OR:%[0-9]+]]:_(<4 x s32>) = G_OR [[AND]], [[AND1]]
     ; CHECK: $q0 = COPY [[OR]](<4 x s32>)
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %0:_(s32) = COPY $w0
     %1:_(<4 x s32>) = COPY $q0
     %2:_(s32) = G_CONSTANT i32 4100
@@ -155,6 +155,6 @@ body:             |
     %3:_(s1) = G_ICMP intpred(eq), %0(s32), %2
     %4:_(<4 x s32>) = G_SELECT %3(s1), %1, %5
     $q0 = COPY %4(<4 x s32>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 
 ...

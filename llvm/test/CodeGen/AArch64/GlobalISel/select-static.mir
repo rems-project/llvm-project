@@ -244,7 +244,7 @@ body:             |
 
   bb.2:
     $s0 = COPY %2
-    RET_ReallyLR implicit $s0
+    RET_ReallyLR 0, implicit $s0
 ...
 
 ---

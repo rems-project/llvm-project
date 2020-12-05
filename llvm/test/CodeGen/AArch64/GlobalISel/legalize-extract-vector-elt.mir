@@ -146,5 +146,5 @@ body: |
     %2:_(s64) = COPY $x0
     %3:_(p0) = G_EXTRACT_VECTOR_ELT %0:_(<2 x p0>), %2:_(s64)
     $x0 = COPY %3(p0)
-    RET_ReallyLR
+    RET_ReallyLR 0
 ...

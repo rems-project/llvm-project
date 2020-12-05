@@ -47,7 +47,7 @@ body:             |
     ADJCALLSTACKDOWN 0, 0, implicit-def dead $sp, implicit $sp
     $x0 = MOVaddr target-flags(aarch64-page) @c, target-flags(aarch64-pageoff, aarch64-nc) @c
     ADJCALLSTACKUP 0, 0, implicit-def dead $sp, implicit $sp
-    RET_ReallyLR implicit $w0
+    RET_ReallyLR 0, implicit $w0
 
   bb.4:
     successors: %bb.5(0x80000000)
