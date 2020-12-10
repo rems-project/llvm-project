@@ -2053,6 +2053,8 @@ static unsigned GetVectorMemOpc(SDNode *N, EVT VT, unsigned BaseOperand) {
                     AArch64::ST4Fourv2s, AArch64::ST4Fourv4s,
                     AArch64::ST1Fourv1d, AArch64::ST4Fourv2d };
       break;
+    case Intrinsic::aarch64_ld64b:
+      return AArch64::LD64B;
     }
     break;
   }
@@ -2395,6 +2397,8 @@ void AArch64DAGToDAGISel::SelectLoad(SDNode *N, unsigned NumVecs) {
 
   unsigned Opc = GetVectorMemOpc(N, VT, 2);
   unsigned SubRegIdx = VT.is64BitVector() ? AArch64::dsub0 : AArch64::qsub0;
+  if (Opc == AArch64::LD64B)
+    SubRegIdx = AArch64::x8sub_0;
 
   SDNode *Ld = CurDAG->getMachineNode(Opc, dl, ResTys, Ops);
   SDValue SuperReg = SDValue(Ld, 0);
@@ -2404,9 +2408,12 @@ void AArch64DAGToDAGISel::SelectLoad(SDNode *N, unsigned NumVecs) {
 
   ReplaceUses(SDValue(N, NumVecs), SDValue(Ld, 1));
 
-  // Transfer memoperands.
-  MachineMemOperand *MemOp = cast<MemIntrinsicSDNode>(N)->getMemOperand();
-  CurDAG->setNodeMemRefs(cast<MachineSDNode>(Ld), {MemOp});
+  // Transfer memoperands. In the case of AArch64::LD64B, there won't be one,
+  // because it's too simple to have needed special treatment during lowering.
+  if (auto *MemIntr = dyn_cast<MemIntrinsicSDNode>(N)) {
+    MachineMemOperand *MemOp = MemIntr->getMemOperand();
+    CurDAG->setNodeMemRefs(cast<MachineSDNode>(Ld), {MemOp});
+  }
 
   CurDAG->RemoveDeadNode(N);
 }
@@ -4849,6 +4856,9 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
       return;
     case Intrinsic::aarch64_neon_ld4lane:
       SelectLoadLane(Node, 4);
+      return;
+    case Intrinsic::aarch64_ld64b:
+      SelectLoad(Node, 8/*, AArch64::LD64B, AArch64::x8sub_0*/);
       return;
     }
   } break;
