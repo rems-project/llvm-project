@@ -5927,7 +5927,7 @@ bool AsmParser::parseDirectivePseudoProbe() {
         return true;
     }
 
-    InlineSite Site = {CallerGuid, CallerProbeId};
+    InlineSite Site(CallerGuid, CallerProbeId);
     InlineStack.push_back(Site);
   }
 
