@@ -682,4 +682,3 @@ body:             |
     %select:gpr(s32) = G_SELECT %cond(s1), %xor, %sub
     $w0 = COPY %select(s32)
     RET_ReallyLR 0, implicit $w0
->>>>>>> aabe36746f79a726b6cfd0963f86d39be74b5740
