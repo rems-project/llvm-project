@@ -66,6 +66,8 @@ protected:
   /// This section contains the static destructor pointer list.
   MCSection *StaticDtorSection = nullptr;
 
+  const TargetMachine *TM = nullptr;
+
 public:
   TargetLoweringObjectFile() = default;
   TargetLoweringObjectFile(const TargetLoweringObjectFile &) = delete;
@@ -85,6 +87,9 @@ public:
 
   /// Emit the module-level metadata that the platform cares about.
   virtual void emitModuleMetadata(MCStreamer &Streamer, Module &M) const {}
+
+  /// Emit Call Graph Profile metadata.
+  void emitCGProfileMetadata(MCStreamer &Streamer, Module &M) const;
 
   /// Get the module-level metadata that the platform cares about.
   virtual void getModuleMetadata(Module &M) {}
