@@ -828,7 +828,6 @@ bool AArch64ExpandPseudo::expandMI(MachineBasicBlock &MBB,
   case AArch64::CMOVbaseTLS: {
     Register DstReg = MI.getOperand(0).getReg();
     auto SysReg = AArch64MorelloCSysReg::CTPIDR_EL0;
-    MachineFunction *MF = MBB.getParent();
     BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(AArch64::CapGetSys), DstReg)
         .addImm(SysReg);
     MI.eraseFromParent();
