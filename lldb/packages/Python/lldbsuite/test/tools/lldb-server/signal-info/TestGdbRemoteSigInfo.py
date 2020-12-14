@@ -7,6 +7,7 @@ from __future__ import print_function
 
 import re
 import struct
+import sys
 
 import gdbremote_testcase
 from lldbsuite.test.decorators import llgs_test, no_match, skipIf
