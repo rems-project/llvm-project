@@ -263,6 +263,7 @@ def adrplabel : Operand<iPTR> {
   let EncoderMethod = "getAdrLabelOpValue";
   let PrintMethod = "printAdrpLabel";
   let ParserMatchClass = AdrpOperand;
+  let OperandType = "OPERAND_PCREL";
 }
 
 def AdrOperand : AsmOperandClass {

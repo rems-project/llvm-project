@@ -27,7 +27,7 @@ mystr:
 # CHECK: Disassembly of section .myothersection:
 # CHECK-A64: <$x.2>:
 # CHECK-C64: <$c.2>:
-# CHECK:        0:       01 00 00 90     adrp    x1, #0
+# CHECK:        0:       01 00 00 90     adrp    x1, 0x0
 # CHECK: <mystr>:
 # CHECK:        4:       62 6c 61 68     .word
 # CHECK:        8:       00              .byte   0x01
