@@ -9793,9 +9793,8 @@ public:
     PSK_CodeSeg,
   };
 
-  bool UnifySection(StringRef SectionName,
-                    int SectionFlags,
-                    DeclaratorDecl *TheDecl);
+  bool UnifySection(StringRef SectionName, int SectionFlags,
+                    NamedDecl *TheDecl);
   bool UnifySection(StringRef SectionName,
                     int SectionFlags,
                     SourceLocation PragmaSectionLocation);
