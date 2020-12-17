@@ -58,8 +58,16 @@ CrashReason GetCrashReasonForSIGSEGV(const siginfo_t &info) {
 #endif
   case SEGV_BNDERR:
     return CrashReason::eBoundViolation;
+#ifdef __linux__
+#ifndef SEGV_MTEAERR
+#define SEGV_MTEAERR 8
+#endif
+  case SEGV_MTEAERR:
+    return CrashReason::eAsyncTagCheckFault;
+#ifndef SEGV_MTESERR
+#define SEGV_MTESERR 9
+#endif
 
-#if defined(__linux__)
 #ifndef SEGV_CAPTAGERR
 #define SEGV_CAPTAGERR 10
 #endif
@@ -215,6 +223,13 @@ std::string GetCrashReasonString(CrashReason reason, lldb::addr_t fault_addr) {
     str = "signal SIGSEGV: capability access fault";
     break;
 #endif // __linux__
+  case CrashReason::eAsyncTagCheckFault:
+    str = "signal SIGSEGV: async tag check fault";
+    break;
+  case CrashReason::eSyncTagCheckFault:
+    str = "signal SIGSEGV: sync tag check fault";
+    AppendFaultAddr(str, fault_addr);
+    break;
   case CrashReason::eIllegalOpcode:
     str = "signal SIGILL: illegal instruction";
     break;
@@ -312,6 +327,12 @@ const char *CrashReasonAsString(CrashReason reason) {
     str = "eCapabilityAccessError";
     break;
 #endif // __linux__
+  case CrashReason::eAsyncTagCheckFault:
+    str = "eAsyncTagCheckFault";
+    break;
+  case CrashReason::eSyncTagCheckFault:
+    str = "eSyncTagCheckFault";
+    break;
 
   // SIGILL crash reasons.
   case CrashReason::eIllegalOpcode:

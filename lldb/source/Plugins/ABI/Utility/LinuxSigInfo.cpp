@@ -34,11 +34,11 @@ CompilerType GetLinuxSigInfoCompilerType(TypeSystemClang &ast_ctx,
   CompilerType void_ptr_type = void_type.GetPointerType();
 
   CompilerType pid_t_type =
-      ast_ctx.CreateTypedefType(s32_type, "__pid_t", CompilerDeclContext(), 0);
+      s32_type.CreateTypedef("__pid_t", CompilerDeclContext(), 0);
   CompilerType uid_t_type =
-      ast_ctx.CreateTypedefType(u32_type, "__uid_t", CompilerDeclContext(), 0);
-  CompilerType clock_t_type = ast_ctx.CreateTypedefType(
-      long_type, "__clock_t", CompilerDeclContext(), 0);
+      u32_type.CreateTypedef("__uid_t", CompilerDeclContext(), 0);
+  CompilerType clock_t_type = long_type.CreateTypedef(
+      "__clock_t", CompilerDeclContext(), 0);
 
   // Anonymous kill struct.
   CompilerType kill_type = ast_ctx.CreateRecordType(
@@ -62,8 +62,8 @@ CompilerType GetLinuxSigInfoCompilerType(TypeSystemClang &ast_ctx,
                                         eAccessPublic, 0);
   TypeSystemClang::CompleteTagDeclarationDefinition(sigval_type);
 
-  CompilerType sigval_t_type = ast_ctx.CreateTypedefType(
-      sigval_type, "sigval_t", CompilerDeclContext(), 0);
+  CompilerType sigval_t_type = sigval_type.CreateTypedef(
+      "sigval_t", CompilerDeclContext(), 0);
 
   // Anonymous timer struct.
   CompilerType timer_type = ast_ctx.CreateRecordType(

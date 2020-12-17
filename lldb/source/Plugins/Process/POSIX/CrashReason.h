@@ -22,6 +22,8 @@ enum class CrashReason {
   eInvalidAddress,
   ePrivilegedAddress,
   eBoundViolation,
+  eAsyncTagCheckFault,
+  eSyncTagCheckFault,
 
 // Android uses SIGSEGV for capability faults,
 // CheriBSD uses SIGPROT. Define only for
