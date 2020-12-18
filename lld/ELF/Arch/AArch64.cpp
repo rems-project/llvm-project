@@ -170,7 +170,7 @@ RelExpr AArch64::getRelExpr(RelType type, const Symbol &s,
   case R_AARCH64_TLSLE_MOVW_TPREL_G1:
   case R_AARCH64_TLSLE_MOVW_TPREL_G1_NC:
   case R_AARCH64_TLSLE_MOVW_TPREL_G2:
-    return R_TLS;
+    return R_TPREL;
   case R_MORELLO_CALL26:
   case R_MORELLO_JUMP26:
   case R_MORELLO_CONDBR19:
