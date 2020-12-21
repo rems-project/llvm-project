@@ -8,6 +8,7 @@
 #include "llvm/Support/Cheri.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/Morello.h"
 #include "llvm/Support/Path.h"
 
 using namespace llvm;
@@ -765,7 +766,7 @@ void MorelloCapRelocsSection::writeTo(uint8_t *buf) {
     // FIXME: This can lead to more imprecise capability bounds. In an ideal
     // world we'd increase Section alignment and post-pad sizes to limit
     // this, but it is too late to do this here.
-    uint64_t alignReq = concentrateReqdAlignment(targetSize);
+    uint64_t alignReq = getMorelloRequiredAlignment(targetSize);
     uint64_t targetLimit = targetVA + targetSize;
     uint64_t alignedTargetVA = alignDown(targetVA, alignReq);
     uint64_t alignedTargetLimit = alignTo(targetLimit, alignReq);
@@ -879,7 +880,7 @@ bool morelloLinkerDefinedCapabilityAlign() {
   bool changed = false;
   if (first && last)
     changed = alignToRequired(
-        first, last, concentrateReqdAlignment(morelloPCCLimit - morelloPCCBase));
+        first, last, getMorelloRequiredAlignment(morelloPCCLimit - morelloPCCBase));
 
   // Linker generated Section Base capabilities. When dynamic linking we need
   // to find these via searching the dynamic relocs, when static linking we
@@ -892,7 +893,7 @@ bool morelloLinkerDefinedCapabilityAlign() {
           isSectionStartSymbol(reloc.sym->getName())) {
         OutputSection *os = reloc.sym->getOutputSection();
         assert(os);
-        changed |= alignToRequired(os, os, concentrateReqdAlignment(os->size));
+        changed |= alignToRequired(os, os, getMorelloRequiredAlignment(os->size));
       }
     }
   } else if (in.capRelocs->isNeeded()) {
@@ -916,7 +917,7 @@ bool MorelloCapRelocsSection::linkerDefinedCapabilityAlign() {
         !targetSym->isUndefWeak()) {
       OutputSection *os = targetSym->getOutputSection();
       assert(os);
-      changed |= alignToRequired(os, os, concentrateReqdAlignment(os->size));
+      changed |= alignToRequired(os, os, getMorelloRequiredAlignment(os->size));
     }
   }
   return changed;
