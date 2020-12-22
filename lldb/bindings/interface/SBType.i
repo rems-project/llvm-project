@@ -220,6 +220,9 @@ public:
     bool
     IsAnonymousType ();
 
+    bool
+    IsScopedEnumerationType ();
+
     lldb::SBType
     GetPointerType(lldb::AddressSpace address_space =
                        lldb::eAddressSpaceNormal);
