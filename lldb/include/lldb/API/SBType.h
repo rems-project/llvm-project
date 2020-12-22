@@ -154,6 +154,9 @@ public:
   lldb::SBType GetVectorElementType();
 
   lldb::SBType GetCanonicalType();
+
+  lldb::SBType GetEnumerationIntegerType();
+
   // Get the "lldb::BasicType" enumeration for a type. If a type is not a basic
   // type eBasicTypeInvalid will be returned
   lldb::BasicType GetBasicType();
