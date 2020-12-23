@@ -1,5 +1,5 @@
 // RUN: llvm-mc -filetype=obj -triple aarch64-linux-gnu %s -o - \
-// RUN:   | llvm-objdump -dwarf=frames - | FileCheck %s
+// RUN:   | llvm-objdump --dwarf=frames - | FileCheck %s
 
 // Check that directive '.cfi_startproc purecap' has the following effects:
 // * Augmentation string includes character 'C'.
@@ -29,7 +29,7 @@ purecap_func:
 //
 // CHECK-LABEL: .eh_frame contents:
 //
-// CHECK: 00000000 00000014 ffffffff CIE
+// CHECK: 00000000 00000014 00000000 CIE
 // CHECK-NEXT:   Version:               1
 // CHECK-NEXT:   Augmentation:          "zRC"
 // CHECK-NEXT:   Code alignment factor: 1

@@ -789,10 +789,12 @@ inline _LIBCPP_INLINE_VISIBILITY double abs(double __lcpp_x) _NOEXCEPT {
   return ::fabs(__lcpp_x);
 }
 
+#ifndef _LIBCPP_HAS_NEWLIB
 inline _LIBCPP_INLINE_VISIBILITY long double
 abs(long double __lcpp_x) _NOEXCEPT {
   return ::fabsl(__lcpp_x);
 }
+#endif // !_LIBCPP_HAS_NEWLIB
 #endif // !(defined(_AIX) || defined(__sun__))
 
 // div

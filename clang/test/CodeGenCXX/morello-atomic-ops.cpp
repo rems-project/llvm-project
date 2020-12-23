@@ -328,7 +328,7 @@ _Atomic(int*) p;
 // CHECK-LABEL: atomictest
 // CHECK-NOT: i128
 void atomictest(void){
-    p2 = &var;
-   p = &var2;
+    p2 = p;
+   p = p2;
    __c11_atomic_store(&p,p2,__ATOMIC_SEQ_CST);
 }

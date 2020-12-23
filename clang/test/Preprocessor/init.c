@@ -3776,23 +3776,6 @@
 // CHERI-COMMON-NEXT: #define _mips 1
 // CHERI-COMMON-NEXT: #define mips 1
 
-// RUN: %cheri_cc1 -E -dM -ffreestanding -triple=mips64-none-none -target-abi purecap < /dev/null | FileCheck -check-prefix CHERI128-PURECAP %s
-// CHERI128-PURECAP: #define _MIPS_FPSET 32
-// CHERI128-PURECAP: #define __CHERI_PURE_CAPABILITY__ 2
-// CHERI128-PURECAP: #define __CHERI_SANDBOX__ 4
-// CHERI128-PURECAP: #define __INTPTR_FMTd__ "Pd"
-// CHERI128-PURECAP: #define __INTPTR_FMTi__ "Pi"
-// CHERI128-PURECAP: #define __INTPTR_MAX__ 9223372036854775807L
-// CHERI128-PURECAP: #define __INTPTR_TYPE__ __intcap_t
-// CHERI128-PURECAP: #define __INTPTR_WIDTH__ 128
-// CHERI128-PURECAP: #define __UINTPTR_FMTX__ "PX"
-// CHERI128-PURECAP: #define __UINTPTR_FMTo__ "Po"
-// CHERI128-PURECAP: #define __UINTPTR_FMTu__ "Pu"
-// CHERI128-PURECAP: #define __UINTPTR_FMTx__ "Px"
-// CHERI128-PURECAP: #define __UINTPTR_MAX__ 18446744073709551615UL
-// CHERI128-PURECAP: #define __UINTPTR_TYPE__ __uintcap_t
-// CHERI128-PURECAP: #define __UINTPTR_WIDTH__ 128
-// CHERI128-PURECAP: #define __mips_fpr 64
 
 // RUN: %cheri_cc1 -E -dM -ffreestanding -triple=cheri-none-none -target-abi purecap < /dev/null | FileCheck -check-prefix CHERI128-PURECAP %s
 // CHERI128-PURECAP: #define _MIPS_FPSET 32
