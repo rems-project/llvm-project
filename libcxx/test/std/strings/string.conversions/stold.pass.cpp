@@ -16,6 +16,9 @@
 // libc++abi.dylib and exceptions are not caught properly.
 // XFAIL: with_system_cxx_lib=macosx10.7
 
+// The newlib implementation doesn't conform.
+// XFAIL: libcpp-has-newlib
+
 #include <cassert>
 #include <cmath>
 #include <stdexcept>

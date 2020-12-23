@@ -20,7 +20,10 @@
 #include <complex.h>
 #include <ctype.h>
 #include <errno.h>
+#if !defined(_NEWLIB_VERSION)
+// newlib doesn't have fenv.h
 #include <fenv.h>
+#endif
 #include <float.h>
 #include <inttypes.h>
 #include <limits.h>

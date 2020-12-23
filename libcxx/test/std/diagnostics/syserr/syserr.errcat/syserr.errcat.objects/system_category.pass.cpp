@@ -33,7 +33,10 @@ void test_message_for_bad_value() {
     const std::error_category& e_cat1 = std::system_category();
     const std::string msg = e_cat1.message(-1);
     // Exact message format varies by platform.
+#ifndef _LIBCPP_HAS_NEWLIB
+    // Newlib doesn't print anything.
     LIBCPP_ASSERT(msg.rfind("Unknown error", 0) == 0);
+#endif
     assert(errno == E2BIG);
 }
 

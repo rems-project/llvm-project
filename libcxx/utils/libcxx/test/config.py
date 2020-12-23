@@ -1127,6 +1127,9 @@ class Configuration(object):
         if isinstance(self.executor, SSHExecutor):
             exec_args.append('--host {}'.format(self.executor.user_prefix + self.executor.host))
             executor = os.path.join(self.libcxx_src_root, 'utils', 'ssh.py')
+        elif isinstance(self.executor, MorelloModelExecutor):
+            exec_args.append('--execdir %t.execdir')
+            executor = os.path.join(self.libcxx_src_root, 'utils', 'run-morello-model.py')
         else:
             exec_args.append('--execdir %t.execdir')
             executor = os.path.join(self.libcxx_src_root, 'utils', 'run.py')

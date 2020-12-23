@@ -18,6 +18,10 @@
 #include "test_macros.h"
 #include "count_new.h"
 
+// We should really have a -fno-builtin flag instead, but for
+// now turn off optimizations.
+#pragma clang optimize off
+
 class A
 {
     int data_[10];

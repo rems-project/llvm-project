@@ -18,6 +18,9 @@
 // TODO GLIBC uses a different string for positive and negative NAN numbers.
 // XFAIL: linux-gnu
 
+// newlib uses '+nan' instead of 'nan'
+// XFAIL: libcpp-has-newlib
+
 #include <locale>
 #include <ios>
 #include <cassert>

@@ -423,3 +423,7 @@ class MorelloModelTI(DefaultTargetInfo):
 
     def add_cxx_compile_flags(self, flags):
         flags += ["-D_GNU_SOURCE"]
+
+    def configure_env(self, env):
+        env['FVP_MORELLO_HOME'] = os.environ['FVP_MORELLO_HOME']
+        env['MORELLO_TOOLCHAIN_HOME'] = os.environ['MORELLO_TOOLCHAIN_HOME']

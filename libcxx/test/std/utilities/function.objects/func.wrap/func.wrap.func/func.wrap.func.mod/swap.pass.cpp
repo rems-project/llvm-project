@@ -12,6 +12,10 @@
 
 // void swap(function& other);
 
+// We should really have a -fno-builtin flag instead, but for
+// now turn off optimizations.
+#pragma clang optimize off
+
 #include <functional>
 #include <cassert>
 

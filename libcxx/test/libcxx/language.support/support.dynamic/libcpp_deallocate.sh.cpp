@@ -40,13 +40,13 @@
 // XFAIL: gcc
 
 // FILE_DEPENDENCIES: %t.exe
-// RUN: %{build} -faligned-allocation -fsized-deallocation
+// RUN: %{build} -faligned-allocation -fsized-deallocation -fno-builtin
 // RUN: %{run}
-// RUN: %{build} -faligned-allocation -fno-sized-deallocation -DNO_SIZE
+// RUN: %{build} -faligned-allocation -fno-sized-deallocation -DNO_SIZE -fno-builtin
 // RUN: %{run}
-// RUN: %{build} -fno-aligned-allocation -fsized-deallocation -DNO_ALIGN
+// RUN: %{build} -fno-aligned-allocation -fsized-deallocation -DNO_ALIGN -fno-builtin
 // RUN: %{run}
-// RUN: %{build} -fno-aligned-allocation -fno-sized-deallocation -DNO_ALIGN -DNO_SIZE
+// RUN: %{build} -fno-aligned-allocation -fno-sized-deallocation -DNO_ALIGN -DNO_SIZE -fno-builtin
 // RUN: %{run}
 
 #include <new>

@@ -13,6 +13,9 @@
 // XFAIL: with_system_cxx_lib=macosx10.10
 // XFAIL: with_system_cxx_lib=macosx10.9
 
+// The newlib strtold doesn't have the precision required to pass this test.
+// UNSUPPORTED: libcpp-has-newlib
+
 // <istream>
 
 // template <class charT, class traits = char_traits<charT> >

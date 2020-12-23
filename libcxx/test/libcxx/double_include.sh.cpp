@@ -73,7 +73,10 @@
 #include <errno.h>
 #include <exception>
 #include <execution>
+#if !defined(_NEWLIB_VERSION)
+// newlib doesn't have fenv.h
 #include <fenv.h>
+#endif
 #include <filesystem>
 #include <float.h>
 #include <forward_list>
