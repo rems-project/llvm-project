@@ -7307,6 +7307,9 @@ AArch64InstrInfo::describeLoadedValue(const MachineInstr &MI,
   }
   case AArch64::ORRWrs:
   case AArch64::ORRXrs:
+    // Consider the case where these are used as a copy from czr.
+    if (AArch64::CapallRegClass.contains(Reg))
+      return None;
     return describeORRLoadedValue(MI, Reg, this, TRI);
   }
 
