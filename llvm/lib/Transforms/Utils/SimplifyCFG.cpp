@@ -6186,10 +6186,13 @@ bool SimplifyCFGOpt::simplifyIndirectBr(IndirectBrInst *IBI) {
   bool Changed = false;
 
   // Eliminate redundant destinations.
+  std::vector<DominatorTree::UpdateType> Updates;
   SmallPtrSet<Value *, 8> Succs;
   for (unsigned i = 0, e = IBI->getNumDestinations(); i != e; ++i) {
     BasicBlock *Dest = IBI->getDestination(i);
     if (!Dest->hasAddressTaken() || !Succs.insert(Dest).second) {
+      if (!Dest->hasAddressTaken())
+        Updates.push_back({DominatorTree::Delete, BB, Dest});
       Dest->removePredecessor(BB);
       IBI->removeDestination(i);
       --i;
@@ -6197,6 +6200,10 @@ bool SimplifyCFGOpt::simplifyIndirectBr(IndirectBrInst *IBI) {
       Changed = true;
     }
   }
+
+  if (DTU)
+    DTU->applyUpdatesPermissive(Updates);
+  Updates.clear();
 
   if (IBI->getNumDestinations() == 0) {
     // If the indirectbr has no successors, change it to unreachable.
