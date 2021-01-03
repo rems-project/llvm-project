@@ -6713,11 +6713,6 @@ bool SimplifyCFGOpt::simplifyOnceImpl(BasicBlock *BB) {
 }
 
 bool SimplifyCFGOpt::simplifyOnce(BasicBlock *BB) {
-  assert((!RequireAndPreserveDomTree ||
-          (DTU &&
-           DTU->getDomTree().verify(DominatorTree::VerificationLevel::Full))) &&
-         "Original domtree is invalid?");
-
   bool Changed = simplifyOnceImpl(BB);
 
   assert((!RequireAndPreserveDomTree ||
@@ -6729,6 +6724,11 @@ bool SimplifyCFGOpt::simplifyOnce(BasicBlock *BB) {
 }
 
 bool SimplifyCFGOpt::run(BasicBlock *BB) {
+  assert((!RequireAndPreserveDomTree ||
+          (DTU &&
+           DTU->getDomTree().verify(DominatorTree::VerificationLevel::Full))) &&
+         "Original domtree is invalid?");
+
   bool Changed = false;
 
   // Repeated simplify BB as long as resimplification is requested.
