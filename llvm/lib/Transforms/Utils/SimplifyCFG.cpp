@@ -873,6 +873,7 @@ static void setBranchWeights(Instruction *I, uint32_t TrueWeight,
 /// also a value comparison with the same value, and if that comparison
 /// determines the outcome of this comparison. If so, simplify TI. This does a
 /// very limited form of jump threading.
+// FIXME: switch to non-permissive DomTreeUpdater::applyUpdates().
 bool SimplifyCFGOpt::SimplifyEqualityComparisonWithOnlyPredecessor(
     Instruction *TI, BasicBlock *Pred, IRBuilder<> &Builder) {
   Value *PredVal = isValueEqualityComparison(Pred->getTerminator());
@@ -925,7 +926,7 @@ bool SimplifyCFGOpt::SimplifyEqualityComparisonWithOnlyPredecessor(
       EraseTerminatorAndDCECond(TI);
 
       if (DTU)
-        DTU->applyUpdatesPermissive(
+        DTU->applyUpdates(
             {{DominatorTree::Delete, PredDef, ThisCases[0].Dest}});
 
       return true;
@@ -957,7 +958,7 @@ bool SimplifyCFGOpt::SimplifyEqualityComparisonWithOnlyPredecessor(
       if (I.second == 0)
         Updates.push_back({DominatorTree::Delete, PredDef, I.first});
     if (DTU)
-      DTU->applyUpdatesPermissive(Updates);
+      DTU->applyUpdates(Updates);
 
     LLVM_DEBUG(dbgs() << "Leaving: " << *TI << "\n");
     return true;
@@ -1081,6 +1082,7 @@ static void FitWeights(MutableArrayRef<uint64_t> Weights) {
 /// (either a switch or a branch on "X == c").
 /// See if any of the predecessors of the terminator block are value comparisons
 /// on the same value.  If so, and if safe to do so, fold them together.
+// FIXME: switch to non-permissive DomTreeUpdater::applyUpdates().
 bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(Instruction *TI,
                                                          IRBuilder<> &Builder) {
   BasicBlock *BB = TI->getParent();
@@ -1561,7 +1563,7 @@ HoistTerminator:
 
   EraseTerminatorAndDCECond(BI);
   if (DTU)
-    DTU->applyUpdatesPermissive(Updates);
+    DTU->applyUpdates(Updates);
   return Changed;
 }
 
@@ -2495,7 +2497,7 @@ static bool FoldCondBranchOnPHI(BranchInst *BI, DomTreeUpdater *DTU,
     Updates.push_back({DominatorTree::Insert, PredBB, EdgeBB});
 
     if (DTU)
-      DTU->applyUpdatesPermissive(Updates);
+      DTU->applyUpdates(Updates);
 
     // Recurse, simplifying any other constants.
     return FoldCondBranchOnPHI(BI, DTU, DL, AC) || true;
@@ -2667,7 +2669,7 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetTransformInfo &TTI,
 
   OldTI->eraseFromParent();
   if (DTU)
-    DTU->applyUpdatesPermissive(Updates);
+    DTU->applyUpdates(Updates);
 
   return true;
 }
@@ -2675,6 +2677,7 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const TargetTransformInfo &TTI,
 /// If we found a conditional branch that goes to two returning blocks,
 /// try to merge them together into one return,
 /// introducing a select if the return values disagree.
+// FIXME: switch to non-permissive DomTreeUpdater::applyUpdates().
 bool SimplifyCFGOpt::SimplifyCondBranchToTwoReturns(BranchInst *BI,
                                                     IRBuilder<> &Builder) {
   auto *BB = BI->getParent();
@@ -3176,7 +3179,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI, DomTreeUpdater *DTU,
           }
         }
         // Update PHI Node.
-	PHIs[i]->setIncomingValueForBlock(PBI->getParent(), MergedCond);
+        PHIs[i]->setIncomingValueForBlock(PBI->getParent(), MergedCond);
       }
 
       // PBI is changed to branch to UniqueSucc below. Remove itself from
@@ -3191,7 +3194,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI, DomTreeUpdater *DTU,
     }
 
     if (DTU)
-      DTU->applyUpdatesPermissive(Updates);
+      DTU->applyUpdates(Updates);
 
     // If BI was a loop latch, it may have had associated loop metadata.
     // We need to copy it to the new latch, that is, PBI.
@@ -3568,9 +3571,8 @@ static bool tryWidenCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI,
     OldSuccessor->removePredecessor(BI->getParent());
     BI->setSuccessor(1, IfFalseBB);
     if (DTU)
-      DTU->applyUpdatesPermissive(
-          {{DominatorTree::Delete, BI->getParent(), OldSuccessor},
-           {DominatorTree::Insert, BI->getParent(), IfFalseBB}});
+      DTU->applyUpdates({{DominatorTree::Delete, BI->getParent(), OldSuccessor},
+                         {DominatorTree::Insert, BI->getParent(), IfFalseBB}});
     return true;
   }
   if (BI->getSuccessor(0) != IfFalseBB && // no inf looping
@@ -3580,9 +3582,8 @@ static bool tryWidenCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI,
     OldSuccessor->removePredecessor(BI->getParent());
     BI->setSuccessor(0, IfFalseBB);
     if (DTU)
-      DTU->applyUpdatesPermissive(
-          {{DominatorTree::Delete, BI->getParent(), OldSuccessor},
-           {DominatorTree::Insert, BI->getParent(), IfFalseBB}});
+      DTU->applyUpdates({{DominatorTree::Delete, BI->getParent(), OldSuccessor},
+                         {DominatorTree::Insert, BI->getParent(), IfFalseBB}});
     return true;
   }
   return false;
@@ -3774,7 +3775,7 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI,
     Updates.push_back({DominatorTree::Insert, PBI->getParent(), Successor});
 
   if (DTU)
-    DTU->applyUpdatesPermissive(Updates);
+    DTU->applyUpdates(Updates);
 
   // Update branch weight for PBI.
   uint64_t PredTrueWeight, PredFalseWeight, SuccTrueWeight, SuccFalseWeight;
@@ -4103,7 +4104,7 @@ bool SimplifyCFGOpt::tryToSimplifyUncondBranchWithICmpInIt(
   Updates.push_back({DominatorTree::Insert, NewBB, SuccBlock});
   PHIUse->addIncoming(NewCst, NewBB);
   if (DTU)
-    DTU->applyUpdatesPermissive(Updates);
+    DTU->applyUpdates(Updates);
   return true;
 }
 
@@ -4250,7 +4251,7 @@ bool SimplifyCFGOpt::SimplifyBranchOnICmpChain(BranchInst *BI,
   // Erase the old branch instruction.
   EraseTerminatorAndDCECond(BI);
   if (DTU)
-    DTU->applyUpdatesPermissive(Updates);
+    DTU->applyUpdates(Updates);
 
   LLVM_DEBUG(dbgs() << "  ** 'icmp' chain result is:\n" << *BB << '\n');
   return true;
@@ -4349,7 +4350,7 @@ bool SimplifyCFGOpt::simplifyCommonResume(ResumeInst *RI) {
     TrivialBB->getTerminator()->eraseFromParent();
     new UnreachableInst(RI->getContext(), TrivialBB);
     if (DTU)
-      DTU->applyUpdatesPermissive({{DominatorTree::Delete, TrivialBB, BB}});
+      DTU->applyUpdates({{DominatorTree::Delete, TrivialBB, BB}});
   }
 
   // Delete the resume block if all its predecessors have been removed.
@@ -4506,7 +4507,7 @@ static bool removeEmptyCleanup(CleanupReturnInst *RI, DomTreeUpdater *DTU) {
     BasicBlock *PredBB = *PI++;
     if (UnwindDest == nullptr) {
       if (DTU)
-        DTU->applyUpdatesPermissive(Updates);
+        DTU->applyUpdates(Updates);
       Updates.clear();
       removeUnwindEdge(PredBB, DTU);
       ++NumInvokes;
@@ -4519,7 +4520,7 @@ static bool removeEmptyCleanup(CleanupReturnInst *RI, DomTreeUpdater *DTU) {
   }
 
   if (DTU) {
-    DTU->applyUpdatesPermissive(Updates);
+    DTU->applyUpdates(Updates);
     DTU->deleteBB(BB);
   } else
     // The cleanup pad is now unreachable.  Zap it.
@@ -4634,6 +4635,7 @@ bool SimplifyCFGOpt::simplifyReturn(ReturnInst *RI, IRBuilder<> &Builder) {
   return false;
 }
 
+// FIXME: switch to non-permissive DomTreeUpdater::applyUpdates().
 bool SimplifyCFGOpt::simplifyUnreachable(UnreachableInst *UI) {
   BasicBlock *BB = UI->getParent();
 
@@ -4739,7 +4741,7 @@ bool SimplifyCFGOpt::simplifyUnreachable(UnreachableInst *UI) {
     } else if (auto *II = dyn_cast<InvokeInst>(TI)) {
       if (II->getUnwindDest() == BB) {
         if (DTU)
-          DTU->applyUpdatesPermissive(Updates);
+          DTU->applyUpdates(Updates);
         Updates.clear();
         removeUnwindEdge(TI->getParent(), DTU);
         Changed = true;
@@ -4747,7 +4749,7 @@ bool SimplifyCFGOpt::simplifyUnreachable(UnreachableInst *UI) {
     } else if (auto *CSI = dyn_cast<CatchSwitchInst>(TI)) {
       if (CSI->getUnwindDest() == BB) {
         if (DTU)
-          DTU->applyUpdatesPermissive(Updates);
+          DTU->applyUpdates(Updates);
         Updates.clear();
         removeUnwindEdge(TI->getParent(), DTU);
         Changed = true;
@@ -4779,7 +4781,7 @@ bool SimplifyCFGOpt::simplifyUnreachable(UnreachableInst *UI) {
         } else {
           // Rewrite all preds to unwind to caller (or from invoke to call).
           if (DTU)
-            DTU->applyUpdatesPermissive(Updates);
+            DTU->applyUpdates(Updates);
           Updates.clear();
           SmallVector<BasicBlock *, 8> EHPreds(predecessors(Predecessor));
           for (BasicBlock *EHPred : EHPreds)
@@ -4840,9 +4842,8 @@ static void createUnreachableSwitchDefault(SwitchInst *Switch,
   auto *OrigDefaultBlock = Switch->getDefaultDest();
   Switch->setDefaultDest(&*NewDefaultBlock);
   if (DTU)
-    DTU->applyUpdatesPermissive(
-        {{DominatorTree::Delete, BB, OrigDefaultBlock},
-         {DominatorTree::Insert, BB, &*NewDefaultBlock}});
+    DTU->applyUpdates({{DominatorTree::Delete, BB, OrigDefaultBlock},
+                       {DominatorTree::Insert, BB, &*NewDefaultBlock}});
   SplitBlock(&*NewDefaultBlock, &NewDefaultBlock->front(),
              DTU ? &DTU->getDomTree() : nullptr);
   SmallVector<DominatorTree::UpdateType, 2> Updates;
@@ -4852,7 +4853,7 @@ static void createUnreachableSwitchDefault(SwitchInst *Switch,
   new UnreachableInst(Switch->getContext(), NewTerminator);
   EraseTerminatorAndDCECond(NewTerminator);
   if (DTU)
-    DTU->applyUpdatesPermissive(Updates);
+    DTU->applyUpdates(Updates);
 }
 
 /// Turn a switch with two reachable destinations into an integer range
@@ -4977,8 +4978,7 @@ bool SimplifyCFGOpt::TurnSwitchRangeIntoICmp(SwitchInst *SI,
   SI->eraseFromParent();
 
   if (!HasDefault && DTU)
-    DTU->applyUpdatesPermissive(
-        {{DominatorTree::Delete, BB, UnreachableDefault}});
+    DTU->applyUpdates({{DominatorTree::Delete, BB, UnreachableDefault}});
 
   return true;
 }
@@ -5048,7 +5048,7 @@ static bool eliminateDeadSwitchCases(SwitchInst *SI, DomTreeUpdater *DTU,
     if (I.second == 0)
       Updates.push_back({DominatorTree::Delete, SI->getParent(), I.first});
   if (DTU)
-    DTU->applyUpdatesPermissive(Updates);
+    DTU->applyUpdates(Updates);
 
   return true;
 }
@@ -5427,7 +5427,7 @@ static void RemoveSwitchAfterSelectConversion(SwitchInst *SI, PHINode *PHI,
   }
   SI->eraseFromParent();
   if (DTU)
-    DTU->applyUpdatesPermissive(Updates);
+    DTU->applyUpdates(Updates);
 }
 
 /// If the switch is only used to initialize one or more
@@ -5838,6 +5838,7 @@ static void reuseTableCompare(
 /// If the switch is only used to initialize one or more phi nodes in a common
 /// successor block with different constant values, replace the switch with
 /// lookup tables.
+// FIXME: switch to non-permissive DomTreeUpdater::applyUpdates().
 static bool SwitchToLookupTable(SwitchInst *SI, IRBuilder<> &Builder,
                                 DomTreeUpdater *DTU, const DataLayout &DL,
                                 const TargetTransformInfo &TTI) {
@@ -6255,6 +6256,7 @@ bool SimplifyCFGOpt::simplifySwitch(SwitchInst *SI, IRBuilder<> &Builder) {
   return false;
 }
 
+// FIXME: switch to non-permissive DomTreeUpdater::applyUpdates().
 bool SimplifyCFGOpt::simplifyIndirectBr(IndirectBrInst *IBI) {
   BasicBlock *BB = IBI->getParent();
   bool Changed = false;
@@ -6378,7 +6380,7 @@ static bool TryToMergeLandingPad(LandingPadInst *LPad, BranchInst *BI,
     Builder.CreateUnreachable();
     BI->eraseFromParent();
     if (DTU)
-      DTU->applyUpdatesPermissive(Updates);
+      DTU->applyUpdates(Updates);
     return true;
   }
   return false;
@@ -6628,8 +6630,7 @@ static bool removeUndefIntroducingPredecessor(BasicBlock *BB,
                                                        : BI->getSuccessor(0));
           BI->eraseFromParent();
           if (DTU)
-            DTU->applyUpdatesPermissive(
-                {{DominatorTree::Delete, Predecessor, BB}});
+            DTU->applyUpdates({{DominatorTree::Delete, Predecessor, BB}});
           return true;
         }
         // TODO: SwitchInst.
