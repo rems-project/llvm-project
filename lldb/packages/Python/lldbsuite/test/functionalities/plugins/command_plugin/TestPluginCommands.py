@@ -23,6 +23,7 @@ class PluginCommandTestCase(TestBase):
     # Requires a compatible arch and platform to link against the host's built
     # lldb lib.
     @skipIfHostIncompatibleWithRemote
+    @skipIfLinux
     @expectedFailureAll(oslist=["windows"], bugnumber="llvm.org/pr24778")
     @no_debug_info_test
     def test_load_plugin(self):

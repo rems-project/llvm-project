@@ -14,6 +14,7 @@ class TestSBCommandReturnObject(TestBase):
     NO_DEBUG_INFO_TESTCASE = True
 
     @skipIfNoSBHeaders
+    @skipIfLinux
     @expectedFailureAll(
         oslist=["windows"],
         bugnumber="llvm.org/pr43570")
