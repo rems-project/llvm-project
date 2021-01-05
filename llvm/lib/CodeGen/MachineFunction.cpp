@@ -1110,10 +1110,14 @@ Printable llvm::printJumpTableEntryReference(unsigned Idx) {
 
 void MachineConstantPoolValue::anchor() {}
 
-Type *MachineConstantPoolEntry::getType() const {
+unsigned MachineConstantPoolValue::getSizeInBytes(const DataLayout &DL) const {
+  return DL.getTypeAllocSize(Ty);
+}
+
+unsigned MachineConstantPoolEntry::getSizeInBytes(const DataLayout &DL) const {
   if (isMachineConstantPoolEntry())
-    return Val.MachineCPVal->getType();
-  return Val.ConstVal->getType();
+    return Val.MachineCPVal->getSizeInBytes(DL);
+  return DL.getTypeAllocSize(Val.ConstVal->getType());
 }
 
 bool MachineConstantPoolEntry::needsRelocation() const {
@@ -1126,7 +1130,7 @@ SectionKind
 MachineConstantPoolEntry::getSectionKind(const DataLayout *DL) const {
   if (needsRelocation())
     return SectionKind::getReadOnlyWithRel();
-  switch (DL->getTypeAllocSize(getType())) {
+  switch (getSizeInBytes(*DL)) {
   case 4:
     return SectionKind::getMergeableConst4();
   case 8:
