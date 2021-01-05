@@ -117,6 +117,7 @@ AARCH64_ARCH_EXT_NAME("tme",          AArch64::AEK_TME,         "+tme",   "-tme"
 AARCH64_ARCH_EXT_NAME("ls64",         AArch64::AEK_LS64,        "+ls64",  "-ls64")
 AARCH64_ARCH_EXT_NAME("brbe",         AArch64::AEK_BRBE,        "+brbe",  "-brbe")
 AARCH64_ARCH_EXT_NAME("pauth",        AArch64::AEK_PAUTH,       "+pauth", "-pauth")
+AARCH64_ARCH_EXT_NAME("flagm",        AArch64::AEK_FLAGM,       "+flagm", "-flagm")
 AARCH64_ARCH_EXT_NAME("a64c",         AArch64::AEK_A64C,        "+a64c",  "-a64c")
 AARCH64_ARCH_EXT_NAME("c64",          AArch64::AEK_C64,         "+c64",  "-c64")
 #undef AARCH64_ARCH_EXT_NAME

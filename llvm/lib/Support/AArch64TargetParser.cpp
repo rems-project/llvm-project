@@ -107,6 +107,8 @@ bool AArch64::getExtensionFeatures(uint64_t Extensions,
     Features.push_back("+brbe");
   if (Extensions & AEK_PAUTH)
     Features.push_back("+pauth");
+  if (Extensions & AEK_FLAGM)
+    Features.push_back("+flagm");
   if (Extensions & AEK_SSBS)
     Features.push_back("+ssbs");
 

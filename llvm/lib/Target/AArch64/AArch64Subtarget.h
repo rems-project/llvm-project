@@ -141,7 +141,7 @@ protected:
   bool HasSEL2 = false;
   bool HasPMU = false;
   bool HasTLB_RMI = false;
-  bool HasFMI = false;
+  bool HasFlagM = false;
   bool HasRCPC_IMMO = false;
 
   bool HasLSLFast = false;
@@ -530,7 +530,7 @@ public:
   bool hasSEL2() const { return HasSEL2; }
   bool hasPMU() const { return HasPMU; }
   bool hasTLB_RMI() const { return HasTLB_RMI; }
-  bool hasFMI() const { return HasFMI; }
+  bool hasFlagM() const { return HasFlagM; }
   bool hasRCPC_IMMO() const { return HasRCPC_IMMO; }
 
   bool addrSinkUsingGEPs() const override {
