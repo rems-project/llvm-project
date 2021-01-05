@@ -244,7 +244,7 @@ AArch64Subtarget::ClassifyGlobalReference(const GlobalValue *GV,
   }
 
   if (IsFat && hasCapGOT() && !GV->hasLocalLinkage() &&
-      !GV->hasProtectedVisibility())
+      !GV->hasProtectedVisibility() && !isa<Function>(GV))
     return AArch64II::MO_GOT | Flags;
 
   // The small code model's direct accesses use ADRP, which cannot

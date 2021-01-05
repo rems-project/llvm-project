@@ -5334,16 +5334,20 @@ SDValue AArch64TargetLowering::LowerGlobalAddress(SDValue Op,
 
     if (SG) {
       auto *VAM = cast<ValueAsMetadata>(SG->getOperand(0));
+      auto *VAMIndex = cast<ValueAsMetadata>(SG->getOperand(1));
       auto *AddrGV = cast<GlobalVariable>(VAM->getValue());
+      uint64_t Index = cast<ConstantInt>(VAMIndex->getValue())->getZExtValue();
+      EVT Type = Subtarget->hasC64() ? MVT::iFATPTR128: MVT::i64;
       SDValue Addr =
-          DAG.getGlobalAddress(AddrGV, DL, Subtarget->hasC64() ? MVT::iFATPTR128
-                                                               : MVT::i64);
+          DAG.getGlobalAddress(AddrGV, DL, Type);
       GlobalAddressSDNode *LGN = cast<GlobalAddressSDNode>(Addr);
       SDValue LoadAddr = Subtarget->hasC64() ? getFatAddr(LGN, DAG)
                                              : getAddr(LGN, DAG, OpFlags);
+      LoadAddr = DAG.getPointerAdd(DL, LoadAddr, Index * 16);
+      // Use MachinePointerInfo::getCapTable to enable machine LICM hoisting.
       SDValue GlobalAddr = DAG.getLoad(
           MVT::iFATPTR128, DL, DAG.getEntryNode(), LoadAddr,
-          MachinePointerInfo(AddrGV, 0), 16,
+          MachinePointerInfo::getCapTable(DAG.getMachineFunction()), 16,
           MachineMemOperand::MONonTemporal | MachineMemOperand::MOInvariant |
           MachineMemOperand::MODereferenceable);
 
@@ -5352,6 +5356,12 @@ SDValue AArch64TargetLowering::LowerGlobalAddress(SDValue Op,
       return GlobalAddr;
     }
   }
+
+  // Dervive function addresses from PCC
+  if (Op.getSimpleValueType() == MVT::iFATPTR128 && dyn_cast<Function>(GV))
+    return DAG.getNode(AArch64ISD::CapSealImm, DL, MVT::iFATPTR128,
+                       getFatAddr(GN, DAG, OpFlags),
+                       DAG.getConstant(1, DL, MVT::i32));
 
   if (Op.getSimpleValueType() == MVT::iFATPTR128 && !IsLargeCM) {
     SDNode *CPNode = DAG.getTargetConstantPool(GV, PtrVT, 0, 0).getNode();
@@ -11938,6 +11948,107 @@ static SDValue performPtrAddCombine(SDNode *N,
   return SDValue();
 }
 
+SDValue AArch64TargetLowering::
+performADDClowCombineSmall(SDNode *N, SelectionDAG &DAG) const {
+  // We have at most two uses for the addclow. Push any constant adds into
+  // the addclow. This helps reduce register pressure and removes an add
+  // instruction from the critical path.
+  GlobalAddressSDNode *GAN =
+      dyn_cast<GlobalAddressSDNode>(N->getOperand(1).getNode());
+  if (!GAN)
+    return SDValue();
+  const GlobalValue *AddrGV = GAN->getGlobal();
+  for (SDNode *N : N->uses()) {
+    if (N->getOpcode() == ISD::LOAD)
+      continue;
+    if (N->getOpcode() != ISD::PTRADD)
+      return SDValue();
+    if (!dyn_cast<ConstantSDNode>(N->getOperand(1)))
+      return SDValue();
+  }
+  for (SDNode *N : N->uses()) {
+    if (N->getOpcode() == ISD::LOAD)
+      continue;
+    auto *C = cast<ConstantSDNode>(N->getOperand(1));
+    SDValue Addr =
+      DAG.getGlobalAddress(AddrGV, SDLoc(N), MVT::iFATPTR128,
+         GAN->getOffset() + C->getZExtValue());
+    GlobalAddressSDNode *LGN = cast<GlobalAddressSDNode>(Addr);
+    Addr = getFatAddr(LGN, DAG);
+    DAG.ReplaceAllUsesWith(N, Addr.getNode());
+  }
+  return SDValue(N, 0);
+}
+
+SDValue AArch64TargetLowering::
+performADDClowCombine(SDNode *N, TargetLowering::DAGCombinerInfo &DCI,
+                      SelectionDAG &DAG) const {
+  // This transformation is similar to the GlobalAddress combine performed
+  // pre-legalization. However we need to do this post-legalization because
+  // add/load instructions are emitted during global address lowering.
+  // The alternative is to replace global addresses with the captable load
+  // in the SelectionDAG builder or in the IR (both disabling some SelectionDAG
+  // optimizations).
+  //
+  // Attempt to push constant adds into addclow.
+  if (!DCI.isAfterLegalizeDAG() || !Subtarget->hasMorello())
+    return SDValue();
+  GlobalAddressSDNode *GAN =
+      dyn_cast<GlobalAddressSDNode>(N->getOperand(1).getNode());
+  if (!GAN)
+    return SDValue();
+
+  const TargetMachine &TM = getTargetMachine();
+  if (Subtarget->ClassifyGlobalReference(GAN->getGlobal(), TM) !=
+      AArch64II::MO_NO_FLAG)
+    return SDValue();
+
+  // This transformation only reduces the number of instructions when
+  // we have 3 or more uses for the addclow. If we have less then two
+  // be conservative and duplicate the addclow.
+  if (N->use_size() <= 2)
+    return performADDClowCombineSmall(N, DAG);
+
+  uint64_t MinOffset = -1ull;
+  for (SDNode *N : N->uses()) {
+    if (N->getOpcode() != ISD::PTRADD)
+        return SDValue();
+    auto *C = dyn_cast<ConstantSDNode>(N->getOperand(1));
+    if (!C)
+      return SDValue();
+    if (C->getSExtValue() < 0)
+      return SDValue();
+    MinOffset = std::min(MinOffset, C->getZExtValue());
+  }
+  uint64_t Offset = MinOffset + GAN->getOffset();
+  if (Offset <= uint64_t(GAN->getOffset()))
+    return SDValue();
+  if (Offset >= (1 << 20))
+    return SDValue();
+
+  // We can't emit (add (addclow sym+offset), -offset) since the add causes
+  // post-indexed loads to be selected. Create a new addclow and replace all
+  // adds.
+  const GlobalValue *AddrGV = GAN->getGlobal();
+  Type *T = AddrGV->getValueType();
+  if (!T->isSized() ||
+      Offset > AddrGV->getParent()->getDataLayout().getTypeAllocSize(T))
+    return SDValue();
+  SDValue Addr =
+      DAG.getGlobalAddress(AddrGV, SDLoc(N), MVT::iFATPTR128, Offset);
+  GlobalAddressSDNode *LGN = cast<GlobalAddressSDNode>(Addr);
+  Addr = getFatAddr(LGN, DAG);
+  for (SDNode *N : N->uses()) {
+    auto *C = dyn_cast<ConstantSDNode>(N->getOperand(0));
+    if (!C)
+      C = dyn_cast<ConstantSDNode>(N->getOperand(1));
+    SDValue NewAdd = DAG.getPointerAdd(SDLoc(N), Addr,
+                           C->getZExtValue() - MinOffset);
+    DAG.ReplaceAllUsesWith(N, NewAdd.getNode());
+  }
+  return SDValue(N, 0);
+}
+
 // Massage DAGs which we can use the high-half "long" operations on into
 // something isel will recognize better. E.g.
 //
@@ -14256,6 +14367,8 @@ SDValue AArch64TargetLowering::PerformDAGCombine(SDNode *N,
     return performAddSubLongCombine(N, DCI, DAG);
   case ISD::PTRADD:
     return performPtrAddCombine(N, DCI, DAG, Subtarget);
+  case AArch64ISD::ADDClow:
+    return performADDClowCombine(N, DCI, DAG);
   case ISD::XOR:
     return performXorCombine(N, DAG, DCI, Subtarget);
   case ISD::MUL:

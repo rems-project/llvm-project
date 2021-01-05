@@ -8,8 +8,9 @@ target triple = "aarch64-none--elf"
 define i8 addrspace(200)* @fun1() addrspace(200) nounwind {
 ; CHECK-LABEL: fun1:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    adrp c0, :got:fun1
-; CHECK-NEXT:    ldr c0, [c0, :got_lo12:fun1]
+; CHECK-NEXT:    adrp c0, fun1
+; CHECK-NEXT:    add c0, c0, :lo12:fun1
+; CHECK-NEXT:    seal c0, c0, rb
 ; CHECK-NEXT:    ret c30
 entry:
   ret i8 addrspace(200) * bitcast (i8 addrspace(200)* () addrspace(200)* @fun1 to i8 addrspace(200)*)
