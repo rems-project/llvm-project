@@ -4,12 +4,12 @@
 // RUN: llvm-readobj --relocations %t.so | FileCheck %s --check-prefix=RELS
 // RUN: llvm-objdump --no-show-raw-insn -d --triple=aarch64-none-elf --mattr=+morello -s %t.so | FileCheck %s
 
- .section .data.rel.ro , "ax", %progbits
+ .section .data.rel.ro
  .capinit local + 3
  .xword 0
  .xword 0
 
- .section .data, "ax", %progbits
+ .section .data
  .local local
  .type local, %object
  .size local, 32
