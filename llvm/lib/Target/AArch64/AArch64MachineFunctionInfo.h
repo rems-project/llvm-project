@@ -255,6 +255,10 @@ public:
     return getCalleeSavedStackSize();
   }
 
+  bool isCalleeSavedStackSizeComputed() const {
+    return HasCalleeSavedStackSize;
+  }
+
   unsigned getCalleeSavedStackSize() const {
     assert(HasCalleeSavedStackSize &&
            "CalleeSavedStackSize has not been calculated");
