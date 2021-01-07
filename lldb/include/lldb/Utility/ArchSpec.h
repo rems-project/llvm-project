@@ -98,6 +98,12 @@ public:
                                        // standard AArch64 ABI and Morello
                                        // Hybrid or Pure Capability ABIs)
     eAArch64_abi_descabi = 0x00000001  // Morello Descriptor ABI
+  }
+
+  enum RISCVSubType {
+    eRISCVSubType_unknown,
+    eRISCVSubType_riscv32,
+    eRISCVSubType_riscv64,
   };
 
   enum Core {
@@ -191,6 +197,9 @@ public:
     eCore_hexagon_generic,
     eCore_hexagon_hexagonv4,
     eCore_hexagon_hexagonv5,
+
+    eCore_riscv32,
+    eCore_riscv64,
 
     eCore_uknownMach32,
     eCore_uknownMach64,
