@@ -2,7 +2,7 @@
 ; RUN: llc -mtriple=arm64-none-linux-gnu -mattr=+c64 -target-abi purecap -relocation-model=pic -filetype=obj < %s | llvm-objdump --mattr=+morello -r - | FileCheck --check-prefix=CHECK-RELOC %s
 ; RUN: llc -mtriple=arm64-none-linux-gnu -mattr=+c64 -target-abi purecap -verify-machineinstrs < %s | FileCheck %s
 ; RUN: llc -mtriple=arm64-none-linux-gnu -mattr=+c64 -target-abi purecap -filetype=obj < %s | llvm-objdump -r - | FileCheck --check-prefix=CHECK-RELOC %s
-; RUN: llc -mtriple=arm64-none-linux-gnu -mattr=+c64 -target-abi purecap -filetype=obj < %s | llvm-objdump -d -mattr=+morello - | FileCheck --check-prefix=CHECK-ASM %s
+; RUN: llc -mtriple=arm64-none-linux-gnu -mattr=+c64 -target-abi purecap -filetype=obj < %s | llvm-objdump -d --mattr=+morello - | FileCheck --check-prefix=CHECK-ASM %s
 
 target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128-pf200:128:128-A200-P200-G200"
 
@@ -12,7 +12,6 @@ target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128-pf200:128:128-A200-P200-G
 
 define i32 @test_generaldynamic() {
 ; CHECK-LABEL: test_generaldynamic:
-; CHECK-NOLD-LABEL: test_generaldynamic:
 
   %val = load i32, i32 addrspace(200)* @general_dynamic_var
   ret i32 %val
@@ -35,7 +34,6 @@ define i32 @test_generaldynamic() {
 
 define i32 addrspace(200)* @test_generaldynamic_addr() {
 ; CHECK-LABEL: test_generaldynamic_addr:
-; CHECK-NOLD-LABEL: test_generaldynamic_addr:
 
   ret i32 addrspace(200)* @general_dynamic_var
 
@@ -59,8 +57,7 @@ define i32 addrspace(200)* @test_generaldynamic_addr() {
 ; For now we're using general dynamic for local dynamic as well.
 define i32 @test_localdynamic() {
 ; CHECK-LABEL: test_localdynamic:
-; CHECK-NOLD-LABEL: test_localdynamic:
-; CHECK-ASM-LABEL: test_localdynamic:
+; CHECK-ASM-LABEL: <test_localdynamic>:
 
   %val = load i32, i32 addrspace(200)* @local_dynamic_var
   ret i32 %val

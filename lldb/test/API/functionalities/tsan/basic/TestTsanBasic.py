@@ -19,6 +19,7 @@ class TsanBasicTestCase(TestBase):
     @expectedFailureNetBSD
     @skipIfFreeBSD  # llvm.org/pr21136 runtimes not yet available by default
     @skipIfRemote
+    @skipIfLinux
     @skipUnlessThreadSanitizer
     def test(self):
         self.build()
