@@ -3536,6 +3536,12 @@ bool TargetProperties::GetMoveToNearestCode() const {
       nullptr, idx, g_target_properties[idx].default_uint_value != 0);
 }
 
+bool TargetProperties::GetForceExpressionEvaluation() const {
+  const uint32_t idx = ePropertyForceExpressionEvaluation;
+  return m_collection_sp->GetPropertyAtIndexAsBoolean(
+      nullptr, idx, g_target_properties[idx].default_uint_value != 0);
+}
+
 lldb::DynamicValueType TargetProperties::GetPreferDynamicValue() const {
   const uint32_t idx = ePropertyPreferDynamic;
   return (lldb::DynamicValueType)

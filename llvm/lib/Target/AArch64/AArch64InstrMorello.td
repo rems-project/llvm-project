@@ -715,10 +715,6 @@ def : Pat<(int_cheri_cap_offset_get Capsp:$Cn),
           (CapGetOffset Capsp:$Cn)>;
 def : Pat<(int_cheri_cap_base_get Capsp:$Cn),
           (CapGetBase Capsp:$Cn)>;
-def : Pat<(int_cheri_cap_flags_get Capsp:$Cn),
-          (CapGetFlags Capsp:$Cn)>;
-def : Pat<(int_cheri_cap_flags_set Capsp:$Cn, GPR64:$Rm),
-          (CapSetFlags Capsp:$Cn, GPR64:$Rm)>;
 def : Pat<(int_cheri_cap_length_get Capsp:$Cn),
           (CapGetLen Capsp:$Cn)>;
 def : Pat<(int_cheri_cap_perms_get Capsp:$Cn),

@@ -252,7 +252,23 @@ Examples:
     expr my_struct->a = my_array[3]
     expr -f bin -- (index * 8) + 5
     expr unsigned int $foo = 5
-    expr char c[] = \"foo\"; c[0])");
+    expr char c[] = \"foo\"; c[0])"
+      R"(
+
+!!!!!!!!!!!!!!!!
+!!! WARNING: !!!
+!!!!!!!!!!!!!!!!
+!!!
+!!! This command is currently disabled for AArch64 because expression evaluation
+!!! may change the values of the capability registers and we lack support for
+!!! restoring them. If you are absolutely certain that your debug session does not
+!!! use the capability registers, you can force the execution of expr commands by
+!!! using:
+!!!
+!!!    settings set target.force-expr-evaluation true
+!!!
+
+)");
 
   CommandArgumentEntry arg;
   CommandArgumentData expression_arg;
@@ -649,6 +665,16 @@ bool CommandObjectExpression::DoExecute(llvm::StringRef command,
   }
 
   Target &target = GetSelectedOrDummyTarget();
+  if (target.GetArchitecture().GetTriple().isAArch64() &&
+      !target.GetForceExpressionEvaluation()) {
+    // Disable expression evaluation for AArch64 since we do not yet have ptrace
+    // support for restoring the capability registers.
+    target.IncrementStats(StatisticKind::ExpressionFailure);
+    result.AppendError("Expression evaluation is disabled for AArch64");
+    result.SetStatus(eReturnStatusFailed);
+    return false;
+  }
+
   if (EvaluateExpression(expr, result.GetOutputStream(),
                          result.GetErrorStream(), result)) {
 

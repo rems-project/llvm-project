@@ -485,6 +485,24 @@ ArgType::matchesType(ASTContext &C, QualType argTy) const {
         return NoMatch;
       }
 
+    case CCapabilityTy:
+      if (const PointerType *PT = argTy->getAs<PointerType>()) {
+        if (!PT->isCHERICapability())
+          return NoMatch;
+      } else if (!C.getTargetInfo().areAllPointersCapabilities()) {
+        // Hybrid requires explicit casts for capabilities so everything should
+        // be a PointerType.
+        return NoMatch;
+      }
+      if (argTy->isVoidPointerType()) {
+        return Match;
+      } if (argTy->isPointerType() || argTy->isObjCObjectPointerType() ||
+            argTy->isBlockPointerType() || argTy->isNullPtrType()) {
+        return NoMatchPedantic;
+      } else {
+        return NoMatch;
+      }
+
     case ObjCPointerTy: {
       if (argTy->getAs<ObjCObjectPointerType>() ||
           argTy->getAs<BlockPointerType>())
@@ -540,6 +558,9 @@ QualType ArgType::getRepresentativeType(ASTContext &C) const {
       break;
     case CPointerTy:
       Res = C.VoidPtrTy;
+      break;
+    case CCapabilityTy:
+      Res = C.getPointerType(C.VoidTy, ASTContext::PIK_Capability);
       break;
     case WIntTy: {
       Res = C.getWIntType();

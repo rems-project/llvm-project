@@ -24,6 +24,9 @@ let Definition = "target" in {
   def ExprPrefix: Property<"expr-prefix", "FileSpec">,
     DefaultStringValue<"">,
     Desc<"Path to a file containing expressions to be prepended to all expressions.">;
+  def ForceExpressionEvaluation: Property<"force-expr-evaluation", "Boolean">,
+    DefaultFalse,
+    Desc<"Force evaluation of expressions even on targets where it is disabled">;
   def PreferDynamic: Property<"prefer-dynamic-value", "Enum">,
     DefaultEnumValue<"eDynamicDontRunTarget">,
     EnumValues<"OptionEnumValues(g_dynamic_value_types)">,

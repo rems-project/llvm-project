@@ -7,6 +7,7 @@ from __future__ import print_function
 
 import re
 import struct
+import sys
 
 import gdbremote_testcase
 from lldbsuite.test.decorators import llgs_test, no_match, skipIf
@@ -61,13 +62,30 @@ class TestGdbRemoteSigInfo(gdbremote_testcase.GdbRemoteTestCaseBase):
 
         # Check the signal information.
         self.assertEqual(len(siginfo), 128)
-        int_format = '<i' if endian == 'little' else '>i'
-        si_signo = struct.unpack(int_format, siginfo[:4])[0]   # int si_signo
-        si_errno = struct.unpack(int_format, siginfo[4:8])[0]  # int si_errno
-        si_code = struct.unpack(int_format, siginfo[8:12])[0]  # int si_code
+
+        # Temporary python 2 code - should be removed when our CI has moved away
+        # from python 2.
+        if sys.version_info.major == 2:
+            int_format = '<i' if endian == 'little' else '>i'
+            si_signo = struct.unpack(int_format, siginfo[:4])[0]   # int si_signo
+            si_errno = struct.unpack(int_format, siginfo[4:8])[0]  # int si_errno
+            si_code = struct.unpack(int_format, siginfo[8:12])[0]  # int si_code
+        else:
+            def raw_bytes(str_input):
+                # The byteorder doesn't matter here, since we only have 1 byte.
+                return b''.join(
+                        ord(c).to_bytes(1, byteorder=endian) for c in str_input)
+
+            def parse_int(str_input):
+                return int.from_bytes(raw_bytes(str_input), endian, signed=True)
+
+            si_signo = parse_int(siginfo[:4])
+            si_errno = parse_int(siginfo[4:8])
+            si_code = parse_int(siginfo[8:12])
+
         self.assertEqual(si_signo, signo)
         self.assertEqual(si_errno, 0)
-        self.assertEqual(si_code, -6)  # SI_TKILL
+        self.assertEqual(si_code, -6)  # SI_TKILL (glibc >= 2.3.3)
 
     @llgs_test
     @skipIf(oslist=no_match(['linux']))
