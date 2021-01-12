@@ -3799,7 +3799,7 @@ void AArch64InstrInfo::storeRegToStackSlot(
     else if (AArch64::PPRRegClass.hasSubClassEq(RC)) {
       assert(Subtarget.hasSVE() && "Unexpected register store without SVE");
       Opc = AArch64::STR_PXI;
-      StackID = TargetStackID::SVEVector;
+      StackID = TargetStackID::ScalableVector;
     }
     break;
   case 4:
@@ -3850,7 +3850,7 @@ void AArch64InstrInfo::storeRegToStackSlot(
     } else if (AArch64::ZPRRegClass.hasSubClassEq(RC)) {
       assert(Subtarget.hasSVE() && "Unexpected register store without SVE");
       Opc = AArch64::STR_ZXI;
-      StackID = TargetStackID::SVEVector;
+      StackID = TargetStackID::ScalableVector;
     }
     break;
   case 24:
@@ -3875,7 +3875,7 @@ void AArch64InstrInfo::storeRegToStackSlot(
     } else if (AArch64::ZPR2RegClass.hasSubClassEq(RC)) {
       assert(Subtarget.hasSVE() && "Unexpected register store without SVE");
       Opc = AArch64::STR_ZZXI;
-      StackID = TargetStackID::SVEVector;
+      StackID = TargetStackID::ScalableVector;
     }
     break;
   case 48:
@@ -3887,7 +3887,7 @@ void AArch64InstrInfo::storeRegToStackSlot(
     } else if (AArch64::ZPR3RegClass.hasSubClassEq(RC)) {
       assert(Subtarget.hasSVE() && "Unexpected register store without SVE");
       Opc = AArch64::STR_ZZZXI;
-      StackID = TargetStackID::SVEVector;
+      StackID = TargetStackID::ScalableVector;
     }
     break;
   case 64:
@@ -3899,7 +3899,7 @@ void AArch64InstrInfo::storeRegToStackSlot(
     } else if (AArch64::ZPR4RegClass.hasSubClassEq(RC)) {
       assert(Subtarget.hasSVE() && "Unexpected register store without SVE");
       Opc = AArch64::STR_ZZZZXI;
-      StackID = TargetStackID::SVEVector;
+      StackID = TargetStackID::ScalableVector;
     }
     break;
   }
@@ -3967,7 +3967,7 @@ void AArch64InstrInfo::loadRegFromStackSlot(
     else if (AArch64::PPRRegClass.hasSubClassEq(RC)) {
       assert(Subtarget.hasSVE() && "Unexpected register load without SVE");
       Opc = AArch64::LDR_PXI;
-      StackID = TargetStackID::SVEVector;
+      StackID = TargetStackID::ScalableVector;
     }
     break;
   case 4:
@@ -4014,7 +4014,7 @@ void AArch64InstrInfo::loadRegFromStackSlot(
     } else if (AArch64::ZPRRegClass.hasSubClassEq(RC)) {
       assert(Subtarget.hasSVE() && "Unexpected register load without SVE");
       Opc = AArch64::LDR_ZXI;
-      StackID = TargetStackID::SVEVector;
+      StackID = TargetStackID::ScalableVector;
     }
     break;
   case 24:
@@ -4039,7 +4039,7 @@ void AArch64InstrInfo::loadRegFromStackSlot(
     } else if (AArch64::ZPR2RegClass.hasSubClassEq(RC)) {
       assert(Subtarget.hasSVE() && "Unexpected register load without SVE");
       Opc = AArch64::LDR_ZZXI;
-      StackID = TargetStackID::SVEVector;
+      StackID = TargetStackID::ScalableVector;
     }
     break;
   case 48:
@@ -4051,7 +4051,7 @@ void AArch64InstrInfo::loadRegFromStackSlot(
     } else if (AArch64::ZPR3RegClass.hasSubClassEq(RC)) {
       assert(Subtarget.hasSVE() && "Unexpected register load without SVE");
       Opc = AArch64::LDR_ZZZXI;
-      StackID = TargetStackID::SVEVector;
+      StackID = TargetStackID::ScalableVector;
     }
     break;
   case 64:
@@ -4063,7 +4063,7 @@ void AArch64InstrInfo::loadRegFromStackSlot(
     } else if (AArch64::ZPR4RegClass.hasSubClassEq(RC)) {
       assert(Subtarget.hasSVE() && "Unexpected register load without SVE");
       Opc = AArch64::LDR_ZZZZXI;
-      StackID = TargetStackID::SVEVector;
+      StackID = TargetStackID::ScalableVector;
     }
     break;
   }
