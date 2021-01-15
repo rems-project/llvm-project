@@ -6534,7 +6534,6 @@ QualType Sema::FindCompositePointerType(SourceLocation Loc,
   //  - if T1 and T2 are similar types (4.5), the cv-combined type of T1 and
   //    T2;
   //
-  SmallVector<std::pair<bool, bool>, 4> CapabilityType;
   // Dismantle T1 and T2 to simultaneously determine whether they are similar
   // and to prepare to form the cv-combined type if so.
   QualType Composite1 = T1;
