@@ -57,6 +57,13 @@ class MorelloCapabilityOperationTestCase(CapabilityOperationTestBase):
         # range=[0x1000, 0x4000)}} to c23.
         remote.registers['c23'].write(0x00c0000000400010000000000000001000)
 
+        # Mark c23 as the frame pointer (note that this is intentionally not
+        # ABI-compliant, we're just making sure we use the value provided by
+        # lldb-server and not some hardcoded value).
+        # FIXME: This should only be true unless we're using the hack for
+        # hardcoding the Morello registers.
+        remote.registers['c23'].alt_name='cfp'
+
         # 0x0010: ELF header for a completely empty program.
         remote.memory.write(0x0010, [
             0x7f, 0x45, 0x4c, 0x46, 0x02, 0x01, 0x01, 0x00,
@@ -155,6 +162,9 @@ class MorelloCapabilityOperationTestCase(CapabilityOperationTestBase):
                     substrs=["c23 = 0x00c0000000400010000000000000001000"])
         self.expect('register read -f capability c23',
                     substrs=["c23 = {tag = 0, address = 0x0000000000001000, attributes = {[Store Load], range = [0x1000-0x4000)}}"])
+
+        self.expect('register read cfp',
+                    substrs=["c23 = 0x00c0000000400010000000000000001000"])
 
         # Test register writes.
         # Write something with the tag 0.
