@@ -2067,6 +2067,18 @@ void MCAsmStreamer::emitBundleUnlock() {
 void MCAsmStreamer::EmitCheriCapabilityImpl(const MCSymbol *Symbol,
                                             const MCExpr *Addend,
                                             unsigned CapSize, SMLoc Loc) {
+  // FIXME: Temporary workaround to avoid changing all Morello tests:
+  // Keep the .capinit output for now.
+  // XXX: No easy way to get the triple, let's just check for .xword for now.
+  if (getContext().getAsmInfo()->getData64bitsDirective() ==
+      StringRef("\t.xword\t")) {
+    const MCSymbolRefExpr *SRE = MCSymbolRefExpr::create(
+        Symbol, MCSymbolRefExpr::VK_None, getContext(), Loc);
+    emitCapInit(MCBinaryExpr::createAdd(SRE, Addend, getContext()));
+    emitIntValue(0, 8);
+    emitIntValue(0, 8);
+    return;
+  }
   OS << "\t.chericap\t";
   Symbol->print(OS, MAI);
   // Avoid parens,unary minus, and zero for constants:
@@ -2086,6 +2098,13 @@ void MCAsmStreamer::EmitCheriCapabilityImpl(const MCSymbol *Symbol,
 
 void MCAsmStreamer::emitCheriIntcap(const MCExpr *Expr, unsigned CapSize,
                                     SMLoc Loc) {
+  // FIXME: Temporary workaround to avoid changing all Morello tests:
+  // Keep the .capinit output for now.
+  // XXX: No easy way to get the triple, let's just check for .xword for now.
+  if (getContext().getAsmInfo()->getData64bitsDirective() ==
+      StringRef("\t.xword\t"))
+    return emitCheriIntcapGeneric(Expr, CapSize, Loc);
+
   int64_t AbsValue;
   if (Expr->evaluateAsAbsolute(AbsValue, *this)) {
     // XXXAR: always emit as hex?

@@ -106,20 +106,6 @@ public:
   // Allow a target to add behavior to the emitAssignment of MCStreamer.
   virtual void emitAssignment(MCSymbol *Symbol, const MCExpr *Value);
 
-  // Let the target customize how it emit the initializer for a CHERI capability.
-  // This will emit the relocation and make sure to allocate the required space.
-  virtual void emitCHERICapability(const MCSymbol *Symbol, int64_t Offset,
-                                   unsigned CapSize, SMLoc Loc = SMLoc());
-  virtual void emitCHERICapability(const MCSymbol *Symbol, const MCExpr *Addend,
-                                   unsigned CapSize, SMLoc Loc = SMLoc());
-  virtual void emitCHERICapability(const MCExpr *Expr, unsigned CapSize,
-                                   SMLoc Loc = SMLoc()) {
-    llvm_unreachable("Target only supports symbol + offset");
-  }
-
-  virtual void emitCheriIntcap(int64_t Value, unsigned CapSize,
-                               SMLoc Loc = SMLoc());
-
   virtual void prettyPrintAsm(MCInstPrinter &InstPrinter, uint64_t Address,
                               const MCInst &Inst, const MCSubtargetInfo &STI,
                               raw_ostream &OS);

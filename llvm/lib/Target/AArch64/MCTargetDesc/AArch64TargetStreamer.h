@@ -33,16 +33,6 @@ public:
   /// Emit contents of constant pool for the current section.
   void emitCurrentConstantPool();
 
-  /// Emit a capability initialization relocation and the data for the capability.
-  void emitCHERICapability(const MCSymbol *Value, int64_t Addend,
-                           unsigned CapSize, SMLoc Loc) override;
-  void emitCHERICapability(const MCSymbol *Value, const MCExpr *Addend,
-                           unsigned CapSize, SMLoc Loc) override;
-  void emitCHERICapability(const MCExpr *Value, unsigned CapSize,
-                           SMLoc Loc) override;
-  void emitCheriIntcap(int64_t Value, unsigned CapSize,
-                       SMLoc Loc) override;
-
   /// Callback used to implement the .inst directive.
   virtual void emitInst(uint32_t Inst, const MCSubtargetInfo &STI);
 

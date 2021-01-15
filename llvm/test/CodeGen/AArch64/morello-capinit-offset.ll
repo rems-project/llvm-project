@@ -10,9 +10,9 @@ target triple = "aarch64-none--elf"
 ; CHECK-LABEL: str
 ; CHECK-LABEL: ptr1
 ; CHECK: .capinit str+8
-; CHECK: .xword 0
-; CHECK: .xword 0
+; CHECK-NEXT: .xword 0
+; CHECK-NEXT: .xword 0
 ; CHECK-LABEL: ptr2
 ; CHECK: .capinit str
-; CHECK: .xword 0
-; CHECK: .xword 0
+; CHECK-NEXT: .xword 0
+; CHECK-NEXT: .xword 0

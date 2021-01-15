@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AArch64TargetStreamer.h"
+#include "AArch64MCExpr.h"
 #include "AArch64MCTargetDesc.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringExtras.h"
@@ -161,6 +162,13 @@ public:
     emitDataMappingSymbol();
     MCObjectStreamer::emitFill(NumBytes, FillValue, Loc);
   }
+
+protected:
+  void EmitCheriCapabilityImpl(const MCSymbol *Symbol, const MCExpr *Addend,
+                               unsigned CapSize, SMLoc Loc) override;
+  void emitCheriIntcap(const MCExpr *Expr, unsigned CapSize,
+                       SMLoc Loc) override;
+
 private:
   enum ElfMappingSymbol {
     EMS_None,
@@ -228,6 +236,32 @@ private:
   ElfMappingSymbol LastEMS;
   SmallVector<MCSymbol *, 3> CurrentLabels;
 };
+
+void AArch64ELFStreamer::EmitCheriCapabilityImpl(const MCSymbol *Symbol,
+    const MCExpr *Addend,
+    unsigned CapSize, SMLoc Loc) {
+  assert(Addend && "Should have received a MCConstExpr(0) instead of nullptr");
+  assert(CapSize == 16 && "Unexpected capability size");
+  visitUsedSymbol(*Symbol);
+  MCContext &Context = getContext();
+  const MCSymbolRefExpr *SRE =
+      MCSymbolRefExpr::create(Symbol, MCSymbolRefExpr::VK_None, Context, Loc);
+  const MCBinaryExpr *CapExpr = MCBinaryExpr::createAdd(SRE, Addend, Context);
+
+  // Pad to ensure that the capability is aligned
+  // TODO: in the future we should check alignment when emitting relocations
+  //  instead of adding alignment for all capabilities.
+  emitValueToAlignment(CapSize, 0, 1, 0);
+  emitCapInit(AArch64MCExpr::create(CapExpr, AArch64MCExpr::VK_CAPINIT, Context));
+  emitIntValue(0, 8);
+  emitIntValue(0, 8);
+}
+
+void AArch64ELFStreamer::emitCheriIntcap(const MCExpr *Expr, unsigned CapSize,
+    SMLoc Loc) {
+  assert(CapSize == 16 && "Unexpected capability size");
+  emitCheriIntcapGeneric(Expr, CapSize, Loc);
+}
 
 } // end anonymous namespace
 

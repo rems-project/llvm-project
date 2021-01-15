@@ -1544,8 +1544,8 @@ bool AsmPrinter::doFinalization(Module &M) {
       for (const auto &Stub : Stubs) {
         OutStreamer->emitLabel(Stub.first);
         if (DL.isFatPointer(AS))
-          OutStreamer->getTargetStreamer()->emitCHERICapability(
-              Stub.second.getPointer(), nullptr, Size);
+          OutStreamer->EmitCheriCapability(Stub.second.getPointer(), nullptr,
+                                           Size);
         else
           OutStreamer->emitSymbolValue(Stub.second.getPointer(), Size);
       }
@@ -2819,34 +2819,36 @@ static void emitGlobalConstantCHERICap(const DataLayout &DL, const Constant *CV,
 
   const MCExpr *Expr = AP.lowerConstant(CV);
   if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Expr)) {
-    AP.OutStreamer->getTargetStreamer()->emitCheriIntcap(CE->getValue(), CapWidth);
+    AP.OutStreamer->emitCheriIntcap(CE->getValue(), CapWidth);
     return;
   }
-
   GlobalValue *GV;
   APInt Addend;
-  auto *TS = AP.OutStreamer->getTargetStreamer();
   if (IsConstantOffsetFromGlobal(const_cast<Constant *>(CV), GV, Addend, DL,
                                  true)) {
-    TS->emitCHERICapability(AP.getSymbol(GV), Addend.getSExtValue(),
-                            CapWidth);
+    AP.OutStreamer->EmitCheriCapability(AP.getSymbol(GV), Addend.getSExtValue(),
+                                        CapWidth);
     return;
   } else if (const MCSymbolRefExpr *SRE = dyn_cast<MCSymbolRefExpr>(Expr)) {
     if (auto BA = dyn_cast<BlockAddress>(CV)) {
       // For block addresses we emit `.chericap FN+(.LtmpN - FN)`
       auto FnStart = AP.getSymbol(BA->getFunction());
       const MCExpr *DiffToStart = MCBinaryExpr::createSub(SRE, MCSymbolRefExpr::create(FnStart, AP.OutContext), AP.OutContext);
-      TS->emitCHERICapability(FnStart, DiffToStart, CapWidth);
+      AP.OutStreamer->EmitCheriCapability(FnStart, DiffToStart, CapWidth);
       return;
     }
     // Emit capability for label whose address is stored in a global variable
     // FIXME: Any more cases to handle other than blockaddress?
     if (SRE->getSymbol().isTemporary()) {
-      TS->emitCHERICapability(&SRE->getSymbol(), nullptr, CapWidth);
+      report_fatal_error(
+          "Cannot emit a global .chericap referring to a temporary since this "
+          "will result in the wrong value at runtime!");
+      AP.OutStreamer->EmitCheriCapability(&SRE->getSymbol(), nullptr, CapWidth);
       return;
     }
   }
-  TS->emitCHERICapability(Expr, CapWidth);
+  llvm_unreachable("Tried to emit a capability which is neither a constant nor "
+                   "a global+offset");
 }
 
 static void emitGlobalConstantImpl(const DataLayout &DL, const Constant *CV,
@@ -2885,7 +2887,7 @@ static void emitGlobalConstantImpl(const DataLayout &DL, const Constant *CV,
 
   if (isa<ConstantPointerNull>(CV)) {
     if (CV->getType()->isPointerTy() && DL.isFatPointer(CV->getType()))
-      AP.OutStreamer->getTargetStreamer()->emitCheriIntcap(0, Size);
+      AP.OutStreamer->emitCheriIntcap((int64_t)0, Size);
     else
       AP.OutStreamer->emitIntValue(0, Size);
     return;

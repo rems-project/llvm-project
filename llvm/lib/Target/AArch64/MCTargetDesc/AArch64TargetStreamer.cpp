@@ -44,52 +44,6 @@ void AArch64TargetStreamer::emitCurrentConstantPool() {
   ConstantPools->emitForCurrentSection(Streamer);
 }
 
-void AArch64TargetStreamer::emitCheriIntcap(int64_t Value, unsigned CapSize,
-                                            SMLoc Loc) {
-  assert(CapSize == 16 && "Unexpected capability size");
-  Streamer.emitIntValue(Value, 8);
-  Streamer.emitIntValue(0, 8);
-}
-
-void AArch64TargetStreamer::emitCHERICapability(const MCSymbol *Value,
-                                               const MCExpr *Addend,
-                                               unsigned CapSize,
-                                               SMLoc Loc) {
-  assert(CapSize == 16 && "Unexpected capability size");
-
-  const MCExpr *Expr =
-    MCSymbolRefExpr::create(Value, MCSymbolRefExpr::VK_None,
-                            Streamer.getContext(), Loc);
-  if (Addend)
-    Expr = MCBinaryExpr::createAdd(Expr, Addend, Streamer.getContext());
-  return emitCHERICapability(Expr, CapSize, Loc);
-}
-
-void AArch64TargetStreamer::emitCHERICapability(const MCSymbol *Value,
-                                               int64_t Addend,
-                                               unsigned CapSize,
-                                               SMLoc Loc) {
-  const MCExpr *Expr = nullptr;
-  if (Addend)
-    Expr = MCConstantExpr::create(Addend, Streamer.getContext());
-
-  return emitCHERICapability(Value, Expr, CapSize, Loc);
-}
-
-void AArch64TargetStreamer::emitCHERICapability(const MCExpr *Expr,
-                                                unsigned CapSize,
-                                                SMLoc Loc) {
-  assert(CapSize == 16 && "Unexpected capability size");
-
-  Expr = AArch64MCExpr::create(Expr, AArch64MCExpr::VK_CAPINIT,
-                               Streamer.getContext());
-
-  Streamer.emitCapInit(Expr);
-  Streamer.emitIntValue(0, 8);
-  Streamer.emitIntValue(0, 8);
-}
-
-
 // finish() - write out any non-empty assembler constant pools.
 void AArch64TargetStreamer::finish() { ConstantPools->emitAll(Streamer); }
 
