@@ -321,7 +321,6 @@ enum NodeType : unsigned {
   CLASTB_N,
   LASTA,
   LASTB,
-  REV,
   TBL,
 
   // Floating-point reductions.
