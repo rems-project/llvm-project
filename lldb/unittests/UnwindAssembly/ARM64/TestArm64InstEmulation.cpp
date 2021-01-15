@@ -747,7 +747,7 @@ TEST_F(TestArm64InstEmulation, TestSUB) {
   };
 
   UnwindPlan unwind_plan =
-      GetUnwindPlan("aarch64-none-elf", data, sizeof(data));
+      GetUnwindPlan("aarch64-linux-android", data, sizeof(data));
 
   {
     SCOPED_TRACE(" 0: CFA = sp + 0 =>");
@@ -767,7 +767,7 @@ TEST_F(TestArm64InstEmulation, TestADD) {
   };
 
   UnwindPlan unwind_plan =
-      GetUnwindPlan("aarch64-none-elf", data, sizeof(data));
+      GetUnwindPlan("aarch64-linux-android", data, sizeof(data));
 
   {
     SCOPED_TRACE(" 0: CFA = sp + 0 =>");
@@ -788,7 +788,7 @@ TEST_F(TestArm64InstEmulation, TestSTPLDP_Post) {
   };
 
   UnwindPlan unwind_plan =
-      GetUnwindPlan("aarch64-none-elf", data, sizeof(data));
+      GetUnwindPlan("aarch64-linux-android", data, sizeof(data));
 
   {
     SCOPED_TRACE(" 0: CFA = sp + 0 =>");
@@ -823,7 +823,7 @@ TEST_F(TestArm64InstEmulation, TestSTPLDP_Pre) {
   };
 
   UnwindPlan unwind_plan =
-      GetUnwindPlan("aarch64-none-elf", data, sizeof(data));
+      GetUnwindPlan("aarch64-linux-android", data, sizeof(data));
 
   {
     SCOPED_TRACE(" 0: CFA = sp + 0 =>");
@@ -857,7 +857,7 @@ TEST_F(TestArm64InstEmulation, TestSTP_Off) {
   };
 
   UnwindPlan unwind_plan =
-      GetUnwindPlan("aarch64-none-elf", data, sizeof(data));
+      GetUnwindPlan("aarch64-linux-android", data, sizeof(data));
 
   {
     SCOPED_TRACE(" 0: CFA = sp + 0 =>");
@@ -888,7 +888,7 @@ TEST_F(TestArm64InstEmulation, TestSimpleC64PurecapFunction) {
   };
 
   UnwindPlan unwind_plan =
-      GetUnwindPlan("aarch64-none-elf", data, sizeof(data));
+      GetUnwindPlan("aarch64-linux-android", data, sizeof(data));
 
   // UnwindPlan we expect:
   //   0: CFA=sp +0 =>
@@ -923,13 +923,9 @@ TEST_F(TestArm64InstEmulation, TestSimpleC64PurecapFunction) {
 
   {
     SCOPED_TRACE(
-        "  12: CFA=fp+32 => fp=[CFA-32] lr=[CFA-16] cfp=[CFA-32] clr=[CFA-16]");
-    UnwindPlanForFunctionOffset(unwind_plan, 12)
-        .ShouldHaveCFA(gpr_fp_arm64, 32)
-        .ShouldHaveRegAtCFAPlusOffset(gpr_fp_arm64, -32)
-        .ShouldHaveRegAtCFAPlusOffset(gpr_lr_arm64, -16)
-        .ShouldHaveRegAtCFAPlusOffset(cap_cfp_arm64, -32)
-        .ShouldHaveRegAtCFAPlusOffset(cap_clr_arm64, -16);
+        "  12: The CFA remains relative to the SP even if the FP changes");
+    EXPECT_EQ(unwind_plan.GetRowForFunctionOffset(12),
+              unwind_plan.GetRowForFunctionOffset(8));
   }
 
   {
