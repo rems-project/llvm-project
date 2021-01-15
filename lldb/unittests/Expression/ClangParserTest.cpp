@@ -25,6 +25,7 @@ struct ClangHostTest : public testing::Test {
 };
 } // namespace
 
+#if !defined(__linux__)
 static std::string ComputeClangResourceDir(std::string lldb_shlib_path,
                                            bool verify = false) {
   FileSpec clang_dir;
@@ -47,6 +48,7 @@ TEST_F(ClangHostTest, ComputeClangResourceDirectory) {
   // ComputeClangResourceDir not give you path_to_clang_dir.
   EXPECT_NE(ComputeClangResourceDir(path_to_liblldb, true), path_to_clang_dir);
 }
+#endif
 
 #if defined(__APPLE__)
 TEST_F(ClangHostTest, MacOSX) {
