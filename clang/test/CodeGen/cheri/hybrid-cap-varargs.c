@@ -59,34 +59,33 @@ extern union int_or_cap int_or_cap;
 // MIPS-NEXT:    [[BYVAL_TEMP7:%.*]] = alloca [[STRUCT_MIXED:%.*]], align 16
 // MIPS-NEXT:    [[BYVAL_TEMP8:%.*]] = alloca [[UNION_INT_OR_CAP:%.*]], align 16
 // MIPS-NEXT:    store i8 addrspace(200)* null, i8 addrspace(200)** [[NULL_CAP]], align 16
-// MIPS-NEXT:    [[TMP0:%.*]] = call i8 addrspace(200)* @llvm.cheri.cap.address.set.i64(i8 addrspace(200)* null, i64 0)
-// MIPS-NEXT:    store i8 addrspace(200)* [[TMP0]], i8 addrspace(200)** [[NULL_UINTCAP]], align 16
-// MIPS-NEXT:    [[TMP1:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** [[NULL_CAP]], align 16
-// MIPS-NEXT:    [[TMP2:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** [[NULL_UINTCAP]], align 16
-// MIPS-NEXT:    [[TMP3:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** @cap, align 16
-// MIPS-NEXT:    [[TMP4:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** @uintcap, align 16
-// MIPS-NEXT:    store i8 addrspace(200)* [[TMP1]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP]], align 16
-// MIPS-NEXT:    store i8 addrspace(200)* [[TMP2]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP1]], align 16
-// MIPS-NEXT:    store i8 addrspace(200)* [[TMP3]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP2]], align 16
-// MIPS-NEXT:    store i8 addrspace(200)* [[TMP4]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP3]], align 16
+// MIPS-NEXT:    store i8 addrspace(200)* null, i8 addrspace(200)** [[NULL_UINTCAP]], align 16
+// MIPS-NEXT:    [[TMP0:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** [[NULL_CAP]], align 16
+// MIPS-NEXT:    [[TMP1:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** [[NULL_UINTCAP]], align 16
+// MIPS-NEXT:    [[TMP2:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** @cap, align 16
+// MIPS-NEXT:    [[TMP3:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** @uintcap, align 16
+// MIPS-NEXT:    store i8 addrspace(200)* [[TMP0]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP]], align 16
+// MIPS-NEXT:    store i8 addrspace(200)* [[TMP1]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP1]], align 16
+// MIPS-NEXT:    store i8 addrspace(200)* [[TMP2]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP2]], align 16
+// MIPS-NEXT:    store i8 addrspace(200)* [[TMP3]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP3]], align 16
 // MIPS-NEXT:    call void (i64, ...) @callee(i64 signext 0, i8 addrspace(200)** [[INDIRECT_ARG_TEMP]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP1]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP2]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP3]])
-// MIPS-NEXT:    [[TMP5:%.*]] = bitcast %struct.single_cap* [[BYVAL_TEMP]] to i8*
-// MIPS-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP5]], i8* align 16 bitcast (%struct.single_cap* @single_cap to i8*), i64 16, i1 false)
+// MIPS-NEXT:    [[TMP4:%.*]] = bitcast %struct.single_cap* [[BYVAL_TEMP]] to i8*
+// MIPS-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP4]], i8* align 16 bitcast (%struct.single_cap* @single_cap to i8*), i64 16, i1 false)
 // MIPS-NEXT:    call void (i64, ...) @callee(i64 signext 1, %struct.single_cap* [[BYVAL_TEMP]])
-// MIPS-NEXT:    [[TMP6:%.*]] = bitcast %struct.double_cap* [[BYVAL_TEMP4]] to i8*
-// MIPS-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP6]], i8* align 16 bitcast (%struct.double_cap* @double_cap to i8*), i64 32, i1 false)
+// MIPS-NEXT:    [[TMP5:%.*]] = bitcast %struct.double_cap* [[BYVAL_TEMP4]] to i8*
+// MIPS-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP5]], i8* align 16 bitcast (%struct.double_cap* @double_cap to i8*), i64 32, i1 false)
 // MIPS-NEXT:    call void (i64, ...) @callee(i64 signext 2, %struct.double_cap* [[BYVAL_TEMP4]])
-// MIPS-NEXT:    [[TMP7:%.*]] = bitcast %struct.single_cap_array* [[BYVAL_TEMP5]] to i8*
-// MIPS-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP7]], i8* align 16 bitcast (%struct.single_cap_array* @single_cap_array to i8*), i64 16, i1 false)
+// MIPS-NEXT:    [[TMP6:%.*]] = bitcast %struct.single_cap_array* [[BYVAL_TEMP5]] to i8*
+// MIPS-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP6]], i8* align 16 bitcast (%struct.single_cap_array* @single_cap_array to i8*), i64 16, i1 false)
 // MIPS-NEXT:    call void (i64, ...) @callee(i64 signext 3, %struct.single_cap_array* [[BYVAL_TEMP5]])
-// MIPS-NEXT:    [[TMP8:%.*]] = bitcast %struct.double_cap_array* [[BYVAL_TEMP6]] to i8*
-// MIPS-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP8]], i8* align 16 bitcast (%struct.double_cap_array* @double_cap_array to i8*), i64 32, i1 false)
+// MIPS-NEXT:    [[TMP7:%.*]] = bitcast %struct.double_cap_array* [[BYVAL_TEMP6]] to i8*
+// MIPS-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP7]], i8* align 16 bitcast (%struct.double_cap_array* @double_cap_array to i8*), i64 32, i1 false)
 // MIPS-NEXT:    call void (i64, ...) @callee(i64 signext 4, %struct.double_cap_array* [[BYVAL_TEMP6]])
-// MIPS-NEXT:    [[TMP9:%.*]] = bitcast %struct.mixed* [[BYVAL_TEMP7]] to i8*
-// MIPS-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP9]], i8* align 16 bitcast (%struct.mixed* @mixed to i8*), i64 32, i1 false)
+// MIPS-NEXT:    [[TMP8:%.*]] = bitcast %struct.mixed* [[BYVAL_TEMP7]] to i8*
+// MIPS-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP8]], i8* align 16 bitcast (%struct.mixed* @mixed to i8*), i64 32, i1 false)
 // MIPS-NEXT:    call void (i64, ...) @callee(i64 signext 5, %struct.mixed* [[BYVAL_TEMP7]])
-// MIPS-NEXT:    [[TMP10:%.*]] = bitcast %union.int_or_cap* [[BYVAL_TEMP8]] to i8*
-// MIPS-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP10]], i8* align 16 bitcast (%union.int_or_cap* @int_or_cap to i8*), i64 16, i1 false)
+// MIPS-NEXT:    [[TMP9:%.*]] = bitcast %union.int_or_cap* [[BYVAL_TEMP8]] to i8*
+// MIPS-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP9]], i8* align 16 bitcast (%union.int_or_cap* @int_or_cap to i8*), i64 16, i1 false)
 // MIPS-NEXT:    call void (i64, ...) @callee(i64 signext 6, %union.int_or_cap* [[BYVAL_TEMP8]])
 // MIPS-NEXT:    ret void
 //
@@ -105,34 +104,33 @@ extern union int_or_cap int_or_cap;
 // RV32IXCHERI-NEXT:    [[BYVAL_TEMP7:%.*]] = alloca [[STRUCT_MIXED:%.*]], align 8
 // RV32IXCHERI-NEXT:    [[BYVAL_TEMP8:%.*]] = alloca [[UNION_INT_OR_CAP:%.*]], align 8
 // RV32IXCHERI-NEXT:    store i8 addrspace(200)* null, i8 addrspace(200)** [[NULL_CAP]], align 8
-// RV32IXCHERI-NEXT:    [[TMP0:%.*]] = call i8 addrspace(200)* @llvm.cheri.cap.address.set.i32(i8 addrspace(200)* null, i32 0)
-// RV32IXCHERI-NEXT:    store i8 addrspace(200)* [[TMP0]], i8 addrspace(200)** [[NULL_UINTCAP]], align 8
-// RV32IXCHERI-NEXT:    [[TMP1:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** [[NULL_CAP]], align 8
-// RV32IXCHERI-NEXT:    [[TMP2:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** [[NULL_UINTCAP]], align 8
-// RV32IXCHERI-NEXT:    [[TMP3:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** @cap, align 8
-// RV32IXCHERI-NEXT:    [[TMP4:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** @uintcap, align 8
-// RV32IXCHERI-NEXT:    store i8 addrspace(200)* [[TMP1]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP]], align 8
-// RV32IXCHERI-NEXT:    store i8 addrspace(200)* [[TMP2]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP1]], align 8
-// RV32IXCHERI-NEXT:    store i8 addrspace(200)* [[TMP3]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP2]], align 8
-// RV32IXCHERI-NEXT:    store i8 addrspace(200)* [[TMP4]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP3]], align 8
+// RV32IXCHERI-NEXT:    store i8 addrspace(200)* null, i8 addrspace(200)** [[NULL_UINTCAP]], align 8
+// RV32IXCHERI-NEXT:    [[TMP0:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** [[NULL_CAP]], align 8
+// RV32IXCHERI-NEXT:    [[TMP1:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** [[NULL_UINTCAP]], align 8
+// RV32IXCHERI-NEXT:    [[TMP2:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** @cap, align 8
+// RV32IXCHERI-NEXT:    [[TMP3:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** @uintcap, align 8
+// RV32IXCHERI-NEXT:    store i8 addrspace(200)* [[TMP0]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP]], align 8
+// RV32IXCHERI-NEXT:    store i8 addrspace(200)* [[TMP1]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP1]], align 8
+// RV32IXCHERI-NEXT:    store i8 addrspace(200)* [[TMP2]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP2]], align 8
+// RV32IXCHERI-NEXT:    store i8 addrspace(200)* [[TMP3]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP3]], align 8
 // RV32IXCHERI-NEXT:    call void (i32, ...) @callee(i32 0, i8 addrspace(200)** [[INDIRECT_ARG_TEMP]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP1]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP2]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP3]])
-// RV32IXCHERI-NEXT:    [[TMP5:%.*]] = bitcast %struct.single_cap* [[BYVAL_TEMP]] to i8*
-// RV32IXCHERI-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i32(i8* align 8 [[TMP5]], i8* align 8 bitcast (%struct.single_cap* @single_cap to i8*), i32 8, i1 false)
+// RV32IXCHERI-NEXT:    [[TMP4:%.*]] = bitcast %struct.single_cap* [[BYVAL_TEMP]] to i8*
+// RV32IXCHERI-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i32(i8* align 8 [[TMP4]], i8* align 8 bitcast (%struct.single_cap* @single_cap to i8*), i32 8, i1 false)
 // RV32IXCHERI-NEXT:    call void (i32, ...) @callee(i32 1, %struct.single_cap* [[BYVAL_TEMP]])
-// RV32IXCHERI-NEXT:    [[TMP6:%.*]] = bitcast %struct.double_cap* [[BYVAL_TEMP4]] to i8*
-// RV32IXCHERI-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i32(i8* align 8 [[TMP6]], i8* align 8 bitcast (%struct.double_cap* @double_cap to i8*), i32 16, i1 false)
+// RV32IXCHERI-NEXT:    [[TMP5:%.*]] = bitcast %struct.double_cap* [[BYVAL_TEMP4]] to i8*
+// RV32IXCHERI-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i32(i8* align 8 [[TMP5]], i8* align 8 bitcast (%struct.double_cap* @double_cap to i8*), i32 16, i1 false)
 // RV32IXCHERI-NEXT:    call void (i32, ...) @callee(i32 2, %struct.double_cap* [[BYVAL_TEMP4]])
-// RV32IXCHERI-NEXT:    [[TMP7:%.*]] = bitcast %struct.single_cap_array* [[BYVAL_TEMP5]] to i8*
-// RV32IXCHERI-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i32(i8* align 8 [[TMP7]], i8* align 8 bitcast (%struct.single_cap_array* @single_cap_array to i8*), i32 8, i1 false)
+// RV32IXCHERI-NEXT:    [[TMP6:%.*]] = bitcast %struct.single_cap_array* [[BYVAL_TEMP5]] to i8*
+// RV32IXCHERI-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i32(i8* align 8 [[TMP6]], i8* align 8 bitcast (%struct.single_cap_array* @single_cap_array to i8*), i32 8, i1 false)
 // RV32IXCHERI-NEXT:    call void (i32, ...) @callee(i32 3, %struct.single_cap_array* [[BYVAL_TEMP5]])
-// RV32IXCHERI-NEXT:    [[TMP8:%.*]] = bitcast %struct.double_cap_array* [[BYVAL_TEMP6]] to i8*
-// RV32IXCHERI-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i32(i8* align 8 [[TMP8]], i8* align 8 bitcast (%struct.double_cap_array* @double_cap_array to i8*), i32 16, i1 false)
+// RV32IXCHERI-NEXT:    [[TMP7:%.*]] = bitcast %struct.double_cap_array* [[BYVAL_TEMP6]] to i8*
+// RV32IXCHERI-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i32(i8* align 8 [[TMP7]], i8* align 8 bitcast (%struct.double_cap_array* @double_cap_array to i8*), i32 16, i1 false)
 // RV32IXCHERI-NEXT:    call void (i32, ...) @callee(i32 4, %struct.double_cap_array* [[BYVAL_TEMP6]])
-// RV32IXCHERI-NEXT:    [[TMP9:%.*]] = bitcast %struct.mixed* [[BYVAL_TEMP7]] to i8*
-// RV32IXCHERI-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i32(i8* align 8 [[TMP9]], i8* align 8 bitcast (%struct.mixed* @mixed to i8*), i32 16, i1 false)
+// RV32IXCHERI-NEXT:    [[TMP8:%.*]] = bitcast %struct.mixed* [[BYVAL_TEMP7]] to i8*
+// RV32IXCHERI-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i32(i8* align 8 [[TMP8]], i8* align 8 bitcast (%struct.mixed* @mixed to i8*), i32 16, i1 false)
 // RV32IXCHERI-NEXT:    call void (i32, ...) @callee(i32 5, %struct.mixed* [[BYVAL_TEMP7]])
-// RV32IXCHERI-NEXT:    [[TMP10:%.*]] = bitcast %union.int_or_cap* [[BYVAL_TEMP8]] to i8*
-// RV32IXCHERI-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i32(i8* align 8 [[TMP10]], i8* align 8 bitcast (%union.int_or_cap* @int_or_cap to i8*), i32 8, i1 false)
+// RV32IXCHERI-NEXT:    [[TMP9:%.*]] = bitcast %union.int_or_cap* [[BYVAL_TEMP8]] to i8*
+// RV32IXCHERI-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i32(i8* align 8 [[TMP9]], i8* align 8 bitcast (%union.int_or_cap* @int_or_cap to i8*), i32 8, i1 false)
 // RV32IXCHERI-NEXT:    call void (i32, ...) @callee(i32 6, %union.int_or_cap* [[BYVAL_TEMP8]])
 // RV32IXCHERI-NEXT:    ret void
 //
@@ -151,34 +149,33 @@ extern union int_or_cap int_or_cap;
 // RV64IXCHERI-NEXT:    [[BYVAL_TEMP7:%.*]] = alloca [[STRUCT_MIXED:%.*]], align 16
 // RV64IXCHERI-NEXT:    [[BYVAL_TEMP8:%.*]] = alloca [[UNION_INT_OR_CAP:%.*]], align 16
 // RV64IXCHERI-NEXT:    store i8 addrspace(200)* null, i8 addrspace(200)** [[NULL_CAP]], align 16
-// RV64IXCHERI-NEXT:    [[TMP0:%.*]] = call i8 addrspace(200)* @llvm.cheri.cap.address.set.i64(i8 addrspace(200)* null, i64 0)
-// RV64IXCHERI-NEXT:    store i8 addrspace(200)* [[TMP0]], i8 addrspace(200)** [[NULL_UINTCAP]], align 16
-// RV64IXCHERI-NEXT:    [[TMP1:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** [[NULL_CAP]], align 16
-// RV64IXCHERI-NEXT:    [[TMP2:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** [[NULL_UINTCAP]], align 16
-// RV64IXCHERI-NEXT:    [[TMP3:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** @cap, align 16
-// RV64IXCHERI-NEXT:    [[TMP4:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** @uintcap, align 16
-// RV64IXCHERI-NEXT:    store i8 addrspace(200)* [[TMP1]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP]], align 16
-// RV64IXCHERI-NEXT:    store i8 addrspace(200)* [[TMP2]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP1]], align 16
-// RV64IXCHERI-NEXT:    store i8 addrspace(200)* [[TMP3]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP2]], align 16
-// RV64IXCHERI-NEXT:    store i8 addrspace(200)* [[TMP4]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP3]], align 16
+// RV64IXCHERI-NEXT:    store i8 addrspace(200)* null, i8 addrspace(200)** [[NULL_UINTCAP]], align 16
+// RV64IXCHERI-NEXT:    [[TMP0:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** [[NULL_CAP]], align 16
+// RV64IXCHERI-NEXT:    [[TMP1:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** [[NULL_UINTCAP]], align 16
+// RV64IXCHERI-NEXT:    [[TMP2:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** @cap, align 16
+// RV64IXCHERI-NEXT:    [[TMP3:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** @uintcap, align 16
+// RV64IXCHERI-NEXT:    store i8 addrspace(200)* [[TMP0]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP]], align 16
+// RV64IXCHERI-NEXT:    store i8 addrspace(200)* [[TMP1]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP1]], align 16
+// RV64IXCHERI-NEXT:    store i8 addrspace(200)* [[TMP2]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP2]], align 16
+// RV64IXCHERI-NEXT:    store i8 addrspace(200)* [[TMP3]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP3]], align 16
 // RV64IXCHERI-NEXT:    call void (i64, ...) @callee(i64 0, i8 addrspace(200)** [[INDIRECT_ARG_TEMP]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP1]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP2]], i8 addrspace(200)** [[INDIRECT_ARG_TEMP3]])
-// RV64IXCHERI-NEXT:    [[TMP5:%.*]] = bitcast %struct.single_cap* [[BYVAL_TEMP]] to i8*
-// RV64IXCHERI-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP5]], i8* align 16 bitcast (%struct.single_cap* @single_cap to i8*), i64 16, i1 false)
+// RV64IXCHERI-NEXT:    [[TMP4:%.*]] = bitcast %struct.single_cap* [[BYVAL_TEMP]] to i8*
+// RV64IXCHERI-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP4]], i8* align 16 bitcast (%struct.single_cap* @single_cap to i8*), i64 16, i1 false)
 // RV64IXCHERI-NEXT:    call void (i64, ...) @callee(i64 1, %struct.single_cap* [[BYVAL_TEMP]])
-// RV64IXCHERI-NEXT:    [[TMP6:%.*]] = bitcast %struct.double_cap* [[BYVAL_TEMP4]] to i8*
-// RV64IXCHERI-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP6]], i8* align 16 bitcast (%struct.double_cap* @double_cap to i8*), i64 32, i1 false)
+// RV64IXCHERI-NEXT:    [[TMP5:%.*]] = bitcast %struct.double_cap* [[BYVAL_TEMP4]] to i8*
+// RV64IXCHERI-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP5]], i8* align 16 bitcast (%struct.double_cap* @double_cap to i8*), i64 32, i1 false)
 // RV64IXCHERI-NEXT:    call void (i64, ...) @callee(i64 2, %struct.double_cap* [[BYVAL_TEMP4]])
-// RV64IXCHERI-NEXT:    [[TMP7:%.*]] = bitcast %struct.single_cap_array* [[BYVAL_TEMP5]] to i8*
-// RV64IXCHERI-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP7]], i8* align 16 bitcast (%struct.single_cap_array* @single_cap_array to i8*), i64 16, i1 false)
+// RV64IXCHERI-NEXT:    [[TMP6:%.*]] = bitcast %struct.single_cap_array* [[BYVAL_TEMP5]] to i8*
+// RV64IXCHERI-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP6]], i8* align 16 bitcast (%struct.single_cap_array* @single_cap_array to i8*), i64 16, i1 false)
 // RV64IXCHERI-NEXT:    call void (i64, ...) @callee(i64 3, %struct.single_cap_array* [[BYVAL_TEMP5]])
-// RV64IXCHERI-NEXT:    [[TMP8:%.*]] = bitcast %struct.double_cap_array* [[BYVAL_TEMP6]] to i8*
-// RV64IXCHERI-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP8]], i8* align 16 bitcast (%struct.double_cap_array* @double_cap_array to i8*), i64 32, i1 false)
+// RV64IXCHERI-NEXT:    [[TMP7:%.*]] = bitcast %struct.double_cap_array* [[BYVAL_TEMP6]] to i8*
+// RV64IXCHERI-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP7]], i8* align 16 bitcast (%struct.double_cap_array* @double_cap_array to i8*), i64 32, i1 false)
 // RV64IXCHERI-NEXT:    call void (i64, ...) @callee(i64 4, %struct.double_cap_array* [[BYVAL_TEMP6]])
-// RV64IXCHERI-NEXT:    [[TMP9:%.*]] = bitcast %struct.mixed* [[BYVAL_TEMP7]] to i8*
-// RV64IXCHERI-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP9]], i8* align 16 bitcast (%struct.mixed* @mixed to i8*), i64 32, i1 false)
+// RV64IXCHERI-NEXT:    [[TMP8:%.*]] = bitcast %struct.mixed* [[BYVAL_TEMP7]] to i8*
+// RV64IXCHERI-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP8]], i8* align 16 bitcast (%struct.mixed* @mixed to i8*), i64 32, i1 false)
 // RV64IXCHERI-NEXT:    call void (i64, ...) @callee(i64 5, %struct.mixed* [[BYVAL_TEMP7]])
-// RV64IXCHERI-NEXT:    [[TMP10:%.*]] = bitcast %union.int_or_cap* [[BYVAL_TEMP8]] to i8*
-// RV64IXCHERI-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP10]], i8* align 16 bitcast (%union.int_or_cap* @int_or_cap to i8*), i64 16, i1 false)
+// RV64IXCHERI-NEXT:    [[TMP9:%.*]] = bitcast %union.int_or_cap* [[BYVAL_TEMP8]] to i8*
+// RV64IXCHERI-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP9]], i8* align 16 bitcast (%union.int_or_cap* @int_or_cap to i8*), i64 16, i1 false)
 // RV64IXCHERI-NEXT:    call void (i64, ...) @callee(i64 6, %union.int_or_cap* [[BYVAL_TEMP8]])
 // RV64IXCHERI-NEXT:    ret void
 //

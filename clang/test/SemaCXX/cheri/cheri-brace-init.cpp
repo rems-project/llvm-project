@@ -104,10 +104,10 @@ struct foo {
 };
 
 void test_cap_to_ptr(void* __capability a) {
-  void* non_cap{a}; // expected-error {{cannot initialize a variable of type 'void *' with an lvalue of type 'void * __capability'}}
-  void* non_cap2 = {a}; // expected-error {{cannot initialize a variable of type 'void *' with an lvalue of type 'void * __capability'}}
+  void* non_cap{a}; // expected-error {{converting capability type 'void * __capability &' to non-capability type 'void *' without an explicit cast}}
+  void* non_cap2 = {a}; // expected-error {{converting capability type 'void * __capability &' to non-capability type 'void *' without an explicit cast}}
   // TODO: These should warn as well
-  foo f{a, a}; // expected-error {{cannot initialize a member subobject of type 'void *' with an lvalue of type 'void * __capability'}}
+  foo f{a, a}; // expected-error {{converting capability type 'void * __capability &' to non-capability type 'void *' without an explicit cast}}
   foo f2;
   f2 = {a, nullptr}; // this is fine
   // TODO: it would be nice if we could get a better error message here (see SemaOverload.cpp), it works fine for references
@@ -121,16 +121,16 @@ void test_cap_to_ptr(void* __capability a) {
 // check arrays:
 void test_arrays(void* __capability cap) {
   int* ptr = nullptr;
-  void* ptr_array[3] = { nullptr, cap, ptr }; // expected-error {{cannot initialize an array element of type 'void *' with an lvalue of type 'void * __capability'}}
+  void* ptr_array[3] = { nullptr, cap, ptr }; // expected-error {{converting capability type 'void * __capability &' to non-capability type 'void *' without an explicit cast}}
   void* __capability cap_array[3] = { nullptr, cap, ptr }; // expected-error {{converting non-capability type 'int *' to capability type 'void * __capability' without an explicit cast}}
 
   struct foo foo_array1[3] = {
     {cap, nullptr}, // no-error
-    {cap, cap}, // expected-error {{cannot initialize a member subobject of type 'void *' with an lvalue of type 'void * __capability'}}
+    {cap, cap}, // expected-error {{converting capability type 'void * __capability &' to non-capability type 'void *' without an explicit cast}}
     {.cap = nullptr, .ptr = nullptr} // no-error
   };
   struct foo foo_array2[2] = {
-    [1] = {.cap = cap, .ptr = cap} // expected-error {{cannot initialize a member subobject of type 'void *' with an lvalue of type 'void * __capability'}}
+    [1] = {.cap = cap, .ptr = cap} // expected-error {{converting capability type 'void * __capability &' to non-capability type 'void *' without an explicit cast}}
     // expected-warning@-1 {{array designators are a C99 extension}}
   };
 }
@@ -141,7 +141,7 @@ union foo_union {
 };
 
 void test_union(void* __capability a) {
-  foo_union u{a}; // expected-error {{cannot initialize a member subobject of type 'void *' with an lvalue of type 'void * __capability'}}
+  foo_union u{a}; // expected-error {{converting capability type 'void * __capability &' to non-capability type 'void *' without an explicit cast}}
 }
 
 #endif

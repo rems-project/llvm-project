@@ -119,21 +119,17 @@ struct a noop_void_cast(struct a *arg) {
 int *tocap_intcap(__intcap_t x) {
  // AST-LABEL: tocap_intcap
  // HYBRID-AST: CStyleCastExpr {{.*}} {{.*}} 'int *' <CHERICapabilityToPointer>
- // HYBRID-AST: ImplicitCastExpr {{.*}} {{.*}} 'int * __capability' <BitCast>
- // PURECAP-AST: CStyleCastExpr {{.*}} {{.*}} 'int *' <NoOp>
- // PURECAP-AST: ImplicitCastExpr {{.*}} {{.*}} 'int *' <BitCast>
- // AST: ImplicitCastExpr {{.*}} {{.*}} '__intcap_t':'__intcap_t' <LValueToRValue>
+ // PURECAP-AST: CStyleCastExpr {{.*}} {{.*}} 'int *' <IntegralToPointer>{{$}}
+ // AST-NEXT: ImplicitCastExpr {{.*}} {{.*}} '__intcap_t':'__intcap_t' <LValueToRValue> part_of_explicit_cast{{$}}
   int *out =  (__cheri_fromcap int *)x;
   return out;
 }
 
 int *tocap_uintcap(__uintcap_t x) {
  // AST-LABEL: tocap_uintcap
- // HYBRID-AST: CStyleCastExpr {{.*}} {{.*}} 'int *' <CHERICapabilityToPointer>
- // HYBRID-AST: ImplicitCastExpr {{.*}} {{.*}} 'int * __capability' <BitCast>
- // PURECAP-AST: CStyleCastExpr {{.*}} {{.*}} 'int *' <NoOp>
- // PURECAP-AST: ImplicitCastExpr {{.*}} {{.*}} 'int *' <BitCast>
- // AST: ImplicitCastExpr {{.*}} {{.*}} '__uintcap_t':'__uintcap_t' <LValueToRValue>
+ // HYBRID-AST: CStyleCastExpr {{.*}} {{.*}} 'int *' <CHERICapabilityToPointer>{{$}}
+ // PURECAP-AST: CStyleCastExpr {{.*}} {{.*}} 'int *' <IntegralToPointer>{{$}}
+ // AST-NEXT: ImplicitCastExpr {{.*}} {{.*}} '__uintcap_t':'__uintcap_t' <LValueToRValue> part_of_explicit_cast{{$}}
   int *out =  (__cheri_fromcap int *)x;
   return out;
 }

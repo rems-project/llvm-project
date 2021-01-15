@@ -309,18 +309,7 @@ class Sema;
     /// Objective-C lifetime qualifier.
     unsigned ObjCLifetimeConversionBinding : 1;
 
-    /// \brief e.g. conversions from pointer -> capability without an explicit __cheri_tocap
-    unsigned IncompatibleCHERIConversion : 1;  // XXXAR: would be nice if we had a ctor to initialize this
-
     unsigned IsCHERIConversion : 1;
-
-    bool isInvalidCHERICapabilityConversion() const {
-      return IncompatibleCHERIConversion;
-    }
-    void setInvalidCHERIConversion(bool IsInvalid = true) {
-      assert(!IncompatibleCHERIConversion); // should have been initialized to false (see above)
-      IncompatibleCHERIConversion = IsInvalid;
-    }
 
     bool isCHERIConversion() const {
       return IsCHERIConversion;

@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -triple cheri-unknown-freebsd -target-abi n64 -fsyntax-only -verify %s
 
 int *testReturnValue11(int * __capability i) {
-    return i; // expected-error{{cannot initialize return object of type 'int *' with an lvalue of type 'int * __capability'}}
+    return i; // expected-error{{converting capability type 'int * __capability &' to non-capability type 'int *' without an explicit cast}}
 }
 
 int * __capability testReturnValue2(int *i) {

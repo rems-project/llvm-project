@@ -5347,7 +5347,7 @@ SDValue AArch64TargetLowering::LowerGlobalAddress(SDValue Op,
 
     if (GN->getOffset() != 0)
       GlobalAddr = DAG.getPointerAdd(DL, GlobalAddr, GN->getOffset());
- 
+
     return GlobalAddr;
   }
 
@@ -14903,8 +14903,7 @@ Value *AArch64TargetLowering::emitLoadLinked(IRBuilder<> &Builder, Value *Addr,
   bool IsFatPointer = false;
   PointerType *BasePTy = cast<PointerType>(Addr->getType());
   if (PointerType *PT = dyn_cast<PointerType>(BasePTy->getElementType())) {
-    unsigned AS = PT->getAddressSpace();
-    if (M->getDataLayout().isFatPointer(AS))
+    if (DL.isFatPointer(PT))
       IsFatPointer = true;
   }
 
@@ -14926,8 +14925,16 @@ Value *AArch64TargetLowering::emitLoadLinked(IRBuilder<> &Builder, Value *Addr,
   Type *EltTy = cast<PointerType>(Addr->getType())->getElementType();
 
   IntegerType *IntEltTy = Builder.getIntNTy(DL.getTypeSizeInBits(EltTy));
-  Value *Trunc = Builder.CreateTrunc(Builder.CreateCall(Ldxr, Addr), IntEltTy);
+  if (EltTy->isPointerTy())
+    Addr = Builder.CreatePointerCast(
+        Addr,
+        IntEltTy->getPointerTo(Addr->getType()->getPointerAddressSpace()));
 
+  Value *Trunc = Builder.CreateTrunc(Builder.CreateCall(Ldxr, Addr), IntEltTy);
+  // For atomicrmw xchg it's possible that Addr is a pointer not an integer
+  assert(!DL.isFatPointer(EltTy) && "Should not be handled here!");
+  if (EltTy->isPointerTy())
+    return Builder.CreateIntToPtr(Trunc, EltTy);
   return Builder.CreateBitCast(Trunc, EltTy);
 }
 
@@ -14963,8 +14970,7 @@ Value *AArch64TargetLowering::emitStoreConditional(IRBuilder<> &Builder,
 
   bool IsFatPointer = false;
   if (PointerType *PT = dyn_cast<PointerType>(Val->getType())) {
-    unsigned AS = PT->getAddressSpace();
-    if (M->getDataLayout().isFatPointer(AS))
+    if (DL.isFatPointer(PT))
       IsFatPointer = true;
   }
   Function *Stxr = nullptr;
@@ -14984,7 +14990,16 @@ Value *AArch64TargetLowering::emitStoreConditional(IRBuilder<> &Builder,
   }
 
   IntegerType *IntValTy = Builder.getIntNTy(DL.getTypeSizeInBits(Val->getType()));
-  Val = Builder.CreateBitCast(Val, IntValTy);
+  if (Val->getType()->isPointerTy())
+    Addr = Builder.CreatePointerCast(
+        Addr,
+        IntValTy->getPointerTo(Addr->getType()->getPointerAddressSpace()));
+  // For atomicrmw xchg it's possible that Addr is a pointer not an integer
+  assert(!DL.isFatPointer(Val->getType()) && "Should not be handled here!");
+  if (Val->getType()->isPointerTy())
+    Val = Builder.CreatePtrToInt(Val, IntValTy);
+  else
+    Val = Builder.CreateBitCast(Val, IntValTy);
 
   return Builder.CreateCall(Stxr,
                             {Builder.CreateZExtOrBitCast(

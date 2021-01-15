@@ -201,7 +201,6 @@ void StandardConversionSequence::setAsIdentityConversion() {
   BindsToRvalue = false;
   BindsImplicitObjectArgumentWithoutRefQualifier = false;
   ObjCLifetimeConversionBinding = false;
-  IncompatibleCHERIConversion = false;
   IsCHERIConversion = false;
   CopyConstructor = nullptr;
 }
@@ -1965,15 +1964,6 @@ static bool IsStandardConversion(Sema &S, Expr* From, QualType ToType,
     if (FromType->isCHERICapabilityType(S.getASTContext())
         != ToType->isCHERICapabilityType(S.getASTContext())) {
       SCS.setCHERIConversion(true);
-      // Check implicit pointer-to-capability conversion.
-      // Don't output warnings at this point as they will be output later.
-      bool validCHERIConversion = false;
-      if (FromType->isPointerType() && ToType->isPointerType() && ToType->getAs<PointerType>()->isCHERICapability())
-        validCHERIConversion = S.ImpCastPointerToCHERICapability(FromType, ToType, From, false);
-
-      SCS.setInvalidCHERIConversion(!validCHERIConversion);
-      if (!validCHERIConversion)
-        return false;
     }
     FromType = ToType;
   } else {
@@ -4777,7 +4767,7 @@ TryReferenceInit(Sema &S, Expr *Init, QualType DeclType,
       if (RType->isReferenceType() &&
           DeclType->isCHERICapabilityType(S.getASTContext()) !=
           RType->isCHERICapabilityType(S.getASTContext())) {
-        ICS.Standard.setInvalidCHERIConversion(true);
+        ICS.Standard.setCHERIConversion(true);
         ICS.setBad(BadConversionSequence::no_conversion, Init, DeclType);
       }
 
@@ -4832,7 +4822,7 @@ TryReferenceInit(Sema &S, Expr *Init, QualType DeclType,
       if (DeclType->isCHERICapabilityType(S.getASTContext()) &&
           DeclType->isReferenceType() &&
           !S.getASTContext().getTargetInfo().areAllPointersCapabilities()) {
-        ICS.Standard.setInvalidCHERIConversion(true);
+        ICS.Standard.setCHERIConversion(true);
         ICS.setBad(BadConversionSequence::no_conversion, Init, DeclType);
       }
 
@@ -7305,10 +7295,9 @@ void Sema::AddConversionCandidate(
   // well-formed.
   DeclRefExpr ConversionRef(Context, Conversion, false, Conversion->getType(),
                             VK_LValue, From->getBeginLoc());
-  ImplicitCastExpr ConversionFn(ImplicitCastExpr::OnStack,
-                                Context.getPointerType(Conversion->getType()),
-                                CK_FunctionToPointerDecay,
-                                &ConversionRef, VK_RValue);
+  ImplicitCastExpr ConversionFn(
+      ImplicitCastExpr::OnStack, Context.getPointerType(Conversion->getType()),
+      CK_FunctionToPointerDecay, &ConversionRef, VK_RValue, Context);
 
   QualType ConversionType = Conversion->getConversionType();
   if (!isCompleteType(From->getBeginLoc(), ConversionType)) {

@@ -29,13 +29,13 @@ void AArch64_ELFTargetObjectFile::Initialize(MCContext &Ctx,
 }
 
 TailPaddingAmount AArch64_ELFTargetObjectFile::
-getTailPaddingForPreciseBounds(uint64_t Size) const {
+getTailPaddingForPreciseBounds(uint64_t Size, const TargetMachine &TM) const {
   uint64_t Pad = AArch64TargetStreamer::getTargetSizeAlignReq(Size).first - Size;
   return static_cast<TailPaddingAmount>(Pad);
 }
 
 Align AArch64_ELFTargetObjectFile::
-getAlignmentForPreciseBounds(uint64_t Size) const {
+getAlignmentForPreciseBounds(uint64_t Size, const TargetMachine &TM) const {
   unsigned LogAlign =
       AArch64TargetStreamer::getTargetSizeAlignReq(Size).second;
   if (!LogAlign)

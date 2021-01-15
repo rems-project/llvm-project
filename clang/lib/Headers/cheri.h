@@ -157,7 +157,6 @@ cheri_cap_from_pointer(const void * __capability __cap, void *__ptr) {
                    (void *)__ptr);
 }
 
-#ifndef __CHERI_PURE_CAPABILITY__
 static inline
 void * cheri_cap_to_pointer(const void * __capability __cap,
                             void * __capability __offset) {
