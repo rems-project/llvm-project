@@ -675,10 +675,6 @@ int TargetTransformInfo::getGatherScatterOpCost(unsigned Opcode, Type *DataTy,
   return Cost;
 }
 
-int TargetTransformInfo::getCheriIntrinsicNullCaseValue() const {
-  return TTIImpl->getCheriIntrinsicNullCaseValue();
-}
-
 int TargetTransformInfo::getInterleavedMemoryOpCost(
     unsigned Opcode, Type *VecTy, unsigned Factor, ArrayRef<unsigned> Indices,
     unsigned Alignment, unsigned AddressSpace, bool UseMaskForCond,

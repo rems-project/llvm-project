@@ -707,10 +707,6 @@ int AArch64TTIImpl::getMemoryOpCost(unsigned Opcode, Type *Ty,
   return LT.first;
 }
 
-int AArch64TTIImpl::getCheriIntrinsicNullCaseValue() {
-  return 0;
-}
-
 int AArch64TTIImpl::getInterleavedMemoryOpCost(unsigned Opcode, Type *VecTy,
                                                unsigned Factor,
                                                ArrayRef<unsigned> Indices,

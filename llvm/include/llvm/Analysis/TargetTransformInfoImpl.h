@@ -475,10 +475,6 @@ public:
     return 1;
   }
 
-  int getCheriIntrinsicNullCaseValue() {
-    return -1;
-  }
-
   unsigned getInterleavedMemoryOpCost(unsigned Opcode, Type *VecTy,
                                       unsigned Factor,
                                       ArrayRef<unsigned> Indices,

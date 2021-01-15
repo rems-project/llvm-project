@@ -963,10 +963,6 @@ public:
                              bool VariableMask, unsigned Alignment,
                              const Instruction *I = nullptr) const;
 
-  /// \return The implementation-defined values when taking the null capability
-  ///        as input for some intrinsics like get_length or get_type.
-  int getCheriIntrinsicNullCaseValue() const;
-
   /// \return The cost of the interleaved memory operation.
   /// \p Opcode is the memory operation code
   /// \p VecTy is the vector type of the interleaved access.
@@ -1360,7 +1356,6 @@ public:
   virtual int getMaskedMemoryOpCost(unsigned Opcode, Type *Src,
                                     unsigned Alignment,
                                     unsigned AddressSpace) = 0;
-  virtual int getCheriIntrinsicNullCaseValue() = 0;
   virtual int getGatherScatterOpCost(unsigned Opcode, Type *DataTy, Value *Ptr,
                                      bool VariableMask, unsigned Alignment,
                                      const Instruction *I = nullptr) = 0;
@@ -1791,9 +1786,6 @@ public:
                              const Instruction *I = nullptr) override {
     return Impl.getGatherScatterOpCost(Opcode, DataTy, Ptr, VariableMask,
                                        Alignment, I);
-  }
-  int getCheriIntrinsicNullCaseValue() override {
-    return Impl.getCheriIntrinsicNullCaseValue();
   }
   int getInterleavedMemoryOpCost(unsigned Opcode, Type *VecTy, unsigned Factor,
                                  ArrayRef<unsigned> Indices, unsigned Alignment,
