@@ -5114,7 +5114,6 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
         TCK = CallInst::TCK_MustTail;
       if (CCInfo & (1 << bitc::CALL_NOTAIL))
         TCK = CallInst::TCK_NoTail;
-
       cast<CallInst>(I)->setTailCallKind(TCK);
       cast<CallInst>(I)->setAttributes(PAL);
       propagateByValTypes(cast<CallBase>(I), ArgsFullTys);

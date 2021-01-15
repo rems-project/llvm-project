@@ -1342,6 +1342,7 @@ public:
 
   /// Emit the unwind information in a compact way.
   void EmitCompactUnwind(const MCDwarfFrameInfo &frame);
+
   const MCSymbol &EmitCIE(const MCDwarfFrameInfo &F);
   void EmitFDE(const MCSymbol &cieStart, const MCDwarfFrameInfo &frame,
                bool LastInSection, const MCSymbol &SectionStart);
@@ -1586,6 +1587,7 @@ static unsigned getCIEVersion(bool IsEH, unsigned DwarfVersion) {
   }
   llvm_unreachable("Unknown version");
 }
+
 const MCSymbol &FrameEmitterImpl::EmitCIE(const MCDwarfFrameInfo &Frame) {
   MCContext &context = Streamer.getContext();
   const MCRegisterInfo *MRI = context.getRegisterInfo();

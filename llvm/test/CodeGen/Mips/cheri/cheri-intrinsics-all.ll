@@ -119,6 +119,7 @@ declare i8 addrspace(200)* @llvm.cheri.cap.flags.set.i64(i8 addrspace(200)*, i64
 ; Function Attrs: nounwind readnone
 declare i8 addrspace(200)* @llvm.cheri.cap.type.set(i8 addrspace(200)*, i64) #1
 
+
 ; Function Attrs: nounwind readnone
 declare i8 addrspace(200)* @llvm.cheri.cap.seal(i8 addrspace(200)*, i8 addrspace(200)*) #1
 
