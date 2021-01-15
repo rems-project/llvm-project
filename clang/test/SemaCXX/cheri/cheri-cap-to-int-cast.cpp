@@ -207,16 +207,16 @@ void cast_ptr() {
   // XXXAR: these should also warn
   using voidp = void *;
   DO_ALL_CASTS(voidp, a);
-  // hybrid-error@-1 4 {{cast from capability type 'void * __capability' to non-capability type 'voidp' (aka 'void *') is most likely an error}}
-  // hybrid-error@-2 {{cannot initialize a value of type 'voidp' (aka 'void *') with an lvalue of type 'void * __capability'}}
+  // hybrid-error@-1 3{{cast from capability type 'void * __capability' to non-capability type 'voidp' (aka 'void *') is most likely an error}}
+  // hybrid-error@-2 {{converting capability type 'void * __capability &' to non-capability type 'voidp' (aka 'void *') without an explicit cast}}
   // hybrid-error@-3 {{const_cast from 'void * __capability' to 'voidp' (aka 'void *') is not allowed}}
   // hybrid-error@-4 {{static_cast from 'void * __capability' to 'voidp' (aka 'void *') changes capability qualifier}}
   // expected-error@-5 {{'void' is not a class}}
 
   using wordp = word *;
   DO_ALL_CASTS(wordp, a);
-  // hybrid-error@-1 4 {{cast from capability type 'void * __capability' to non-capability type 'wordp' (aka '__uintcap_t *') is most likely an error}}
-  // hybrid-error@-2 {{cannot initialize a value of type 'wordp' (aka '__uintcap_t *') with an lvalue of type 'void * __capability'}}
+  // hybrid-error@-1 3 {{cast from capability type 'void * __capability' to non-capability type 'wordp' (aka '__uintcap_t *') is most likely an error}}
+  // hybrid-error@-2 {{cannot implicitly or explicitly convert non-capability type 'void * __capability' to unrelated capability type 'wordp' (aka '__uintcap_t *')}}
   // hybrid-error@-3 {{const_cast from 'void * __capability' to 'wordp' (aka '__uintcap_t *') is not allowed}}
   // purecap-error@-4 {{const_cast from 'void *' to 'wordp' (aka '__uintcap_t *') is not allowed}}
   // purecap-error@-5 {{cannot initialize a value of type 'wordp' (aka '__uintcap_t *') with an lvalue of type 'void *'}}
@@ -226,9 +226,9 @@ void cast_ptr() {
   using test_class_ptr = test_class *;
   test_class *__capability b = nullptr;
   DO_ALL_CASTS(test_class_ptr, b);
-  // hybrid-error@-1 4 {{cast from capability type 'test_class * __capability' to non-capability type 'test_class_ptr' (aka 'test_class *') is most likely an error}}
-  // hybrid-error@-2 {{cannot initialize a value of type 'test_class_ptr' (aka 'test_class *') with an lvalue of type 'test_class * __capability'}}
-  // hybrid-error@-3 {{static_cast from 'test_class * __capability' to 'test_class_ptr' (aka 'test_class *'), which are not related by inheritance, is not allowed}} // TODO: this should be a better error message
+  // hybrid-error@-1 3 {{cast from capability type 'test_class * __capability' to non-capability type 'test_class_ptr' (aka 'test_class *') is most likely an error}}
+  // hybrid-error@-2 {{converting capability type 'test_class * __capability &' to non-capability type 'test_class_ptr' (aka 'test_class *') without an explicit cast}}
+  // hybrid-error@-3 {{static_cast from 'test_class * __capability' to 'test_class_ptr' (aka 'test_class *') changes capability qualifier}}
   // hybrid-error@-4 {{const_cast from 'test_class * __capability' to 'test_class_ptr' (aka 'test_class *') is not allowed}}
   // hybrid-error@-5 {{dynamic_cast from 'test_class * __capability' to 'test_class *' changes capability qualifier}}
 }

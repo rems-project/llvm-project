@@ -41,7 +41,7 @@ void *__capability cast_uintcap_to_capptr_implicit(__uintcap_t cap) {
   // c-warning-re@-3{{incompatible integer to pointer conversion returning '__uintcap_t'{{( \(aka 'unsigned long'\))?}} from a function with result type 'void *{{( __capability)?}}'}}
 }
 
-void *cast_capptr_to_intptr_implicit(voSema/cheri/cheri-cap-ptr-casts.cid *__capability cap) {
+void *cast_capptr_to_intptr_implicit(void *__capability cap) {
   return cap; // hybrid-c-error{{converting capability type 'void * __capability' to non-capability type 'void *' without an explicit cast}}
   // hybrid-cxx-error@-1{{converting capability type 'void * __capability &' to non-capability type 'void *' without an explicit cast}}
 }

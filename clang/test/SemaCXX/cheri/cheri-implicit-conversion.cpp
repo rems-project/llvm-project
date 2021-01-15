@@ -41,16 +41,24 @@ void addrof(void) {
 int foo(int *__capability cap_arg_int, void *__capability cap_arg_void, int *ptr_arg_int, void *ptr_arg_void) {
   // pointer -> cap
   int *__capability intcap = ptr_arg_int;
-  // implicit-warning@-1 {{converting non-capability type 'int *' to capability type 'int * __capability' without an explicit cast}}
-  // explicit-error@-2 {{converting non-capability type 'int *' to capability type 'int * __capability' without an explicit cast}}
+  // implicit-warning@-1  {{converting non-capability type 'int *' to capability type 'int * __capability' without an explicit cast}}
+  // explicit-c-error@-2  {{converting non-capability type 'int *' to capability type 'int * __capability' without an explicit cast}}
+  // explicit-cxx-error@-3{{converting non-capability type 'int *&' to capability type 'int * __capability' without an explicit cast}}
   unsigned int *__capability uintcap = ptr_arg_int;
   // explicit-error@-1{{cannot implicitly or explicitly convert non-capability type 'int *' to unrelated capability type 'unsigned int * __capability'}}
   // implicit-c-warning@-2{{implicit conversion from non-capability type 'int *' to capability type 'unsigned int * __capability' converts between integer types with different signs}}
   // implicit-cxx-error@-3{{cannot implicitly or explicitly convert non-capability type 'int *' to unrelated capability type 'unsigned int * __capability'}}
-  void *__capability vcap = ptr_arg_int; // expected-error {{converting non-capability type 'int *' to capability type 'void * __capability' without an explicit cast}}
+  void *__capability vcap = ptr_arg_int;
+  // expected-c-error@-1   {{converting non-capability type 'int *' to capability type 'void * __capability' without an explicit cast}}
+  // implicit-cxx-error@-2 {{converting non-capability type 'int *' to capability type 'void * __capability' without an explicit cast}}
+  // explicit-cxx-error@-3 {{converting non-capability type 'int *&' to capability type 'void * __capability' without an explicit cast}}
   // cap -> pointer
-  int *intptr = cap_arg_int; // expected-error {{converting capability type 'int * __capability' to non-capability type 'int *' without an explicit cast}}
-  void *vptr = cap_arg_int;  // expected-error {{converting capability type 'int * __capability' to non-capability type 'void *' without an explicit cast}}
+  int *intptr = cap_arg_int;
+  // expected-cxx-error@-1 {{converting capability type 'int * __capability &' to non-capability type 'int *' without an explicit cast}}
+  // expected-c-error@-2   {{converting capability type 'int * __capability' to non-capability type 'int *' without an explicit cast}}
+  void *vptr = cap_arg_int;
+  // expected-cxx-error@-1 {{converting capability type 'int * __capability &' to non-capability type 'void *' without an explicit cast}}
+  // expected-c-error@-2   {{converting capability type 'int * __capability' to non-capability type 'void *' without an explicit cast}}
   // to void*
   void *__capability vcap2 = cap_arg_int; // casting to void* should work without a cast
   void *vptr2 = ptr_arg_int;              // casting to void* should work without a cast
@@ -104,7 +112,8 @@ void str_to_ptr(void) {
   // but conversion from a pointer isn't
   const char *__capability cap2 = ptr;
   // implicit-warning@-1 {{converting non-capability type 'const char *' to capability type 'const char * __capability' without an explicit cast}}
-  // explicit-error@-2 {{converting non-capability type 'const char *' to capability type 'const char * __capability' without an explicit cast}}
+  // explicit-c-error@-2 {{converting non-capability type 'const char *' to capability type 'const char * __capability' without an explicit cast}}
+  // explicit-cxx-error@-3 {{converting non-capability type 'const char *&' to capability type 'const char * __capability' without an explicit cast}}
 
   // conversion to char* should be an error:
   char *nonconst_ptr = "foo";

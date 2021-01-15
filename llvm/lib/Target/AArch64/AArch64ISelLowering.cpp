@@ -14900,35 +14900,31 @@ Value *AArch64TargetLowering::emitLoadLinked(IRBuilder<> &Builder, Value *Addr,
         Lo, Builder.CreateShl(Hi, ConstantInt::get(ValTy, 64)), "val64");
   }
 
+  Type *EltTy = cast<PointerType>(Addr->getType())->getElementType();
+  IntegerType *IntEltTy = Builder.getIntNTy(DL.getTypeSizeInBits(EltTy));
+
   bool IsFatPointer = false;
   PointerType *BasePTy = cast<PointerType>(Addr->getType());
   if (PointerType *PT = dyn_cast<PointerType>(BasePTy->getElementType())) {
     if (DL.isFatPointer(PT))
       IsFatPointer = true;
   }
-
-  Function *Ldxr = nullptr;
   if (IsFatPointer) {
     Intrinsic::ID Int = IsAcquire ? Intrinsic::aarch64_cldaxr :
                                     Intrinsic::aarch64_cldxr;
     Type *Tys[] = { Addr->getType() };
-    Ldxr = llvm::Intrinsic::getDeclaration(M, Int, Tys);
+    Function *Ldxr = llvm::Intrinsic::getDeclaration(M, Int, Tys);
     Type *EltTy = cast<PointerType>(Addr->getType())->getElementType();
     return Builder.CreateBitCast(Builder.CreateCall(Ldxr, Addr), EltTy);
-  } else {
-    Intrinsic::ID Int = IsAcquire ? Intrinsic::aarch64_ldaxr :
-                                    Intrinsic::aarch64_ldxr;
-    Type *Tys[] = { Addr->getType() };
-    Ldxr = llvm::Intrinsic::getDeclaration(M, Int, Tys);
   }
-
-  Type *EltTy = cast<PointerType>(Addr->getType())->getElementType();
-
-  IntegerType *IntEltTy = Builder.getIntNTy(DL.getTypeSizeInBits(EltTy));
   if (EltTy->isPointerTy())
     Addr = Builder.CreatePointerCast(
         Addr,
         IntEltTy->getPointerTo(Addr->getType()->getPointerAddressSpace()));
+  Type *Tys[] = {Addr->getType()};
+  Intrinsic::ID Int =
+      IsAcquire ? Intrinsic::aarch64_ldaxr : Intrinsic::aarch64_ldxr;
+  Function *Ldxr = Intrinsic::getDeclaration(M, Int, Tys);
 
   Value *Trunc = Builder.CreateTrunc(Builder.CreateCall(Ldxr, Addr), IntEltTy);
   // For atomicrmw xchg it's possible that Addr is a pointer not an integer
@@ -14973,27 +14969,26 @@ Value *AArch64TargetLowering::emitStoreConditional(IRBuilder<> &Builder,
     if (DL.isFatPointer(PT))
       IsFatPointer = true;
   }
-  Function *Stxr = nullptr;
   if (IsFatPointer) {
     Intrinsic::ID Int =
         IsRelease ? Intrinsic::aarch64_cstlxr : Intrinsic::aarch64_cstxr;
     Type *Tys[] = { Addr->getType() };
-    Stxr = Intrinsic::getDeclaration(M, Int, Tys);
+    Function *Stxr = Intrinsic::getDeclaration(M, Int, Tys);
     Val = Builder.CreateBitCast(Val,
                                 Stxr->getFunctionType()->getParamType(0));
     return Builder.CreateCall(Stxr, {Val, Addr});
-  } else {
-    Intrinsic::ID Int =
-        IsRelease ? Intrinsic::aarch64_stlxr : Intrinsic::aarch64_stxr;
-    Type *Tys[] = { Addr->getType() };
-    Stxr = Intrinsic::getDeclaration(M, Int, Tys);
   }
-
-  IntegerType *IntValTy = Builder.getIntNTy(DL.getTypeSizeInBits(Val->getType()));
+  Intrinsic::ID Int =
+      IsRelease ? Intrinsic::aarch64_stlxr : Intrinsic::aarch64_stxr;
+  IntegerType *IntValTy =
+      Builder.getIntNTy(DL.getTypeSizeInBits(Val->getType()));
   if (Val->getType()->isPointerTy())
     Addr = Builder.CreatePointerCast(
         Addr,
         IntValTy->getPointerTo(Addr->getType()->getPointerAddressSpace()));
+  Type *Tys[] = {Addr->getType()};
+  Function *Stxr = Intrinsic::getDeclaration(M, Int, Tys);
+
   // For atomicrmw xchg it's possible that Addr is a pointer not an integer
   assert(!DL.isFatPointer(Val->getType()) && "Should not be handled here!");
   if (Val->getType()->isPointerTy())

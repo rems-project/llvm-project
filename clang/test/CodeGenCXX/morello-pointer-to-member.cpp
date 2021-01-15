@@ -31,7 +31,7 @@ int A::* global_data_ptr = &A::y;
 AMemberFuncPtr global_nonvirt_func_ptr = &A::bar;
 AMemberFuncPtr global_virt_func_ptr = &A::bar_virtual;
 
-// CHECK-LABEL: @main(
+// CHECK-LABEL: define {{[^@]+}}@main() addrspace(200) #2
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[RETVAL:%.*]] = alloca i32, align 4, addrspace(200)
 // CHECK-NEXT:    [[A:%.*]] = alloca [[CLASS_A:%.*]], align 16, addrspace(200)
@@ -52,7 +52,7 @@ AMemberFuncPtr global_virt_func_ptr = &A::bar_virtual;
 // CHECK-NEXT:    store { i8 addrspace(200)*, i64 } { i8 addrspace(200)* bitcast (i32 (%class.A addrspace(200)*) addrspace(200)* @_ZN1A3fooEv to i8 addrspace(200)*), i64 0 }, { i8 addrspace(200)*, i64 } addrspace(200)* [[FUNC_PTR]], align 16
 // CHECK-NEXT:    store { i8 addrspace(200)*, i64 } { i8 addrspace(200)* bitcast (i32 (%class.A addrspace(200)*) addrspace(200)* @_ZN1A3barEv to i8 addrspace(200)*), i64 0 }, { i8 addrspace(200)*, i64 } addrspace(200)* [[FUNC_PTR_2]], align 16
 // CHECK-NEXT:    store { i8 addrspace(200)*, i64 } { i8 addrspace(200)* null, i64 1 }, { i8 addrspace(200)*, i64 } addrspace(200)* [[VIRTUAL_FUNC_PTR]], align 16
-// CHECK-NEXT:    store { i8 addrspace(200)*, i64 } { i8 addrspace(200)* inttoptr (i64 16 to i8 addrspace(200)*), i64 1 }, { i8 addrspace(200)*, i64 } addrspace(200)* [[VIRTUAL_FUNC_PTR_2]], align 16
+// CHECK-NEXT:    store { i8 addrspace(200)*, i64 } { i8 addrspace(200)* getelementptr (i8, i8 addrspace(200)* null, i64 16), i64 1 }, { i8 addrspace(200)*, i64 } addrspace(200)* [[VIRTUAL_FUNC_PTR_2]], align 16
 // CHECK-NEXT:    [[TMP0:%.*]] = load i64, i64 addrspace(200)* [[DATA_PTR]], align 8
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast [[CLASS_A]] addrspace(200)* [[A]] to i8 addrspace(200)*
 // CHECK-NEXT:    [[MEMPTR_OFFSET:%.*]] = getelementptr inbounds i8, i8 addrspace(200)* [[TMP1]], i64 [[TMP0]]
@@ -79,10 +79,11 @@ int main() {
   return a.*data_ptr;
 }
 
-// CHECK-LABEL: @_Z19data_ptr_is_nonnullM1Ai(
+// CHECK-LABEL: define {{[^@]+}}@_Z19data_ptr_is_nonnullM1Ai
+// CHECK-SAME: (i64 [[PTR:%.*]]) addrspace(200) #1
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[PTR_ADDR:%.*]] = alloca i64, align 8, addrspace(200)
-// CHECK-NEXT:    store i64 [[PTR:%.*]], i64 addrspace(200)* [[PTR_ADDR]], align 8
+// CHECK-NEXT:    store i64 [[PTR]], i64 addrspace(200)* [[PTR_ADDR]], align 8
 // CHECK-NEXT:    [[TMP0:%.*]] = load i64, i64 addrspace(200)* [[PTR_ADDR]], align 8
 // CHECK-NEXT:    [[MEMPTR_TOBOOL:%.*]] = icmp ne i64 [[TMP0]], -1
 // CHECK-NEXT:    ret i1 [[MEMPTR_TOBOOL]]
@@ -91,10 +92,11 @@ bool data_ptr_is_nonnull(int A::* ptr) {
   return static_cast<bool>(ptr);
 }
 
-// CHECK-LABEL: @_Z16data_ptr_is_nullM1Ai(
+// CHECK-LABEL: define {{[^@]+}}@_Z16data_ptr_is_nullM1Ai
+// CHECK-SAME: (i64 [[PTR:%.*]]) addrspace(200) #1
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[PTR_ADDR:%.*]] = alloca i64, align 8, addrspace(200)
-// CHECK-NEXT:    store i64 [[PTR:%.*]], i64 addrspace(200)* [[PTR_ADDR]], align 8
+// CHECK-NEXT:    store i64 [[PTR]], i64 addrspace(200)* [[PTR_ADDR]], align 8
 // CHECK-NEXT:    [[TMP0:%.*]] = load i64, i64 addrspace(200)* [[PTR_ADDR]], align 8
 // CHECK-NEXT:    [[MEMPTR_TOBOOL:%.*]] = icmp ne i64 [[TMP0]], -1
 // CHECK-NEXT:    [[LNOT:%.*]] = xor i1 [[MEMPTR_TOBOOL]], true
@@ -104,12 +106,13 @@ bool data_ptr_is_null(int A::* ptr) {
   return !ptr;
 }
 
-// CHECK-LABEL: @_Z14data_ptr_equalM1AiS0_(
+// CHECK-LABEL: define {{[^@]+}}@_Z14data_ptr_equalM1AiS0_
+// CHECK-SAME: (i64 [[PTR1:%.*]], i64 [[PTR2:%.*]]) addrspace(200) #1
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[PTR1_ADDR:%.*]] = alloca i64, align 8, addrspace(200)
 // CHECK-NEXT:    [[PTR2_ADDR:%.*]] = alloca i64, align 8, addrspace(200)
-// CHECK-NEXT:    store i64 [[PTR1:%.*]], i64 addrspace(200)* [[PTR1_ADDR]], align 8
-// CHECK-NEXT:    store i64 [[PTR2:%.*]], i64 addrspace(200)* [[PTR2_ADDR]], align 8
+// CHECK-NEXT:    store i64 [[PTR1]], i64 addrspace(200)* [[PTR1_ADDR]], align 8
+// CHECK-NEXT:    store i64 [[PTR2]], i64 addrspace(200)* [[PTR2_ADDR]], align 8
 // CHECK-NEXT:    [[TMP0:%.*]] = load i64, i64 addrspace(200)* [[PTR1_ADDR]], align 8
 // CHECK-NEXT:    [[TMP1:%.*]] = load i64, i64 addrspace(200)* [[PTR2_ADDR]], align 8
 // CHECK-NEXT:    [[TMP2:%.*]] = icmp eq i64 [[TMP0]], [[TMP1]]
@@ -119,12 +122,13 @@ bool data_ptr_equal(int A::* ptr1, int A::* ptr2) {
   return ptr1 == ptr2;
 }
 
-// CHECK-LABEL: @_Z18data_ptr_not_equalM1AiS0_(
+// CHECK-LABEL: define {{[^@]+}}@_Z18data_ptr_not_equalM1AiS0_
+// CHECK-SAME: (i64 [[PTR1:%.*]], i64 [[PTR2:%.*]]) addrspace(200) #1
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[PTR1_ADDR:%.*]] = alloca i64, align 8, addrspace(200)
 // CHECK-NEXT:    [[PTR2_ADDR:%.*]] = alloca i64, align 8, addrspace(200)
-// CHECK-NEXT:    store i64 [[PTR1:%.*]], i64 addrspace(200)* [[PTR1_ADDR]], align 8
-// CHECK-NEXT:    store i64 [[PTR2:%.*]], i64 addrspace(200)* [[PTR2_ADDR]], align 8
+// CHECK-NEXT:    store i64 [[PTR1]], i64 addrspace(200)* [[PTR1_ADDR]], align 8
+// CHECK-NEXT:    store i64 [[PTR2]], i64 addrspace(200)* [[PTR2_ADDR]], align 8
 // CHECK-NEXT:    [[TMP0:%.*]] = load i64, i64 addrspace(200)* [[PTR1_ADDR]], align 8
 // CHECK-NEXT:    [[TMP1:%.*]] = load i64, i64 addrspace(200)* [[PTR2_ADDR]], align 8
 // CHECK-NEXT:    [[TMP2:%.*]] = icmp ne i64 [[TMP0]], [[TMP1]]
@@ -134,12 +138,13 @@ bool data_ptr_not_equal(int A::* ptr1, int A::* ptr2) {
   return ptr1 != ptr2;
 }
 
-// CHECK-LABEL: @_Z19data_ptr_derefereceP1AMS_i(
+// CHECK-LABEL: define {{[^@]+}}@_Z19data_ptr_derefereceP1AMS_i
+// CHECK-SAME: (%class.A addrspace(200)* [[A:%.*]], i64 [[PTR:%.*]]) addrspace(200) #1
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[A_ADDR:%.*]] = alloca [[CLASS_A:%.*]] addrspace(200)*, align 16, addrspace(200)
 // CHECK-NEXT:    [[PTR_ADDR:%.*]] = alloca i64, align 8, addrspace(200)
-// CHECK-NEXT:    store [[CLASS_A]] addrspace(200)* [[A:%.*]], [[CLASS_A]] addrspace(200)* addrspace(200)* [[A_ADDR]], align 16
-// CHECK-NEXT:    store i64 [[PTR:%.*]], i64 addrspace(200)* [[PTR_ADDR]], align 8
+// CHECK-NEXT:    store [[CLASS_A]] addrspace(200)* [[A]], [[CLASS_A]] addrspace(200)* addrspace(200)* [[A_ADDR]], align 16
+// CHECK-NEXT:    store i64 [[PTR]], i64 addrspace(200)* [[PTR_ADDR]], align 8
 // CHECK-NEXT:    [[TMP0:%.*]] = load [[CLASS_A]] addrspace(200)*, [[CLASS_A]] addrspace(200)* addrspace(200)* [[A_ADDR]], align 16
 // CHECK-NEXT:    [[TMP1:%.*]] = load i64, i64 addrspace(200)* [[PTR_ADDR]], align 8
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast [[CLASS_A]] addrspace(200)* [[TMP0]] to i8 addrspace(200)*
@@ -152,11 +157,12 @@ int data_ptr_dereferece(A* a, int A::* ptr) {
   return a->*ptr;
 }
 
-// CHECK-LABEL: @_Z19func_ptr_is_nonnullM1AFivE(
+// CHECK-LABEL: define {{[^@]+}}@_Z19func_ptr_is_nonnullM1AFivE
+// CHECK-SAME: ({ i8 addrspace(200)*, i64 } [[PTR_COERCE:%.*]]) addrspace(200) #1
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[PTR:%.*]] = alloca { i8 addrspace(200)*, i64 }, align 16, addrspace(200)
 // CHECK-NEXT:    [[PTR_ADDR:%.*]] = alloca { i8 addrspace(200)*, i64 }, align 16, addrspace(200)
-// CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR_COERCE:%.*]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR]], align 16
+// CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR_COERCE]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR]], align 16
 // CHECK-NEXT:    [[PTR1:%.*]] = load { i8 addrspace(200)*, i64 }, { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR]], align 16
 // CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR1]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR_ADDR]], align 16
 // CHECK-NEXT:    [[TMP0:%.*]] = load { i8 addrspace(200)*, i64 }, { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR_ADDR]], align 16
@@ -173,11 +179,12 @@ bool func_ptr_is_nonnull(AMemberFuncPtr ptr) {
 
 }
 
-// CHECK-LABEL: @_Z16func_ptr_is_nullM1AFivE(
+// CHECK-LABEL: define {{[^@]+}}@_Z16func_ptr_is_nullM1AFivE
+// CHECK-SAME: ({ i8 addrspace(200)*, i64 } [[PTR_COERCE:%.*]]) addrspace(200) #1
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[PTR:%.*]] = alloca { i8 addrspace(200)*, i64 }, align 16, addrspace(200)
 // CHECK-NEXT:    [[PTR_ADDR:%.*]] = alloca { i8 addrspace(200)*, i64 }, align 16, addrspace(200)
-// CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR_COERCE:%.*]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR]], align 16
+// CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR_COERCE]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR]], align 16
 // CHECK-NEXT:    [[PTR1:%.*]] = load { i8 addrspace(200)*, i64 }, { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR]], align 16
 // CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR1]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR_ADDR]], align 16
 // CHECK-NEXT:    [[TMP0:%.*]] = load { i8 addrspace(200)*, i64 }, { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR_ADDR]], align 16
@@ -195,15 +202,16 @@ bool func_ptr_is_null(AMemberFuncPtr ptr) {
 
 }
 
-// CHECK-LABEL: @_Z14func_ptr_equalM1AFivES1_(
+// CHECK-LABEL: define {{[^@]+}}@_Z14func_ptr_equalM1AFivES1_
+// CHECK-SAME: ({ i8 addrspace(200)*, i64 } [[PTR1_COERCE:%.*]], { i8 addrspace(200)*, i64 } [[PTR2_COERCE:%.*]]) addrspace(200) #1
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[PTR1:%.*]] = alloca { i8 addrspace(200)*, i64 }, align 16, addrspace(200)
 // CHECK-NEXT:    [[PTR2:%.*]] = alloca { i8 addrspace(200)*, i64 }, align 16, addrspace(200)
 // CHECK-NEXT:    [[PTR1_ADDR:%.*]] = alloca { i8 addrspace(200)*, i64 }, align 16, addrspace(200)
 // CHECK-NEXT:    [[PTR2_ADDR:%.*]] = alloca { i8 addrspace(200)*, i64 }, align 16, addrspace(200)
-// CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR1_COERCE:%.*]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR1]], align 16
+// CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR1_COERCE]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR1]], align 16
 // CHECK-NEXT:    [[PTR11:%.*]] = load { i8 addrspace(200)*, i64 }, { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR1]], align 16
-// CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR2_COERCE:%.*]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR2]], align 16
+// CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR2_COERCE]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR2]], align 16
 // CHECK-NEXT:    [[PTR22:%.*]] = load { i8 addrspace(200)*, i64 }, { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR2]], align 16
 // CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR11]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR1_ADDR]], align 16
 // CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR22]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR2_ADDR]], align 16
@@ -229,15 +237,16 @@ bool func_ptr_equal(AMemberFuncPtr ptr1, AMemberFuncPtr ptr2) {
 
 }
 
-// CHECK-LABEL: @_Z18func_ptr_not_equalM1AFivES1_(
+// CHECK-LABEL: define {{[^@]+}}@_Z18func_ptr_not_equalM1AFivES1_
+// CHECK-SAME: ({ i8 addrspace(200)*, i64 } [[PTR1_COERCE:%.*]], { i8 addrspace(200)*, i64 } [[PTR2_COERCE:%.*]]) addrspace(200) #1
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[PTR1:%.*]] = alloca { i8 addrspace(200)*, i64 }, align 16, addrspace(200)
 // CHECK-NEXT:    [[PTR2:%.*]] = alloca { i8 addrspace(200)*, i64 }, align 16, addrspace(200)
 // CHECK-NEXT:    [[PTR1_ADDR:%.*]] = alloca { i8 addrspace(200)*, i64 }, align 16, addrspace(200)
 // CHECK-NEXT:    [[PTR2_ADDR:%.*]] = alloca { i8 addrspace(200)*, i64 }, align 16, addrspace(200)
-// CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR1_COERCE:%.*]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR1]], align 16
+// CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR1_COERCE]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR1]], align 16
 // CHECK-NEXT:    [[PTR11:%.*]] = load { i8 addrspace(200)*, i64 }, { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR1]], align 16
-// CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR2_COERCE:%.*]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR2]], align 16
+// CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR2_COERCE]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR2]], align 16
 // CHECK-NEXT:    [[PTR22:%.*]] = load { i8 addrspace(200)*, i64 }, { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR2]], align 16
 // CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR11]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR1_ADDR]], align 16
 // CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR22]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR2_ADDR]], align 16
@@ -263,14 +272,15 @@ bool func_ptr_not_equal(AMemberFuncPtr ptr1, AMemberFuncPtr ptr2) {
 
 }
 
-// CHECK-LABEL: @_Z20func_ptr_dereferenceP1AMS_FivE(
+// CHECK-LABEL: define {{[^@]+}}@_Z20func_ptr_dereferenceP1AMS_FivE
+// CHECK-SAME: (%class.A addrspace(200)* [[A:%.*]], { i8 addrspace(200)*, i64 } [[PTR_COERCE:%.*]]) addrspace(200) #3
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[PTR:%.*]] = alloca { i8 addrspace(200)*, i64 }, align 16, addrspace(200)
 // CHECK-NEXT:    [[A_ADDR:%.*]] = alloca [[CLASS_A:%.*]] addrspace(200)*, align 16, addrspace(200)
 // CHECK-NEXT:    [[PTR_ADDR:%.*]] = alloca { i8 addrspace(200)*, i64 }, align 16, addrspace(200)
-// CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR_COERCE:%.*]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR]], align 16
+// CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR_COERCE]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR]], align 16
 // CHECK-NEXT:    [[PTR1:%.*]] = load { i8 addrspace(200)*, i64 }, { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR]], align 16
-// CHECK-NEXT:    store [[CLASS_A]] addrspace(200)* [[A:%.*]], [[CLASS_A]] addrspace(200)* addrspace(200)* [[A_ADDR]], align 16
+// CHECK-NEXT:    store [[CLASS_A]] addrspace(200)* [[A]], [[CLASS_A]] addrspace(200)* addrspace(200)* [[A_ADDR]], align 16
 // CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR1]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR_ADDR]], align 16
 // CHECK-NEXT:    [[TMP0:%.*]] = load [[CLASS_A]] addrspace(200)*, [[CLASS_A]] addrspace(200)* addrspace(200)* [[A_ADDR]], align 16
 // CHECK-NEXT:    [[TMP1:%.*]] = load { i8 addrspace(200)*, i64 }, { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR_ADDR]], align 16
@@ -304,19 +314,20 @@ int func_ptr_dereference(A* a, AMemberFuncPtr ptr) {
 }
 
 // Check using Member pointers as return values an parameters
-// CHECK-LABEL: @_Z15return_func_ptrv(
+// CHECK-LABEL: define {{[^@]+}}@_Z15return_func_ptrv() addrspace(200) #1
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    ret { i8 addrspace(200)*, i64 } { i8 addrspace(200)* inttoptr (i64 16 to i8 addrspace(200)*), i64 1 }
+// CHECK-NEXT:    ret { i8 addrspace(200)*, i64 } { i8 addrspace(200)* getelementptr (i8, i8 addrspace(200)* null, i64 16), i64 1 }
 //
 AMemberFuncPtr return_func_ptr() {
   return &A::bar_virtual;
 }
 
-// CHECK-LABEL: @_Z13take_func_ptrM1AFivE(
+// CHECK-LABEL: define {{[^@]+}}@_Z13take_func_ptrM1AFivE
+// CHECK-SAME: ({ i8 addrspace(200)*, i64 } [[PTR_COERCE:%.*]]) addrspace(200) #1
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[PTR:%.*]] = alloca { i8 addrspace(200)*, i64 }, align 16, addrspace(200)
 // CHECK-NEXT:    [[PTR_ADDR:%.*]] = alloca { i8 addrspace(200)*, i64 }, align 16, addrspace(200)
-// CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR_COERCE:%.*]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR]], align 16
+// CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR_COERCE]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR]], align 16
 // CHECK-NEXT:    [[PTR1:%.*]] = load { i8 addrspace(200)*, i64 }, { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR]], align 16
 // CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR1]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR_ADDR]], align 16
 // CHECK-NEXT:    ret void
@@ -324,11 +335,12 @@ AMemberFuncPtr return_func_ptr() {
 void take_func_ptr(AMemberFuncPtr ptr) {
 }
 
-// CHECK-LABEL: @_Z20passthrough_func_ptrM1AFivE(
+// CHECK-LABEL: define {{[^@]+}}@_Z20passthrough_func_ptrM1AFivE
+// CHECK-SAME: ({ i8 addrspace(200)*, i64 } [[PTR_COERCE:%.*]]) addrspace(200) #1
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[PTR:%.*]] = alloca { i8 addrspace(200)*, i64 }, align 16, addrspace(200)
 // CHECK-NEXT:    [[PTR_ADDR:%.*]] = alloca { i8 addrspace(200)*, i64 }, align 16, addrspace(200)
-// CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR_COERCE:%.*]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR]], align 16
+// CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR_COERCE]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR]], align 16
 // CHECK-NEXT:    [[PTR1:%.*]] = load { i8 addrspace(200)*, i64 }, { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR]], align 16
 // CHECK-NEXT:    store { i8 addrspace(200)*, i64 } [[PTR1]], { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR_ADDR]], align 16
 // CHECK-NEXT:    [[TMP0:%.*]] = load { i8 addrspace(200)*, i64 }, { i8 addrspace(200)*, i64 } addrspace(200)* [[PTR_ADDR]], align 16
@@ -343,7 +355,7 @@ namespace PR7556 {
   struct A { ~A(); };
   struct B { int i; ~B(); };
   struct C { int C::*pm; ~C(); };
-// CHECK-LABEL: @_ZN6PR75563fooEv(
+// CHECK-LABEL: define {{[^@]+}}@_ZN6PR75563fooEv() addrspace(200) #1
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[AGG_TMP_ENSURED:%.*]] = alloca %"struct.PR7556::A", align 1, addrspace(200)
 // CHECK-NEXT:    [[AGG_TMP_ENSURED1:%.*]] = alloca %"struct.PR7556::B", align 4, addrspace(200)
