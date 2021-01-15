@@ -66,10 +66,11 @@ __uintcap_t bat(__uintcap_t x) {
 
 // CHECK-LABEL: @fib(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = getelementptr i8, i8 addrspace(200)* [[X:%.*]], i64 3
-// CHECK-NEXT:    [[TMP1:%.*]] = call i64 @llvm.cheri.cap.address.get.i64(i8 addrspace(200)* [[TMP0]])
-// CHECK-NEXT:    [[AND:%.*]] = and i64 [[TMP1]], -4
-// CHECK-NEXT:    [[TMP2:%.*]] = call i8 addrspace(200)* @llvm.cheri.cap.address.set.i64(i8 addrspace(200)* [[X]], i64 [[AND]])
+// CHECK-NEXT:    [[TMP0:%.*]] = call i64 @llvm.cheri.cap.address.get.i64(i8 addrspace(200)* [[X:%.*]])
+// CHECK-NEXT:    [[ADD:%.*]] = add i64 [[TMP0]], 3
+// CHECK-NEXT:    [[TMP1:%.*]] = getelementptr i8, i8 addrspace(200)* [[X]], i64 3
+// CHECK-NEXT:    [[AND:%.*]] = and i64 [[ADD]], -4
+// CHECK-NEXT:    [[TMP2:%.*]] = call i8 addrspace(200)* @llvm.cheri.cap.address.set.i64(i8 addrspace(200)* [[TMP1]], i64 [[AND]])
 // CHECK-NEXT:    ret i8 addrspace(200)* [[TMP2]]
 //
 __uintcap_t fib(__uintcap_t x) {
@@ -78,10 +79,11 @@ __uintcap_t fib(__uintcap_t x) {
 // CHECK-LABEL: @fib2(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = call i64 @llvm.cheri.cap.address.get.i64(i8 addrspace(200)* [[X:%.*]])
+// CHECK-NEXT:    [[TMP1:%.*]] = getelementptr i8, i8 addrspace(200)* [[X]], i64 -1
 // CHECK-NEXT:    [[ADD:%.*]] = add i64 [[TMP0]], 3
 // CHECK-NEXT:    [[AND:%.*]] = and i64 [[ADD]], -4
-// CHECK-NEXT:    [[TMP1:%.*]] = call i8 addrspace(200)* @llvm.cheri.cap.address.set.i64(i8 addrspace(200)* [[X]], i64 [[AND]])
-// CHECK-NEXT:    ret i8 addrspace(200)* [[TMP1]]
+// CHECK-NEXT:    [[TMP2:%.*]] = call i8 addrspace(200)* @llvm.cheri.cap.address.set.i64(i8 addrspace(200)* [[TMP1]], i64 [[AND]])
+// CHECK-NEXT:    ret i8 addrspace(200)* [[TMP2]]
 //
 __uintcap_t fib2(__uintcap_t x) {
   return ((x - 1) + 0x4) & ~0x3;
