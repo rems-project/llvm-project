@@ -18550,6 +18550,7 @@ SDValue AArch64TargetLowering::getSVESafeBitCast(EVT VT, SDValue Op,
   SDLoc DL(Op);
   EVT InVT = Op.getValueType();
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  (void)TLI;
 
   assert(VT.isScalableVector() && TLI.isTypeLegal(VT) &&
          InVT.isScalableVector() && TLI.isTypeLegal(InVT) &&
