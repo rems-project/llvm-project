@@ -2365,7 +2365,7 @@ define i64 @test_freeze(i64 %a) {
   ; CHECK: [[COPY:%[0-9]+]]:_(s64) = COPY $x0
   ; CHECK-NEXT: [[RES:%[0-9]+]]:_(s64) = G_FREEZE [[COPY]]
   ; CHECK-NEXT: $x0 = COPY [[RES]]
-  ; CHECK-NEXT: RET_ReallyLR implicit $x0
+  ; CHECK-NEXT: RET_ReallyLR 0, implicit $x0
   %res = freeze i64 %a
   ret i64 %res
 }
@@ -2382,7 +2382,7 @@ define {i8, i32} @test_freeze_struct({ i8, i32 }* %addr) {
   ; CHECK-NEXT: [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[FREEZE]]
   ; CHECK-NEXT: $w0 = COPY [[ANYEXT]]
   ; CHECK-NEXT: $w1 = COPY [[FREEZE1]]
-  ; CHECK-NEXT: RET_ReallyLR implicit $w0, implicit $w1
+  ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0, implicit $w1
   %load = load { i8, i32 }, { i8, i32 }* %addr
   %res = freeze {i8, i32} %load
   ret {i8, i32} %res

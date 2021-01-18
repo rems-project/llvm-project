@@ -87,7 +87,7 @@ body:             |
     ; CHECK: $wzr = SUBSWri %copy1, 0, 0, implicit-def $nzcv
     ; CHECK: %select:gpr32 = CSELWr %cst, %copy2, 11, implicit $nzcv
     ; CHECK: $w0 = COPY %select
-    ; CHECK: RET_ReallyLR implicit $w0
+    ; CHECK: RET_ReallyLR 0, implicit $w0
     %copy1:gpr(s32) = COPY $w0
     %copy2:gpr(s32) = COPY $w1
     %cst:gpr(s32) = G_CONSTANT i32 -1
@@ -95,5 +95,5 @@ body:             |
     %trunc:gpr(s1) = G_TRUNC %cmp(s32)
     %select:gpr(s32) = G_SELECT %trunc(s1), %cst, %copy2
     $w0 = COPY %select(s32)
-    RET_ReallyLR implicit $w0
+    RET_ReallyLR 0, implicit $w0
 ...
