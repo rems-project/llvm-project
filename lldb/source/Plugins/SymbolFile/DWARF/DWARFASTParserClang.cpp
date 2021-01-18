@@ -820,7 +820,7 @@ TypeSP DWARFASTParserClang::ParseEnum(const SymbolContext &sc,
   type_sp = std::make_shared<Type>(
       die.GetID(), dwarf, attrs.name, attrs.byte_size, nullptr,
       dwarf->GetUID(attrs.type.Reference()), Type::eEncodingIsUID, &attrs.decl,
-      clang_type, Type::ResolveState::Forward, lldb::eAddressSpaceNormal
+      clang_type, Type::ResolveState::Forward, lldb::eAddressSpaceNormal,
       TypePayloadClang(GetOwningClangModule(die)));
 
   if (TypeSystemClang::StartTagDeclarationDefinition(clang_type)) {
