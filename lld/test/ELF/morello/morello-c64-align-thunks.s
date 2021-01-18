@@ -45,8 +45,8 @@ target2:
 
 /// Without additional alignment for PCC there are no Thunks needed.
 // CHECK: 0000000000ff0000 <_start>:
-// CHECK-NEXT:   ff0000:        bl      #133234688
-// CHECK-NEXT:   ff0004:        b       #133234688
+// CHECK-NEXT:   ff0000:        bl 0x8f00000 <target>
+// CHECK-NEXT:   ff0004:        b 0x8f00004 <target2>
 
 /// Check that specifying alignment of the PCC in the linker script overrides
 /// above behaviour and influences other address sensitive content generation
@@ -74,5 +74,5 @@ target2:
 // ALIGN-NEXT:  1000014:        br      c16
 
 // ALIGN: 0000000001000018 <_start>:
-// ALIGN-NEXT:  1000018:        bl      #-24 <__C64ADRPThunk_target>
-// ALIGN-NEXT:  100001c:        b       #-16 <__C64ADRPThunk_target2>
+// ALIGN-NEXT:  1000018:        bl      0x1000000 <__C64ADRPThunk_target>
+// ALIGN-NEXT:  100001c:        b       0x100000c <__C64ADRPThunk_target2>

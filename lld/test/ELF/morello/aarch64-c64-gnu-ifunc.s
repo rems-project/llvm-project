@@ -34,8 +34,8 @@ _start:
 // CHECK-NEXT:   210235:        <unknown>
 
 // CHECK: 0000000000210238 <_start>:
-// CHECK-NEXT:   210238:        bl      #0x18
-// CHECK-NEXT:   21023c:        bl      #0x24
+// CHECK-NEXT:   210238:        bl      0x210250
+// CHECK-NEXT:   21023c:        bl      0x210260
 // CHECK-NEXT:   210240:        add     x2, x2, #0x200
 // CHECK-NEXT:   210244:        add     x2, x2, #0x230
 

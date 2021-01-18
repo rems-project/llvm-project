@@ -52,7 +52,7 @@ hidden:  .xword 3
 // DIS-NEXT:    103a4:          ldr     c3, [c3, #1280]
 // DIS-NEXT:    103a8:          adrp    c4, #65536
 // DIS-NEXT:    103ac:          ldr     c4, [c4, #1296]
-// DIS-NEXT:    103b0:          bl      #48 <imported+0x103e0>
+// DIS-NEXT:    103b0:          bl      0x103e0 <imported+0x103e0>
 
 // DIS: 00000000000103c0 <.plt>:
 // DIS-NEXT:    103c0:          stp     c16, c30, [csp, #-32]!
