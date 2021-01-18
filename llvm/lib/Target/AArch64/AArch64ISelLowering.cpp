@@ -6508,13 +6508,20 @@ SDValue AArch64TargetLowering::LowerBlockAddress(SDValue Op,
         &DAG.getMachineFunction().getFunction())
       report_fatal_error(
           "Should only get a blockaddress for the current function");
+    SDValue BlockAddrUnsealed;
     if (getTargetMachine().getCodeModel() == CodeModel::Large &&
-        !Subtarget->isTargetMachO())
-      return getFatAddrLarge(BA, DAG);
-    // TODO: CodeModel::Tiny
-    assert((getTargetMachine().getCodeModel() != CodeModel::Tiny) &&
-           "not implemented for CodeModel::Tiny");
-    return getFatAddr(BA, DAG);
+        !Subtarget->isTargetMachO()) {
+      BlockAddrUnsealed = getFatAddrLarge(BA, DAG);
+    } else { // TODO: CodeModel::Tiny
+      assert((getTargetMachine().getCodeModel() != CodeModel::Tiny) &&
+             "not implemented for CodeModel::Tiny");
+      BlockAddrUnsealed = getFatAddr(BA, DAG);
+    }
+    SDLoc DL(Op);
+    // Create a sentry capability for block address to ensure that we don't
+    // end up storing a mutable PCC-derived value in a global variable, etc.
+    return DAG.getNode(AArch64ISD::CapSealImm, DL, MVT::iFATPTR128,
+        BlockAddrUnsealed, DAG.getConstant(1, DL, MVT::i32));
   }
   if (getTargetMachine().getCodeModel() == CodeModel::Large &&
       !Subtarget->isTargetMachO()) {

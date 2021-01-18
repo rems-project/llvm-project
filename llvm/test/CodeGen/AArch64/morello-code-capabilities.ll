@@ -22,6 +22,7 @@ define i8 addrspace(200)* @fun2() addrspace(200) nounwind {
 ; CHECK-NEXT:  // %bb.1: // %newb
 ; CHECK-NEXT:    adrp c0, .Ltmp0
 ; CHECK-NEXT:    add c0, c0, :lo12:.Ltmp0+1
+; CHECK-NEXT:    seal c0, c0, rb
 ; CHECK-NEXT:    ret c30
 entry:
   br label %newb
