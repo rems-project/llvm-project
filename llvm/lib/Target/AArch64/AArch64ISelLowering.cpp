@@ -6498,27 +6498,24 @@ SDValue AArch64TargetLowering::LowerConstantPool(SDValue Op,
 }
 
 SDValue AArch64TargetLowering::LowerBlockAddress(SDValue Op,
-                                               SelectionDAG &DAG) const {
+                                                 SelectionDAG &DAG) const {
   BlockAddressSDNode *BA = cast<BlockAddressSDNode>(Op);
   if (Op.getSimpleValueType() == MVT::iFATPTR128) {
-      SDLoc dl(Op);
-      const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-      unsigned AddrSpace = DAG.getDataLayout().getGlobalsAddressSpace();
-
-      const BlockAddress *CBA = BA->getBlockAddress();
-      BlockAddress *BA = const_cast<BlockAddress *>(CBA);
-      Constant *C = cast<Constant>(BA);
-      SDValue CPIdx = DAG.getConstantPool(
-           C, TLI.getPointerTy(DAG.getDataLayout(), AddrSpace));
-      unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
-      EVT VT = MVT::iFATPTR128;
-
-      SDValue Result = DAG.getLoad(
-          VT, dl, DAG.getEntryNode(), CPIdx,
-          MachinePointerInfo::getConstantPool(DAG.getMachineFunction()), Alignment);
-      return Result;
+    // In ABIs with tightly bounded PCC we can only get block addresses for
+    // the current function, and the LLVM IR verifier should have rejected
+    // any cases where this is not true.
+    if (BA->getBlockAddress()->getFunction() !=
+        &DAG.getMachineFunction().getFunction())
+      report_fatal_error(
+          "Should only get a blockaddress for the current function");
+    if (getTargetMachine().getCodeModel() == CodeModel::Large &&
+        !Subtarget->isTargetMachO())
+      return getFatAddrLarge(BA, DAG);
+    // TODO: CodeModel::Tiny
+    assert((getTargetMachine().getCodeModel() != CodeModel::Tiny) &&
+           "not implemented for CodeModel::Tiny");
+    return getFatAddr(BA, DAG);
   }
-
   if (getTargetMachine().getCodeModel() == CodeModel::Large &&
       !Subtarget->isTargetMachO()) {
     return getAddrLarge(BA, DAG);
