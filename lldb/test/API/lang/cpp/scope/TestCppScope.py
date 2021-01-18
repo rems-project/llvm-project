@@ -16,7 +16,7 @@ class TestCase(TestBase):
         global_vars = self.frame().GetVariables(False, False, True, False)
         global_var_names = [v.GetName() for v in global_vars]
         expected_var_names = ["A::a", "B::a", "C::a", "::a"]
-        self.assertEqual(global_var_names, expected_var_names)
+        self.assertEqual(global_var_names.sort(), expected_var_names.sort())
 
         # Test lookup in scopes.
         self.expect_expr("A::a", result_value="1111")
