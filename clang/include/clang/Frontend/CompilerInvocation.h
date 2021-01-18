@@ -249,7 +249,8 @@ private:
                        DiagnosticsEngine &Diags);
 
   /// Parse command line options that map to LangOptions.
-  static void ParseLangArgs(LangOptions &Opts, llvm::opt::ArgList &Args,
+  static void ParseLangArgs(LangOptions &Opts, TargetOptions &TOpts,
+                            llvm::opt::ArgList &Args,
                             InputKind IK, const llvm::Triple &T,
                             std::vector<std::string> &Includes,
                             DiagnosticsEngine &Diags);

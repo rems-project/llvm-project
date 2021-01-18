@@ -2166,7 +2166,9 @@ static void GenerateLangArgs(const LangOptions &Opts,
     Args.push_back(SA(GetOptName(OPT_fdeclare_opencl_builtins)));
 }
 
-void CompilerInvocation::ParseLangArgs(LangOptions &Opts, ArgList &Args,
+void CompilerInvocation::ParseLangArgs(LangOptions &Opts,
+                                       TargetOptions &TOpts,
+                                       ArgList &Args,
                                        InputKind IK, const llvm::Triple &T,
                                        std::vector<std::string> &Includes,
                                        DiagnosticsEngine &Diags) {
@@ -2237,7 +2239,8 @@ void CompilerInvocation::ParseLangArgs(LangOptions &Opts, ArgList &Args,
   Opts.IncludeDefaultHeader = Args.hasArg(OPT_finclude_default_header);
   Opts.DeclareOpenCLBuiltins = Args.hasArg(OPT_fdeclare_opencl_builtins);
 
-  CompilerInvocation::setLangDefaults(Opts, IK, T, Includes, LangStd);
+  CompilerInvocation::setLangDefaults(Opts, IK, T, Includes,
+                                      LangStd);
 
   // The key paths of codegen options defined in Options.td start with
   // "LangOpts->". Let's provide the expected variable name and type.
@@ -2538,7 +2541,7 @@ void CompilerInvocation::ParseLangArgs(LangOptions &Opts, ArgList &Args,
   Opts.Blocks = Args.hasArg(OPT_fblocks) || (Opts.OpenCL
     && Opts.OpenCLVersion == 200);
   Opts.Coroutines = Opts.CPlusPlus20 || Args.hasArg(OPT_fcoroutines_ts);
-  if (TargetOpts.ABI == "purecap") {
+  if (TOpts.ABI == "purecap") {
     Opts.Coroutines = false;
     if (Args.hasArg(OPT_fcoroutines_ts))
       Diags.Report(diag::warn_coro_cheri_purecap);
@@ -3116,8 +3119,8 @@ bool CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   } else {
     // Other LangOpts are only initialized when the input is not AST or LLVM IR.
     // FIXME: Should we really be calling this for an Language::Asm input?
-    ParseLangArgs(LangOpts, Args, DashX, T, Res.getPreprocessorOpts().Includes,
-                  Diags);
+    ParseLangArgs(LangOpts, Res.getTargetOpts(), Args, DashX, T,
+                  Res.getPreprocessorOpts().Includes, Diags);
     if (Res.getFrontendOpts().ProgramAction == frontend::RewriteObjC)
       LangOpts.ObjCExceptions = 1;
     if (T.isOSDarwin() && DashX.isPreprocessed()) {

@@ -3233,6 +3233,7 @@ static const struct Extension {
   { "sve2-bitperm", {AArch64::FeatureSVE2BitPerm}, {AArch64::FeatureSVE2BitPerm}},
   { "ls64", {AArch64::FeatureLS64}, {AArch64::FeatureLS64}},
   { "xs", {AArch64::FeatureXS}, {AArch64::FeatureXS} },
+  { "pauth", {AArch64::FeaturePAuth}, {AArch64::FeaturePAuth}},
   { "a64c", {AArch64::FeatureMorello},
             {AArch64::FeatureMorello, AArch64::FeatureC64} },
   { "c64", {AArch64::FeatureMorello, AArch64::FeatureC64},

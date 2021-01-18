@@ -7552,11 +7552,10 @@ static Expr *BuildExpressionFromIntegralTemplateArgumentValue(
   } else if (T->isBooleanType()) {
     E = new (S.Context) CXXBoolLiteralExpr(Int.getBoolValue(), T, Loc);
   } else {
+    llvm::APSInt Tmp = Int;
     if (T->isIntCapType())
-      E = IntegerLiteral::Create(S.Context, Int,
-                                 Int.extOrTrunc(S.Context.getIntRange(T)), Loc);
-    else
-      E = IntegerLiteral::Create(S.Context, Int, T, Loc);
+      Tmp = Tmp.extOrTrunc(S.Context.getIntRange(T));
+    E = IntegerLiteral::Create(S.Context, Tmp, T, Loc);
   }
 
   if (OrigT->isEnumeralType()) {
