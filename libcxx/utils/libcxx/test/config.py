@@ -651,6 +651,7 @@ class Configuration(object):
         # that can be used in the tests.
         # Ex. _LIBCPP_HAS_NO_THREADS -> libcpp-has-no-threads
         translate = {
+            '_LIBCPP_HAS_NEWLIB',
             '_LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE',
             '_LIBCPP_HAS_NO_MONOTONIC_CLOCK',
             '_LIBCPP_HAS_NO_STDIN',
