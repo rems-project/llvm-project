@@ -40,6 +40,7 @@ public:
 
   void HardcodeARMRegisters(bool from_scratch);
   void HardcodeAArch64MorelloRegisters(bool is_desc_abi);
+  bool UpdateARM64SVERegistersInfos(uint64_t vg);
 };
 
 class GDBRemoteRegisterContext : public RegisterContext {
@@ -77,6 +78,8 @@ public:
 
   uint32_t ConvertRegisterKindToRegisterNumber(lldb::RegisterKind kind,
                                                uint32_t num) override;
+
+  bool AArch64SVEReconfigure();
 
 protected:
   friend class ThreadGDBRemote;

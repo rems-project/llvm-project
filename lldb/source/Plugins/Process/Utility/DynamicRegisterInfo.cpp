@@ -668,6 +668,17 @@ void DynamicRegisterInfo::Finalize(const ArchSpec &arch) {
         MarkAsFP(reg, /*is_capability*/ true);
     }
   }
+
+  // Check if register info is reconfigurable
+  // AArch64 SVE register set has configurable register sizes
+  if (arch.GetTriple().isAArch64()) {
+    for (const auto &reg : m_regs) {
+      if (strcmp(reg.name, "vg") == 0) {
+        m_is_reconfigurable = true;
+        break;
+      }
+    }
+  }
 }
 
 void DynamicRegisterInfo::ConfigureOffsets() {
