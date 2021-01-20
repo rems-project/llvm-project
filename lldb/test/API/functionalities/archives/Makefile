@@ -1,8 +1,15 @@
-C_SOURCES := main.c
-
+C_SOURCES := main.c a.c b.c
+EXE :=  # Define a.out explicitly
 MAKE_DSYM := NO
-ARCHIVE_NAME := libfoo.a
-ARCHIVE_C_SOURCES := a.c b.c
 ARFLAGS := -rU
+
+all: a.out
+
+a.out: main.o libfoo.a
+	$(LD) $(LDFLAGS) $^ -o $@
+
+libfoo.a: a.o b.o
+	$(AR) $(ARFLAGS) $@ $^
+	$(RM) $^
 
 include Makefile.rules
