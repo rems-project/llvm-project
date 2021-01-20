@@ -224,10 +224,6 @@ static std::unique_ptr<TargetLoweringObjectFile> createTLOF(const Triple &TT) {
 static std::string computeDataLayout(const Triple &TT, StringRef FS,
                                      const MCTargetOptions &Options,
                                      bool LittleEndian) {
-  if (Options.getABIName() == "ilp32")
-    return "e-m:e-p:32:32-i8:8-i16:16-i64:64-S128";
-  std::string Desc(LittleEndian ? "e" : "E");
-
   if (TT.isOSBinFormatMachO()) {
     if (TT.getArch() == Triple::aarch64_32)
       return "e-m:o-p:32:32-i64:64-i128:128-n32:64-S128";
@@ -236,23 +232,16 @@ static std::string computeDataLayout(const Triple &TT, StringRef FS,
 
   if (TT.isOSBinFormatCOFF())
     return "e-m:w-p:64:64-i32:32-i64:64-i128:128-n32:64-S128";
-
-  if (TT.isOSBinFormatMachO())
-    Desc += "-m:o";
-  else
-    Desc += "-m:e";
-
+  std::string Endian = LittleEndian ? "e" : "E";
+  std::string Ptr32 = TT.getEnvironment() == Triple::GNUILP32 ? "-p:32:32" : "";
+  std::string Cap = "";
   if (FS.find("+c64") != StringRef::npos ||
       FS.find("+morello") != StringRef::npos)
-    Desc += "-pf200:128:128:128:64";
-
-  Desc += TT.isOSBinFormatMachO() ? "-i64:64-i128:128-n32:64-S128" :
-             "-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128";
-
-  if (Options.getABIName() == "purecap")
-    Desc += "-A200-P200-G200";
-
-  return Desc;
+    Cap = "-pf200:128:128:128:64";
+  std::string PurecapAS = (Options.getABIName() == "purecap") ? "-A200-P200-G200"
+                                                              : "";
+  return Endian + "-m:e" + Cap + Ptr32 +
+         "-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128" + PurecapAS;
 }
 
 static StringRef computeDefaultCPU(const Triple &TT, StringRef CPU) {
@@ -360,6 +349,7 @@ AArch64TargetMachine::AArch64TargetMachine(const Target &T, const Triple &TT,
   // MachO/CodeModel::Large, which GlobalISel does not support.
   if (getOptLevel() <= EnableGlobalISelAtO &&
       TT.getArch() != Triple::aarch64_32 && !isMorello &&
+      TT.getEnvironment() != Triple::GNUILP32 &&
       !(getCodeModel() == CodeModel::Large && TT.isOSBinFormatMachO())) {
     setGlobalISel(true);
     setGlobalISelAbort(GlobalISelAbortMode::Disable);

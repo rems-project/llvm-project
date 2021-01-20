@@ -7781,14 +7781,18 @@ SDValue AArch64TargetLowering::LowerWin64_VASTART(SDValue Op,
 }
 
 SDValue AArch64TargetLowering::LowerAAPCS_VASTART(SDValue Op,
-                                                SelectionDAG &DAG) const {
+                                                  SelectionDAG &DAG) const {
   // The layout of the va_list struct is specified in the AArch64 Procedure Call
   // Standard, section B.3.
   MachineFunction &MF = DAG.getMachineFunction();
   AArch64FunctionInfo *FuncInfo = MF.getInfo<AArch64FunctionInfo>();
-  const DataLayout &TDL = DAG.getDataLayout();
-  auto PtrVT = getPointerTy(TDL, TDL.getAllocaAddrSpace());
   bool HasPureCap = Subtarget->hasPureCap();
+  const DataLayout &TDL = DAG.getDataLayout();
+  unsigned PtrSize =
+      Subtarget->isTargetILP32() ? 4
+                                 : (HasPureCap ? 16 : 8);
+  auto PtrMemVT = getPointerMemTy(TDL, TDL.getAllocaAddrSpace());
+  auto PtrVT = getPointerTy(TDL, TDL.getAllocaAddrSpace());
   SDLoc DL(Op);
 
   SDValue Chain = Op.getOperand(0);
@@ -7797,52 +7801,62 @@ SDValue AArch64TargetLowering::LowerAAPCS_VASTART(SDValue Op,
   SmallVector<SDValue, 4> MemOps;
 
   // void *__stack at offset 0
+  unsigned Offset = 0;
   SDValue Stack = DAG.getFrameIndex(FuncInfo->getVarArgsStackIndex(), PtrVT);
-  MemOps.push_back(
-      DAG.getStore(Chain, DL, Stack, VAList, MachinePointerInfo(SV),
-                   Align(HasPureCap ? 16 : 8)));
+  Stack = PtrMemVT.isInteger() ? DAG.getZExtOrTrunc(Stack, DL, PtrMemVT)
+                               : Stack;
+  MemOps.push_back(DAG.getStore(Chain, DL, Stack, VAList,
+                                MachinePointerInfo(SV), Align(PtrSize)));
 
-  // void *__gr_top at offset 8 (16 in the PureCap ABI)
+  // void *__gr_top at offset 8 (4 on ILP32)
+  Offset += PtrSize;
   int GPRSize = FuncInfo->getVarArgsGPRSize();
   int GPROffset = FuncInfo->getVarArgsGPROffset();
   if (GPRSize > 0) {
     SDValue GRTop, GRTopAddr;
 
-    GRTopAddr = DAG.getPointerAdd(DL, VAList, HasPureCap ? 16 : 8);
+    GRTopAddr = DAG.getPointerAdd(DL, VAList, Offset);
 
     GRTop = DAG.getFrameIndex(FuncInfo->getVarArgsGPRIndex(), PtrVT);
     GRTop = DAG.getPointerAdd(DL, GRTop, GPRSize + GPROffset);
+    GRTop = PtrMemVT.isInteger() ? DAG.getZExtOrTrunc(GRTop, DL, PtrMemVT)
+                                 : GRTop;
 
     MemOps.push_back(DAG.getStore(Chain, DL, GRTop, GRTopAddr,
-                                  MachinePointerInfo(SV, HasPureCap ? 16 : 8),
-                                  Align(HasPureCap ? 16 : 8)));
+                                  MachinePointerInfo(SV, Offset),
+                                  Align(PtrSize)));
   }
 
-  // void *__vr_top at offset 16 (32 in the PureCap ABI)
+  // void *__vr_top at offset 16 (8 on ILP32)
+  Offset += PtrSize;
   int FPRSize = FuncInfo->getVarArgsFPRSize();
   if (FPRSize > 0) {
     SDValue VRTop, VRTopAddr;
-    VRTopAddr = DAG.getPointerAdd(DL, VAList, HasPureCap ? 32 : 16);
+    VRTopAddr = DAG.getPointerAdd(DL, VAList, Offset);
 
     VRTop = DAG.getFrameIndex(FuncInfo->getVarArgsFPRIndex(), PtrVT);
     VRTop = DAG.getPointerAdd(DL, VRTop, FPRSize);
+    VRTop = PtrMemVT.isInteger() ? DAG.getZExtOrTrunc(VRTop, DL, PtrMemVT)
+                                 : VRTop;
 
     MemOps.push_back(DAG.getStore(Chain, DL, VRTop, VRTopAddr,
-                                  MachinePointerInfo(SV, HasPureCap ? 32 : 16),
-                                  Align(HasPureCap ? 16 : 8)));
+                                  MachinePointerInfo(SV, Offset),
+                                  Align(PtrSize)));
   }
 
-  // int __gr_offs at offset 24 (48 in the PureCap ABI)
-  SDValue GROffsAddr = DAG.getPointerAdd(DL, VAList, HasPureCap ? 48 : 24);
-  MemOps.push_back(DAG.getStore(
-      Chain, DL, DAG.getConstant(-GPRSize, DL, MVT::i32), GROffsAddr,
-      MachinePointerInfo(SV, HasPureCap ? 48 : 24), Align(4)));
+  // int __gr_offs at offset 24 (12 on ILP32)
+  Offset += PtrSize;
+  SDValue GROffsAddr = DAG.getPointerAdd(DL, VAList, Offset);
+  MemOps.push_back(
+      DAG.getStore(Chain, DL, DAG.getConstant(-GPRSize, DL, MVT::i32),
+                   GROffsAddr, MachinePointerInfo(SV, Offset), Align(4)));
 
-  // int __vr_offs at offset 28 (52 in the PureCap ABI)
-  SDValue VROffsAddr = DAG.getPointerAdd(DL, VAList, HasPureCap ? 52 : 28);
-  MemOps.push_back(DAG.getStore(
-      Chain, DL, DAG.getConstant(-FPRSize, DL, MVT::i32), VROffsAddr,
-      MachinePointerInfo(SV, HasPureCap ? 52 : 28), Align(4)));
+  // int __vr_offs at offset 28 (16 on ILP32)
+  Offset += 4;
+  SDValue VROffsAddr = DAG.getPointerAdd(DL, VAList, Offset);
+  MemOps.push_back(
+      DAG.getStore(Chain, DL, DAG.getConstant(-FPRSize, DL, MVT::i32),
+                   VROffsAddr, MachinePointerInfo(SV, Offset), Align(4)));
 
   return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, MemOps);
 }
@@ -7864,11 +7878,14 @@ SDValue AArch64TargetLowering::LowerVACOPY(SDValue Op,
   // AAPCS has three pointers and two ints (= 32 bytes), Darwin has single
   // pointer.
   SDLoc DL(Op);
-  unsigned PtrSize = Subtarget->isTargetILP32() ? 4 :
-                     (Subtarget->hasPureCap() ? 16 : 8);
-  unsigned VaListSize = (Subtarget->isTargetDarwin() ||
-                         Subtarget->isTargetWindows()) ? PtrSize :
-                         (Subtarget->hasPureCap() ? 56 : 32);
+  unsigned PtrSize =
+      Subtarget->isTargetILP32() ? 4
+                                 : (Subtarget->hasPureCap() ? 16 : 8);
+  unsigned VaListSize =
+      (Subtarget->isTargetDarwin() || Subtarget->isTargetWindows())
+          ? PtrSize
+          : Subtarget->isTargetILP32() ? 20
+                                       : (Subtarget->hasPureCap() ? 56 : 32);
   const Value *DestSV = cast<SrcValueSDNode>(Op.getOperand(3))->getValue();
   const Value *SrcSV = cast<SrcValueSDNode>(Op.getOperand(4))->getValue();
 
