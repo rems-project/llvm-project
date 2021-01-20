@@ -934,10 +934,9 @@ bool AArch64CallLowering::lowerTailCall(
   // If Callee is a reg, since it is used by a target specific instruction,
   // it must have a register class matching the constraint of that instruction.
   if (Info.Callee.isReg())
-    MIB->getOperand(0).setReg(constrainOperandRegClass(
-        MF, *TRI, MRI, *MF.getSubtarget().getInstrInfo(),
-        *MF.getSubtarget().getRegBankInfo(), *MIB, MIB->getDesc(), Info.Callee,
-        0));
+    constrainOperandRegClass(MF, *TRI, MRI, *MF.getSubtarget().getInstrInfo(),
+                             *MF.getSubtarget().getRegBankInfo(), *MIB,
+                             MIB->getDesc(), Info.Callee, 0);
 
   MF.getFrameInfo().setHasTailCall();
   Info.LoweredTailCall = true;
@@ -1019,10 +1018,9 @@ bool AArch64CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
   // instruction, it must have a register class matching the
   // constraint of that instruction.
   if (Info.Callee.isReg())
-    MIB->getOperand(0).setReg(constrainOperandRegClass(
-        MF, *TRI, MRI, *MF.getSubtarget().getInstrInfo(),
-        *MF.getSubtarget().getRegBankInfo(), *MIB, MIB->getDesc(), Info.Callee,
-        0));
+    constrainOperandRegClass(MF, *TRI, MRI, *MF.getSubtarget().getInstrInfo(),
+                             *MF.getSubtarget().getRegBankInfo(), *MIB,
+                             MIB->getDesc(), Info.Callee, 0);
 
   // Finally we can copy the returned value back into its virtual-register. In
   // symmetry with the arguments, the physical register must be an
