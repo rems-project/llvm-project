@@ -945,7 +945,7 @@ InstructionCost AArch64TTIImpl::getGatherScatterOpCost(
   Optional<unsigned> MaxNumVScale = getMaxVScale();
   assert(MaxNumVScale && "Expected valid max vscale value");
 
-  unsigned MemOpCost =
+  InstructionCost MemOpCost =
       getMemoryOpCost(Opcode, VT->getElementType(), Alignment, 0, CostKind, I);
   unsigned MaxNumElementsPerGather =
       MaxNumVScale.getValue() * LegalVF.getKnownMinValue();
@@ -956,10 +956,11 @@ bool AArch64TTIImpl::useNeonVector(const Type *Ty) const {
   return isa<FixedVectorType>(Ty) && !ST->useSVEForFixedLengthVectors();
 }
 
-int AArch64TTIImpl::getMemoryOpCost(unsigned Opcode, Type *Ty,
-                                    MaybeAlign Alignment, unsigned AddressSpace,
-                                    TTI::TargetCostKind CostKind,
-                                    const Instruction *I) {
+InstructionCost AArch64TTIImpl::getMemoryOpCost(unsigned Opcode, Type *Ty,
+                                                MaybeAlign Alignment,
+                                                unsigned AddressSpace,
+                                                TTI::TargetCostKind CostKind,
+                                                const Instruction *I) {
   // TODO: Handle other cost kinds.
   if (CostKind != TTI::TCK_RecipThroughput)
     return 1;
@@ -1016,7 +1017,7 @@ int AArch64TTIImpl::getMemoryOpCost(unsigned Opcode, Type *Ty,
   return LT.first;
 }
 
-int AArch64TTIImpl::getInterleavedMemoryOpCost(
+InstructionCost AArch64TTIImpl::getInterleavedMemoryOpCost(
     unsigned Opcode, Type *VecTy, unsigned Factor, ArrayRef<unsigned> Indices,
     Align Alignment, unsigned AddressSpace, TTI::TargetCostKind CostKind,
     bool UseMaskForCond, bool UseMaskForGaps) {
@@ -1053,7 +1054,7 @@ int AArch64TTIImpl::getInterleavedMemoryOpCost(
 }
 
 int AArch64TTIImpl::getCostOfKeepingLiveOverCall(ArrayRef<Type *> Tys) {
-  int Cost = 0;
+  InstructionCost Cost = 0;
   TTI::TargetCostKind CostKind = TTI::TCK_RecipThroughput;
   for (auto *I : Tys) {
     if (!I->isVectorTy())
@@ -1063,7 +1064,7 @@ int AArch64TTIImpl::getCostOfKeepingLiveOverCall(ArrayRef<Type *> Tys) {
       Cost += getMemoryOpCost(Instruction::Store, I, Align(128), 0, CostKind) +
               getMemoryOpCost(Instruction::Load, I, Align(128), 0, CostKind);
   }
-  return Cost;
+  return *Cost.getValue();
 }
 
 unsigned AArch64TTIImpl::getMaxInterleaveFactor(unsigned VF) {
