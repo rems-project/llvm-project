@@ -110,7 +110,7 @@ public:
 
   size_t GetRegisterSetFromRegisterIndex(uint32_t reg_index) const override;
 
-  uint32_t ConfigureVectorRegisterInfos(uint32_t mode);
+  uint32_t ConfigureVectorRegisterInfos(uint32_t sve_vq);
 
   bool VectorSizeIsValid(uint32_t vq) {
     if (vq >= eVectorQuadwordAArch64 && vq <= eVectorQuadwordAArch64SVEMax)
