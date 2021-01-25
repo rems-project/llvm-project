@@ -267,8 +267,9 @@ ProgramHeaders:
     Flags:    [ PF_R, PF_X ]
     VAddr:    0x200
     Align:    0x1000
-    FirstSec: .text
-    LastSec:  .text
+    Sections:
+      - Section: .text
+      - Section: .text
   ## Add .got so that the PT_LOAD does not have zero p_memsz. We don't add
   ## sections to zero-sized segments so zero-sized segments may have strange
   ## offsets. In practice, the Linux kernel errors when mmapping a p_memsz
@@ -277,10 +278,12 @@ ProgramHeaders:
     Flags:    [ PF_R, PF_W ]
     VAddr:    0x1240
     Align:    0x1000
-    FirstSec: .tdata
-    LastSec:  .got
+    Sections:
+      - Section: .tdata
+      - Section: .got
   - Type:     PT_TLS
     Flags:    [ PF_R ]
     VAddr:    0x1240
-    FirstSec: .tdata
-    LastSec:  .tdata
+    Sections:
+      - Section: .tdata
+      - Section: .tdata
