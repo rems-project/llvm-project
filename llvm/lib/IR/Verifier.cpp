@@ -1676,7 +1676,6 @@ static bool isFuncOnlyAttr(Attribute::AttrKind Kind) {
   case Attribute::NullPointerIsValid:
   case Attribute::MustPreserveCheriTags:
   case Attribute::MustProgress:
-  case Attribute::NoProfile:
     return true;
   default:
     break;
