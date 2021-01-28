@@ -53,9 +53,8 @@ if(ANDROID)
   include_directories(${LIBOMP_SRC_DIR}/android)
 endif()
 
-# Building with time profiling support for libomptarget requires
-# LLVM directory includes.
-if(LIBOMPTARGET_PROFILING_SUPPORT)
+# Building with time profiling support requires LLVM directory includes.
+if(LIBOMP_PROFILING_SUPPORT)
   include_directories(
     ${LLVM_MAIN_INCLUDE_DIR}
     ${LLVM_INCLUDE_DIR}
@@ -150,7 +149,7 @@ libomp_get_ldflags(LIBOMP_CONFIGURED_LDFLAGS)
 
 libomp_get_libflags(LIBOMP_CONFIGURED_LIBFLAGS)
 # Build libomp library. Add LLVMSupport dependency if building in-tree with libomptarget profiling enabled.
-if(OPENMP_STANDALONE_BUILD OR (NOT OPENMP_ENABLE_LIBOMPTARGET_PROFILING))
+if(OPENMP_STANDALONE_BUILD OR (NOT OPENMP_ENABLE_LIBOMP_PROFILING))
   add_library(omp ${LIBOMP_LIBRARY_KIND} ${LIBOMP_SOURCE_FILES})
   # Linking command will include libraries in LIBOMP_CONFIGURED_LIBFLAGS
   target_link_libraries(omp ${LIBOMP_CONFIGURED_LIBFLAGS} ${CMAKE_DL_LIBS})
@@ -159,6 +158,8 @@ else()
     LINK_LIBS ${LIBOMP_CONFIGURED_LIBFLAGS} ${CMAKE_DL_LIBS}
     LINK_COMPONENTS Support
     )
+  # libomp must be a C++ library such that it can link libLLVMSupport
+  set(LIBOMP_LINKER_LANGUAGE CXX)
 endif()
 
 set_target_properties(omp PROPERTIES
