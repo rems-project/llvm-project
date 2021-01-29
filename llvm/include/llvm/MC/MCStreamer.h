@@ -42,7 +42,6 @@
 namespace llvm {
 
 class AssemblerConstantPools;
-class formatted_raw_ostream;
 class MCAsmBackend;
 class MCCodeEmitter;
 class MCContext;
