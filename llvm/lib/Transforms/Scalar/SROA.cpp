@@ -2757,7 +2757,7 @@ private:
                                               NewAI.getAlign(), LI.isVolatile(),
                                               LI.getName());
       if (AATags)
-        NewLI->setAAMetadata(AATags);
+        NewLI->setAAMetadata(AATags.shift(NewBeginOffset - BeginOffset));
       if (LI.isVolatile())
         NewLI->setAtomic(LI.getOrdering(), LI.getSyncScopeID());
       if (NewLI->isAtomic())
@@ -2796,7 +2796,7 @@ private:
           IRB.CreateAlignedLoad(TargetTy, getNewAllocaSlicePtr(IRB, LTy),
                                 getSliceAlign(), LI.isVolatile(), LI.getName());
       if (AATags)
-        NewLI->setAAMetadata(AATags);
+        NewLI->setAAMetadata(AATags.shift(NewBeginOffset - BeginOffset));
       if (LI.isVolatile())
         NewLI->setAtomic(LI.getOrdering(), LI.getSyncScopeID());
 
@@ -2859,7 +2859,7 @@ private:
     }
     StoreInst *Store = IRB.CreateAlignedStore(V, &NewAI, NewAI.getAlign());
     if (AATags)
-      Store->setAAMetadata(AATags);
+      Store->setAAMetadata(AATags.shift(NewBeginOffset - BeginOffset));
     Pass.DeadInsts.push_back(&SI);
 
     LLVM_DEBUG(dbgs() << "          to: " << *Store << "\n");
@@ -2883,7 +2883,7 @@ private:
     Store->copyMetadata(SI, {LLVMContext::MD_mem_parallel_loop_access,
                              LLVMContext::MD_access_group});
     if (AATags)
-      Store->setAAMetadata(AATags);
+      Store->setAAMetadata(AATags.shift(NewBeginOffset - BeginOffset));
     Pass.DeadInsts.push_back(&SI);
     LLVM_DEBUG(dbgs() << "          to: " << *Store << "\n");
     return true;
@@ -2953,7 +2953,7 @@ private:
     NewSI->copyMetadata(SI, {LLVMContext::MD_mem_parallel_loop_access,
                              LLVMContext::MD_access_group});
     if (AATags)
-      NewSI->setAAMetadata(AATags);
+      NewSI->setAAMetadata(AATags.shift(NewBeginOffset - BeginOffset));
     if (SI.isVolatile())
       NewSI->setAtomic(SI.getOrdering(), SI.getSyncScopeID());
     if (NewSI->isAtomic())
@@ -3049,7 +3049,7 @@ private:
           getNewAllocaSlicePtr(IRB, OldPtr->getType()), II.getValue(), Size,
           MaybeAlign(getSliceAlign()), II.isVolatile());
       if (AATags)
-        New->setAAMetadata(AATags);
+        New->setAAMetadata(AATags.shift(NewBeginOffset - BeginOffset));
       LLVM_DEBUG(dbgs() << "          to: " << *New << "\n");
       return false;
     }
@@ -3118,7 +3118,7 @@ private:
     StoreInst *New =
         IRB.CreateAlignedStore(V, &NewAI, NewAI.getAlign(), II.isVolatile());
     if (AATags)
-      New->setAAMetadata(AATags);
+      New->setAAMetadata(AATags.shift(NewBeginOffset - BeginOffset));
     LLVM_DEBUG(dbgs() << "          to: " << *New << "\n");
     return !II.isVolatile();
   }
@@ -3256,7 +3256,7 @@ private:
       CallInst *New = IRB.CreateMemCpy(DestPtr, DestAlign, SrcPtr, SrcAlign,
                                        Size, II.isVolatile());
       if (AATags)
-        New->setAAMetadata(AATags);
+        New->setAAMetadata(AATags.shift(NewBeginOffset - BeginOffset));
       LLVM_DEBUG(dbgs() << "          to: " << *New << "\n");
       return false;
     }
@@ -3310,7 +3310,7 @@ private:
       LoadInst *Load = IRB.CreateAlignedLoad(OtherTy, SrcPtr, SrcAlign,
                                              II.isVolatile(), "copyload");
       if (AATags)
-        Load->setAAMetadata(AATags);
+        Load->setAAMetadata(AATags.shift(NewBeginOffset - BeginOffset));
       Src = Load;
     }
 
@@ -3330,7 +3330,7 @@ private:
     StoreInst *Store = cast<StoreInst>(
         IRB.CreateAlignedStore(Src, DstPtr, DstAlign, II.isVolatile()));
     if (AATags)
-      Store->setAAMetadata(AATags);
+      Store->setAAMetadata(AATags.shift(NewBeginOffset - BeginOffset));
     LLVM_DEBUG(dbgs() << "          to: " << *Store << "\n");
     return !II.isVolatile();
   }
@@ -3631,8 +3631,13 @@ private:
           IRB.CreateInBoundsGEP(BaseTy, Ptr, GEPIndices, Name + ".gep");
       LoadInst *Load =
           IRB.CreateAlignedLoad(Ty, GEP, Alignment, Name + ".load");
-      if (AATags)
-        Load->setAAMetadata(AATags);
+
+      APInt Offset(
+          DL.getIndexSizeInBits(Ptr->getType()->getPointerAddressSpace()), 0);
+      if (AATags &&
+          GEPOperator::accumulateConstantOffset(BaseTy, GEPIndices, DL, Offset))
+        Load->setAAMetadata(AATags.shift(Offset.getZExtValue()));
+
       Agg = IRB.CreateInsertValue(Agg, Load, Indices, Name + ".insert");
       LLVM_DEBUG(dbgs() << "          to: " << *Load << "\n");
     }
@@ -3678,8 +3683,13 @@ private:
           IRB.CreateInBoundsGEP(BaseTy, Ptr, GEPIndices, Name + ".gep");
       StoreInst *Store =
           IRB.CreateAlignedStore(ExtractValue, InBoundsGEP, Alignment);
-      if (AATags)
-        Store->setAAMetadata(AATags);
+
+      APInt Offset(
+          DL.getIndexSizeInBits(Ptr->getType()->getPointerAddressSpace()), 0);
+      if (AATags &&
+          GEPOperator::accumulateConstantOffset(BaseTy, GEPIndices, DL, Offset))
+        Store->setAAMetadata(AATags.shift(Offset.getZExtValue()));
+
       LLVM_DEBUG(dbgs() << "          to: " << *Store << "\n");
     }
   };
