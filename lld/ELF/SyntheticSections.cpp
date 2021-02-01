@@ -538,6 +538,10 @@ void EhFrameSection::finalizeContents() {
   off += 4;
 
   this->size = off;
+
+  if (auto *r = symtab->find("__eh_frame_end"))
+    if (auto *d = dyn_cast<Defined>(r))
+      d->value = this->outSecOff + this->getSize();
 }
 
 // Returns data for .eh_frame_hdr. .eh_frame_hdr is a binary search table
@@ -3097,6 +3101,12 @@ size_t EhFrameHeader::getSize() const {
 
 bool EhFrameHeader::isNeeded() const {
   return isLive() && getPartition().ehFrame->isNeeded();
+}
+
+void EhFrameHeader::finalizeContents() {
+  if (auto *r = symtab->find("__eh_frame_hdr_end"))
+    if (auto *d = dyn_cast<Defined>(r))
+      d->value = this->outSecOff + this->getSize();
 }
 
 VersionDefinitionSection::VersionDefinitionSection()

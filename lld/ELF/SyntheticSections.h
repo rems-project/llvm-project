@@ -800,6 +800,7 @@ public:
   void writeTo(uint8_t *buf) override;
   size_t getSize() const override;
   bool isNeeded() const override;
+  void finalizeContents() override;
 };
 
 // For more information about .gnu.version and .gnu.version_r see:

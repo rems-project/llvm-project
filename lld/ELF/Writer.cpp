@@ -2369,6 +2369,11 @@ template <class ELFT> void Writer<ELFT>::addStartEndSymbols() {
   define("__fini_array_start", "__fini_array_end", Out::finiArray);
   define("__ctors_start", "__ctors_end", findSection(".ctors"));
   define("__dtors_start", "__dtors_end", findSection(".dtors"));
+  if (findSection(".eh_frame"))
+    define("__eh_frame_start", "__eh_frame_end", findSection(".eh_frame"));
+  if (findSection(".eh_frame_hdr"))
+    define("__eh_frame_hdr_start", "__eh_frame_hdr_end",
+           findSection(".eh_frame_hdr"));
   if (in.cheriCapTable)
     define("__cap_table_start", "__cap_table_end",
            in.cheriCapTable->getOutputSection());
