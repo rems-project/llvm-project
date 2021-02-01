@@ -424,7 +424,15 @@ class MorelloModelTI(DefaultTargetInfo):
         super(MorelloModelTI, self).__init__(full_config)
 
     def add_cxx_compile_flags(self, flags):
-        flags += ["-D_GNU_SOURCE"]
+        flags += ["-D_GNU_SOURCE", "-static"]
+
+    def add_cxx_link_flags(self, flags):
+        use_exceptions = self.full_config.get_lit_bool('enable_exceptions', False)
+        if use_exceptions:
+            flags += ['-lunwind']
+
+    def default_cxx_abi_library(self):
+        return "libcxxabi"
 
     def configure_env(self, env):
         forwarded = ['FVP_MORELLO_HOME', 'LD_LIBRARY_PATH', 'MORELLO_TOOLCHAIN_HOME']

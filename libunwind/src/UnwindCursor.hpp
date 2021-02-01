@@ -169,7 +169,7 @@ void DwarfFDECache<A>::add(pint_t mh, addr_t ip_start, addr_t ip_end,
     _bufferUsed = &newBuffer[oldSize];
     _bufferEnd = &newBuffer[newSize];
   }
-  _bufferUsed->mh = assert_pointer_in_bounds(mh);
+  _bufferUsed->mh = mh ? assert_pointer_in_bounds(mh) : 0;
   _bufferUsed->ip_start = ip_start;
   _bufferUsed->ip_end = ip_end;
   assert(ip_start < ip_end);
