@@ -365,8 +365,8 @@ int AArch64TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src,
     if (FatPtrVecSrc == FatPtrVecDst)
       return 0;
     if (FatPtrVecSrc)
-      return cast<VectorType>(Src)->getNumElements();
-    return 1 + cast<VectorType>(Src)->getNumElements();
+      return cast<VectorType>(Src)->getElementCount().getFixedValue();
+    return 1 + cast<VectorType>(Src)->getElementCount().getFixedValue();
   }
 
   EVT SrcTy = TLI->getValueType(DL, Src);

@@ -473,9 +473,9 @@ void ProcessGDBRemote::BuildDynamicRegisterInfo(bool force) {
         g_processgdbremote_properties
             [ePropertyTargetDefinitionAArch64MorelloBuiltIn]
                 .name);
-    m_register_info.HardcodeAArch64MorelloRegisters(
+    m_register_info_sp->HardcodeAArch64MorelloRegisters(
         arch_to_use.IsAArch64MorelloDescriptorABI());
-    m_register_info.Finalize(arch_to_use);
+    m_register_info_sp->Finalize(arch_to_use);
     return;
   }
 

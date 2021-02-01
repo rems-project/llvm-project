@@ -324,7 +324,7 @@ body:             |
     %val:_(<32 x s8>) = G_IMPLICIT_DEF
     %ptr:_(p0) = COPY $x0
     G_STORE %val(<32 x s8>), %ptr(p0) :: (store 32)
-    RET_ReallyLR
+    RET_ReallyLR 0
 ...
 ---
 name:            store_16xs16
@@ -348,7 +348,7 @@ body:             |
     %val:_(<16 x s16>) = G_IMPLICIT_DEF
     %ptr:_(p0) = COPY $x0
     G_STORE %val(<16 x s16>), %ptr(p0) :: (store 32)
-    RET_ReallyLR
+    RET_ReallyLR 0
 ...
 ---
 name:            store_8xs32
@@ -372,7 +372,7 @@ body:             |
     %val:_(<8 x s32>) = G_IMPLICIT_DEF
     %ptr:_(p0) = COPY $x0
     G_STORE %val(<8 x s32>), %ptr(p0) :: (store 32)
-    RET_ReallyLR
+    RET_ReallyLR 0
 ...
 ---
 name:            store_4xs64
@@ -394,4 +394,4 @@ body:             |
     %val:_(<4 x s64>) = G_IMPLICIT_DEF
     %ptr:_(p0) = COPY $x0
     G_STORE %val(<4 x s64>), %ptr(p0) :: (store 32)
-    RET_ReallyLR
+    RET_ReallyLR 0
