@@ -421,5 +421,7 @@ class MorelloModelTI(DefaultTargetInfo):
         flags += ["-D_GNU_SOURCE"]
 
     def configure_env(self, env):
-        env['FVP_MORELLO_HOME'] = os.environ['FVP_MORELLO_HOME']
-        env['MORELLO_TOOLCHAIN_HOME'] = os.environ['MORELLO_TOOLCHAIN_HOME']
+        forwarded = ['FVP_MORELLO_HOME', 'LD_LIBRARY_PATH', 'MORELLO_TOOLCHAIN_HOME']
+        for var in forwarded:
+            if os.environ.get(var) is not None:
+                env[var] = os.environ[var]

@@ -1,4 +1,5 @@
 # REQUIRES: python
+# UNSUPPORTED: linux
 # UNSUPPORTED: system-windows
 # Ensure that the reproducers know about imported Python modules.
 
