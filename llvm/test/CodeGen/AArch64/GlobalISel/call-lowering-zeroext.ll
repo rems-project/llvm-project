@@ -12,7 +12,7 @@ define i8 @zeroext_param_i8(i8 zeroext %x) {
   ; CHECK:   [[TRUNC:%[0-9]+]]:_(s8) = G_TRUNC [[ASSERT_ZEXT]](s32)
   ; CHECK:   [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[TRUNC]](s8)
   ; CHECK:   $w0 = COPY [[ANYEXT]](s32)
-  ; CHECK:   RET_ReallyLR implicit $w0
+  ; CHECK:   RET_ReallyLR 0, implicit $w0
   ret i8 %x
 }
 
@@ -24,7 +24,7 @@ define i8 @no_zeroext_param(i8 %x) {
   ; CHECK:   [[TRUNC:%[0-9]+]]:_(s8) = G_TRUNC [[COPY]](s32)
   ; CHECK:   [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[TRUNC]](s8)
   ; CHECK:   $w0 = COPY [[ANYEXT]](s32)
-  ; CHECK:   RET_ReallyLR implicit $w0
+  ; CHECK:   RET_ReallyLR 0, implicit $w0
   ret i8 %x
 }
 
@@ -35,6 +35,6 @@ define i32 @zeroext_param_i32(i32 zeroext %x) {
   ; CHECK:   liveins: $w0
   ; CHECK:   [[COPY:%[0-9]+]]:_(s32) = COPY $w0
   ; CHECK:   $w0 = COPY [[COPY]](s32)
-  ; CHECK:   RET_ReallyLR implicit $w0
+  ; CHECK:   RET_ReallyLR 0, implicit $w0
   ret i32 %x
 }
