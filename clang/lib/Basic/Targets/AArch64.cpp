@@ -680,7 +680,7 @@ const char *AArch64TargetInfo::getClobbers() const { return ""; }
 
 int AArch64TargetInfo::getEHDataRegisterNumber(unsigned RegNo) const {
   if (RegNo == 0)
-    return 0;
+    return hasPureCap() ? 198 : 0;
   if (RegNo == 1)
     return 1;
   return -1;
