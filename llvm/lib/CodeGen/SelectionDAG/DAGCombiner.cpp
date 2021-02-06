@@ -17640,11 +17640,12 @@ static SDValue convertUnalignedStoreOfLoadToMemmove(SDNode *N,
     return SDValue();
   }
 
-  const unsigned Alignment = ST->getAlignment();
+  const Align Alignment = ST->getAlign();
   // Don't bother doing this transformation if the unaligned load/store is fast
   bool Fast = false;
-  if (TLI.allowsMisalignedMemoryAccesses(
-          ST->getMemoryVT(), ST->getAddressSpace(), Alignment, MachineMemOperand::MONone, &Fast)) {
+  if (TLI.allowsMisalignedMemoryAccesses(ST->getMemoryVT(),
+                                         ST->getAddressSpace(), Alignment,
+                                         MachineMemOperand::MONone, &Fast)) {
     if (Fast)
       return SDValue();
   }
@@ -17675,7 +17676,7 @@ static SDValue convertUnalignedStoreOfLoadToMemmove(SDNode *N,
             DAG.getMachineFunction().getFunction(), dl.getDebugLoc(),
             "found underaligned store of underaligned load of capability type"
             " (aligned to " +
-                Twine(Alignment) + " bytes instead of " + Twine(ABIAlignment) +
+                Twine(Alignment.value()) + " bytes instead of " + Twine(ABIAlignment) +
                 "). Will use memmove() to preserve tags if it is aligned "
                 "correctly at runtime");
         DAG.getContext()->diagnose(Warning);
