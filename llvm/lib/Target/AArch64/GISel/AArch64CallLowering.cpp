@@ -410,7 +410,8 @@ bool AArch64CallLowering::lowerReturn(MachineIRBuilder &MIRBuilder,
     }
 
     OutgoingArgHandler Handler(MIRBuilder, MRI, MIB, AssignFn, AssignFn);
-    Success = handleAssignments(MIRBuilder, SplitArgs, Handler);
+    Success =
+        handleAssignments(MIRBuilder, SplitArgs, Handler, CC, F.isVarArg());
   }
 
   if (SwiftErrorVReg) {
@@ -502,7 +503,8 @@ bool AArch64CallLowering::lowerFormalArguments(
       TLI.CCAssignFnForCall(F.getCallingConv(), /*IsVarArg=*/false);
 
   FormalArgHandler Handler(MIRBuilder, MRI, AssignFn);
-  if (!handleAssignments(MIRBuilder, SplitArgs, Handler))
+  if (!handleAssignments(MIRBuilder, SplitArgs, Handler, F.getCallingConv(),
+                         F.isVarArg()))
     return false;
 
   AArch64FunctionInfo *FuncInfo = MF.getInfo<AArch64FunctionInfo>();
@@ -904,7 +906,7 @@ bool AArch64CallLowering::lowerTailCall(
   // Do the actual argument marshalling.
   OutgoingArgHandler Handler(MIRBuilder, MRI, MIB, AssignFnFixed,
                              AssignFnVarArg, true, FPDiff);
-  if (!handleAssignments(MIRBuilder, OutArgs, Handler))
+  if (!handleAssignments(MIRBuilder, OutArgs, Handler, CalleeCC, Info.IsVarArg))
     return false;
 
   Mask = getMaskForArgs(OutArgs, Info, *TRI, MF);
@@ -1016,7 +1018,8 @@ bool AArch64CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
   // Do the actual argument marshalling.
   OutgoingArgHandler Handler(MIRBuilder, MRI, MIB, AssignFnFixed,
                              AssignFnVarArg, false);
-  if (!handleAssignments(MIRBuilder, OutArgs, Handler))
+  if (!handleAssignments(MIRBuilder, OutArgs, Handler, Info.CallConv,
+                         Info.IsVarArg))
     return false;
 
   Mask = getMaskForArgs(OutArgs, Info, *TRI, MF);
@@ -1051,6 +1054,7 @@ bool AArch64CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
                                                     RetAssignFn);
     if (!handleAssignments(MIRBuilder, InArgs,
                            UsingReturnedArg ? ReturnedArgHandler : Handler,
+                           Info.CallConv, Info.IsVarArg,
                            UsingReturnedArg ? OutArgs[0].Regs[0] : Register()))
       return false;
   }
