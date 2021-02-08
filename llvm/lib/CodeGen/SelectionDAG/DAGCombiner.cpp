@@ -12751,7 +12751,7 @@ SDValue DAGCombiner::visitFADDForFMACombine(SDNode *N) {
   if (!AllowFusionGlobally && !isContractable(N))
     return SDValue();
 
-  if (STI && STI->generateFMAsInMachineCombiner(OptLevel))
+  if (TLI.generateFMAsInMachineCombiner(VT, OptLevel))
     return SDValue();
 
   // Always prefer FMAD to FMA for precision.
@@ -12960,7 +12960,7 @@ SDValue DAGCombiner::visitFSUBForFMACombine(SDNode *N) {
   if (!AllowFusionGlobally && !isContractable(N))
     return SDValue();
 
-  if (STI && STI->generateFMAsInMachineCombiner(OptLevel))
+  if (TLI.generateFMAsInMachineCombiner(VT, OptLevel))
     return SDValue();
 
   // Always prefer FMAD to FMA for precision.
