@@ -43,6 +43,11 @@ if 'LLDB_CAPTURE_REPRODUCER' in os.environ:
   config.environment['LLDB_CAPTURE_REPRODUCER'] = os.environ[
       'LLDB_CAPTURE_REPRODUCER']
 
+# Propagate PYTHONHOME, otherwise lldb will use the system python internally.
+if 'PYTHONHOME' in os.environ:
+  print("Propagating PYTHONHOME: {}".format(os.environ['PYTHONHOME']))
+  config.environment['PYTHONHOME'] = os.environ['PYTHONHOME']
+
 # Support running the test suite under the lldb-repro wrapper. This makes it
 # possible to capture a test suite run and then rerun all the test from the
 # just captured reproducer.
