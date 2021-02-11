@@ -200,6 +200,7 @@ protected:
 
   // Armv8.8-A Extensions
   bool HasHBC = false;
+  bool HasMOPS = false;
 
   // Arm SVE2 extensions
   bool HasSVE2 = false;
@@ -603,6 +604,7 @@ public:
   bool hasEL2VMSA() const { return HasEL2VMSA; }
   bool hasEL3() const { return HasEL3; }
   bool hasHBC() const { return HasHBC; }
+  bool hasMOPS() const { return HasMOPS; }
 
   bool fixCortexA53_835769() const { return FixCortexA53_835769; }
 
