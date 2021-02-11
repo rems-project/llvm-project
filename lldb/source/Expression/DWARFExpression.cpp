@@ -1071,6 +1071,7 @@ bool DWARFExpression::Evaluate(
         stack.back().SetValueType(Value::ValueType::LoadAddress);
         // Fall through to load address code below...
       } LLVM_FALLTHROUGH;
+      case Value::ValueType::Scalar:
       case Value::ValueType::LoadAddress:
         if (exe_ctx) {
           if (process) {
@@ -1103,7 +1104,6 @@ bool DWARFExpression::Evaluate(
         }
         break;
 
-      case Value::ValueType::Scalar:
       case Value::ValueType::Invalid:
         if (error_ptr)
           error_ptr->SetErrorString("Invalid value type for DW_OP_deref.\n");
@@ -1174,6 +1174,7 @@ bool DWARFExpression::Evaluate(
         stack.back().GetScalar() = ptr;
         stack.back().ClearContext();
       } break;
+      case Value::ValueType::Scalar:
       case Value::ValueType::LoadAddress:
         if (exe_ctx) {
           if (process) {
@@ -1225,7 +1226,6 @@ bool DWARFExpression::Evaluate(
         }
         break;
 
-      case Value::ValueType::Scalar:
       case Value::ValueType::FileAddress:
       case Value::ValueType::Invalid:
         if (error_ptr)
