@@ -1241,13 +1241,15 @@ static unsigned getSetupCost(const SCEV *Reg, unsigned Depth) {
 void Cost::RateRegister(const Formula &F, const SCEV *Reg,
                         SmallPtrSetImpl<const SCEV *> &Regs) {
   const DataLayout &DL = L->getHeader()->getModule()->getDataLayout();
+  TTI::AddressingModeKind AMK = TTI->getPreferredAddressingMode(L, SE);
+
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Reg)) {
     // If this is an addrec for another loop, it should be an invariant
     // with respect to L since L is the innermost loop (at least
     // for now LSR only handles innermost loops).
     if (AR->getLoop() != L) {
       // If the AddRec exists, consider it's register free and leave it alone.
-      if (isExistingPhi(AR, *SE) && !TTI->shouldFavorPostInc())
+      if (isExistingPhi(AR, *SE) && AMK != TTI::AMK_PostIndexed)
         return;
 
       // It is bad to allow LSR for current loop to add induction variables
@@ -1270,13 +1272,11 @@ void Cost::RateRegister(const Formula &F, const SCEV *Reg,
 
       // If the step size matches the base offset, we could use pre-indexed
       // addressing.
-      if (TTI->shouldFavorBackedgeIndex(L)) {
+      if (AMK == TTI::AMK_PreIndexed) {
         if (auto *Step = dyn_cast<SCEVConstant>(AR->getStepRecurrence(*SE)))
           if (Step->getAPInt() == F.BaseOffset)
             LoopCost = 0;
-      }
-
-      if (TTI->shouldFavorPostInc()) {
+      } else if (AMK == TTI::AMK_PostIndexed) {
         const SCEV *LoopStep = AR->getStepRecurrence(*SE);
         if (isa<SCEVConstant>(LoopStep)) {
           const SCEV *LoopStart = AR->getStart();
@@ -3696,7 +3696,8 @@ void LSRInstance::GenerateReassociationsImpl(LSRUse &LU, unsigned LUIdx,
   // may generate a post-increment operator. The reason is that the
   // reassociations cause extra base+register formula to be created,
   // and possibly chosen, but the post-increment is more efficient.
-  if (TTI.shouldFavorPostInc() && mayUsePostIncMode(TTI, LU, BaseReg, L, SE))
+  TTI::AddressingModeKind AMK = TTI.getPreferredAddressingMode(L, &SE);
+  if (AMK == TTI::AMK_PostIndexed && mayUsePostIncMode(TTI, LU, BaseReg, L, SE))
     return;
   SmallVector<const SCEV *, 8> AddOps;
   const SCEV *Remainder = CollectSubexprs(BaseReg, nullptr, AddOps, L, SE);
@@ -4390,7 +4391,8 @@ void LSRInstance::GenerateCrossUseConstantOffsets() {
           NewF.BaseOffset = (uint64_t)NewF.BaseOffset + Imm;
           if (!isLegalUse(TTI, LU.MinOffset, LU.MaxOffset,
                           LU.Kind, LU.AccessTy, NewF)) {
-            if (TTI.shouldFavorPostInc() &&
+            if (TTI.getPreferredAddressingMode(this->L, &SE) ==
+                    TTI::AMK_PostIndexed &&
                 mayUsePostIncMode(TTI, LU, OrigReg, this->L, SE))
               continue;
             if (!TTI.isLegalAddImmediate((uint64_t)NewF.UnfoldedOffset + Imm))
@@ -4830,7 +4832,7 @@ void LSRInstance::NarrowSearchSpaceByFilterFormulaWithSameScaledReg() {
 /// If we are over the complexity limit, filter out any post-inc prefering
 /// variables to only post-inc values.
 void LSRInstance::NarrowSearchSpaceByFilterPostInc() {
-  if (!TTI.shouldFavorPostInc())
+  if (TTI.getPreferredAddressingMode(L, &SE) != TTI::AMK_PostIndexed)
     return;
   if (EstimateSearchSpaceComplexity() < ComplexityLimit)
     return;
@@ -5129,7 +5131,8 @@ void LSRInstance::SolveRecurse(SmallVectorImpl<const Formula *> &Solution,
     // This can sometimes (notably when trying to favour postinc) lead to
     // sub-optimial decisions. There it is best left to the cost modelling to
     // get correct.
-    if (!TTI.shouldFavorPostInc() || LU.Kind != LSRUse::Address) {
+    if (TTI.getPreferredAddressingMode(L, &SE) != TTI::AMK_PostIndexed ||
+        LU.Kind != LSRUse::Address) {
       int NumReqRegsToFind = std::min(F.getNumRegs(), ReqRegs.size());
       for (const SCEV *Reg : ReqRegs) {
         if ((F.ScaledReg && F.ScaledReg == Reg) ||
@@ -5756,7 +5759,8 @@ LSRInstance::LSRInstance(Loop *L, IVUsers &IU, ScalarEvolution &SE,
                          TargetLibraryInfo &TLI, MemorySSAUpdater *MSSAU)
     : IU(IU), SE(SE), DT(DT), LI(LI), AC(AC), TLI(TLI), TTI(TTI), L(L),
       MSSAU(MSSAU), FavorBackedgeIndex(EnableBackedgeIndexing &&
-                                       TTI.shouldFavorBackedgeIndex(L)) {
+                                       TTI.getPreferredAddressingMode(L, &SE) ==
+                                           TTI::AMK_PreIndexed) {
   // If LoopSimplify form is not available, stay out of trouble.
   if (!L->isLoopSimplifyForm())
     return;
