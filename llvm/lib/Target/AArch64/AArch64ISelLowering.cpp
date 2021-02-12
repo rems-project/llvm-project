@@ -12389,6 +12389,8 @@ bool AArch64TargetLowering::isFMAFasterThanFMulAndFAdd(
     return false;
 
   switch (VT.getSimpleVT().SimpleTy) {
+  case MVT::f16:
+    return Subtarget->hasFullFP16();
   case MVT::f32:
   case MVT::f64:
     return true;
