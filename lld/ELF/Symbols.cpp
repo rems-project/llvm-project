@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Symbols.h"
+#include "Arch/Cheri.h"
 #include "InputFiles.h"
 #include "InputSection.h"
 #include "OutputSections.h"
@@ -274,6 +275,18 @@ uint64_t Symbol::getPltVA() const {
   if (config->morelloC64Plt)
     outVA |= 1;
   return outVA;
+}
+
+uint64_t Symbol::getCapTableVA(const InputSectionBase *isec,
+                               uint64_t offset) const {
+  return ElfSym::cheriCapabilityTable->getVA() +
+    getCapTableOffset(isec, offset);
+}
+
+uint64_t Symbol::getCapTableOffset(const InputSectionBase *isec,
+                                   uint64_t offset) const {
+  return config->capabilitySize *
+    in.cheriCapTable->getIndex(*this, isec, offset);
 }
 
 uint64_t Symbol::getSize(bool forCheriCap) const {
