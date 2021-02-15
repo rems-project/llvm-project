@@ -1068,8 +1068,7 @@ public:
   virtual bool
   RestoreRegisterStateFromCheckpoint(ThreadStateCheckpoint &saved_state);
 
-  virtual bool
-  RestoreThreadStateFromCheckpoint(ThreadStateCheckpoint &saved_state);
+  void RestoreThreadStateFromCheckpoint(ThreadStateCheckpoint &saved_state);
 
   void EnableTracer(bool value, bool single_step);
 
