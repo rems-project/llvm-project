@@ -624,7 +624,9 @@ def ProcA55     : SubtargetFeature<"a55", "ARMProcFamily", "CortexA55",
                                    FeatureFullFP16,
                                    FeatureDotProd,
                                    FeatureRCPC,
-                                   FeaturePerfMon
+                                   FeaturePerfMon,
+                                   FeaturePostRAScheduler,
+                                   FeatureUseAA
                                    ]>;
 
 def ProcA57     : SubtargetFeature<"a57", "ARMProcFamily", "CortexA57",
@@ -758,7 +760,7 @@ def ProcR82 : SubtargetFeature<"cortex-r82", "ARMProcFamily",
                                "CortexR82",
                                "Cortex-R82 ARM Processors", [
                                FeaturePostRAScheduler,
-                               // TODO: crypto and FuseAES
+                               FeatureUseAA,
                                // All other features are implied by v8_0r ops:
                                HasV8_0rOps,
                                ]>;
@@ -1007,6 +1009,9 @@ def ProcNeoverseE1 : SubtargetFeature<"neoversee1", "ARMProcFamily",
                                       FeatureNEON,
                                       FeatureRCPC,
                                       FeatureSSBS,
+                                      FeaturePostRAScheduler,
+                                      FeatureUseAA,
+                                      FeatureFuseAES,
                                       ]>;
 
 def ProcNeoverseN1 : SubtargetFeature<"neoversen1", "ARMProcFamily",
@@ -1021,6 +1026,9 @@ def ProcNeoverseN1 : SubtargetFeature<"neoversen1", "ARMProcFamily",
                                       FeatureRCPC,
                                       FeatureSPE,
                                       FeatureSSBS,
+                                      FeaturePostRAScheduler,
+                                      FeatureUseAA,
+                                      FeatureFuseAES,
                                       ]>;
 
 def ProcRainier : SubtargetFeature<"rainier", "ARMProcFamily",
@@ -1048,7 +1056,12 @@ def ProcNeoverseN2 : SubtargetFeature<"neoversen2", "ARMProcFamily",
                                       FeatureMTE,
                                       FeatureSVE2,
                                       FeatureSVE2BitPerm,
-                                      FeatureTRBE]>;
+                                      FeatureTRBE,
+                                      FeaturePostRAScheduler,
+                                      FeatureUseAA,
+                                      FeatureCrypto,
+                                      FeatureFuseAES,
+                                      ]>;
 
 def ProcNeoverseV1 : SubtargetFeature<"neoversev1", "ARMProcFamily",
                                       "NeoverseV1",
@@ -1065,6 +1078,7 @@ def ProcNeoverseV1 : SubtargetFeature<"neoversev1", "ARMProcFamily",
                                       FeatureNEON,
                                       FeaturePerfMon,
                                       FeaturePostRAScheduler,
+                                      FeatureUseAA,
                                       FeatureRandGen,
                                       FeatureSPE,
                                       FeatureSSBS,
