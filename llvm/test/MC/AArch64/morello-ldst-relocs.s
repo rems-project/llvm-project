@@ -12,9 +12,9 @@ somewhere:
   ldr c0, somewhere
   ldr c1, anywhere
 
-// OBJ: ldr c0, 0xc <somewhere+0xc>
+// OBJ: ldr c0, #0
 // OBJ-NEXT: R_MORELLO_LD_PREL_LO17 .text
-// OBJ: ldr c1, 0x10 <somewhere+0x10>
+// OBJ: ldr c1, #0
 // OBJ-NEXT: R_MORELLO_LD_PREL_LO17 anywhere
 
 // ASM:  ldr c0, somewhere           // encoding: [0bAAA00000,A,0b00AAAAAA,0x82]

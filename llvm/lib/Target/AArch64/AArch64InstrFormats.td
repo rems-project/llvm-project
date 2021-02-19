@@ -11516,9 +11516,8 @@ def PCRelLabel17OperandScaled16 : AsmOperandClass {
 def am_ldrlit_aligned16 : Operand<OtherVT> {
   let EncoderMethod = "getLoadLiteralOpValue";
   let DecoderMethod = "DecodePCRelLabel17Scale16";
-  let PrintMethod = "printAlignedLabel<16>";
+  let PrintMethod = "printCapLitLabel";
   let ParserMatchClass = PCRelLabel17OperandScaled16;
-  let OperandType = "OPERAND_PCREL";
 }
 
 def ScbndsImmOperand : AsmOperandClass {

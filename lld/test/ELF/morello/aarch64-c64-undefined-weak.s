@@ -26,4 +26,4 @@ _start:
 // CHECK:         210120:       b       0x210124 <_start+0x4>
 // CHECK-NEXT:    210124:       bl      0x210128 <_start+0x8>
 // CHECK-NEXT:    210128:       adrp    c0, #0
-// CHECK-NEXT:    21012c:       ldr     c8, 0x21012c <_start+0xc>
+// CHECK-NEXT:    21012c:       ldr     c8, #0

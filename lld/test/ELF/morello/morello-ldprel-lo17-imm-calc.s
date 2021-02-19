@@ -22,13 +22,13 @@
 // DISASM-EMPTY:
 // DISASM-NEXT:   0000000000210160 <_start>:
 // FIXME: is this llvm-objdump output wrong?
-// DISASM-NEXT:   210160:      ldr     c8, 0x220180 <_start+0x4008>
+// DISASM-NEXT:   210160:      ldr     c8, #65568
 // DISASM-NEXT:   210164:      nop
 // DISASM-NEXT:   210168:      nop
-// DISASM-NEXT:   21016c:      ldr     c9, 0x22018c <_start+0x4014>
+// DISASM-NEXT:   21016c:      ldr     c9, #65568
 // DISASM-NEXT:   210170:      nop
-// DISASM-NEXT:   210174:      ldr     c10, 0x220184 <_start+0x4018>
-// DISASM-NEXT:   210178:      ldr     c11, 0x220188 <_start+0x401c>
+// DISASM-NEXT:   210174:      ldr     c10, #65552
+// DISASM-NEXT:   210178:      ldr     c11, #65552
 
 // SYM: Name: sym (6)
 // SYM-NEXT: Value: 0x220180

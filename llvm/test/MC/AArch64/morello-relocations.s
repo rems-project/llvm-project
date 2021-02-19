@@ -20,9 +20,9 @@ sym:
 // CHECK:      nop
 // CHECK-NEXT: nop
 // CHECK-NEXT: nop
-// CHECK-NEXT: 19 00 00 82  ldr  c25, 0xc <somewhere+0xc>
+// CHECK-NEXT: 19 00 00 82  ldr  c25, #0
 // CHECK-NEXT:      R_MORELLO_LD_PREL_LO17 .text+0x1
-// CHECK-NEXT: 19 00 00 82  ldr  c25, 0x10 <somewhere+0x10>
+// CHECK-NEXT: 19 00 00 82  ldr  c25, #0
 // CHECK-NEXT:      R_MORELLO_LD_PREL_LO17 anywhere+0x2
 // CHECK-NEXT: 19 00 80 90  adrp c25, #0
 // CHECK-NEXT:      R_MORELLO_ADR_PREL_PG_HI20 sym+0x4
