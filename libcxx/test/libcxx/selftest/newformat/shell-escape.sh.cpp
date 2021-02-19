@@ -6,6 +6,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+// Baremetal doesn't have echo, so skip for newlib.
+// UNSUPPORTED: libcpp-has-newlib
+
 // Make sure that arguments of the %{exec} substitution are shell-escaped
 // properly. If that wasn't the case, the command would fail because the
 // shell would look for a matching `"`.

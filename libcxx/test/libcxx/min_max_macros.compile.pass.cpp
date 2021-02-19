@@ -40,7 +40,9 @@ TEST_MACROS();
 TEST_MACROS();
 #include <cerrno>
 TEST_MACROS();
+#ifndef _LIBCPP_HAS_NEWLIB
 #include <cfenv>
+#endif
 TEST_MACROS();
 #include <cfloat>
 TEST_MACROS();

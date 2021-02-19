@@ -27,7 +27,9 @@
 #include <ccomplex>
 #include <cctype>
 #include <cerrno>
+#ifndef _LIBCPP_HAS_NEWLIB
 #include <cfenv>
+#endif
 #include <cfloat>
 #include <charconv>
 #include <chrono>
@@ -59,7 +61,9 @@
 #include <errno.h>
 #include <exception>
 #include <execution>
+#ifndef _LIBCPP_HAS_NEWLIB
 #include <fenv.h>
+#endif
 #include <filesystem>
 #include <float.h>
 #include <forward_list>
