@@ -290,14 +290,14 @@ body:             |
     ; CHECK: [[SUBSWrr:%[0-9]+]]:gpr32 = SUBSWrr %cmp_lhs, %cmp_rhs, implicit-def $nzcv
     ; CHECK: %add:gpr32 = CSINCWr %add_rhs, %add_rhs, 1, implicit $nzcv
     ; CHECK: $w0 = COPY %add
-    ; CHECK: RET_ReallyLR implicit $w0
+    ; CHECK: RET_ReallyLR 0, implicit $w0
     %cmp_lhs:gpr(s32) = COPY $w0
     %cmp_rhs:gpr(s32) = COPY $w1
     %add_rhs:gpr(s32) = COPY $w2
     %cmp:gpr(s32) = G_ICMP intpred(eq), %cmp_lhs(s32), %cmp_rhs
     %add:gpr(s32) = G_ADD %cmp, %add_rhs
     $w0 = COPY %add(s32)
-    RET_ReallyLR implicit $w0
+    RET_ReallyLR 0, implicit $w0
 
 ...
 ---
@@ -320,14 +320,14 @@ body:             |
     ; CHECK: [[SUBSWrr:%[0-9]+]]:gpr32 = SUBSWrr %cmp_lhs, %cmp_rhs, implicit-def $nzcv
     ; CHECK: %add:gpr32 = CSINCWr %add_lhs, %add_lhs, 1, implicit $nzcv
     ; CHECK: $w0 = COPY %add
-    ; CHECK: RET_ReallyLR implicit $w0
+    ; CHECK: RET_ReallyLR 0, implicit $w0
     %cmp_lhs:gpr(s32) = COPY $w0
     %cmp_rhs:gpr(s32) = COPY $w1
     %add_lhs:gpr(s32) = COPY $w2
     %cmp:gpr(s32) = G_ICMP intpred(eq), %cmp_lhs(s32), %cmp_rhs
     %add:gpr(s32) = G_ADD %add_lhs, %cmp
     $w0 = COPY %add(s32)
-    RET_ReallyLR implicit $w0
+    RET_ReallyLR 0, implicit $w0
 
 ...
 ---
@@ -350,11 +350,11 @@ body:             |
     ; CHECK: [[CMEQv4i32_:%[0-9]+]]:fpr128 = CMEQv4i32 %cmp_lhs, %cmp_rhs
     ; CHECK: %add:fpr128 = ADDv4i32 %add_lhs, [[CMEQv4i32_]]
     ; CHECK: $q0 = COPY %add
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %cmp_lhs:fpr(<4 x s32>) = COPY $q0
     %cmp_rhs:fpr(<4 x s32>) = COPY $q1
     %add_lhs:fpr(<4 x s32>) = COPY $q2
     %cmp:fpr(<4 x s32>) = G_ICMP intpred(eq), %cmp_lhs(<4 x s32>), %cmp_rhs
     %add:fpr(<4 x s32>) = G_ADD %add_lhs, %cmp
     $q0 = COPY %add(<4 x s32>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0

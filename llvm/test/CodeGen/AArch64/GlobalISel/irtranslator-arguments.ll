@@ -35,7 +35,7 @@ declare void @use_s128(i128 %a, i128 %b)
 ; CHECK:   BL @use_s128, csr_aarch64_aapcs, implicit-def $lr, implicit $sp, implicit $x0, implicit $x1, implicit $x2, implicit $x3
 ; CHECK:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
 ; CHECK:   $w0 = COPY [[C]](s32)
-; CHECK:   RET_ReallyLR implicit $w0
+; CHECK:   RET_ReallyLR 0, implicit $w0
 define i32 @call_use_s128(i32 %p1, i128 %p2, i32 %p3, i32 %p4, i32 %p5, i128 %p6, i32 %p7) {
 entry:
   call void @use_s128(i128 %p2, i128 %p6)
