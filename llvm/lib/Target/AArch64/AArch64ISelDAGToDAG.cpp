@@ -968,7 +968,7 @@ static bool isWorthFoldingADDClow(SDValue N) {
     if (Use->getOpcode() != ISD::LOAD && Use->getOpcode() != ISD::STORE)
       return false;
 
-    if (isStrongerThanMonotonic(cast<MemSDNode>(Use)->getOrdering()))
+    if (isStrongerThanMonotonic(cast<MemSDNode>(Use)->getSuccessOrdering()))
       return false;
   }
 

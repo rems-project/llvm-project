@@ -1178,6 +1178,10 @@ static lldb::addr_t ReadLinuxProcessAddressMask(lldb::ProcessSP process_sp,
 }
 
 lldb::addr_t ABISysV_arm64::FixCodeAddress(lldb::addr_t pc) {
+  // Clear bit zero in the address as it is used to signify use of the C64
+  // instruction set.
+  pc = pc & ~(lldb::addr_t)1;
+
   if (lldb::ProcessSP process_sp = GetProcessSP()) {
     if (process_sp->GetTarget().GetArchitecture().GetTriple().isOSLinux() &&
         !process_sp->GetCodeAddressMask())

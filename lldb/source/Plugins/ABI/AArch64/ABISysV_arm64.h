@@ -97,12 +97,6 @@ public:
     return true;
   }
 
-  lldb::addr_t FixCodeAddress(lldb::addr_t pc) override {
-    // Clear bit zero in the address as it is used to signify use of the C64
-    // instruction set.
-    return pc & ~(lldb::addr_t)1;
-  }
-
   bool GetPointerReturnRegister(const char *&name) override;
 
   lldb::addr_t FixAddress(lldb::addr_t pc, lldb::addr_t mask) override;

@@ -4401,7 +4401,8 @@ SDValue AArch64TargetLowering::LowerAtomic(SDValue Op,
   SDNode *Node = Op.getNode();
   bool FatPtrBase =
     cast<AtomicSDNode>(Node)->getBasePtr().getValueType().isFatPointer();
-  bool Relaxed = !isAcquireOrStronger(cast<AtomicSDNode>(Node)->getOrdering());
+  bool Relaxed =
+      !isAcquireOrStronger(cast<AtomicSDNode>(Node)->getSuccessOrdering());
 
   // This only handles altenate base atomics. Others are handled in tablegen.
   if (FatPtrBase == Subtarget->hasC64() || Relaxed)
