@@ -4251,8 +4251,7 @@ bool TargetProperties::GetEnableAutoInstallMainExecutable() const {
       nullptr, idx, g_target_properties[idx].default_uint_value != 0);
 }
 
-const ProcessLaunchInfo &TargetProperties::GetProcessLaunchInfo() {
-  m_launch_info.SetArg0(GetArg0()); // FIXME: Arg0 callback doesn't work
+const ProcessLaunchInfo &TargetProperties::GetProcessLaunchInfo() const {
   return m_launch_info;
 }
 
