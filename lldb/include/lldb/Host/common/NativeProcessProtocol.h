@@ -89,6 +89,9 @@ public:
       lldb::addr_t addr, void *buf, size_t size, size_t &bytes_read,
       lldb::MemoryContentType type = lldb::eMemoryContentNormal);
 
+  virtual Status ReadMemoryTags(int32_t type, lldb::addr_t addr, size_t len,
+                                std::vector<uint8_t> &tags);
+
   /// Reads a null terminated string from memory.
   ///
   /// Reads up to \p max_size bytes of memory until it finds a '\0'.

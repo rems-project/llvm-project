@@ -23,6 +23,7 @@
 #include "Plugins/Process/Linux/Procfs.h"
 #include "Plugins/Process/POSIX/ProcessPOSIXLog.h"
 #include "Plugins/Process/Utility/lldb-arm64-register-enums.h"
+#include "Plugins/Process/Utility/MemoryTagManagerAArch64MTE.h"
 #include "Plugins/Process/Utility/RegisterInfoPOSIX_arm64.h"
 
 #include "Utility/ARM64_DWARF_Registers.h"
@@ -1121,6 +1122,17 @@ std::vector<uint32_t> NativeRegisterContextLinux_arm64::GetExpeditedRegisters(
     expedited_reg_nums.push_back(GetRegisterInfo().GetRegNumSVEVG());
 
   return expedited_reg_nums;
+}
+
+llvm::Expected<NativeRegisterContextLinux::MemoryTaggingDetails>
+NativeRegisterContextLinux_arm64::GetMemoryTaggingDetails(int32_t type) {
+  if (type == MemoryTagManagerAArch64MTE::eMTE_allocation) {
+    return MemoryTaggingDetails{std::make_unique<MemoryTagManagerAArch64MTE>(),
+                                PTRACE_PEEKMTETAGS, PTRACE_POKEMTETAGS};
+  }
+
+  return llvm::createStringError(llvm::inconvertibleErrorCode(),
+                                 "Unknown AArch64 memory tag type %d", type);
 }
 
 #endif // defined (__arm64__) || defined (__aarch64__)
