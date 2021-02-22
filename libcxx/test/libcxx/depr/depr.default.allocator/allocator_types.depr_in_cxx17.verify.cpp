@@ -29,9 +29,9 @@
 
 // UNSUPPORTED: c++98, c++03, c++11, c++14
 
-// Clang 6 does not handle the deprecated attribute on template members properly,
+// Clang 6 and 7 do not handle the deprecated attribute on template members properly,
 // so the rebind<int> check below fails.
-// UNSUPPORTED: clang-6
+// UNSUPPORTED: clang-6, clang-7
 
 // ADDITIONAL_COMPILE_FLAGS: -D_LIBCPP_ENABLE_CXX20_REMOVED_ALLOCATOR_MEMBERS
 
