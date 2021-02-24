@@ -9,7 +9,7 @@ define i8 @v1s8_add(<1 x i8> %a0) {
   ; CHECK:   [[UV:%[0-9]+]]:_(s8), [[UV1:%[0-9]+]]:_(s8), [[UV2:%[0-9]+]]:_(s8), [[UV3:%[0-9]+]]:_(s8), [[UV4:%[0-9]+]]:_(s8), [[UV5:%[0-9]+]]:_(s8), [[UV6:%[0-9]+]]:_(s8), [[UV7:%[0-9]+]]:_(s8) = G_UNMERGE_VALUES [[COPY]](<8 x s8>)
   ; CHECK:   [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[UV]](s8)
   ; CHECK:   $w0 = COPY [[ANYEXT]](s32)
-  ; CHECK:   RET_ReallyLR implicit $w0
+  ; CHECK:   RET_ReallyLR 0, implicit $w0
   %res = bitcast <1 x i8> %a0 to i8
   ret i8 %res
 }
@@ -29,7 +29,7 @@ define i24 @test_v3i8(<3 x i8> %a) {
   ; CHECK:   [[BITCAST:%[0-9]+]]:_(s24) = G_BITCAST [[TRUNC]](<3 x s8>)
   ; CHECK:   [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[BITCAST]](s24)
   ; CHECK:   $w0 = COPY [[ANYEXT]](s32)
-  ; CHECK:   RET_ReallyLR implicit $w0
+  ; CHECK:   RET_ReallyLR 0, implicit $w0
   %res = bitcast <3 x i8> %a to i24
   ret i24 %res
 }

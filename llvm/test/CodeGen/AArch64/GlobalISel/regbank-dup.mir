@@ -167,11 +167,11 @@ body:             |
     ; CHECK: %trunc:gpr(s8) = G_TRUNC [[COPY]](s32)
     ; CHECK: [[DUP:%[0-9]+]]:fpr(<16 x s8>) = G_DUP %trunc(s8)
     ; CHECK: $q0 = COPY [[DUP]](<16 x s8>)
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %0:_(s32) = COPY $w0
     %trunc:_(s8) = G_TRUNC %0(s32)
     %1:_(<16 x s8>) = G_DUP %trunc(s8)
     $q0 = COPY %1(<16 x s8>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 
 ...

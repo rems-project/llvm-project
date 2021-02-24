@@ -983,18 +983,17 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
             Intrinsic::getDeclaration(F->getParent(), Intrinsic::prefetch, Tys);
         return true;
       }
-    } else if (Name.startswith("ptr.annotation.") && F->arg_size() == 4) {
-      rename(F);
-      NewFn = Intrinsic::getDeclaration(F->getParent(),
-                                        Intrinsic::ptr_annotation,
-                                        F->arg_begin()->getType());
-      return true;
-    }
-   if (Name == "ptr.annotation") {
+    } else if (Name.startswith("ptr.annotation.")) {
       Type *Tys[] = {F->getReturnType(), F->getFunctionType()->params()[1] };
       NewFn = Intrinsic::getDeclaration(F->getParent(),
                                         Intrinsic::ptr_annotation, Tys);
-      return true;
+      if (F->arg_size() == 4 || NewFn != F) {
+        if (F->arg_size() == 4)
+          rename(F);
+        return true;
+      } else {
+        NewFn = nullptr;
+      }
     }
     if (Name == "prefetch") {
       auto *ArgTy = F->arg_begin()->getType();
@@ -1056,19 +1055,15 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
       return true;
     }
     if (Name == "var.annotation") {
-      NewFn = Intrinsic::getDeclaration(F->getParent(),
-                                        Intrinsic::var_annotation, ArgTy);
-      return true;
-    }
-    break;
-  }
-
-  case 'v': {
-    if (Name == "var.annotation" && F->arg_size() == 4) {
-      rename(F);
-      NewFn = Intrinsic::getDeclaration(F->getParent(),
-                                        Intrinsic::var_annotation);
-      return true;
+       NewFn = Intrinsic::getDeclaration(F->getParent(),
+                                         Intrinsic::var_annotation, ArgTy);
+       if (F->arg_size() == 4 || NewFn != F) {
+         if (F->arg_size() == 4)
+           rename(F);
+         return true;
+       } else {
+         NewFn = nullptr;
+       }
     }
     break;
   }
@@ -3862,8 +3857,8 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
 
   case Intrinsic::ptr_annotation:
     // Upgrade from versions that lacked the annotation attribute argument.
-    assert(CI->getNumArgOperands() == 4 &&
-           "Before LLVM 12.0 this intrinsic took four arguments");
+    // assert(CI->getNumArgOperands() == 4 &&
+    //       "Before LLVM 12.0 this intrinsic took four arguments");
     // Create a new call with an added null annotation attribute argument.
     NewCall = Builder.CreateCall(
         NewFn,
@@ -3876,8 +3871,8 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
 
   case Intrinsic::var_annotation:
     // Upgrade from versions that lacked the annotation attribute argument.
-    assert(CI->getNumArgOperands() == 4 &&
-           "Before LLVM 12.0 this intrinsic took four arguments");
+    // assert(CI->getNumArgOperands() == 4 &&
+    //        "Before LLVM 12.0 this intrinsic took four arguments");
     // Create a new call with an added null annotation attribute argument.
     NewCall = Builder.CreateCall(
         NewFn,
