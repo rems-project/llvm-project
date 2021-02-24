@@ -261,12 +261,12 @@ body:             |
     ; CHECK: %copy:gpr32 = COPY $w0
     ; CHECK: %dup:fpr64 = DUPv4i16gpr %copy
     ; CHECK: $d0 = COPY %dup
-    ; CHECK: RET_ReallyLR implicit $d0
+    ; CHECK: RET_ReallyLR 0, implicit $d0
     %copy:gpr(s32) = COPY $w0
     %trunc:gpr(s16) = G_TRUNC %copy
     %dup:fpr(<4 x s16>) = G_DUP %trunc(s16)
     $d0 = COPY %dup(<4 x s16>)
-    RET_ReallyLR implicit $d0
+    RET_ReallyLR 0, implicit $d0
 
 ...
 ---
@@ -304,12 +304,12 @@ body:             |
     ; CHECK: %copy:gpr32 = COPY $w0
     ; CHECK: %dup:fpr64 = DUPv8i8gpr %copy
     ; CHECK: $d0 = COPY %dup
-    ; CHECK: RET_ReallyLR implicit $d0
+    ; CHECK: RET_ReallyLR 0, implicit $d0
     %copy:gpr(s32) = COPY $w0
     %trunc:gpr(s8) = G_TRUNC %copy(s32)
     %dup:fpr(<8 x s8>) = G_DUP %trunc(s8)
     $d0 = COPY %dup(<8 x s8>)
-    RET_ReallyLR implicit $d0
+    RET_ReallyLR 0, implicit $d0
 
 ...
 ---
