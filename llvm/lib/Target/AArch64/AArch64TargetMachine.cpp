@@ -638,7 +638,7 @@ void AArch64PassConfig::addPreGlobalInstructionSelect() {
 }
 
 bool AArch64PassConfig::addGlobalInstructionSelect() {
-  addPass(new InstructionSelect());
+  addPass(new InstructionSelect(getOptLevel()));
   if (getOptLevel() != CodeGenOpt::None)
     addPass(createAArch64PostSelectOptimize());
   return false;
