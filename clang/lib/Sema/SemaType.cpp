@@ -2113,7 +2113,8 @@ QualType Sema::BuildPointerType(QualType T,
   }
 
   if (T->isFunctionType() && getLangOpts().OpenCL &&
-      !getOpenCLOptions().isEnabled("__cl_clang_function_pointers")) {
+      !getOpenCLOptions().isAvailableOption("__cl_clang_function_pointers",
+                                            getLangOpts())) {
     Diag(Loc, diag::err_opencl_function_pointer) << /*pointer*/ 0;
     return QualType();
   }
@@ -2201,7 +2202,8 @@ QualType Sema::BuildReferenceType(QualType T, bool SpelledAsLValue,
     return QualType();
 
   if (T->isFunctionType() && getLangOpts().OpenCL &&
-      !getOpenCLOptions().isEnabled("__cl_clang_function_pointers")) {
+      !getOpenCLOptions().isAvailableOption("__cl_clang_function_pointers",
+                                            getLangOpts())) {
     Diag(Loc, diag::err_opencl_function_pointer) << /*reference*/ 1;
     return QualType();
   }
@@ -2941,7 +2943,8 @@ QualType Sema::BuildMemberPointerType(QualType T, QualType Class,
   }
 
   if (T->isFunctionType() && getLangOpts().OpenCL &&
-      !getOpenCLOptions().isEnabled("__cl_clang_function_pointers")) {
+      !getOpenCLOptions().isAvailableOption("__cl_clang_function_pointers",
+                                            getLangOpts())) {
     Diag(Loc, diag::err_opencl_function_pointer) << /*pointer*/ 0;
     return QualType();
   }
@@ -5056,7 +5059,8 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
       // FIXME: This really should be in BuildFunctionType.
       if (T->isHalfType()) {
         if (S.getLangOpts().OpenCL) {
-          if (!S.getOpenCLOptions().isEnabled("cl_khr_fp16")) {
+          if (!S.getOpenCLOptions().isAvailableOption("cl_khr_fp16",
+                                                      S.getLangOpts())) {
             S.Diag(D.getIdentifierLoc(), diag::err_opencl_invalid_return)
                 << T << 0 /*pointer hint*/;
             D.setInvalidType(true);
@@ -5081,7 +5085,8 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
         // (s6.9.e and s6.12.5 OpenCL v2.0) except for printf.
         // We also allow here any toolchain reserved identifiers.
         if (FTI.isVariadic &&
-            !S.getOpenCLOptions().isEnabled("__cl_clang_variadic_functions") &&
+            !S.getOpenCLOptions().isAvailableOption(
+                "__cl_clang_variadic_functions", S.getLangOpts()) &&
             !(D.getIdentifier() &&
               ((D.getIdentifier()->getName() == "printf" &&
                 (LangOpts.OpenCLCPlusPlus || LangOpts.OpenCLVersion >= 120)) ||
@@ -5276,7 +5281,8 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
             // Disallow half FP parameters.
             // FIXME: This really should be in BuildFunctionType.
             if (S.getLangOpts().OpenCL) {
-              if (!S.getOpenCLOptions().isEnabled("cl_khr_fp16")) {
+              if (!S.getOpenCLOptions().isAvailableOption("cl_khr_fp16",
+                                                          S.getLangOpts())) {
                 S.Diag(Param->getLocation(), diag::err_opencl_invalid_param)
                     << ParamTy << 0;
                 D.setInvalidType();
