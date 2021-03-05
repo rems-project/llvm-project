@@ -18,7 +18,7 @@ body:             |
     $x1 = ADDXri $sp, 16, 0
     BL @spam, csr_darwin_aarch64_aapcs, implicit-def dead $lr, implicit $sp, implicit $x0, implicit killed $x1, implicit-def $sp, implicit-def dead $x0
 
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -31,7 +31,7 @@ body:             |
     $x1 = ADDXri $sp, 16, 0
     BL @spam, csr_darwin_aarch64_aapcs, implicit-def dead $lr, implicit $sp, implicit $x0, implicit killed $x1, implicit-def $sp, implicit-def dead $x0
 
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -44,7 +44,7 @@ body:             |
     $x1 = ADDXri $sp, 16, 0
     BL @spam, csr_darwin_aarch64_aapcs, implicit-def dead $lr, implicit $sp, implicit $x0, implicit killed $x1, implicit-def $sp, implicit-def dead $x0
 
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 
