@@ -463,16 +463,12 @@ define i64 @diff(i8 addrspace(200)* %cap1, i8 addrspace(200)* %cap2) nounwind {
 ; PURECAP-LABEL: diff:
 ; PURECAP:       .Lfunc_begin27:
 ; PURECAP-NEXT:  // %bb.0:
-; PURECAP-NEXT:    gcvalue x8, c1
-; PURECAP-NEXT:    gcvalue x9, c0
-; PURECAP-NEXT:    sub x0, x9, x8
+; PURECAP-NEXT:    sub x0, x0, x1
 ; PURECAP-NEXT:    ret c30
 ;
 ; HYBRID-LABEL: diff:
 ; HYBRID:       // %bb.0:
-; HYBRID-NEXT:    gcvalue x8, c1
-; HYBRID-NEXT:    gcvalue x9, c0
-; HYBRID-NEXT:    sub x0, x9, x8
+; HYBRID-NEXT:    sub x0, x0, x1
 ; HYBRID-NEXT:    ret
   %diff = call i64 @llvm.cheri.cap.diff(i8 addrspace(200)* %cap1, i8 addrspace(200)* %cap2)
   ret i64 %diff
