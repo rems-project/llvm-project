@@ -314,6 +314,8 @@ enum NodeType : unsigned {
   /// mode without emitting such REV instructions.
   NVCAST,
 
+  MRS, // MRS, also sets the flags via a glue.
+
   SMULL,
   UMULL,
 
