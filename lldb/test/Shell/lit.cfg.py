@@ -45,6 +45,7 @@ llvm_config.with_system_environment([
     'LLDB_CAPTURE_REPRODUCER',
     'TEMP',
     'TMP',
+    'XDG_CACHE_HOME',
 ])
 
 # Propagate PYTHONHOME, otherwise lldb will use the system python internally.
