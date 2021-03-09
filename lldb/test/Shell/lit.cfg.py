@@ -38,10 +38,14 @@ config.test_source_root = os.path.dirname(__file__)
 # test_exec_root: The root path where tests should be run.
 config.test_exec_root = os.path.join(config.lldb_obj_root, 'test')
 
-# Propagate reproducer environment vars.
-if 'LLDB_CAPTURE_REPRODUCER' in os.environ:
-  config.environment['LLDB_CAPTURE_REPRODUCER'] = os.environ[
-      'LLDB_CAPTURE_REPRODUCER']
+# Propagate environment vars.
+llvm_config.with_system_environment([
+    'FREEBSD_LEGACY_PLUGIN',
+    'HOME',
+    'LLDB_CAPTURE_REPRODUCER',
+    'TEMP',
+    'TMP',
+])
 
 # Propagate PYTHONHOME, otherwise lldb will use the system python internally.
 if 'PYTHONHOME' in os.environ:
@@ -141,6 +145,3 @@ if platform.system() == 'NetBSD' and os.geteuid() != 0:
         can_set_dbregs = False
 if can_set_dbregs:
     config.available_features.add('dbregs-set')
-
-# pass control variable through
-llvm_config.with_system_environment('FREEBSD_LEGACY_PLUGIN')
