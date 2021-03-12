@@ -646,6 +646,7 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FNEARBYINT,  MVT::f16,  Promote);
     setOperationAction(ISD::FRINT,       MVT::f16,  Promote);
     setOperationAction(ISD::FROUND,      MVT::f16,  Promote);
+    setOperationAction(ISD::FROUNDEVEN,  MVT::f16,  Promote);
     setOperationAction(ISD::FTRUNC,      MVT::f16,  Promote);
     setOperationAction(ISD::FMINNUM,     MVT::f16,  Promote);
     setOperationAction(ISD::FMAXNUM,     MVT::f16,  Promote);
@@ -665,6 +666,7 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FABS,        MVT::v4f16, Expand);
     setOperationAction(ISD::FNEG,        MVT::v4f16, Expand);
     setOperationAction(ISD::FROUND,      MVT::v4f16, Expand);
+    setOperationAction(ISD::FROUNDEVEN,  MVT::v4f16, Expand);
     setOperationAction(ISD::FMA,         MVT::v4f16, Expand);
     setOperationAction(ISD::SETCC,       MVT::v4f16, Expand);
     setOperationAction(ISD::BR_CC,       MVT::v4f16, Expand);
@@ -689,6 +691,7 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FNEARBYINT,  MVT::v8f16, Expand);
     setOperationAction(ISD::FNEG,        MVT::v8f16, Expand);
     setOperationAction(ISD::FROUND,      MVT::v8f16, Expand);
+    setOperationAction(ISD::FROUNDEVEN,  MVT::v8f16, Expand);
     setOperationAction(ISD::FRINT,       MVT::v8f16, Expand);
     setOperationAction(ISD::FSQRT,       MVT::v8f16, Expand);
     setOperationAction(ISD::FSUB,        MVT::v8f16, Expand);
@@ -708,6 +711,7 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FRINT, Ty, Legal);
     setOperationAction(ISD::FTRUNC, Ty, Legal);
     setOperationAction(ISD::FROUND, Ty, Legal);
+    setOperationAction(ISD::FROUNDEVEN, Ty, Legal);
     setOperationAction(ISD::FMINNUM, Ty, Legal);
     setOperationAction(ISD::FMAXNUM, Ty, Legal);
     setOperationAction(ISD::FMINIMUM, Ty, Legal);
@@ -725,6 +729,7 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FRINT,   MVT::f16, Legal);
     setOperationAction(ISD::FTRUNC,  MVT::f16, Legal);
     setOperationAction(ISD::FROUND,  MVT::f16, Legal);
+    setOperationAction(ISD::FROUNDEVEN,  MVT::f16, Legal);
     setOperationAction(ISD::FMINNUM, MVT::f16, Legal);
     setOperationAction(ISD::FMAXNUM, MVT::f16, Legal);
     setOperationAction(ISD::FMINIMUM, MVT::f16, Legal);
@@ -992,6 +997,7 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FPOW, MVT::v1f64, Expand);
     setOperationAction(ISD::FREM, MVT::v1f64, Expand);
     setOperationAction(ISD::FROUND, MVT::v1f64, Expand);
+    setOperationAction(ISD::FROUNDEVEN, MVT::v1f64, Expand);
     setOperationAction(ISD::FRINT, MVT::v1f64, Expand);
     setOperationAction(ISD::FSIN, MVT::v1f64, Expand);
     setOperationAction(ISD::FSINCOS, MVT::v1f64, Expand);
@@ -1118,6 +1124,7 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
       setOperationAction(ISD::FRINT, Ty, Legal);
       setOperationAction(ISD::FTRUNC, Ty, Legal);
       setOperationAction(ISD::FROUND, Ty, Legal);
+      setOperationAction(ISD::FROUNDEVEN, Ty, Legal);
     }
 
     if (Subtarget->hasFullFP16()) {
@@ -1128,6 +1135,7 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
         setOperationAction(ISD::FRINT, Ty, Legal);
         setOperationAction(ISD::FTRUNC, Ty, Legal);
         setOperationAction(ISD::FROUND, Ty, Legal);
+        setOperationAction(ISD::FROUNDEVEN, Ty, Legal);
       }
     }
 
@@ -1462,6 +1470,7 @@ void AArch64TargetLowering::addTypeForFixedLengthSVE(MVT VT) {
   setOperationAction(ISD::FNEG, VT, Custom);
   setOperationAction(ISD::FRINT, VT, Custom);
   setOperationAction(ISD::FROUND, VT, Custom);
+  setOperationAction(ISD::FROUNDEVEN, VT, Custom);
   setOperationAction(ISD::FSQRT, VT, Custom);
   setOperationAction(ISD::FSUB, VT, Custom);
   setOperationAction(ISD::FTRUNC, VT, Custom);
