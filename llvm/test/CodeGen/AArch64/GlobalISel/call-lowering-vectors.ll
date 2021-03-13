@@ -40,7 +40,7 @@ define <1 x half> @test_v1s16(<1 x float> %x) {
   ; CHECK:   [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[COPY]](<2 x s32>)
   ; CHECK:   [[FPTRUNC:%[0-9]+]]:_(s16) = G_FPTRUNC [[UV]](s32)
   ; CHECK:   $h0 = COPY [[FPTRUNC]](s16)
-  ; CHECK:   RET_ReallyLR implicit $h0
+  ; CHECK:   RET_ReallyLR 0, implicit $h0
   %tmp = fptrunc <1 x float> %x to <1 x half>
   ret <1 x half> %tmp
 }

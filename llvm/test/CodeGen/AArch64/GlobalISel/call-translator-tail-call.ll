@@ -117,7 +117,7 @@ define i32 @test_too_big_stack() {
   ; DARWIN:   [[COPY1:%[0-9]+]]:_(s32) = COPY $w0
   ; DARWIN:   ADJCALLSTACKUP 4, 0, implicit-def $sp, implicit $sp
   ; DARWIN:   $w0 = COPY [[COPY1]](s32)
-  ; DARWIN:   RET_ReallyLR implicit $w0
+  ; DARWIN:   RET_ReallyLR 0, implicit $w0
   ; WINDOWS-LABEL: name: test_too_big_stack
   ; WINDOWS: bb.1.entry:
   ; WINDOWS:   [[DEF:%[0-9]+]]:_(s64) = G_IMPLICIT_DEF
@@ -143,7 +143,7 @@ define i32 @test_too_big_stack() {
   ; WINDOWS:   [[COPY1:%[0-9]+]]:_(s32) = COPY $w0
   ; WINDOWS:   ADJCALLSTACKUP 16, 0, implicit-def $sp, implicit $sp
   ; WINDOWS:   $w0 = COPY [[COPY1]](s32)
-  ; WINDOWS:   RET_ReallyLR implicit $w0
+  ; WINDOWS:   RET_ReallyLR 0, implicit $w0
 entry:
   %call = tail call i32 @too_big_stack(i64 undef, i64 undef, i64 undef, i64 undef, i64 undef, i64 undef, i64 undef, i64 undef, i8 8, i16 9)
   ret i32 %call
@@ -209,7 +209,7 @@ define void @test_varargs_2() {
   ; DARWIN:   G_STORE [[C3]](s64), [[PTR_ADD]](p0) :: (store 8 into stack, align 1)
   ; DARWIN:   BL @varargs, csr_darwin_aarch64_aapcs, implicit-def $lr, implicit $sp, implicit $w0, implicit $d0, implicit $x1
   ; DARWIN:   ADJCALLSTACKUP 8, 0, implicit-def $sp, implicit $sp
-  ; DARWIN:   RET_ReallyLR
+  ; DARWIN:   RET_ReallyLR 0
   ; WINDOWS-LABEL: name: test_varargs_2
   ; WINDOWS: bb.1 (%ir-block.0):
   ; WINDOWS:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 42
@@ -257,7 +257,7 @@ define void @test_varargs_3([8 x <2 x double>], <4 x half> %arg) {
   ; DARWIN:   G_STORE [[C3]](s64), [[PTR_ADD]](p0) :: (store 8 into stack, align 1)
   ; DARWIN:   BL @varargs, csr_darwin_aarch64_aapcs, implicit-def $lr, implicit $sp, implicit $w0, implicit $d0, implicit $x1
   ; DARWIN:   ADJCALLSTACKUP 8, 0, implicit-def $sp, implicit $sp
-  ; DARWIN:   RET_ReallyLR
+  ; DARWIN:   RET_ReallyLR 0
   ; WINDOWS-LABEL: name: test_varargs_3
   ; WINDOWS: bb.1 (%ir-block.1):
   ; WINDOWS:   liveins: $q0, $q1, $q2, $q3, $q4, $q5, $q6, $q7
@@ -293,13 +293,13 @@ define void @test_bad_call_conv() {
   ; DARWIN:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; DARWIN:   BL @bad_call_conv_fn, csr_aarch64_noregs, implicit-def $lr, implicit $sp
   ; DARWIN:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
-  ; DARWIN:   RET_ReallyLR
+  ; DARWIN:   RET_ReallyLR 0
   ; WINDOWS-LABEL: name: test_bad_call_conv
   ; WINDOWS: bb.1 (%ir-block.0):
   ; WINDOWS:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; WINDOWS:   BL @bad_call_conv_fn, csr_aarch64_noregs, implicit-def $lr, implicit $sp
   ; WINDOWS:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
-  ; WINDOWS:   RET_ReallyLR
+  ; WINDOWS:   RET_ReallyLR 0
   tail call ghccc void @bad_call_conv_fn()
   ret void
 }
@@ -313,7 +313,7 @@ define void @test_byval(i8* byval(i8) %ptr) {
   ; DARWIN:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; DARWIN:   BL @simple_fn, csr_darwin_aarch64_aapcs, implicit-def $lr, implicit $sp
   ; DARWIN:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
-  ; DARWIN:   RET_ReallyLR
+  ; DARWIN:   RET_ReallyLR 0
   ; WINDOWS-LABEL: name: test_byval
   ; WINDOWS: bb.1 (%ir-block.0):
   ; WINDOWS:   [[FRAME_INDEX:%[0-9]+]]:_(p0) = G_FRAME_INDEX %fixed-stack.0
@@ -321,7 +321,7 @@ define void @test_byval(i8* byval(i8) %ptr) {
   ; WINDOWS:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; WINDOWS:   BL @simple_fn, csr_aarch64_aapcs, implicit-def $lr, implicit $sp
   ; WINDOWS:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
-  ; WINDOWS:   RET_ReallyLR
+  ; WINDOWS:   RET_ReallyLR 0
   tail call void @simple_fn()
   ret void
 }
@@ -335,7 +335,7 @@ define void @test_inreg(i8* inreg %ptr) {
   ; DARWIN:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; DARWIN:   BL @simple_fn, csr_darwin_aarch64_aapcs, implicit-def $lr, implicit $sp
   ; DARWIN:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
-  ; DARWIN:   RET_ReallyLR
+  ; DARWIN:   RET_ReallyLR 0
   ; WINDOWS-LABEL: name: test_inreg
   ; WINDOWS: bb.1 (%ir-block.0):
   ; WINDOWS:   liveins: $x0
@@ -343,7 +343,7 @@ define void @test_inreg(i8* inreg %ptr) {
   ; WINDOWS:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; WINDOWS:   BL @simple_fn, csr_aarch64_aapcs, implicit-def $lr, implicit $sp
   ; WINDOWS:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
-  ; WINDOWS:   RET_ReallyLR
+  ; WINDOWS:   RET_ReallyLR 0
   tail call void @simple_fn()
   ret void
 }
