@@ -17,5 +17,5 @@ namespace llvm {
 
 bool useCHERICapLibFunc(bool PureCapABI);
 
-};
+}
 #endif

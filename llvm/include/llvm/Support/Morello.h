@@ -20,5 +20,5 @@ namespace llvm {
 
 uint64_t getMorelloRequiredAlignment(uint64_t length);
 
-};
+}
 #endif

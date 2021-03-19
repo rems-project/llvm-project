@@ -19,7 +19,7 @@ def ClearPerms  : SDNode<"AArch64ISD::ClearPerms",    SDTCapUnary>;
 
 let Predicates = [HasC64] in {
 
-multiclass PLoadUI<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
+multiclass PLoadUI<bits<2> sz, bit V, bits<2> opc, DAGOperand regtype,
                   Operand indextype, string asm, list<dag> pattern> {
   let AddedComplexity = 10, mayLoad = 1, mayStore = 0, hasSideEffects = 0 in
   def ui : BaseLoadStoreUI<sz, V, opc, (outs regtype:$Rt),
@@ -33,7 +33,7 @@ multiclass PLoadUI<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
                   (!cast<Instruction>(NAME # "ui") regtype:$Rt, Capsp:$Rn, 0)>;
 
 }
-multiclass PStoreUI<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
+multiclass PStoreUI<bits<2> sz, bit V, bits<2> opc, DAGOperand regtype,
              Operand indextype, string asm, list<dag> pattern> {
   let AddedComplexity = 10, mayLoad = 0, mayStore = 1, hasSideEffects = 0 in
   def ui : BaseLoadStoreUI<sz, V, opc, (outs),
@@ -57,11 +57,11 @@ class PPrefetchUI<bits<2> sz, bit V, bits<2> opc, string asm, list<dag> pat>
   let DecoderNamespace = "AArch64C64";
 }
 
-class PROInstAlias<string asm, RegisterOperand regtype, Instruction INST>
+class PROInstAlias<string asm, DAGOperand regtype, Instruction INST>
   : InstAlias<asm # "\t$Rt, [$Rn, $Rm]",
               (INST regtype:$Rt, Capsp:$Rn, GPR64:$Rm, 0, 0)>;
 
-multiclass PLoad8RO<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
+multiclass PLoad8RO<bits<2> sz, bit V, bits<2> opc, DAGOperand regtype,
                    string asm, ValueType Ty, SDPatternOperator loadop> {
   let AddedComplexity = 10 in
   def roW : LoadStore8RO<sz, V, opc, regtype, asm,
@@ -90,7 +90,7 @@ multiclass PLoad8RO<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
   def : PROInstAlias<asm, regtype, !cast<Instruction>(NAME # "roX")>;
 }
 
-multiclass PStore8RO<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
+multiclass PStore8RO<bits<2> sz, bit V, bits<2> opc, DAGOperand regtype,
                      string asm, ValueType Ty, SDPatternOperator storeop> {
   let AddedComplexity = 10 in
   def roW : LoadStore8RO<sz, V, opc, regtype, asm, (outs),
@@ -117,7 +117,7 @@ multiclass PStore8RO<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
   def : PROInstAlias<asm, regtype, !cast<Instruction>(NAME # "roX")>;
 }
 
-multiclass PLoad16RO<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
+multiclass PLoad16RO<bits<2> sz, bit V, bits<2> opc, DAGOperand regtype,
                      string asm, ValueType Ty, SDPatternOperator loadop> {
   let AddedComplexity = 10 in
   def roW : LoadStore16RO<sz, V, opc, regtype, asm, (outs regtype:$Rt),
@@ -144,7 +144,7 @@ multiclass PLoad16RO<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
   def : PROInstAlias<asm, regtype, !cast<Instruction>(NAME # "roX")>;
 }
 
-multiclass PStore16RO<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
+multiclass PStore16RO<bits<2> sz, bit V, bits<2> opc, DAGOperand regtype,
                       string asm, ValueType Ty, SDPatternOperator storeop> {
   let AddedComplexity = 10 in
   def roW : LoadStore16RO<sz, V, opc, regtype, asm, (outs),
@@ -170,7 +170,7 @@ multiclass PStore16RO<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
 
   def : PROInstAlias<asm, regtype, !cast<Instruction>(NAME # "roX")>;
 }
-multiclass PLoad32RO<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
+multiclass PLoad32RO<bits<2> sz, bit V, bits<2> opc, DAGOperand regtype,
                      string asm, ValueType Ty, SDPatternOperator loadop> {
   let AddedComplexity = 10 in
   def roW : LoadStore32RO<sz, V, opc, regtype, asm, (outs regtype:$Rt),
@@ -196,7 +196,7 @@ multiclass PLoad32RO<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
 
   def : PROInstAlias<asm, regtype, !cast<Instruction>(NAME # "roX")>;
 }
-multiclass PStore32RO<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
+multiclass PStore32RO<bits<2> sz, bit V, bits<2> opc, DAGOperand regtype,
                       string asm, ValueType Ty, SDPatternOperator storeop> {
   let AddedComplexity = 10 in
   def roW : LoadStore32RO<sz, V, opc, regtype, asm, (outs),
@@ -223,7 +223,7 @@ multiclass PStore32RO<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
   def : PROInstAlias<asm, regtype, !cast<Instruction>(NAME # "roX")>;
 }
 
-multiclass PLoad64RO<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
+multiclass PLoad64RO<bits<2> sz, bit V, bits<2> opc, DAGOperand regtype,
                      string asm, ValueType Ty, SDPatternOperator loadop> {
   let AddedComplexity = 10, mayLoad = 1, mayStore = 0, hasSideEffects = 0 in
   def roW : LoadStore64RO<sz, V, opc, regtype, asm, (outs regtype:$Rt),
@@ -250,7 +250,7 @@ multiclass PLoad64RO<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
   def : PROInstAlias<asm, regtype, !cast<Instruction>(NAME # "roX")>;
 }
 
-multiclass PStore64RO<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
+multiclass PStore64RO<bits<2> sz, bit V, bits<2> opc, DAGOperand regtype,
                      string asm, ValueType Ty, SDPatternOperator storeop> {
   let AddedComplexity = 10, mayLoad = 0, mayStore = 1, hasSideEffects = 0 in
   def roW : LoadStore64RO<sz, V, opc, regtype, asm, (outs),
@@ -277,7 +277,7 @@ multiclass PStore64RO<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
   def : PROInstAlias<asm, regtype, !cast<Instruction>(NAME # "roX")>;
 }
 
-multiclass PLoad128RO<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
+multiclass PLoad128RO<bits<2> sz, bit V, bits<2> opc, DAGOperand regtype,
                       string asm, ValueType Ty, SDPatternOperator loadop> {
   let AddedComplexity = 10, mayLoad = 1, mayStore = 0, hasSideEffects = 0 in
   def roW : LoadStore128RO<sz, V, opc, regtype, asm, (outs regtype:$Rt),
@@ -303,7 +303,7 @@ multiclass PLoad128RO<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
 
   def : PROInstAlias<asm, regtype, !cast<Instruction>(NAME # "roX")>;
 }
-multiclass PStore128RO<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
+multiclass PStore128RO<bits<2> sz, bit V, bits<2> opc, DAGOperand regtype,
                        string asm, ValueType Ty, SDPatternOperator storeop> {
   let AddedComplexity = 10, mayLoad = 0, mayStore = 1, hasSideEffects = 0 in
   def roW : LoadStore128RO<sz, V, opc, regtype, asm, (outs),
@@ -350,7 +350,7 @@ multiclass PPrefetchRO<bits<2> sz, bit V, bits<2> opc, string asm> {
                                                  Capsp:$Rn, GPR64:$Rm, 0, 0)>;
 }
 
-multiclass PLoadUnscaled<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
+multiclass PLoadUnscaled<bits<2> sz, bit V, bits<2> opc, DAGOperand regtype,
                          string asm, list<dag> pattern> {
   let AddedComplexity = 1 in // try this before LoadUI
   def i : BaseLoadStoreUnscale<sz, V, opc, (outs regtype:$Rt),
@@ -362,7 +362,7 @@ multiclass PLoadUnscaled<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype
   def : InstAlias<asm # "\t$Rt, [$Rn]",
                   (!cast<Instruction>(NAME # "i") regtype:$Rt, Capsp:$Rn, 0)>;
 }
-multiclass PStoreUnscaled<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
+multiclass PStoreUnscaled<bits<2> sz, bit V, bits<2> opc, DAGOperand regtype,
                           string asm, list<dag> pattern> {
   let AddedComplexity = 1 in // try this before StoreUI
   def i : BaseLoadStoreUnscale<sz, V, opc, (outs),
@@ -541,7 +541,7 @@ class PStorePairPostIdx<bits<2> opc, bit V, RegisterOperand regtype,
   let DecoderNamespace = "AArch64C64";
 }
 
-multiclass PLoadPairNoAlloc<bits<2> opc, bit V, RegisterClass regtype,
+multiclass PLoadPairNoAlloc<bits<2> opc, bit V, DAGOperand regtype,
                             Operand indextype, string asm> {
   let hasSideEffects = 0, mayStore = 0, mayLoad = 1 in
   def i : BaseLoadStorePairNoAlloc<opc, V, 1,
@@ -557,7 +557,7 @@ multiclass PLoadPairNoAlloc<bits<2> opc, bit V, RegisterClass regtype,
                                                   Capsp:$Rn, 0)>;
 }
 
-multiclass PStorePairNoAlloc<bits<2> opc, bit V, RegisterClass regtype,
+multiclass PStorePairNoAlloc<bits<2> opc, bit V, DAGOperand regtype,
                              Operand indextype, string asm> {
   let hasSideEffects = 0, mayStore = 1, mayLoad = 0 in
   def i : BaseLoadStorePairNoAlloc<opc, V, 0, (outs),
@@ -1464,7 +1464,7 @@ multiclass PCASregister_patterns<string inst, string op> {
                         (i32 GPR32:$Rold), (i32 GPR32:$Rnew)>;
 }
 
-multiclass CapCASPatterns<string inst, string op, RegisterOperand reg> {
+multiclass CapCASPatterns<string inst, string op, RegisterClass reg> {
   def : Pat<(!cast<PatFrag>(op#"_monotonic") reg:$Rn, Cap:$Cs, Cap:$Ct),
             (!cast<Instruction>(inst) Cap:$Cs, Cap:$Ct, reg:$Rn)>;
   def : Pat<(!cast<PatFrag>(op#"_acquire") reg:$Rn, Cap:$Cs, Cap:$Ct),
@@ -1477,7 +1477,7 @@ multiclass CapCASPatterns<string inst, string op, RegisterOperand reg> {
             (!cast<Instruction>(inst#"AcqRel") Cap:$Cs, Cap:$Ct, reg:$Rn)>;
 }
 
-multiclass CapSWPPatterns<string inst, string op, RegisterOperand reg> {
+multiclass CapSWPPatterns<string inst, string op, RegisterClass reg> {
   def : Pat<(!cast<PatFrag>(op#"_monotonic") reg:$Rn, Cap:$Cs),
             (!cast<Instruction>(inst) Cap:$Cs, reg:$Rn)>;
   def : Pat<(!cast<PatFrag>(op#"_acquire") reg:$Rn, Cap:$Cs),

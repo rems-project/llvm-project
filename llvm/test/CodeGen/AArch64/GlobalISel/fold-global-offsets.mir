@@ -34,12 +34,12 @@ body:             |
     ; CHECK: liveins: $x0
     ; CHECK: [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @g + 1
     ; CHECK: $x0 = COPY [[GV]](p0)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %global:_(p0) = G_GLOBAL_VALUE @g
     %offset:_(s64) = G_CONSTANT i64 1
     %ptr_add:_(p0) = G_PTR_ADD %global, %offset(s64)
     $x0 = COPY %ptr_add
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 
 ...
 ---
@@ -58,12 +58,12 @@ body:             |
     ; CHECK: liveins: $x0
     ; CHECK: [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @g + 4
     ; CHECK: $x0 = COPY [[GV]](p0)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %global:_(p0) = G_GLOBAL_VALUE @g + 3
     %offset:_(s64) = G_CONSTANT i64 1
     %ptr_add:_(p0) = G_PTR_ADD %global, %offset(s64)
     $x0 = COPY %ptr_add
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 
 ...
 ---
@@ -85,7 +85,7 @@ body:             |
     ; CHECK: [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @g + 1
     ; CHECK: G_STORE %val1(s64), [[GV]](p0) :: (store 8)
     ; CHECK: G_STORE %val2(s64), [[GV]](p0) :: (store 8)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %val1:_(s64) = COPY $x0
     %val2:_(s64) = COPY $x1
     %global:_(p0) = G_GLOBAL_VALUE @g
@@ -94,7 +94,7 @@ body:             |
     %ptr_add2:_(p0) = G_PTR_ADD %global, %offset(s64)
     G_STORE %val1:_(s64), %ptr_add1 :: (store 8)
     G_STORE %val2:_(s64), %ptr_add2 :: (store 8)
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 
 ...
 ---
@@ -118,7 +118,7 @@ body:             |
     ; CHECK: %ptr_add2:_(p0) = G_PTR_ADD [[GV]], [[C]](s64)
     ; CHECK: G_STORE %val1(s64), [[GV]](p0) :: (store 8)
     ; CHECK: G_STORE %val2(s64), %ptr_add2(p0) :: (store 8)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %val1:_(s64) = COPY $x0
     %val2:_(s64) = COPY $x1
     %global:_(p0) = G_GLOBAL_VALUE @g
@@ -128,7 +128,7 @@ body:             |
     %ptr_add2:_(p0) = G_PTR_ADD %global, %offset2(s64)
     G_STORE %val1:_(s64), %ptr_add1 :: (store 8)
     G_STORE %val2:_(s64), %ptr_add2 :: (store 8)
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 
 ...
 ---
@@ -151,7 +151,7 @@ body:             |
     ; CHECK: [[C:%[0-9]+]]:_(s64) = G_CONSTANT i64 4
     ; CHECK: %dont_fold_me:_(p0) = G_PTR_ADD [[GV]], [[C]](s64)
     ; CHECK: $x0 = COPY %dont_fold_me(p0)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %global:_(p0) = G_GLOBAL_VALUE @g
     %offset:_(s64) = G_CONSTANT i64 1
     %ptr_add1:_(p0) = G_PTR_ADD %global, %offset(s64)
@@ -160,7 +160,7 @@ body:             |
     %ptr_add4:_(p0) = G_PTR_ADD %ptr_add3, %offset(s64)
     %dont_fold_me:_(p0) = G_PTR_ADD %ptr_add4, %offset(s64)
     $x0 = COPY %dont_fold_me
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 
 ...
 ---
@@ -180,12 +180,12 @@ body:             |
     ; CHECK: %offset:_(s64) = G_CONSTANT i64 -1
     ; CHECK: %ptr_add:_(p0) = G_PTR_ADD %global, %offset(s64)
     ; CHECK: $x0 = COPY %ptr_add(p0)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %global:_(p0) = G_GLOBAL_VALUE @g
     %offset:_(s64) = G_CONSTANT i64 -1
     %ptr_add:_(p0) = G_PTR_ADD %global, %offset(s64)
     $x0 = COPY %ptr_add
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 
 ...
 ---
@@ -205,12 +205,12 @@ body:             |
     ; CHECK: %offset:_(s64) = G_CONSTANT i64 -1
     ; CHECK: %ptr_add:_(p0) = G_PTR_ADD %global, %offset(s64)
     ; CHECK: $x0 = COPY %ptr_add(p0)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %global:_(p0) = G_GLOBAL_VALUE @g + 3
     %offset:_(s64) = G_CONSTANT i64 -1
     %ptr_add:_(p0) = G_PTR_ADD %global, %offset(s64)
     $x0 = COPY %ptr_add
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 
 ...
 ---
@@ -231,12 +231,12 @@ body:             |
     ; CHECK: %offset:_(s64) = G_CONSTANT i64 4292870144
     ; CHECK: %ptr_add:_(p0) = G_PTR_ADD %global, %offset(s64)
     ; CHECK: $x0 = COPY %ptr_add(p0)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %global:_(p0) = G_GLOBAL_VALUE @g
     %offset:_(s64) = G_CONSTANT i64 4292870144 ; 1 << 21
     %ptr_add:_(p0) = G_PTR_ADD %global, %offset(s64)
     $x0 = COPY %ptr_add
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 
 ...
 ---
@@ -254,12 +254,12 @@ body:             |
     ; CHECK: %offset:_(s64) = G_CONSTANT i64 16
     ; CHECK: %ptr_add:_(p0) = G_PTR_ADD %global, %offset(s64)
     ; CHECK: $x0 = COPY %ptr_add(p0)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %global:_(p0) = G_GLOBAL_VALUE @g
     %offset:_(s64) = G_CONSTANT i64 16
     %ptr_add:_(p0) = G_PTR_ADD %global, %offset(s64)
     $x0 = COPY %ptr_add(p0)
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 
 ...
 ---
@@ -276,9 +276,9 @@ body:             |
     ; CHECK: %offset:_(s64) = G_CONSTANT i64 16
     ; CHECK: %ptr_add:_(p0) = G_PTR_ADD %global, %offset(s64)
     ; CHECK: $x0 = COPY %ptr_add(p0)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %global:_(p0) = G_GLOBAL_VALUE @unsized
     %offset:_(s64) = G_CONSTANT i64 16
     %ptr_add:_(p0) = G_PTR_ADD %global, %offset(s64)
     $x0 = COPY %ptr_add(p0)
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0

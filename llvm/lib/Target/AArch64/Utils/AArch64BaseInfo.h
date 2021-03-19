@@ -281,7 +281,7 @@ inline static const char *getCapSealFormName(SealForm Perm) {
   default: llvm_unreachable("Unknown capability permission");
   }
 }
-};
+}
 
 namespace AArch64CapPerm {
   enum CapPerm {
@@ -309,7 +309,7 @@ inline static const char *getCapPermName(CapPerm Perm) {
   llvm_unreachable("Unknown capability permission");
 }
 
-};
+}
 namespace AArch64CC {
 
 // The CondCodes constants map directly to the 4-bit encoding of the condition

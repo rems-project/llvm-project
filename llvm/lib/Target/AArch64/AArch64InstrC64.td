@@ -911,7 +911,7 @@ def : Pat<(store (bf16 FPR16Op:$Rt),
 
 
 // Match stores from lane 0 to the appropriate subreg's store.
-multiclass PVecStoreLane0Pat<Operand UIAddrMode, SDPatternOperator storeop,
+multiclass PVecStoreLane0Pat<ComplexPattern UIAddrMode, SDPatternOperator storeop,
                             ValueType VTy, ValueType STy,
                             SubRegIndex SubRegIdx, Operand IndexType,
                             Instruction STR> {
