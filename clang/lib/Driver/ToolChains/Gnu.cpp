@@ -2539,9 +2539,6 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
       // triple.
       {"i386-linux-gnu/gcc/" + CandidateTriple.str(), "../../..",
        (TargetArch == llvm::Triple::x86 &&
-        TargetTriple.getOS() != llvm::Triple::Solaris)},
-      {"i386-gnu/gcc/" + CandidateTriple.str(), "../../..",
-       (TargetArch == llvm::Triple::x86 &&
         TargetTriple.getOS() != llvm::Triple::Solaris)}};
 
   for (auto &Suffix : Suffixes) {
