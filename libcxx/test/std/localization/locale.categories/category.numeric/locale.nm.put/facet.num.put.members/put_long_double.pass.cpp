@@ -17,6 +17,7 @@
 
 // newlib uses '+nan' instead of 'nan'
 // XFAIL: libcpp-has-newlib
+// XFAIL: LIBCXX-WINDOWS-FIXME
 
 #include <locale>
 #include <ios>
