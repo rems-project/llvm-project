@@ -2347,7 +2347,11 @@ const MCExpr *AsmPrinter::lowerConstant(const Constant *CV) {
     const Constant *Op = CE->getOperand(0);
     unsigned DstAS = CE->getType()->getPointerAddressSpace();
     unsigned SrcAS = Op->getType()->getPointerAddressSpace();
-    if (TM.isNoopAddrSpaceCast(SrcAS, DstAS) || isCheriPointer(DstAS, nullptr))
+    if (TM.isNoopAddrSpaceCast(SrcAS, DstAS))
+      return lowerConstant(Op);
+    // We can also lower a global addrspacecast from CHERI cap -> non-cap:
+    if (isCheriPointer(DstAS, &getDataLayout()) ||
+        isCheriPointer(SrcAS, &getDataLayout()))
       return lowerConstant(Op);
 
     // Fallthrough to error.
