@@ -4072,8 +4072,8 @@ void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
       Root = Chain;
       ChainI = 0;
     }
-    SDValue A = DAG.getMemBasePlusOffset(Ptr, TypeSize::Fixed(Offsets[i]), dl,
-                                         Flags);
+    SDValue A =
+        DAG.getMemBasePlusOffset(Ptr, TypeSize::Fixed(Offsets[i]), dl, Flags);
 
     SDValue L = DAG.getLoad(MemVTs[i], dl, Root, A,
                             MachinePointerInfo(SV, Offsets[i]), Alignment,

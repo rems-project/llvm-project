@@ -7200,7 +7200,8 @@ SDValue TargetLowering::expandUnalignedStore(StoreSDNode *ST,
                                     ST->getMemOperand()->getFlags()));
       // Increment the pointers.
       Offset += RegBytes;
-      StackPtr = DAG.getObjectPtrOffset(dl, StackPtr, TypeSize::Fixed(RegBytes));
+      StackPtr =
+          DAG.getObjectPtrOffset(dl, StackPtr, TypeSize::Fixed(RegBytes));
       Ptr = DAG.getObjectPtrOffset(dl, Ptr, TypeSize::Fixed(RegBytes));
     }
 
