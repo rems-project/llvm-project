@@ -146,3 +146,26 @@ declare void @extern_fn() #0
 ; ASM-NEXT:  [[PTR_DIRECTIVE]] 0
 @IF-MIPS@; ASM-NEXT:  [[PTR_DIRECTIVE]] extern_fn+2
 ; ASM-NEXT:  .size global_fncap_nullgep_plus_two, @CAP_BYTES@
+
+
+; RELOCS-LABEL: RELOCATION RECORDS FOR [.{{s?}}data]:
+; RELOCS-NEXT:   OFFSET   TYPE       VALUE
+; RELOCS-NEXT:  [[INTEGER_RELOC]]    extern_data
+; RELOCS-NEXT:  [[INTEGER_RELOC]]    extern_data+0x1
+; RELOCS-NEXT:  [[INTEGER_RELOC]]    extern_data+0x2
+; RELOCS-NEXT:  [[CAPABILITY_RELOC]] extern_data
+; RELOCS-NEXT:  [[CAPABILITY_RELOC]] extern_data+0x1
+; RELOCS-NEXT:  [[CAPABILITY_RELOC]] extern_data+0x2
+; RELOCS-NEXT:  [[INTEGER_RELOC]]    extern_data
+; RELOCS-NEXT:  [[INTEGER_RELOC]]    extern_data+0x1
+; RELOCS-NEXT:  [[INTEGER_RELOC]]    extern_data+0x2
+; RELOCS-NEXT:  [[INTEGER_RELOC]]    extern_fn
+; RELOCS-NEXT:  [[CAPABILITY_RELOC]] extern_fn
+; RELOCS-NEXT:  [[CAPABILITY_RELOC]] extern_fn
+; RELOCS-NEXT:  [[INTEGER_RELOC]]    extern_fn
+; RELOCS-NEXT:  [[CAPABILITY_RELOC]] extern_fn+0x2
+; RELOCS-NEXT:  [[INTEGER_RELOC]]    extern_fn+0x2
+
+; Don't use .sdata for RISC-V, to allow re-using the same RELOCS lines.
+!llvm.module.flags = !{!0}
+!0 = !{i32 1, !"SmallDataLimit", i32 0}
