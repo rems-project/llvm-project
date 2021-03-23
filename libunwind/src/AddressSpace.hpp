@@ -452,7 +452,7 @@ constexpr int check_same_type() {
 extern "C" uintcap_t __get_eh_frame_capability();
 extern "C" uintcap_t __get_eh_frame_hdr_capability();
 #else
-__attribute__((weak)) extern "C" ElfW(Dyn) _DYNAMIC[];
+__attribute__((weak)) extern "C" Elf_Dyn _DYNAMIC[];
 // #pragma weak _DYNAMIC
 #endif
 #endif
