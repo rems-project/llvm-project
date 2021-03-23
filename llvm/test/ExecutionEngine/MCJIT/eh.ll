@@ -1,5 +1,6 @@
 ; REQUIRES: cxx-shared-library
 ; UNSUPPORTED: libcxx-used
+; RUN: %lli -jit-kind=mcjit %s
 ; RUN: %lli %s
 ; XFAIL: arm, cygwin, windows-msvc, windows-gnu
 declare i8* @__cxa_allocate_exception(i64)
