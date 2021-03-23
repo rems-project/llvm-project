@@ -721,9 +721,6 @@ public:
   /// containing this constant value for the target.
   bool shouldBuildLookupTablesForConstant(Constant *C) const;
 
-  /// Return true if lookup tables should be turned into relative lookup tables.
-  bool shouldBuildRelLookupTables() const;
-
   /// Return true if the input function which is cold at all call sites,
   ///  should use coldcc calling convention.
   bool useColdCCForColdCall(Function &F) const;
@@ -1485,7 +1482,6 @@ public:
   virtual unsigned getRegUsageForType(Type *Ty) = 0;
   virtual bool shouldBuildLookupTables() = 0;
   virtual bool shouldBuildLookupTablesForConstant(Constant *C) = 0;
-  virtual bool shouldBuildRelLookupTables() = 0;
   virtual bool useColdCCForColdCall(Function &F) = 0;
   virtual unsigned getScalarizationOverhead(VectorType *Ty,
                                             const APInt &DemandedElts,
@@ -1871,9 +1867,6 @@ public:
   }
   bool shouldBuildLookupTablesForConstant(Constant *C) override {
     return Impl.shouldBuildLookupTablesForConstant(C);
-  }
-  bool shouldBuildRelLookupTables() override {
-    return Impl.shouldBuildRelLookupTables();
   }
   bool useColdCCForColdCall(Function &F) override {
     return Impl.useColdCCForColdCall(F);
