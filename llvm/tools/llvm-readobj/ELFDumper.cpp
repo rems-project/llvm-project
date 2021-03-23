@@ -3474,8 +3474,8 @@ template <class ELFT> void ELFDumper<ELFT>::printCheriCapRelocs() {
       auto it = CapRelocsDynRels.find(CapRelocsStartVaddr + CurrentOffset + 8);
       if (it != CapRelocsDynRels.end()) {
         Elf_Rel R = it->second;
-        const Elf_Sym *Sym = unwrapOrError(
-            ObjF->getFileName(), Obj->getRelocationSymbol(R, SymTab));
+        const Elf_Sym *Sym = unwrapOrError(ObjF->getFileName(),
+                                           Obj->getRelocationSymbol(R, SymTab));
         // Since we are looking up dynamic relocations, we have to look for the
         // symbol name in the .dynstrtab section.
         BaseSymbol = getFullSymbolName(Sym, DynamicStringTable, true);
@@ -3641,8 +3641,8 @@ template <class ELFT> void ELFDumper<ELFT>::printCheriCapTable() {
       StringRef TargetName;
       Obj->getRelocationTypeName(R.getType(Obj->isMips64EL()), RelocName);
 
-      const Elf_Sym *Sym = unwrapOrError(
-          ObjF->getFileName(), Obj->getRelocationSymbol(R, SymTab));
+      const Elf_Sym *Sym = unwrapOrError(ObjF->getFileName(),
+                                         Obj->getRelocationSymbol(R, SymTab));
       if (Sym) {
         TargetName = unwrapOrError(
             ObjF->getFileName(), Sym->getName(getDynamicStringTable()));
