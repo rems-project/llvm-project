@@ -5905,7 +5905,7 @@ AArch64TargetLowering::LowerDarwinGlobalTLSAddress(SDValue Op,
   SDValue FuncTLVGet = DAG.getLoad(
       PtrMemVT, DL, Chain, DescAddr,
       MachinePointerInfo::getGOT(DAG.getMachineFunction()),
-      /* Alignment = */ PtrMemVT.getSizeInBits() / 8,
+      Align(PtrMemVT.getSizeInBits() / 8),
       MachineMemOperand::MOInvariant | MachineMemOperand::MODereferenceable);
   Chain = FuncTLVGet.getValue(1);
 
@@ -7076,8 +7076,9 @@ SDValue AArch64TargetLowering::LowerAAPCS_VASTART(SDValue Op,
 
   // void *__stack at offset 0
   SDValue Stack = DAG.getFrameIndex(FuncInfo->getVarArgsStackIndex(), PtrVT);
-  MemOps.push_back(DAG.getStore(Chain, DL, Stack, VAList,
-                                MachinePointerInfo(SV), HasPureCap ? 16 : 8));
+  MemOps.push_back(
+      DAG.getStore(Chain, DL, Stack, VAList, MachinePointerInfo(SV),
+                   Align(HasPureCap ? 16 : 8)));
 
   // void *__gr_top at offset 8 (16 in the PureCap ABI)
   int GPRSize = FuncInfo->getVarArgsGPRSize();
@@ -7091,7 +7092,8 @@ SDValue AArch64TargetLowering::LowerAAPCS_VASTART(SDValue Op,
     GRTop = DAG.getPointerAdd(DL, GRTop, GPRSize + GPROffset);
 
     MemOps.push_back(DAG.getStore(Chain, DL, GRTop, GRTopAddr,
-                                  MachinePointerInfo(SV, HasPureCap ? 16 : 8)));
+                                  MachinePointerInfo(SV, HasPureCap ? 16 : 8),
+                                  Align(HasPureCap ? 16 : 8)));
   }
 
   // void *__vr_top at offset 16 (32 in the PureCap ABI)
@@ -7104,20 +7106,21 @@ SDValue AArch64TargetLowering::LowerAAPCS_VASTART(SDValue Op,
     VRTop = DAG.getPointerAdd(DL, VRTop, FPRSize);
 
     MemOps.push_back(DAG.getStore(Chain, DL, VRTop, VRTopAddr,
-                                  MachinePointerInfo(SV, HasPureCap ? 32 : 16)));
+                                  MachinePointerInfo(SV, HasPureCap ? 32 : 16),
+                                  Align(HasPureCap ? 16 : 8)));
   }
 
   // int __gr_offs at offset 24 (48 in the PureCap ABI)
   SDValue GROffsAddr = DAG.getPointerAdd(DL, VAList, HasPureCap ? 48 : 24);
   MemOps.push_back(DAG.getStore(
       Chain, DL, DAG.getConstant(-GPRSize, DL, MVT::i32), GROffsAddr,
-      MachinePointerInfo(SV, HasPureCap ? 48 : 24)));
+      MachinePointerInfo(SV, HasPureCap ? 48 : 24), Align(4)));
 
   // int __vr_offs at offset 28 (52 in the PureCap ABI)
   SDValue VROffsAddr = DAG.getPointerAdd(DL, VAList, HasPureCap ? 52 : 28);
   MemOps.push_back(DAG.getStore(
       Chain, DL, DAG.getConstant(-FPRSize, DL, MVT::i32), VROffsAddr,
-      MachinePointerInfo(SV, HasPureCap ? 52 : 28)));
+      MachinePointerInfo(SV, HasPureCap ? 52 : 28), Align(4)));
 
   return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, MemOps);
 }
