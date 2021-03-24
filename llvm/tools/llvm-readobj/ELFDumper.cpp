@@ -3322,7 +3322,7 @@ static bool isAArch64C64MapSymbol(StringRef Name) {
 }
 
 template <class ELFT> void ELFDumper<ELFT>::printCheriCapRelocs() {
-  const ELFFile<ELFT> *Obj = ObjF->getELFFile();
+  const ELFFile<ELFT> *Obj = ObjF.getELFFile();
   const Elf_Shdr *Shdr = findSectionByName("__cap_relocs");
   if (!Shdr) {
     W.startLine() << "There is no __cap_relocs section in the file.\n";
@@ -3330,7 +3330,7 @@ template <class ELFT> void ELFDumper<ELFT>::printCheriCapRelocs() {
   }
   // TODO: get symbol name for __cap_reloc
   ArrayRef<uint8_t> Data =
-      unwrapOrError(ObjF->getFileName(), Obj->getSectionContents(*Shdr));
+      unwrapOrError(ObjF.getFileName(), Obj->getSectionContents(*Shdr));
   const uint64_t CapRelocsStartVaddr = Shdr->sh_addr;
   const uint64_t CapRelocsEndVaddr = Shdr->sh_addr + Shdr->sh_size;
   const size_t entry_size = ELFT::Is64Bits ? 40 : 20;
@@ -3366,19 +3366,21 @@ template <class ELFT> void ELFDumper<ELFT>::printCheriCapRelocs() {
   bool UsingDynsym = false;
   if (DotSymtabSec) {
     StrTable = unwrapOrError(
-        ObjF->getFileName(), Obj->getStringTableForSymtab(*DotSymtabSec));
-    Syms = unwrapOrError(ObjF->getFileName(), Obj->symbols(DotSymtabSec));
+        ObjF.getFileName(), Obj->getStringTableForSymtab(*DotSymtabSec));
+    Syms = unwrapOrError(ObjF.getFileName(), Obj->symbols(DotSymtabSec));
   } else {
     StrTable = DynamicStringTable;
     Syms = dynamic_symbols();
     UsingDynsym = true;
   }
   std::unordered_map<uint64_t, std::string> SymbolNames;
+  const Elf_Sym &FirstSym = Syms[0];
   for (const auto &Sym : Syms) {
     uint64_t Start = Sym.st_value;
     if (!Start)
       continue;
-    std::string Name = getFullSymbolName(&Sym, StrTable, UsingDynsym);
+    std::string Name =
+        getFullSymbolName(Sym, &Sym - &FirstSym, StrTable, UsingDynsym);
     if (Name.empty())
       continue;
     auto IterRet = SymbolNames.insert({Start, Name});
@@ -3400,7 +3402,7 @@ template <class ELFT> void ELFDumper<ELFT>::printCheriCapRelocs() {
     reportError(
         createStringError(object_error::parse_failed,
                           "No dynamic symbol section"),
-        ObjF->getFileName());
+        ObjF.getFileName());
   using TargetUint = typename ELFT::uint;
   using TargetInt =
       typename std::conditional<ELFT::Is64Bits, int64_t, int32_t>::type;
@@ -3445,11 +3447,12 @@ template <class ELFT> void ELFDumper<ELFT>::printCheriCapRelocs() {
       auto it = CapRelocsDynRels.find(CapRelocsStartVaddr + CurrentOffset + 8);
       if (it != CapRelocsDynRels.end()) {
         Elf_Rel R = it->second;
-        const Elf_Sym *Sym = unwrapOrError(ObjF->getFileName(),
+        const Elf_Sym *Sym = unwrapOrError(ObjF.getFileName(),
                                            Obj->getRelocationSymbol(R, SymTab));
         // Since we are looking up dynamic relocations, we have to look for the
         // symbol name in the .dynstrtab section.
-        BaseSymbol = getFullSymbolName(Sym, DynamicStringTable, true);
+        BaseSymbol = getFullSymbolName(*Sym, R.getSymbol(Obj->isMips64EL()),
+                                       DynamicStringTable, true);
         // errs() << "Found dyn_rel for base: 0x" << utohexstr(R.r_offset) << "Name=" << BaseSymbol << "\n";
       }
     } else {
@@ -3494,7 +3497,7 @@ template <class ELFT> void ELFDumper<ELFT>::printCheriCapRelocs() {
 }
 
 template <class ELFT> void ELFDumper<ELFT>::printCheriCapTable() {
-  const ELFFile<ELFT> *Obj = ObjF->getELFFile();
+  const ELFFile<ELFT> *Obj = ObjF.getELFFile();
   const Elf_Shdr *Shdr = findSectionByName(".captable");
   if (!Shdr) {
     W.startLine() << "There is no .captable section in the file.\n";
@@ -3531,8 +3534,8 @@ template <class ELFT> void ELFDumper<ELFT>::printCheriCapTable() {
   bool UsingDynsym = false;
   if (DotSymtabSec) {
     StrTable = unwrapOrError(
-        ObjF->getFileName(), Obj->getStringTableForSymtab(*DotSymtabSec));
-    Syms = unwrapOrError(ObjF->getFileName(), Obj->symbols(DotSymtabSec));
+        ObjF.getFileName(), Obj->getStringTableForSymtab(*DotSymtabSec));
+    Syms = unwrapOrError(ObjF.getFileName(), Obj->symbols(DotSymtabSec));
   } else {
     StrTable = DynamicStringTable;
     Syms = dynamic_symbols();
@@ -3540,11 +3543,13 @@ template <class ELFT> void ELFDumper<ELFT>::printCheriCapTable() {
   }
 
   std::unordered_map<uint64_t, std::string> SymbolNames;
+  const Elf_Sym &FirstSym = Syms[0];
   for (const auto &Sym : Syms) {
     uint64_t Start = Sym.st_value;
     if (Start < CapTableStartVaddr || Start > CapTableEndVaddr)
       continue;
-    std::string Name = getFullSymbolName(&Sym, StrTable, UsingDynsym);
+    std::string Name =
+        getFullSymbolName(Sym, &Sym - &FirstSym, StrTable, UsingDynsym);
     if (Name == "_CHERI_CAPABILITY_TABLE_")
       continue;
     SymbolNames.insert({Start, Name});
@@ -3590,7 +3595,7 @@ template <class ELFT> void ELFDumper<ELFT>::printCheriCapTable() {
     reportError(
         createStringError(object_error::parse_failed,
                           "No dynamic symbol section"),
-        ObjF->getFileName());
+        ObjF.getFileName());
   for (uint64_t Offset = CapTableStartVaddr; Offset < CapTableEndVaddr;
        Offset += CapSize) {
     // Find name:
@@ -3612,11 +3617,11 @@ template <class ELFT> void ELFDumper<ELFT>::printCheriCapTable() {
       StringRef TargetName;
       Obj->getRelocationTypeName(R.getType(Obj->isMips64EL()), RelocName);
 
-      const Elf_Sym *Sym = unwrapOrError(ObjF->getFileName(),
+      const Elf_Sym *Sym = unwrapOrError(ObjF.getFileName(),
                                          Obj->getRelocationSymbol(R, SymTab));
       if (Sym) {
         TargetName = unwrapOrError(
-            ObjF->getFileName(), Sym->getName(getDynamicStringTable()));
+            ObjF.getFileName(), Sym->getName(getDynamicStringTable()));
       }
       OS << " " << RelocName << " against " << TargetName;
       // TODO: getSymbol(dynamic_symbols()); StrTable = DynamicStringTable;
@@ -3626,14 +3631,14 @@ template <class ELFT> void ELFDumper<ELFT>::printCheriCapTable() {
 }
 
 template <class ELFT> void ELFDumper<ELFT>::printCheriCapTableMapping() {
-  const ELFFile<ELFT> *Obj = ObjF->getELFFile();
+  const ELFFile<ELFT> *Obj = ObjF.getELFFile();
   const Elf_Shdr *Shdr = findSectionByName(".captable_mapping");
   if (!Shdr) {
     W.startLine() << "There is no .captable_mapping section in the file.\n";
     return;
   }
   ArrayRef<uint8_t> Data =
-      unwrapOrError(ObjF->getFileName(), Obj->getSectionContents(*Shdr));
+      unwrapOrError(ObjF.getFileName(), Obj->getSectionContents(*Shdr));
   const size_t EntrySize = 24;
 
   typename ELFT::SymRange Syms;
@@ -3641,8 +3646,8 @@ template <class ELFT> void ELFDumper<ELFT>::printCheriCapTableMapping() {
   bool UsingDynsym = false;
   if (DotSymtabSec) {
     StrTable = unwrapOrError(
-        ObjF->getFileName(), Obj->getStringTableForSymtab(*DotSymtabSec));
-    Syms = unwrapOrError(ObjF->getFileName(), Obj->symbols(DotSymtabSec));
+        ObjF.getFileName(), Obj->getStringTableForSymtab(*DotSymtabSec));
+    Syms = unwrapOrError(ObjF.getFileName(), Obj->symbols(DotSymtabSec));
   } else {
     StrTable = DynamicStringTable;
     Syms = dynamic_symbols();
@@ -3665,11 +3670,13 @@ template <class ELFT> void ELFDumper<ELFT>::printCheriCapTableMapping() {
     OS << "Function start: " << W.hex(FunctionStart);
     // Try to find a matching symbol
     std::string SymName = "<unknown function>";
+
+    const Elf_Sym &FirstSym = Syms[0];
     for (const auto &Sym : Syms) {
       if (Sym.getType() != ELF::STT_FUNC)
         continue;
       if (Sym.st_value >= FunctionStart && Sym.st_value < FunctionEnd) {
-        SymName = getFullSymbolName(&Sym, StrTable, UsingDynsym);
+        SymName = getFullSymbolName(Sym, &Sym - &FirstSym, StrTable, UsingDynsym);
         break;
       }
     }
