@@ -67,6 +67,8 @@ if config.android:
     # to link. In r19 and later we just use the default which is libc++.
     config.cxx_mode_flags.append('-stdlib=libstdc++')
 
+config.environment = dict(os.environ)
+
 # Clear some environment variables that might affect Clang.
 possibly_dangerous_env_vars = ['ASAN_OPTIONS', 'DFSAN_OPTIONS', 'LSAN_OPTIONS',
                                'MSAN_OPTIONS', 'UBSAN_OPTIONS',
@@ -102,6 +104,8 @@ config.available_features.add(config.host_os.lower())
 
 if re.match(r'^x86_64.*-linux', config.target_triple):
   config.available_features.add("x86_64-linux")
+
+config.available_features.add("host-byteorder-" + sys.byteorder + "-endian")
 
 if config.have_zlib == "1":
   config.available_features.add("zlib")

@@ -64,7 +64,6 @@ enum LoadDependentFiles {
   eLoadDependentsNo,
 };
 
-// TargetProperties
 class TargetExperimentalProperties : public Properties {
 public:
   TargetExperimentalProperties();
@@ -211,10 +210,6 @@ public:
 
   void SetInjectLocalVariables(ExecutionContext *exe_ctx, bool b);
   
-  bool GetOSPluginReportsAllThreads() const;
-
-  void SetOSPluginReportsAllThreads(bool does_report);
-
   void SetRequireHardwareBreakpoints(bool b);
 
   bool GetRequireHardwareBreakpoints() const;
@@ -494,7 +489,8 @@ public:
     lldb::TargetSP m_target_sp;
     ModuleList m_module_list;
 
-    DISALLOW_COPY_AND_ASSIGN(TargetEventData);
+    TargetEventData(const TargetEventData &) = delete;
+    const TargetEventData &operator=(const TargetEventData &) = delete;
   };
 
   ~Target() override;
@@ -1378,7 +1374,8 @@ private:
 
   void FinalizeFileActions(ProcessLaunchInfo &info);
 
-  DISALLOW_COPY_AND_ASSIGN(Target);
+  Target(const Target &) = delete;
+  const Target &operator=(const Target &) = delete;
 };
 
 } // namespace lldb_private

@@ -1106,11 +1106,15 @@ public:
   bool isMOVZMovAlias() const {
     if (!isImm()) return false;
 
-    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
-    if (!CE) return false;
-    uint64_t Value = CE->getValue();
+    const MCExpr *E = getImm();
+    if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(E)) {
+      uint64_t Value = CE->getValue();
 
-    return AArch64_AM::isMOVZMovAlias(Value, Shift, RegWidth);
+      return AArch64_AM::isMOVZMovAlias(Value, Shift, RegWidth);
+    }
+    // Only supports the case of Shift being 0 if an expression is used as an
+    // operand
+    return !Shift && E;
   }
 
   template<int RegWidth, int Shift>
@@ -2070,9 +2074,13 @@ public:
   void addMOVZMovAliasOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
 
-    const MCConstantExpr *CE = cast<MCConstantExpr>(getImm());
-    uint64_t Value = CE->getValue();
-    Inst.addOperand(MCOperand::createImm((Value >> Shift) & 0xffff));
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (CE) {
+      uint64_t Value = CE->getValue();
+      Inst.addOperand(MCOperand::createImm((Value >> Shift) & 0xffff));
+    } else {
+      addExpr(Inst, getImm());
+    }
   }
 
   template<int Shift>
@@ -2718,9 +2726,9 @@ AArch64AsmParser::tryParsePrefetch(OperandVector &Operands) {
     return MatchOperand_ParseFail;
   }
 
-  Parser.Lex(); // Eat identifier token.
   Operands.push_back(AArch64Operand::CreatePrefetch(
       *PRFM, Tok.getString(), S, getContext()));
+  Parser.Lex(); // Eat identifier token.
   return MatchOperand_Success;
 }
 
@@ -2741,9 +2749,9 @@ AArch64AsmParser::tryParsePSBHint(OperandVector &Operands) {
     return MatchOperand_ParseFail;
   }
 
-  Parser.Lex(); // Eat identifier token.
   Operands.push_back(AArch64Operand::CreatePSBHint(
       PSB->Encoding, Tok.getString(), S, getContext()));
+  Parser.Lex(); // Eat identifier token.
   return MatchOperand_Success;
 }
 
@@ -2764,9 +2772,9 @@ AArch64AsmParser::tryParseBTIHint(OperandVector &Operands) {
     return MatchOperand_ParseFail;
   }
 
-  Parser.Lex(); // Eat identifier token.
   Operands.push_back(AArch64Operand::CreateBTIHint(
       BTI->Encoding, Tok.getString(), S, getContext()));
+  Parser.Lex(); // Eat identifier token.
   return MatchOperand_Success;
 }
 
@@ -3127,38 +3135,40 @@ static const struct Extension {
   const FeatureBitset Features;
   const FeatureBitset DisableFeatures;
 } ExtensionMap[] = {
-  { "crc", {AArch64::FeatureCRC}, {AArch64::FeatureCRC} },
-  { "sm4",  {AArch64::FeatureSM4},  {AArch64::FeatureSM4} },
-  { "sha3", {AArch64::FeatureSHA3}, {AArch64::FeatureSHA3} },
-  { "sha2", {AArch64::FeatureSHA2}, {AArch64::FeatureSHA2} },
-  { "aes",  {AArch64::FeatureAES},  {AArch64::FeatureAES} },
-  { "crypto", {AArch64::FeatureCrypto}, {AArch64::FeatureCrypto} },
-  { "fp", {AArch64::FeatureFPARMv8}, {AArch64::FeatureFPARMv8, AArch64::FeatureNEON} },
-  { "simd", {AArch64::FeatureNEON, AArch64::FeatureFPARMv8}, {AArch64::FeatureNEON} },
-  { "ras", {AArch64::FeatureRAS}, {AArch64::FeatureRAS} },
-  { "lse", {AArch64::FeatureLSE}, {AArch64::FeatureLSE} },
-  { "predres", {AArch64::FeaturePredRes}, {AArch64::FeaturePredRes} },
-  { "ccdp", {AArch64::FeatureCacheDeepPersist}, {AArch64::FeatureCacheDeepPersist} },
-  { "mte", {AArch64::FeatureMTE}, {AArch64::FeatureMTE} },
-  { "tlb-rmi", {AArch64::FeatureTLB_RMI}, {AArch64::FeatureTLB_RMI} },
-  { "pan-rwv", {AArch64::FeaturePAN_RWV}, {AArch64::FeaturePAN_RWV} },
-  { "ccpp", {AArch64::FeatureCCPP}, {AArch64::FeatureCCPP} },
-  { "sve", {AArch64::FeatureSVE}, {AArch64::FeatureSVE} },
-  { "sve2", {AArch64::FeatureSVE2}, {AArch64::FeatureSVE2}},
-  { "sve2-aes", {AArch64::FeatureSVE2AES}, {AArch64::FeatureSVE2AES}},
-  { "sve2-sm4", {AArch64::FeatureSVE2SM4}, {AArch64::FeatureSVE2SM4}},
-  { "sve2-sha3", {AArch64::FeatureSVE2SHA3}, {AArch64::FeatureSVE2SHA3}},
-  { "rcpc", {AArch64::FeatureRCPC}, {AArch64::FeatureRCPC}},
-  { "sve2-bitperm", {AArch64::FeatureSVE2BitPerm}, {AArch64::FeatureSVE2BitPerm}},
-  { "a64c", {AArch64::FeatureMorello},
-            {AArch64::FeatureMorello, AArch64::FeatureC64} },
-  { "c64", {AArch64::FeatureMorello, AArch64::FeatureC64},
-           {AArch64::FeatureC64} },
-  // FIXME: Unsupported extensions
-  { "pan", {}, {} },
-  { "lor", {}, {} },
-  { "rdma", {}, {} },
-  { "profile", {}, {} },
+    {"crc", {AArch64::FeatureCRC}},
+    {"sm4", {AArch64::FeatureSM4}},
+    {"sha3", {AArch64::FeatureSHA3}},
+    {"sha2", {AArch64::FeatureSHA2}},
+    {"aes", {AArch64::FeatureAES}},
+    {"crypto", {AArch64::FeatureCrypto}},
+    {"fp", {AArch64::FeatureFPARMv8}},
+    {"simd", {AArch64::FeatureNEON}},
+    {"ras", {AArch64::FeatureRAS}},
+    {"lse", {AArch64::FeatureLSE}},
+    {"predres", {AArch64::FeaturePredRes}},
+    {"ccdp", {AArch64::FeatureCacheDeepPersist}},
+    {"mte", {AArch64::FeatureMTE}},
+    {"tlb-rmi", {AArch64::FeatureTLB_RMI}},
+    {"pan-rwv", {AArch64::FeaturePAN_RWV}},
+    {"ccpp", {AArch64::FeatureCCPP}},
+    {"rcpc", {AArch64::FeatureRCPC}},
+    {"sve", {AArch64::FeatureSVE}},
+    {"sve2", {AArch64::FeatureSVE2}},
+    {"sve2-aes", {AArch64::FeatureSVE2AES}},
+    {"sve2-sm4", {AArch64::FeatureSVE2SM4}},
+    {"sve2-sha3", {AArch64::FeatureSVE2SHA3}},
+    {"sve2-bitperm", {AArch64::FeatureSVE2BitPerm}},
+    {"a64c",
+     {AArch64::FeatureMorello},
+     {AArch64::FeatureMorello, AArch64::FeatureC64}},
+    {"c64",
+     {AArch64::FeatureMorello, AArch64::FeatureC64},
+     {AArch64::FeatureC64}},
+    // FIXME: Unsupported extensions
+    {"pan", {}},
+    {"lor", {}},
+    {"rdma", {}},
+    {"profile", {}},
 };
 
 static void setRequiredFeatureString(FeatureBitset FBS, std::string &Str) {

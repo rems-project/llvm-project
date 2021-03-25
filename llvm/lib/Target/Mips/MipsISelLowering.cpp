@@ -170,15 +170,17 @@ unsigned MipsTargetLowering::getVectorTypeBreakdownForCallingConv(
 
 SDValue MipsTargetLowering::getGlobalReg(SelectionDAG &DAG, EVT Ty,
                                          bool IsForTls) const {
-  MipsFunctionInfo *FI = DAG.getMachineFunction().getInfo<MipsFunctionInfo>();
-  return DAG.getRegister(FI->getGlobalBaseReg(IsForTls), Ty);
+  MachineFunction &MF = DAG.getMachineFunction();
+  MipsFunctionInfo *FI = MF.getInfo<MipsFunctionInfo>();
+  return DAG.getRegister(FI->getGlobalBaseReg(MF, IsForTls), Ty);
 }
 
 SDValue MipsTargetLowering::getCapGlobalReg(SelectionDAG &DAG, EVT Ty) const {
   assert(Ty.isFatPointer());
   assert(ABI.IsCheriPureCap());
-  MipsFunctionInfo *FI = DAG.getMachineFunction().getInfo<MipsFunctionInfo>();
-  return DAG.getRegister(FI->getCapGlobalBaseRegForGlobalISel(), Ty);
+  MachineFunction &MF = DAG.getMachineFunction();
+  MipsFunctionInfo *FI = MF.getInfo<MipsFunctionInfo>();
+  return DAG.getRegister(FI->getCapGlobalBaseRegForGlobalISel(MF), Ty);
 }
 
 SDValue MipsTargetLowering::getTargetNode(GlobalAddressSDNode *N, EVT Ty,
@@ -208,7 +210,7 @@ SDValue MipsTargetLowering::getTargetNode(JumpTableSDNode *N, EVT Ty,
 SDValue MipsTargetLowering::getTargetNode(ConstantPoolSDNode *N, EVT Ty,
                                           SelectionDAG &DAG,
                                           unsigned Flag) const {
-  return DAG.getTargetConstantPool(N->getConstVal(), Ty, N->getAlignment(),
+  return DAG.getTargetConstantPool(N->getConstVal(), Ty, N->getAlign(),
                                    N->getOffset(), Flag);
 }
 
@@ -2605,7 +2607,7 @@ static void addGlobalsCSetBoundsStats(const GlobalValue *GV, SelectionDAG &DAG,
     AllocSize = DAG.getDataLayout().getTypeAllocSize(GV->getValueType());
   }
   cheri::CSetBoundsStats->add(
-      MaybeAlign(GV->getAlignment()).valueOrOne(), Size, Pass,
+      GV->getPointerAlignment(DAG.getDataLayout()), Size, Pass,
       cheri::SetBoundsPointerSource::GlobalVar,
       "load of global " + GV->getName() + " (alloc size=" + Twine(AllocSize) +
           ")",
@@ -3888,8 +3890,8 @@ static bool CC_MipsO32(unsigned ValNo, MVT ValVT, MVT LocVT,
   // argument which is not f32 or f64.
   bool AllocateFloatsInIntReg = State.isVarArg() || ValNo > 1 ||
                                 State.getFirstUnallocated(F32Regs) != ValNo;
-  unsigned OrigAlign = ArgFlags.getOrigAlign();
-  bool isI64 = (ValVT == MVT::i32 && OrigAlign == 8);
+  Align OrigAlign = ArgFlags.getNonZeroOrigAlign();
+  bool isI64 = (ValVT == MVT::i32 && OrigAlign == Align(8));
   bool isVectorFloat = MipsState->WasOriginalArgVectorFloat(ValNo);
 
   // The MIPS vector ABI for floats passes them in a pair of registers
@@ -4192,13 +4194,16 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // caller side but removing it breaks the frame size calculation.
   unsigned ReservedArgArea =
       MemcpyInByVal ? 0 : ABI.GetCalleeAllocdArgSizeInBytes(CallConv);
-  CCInfo.AllocateStack(ReservedArgArea, 1);
+  CCInfo.AllocateStack(ReservedArgArea, Align(1));
 
   CCInfo.AnalyzeCallOperands(Outs, CC_Mips, CLI.getArgs(),
                              ES ? ES->getSymbol() : nullptr);
 
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NextStackOffset = CCInfo.getNextStackOffset();
+
+  // Call site info for function parameters tracking.
+  MachineFunction::CallSiteInfo CSInfo;
 
   // Check if it's really possible to do a tail call. Restrict it to functions
   // that are part of this compilation unit.
@@ -4337,6 +4342,17 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                (VA.getLocReg() <= Mips::T3_64))
         IntArgs++;
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
+
+      // If the parameter is passed through reg $D, which splits into
+      // two physical registers, avoid creating call site info.
+      if (Mips::AFGR64RegClass.contains(VA.getLocReg()))
+        continue;
+
+      // Collect CSInfo about which register passes which parameter.
+      const TargetOptions &Options = DAG.getTarget().Options;
+      if (Options.SupportsDebugEntryValues)
+        CSInfo.emplace_back(VA.getLocReg(), i);
+
       continue;
     }
 
@@ -4468,42 +4484,45 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   }
 
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
-    const GlobalValue *GV = G->getGlobal();
+      const GlobalValue *Val = G->getGlobal();
     if (CheriCapTable) {
-      Callee = getCallTargetFromCapTable(G, DL, CapType, DAG, Chain,
-                                         FuncInfo->callPtrInfo(GV));
-      IsCallReloc = true;
-    } else if (IsPIC || ABI.IsCheriPureCap()) {
-      // Legacy ABI also needs to load from GOT in non-PIC since otherwise
-      // it will attempt to use a JAL relocation in a CGetPCCSetOffset (and
-      // corrupt the instruction)
-      InternalLinkage = GV->hasInternalLinkage();
+        Callee = getCallTargetFromCapTable(G, DL, CapType, DAG, Chain,
+                                           FuncInfo->callPtrInfo(MF, Val));
+        IsCallReloc = true;
+      } else if (IsPIC || ABI.IsCheriPureCap()) {
+        // Legacy ABI also needs to load from GOT in non-PIC since otherwise
+        // it will attempt to use a JAL relocation in a CGetPCCSetOffset (and
+        // corrupt the instruction)
+        InternalLinkage = Val->hasInternalLinkage();
 
-      if (InternalLinkage)
-        Callee = getAddrLocal(G, DL, Ty, DAG, ABI.IsN32() || ABI.IsN64(), GV->isThreadLocal());
-      else if (Subtarget.useXGOT()) {
-        Callee = getAddrGlobalLargeGOT(
-            G, DL, Ty, DAG, MipsII::MO_CALL_HI16, MipsII::MO_CALL_LO16, Chain,
-            FuncInfo->callPtrInfo(GV), GV->isThreadLocal());
-        IsCallReloc = true;
+        if (InternalLinkage)
+          Callee = getAddrLocal(G, DL, Ty, DAG, ABI.IsN32() || ABI.IsN64(),
+                                Val->isThreadLocal());
+        else if (Subtarget.useXGOT()) {
+          Callee = getAddrGlobalLargeGOT(
+              G, DL, Ty, DAG, MipsII::MO_CALL_HI16, MipsII::MO_CALL_LO16, Chain,
+              FuncInfo->callPtrInfo(MF, Val), Val->isThreadLocal());
+          IsCallReloc = true;
+        } else {
+          Callee = getAddrGlobal(G, DL, Ty, DAG, MipsII::MO_GOT_CALL, Chain,
+                                 FuncInfo->callPtrInfo(MF, Val),
+                                 Val->isThreadLocal());
+          IsCallReloc = true;
+        }
       } else {
-        Callee = getAddrGlobal(G, DL, Ty, DAG, MipsII::MO_GOT_CALL, Chain,
-                               FuncInfo->callPtrInfo(GV), GV->isThreadLocal());
-        IsCallReloc = true;
+        assert(!ABI.IsCheriPureCap());
+        Callee = DAG.getTargetGlobalAddress(
+            Val, DL, getPointerTy(DAG.getDataLayout(), 0), 0,
+            MipsII::MO_NO_FLAG);
       }
-    } else {
-      assert(!ABI.IsCheriPureCap());
-      Callee = DAG.getTargetGlobalAddress(
-          GV, DL, getPointerTy(DAG.getDataLayout(), 0), 0, MipsII::MO_NO_FLAG);
-    }
-    GlobalOrExternal = true;
+      GlobalOrExternal = true;
   }
   else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     const char *Sym = S->getSymbol();
 
     if (CheriCapTable) {
       Callee = getCallTargetFromCapTable(S, DL, CapType, DAG, Chain,
-                                         FuncInfo->callPtrInfo(Sym));
+                                         FuncInfo->callPtrInfo(MF, Sym));
       IsCallReloc = true;
     } else if (!IsPIC) { // static
       assert(!ABI.IsCheriPureCap());
@@ -4513,11 +4532,11 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     } else if (Subtarget.useXGOT()) {
       Callee = getAddrGlobalLargeGOT(S, DL, Ty, DAG, MipsII::MO_CALL_HI16,
                                      MipsII::MO_CALL_LO16, Chain,
-                                     FuncInfo->callPtrInfo(Sym), /*IsForTls=*/false);
+                                     FuncInfo->callPtrInfo(MF, Sym), /*IsForTls=*/false);
       IsCallReloc = true;
     } else { // PIC
       Callee = getAddrGlobal(S, DL, Ty, DAG, MipsII::MO_GOT_CALL, Chain,
-                             FuncInfo->callPtrInfo(Sym), /*IsForTls=*/false);
+                             FuncInfo->callPtrInfo(MF, Sym), /*IsForTls=*/false);
       IsCallReloc = true;
     }
 
@@ -4551,7 +4570,9 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   } else {
     if (IsTailCall) {
       MF.getFrameInfo().setHasTailCall();
-      return DAG.getNode(MipsISD::TailCall, DL, MVT::Other, Ops);
+      SDValue Ret = DAG.getNode(MipsISD::TailCall, DL, MVT::Other, Ops);
+      DAG.addCallSiteInfo(Ret.getNode(), std::move(CSInfo));
+      return Ret;
     }
 
     if (ABI.IsCheriPureCap())
@@ -4560,6 +4581,8 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       Chain = DAG.getNode(MipsISD::JmpLink, DL, NodeTys, Ops);
   }
   SDValue InFlag = Chain.getValue(1);
+
+  DAG.addCallSiteInfo(Chain.getNode(), std::move(CSInfo));
 
   // Create the CALLSEQ_END node in the case of where it is not a call to
   // memcpy.
@@ -4793,7 +4816,7 @@ SDValue MipsTargetLowering::LowerFormalArguments(
   SmallVector<CCValAssign, 16> ArgLocs;
   MipsCCState CCInfo(CallConv, IsVarArg, DAG.getMachineFunction(), ArgLocs,
                      *DAG.getContext());
-  CCInfo.AllocateStack(ABI.GetCalleeAllocdArgSizeInBytes(CallConv), 1);
+  CCInfo.AllocateStack(ABI.GetCalleeAllocdArgSizeInBytes(CallConv), Align(1));
   const Function &Func = DAG.getMachineFunction().getFunction();
   Function::const_arg_iterator FuncArg = Func.arg_begin();
 
@@ -5837,12 +5860,12 @@ void MipsTargetLowering::writeVarArgRegs(std::vector<SDValue> &OutChains,
 }
 
 void MipsTargetLowering::HandleByVal(CCState *State, unsigned &Size,
-                                     unsigned Align) const {
+                                     Align Alignment) const {
   const TargetFrameLowering *TFL = Subtarget.getFrameLowering();
 
   assert(Size && "Byval argument's size shouldn't be 0.");
 
-  Align = std::min(Align, TFL->getStackAlignment());
+  Alignment = std::min(Alignment, TFL->getStackAlign());
 
   unsigned FirstReg = 0;
   unsigned NumRegs = 0;
@@ -5856,17 +5879,17 @@ void MipsTargetLowering::HandleByVal(CCState *State, unsigned &Size,
 
     // We used to check the size as well but we can't do that anymore since
     // CCState::HandleByVal() rounds up the size after calling this function.
-    assert(!(Align % RegSizeInBytes) &&
-           "Byval argument's alignment should be a multiple of"
-           "RegSizeInBytes.");
+    assert(
+        Alignment >= Align(RegSizeInBytes) &&
+        "Byval argument's alignment should be a multiple of RegSizeInBytes.");
 
     FirstReg = State->getFirstUnallocated(IntArgRegs);
 
-    // If Align > RegSizeInBytes, the first arg register must be even.
+    // If Alignment > RegSizeInBytes, the first arg register must be even.
     // FIXME: This condition happens to do the right thing but it's not the
     //        right way to test it. We want to check that the stack frame offset
     //        of the register is aligned.
-    if ((Align > RegSizeInBytes) && (FirstReg % 2)) {
+    if ((Alignment > RegSizeInBytes) && (FirstReg % 2)) {
       State->AllocateReg(IntArgRegs[FirstReg], ShadowRegs[FirstReg]);
       ++FirstReg;
     }

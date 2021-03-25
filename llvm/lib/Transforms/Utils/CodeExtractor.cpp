@@ -880,8 +880,10 @@ Function *CodeExtractor::constructFunction(const ValueSet &inputs,
       case Attribute::NoAlias:
       case Attribute::NoBuiltin:
       case Attribute::NoCapture:
+      case Attribute::NoMerge:
       case Attribute::NoReturn:
       case Attribute::NoSync:
+      case Attribute::NoUndef:
       case Attribute::None:
       case Attribute::NonNull:
       case Attribute::Preallocated:
@@ -916,6 +918,7 @@ Function *CodeExtractor::constructFunction(const ValueSet &inputs,
       case Attribute::NonLazyBind:
       case Attribute::NoRedZone:
       case Attribute::NoUnwind:
+      case Attribute::NullPointerIsValid:
       case Attribute::OptForFuzzing:
       case Attribute::OptimizeNone:
       case Attribute::OptimizeForSize:
@@ -1140,8 +1143,7 @@ CallInst *CodeExtractor::emitCallAndSwitchStatement(Function *newFunction,
       GetElementPtrInst *GEP = GetElementPtrInst::Create(
           StructArgTy, Struct, Idx, "gep_" + StructValues[i]->getName());
       codeReplacer->getInstList().push_back(GEP);
-      StoreInst *SI = new StoreInst(StructValues[i], GEP);
-      codeReplacer->getInstList().push_back(SI);
+      new StoreInst(StructValues[i], GEP, codeReplacer);
     }
   }
 
@@ -1371,6 +1373,9 @@ void CodeExtractor::calculateNewCallTerminatorWeights(
   // Block Frequency distribution with dummy node.
   Distribution BranchDist;
 
+  SmallVector<BranchProbability, 4> EdgeProbabilities(
+      TI->getNumSuccessors(), BranchProbability::getUnknown());
+
   // Add each of the frequencies of the successors.
   for (unsigned i = 0, e = TI->getNumSuccessors(); i < e; ++i) {
     BlockNode ExitNode(i);
@@ -1378,12 +1383,14 @@ void CodeExtractor::calculateNewCallTerminatorWeights(
     if (ExitFreq != 0)
       BranchDist.addExit(ExitNode, ExitFreq);
     else
-      BPI->setEdgeProbability(CodeReplacer, i, BranchProbability::getZero());
+      EdgeProbabilities[i] = BranchProbability::getZero();
   }
 
   // Check for no total weight.
-  if (BranchDist.Total == 0)
+  if (BranchDist.Total == 0) {
+    BPI->setEdgeProbability(CodeReplacer, EdgeProbabilities);
     return;
+  }
 
   // Normalize the distribution so that they can fit in unsigned.
   BranchDist.normalize();
@@ -1395,8 +1402,9 @@ void CodeExtractor::calculateNewCallTerminatorWeights(
     // Get the weight and update the current BFI.
     BranchWeights[Weight.TargetNode.Index] = Weight.Amount;
     BranchProbability BP(Weight.Amount, BranchDist.Total);
-    BPI->setEdgeProbability(CodeReplacer, Weight.TargetNode.Index, BP);
+    EdgeProbabilities[Weight.TargetNode.Index] = BP;
   }
+  BPI->setEdgeProbability(CodeReplacer, EdgeProbabilities);
   TI->setMetadata(
       LLVMContext::MD_prof,
       MDBuilder(TI->getContext()).createBranchWeights(BranchWeights));

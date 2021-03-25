@@ -326,7 +326,8 @@ protected:
                                               llvm::StringRef type_name) const;
 
 private:
-  DISALLOW_COPY_AND_ASSIGN(ABI);
+  ABI(const ABI &) = delete;
+  const ABI &operator=(const ABI &) = delete;
 };
 
 class RegInfoBasedABI : public ABI {

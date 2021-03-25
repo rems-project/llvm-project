@@ -8,7 +8,10 @@
 
 #include "OutputSegment.h"
 #include "InputSection.h"
+#include "MergedOutputSection.h"
+#include "SyntheticSections.h"
 
+#include "lld/Common/ErrorHandler.h"
 #include "lld/Common/Memory.h"
 #include "llvm/BinaryFormat/MachO.h"
 
@@ -33,21 +36,21 @@ static uint32_t maxProt(StringRef name) {
   return VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE;
 }
 
-void OutputSegment::addSection(InputSection *isec) {
-  isec->parent = this;
-  std::vector<InputSection *> &vec = sections[isec->name];
-  if (vec.empty() && !isec->isHidden()) {
-    ++numNonHiddenSections;
+size_t OutputSegment::numNonHiddenSections() const {
+  size_t count = 0;
+  for (const OutputSection *osec : sections) {
+    count += (!osec->isHidden() ? 1 : 0);
   }
-  vec.push_back(isec);
+  return count;
+}
+
+void OutputSegment::addOutputSection(OutputSection *osec) {
+  osec->parent = this;
+  sections.push_back(osec);
 }
 
 static llvm::DenseMap<StringRef, OutputSegment *> nameToOutputSegment;
 std::vector<OutputSegment *> macho::outputSegments;
-
-OutputSegment *macho::getOutputSegment(StringRef name) {
-  return nameToOutputSegment.lookup(name);
-}
 
 OutputSegment *macho::getOrCreateOutputSegment(StringRef name) {
   OutputSegment *&segRef = nameToOutputSegment[name];

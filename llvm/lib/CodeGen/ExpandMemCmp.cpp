@@ -25,6 +25,7 @@
 #include "llvm/InitializePasses.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/SizeOpts.h"
+#include "llvm/Target/TargetMachine.h"
 
 using namespace llvm;
 
@@ -276,8 +277,8 @@ MemCmpExpansion::LoadPair MemCmpExpansion::getLoadPair(Type *LoadSizeType,
   unsigned ASLhs = cast<PointerType>(LhsSource->getType())->getAddressSpace();
   unsigned ASRhs = cast<PointerType>(RhsSource->getType())->getAddressSpace();
 
-  Align LhsAlign = LhsSource->getPointerAlignment(DL).valueOrOne();
-  Align RhsAlign = RhsSource->getPointerAlignment(DL).valueOrOne();
+  Align LhsAlign = LhsSource->getPointerAlignment(DL);
+  Align RhsAlign = RhsSource->getPointerAlignment(DL);
   if (OffsetBytes > 0) {
     auto *ByteType = Type::getInt8Ty(CI->getContext());
     LhsSource = Builder.CreateConstGEP1_64(

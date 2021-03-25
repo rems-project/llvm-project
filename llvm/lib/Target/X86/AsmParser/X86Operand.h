@@ -58,6 +58,7 @@ struct X86Operand final : public MCParsedAsmOperand {
     unsigned SegReg;
     const MCExpr *Disp;
     unsigned BaseReg;
+    unsigned DefaultBaseReg;
     unsigned IndexReg;
     unsigned Scale;
     unsigned Size;
@@ -181,6 +182,10 @@ struct X86Operand final : public MCParsedAsmOperand {
   unsigned getMemBaseReg() const {
     assert(Kind == Memory && "Invalid access!");
     return Mem.BaseReg;
+  }
+  unsigned getMemDefaultBaseReg() const {
+    assert(Kind == Memory && "Invalid access!");
+    return Mem.DefaultBaseReg;
   }
   unsigned getMemIndexReg() const {
     assert(Kind == Memory && "Invalid access!");
@@ -310,6 +315,11 @@ struct X86Operand final : public MCParsedAsmOperand {
   bool isMem512() const {
     return Kind == Memory && (!Mem.Size || Mem.Size == 512);
   }
+
+  bool isSibMem() const {
+    return isMem() && Mem.BaseReg != X86::RIP && Mem.BaseReg != X86::EIP;
+  }
+
   bool isMemIndexReg(unsigned LowR, unsigned HighR) const {
     assert(Kind == Memory && "Invalid access!");
     return Mem.IndexReg >= LowR && Mem.IndexReg <= HighR;
@@ -456,6 +466,14 @@ struct X86Operand final : public MCParsedAsmOperand {
       X86MCRegisterClasses[X86::GR64RegClassID].contains(getReg()));
   }
 
+  bool isVectorReg() const {
+    return Kind == Register &&
+           (X86MCRegisterClasses[X86::VR64RegClassID].contains(getReg()) ||
+            X86MCRegisterClasses[X86::VR128XRegClassID].contains(getReg()) ||
+            X86MCRegisterClasses[X86::VR256XRegClassID].contains(getReg()) ||
+            X86MCRegisterClasses[X86::VR512RegClassID].contains(getReg()));
+  }
+
   bool isVK1Pair() const {
     return Kind == Register &&
       X86MCRegisterClasses[X86::VK1RegClassID].contains(getReg());
@@ -538,7 +556,10 @@ struct X86Operand final : public MCParsedAsmOperand {
 
   void addMemOperands(MCInst &Inst, unsigned N) const {
     assert((N == 5) && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::createReg(getMemBaseReg()));
+    if (getMemBaseReg())
+      Inst.addOperand(MCOperand::createReg(getMemBaseReg()));
+    else
+      Inst.addOperand(MCOperand::createReg(getMemDefaultBaseReg()));
     Inst.addOperand(MCOperand::createImm(getMemScale()));
     Inst.addOperand(MCOperand::createReg(getMemIndexReg()));
     addExpr(Inst, getMemDisp());
@@ -631,6 +652,7 @@ struct X86Operand final : public MCParsedAsmOperand {
     Res->Mem.SegReg   = 0;
     Res->Mem.Disp     = Disp;
     Res->Mem.BaseReg  = 0;
+    Res->Mem.DefaultBaseReg = 0;
     Res->Mem.IndexReg = 0;
     Res->Mem.Scale    = 1;
     Res->Mem.Size     = Size;
@@ -646,11 +668,14 @@ struct X86Operand final : public MCParsedAsmOperand {
   static std::unique_ptr<X86Operand>
   CreateMem(unsigned ModeSize, unsigned SegReg, const MCExpr *Disp,
             unsigned BaseReg, unsigned IndexReg, unsigned Scale, SMLoc StartLoc,
-            SMLoc EndLoc, unsigned Size = 0, StringRef SymName = StringRef(),
-            void *OpDecl = nullptr, unsigned FrontendSize = 0) {
+            SMLoc EndLoc, unsigned Size = 0,
+            unsigned DefaultBaseReg = X86::NoRegister,
+            StringRef SymName = StringRef(), void *OpDecl = nullptr,
+            unsigned FrontendSize = 0) {
     // We should never just have a displacement, that should be parsed as an
     // absolute memory operand.
-    assert((SegReg || BaseReg || IndexReg) && "Invalid memory operand!");
+    assert((SegReg || BaseReg || IndexReg || DefaultBaseReg) &&
+           "Invalid memory operand!");
 
     // The scale should always be one of {1,2,4,8}.
     assert(((Scale == 1 || Scale == 2 || Scale == 4 || Scale == 8)) &&
@@ -659,6 +684,7 @@ struct X86Operand final : public MCParsedAsmOperand {
     Res->Mem.SegReg   = SegReg;
     Res->Mem.Disp     = Disp;
     Res->Mem.BaseReg  = BaseReg;
+    Res->Mem.DefaultBaseReg = DefaultBaseReg;
     Res->Mem.IndexReg = IndexReg;
     Res->Mem.Scale    = Scale;
     Res->Mem.Size     = Size;

@@ -56,20 +56,20 @@ static const MCPhysReg QRegList[] = {AArch64::Q0, AArch64::Q1, AArch64::Q2,
 
 static bool finishStackBlock(SmallVectorImpl<CCValAssign> &PendingMembers,
                              MVT LocVT, ISD::ArgFlagsTy &ArgFlags,
-                             CCState &State, unsigned SlotAlign) {
+                             CCState &State, Align SlotAlign) {
   const Align StackAlign =
       State.getMachineFunction().getDataLayout().getStackAlignment();
-  const Align OrigAlign(ArgFlags.getOrigAlign());
-  const Align Align = std::min(OrigAlign, StackAlign);
+  const Align OrigAlign = ArgFlags.getNonZeroOrigAlign();
+  const Align Alignment = std::min(OrigAlign, StackAlign);
 
   for (auto &It : PendingMembers) {
     unsigned Size = It.getLocVT().getSizeInBits() / 8;
-    unsigned RegAlign = std::max((unsigned)Align.value(), SlotAlign);
+    Align RegAlign = std::max(Alignment, SlotAlign);
     if (It.getLocVT() == MVT::iFATPTR128)
-      RegAlign = std::max(RegAlign, 16u);
+      RegAlign = std::max(RegAlign, Align(16u));
     It.convertToMem(State.AllocateStack(Size, RegAlign));
     State.addLoc(It);
-    SlotAlign = 1;
+    SlotAlign = Align(1);
   }
 
   // All pending members have now been allocated
@@ -94,7 +94,7 @@ static bool CC_AArch64_Custom_Stack_Block(
 
   const AArch64Subtarget &Subtarget = static_cast<const AArch64Subtarget &>(
       State.getMachineFunction().getSubtarget());
-  unsigned StackAlign = Subtarget.hasPureCap() ? 16 : 8;
+  Align StackAlign(Subtarget.hasPureCap() ? 16 : 8);
   return finishStackBlock(PendingMembers, LocVT, ArgFlags, State, StackAlign);
 }
 
@@ -204,8 +204,9 @@ static bool CC_AArch64_Custom_Block(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
   for (auto Reg : RegList)
     State.AllocateReg(Reg);
 
-  unsigned SlotAlign =
-      Subtarget.isTargetDarwin() ? 1 : (Subtarget.hasPureCap() ? 16 : 8);
+  const Align SlotAlign = Subtarget.isTargetDarwin()
+                              ? Align(1)
+                              : Align(Subtarget.hasPureCap() ? 16 : 8);
 
   return finishStackBlock(PendingMembers, LocVT, ArgFlags, State, SlotAlign);
 }

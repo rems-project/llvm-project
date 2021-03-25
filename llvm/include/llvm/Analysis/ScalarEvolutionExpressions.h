@@ -222,39 +222,21 @@ class Type;
   class SCEVAddExpr : public SCEVCommutativeExpr {
     friend class ScalarEvolution;
 
-    Type *ExprType;
+    Type *Ty;
 
-    SCEVAddExpr(const FoldingSetNodeIDRef ID,
-                const SCEV *const *O, size_t N)
-      : SCEVCommutativeExpr(ID, scAddExpr, O, N) {
-      // We really want to get the correct type for fat pointers here.
-      // We should have special expressions for them which would clear
-      // up the type issue, but right now we use this hack which just
-      // checks the address space instead of going through the data
-      // layout.
-      ExprType = nullptr;
-      for (unsigned i = 0; i < getNumOperands(); ++i) {
-        Type *Ty = getOperand(i)->getType();
-        if (auto *PTy = dyn_cast<PointerType>(Ty)) {
-          if (PTy->getAddressSpace() == 200) {
-            ExprType = Ty;
-            break;
-          }
-        }
-      }
-      if (!ExprType)
-        ExprType = getOperand(getNumOperands() - 1)->getType();
+    SCEVAddExpr(const FoldingSetNodeIDRef ID, const SCEV *const *O, size_t N)
+        : SCEVCommutativeExpr(ID, scAddExpr, O, N) {
+      auto *FirstPointerTypedOp = find_if(operands(), [](const SCEV *Op) {
+        return Op->getType()->isPointerTy();
+      });
+      if (FirstPointerTypedOp != operands().end())
+        Ty = (*FirstPointerTypedOp)->getType();
+      else
+        Ty = getOperand(0)->getType();
     }
 
   public:
-    Type *getType() const {
-      return ExprType;
-      // FIXME: this doesn't work....
-      // Use the type of the last operand, which is likely to be a pointer
-      // type, if there is one. This doesn't usually matter, but it can help
-      // reduce casts when the expressions are expanded.
-      //return getOperand(getNumOperands() - 1)->getType();
-    }
+    Type *getType() const { return Ty; }
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static bool classof(const SCEV *S) {

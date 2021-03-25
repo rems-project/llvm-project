@@ -18,13 +18,14 @@
 ; CHECK-NEXT:  ModulePass Manager
 ; CHECK-NEXT:    Pre-ISel Intrinsic Lowering
 ; CHECK-NEXT:    FunctionPass Manager
+; CHECK-NEXT:      Module Verifier
 ; CHECK-NEXT:      Dominator Tree Construction
 ; CHECK-NEXT:      Basic Alias Analysis (stateless AA impl)
-; CHECK-NEXT:      Module Verifier
 ; CHECK-NEXT:      Natural Loop Information
 ; CHECK-NEXT:      Canonicalize natural loops
 ; CHECK-NEXT:      Scalar Evolution Analysis
 ; CHECK-NEXT:      Loop Pass Manager
+; CHECK-NEXT:        Canonicalize Freeze Instructions in Loops
 ; CHECK-NEXT:        Induction Variable Users
 ; CHECK-NEXT:        Loop Strength Reduction
 ; CHECK-NEXT:      Basic Alias Analysis (stateless AA impl)
@@ -139,9 +140,10 @@
 ; CHERI-NEXT:      CHERI invalidate pass
 ; CHECK-NEXT:      Fixup Statepoint Caller Saved
 ; CHECK-NEXT:      PostRA Machine Sink
-; CHECK-NEXT:      MachineDominator Tree Construction
-; CHECK-NEXT:      Machine Natural Loop Construction
+; CHERI-NEXT:      MachineDominator Tree Construction
+; CHERI-NEXT:      Machine Natural Loop Construction
 ; CHECK-NEXT:      Machine Block Frequency Analysis
+; MIPS-NEXT:       MachineDominator Tree Construction
 ; CHECK-NEXT:      MachinePostDominator Tree Construction
 ; CHECK-NEXT:      Lazy Machine Block Frequency Analysis
 ; CHECK-NEXT:      Machine Optimization Remark Emitter

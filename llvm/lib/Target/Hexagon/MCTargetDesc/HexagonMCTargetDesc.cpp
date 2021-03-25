@@ -292,7 +292,7 @@ static MCAsmInfo *createHexagonMCAsmInfo(const MCRegisterInfo &MRI,
 
   // VirtualFP = (R30 + #0).
   MCCFIInstruction Inst =
-      MCCFIInstruction::createDefCfa(nullptr,
+      MCCFIInstruction::cfiDefCfa(nullptr,
           MRI.getDwarfRegNum(Hexagon::R30, true), 0);
   MAI->addInitialFrameState(MCCFIProcType::Normal, Inst);
 

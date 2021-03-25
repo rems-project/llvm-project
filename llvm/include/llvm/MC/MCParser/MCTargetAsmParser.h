@@ -338,7 +338,7 @@ protected: // Can only create subclasses.
 
   /// SemaCallback - The Sema callback implementation.  Must be set when parsing
   /// ms-style inline assembly.
-  MCAsmParserSemaCallback *SemaCallback;
+  MCAsmParserSemaCallback *SemaCallback = nullptr;
 
   /// Set of options which affects instrumentation of inline assembly.
   MCTargetOptions MCOptions;

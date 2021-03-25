@@ -362,7 +362,6 @@ public:
       } m_value;
     }; // class FAValue
 
-  public:
     Row();
 
     Row(const UnwindPlan::Row &rhs) = default;
@@ -417,7 +416,6 @@ public:
     collection m_register_locations;
   }; // class Row
 
-public:
   typedef std::shared_ptr<Row> RowSP;
 
   UnwindPlan(lldb::RegisterKind reg_kind)

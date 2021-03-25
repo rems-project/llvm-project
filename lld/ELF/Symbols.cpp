@@ -23,8 +23,9 @@
 using namespace llvm;
 using namespace llvm::object;
 using namespace llvm::ELF;
+using namespace lld;
+using namespace lld::elf;
 
-namespace lld {
 // Returns a symbol for an error message.
 static std::string demangle(StringRef symName) {
   if (elf::config->demangle)
@@ -32,7 +33,7 @@ static std::string demangle(StringRef symName) {
   return std::string(symName);
 }
 
-std::string toString(const elf::Symbol &sym) {
+std::string lld::toString(const elf::Symbol &sym) {
   StringRef name = sym.getName();
   std::string ret = demangle(name);
 
@@ -44,11 +45,10 @@ std::string toString(const elf::Symbol &sym) {
   return ret;
 }
 
-namespace elf {
 static std::string getLocationNonTemplate(InputSectionBase *isec,
                                           uint64_t symOffset);
-}
-std::string verboseToString(const elf::Symbol *b, uint64_t symOffset) {
+
+std::string lld::verboseToString(const Symbol *b, uint64_t symOffset) {
   std::string msg;
 
   if (b->isLocal())
@@ -95,7 +95,7 @@ std::string verboseToString(const elf::Symbol *b, uint64_t symOffset) {
   if (name.empty()) {
     if (dr && dr->section) {
       if (isec) {
-        name = elf::getLocationNonTemplate(isec, symOffset);
+        name = ::getLocationNonTemplate(isec, symOffset);
       } else {
         name = (dr->section->name + "+0x" + utohexstr(symOffset)).str();
       }
@@ -116,11 +116,10 @@ std::string verboseToString(const elf::Symbol *b, uint64_t symOffset) {
   return msg;
 }
 
-std::string toELFString(const Archive::Symbol &b) {
+std::string lld::toELFString(const Archive::Symbol &b) {
   return demangle(b.getName());
 }
 
-namespace elf {
 Defined *ElfSym::bss;
 Defined *ElfSym::etext1;
 Defined *ElfSym::etext2;
@@ -137,7 +136,7 @@ Defined *ElfSym::relaIpltStart;
 Defined *ElfSym::relaIpltEnd;
 Defined *ElfSym::riscvGlobalPointer;
 Defined *ElfSym::tlsModuleBase;
-DenseMap<const Symbol *, const InputFile *> backwardReferences;
+DenseMap<const Symbol *, const InputFile *> elf::backwardReferences;
 
 Defined *ElfSym::newLibBss1;
 Defined *ElfSym::newLibBss2;
@@ -405,7 +404,7 @@ bool Symbol::includeInDynsym() const {
 }
 
 // Print out a log message for --trace-symbol.
-void printTraceSymbol(const Symbol *sym) {
+void elf::printTraceSymbol(const Symbol *sym) {
   std::string s;
   if (sym->isUndefined())
     s = ": reference to ";
@@ -421,7 +420,7 @@ void printTraceSymbol(const Symbol *sym) {
   message(toString(sym->file) + s + sym->getName());
 }
 
-void maybeWarnUnorderableSymbol(const Symbol *sym) {
+void elf::maybeWarnUnorderableSymbol(const Symbol *sym) {
   if (!config->warnSymbolOrdering)
     return;
 
@@ -469,7 +468,7 @@ static std::string getLocationNonTemplate(InputSectionBase *isec,
 
 // Returns true if a symbol can be replaced at load-time by a symbol
 // with the same name defined in other ELF executable or DSO.
-bool computeIsPreemptible(const Symbol &sym) {
+bool elf::computeIsPreemptible(const Symbol &sym) {
   assert(!sym.isLocal());
 
   // Only symbols with default visibility that appear in dynsym can be
@@ -485,17 +484,15 @@ bool computeIsPreemptible(const Symbol &sym) {
   if (!config->shared)
     return false;
 
-  // If the dynamic list is present, it specifies preemptable symbols in a DSO.
-  if (config->hasDynamicList)
+  // If -Bsymbolic or --dynamic-list is specified, or -Bsymbolic-functions is
+  // specified and the symbol is STT_FUNC, the symbol is preemptible iff it is
+  // in the dynamic list.
+  if (config->symbolic || (config->bsymbolicFunctions && sym.isFunc()))
     return sym.inDynamicList;
-
-  // -Bsymbolic means that definitions are not preempted.
-  if (config->bsymbolic || (config->bsymbolicFunctions && sym.isFunc()))
-    return false;
   return true;
 }
 
-void reportBackrefs() {
+void elf::reportBackrefs() {
   for (auto &it : backwardReferences) {
     const Symbol &sym = *it.first;
     warn("backward reference detected: " + sym.getName() + " in " +
@@ -846,8 +843,6 @@ void Symbol::resolveShared(const SharedSymbol &other) {
     uint8_t bind = binding;
     replace(other);
     binding = bind;
-  }
+  } else if (traced)
+    printTraceSymbol(&other);
 }
-
-} // namespace elf
-} // namespace lld

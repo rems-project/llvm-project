@@ -59,28 +59,28 @@ public:
   /// Also update LLVMTypeKind and LLVMGetTypeKind () in the C binding.
   ///
   enum TypeID {
-    // PrimitiveTypes - make sure LastPrimitiveTyID stays up to date.
-    VoidTyID = 0,  ///<  0: type with no size
-    HalfTyID,      ///<  1: 16-bit floating point type
-    FloatTyID,     ///<  2: 32-bit floating point type
-    DoubleTyID,    ///<  3: 64-bit floating point type
-    X86_FP80TyID,  ///<  4: 80-bit floating point type (X87)
-    FP128TyID,     ///<  5: 128-bit floating point type (112-bit mantissa)
-    PPC_FP128TyID, ///<  6: 128-bit floating point type (two 64-bits, PowerPC)
-    LabelTyID,     ///<  7: Labels
-    MetadataTyID,  ///<  8: Metadata
-    X86_MMXTyID,   ///<  9: MMX vectors (64 bits, X86 specific)
-    TokenTyID,     ///< 10: Tokens
+    // PrimitiveTypes
+    HalfTyID = 0,  ///< 16-bit floating point type
+    BFloatTyID,    ///< 16-bit floating point type (7-bit significand)
+    FloatTyID,     ///< 32-bit floating point type
+    DoubleTyID,    ///< 64-bit floating point type
+    X86_FP80TyID,  ///< 80-bit floating point type (X87)
+    FP128TyID,     ///< 128-bit floating point type (112-bit significand)
+    PPC_FP128TyID, ///< 128-bit floating point type (two 64-bits, PowerPC)
+    VoidTyID,      ///< type with no size
+    LabelTyID,     ///< Labels
+    MetadataTyID,  ///< Metadata
+    X86_MMXTyID,   ///< MMX vectors (64 bits, X86 specific)
+    TokenTyID,     ///< Tokens
 
     // Derived types... see DerivedTypes.h file.
-    // Make sure FirstDerivedTyID stays up to date!
-    IntegerTyID,       ///< 11: Arbitrary bit width integers
-    FunctionTyID,      ///< 12: Functions
-    StructTyID,        ///< 13: Structures
-    ArrayTyID,         ///< 14: Arrays
-    PointerTyID,       ///< 15: Pointers
-    FixedVectorTyID,   ///< 16: Fixed width SIMD vector type
-    ScalableVectorTyID ///< 17: Scalable SIMD vector type
+    IntegerTyID,       ///< Arbitrary bit width integers
+    FunctionTyID,      ///< Functions
+    PointerTyID,       ///< Pointers
+    StructTyID,        ///< Structures
+    ArrayTyID,         ///< Arrays
+    FixedVectorTyID,   ///< Fixed width SIMD vector type
+    ScalableVectorTyID ///< Scalable SIMD vector type
   };
 
 private:
@@ -146,6 +146,9 @@ public:
   /// Return true if this is 'half', a 16-bit IEEE fp type.
   bool isHalfTy() const { return getTypeID() == HalfTyID; }
 
+  /// Return true if this is 'bfloat', a 16-bit bfloat type.
+  bool isBFloatTy() const { return getTypeID() == BFloatTyID; }
+
   /// Return true if this is 'float', a 32-bit IEEE fp type.
   bool isFloatTy() const { return getTypeID() == FloatTyID; }
 
@@ -163,8 +166,8 @@ public:
 
   /// Return true if this is one of the six floating-point types
   bool isFloatingPointTy() const {
-    return getTypeID() == HalfTyID || getTypeID() == FloatTyID ||
-           getTypeID() == DoubleTyID ||
+    return getTypeID() == HalfTyID || getTypeID() == BFloatTyID ||
+           getTypeID() == FloatTyID || getTypeID() == DoubleTyID ||
            getTypeID() == X86_FP80TyID || getTypeID() == FP128TyID ||
            getTypeID() == PPC_FP128TyID;
   }
@@ -172,6 +175,7 @@ public:
   const fltSemantics &getFltSemantics() const {
     switch (getTypeID()) {
     case HalfTyID: return APFloat::IEEEhalf();
+    case BFloatTyID: return APFloat::BFloat();
     case FloatTyID: return APFloat::IEEEsingle();
     case DoubleTyID: return APFloat::IEEEdouble();
     case X86_FP80TyID: return APFloat::x87DoubleExtended();
@@ -230,7 +234,9 @@ public:
   bool isPtrOrPtrVectorTy() const { return getScalarType()->isPointerTy(); }
 
   /// True if this is an instance of VectorType.
-  inline bool isVectorTy() const;
+  inline bool isVectorTy() const {
+    return getTypeID() == ScalableVectorTyID || getTypeID() == FixedVectorTyID;
+  }
 
   /// Return true if this type could be converted with a lossless BitCast to
   /// type 'Ty'. For example, i8* to i32*. BitCasts are valid for types of the
@@ -306,7 +312,11 @@ public:
 
   /// If this is a vector type, return the element type, otherwise return
   /// 'this'.
-  inline Type *getScalarType() const;
+  inline Type *getScalarType() const {
+    if (isVectorTy())
+      return getContainedType(0);
+    return const_cast<Type *>(this);
+  }
 
   //===--------------------------------------------------------------------===//
   // Type Iteration support.
@@ -393,6 +403,7 @@ public:
   static Type *getVoidTy(LLVMContext &C);
   static Type *getLabelTy(LLVMContext &C);
   static Type *getHalfTy(LLVMContext &C);
+  static Type *getBFloatTy(LLVMContext &C);
   static Type *getFloatTy(LLVMContext &C);
   static Type *getDoubleTy(LLVMContext &C);
   static Type *getMetadataTy(LLVMContext &C);
@@ -428,6 +439,7 @@ public:
   // types as pointee.
   //
   static PointerType *getHalfPtrTy(LLVMContext &C, LLVM_DEFAULT_AS_PARAM(AS));
+  static PointerType *getBFloatPtrTy(LLVMContext &C, LLVM_DEFAULT_AS_PARAM(AS));
   static PointerType *getFloatPtrTy(LLVMContext &C, LLVM_DEFAULT_AS_PARAM(AS));
   static PointerType *getDoublePtrTy(LLVMContext &C, LLVM_DEFAULT_AS_PARAM(AS));
   static PointerType *getX86_FP80PtrTy(LLVMContext &C, LLVM_DEFAULT_AS_PARAM(AS));

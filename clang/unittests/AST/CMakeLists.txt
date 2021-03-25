@@ -26,7 +26,7 @@ add_clang_unittest(ASTTests
   DeclTest.cpp
   EvaluateAsRValueTest.cpp
   ExternalASTSourceTest.cpp
-  Language.cpp
+  HasSideEffectsTest.cpp
   NamedDeclPrinterTest.cpp
   RecursiveASTVisitorTest.cpp
   SizelessTypesTest.cpp
@@ -42,6 +42,7 @@ clang_target_link_libraries(ASTTests
   clangBasic
   clangFrontend
   clangSerialization
+  clangTesting
   clangTooling
   )
 

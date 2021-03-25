@@ -176,7 +176,9 @@ protected:
 
 private:
   // For RegisterContext only
-  DISALLOW_COPY_AND_ASSIGN(NativeRegisterContext);
+  NativeRegisterContext(const NativeRegisterContext &) = delete;
+  const NativeRegisterContext &
+  operator=(const NativeRegisterContext &) = delete;
 };
 
 } // namespace lldb_private

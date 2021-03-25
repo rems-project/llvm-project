@@ -144,7 +144,7 @@ public:
     // If the use is actually in a constant cast expression which itself
     // has only one use, we look through the constant cast expression.
     if (auto *CE = dyn_cast<ConstantExpr>(U->getUser()))
-      if (CE->getNumUses() == 1 && CE->isCast())
+      if (CE->hasOneUse() && CE->isCast())
         U = &*CE->use_begin();
 
     return (int)CB->getArgOperandNo(U) == CI.ParameterEncoding[0];
@@ -220,6 +220,27 @@ public:
     return V ? dyn_cast<Function>(V->stripPointerCasts()) : nullptr;
   }
 };
+
+/// Apply function Func to each CB's callback call site.
+template <typename UnaryFunction>
+void forEachCallbackCallSite(const CallBase &CB, UnaryFunction Func) {
+  SmallVector<const Use *, 4u> CallbackUses;
+  AbstractCallSite::getCallbackUses(CB, CallbackUses);
+  for (const Use *U : CallbackUses) {
+    AbstractCallSite ACS(U);
+    assert(ACS && ACS.isCallbackCall() && "must be a callback call");
+    Func(ACS);
+  }
+}
+
+/// Apply function Func to each CB's callback function.
+template <typename UnaryFunction>
+void forEachCallbackFunction(const CallBase &CB, UnaryFunction Func) {
+  forEachCallbackCallSite(CB, [&Func](AbstractCallSite &ACS) {
+    if (Function *Callback = ACS.getCalledFunction())
+      Func(Callback);
+  });
+}
 
 } // end namespace llvm
 

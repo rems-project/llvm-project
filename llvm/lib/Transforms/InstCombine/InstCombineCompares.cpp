@@ -1453,6 +1453,27 @@ Instruction *InstCombiner::foldICmpWithConstant(ICmpInst &Cmp) {
     if (Instruction *Res = processUGT_ADDCST_ADD(Cmp, A, B, CI2, CI, *this))
       return Res;
 
+  // icmp(phi(C1, C2, ...), C) -> phi(icmp(C1, C), icmp(C2, C), ...).
+  Constant *C = dyn_cast<Constant>(Op1);
+  if (!C)
+    return nullptr;
+
+  if (auto *Phi = dyn_cast<PHINode>(Op0))
+    if (all_of(Phi->operands(), [](Value *V) { return isa<Constant>(V); })) {
+      Type *Ty = Cmp.getType();
+      Builder.SetInsertPoint(Phi);
+      PHINode *NewPhi =
+          Builder.CreatePHI(Ty, Phi->getNumOperands());
+      for (BasicBlock *Predecessor : predecessors(Phi->getParent())) {
+        auto *Input =
+            cast<Constant>(Phi->getIncomingValueForBlock(Predecessor));
+        auto *BoolInput = ConstantExpr::getCompare(Pred, Input, C);
+        NewPhi->addIncoming(BoolInput, Predecessor);
+      }
+      NewPhi->takeName(&Cmp);
+      return replaceInstUsesWith(Cmp, NewPhi);
+    }
+
   return nullptr;
 }
 
@@ -1863,7 +1884,7 @@ Instruction *InstCombiner::foldICmpAndConstant(ICmpInst &Cmp,
     if (ExactLogBase2 != -1 && DL.isLegalInteger(ExactLogBase2 + 1)) {
       Type *NTy = IntegerType::get(Cmp.getContext(), ExactLogBase2 + 1);
       if (auto *AndVTy = dyn_cast<VectorType>(And->getType()))
-        NTy = VectorType::get(NTy, AndVTy->getNumElements());
+        NTy = FixedVectorType::get(NTy, AndVTy->getNumElements());
       Value *Trunc = Builder.CreateTrunc(X, NTy);
       auto NewPred = Cmp.getPredicate() == CmpInst::ICMP_EQ ? CmpInst::ICMP_SGE
                                                             : CmpInst::ICMP_SLT;
@@ -2153,7 +2174,7 @@ Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &Cmp,
       DL.isLegalInteger(TypeBits - Amt)) {
     Type *TruncTy = IntegerType::get(Cmp.getContext(), TypeBits - Amt);
     if (auto *ShVTy = dyn_cast<VectorType>(ShType))
-      TruncTy = VectorType::get(TruncTy, ShVTy->getNumElements());
+      TruncTy = FixedVectorType::get(TruncTy, ShVTy->getNumElements());
     Constant *NewC =
         ConstantInt::get(TruncTy, C.ashr(*ShiftAmt).trunc(TypeBits - Amt));
     return new ICmpInst(Pred, Builder.CreateTrunc(X, TruncTy), NewC);
@@ -2786,7 +2807,7 @@ static Instruction *foldICmpBitCast(ICmpInst &Cmp,
 
           Type *NewType = Builder.getIntNTy(XType->getScalarSizeInBits());
           if (auto *XVTy = dyn_cast<VectorType>(XType))
-            NewType = VectorType::get(NewType, XVTy->getNumElements());
+            NewType = FixedVectorType::get(NewType, XVTy->getNumElements());
           Value *NewBitcast = Builder.CreateBitCast(X, NewType);
           if (TrueIfSigned)
             return new ICmpInst(ICmpInst::ICMP_SLT, NewBitcast,
@@ -2827,7 +2848,7 @@ static Instruction *foldICmpBitCast(ICmpInst &Cmp,
 
   Value *Vec;
   ArrayRef<int> Mask;
-  if (match(BCSrcOp, m_ShuffleVector(m_Value(Vec), m_Undef(), m_Mask(Mask)))) {
+  if (match(BCSrcOp, m_Shuffle(m_Value(Vec), m_Undef(), m_Mask(Mask)))) {
     // Check whether every element of Mask is the same constant
     if (is_splat(Mask)) {
       auto *VecTy = cast<VectorType>(BCSrcOp->getType());
@@ -4626,17 +4647,6 @@ static Instruction *processUMulZExtIdiom(ICmpInst &I, Value *MulVal,
   case ICmpInst::ICMP_NE:
     // Recognize pattern:
     //   mulval = mul(zext A, zext B)
-    //   cmp eq/neq mulval, zext trunc mulval
-    if (ZExtInst *Zext = dyn_cast<ZExtInst>(OtherVal))
-      if (Zext->hasOneUse()) {
-        Value *ZextArg = Zext->getOperand(0);
-        if (TruncInst *Trunc = dyn_cast<TruncInst>(ZextArg))
-          if (Trunc->getType()->getPrimitiveSizeInBits() == MulWidth)
-            break; //Recognized
-      }
-
-    // Recognize pattern:
-    //   mulval = mul(zext A, zext B)
     //   cmp eq/neq mulval, and(mulval, mask), mask selects low MulWidth bits.
     ConstantInt *CI;
     Value *ValToMask;
@@ -5305,6 +5315,47 @@ static ICmpInst *canonicalizeCmpWithConstant(ICmpInst &I) {
   return new ICmpInst(FlippedStrictness->first, Op0, FlippedStrictness->second);
 }
 
+/// If we have a comparison with a non-canonical predicate, if we can update
+/// all the users, invert the predicate and adjust all the users.
+static CmpInst *canonicalizeICmpPredicate(CmpInst &I) {
+  // Is the predicate already canonical?
+  CmpInst::Predicate Pred = I.getPredicate();
+  if (isCanonicalPredicate(Pred))
+    return nullptr;
+
+  // Can all users be adjusted to predicate inversion?
+  if (!canFreelyInvertAllUsersOf(&I, /*IgnoredUser=*/nullptr))
+    return nullptr;
+
+  // Ok, we can canonicalize comparison!
+  // Let's first invert the comparison's predicate.
+  I.setPredicate(CmpInst::getInversePredicate(Pred));
+  I.setName(I.getName() + ".not");
+
+  // And now let's adjust every user.
+  for (User *U : I.users()) {
+    switch (cast<Instruction>(U)->getOpcode()) {
+    case Instruction::Select: {
+      auto *SI = cast<SelectInst>(U);
+      SI->swapValues();
+      SI->swapProfMetadata();
+      break;
+    }
+    case Instruction::Br:
+      cast<BranchInst>(U)->swapSuccessors(); // swaps prof metadata too
+      break;
+    case Instruction::Xor:
+      U->replaceAllUsesWith(&I);
+      break;
+    default:
+      llvm_unreachable("Got unexpected user - out of sync with "
+                       "canFreelyInvertAllUsersOf() ?");
+    }
+  }
+
+  return &I;
+}
+
 /// Integer compare with boolean values can always be turned into bitwise ops.
 static Instruction *canonicalizeICmpBool(ICmpInst &I,
                                          InstCombiner::BuilderTy &Builder) {
@@ -5432,21 +5483,18 @@ static Instruction *foldVectorCmp(CmpInst &Cmp,
                                   InstCombiner::BuilderTy &Builder) {
   const CmpInst::Predicate Pred = Cmp.getPredicate();
   Value *LHS = Cmp.getOperand(0), *RHS = Cmp.getOperand(1);
-  bool IsFP = isa<FCmpInst>(Cmp);
-
   Value *V1, *V2;
   ArrayRef<int> M;
-  if (!match(LHS, m_ShuffleVector(m_Value(V1), m_Undef(), m_Mask(M))))
+  if (!match(LHS, m_Shuffle(m_Value(V1), m_Undef(), m_Mask(M))))
     return nullptr;
 
   // If both arguments of the cmp are shuffles that use the same mask and
   // shuffle within a single vector, move the shuffle after the cmp:
   // cmp (shuffle V1, M), (shuffle V2, M) --> shuffle (cmp V1, V2), M
   Type *V1Ty = V1->getType();
-  if (match(RHS, m_ShuffleVector(m_Value(V2), m_Undef(), m_SpecificMask(M))) &&
+  if (match(RHS, m_Shuffle(m_Value(V2), m_Undef(), m_SpecificMask(M))) &&
       V1Ty == V2->getType() && (LHS->hasOneUse() || RHS->hasOneUse())) {
-    Value *NewCmp = IsFP ? Builder.CreateFCmp(Pred, V1, V2)
-                         : Builder.CreateICmp(Pred, V1, V2);
+    Value *NewCmp = Builder.CreateCmp(Pred, V1, V2);
     return new ShuffleVectorInst(NewCmp, UndefValue::get(NewCmp->getType()), M);
   }
 
@@ -5467,8 +5515,7 @@ static Instruction *foldVectorCmp(CmpInst &Cmp,
     C = ConstantVector::getSplat(cast<VectorType>(V1Ty)->getElementCount(),
                                  ScalarC);
     SmallVector<int, 8> NewM(M.size(), MaskSplatIndex);
-    Value *NewCmp = IsFP ? Builder.CreateFCmp(Pred, V1, C)
-                         : Builder.CreateICmp(Pred, V1, C);
+    Value *NewCmp = Builder.CreateCmp(Pred, V1, C);
     return new ShuffleVectorInst(NewCmp, UndefValue::get(NewCmp->getType()),
                                  NewM);
   }
@@ -5547,8 +5594,11 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     if (Instruction *Res = canonicalizeICmpBool(I, Builder))
       return Res;
 
-  if (ICmpInst *NewICmp = canonicalizeCmpWithConstant(I))
-    return NewICmp;
+  if (Instruction *Res = canonicalizeCmpWithConstant(I))
+    return Res;
+
+  if (Instruction *Res = canonicalizeICmpPredicate(I))
+    return Res;
 
   if (Instruction *Res = foldICmpWithConstant(I))
     return Res;

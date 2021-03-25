@@ -31,7 +31,7 @@ static int getLibCallID(const MachineFunction &MF,
                         const std::vector<CalleeSavedInfo> &CSI) {
   const auto *RVFI = MF.getInfo<RISCVMachineFunctionInfo>();
 
-  if (CSI.empty() || !RVFI->useSaveRestoreLibCalls())
+  if (CSI.empty() || !RVFI->useSaveRestoreLibCalls(MF))
     return -1;
 
   Register MaxReg = RISCV::NoRegister;
@@ -307,7 +307,7 @@ void RISCVFrameLowering::emitPrologue(MachineFunction &MF,
 
   // Emit ".cfi_def_cfa_offset RealStackSize"
   unsigned CFIIndex = MF.addFrameInst(
-      MCCFIInstruction::createDefCfaOffset(nullptr, -RealStackSize));
+      MCCFIInstruction::cfiDefCfaOffset(nullptr, RealStackSize));
   BuildMI(MBB, MBBI, DL, TII->get(TargetOpcode::CFI_INSTRUCTION))
       .addCFIIndex(CFIIndex);
 
@@ -350,9 +350,9 @@ void RISCVFrameLowering::emitPrologue(MachineFunction &MF,
               RealStackSize - RVFI->getVarArgsSaveSize(),
               MachineInstr::FrameSetup);
 
-    // Emit ".cfi_def_cfa $fp, -RVFI->getVarArgsSaveSize()"
-    unsigned CFIIndex = MF.addFrameInst(MCCFIInstruction::createDefCfa(
-        nullptr, RI->getDwarfRegNum(FPReg, true), -RVFI->getVarArgsSaveSize()));
+    // Emit ".cfi_def_cfa $fp, RVFI->getVarArgsSaveSize()"
+    unsigned CFIIndex = MF.addFrameInst(MCCFIInstruction::cfiDefCfa(
+        nullptr, RI->getDwarfRegNum(FPReg, true), RVFI->getVarArgsSaveSize()));
     BuildMI(MBB, MBBI, DL, TII->get(TargetOpcode::CFI_INSTRUCTION))
         .addCFIIndex(CFIIndex);
   }
@@ -370,7 +370,7 @@ void RISCVFrameLowering::emitPrologue(MachineFunction &MF,
     if (!hasFP(MF)) {
       // Emit ".cfi_def_cfa_offset StackSize"
       unsigned CFIIndex = MF.addFrameInst(
-          MCCFIInstruction::createDefCfaOffset(nullptr, -MFI.getStackSize()));
+          MCCFIInstruction::cfiDefCfaOffset(nullptr, MFI.getStackSize()));
       BuildMI(MBB, MBBI, DL, TII->get(TargetOpcode::CFI_INSTRUCTION))
           .addCFIIndex(CFIIndex);
     }
@@ -638,8 +638,8 @@ void RISCVFrameLowering::processFunctionBeforeFrameFinalized(
   // still needs an emergency spill slot for branch relaxation. This case
   // would currently be missed.
   if (!isInt<11>(MFI.estimateStackSize(MF))) {
-    int RegScavFI = MFI.CreateStackObject(
-        RegInfo->getSpillSize(*RC), RegInfo->getSpillAlignment(*RC), false);
+    int RegScavFI = MFI.CreateStackObject(RegInfo->getSpillSize(*RC),
+                                          RegInfo->getSpillAlign(*RC), false);
     RS->addScavengingFrameIndex(RegScavFI);
   }
 }
@@ -813,9 +813,10 @@ bool RISCVFrameLowering::restoreCalleeSavedRegisters(
 
 bool RISCVFrameLowering::canUseAsPrologue(const MachineBasicBlock &MBB) const {
   MachineBasicBlock *TmpMBB = const_cast<MachineBasicBlock *>(&MBB);
-  const auto *RVFI = MBB.getParent()->getInfo<RISCVMachineFunctionInfo>();
+  const MachineFunction *MF = MBB.getParent();
+  const auto *RVFI = MF->getInfo<RISCVMachineFunctionInfo>();
 
-  if (!RVFI->useSaveRestoreLibCalls())
+  if (!RVFI->useSaveRestoreLibCalls(*MF))
     return true;
 
   // Inserting a call to a __riscv_save libcall requires the use of the register
@@ -828,10 +829,11 @@ bool RISCVFrameLowering::canUseAsPrologue(const MachineBasicBlock &MBB) const {
 }
 
 bool RISCVFrameLowering::canUseAsEpilogue(const MachineBasicBlock &MBB) const {
+  const MachineFunction *MF = MBB.getParent();
   MachineBasicBlock *TmpMBB = const_cast<MachineBasicBlock *>(&MBB);
-  const auto *RVFI = MBB.getParent()->getInfo<RISCVMachineFunctionInfo>();
+  const auto *RVFI = MF->getInfo<RISCVMachineFunctionInfo>();
 
-  if (!RVFI->useSaveRestoreLibCalls())
+  if (!RVFI->useSaveRestoreLibCalls(*MF))
     return true;
 
   // Using the __riscv_restore libcalls to restore CSRs requires a tail call.

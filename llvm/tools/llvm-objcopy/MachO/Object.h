@@ -107,14 +107,17 @@ struct SymbolEntry {
   uint16_t n_desc;
   uint64_t n_value;
 
-  bool isExternalSymbol() const {
-    return n_type & ((MachO::N_EXT | MachO::N_PEXT));
-  }
+  bool isExternalSymbol() const { return n_type & MachO::N_EXT; }
 
   bool isLocalSymbol() const { return !isExternalSymbol(); }
 
   bool isUndefinedSymbol() const {
     return (n_type & MachO::N_TYPE) == MachO::N_UNDF;
+  }
+
+  bool isSwiftSymbol() const {
+    return StringRef(Name).startswith("_$s") ||
+           StringRef(Name).startswith("_$S");
   }
 
   Optional<uint32_t> section() const {
@@ -299,7 +302,12 @@ struct Object {
   IndirectSymbolTable IndirectSymTable;
   LinkData DataInCode;
   LinkData FunctionStarts;
+  LinkData CodeSignature;
 
+  Optional<uint32_t> SwiftVersion;
+
+  /// The index of LC_CODE_SIGNATURE load command if present.
+  Optional<size_t> CodeSignatureCommandIndex;
   /// The index of LC_SYMTAB load command if present.
   Optional<size_t> SymTabCommandIndex;
   /// The index of LC_DYLD_INFO or LC_DYLD_INFO_ONLY load command if present.
@@ -318,6 +326,11 @@ struct Object {
 
   Error
   removeSections(function_ref<bool(const std::unique_ptr<Section> &)> ToRemove);
+
+  Error removeLoadCommands(function_ref<bool(const LoadCommand &)> ToRemove);
+
+  void updateLoadCommandIndexes();
+
   void addLoadCommand(LoadCommand LC);
 
   /// Creates a new segment load command in the object and returns a reference

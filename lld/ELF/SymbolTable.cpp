@@ -26,10 +26,10 @@
 using namespace llvm;
 using namespace llvm::object;
 using namespace llvm::ELF;
+using namespace lld;
+using namespace lld::elf;
 
-namespace lld {
-namespace elf {
-SymbolTable *symtab;
+SymbolTable *elf::symtab;
 
 Defined *SymbolTable::ensureSymbolWillBeInDynsym(Symbol* original) {
   assert(!original->includeInDynsym() && "Already included in dynsym?");
@@ -78,12 +78,18 @@ void SymbolTable::wrap(Symbol *sym, Symbol *real, Symbol *wrap) {
   idx2 = idx1;
   idx1 = idx3;
 
-  // Now renaming is complete. No one refers Real symbol. We could leave
-  // Real as-is, but if Real is written to the symbol table, that may
-  // contain irrelevant values. So, we copy all values from Sym to Real.
-  StringRef s = real->getName();
+  if (real->exportDynamic)
+    sym->exportDynamic = true;
+
+  // Now renaming is complete, and no one refers to real. We drop real from
+  // .symtab and .dynsym. If real is undefined, it is important that we don't
+  // leave it in .dynsym, because otherwise it might lead to an undefined symbol
+  // error in a subsequent link. If real is defined, we could emit real as an
+  // alias for sym, but that could degrade the user experience of some tools
+  // that can print out only one symbol for each location: sym is a preferred
+  // name than real, but they might print out real instead.
   memcpy(real, sym, sizeof(SymbolUnion));
-  real->setName(s);
+  real->isUsedInRegularObj = false;
 }
 
 // Find an existing symbol or create a new one.
@@ -126,7 +132,7 @@ Symbol *SymbolTable::insert(StringRef name) {
 }
 
 Symbol *SymbolTable::addSymbol(const Symbol &newSym) {
-  Symbol *sym = symtab->insert(newSym.getName());
+  Symbol *sym = insert(newSym.getName());
   sym->resolve(newSym);
   return sym;
 }
@@ -148,7 +154,7 @@ Symbol *SymbolTable::find(StringRef name) {
 // We need to put such symbols to the main program's .dynsym so that
 // shared libraries can find them.
 // Except this, we ignore undefined symbols in DSOs.
-template <class ELFT> void SymbolTable::scanShlibUndefined() {
+void SymbolTable::scanShlibUndefined() {
   for (InputFile *F : sharedFiles) {
     for (StringRef U : F->getUndefinedSymbols()) {
       Symbol *Sym = find(U);
@@ -325,10 +331,3 @@ void SymbolTable::scanVersionScript() {
   // --dynamic-list.
   handleDynamicList();
 }
-
-template void SymbolTable::scanShlibUndefined<ELF32LE>();
-template void SymbolTable::scanShlibUndefined<ELF32BE>();
-template void SymbolTable::scanShlibUndefined<ELF64LE>();
-template void SymbolTable::scanShlibUndefined<ELF64BE>();
-} // namespace elf
-} // namespace lld

@@ -19,9 +19,8 @@ using namespace llvm;
 using namespace llvm::object;
 using namespace llvm::support::endian;
 using namespace llvm::ELF;
-
-namespace lld {
-namespace elf {
+using namespace lld;
+using namespace lld::elf;
 
 namespace {
 class X86_64 : public TargetInfo {
@@ -38,6 +37,7 @@ public:
                 uint64_t pltEntryAddr) const override;
   void relocate(uint8_t *loc, const Relocation &rel,
                 uint64_t val) const override;
+  int64_t getImplicitAddend(const uint8_t *buf, RelType type) const override;
   void applyJumpInstrMod(uint8_t *loc, JumpModType type,
                          unsigned size) const override;
 
@@ -675,6 +675,45 @@ void X86_64::applyJumpInstrMod(uint8_t *loc, JumpModType type,
   }
 }
 
+int64_t X86_64::getImplicitAddend(const uint8_t *buf, RelType type) const {
+  switch (type) {
+  case R_X86_64_8:
+  case R_X86_64_PC8:
+    return SignExtend64<8>(*buf);
+  case R_X86_64_16:
+  case R_X86_64_PC16:
+    return SignExtend64<16>(read16le(buf));
+  case R_X86_64_32:
+  case R_X86_64_32S:
+  case R_X86_64_TPOFF32:
+  case R_X86_64_GOT32:
+  case R_X86_64_GOTPC32:
+  case R_X86_64_GOTPC32_TLSDESC:
+  case R_X86_64_GOTPCREL:
+  case R_X86_64_GOTPCRELX:
+  case R_X86_64_REX_GOTPCRELX:
+  case R_X86_64_PC32:
+  case R_X86_64_GOTTPOFF:
+  case R_X86_64_PLT32:
+  case R_X86_64_TLSGD:
+  case R_X86_64_TLSLD:
+  case R_X86_64_DTPOFF32:
+  case R_X86_64_SIZE32:
+    return SignExtend64<32>(read32le(buf));
+  case R_X86_64_64:
+  case R_X86_64_DTPOFF64:
+  case R_X86_64_PC64:
+  case R_X86_64_SIZE64:
+  case R_X86_64_GOT64:
+  case R_X86_64_GOTOFF64:
+  case R_X86_64_GOTPC64:
+  case R_X86_64_RELATIVE:
+    return read64le(buf);
+  default:
+    llvm_unreachable("unknown relocation");
+  }
+}
+
 void X86_64::relocate(uint8_t *loc, const Relocation &rel, uint64_t val) const {
   switch (rel.type) {
   case R_X86_64_8:
@@ -722,6 +761,7 @@ void X86_64::relocate(uint8_t *loc, const Relocation &rel, uint64_t val) const {
   case R_X86_64_GOT64:
   case R_X86_64_GOTOFF64:
   case R_X86_64_GOTPC64:
+  case R_X86_64_RELATIVE:
     write64le(loc, val);
     break;
   default:
@@ -1086,7 +1126,4 @@ static TargetInfo *getTargetInfo() {
   return &t;
 }
 
-TargetInfo *getX86_64TargetInfo() { return getTargetInfo(); }
-
-} // namespace elf
-} // namespace lld
+TargetInfo *elf::getX86_64TargetInfo() { return getTargetInfo(); }

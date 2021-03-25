@@ -1374,33 +1374,26 @@ class IntegratedTestKeywordParser(object):
                 BooleanExpression.evaluate(s, [])
         return output
 
-def parseIntegratedTestScript(test, additional_parsers=[],
-                              require_script=True):
 
-    """parseIntegratedTestScript - Scan an LLVM/Clang style integrated test
-    script and extract the lines to 'RUN' as well as 'XFAIL', 'REQUIRES',
-    'UNSUPPORTED' and 'ALLOW_RETRIES' information.
+def _parseKeywords(sourcepath, additional_parsers=[],
+                   require_script=True):
+    """_parseKeywords
 
-    If additional parsers are specified then the test is also scanned for the
-    keywords they specify and all matches are passed to the custom parser.
+    Scan an LLVM/Clang style integrated test script and extract all the lines
+    pertaining to a special parser. This includes 'RUN', 'XFAIL', 'REQUIRES',
+    'UNSUPPORTED' and 'ALLOW_RETRIES', as well as other specified custom
+    parsers.
 
-    If 'require_script' is False an empty script
-    may be returned. This can be used for test formats where the actual script
-    is optional or ignored.
+    Returns a dictionary mapping each custom parser to its value after
+    parsing the test.
     """
-
     # Install the built-in keyword parsers.
     script = []
-    assert isinstance(test, lit.Test.Test)
     builtin_parsers = [
-        IntegratedTestKeywordParser('RUN:', ParserKind.COMMAND,
-                                    initial_value=script),
-        IntegratedTestKeywordParser('XFAIL:', ParserKind.BOOLEAN_EXPR,
-                                    initial_value=test.xfails),
-        IntegratedTestKeywordParser('REQUIRES:', ParserKind.BOOLEAN_EXPR,
-                                    initial_value=test.requires),
-        IntegratedTestKeywordParser('UNSUPPORTED:', ParserKind.BOOLEAN_EXPR,
-                                    initial_value=test.unsupported),
+        IntegratedTestKeywordParser('RUN:', ParserKind.COMMAND, initial_value=script),
+        IntegratedTestKeywordParser('XFAIL:', ParserKind.BOOLEAN_EXPR),
+        IntegratedTestKeywordParser('REQUIRES:', ParserKind.BOOLEAN_EXPR),
+        IntegratedTestKeywordParser('UNSUPPORTED:', ParserKind.BOOLEAN_EXPR),
         IntegratedTestKeywordParser('ALLOW_RETRIES:', ParserKind.INTEGER),
         IntegratedTestKeywordParser('END.', ParserKind.TAG)
     ]
@@ -1409,7 +1402,7 @@ def parseIntegratedTestScript(test, additional_parsers=[],
     # Install user-defined additional parsers.
     for parser in additional_parsers:
         if not isinstance(parser, IntegratedTestKeywordParser):
-            raise ValueError('additional parser must be an instance of '
+            raise ValueError('Additional parser must be an instance of '
                              'IntegratedTestKeywordParser')
         if parser.keyword in keyword_parsers:
             raise ValueError("Parser for keyword '%s' already exists"
@@ -1417,7 +1410,6 @@ def parseIntegratedTestScript(test, additional_parsers=[],
         keyword_parsers[parser.keyword] = parser
 
     # Collect the test lines from the script.
-    sourcepath = test.getSourcePath()
     for line_number, command_type, ln in \
             parseIntegratedTestScriptCommands(sourcepath,
                                               keyword_parsers.keys()):
@@ -1426,29 +1418,13 @@ def parseIntegratedTestScript(test, additional_parsers=[],
         if command_type == 'END.' and parser.getValue() is True:
             break
 
-    # HACK to allow running only cheri tests:
-    is_cheri_test = False
-    # tests are CHERI tests if they are inside a cheri directory. They are also
-    # cheri tests if they use any of the CHERI substitutions in the RUN: lines
-    if "/cheri/" in test.getFullName().lower():
-        is_cheri_test = True
-    if not is_cheri_test and (script and any("%cheri" in command for command in script)):
-        # print("Test", test.getFullName(), "uses cheri substitutions")
-        is_cheri_test = True
-    if is_cheri_test:
-        test.requires.append(CheriTestMode.feature_include_cheri_tests)
-    else:
-        # This test should not be run when running cheri tests only
-        test.unsupported.append(CheriTestMode.feature_cheri_tests_only)
-
     # Verify the script contains a run line.
     if require_script and not script:
-        return lit.Test.Result(Test.UNRESOLVED, "Test has no run line!")
+        raise ValueError("Test has no 'RUN:' line")
 
     # Check for unterminated run lines.
     if script and script[-1][-1] == '\\':
-        return lit.Test.Result(Test.UNRESOLVED,
-                               "Test has unterminated run lines (with '\\')")
+        raise ValueError("Test has unterminated 'RUN:' lines (with '\\')")
 
     # Check boolean expressions for unterminated lines.
     for key in keyword_parsers:
@@ -1457,7 +1433,60 @@ def parseIntegratedTestScript(test, additional_parsers=[],
             continue
         value = kp.getValue()
         if value and value[-1][-1] == '\\':
-            raise ValueError("Test has unterminated %s lines (with '\\')" % key)
+            raise ValueError("Test has unterminated '{key}' lines (with '\\')"
+                             .format(key=key))
+
+    # Make sure there's at most one ALLOW_RETRIES: line
+    allowed_retries = keyword_parsers['ALLOW_RETRIES:'].getValue()
+    if allowed_retries and len(allowed_retries) > 1:
+        raise ValueError("Test has more than one ALLOW_RETRIES lines")
+
+    return {p.keyword: p.getValue() for p in keyword_parsers.values()}
+
+
+def parseIntegratedTestScript(test, additional_parsers=[],
+                              require_script=True):
+    """parseIntegratedTestScript - Scan an LLVM/Clang style integrated test
+    script and extract the lines to 'RUN' as well as 'XFAIL', 'REQUIRES',
+    'UNSUPPORTED' and 'ALLOW_RETRIES' information into the given test.
+
+    If additional parsers are specified then the test is also scanned for the
+    keywords they specify and all matches are passed to the custom parser.
+
+    If 'require_script' is False an empty script
+    may be returned. This can be used for test formats where the actual script
+    is optional or ignored.
+    """
+    # Parse the test sources and extract test properties
+    try:
+        parsed = _parseKeywords(test.getSourcePath(), additional_parsers,
+                                require_script)
+    except ValueError as e:
+        return lit.Test.Result(Test.UNRESOLVED, str(e))
+    script = parsed['RUN:'] or []
+    test.xfails += parsed['XFAIL:'] or []
+    test.requires += parsed['REQUIRES:'] or []
+    test.unsupported += parsed['UNSUPPORTED:'] or []
+    if parsed['ALLOW_RETRIES:']:
+        test.allowed_retries = parsed['ALLOW_RETRIES:'][0]
+
+    # HACK to allow running only cheri tests:
+    # Tests are CHERI tests if they are inside a cheri directory. They are also
+    # cheri tests if they use any of the CHERI substitutions in the RUN: lines
+    if test.config.cheri_test_mode != CheriTestMode.INCLUDE:
+        is_cheri_test = False
+        assert isinstance(test.path_in_suite, tuple)
+        if "cheri" in test.path_in_suite or "CHERI" in test.path_in_suite or "CHERI-Generic" in test.path_in_suite:
+            is_cheri_test = True
+        if not is_cheri_test and (script and any("%cheri" in command for command in script)):
+            # print("Test", test.getFullName(), "uses cheri substitutions")
+            is_cheri_test = True
+
+        if is_cheri_test and test.config.cheri_test_mode == CheriTestMode.EXCLUDE:
+            return lit.Test.Result(Test.SKIPPED, "Skipped since CHERI tests are excluded.")
+        elif not is_cheri_test and test.config.cheri_test_mode == CheriTestMode.ONLY:
+            return lit.Test.Result(Test.SKIPPED, "Not a CHERI test and only running CHERI tests.")
+
 
     # Enforce REQUIRES:
     missing_required_features = test.getMissingRequiredFeatures()
@@ -1475,14 +1504,6 @@ def parseIntegratedTestScript(test, additional_parsers=[],
             Test.UNSUPPORTED,
             "Test does not support the following features "
             "and/or targets: %s" % msg)
-
-    # Handle ALLOW_RETRIES:
-    allowed_retries = keyword_parsers['ALLOW_RETRIES:'].getValue()
-    if allowed_retries:
-        if len(allowed_retries) > 1:
-            return lit.Test.Result(Test.UNRESOLVED,
-                                   "Test has more than one ALLOW_RETRIES lines")
-        test.allowed_retries = allowed_retries[0]
 
     # Enforce limit_to_features.
     if not test.isWithinFeatureLimits():

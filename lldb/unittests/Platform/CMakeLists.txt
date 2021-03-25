@@ -7,3 +7,5 @@ add_lldb_unittest(LLDBPlatformTests
     Support
     RuntimeDyld
   )
+
+add_subdirectory(Android)
