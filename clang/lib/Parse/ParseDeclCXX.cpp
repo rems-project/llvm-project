@@ -1854,7 +1854,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     } else if (TUK == Sema::TUK_Reference ||
                (TUK == Sema::TUK_Friend &&
                 TemplateInfo.Kind == ParsedTemplateInfo::NonTemplate)) {
-      ProhibitAttributes(attrs);
+      ProhibitCXX11Attributes(attrs, diag::err_attributes_not_allowed,
+                              /*DiagnoseEmptyAttrs=*/true);
       TypeResult = Actions.ActOnTagTemplateIdType(TUK, TagType, StartLoc,
                                                   SS,
                                                   TemplateId->TemplateKWLoc,
@@ -1926,7 +1927,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
         TagType, StartLoc, SS, Name, NameLoc, attrs);
   } else if (TUK == Sema::TUK_Friend &&
              TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate) {
-    ProhibitAttributes(attrs);
+    ProhibitCXX11Attributes(attrs, diag::err_attributes_not_allowed,
+                            /*DiagnoseEmptyAttrs=*/true);
 
     TagOrTempResult = Actions.ActOnTemplatedFriendTag(
         getCurScope(), DS.getFriendSpecLoc(), TagType, StartLoc, SS, Name,
