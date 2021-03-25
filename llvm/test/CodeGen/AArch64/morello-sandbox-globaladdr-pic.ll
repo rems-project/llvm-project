@@ -1,4 +1,4 @@
-; RUN: llc -march=arm64 -mattr=+c64,+morello -target-abi purecap -relocation-model=pic -o - %s | FileCheck %s
+; RUN: llc -mtriple=arm64 -mattr=+c64,+morello -target-abi purecap -relocation-model=pic -o - %s | FileCheck %s
 
 @v = internal addrspace(200) global i32 5, align 4
 

@@ -1,5 +1,5 @@
-; RUN: llc -march=arm64 -mattr=+c64,+morello,+use-16-cap-regs -target-abi purecap -o - %s -verify-machineinstrs | FileCheck %s --check-prefix=PCS16
-; RUN: llc -march=arm64 -mattr=+c64,+morello -target-abi purecap -o - %s -verify-machineinstrs | FileCheck %s --check-prefix=PCS32
+; RUN: llc -mtriple=arm64 -mattr=+c64,+morello,+use-16-cap-regs -target-abi purecap -o - %s -verify-machineinstrs | FileCheck %s --check-prefix=PCS16
+; RUN: llc -mtriple=arm64 -mattr=+c64,+morello -target-abi purecap -o - %s -verify-machineinstrs | FileCheck %s --check-prefix=PCS32
 
 target datalayout = "e-m:e-pf200:128:128-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"
 
