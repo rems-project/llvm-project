@@ -2227,8 +2227,7 @@ void CodeGenModule::ConstructAttributeList(
     llvm::AttrBuilder Attrs;
 
     if (!CodeGenOpts.NullPointerIsValid &&
-        getTargetCodeGenInfo().canMarkAsNonNull(FI.arg_begin()->type,
-                                                getContext())) {
+        getAddressSpaceForType(FI.arg_begin()->type) == 0) {
       Attrs.addAttribute(llvm::Attribute::NonNull);
     }
 
