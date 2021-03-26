@@ -1,4 +1,4 @@
-breakpoint set -n last
+breakpoint set -p "Break here"
 process launch --
 
 thread backtrace
