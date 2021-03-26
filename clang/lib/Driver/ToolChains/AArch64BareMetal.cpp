@@ -299,7 +299,8 @@ void Linker::ConstructJob(Compilation &C, const JobAction &JA,
   }
   if (Linker == nullptr)
     Linker = Args.MakeArgString(TC.GetProgramPath(LinkerName.c_str()));
-  C.addCommand(std::make_unique<Command>(JA, *this, Linker, CmdArgs, Inputs));
+  C.addCommand(std::make_unique<Command>(
+      JA, *this, ResponseFileSupport::AtFileUTF8(), Linker, CmdArgs, Inputs));
 }
 
 void Assembler::ConstructJob(Compilation &C, const JobAction &JA,
@@ -325,5 +326,7 @@ void Assembler::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back(Input.getFilename());
 
   const char *Assembler = Args.MakeArgString(TC.GetProgramPath(AssemblerName.c_str()));
-  C.addCommand(std::make_unique<Command>(JA, *this, Assembler, CmdArgs, Inputs));
+  C.addCommand(std::make_unique<Command>(JA, *this,
+                                         ResponseFileSupport::AtFileUTF8(),
+                                         Assembler, CmdArgs, Inputs));
 }

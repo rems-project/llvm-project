@@ -261,7 +261,7 @@ static MCAsmInfo *createAArch64MCAsmInfo(const MCRegisterInfo &MRI,
 
   unsigned RegPureCap = MRI.getDwarfRegNum(AArch64::CSP, true);
   MCCFIInstruction InstPureCap =
-      MCCFIInstruction::createDefCfa(nullptr, RegPureCap, 0);
+      MCCFIInstruction::cfiDefCfa(nullptr, RegPureCap, 0);
   MAI->addInitialFrameState(MCCFIProcType::PureCap, InstPureCap);
 
   // Register that the purecap CFI procedure type uses CLR as the return address

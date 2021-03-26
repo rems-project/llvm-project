@@ -659,11 +659,11 @@ static uint32_t g_rddc_el0_invalidates[] = {cap_ddc, LLDB_INVALID_REGNUM};
         g_##reg##_invalidates, nullptr, 0                                      \
   }
 
-#define DEFINE_CAP_PCC(reg, generic_kind)                                     \
+#define DEFINE_CAP_PCC(reg, generic_kind)                                      \
   {                                                                            \
     #reg, nullptr, 17, CAP_OFFSET(cap_##reg - cap_c0),                         \
         lldb::eEncodingCapability,                                             \
-        lldb::eFormatHex, MISC_KIND(cap_##reg), nullptr,    \
+        lldb::eFormatHex, LLDB_KIND(cap_##reg), nullptr,                       \
         g_##reg##_invalidates, nullptr, 0                                      \
   }
 
@@ -705,7 +705,7 @@ static uint32_t g_rddc_el0_invalidates[] = {cap_ddc, LLDB_INVALID_REGNUM};
   {                                                                            \
     #reg, nullptr, size, THREAD_OFFSET_NAME(reg),                              \
         type,                                                                  \
-        lldb::eFormatHex, MISC_KIND(thread_##reg), nullptr, \
+        lldb::eFormatHex, LLDB_KIND(thread_##reg), nullptr, \
         nullptr, nullptr, 0                                      \
   }
 

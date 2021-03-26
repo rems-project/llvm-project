@@ -10405,6 +10405,7 @@ class SIMDLdStSingleDTiedPost<bit L, bit R, bits<3> opcode, bits<2> size,
   let Inst{11-10} = size;
 }
 
+let mayLoad = 1, mayStore = 0, hasSideEffects = 0 in
 multiclass SIMDLdSingleBTied<bit R, bits<3> opcode, string asm,
                          RegisterOperand listtype,
                          RegisterOperand GPR64pi> {

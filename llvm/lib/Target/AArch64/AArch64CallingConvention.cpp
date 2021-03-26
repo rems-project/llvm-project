@@ -265,7 +265,7 @@ static bool CC_AArch64_Custom_CCall_Block(unsigned &ValNo, MVT &ValVT, MVT &LocV
   for (auto Reg : RegList)
     State.AllocateReg(Reg);
 
-  return finishStackBlock(PendingMembers, LocVT, ArgFlags, State, 16);
+  return finishStackBlock(PendingMembers, LocVT, ArgFlags, State, Align(16));
 }
 
 // TableGen provides definitions of the calling convention analysis entry

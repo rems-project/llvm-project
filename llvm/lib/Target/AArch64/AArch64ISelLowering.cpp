@@ -1459,6 +1459,7 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case AArch64ISD::FIRST_NUMBER:
     break;
     MAKE_CASE(AArch64ISD::CALL)
+    MAKE_CASE(AArch64ISD::CCALL)
     MAKE_CASE(AArch64ISD::ClearCALL)
     MAKE_CASE(AArch64ISD::ClearCCALL)
     MAKE_CASE(AArch64ISD::ADRP)
@@ -1591,6 +1592,7 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
     MAKE_CASE(AArch64ISD::TC_RETURN)
     MAKE_CASE(AArch64ISD::CTC_RETURN)
     MAKE_CASE(AArch64ISD::ClearTC_RETURN)
+    MAKE_CASE(AArch64ISD::ClearCTC_RETURN)
     MAKE_CASE(AArch64ISD::CapAlignDown)
     MAKE_CASE(AArch64ISD::CapAlignUp)
     MAKE_CASE(AArch64ISD::CCheckPermS)
@@ -3672,7 +3674,7 @@ SDValue AArch64TargetLowering::LowerADDRSPACECAST(SDValue Op,
             ConstantInt::get(Int64Ty, GN->getOffset()));
       // Now load the constant from a constant pool.
       SDNode *CPNode =
-          DAG.getTargetConstantPool(Addr, MVT::i64, 16, 0).getNode();
+          DAG.getTargetConstantPool(Addr, MVT::i64, Align(16), 0).getNode();
       ConstantPoolSDNode *Pool = cast<ConstantPoolSDNode>(CPNode);
       SDValue PoolAddr = (Subtarget->hasC64() ? getFatAddr(Pool, DAG)
                                               : getAddr(Pool, DAG));
@@ -5587,7 +5589,7 @@ SDValue AArch64TargetLowering::LowerGlobalAddress(SDValue Op,
                        DAG.getConstant(1, DL, MVT::i32));
 
   if (Op.getSimpleValueType() == MVT::iFATPTR128 && !IsLargeCM) {
-    SDNode *CPNode = DAG.getTargetConstantPool(GV, PtrVT, 0, 0).getNode();
+    SDNode *CPNode = DAG.getTargetConstantPool(GV, PtrVT, MaybeAlign(), 0).getNode();
     ConstantPoolSDNode *Pool = cast<ConstantPoolSDNode>(CPNode);
     SDValue PoolAddr = (Subtarget->hasC64() ? getFatAddr(Pool, DAG)
                                             : getAddr(Pool, DAG, OpFlags));
@@ -6756,7 +6758,7 @@ SDValue AArch64TargetLowering::LowerConstantPool(SDValue Op,
 
     SDLoc DL(Op);
     SDNode *CPNode = DAG.getTargetConstantPool(CP->getConstVal(),
-                                               PtrVT, CP->getAlignment(),
+                                               PtrVT, CP->getAlign(),
                                                CP->getOffset()).getNode();
     ConstantPoolSDNode *Pool = cast<ConstantPoolSDNode>(CPNode);
 

@@ -36,6 +36,76 @@
 using namespace lldb;
 using namespace lldb_private;
 
+
+static uint32_t GetCRegFromXRegForUnwind(RegisterContext &reg_ctx,
+    uint32_t lldb_regnum) {
+  // Convert the register number to the DWARF numbering to allow a sensible
+  // lookup.
+  uint32_t dwarf_regnum;
+  if (!reg_ctx.ConvertBetweenRegisterKinds(eRegisterKindLLDB, lldb_regnum,
+      eRegisterKindDWARF, dwarf_regnum))
+    return LLDB_INVALID_REGNUM;
+
+  // See if it is an Xn register and get its Cn alias.
+  uint32_t extended_dwarf_regnum;
+  if (dwarf_regnum >= arm64_dwarf::x0 && dwarf_regnum <= arm64_dwarf::x30)
+    extended_dwarf_regnum = arm64_dwarf::c0 + (dwarf_regnum - arm64_dwarf::x0);
+  else if (dwarf_regnum == arm64_dwarf::sp)
+    extended_dwarf_regnum = arm64_dwarf::csp;
+  else
+    return LLDB_INVALID_REGNUM;
+
+  // Convert the Cn register to the internal numbering.
+  uint32_t extended_lldb_regnum;
+  if (!reg_ctx.ConvertBetweenRegisterKinds(
+      eRegisterKindDWARF, extended_dwarf_regnum, eRegisterKindLLDB,
+      extended_lldb_regnum))
+    return LLDB_INVALID_REGNUM;
+
+  return extended_lldb_regnum;
+}
+
+static uint32_t GetXRegFromCRegForUnwind(RegisterContext &reg_ctx,
+    uint32_t lldb_regnum) {
+  // Convert the register number to the DWARF numbering to allow a sensible
+  // lookup.
+  uint32_t dwarf_regnum;
+  if (!reg_ctx.ConvertBetweenRegisterKinds(eRegisterKindLLDB, lldb_regnum,
+      eRegisterKindDWARF, dwarf_regnum))
+    return LLDB_INVALID_REGNUM;
+
+  // See if it is a Cn register and get its Xn alias.
+  uint32_t primordial_dwarf_regnum;
+  if (dwarf_regnum >= arm64_dwarf::c0 && dwarf_regnum <= arm64_dwarf::c30)
+    primordial_dwarf_regnum =
+        arm64_dwarf::x0 + (dwarf_regnum - arm64_dwarf::c0);
+  else if (dwarf_regnum == arm64_dwarf::csp)
+    primordial_dwarf_regnum = arm64_dwarf::sp;
+  else
+    return LLDB_INVALID_REGNUM;
+
+  // Convert the Xn register to the internal numbering.
+  uint32_t primordial_lldb_regnum;
+  if (!reg_ctx.ConvertBetweenRegisterKinds(
+      eRegisterKindDWARF, primordial_dwarf_regnum, eRegisterKindLLDB,
+      primordial_lldb_regnum))
+    return LLDB_INVALID_REGNUM;
+
+  return primordial_lldb_regnum;
+}
+
+static bool GetReturnRegisterType(RegisterContext &reg_ctx, RegisterKind kind,
+    uint32_t ra_regnum, bool &ra_is_capability) {
+  uint32_t ra_dwarf_regnum;
+  if (!reg_ctx.ConvertBetweenRegisterKinds(kind, ra_regnum, eRegisterKindDWARF,
+      ra_dwarf_regnum))
+    return false;
+
+  ra_is_capability =
+      ra_dwarf_regnum >= arm64_dwarf::c0 && ra_dwarf_regnum <= arm64_dwarf::c30;
+  return true;
+}
+
 bool ABISysV_arm64::GetPointerReturnRegister(const char *&name) {
   name = "x0";
   return true;

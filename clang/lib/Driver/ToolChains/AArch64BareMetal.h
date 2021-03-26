@@ -18,10 +18,10 @@ namespace driver {
 namespace tools {
 namespace aarch64 {
 
-class LLVM_LIBRARY_VISIBILITY Linker : public GnuTool {
+class LLVM_LIBRARY_VISIBILITY Linker : public Tool {
 public:
   Linker(const ToolChain &TC, const char *Name)
-      : GnuTool("aarch64::Linker", Name, TC), LinkerName(Name) {}
+      : Tool("aarch64::Linker", Name, TC), LinkerName(Name) {}
 
   bool hasIntegratedCPP() const override { return false; }
   bool isLinkJob() const override { return true; }
@@ -33,10 +33,10 @@ public:
 private:
   const std::string LinkerName;
 };
-class LLVM_LIBRARY_VISIBILITY Assembler : public GnuTool {
+class LLVM_LIBRARY_VISIBILITY Assembler : public Tool {
 public:
   Assembler(const ToolChain &TC, const char *Name)
-      : GnuTool("aarch64::Assembler", Name, TC), AssemblerName(Name) {}
+      : Tool("aarch64::Assembler", Name, TC), AssemblerName(Name) {}
 
   bool hasIntegratedCPP() const override { return false; }
 
