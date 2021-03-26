@@ -205,13 +205,14 @@ def SVELogicalImm32Pat : ComplexPattern<i32, 1, "SelectSVELogicalImm<MVT::i32>",
 def SVELogicalImm64Pat : ComplexPattern<i64, 1, "SelectSVELogicalImm<MVT::i64>", []>;
 
 def SVE8BitLslImm : ComplexPattern<i32, 2, "SelectSVE8BitLslImm", [imm]>;
+def SVE8BitLslImm64 : ComplexPattern<i64, 2, "SelectSVE8BitLslImm", [imm]>;
 
 def SVEArithUImmPat  : ComplexPattern<i32, 1, "SelectSVEArithImm", []>;
 def SVEArithSImmPat  : ComplexPattern<i32, 1, "SelectSVESignedArithImm", []>;
 def SVEArithSImm64Pat  : ComplexPattern<i64, 1, "SelectSVESignedArithImm", []>;
 def SVEArithUImm64Pat  : ComplexPattern<i64, 1, "SelectSVEArithImm", []>;
 
-def SVEShiftImm64 : ComplexPattern<i32, 1, "SelectSVEShiftImm64<0, 64>", []>;
+def SVEShiftImm64 : ComplexPattern<i64, 1, "SelectSVEShiftImm64<0, 64>", []>;
 
 class SVEExactFPImm<string Suffix, string ValA, string ValB> : AsmOperandClass {
   let Name = "SVEExactFPImmOperand" # Suffix;
@@ -377,24 +378,30 @@ class SVE_4_Op_Imm_Pat<ValueType vtd, SDPatternOperator op, ValueType vt1,
 
 def SVEDup0_nxv2i64 : ComplexPattern<nxv2i64, 0, "SelectDupZero<128>", []>;
 def SVEDup0_nxv2f16 : ComplexPattern<nxv2f16, 0, "SelectDupZero<32>", []>;
+def SVEDup0_nxv2bf16 : ComplexPattern<nxv2bf16, 0, "SelectDupZero<32>", []>;
 def SVEDup0_nxv2f32 : ComplexPattern<nxv2f32, 0, "SelectDupZero<64>", []>;
 def SVEDup0_nxv2f64 : ComplexPattern<nxv2f64, 0, "SelectDupZero<128>", []>;
 def SVEDup0_nxv4i32 : ComplexPattern<nxv4i32, 0, "SelectDupZero<128>", []>;
 def SVEDup0_nxv4f16 : ComplexPattern<nxv4f16, 0, "SelectDupZero<64>", []>;
+def SVEDup0_nxv4bf16 : ComplexPattern<nxv4bf16, 0, "SelectDupZero<64>", []>;
 def SVEDup0_nxv4f32 : ComplexPattern<nxv4f32, 0, "SelectDupZero<128>", []>;
 def SVEDup0_nxv8i16 : ComplexPattern<nxv8i16, 0, "SelectDupZero<128>", []>;
 def SVEDup0_nxv8f16 : ComplexPattern<nxv8f16, 0, "SelectDupZero<128>", []>;
+def SVEDup0_nxv8bf16 : ComplexPattern<nxv8bf16, 0, "SelectDupZero<128>", []>;
 def SVEDup0_nxv16i8 : ComplexPattern<nxv16i8, 0, "SelectDupZero<128>", []>;
 
 def SVEDup0Undef_nxv2i64 : ComplexPattern<nxv2i64, 0, "SelectDupZeroOrUndef<128>", []>;
 def SVEDup0Undef_nxv2f16 : ComplexPattern<nxv2f16, 0, "SelectDupZeroOrUndef<32>", []>;
+def SVEDup0Undef_nxv2bf16 : ComplexPattern<nxv2bf16, 0, "SelectDupZeroOrUndef<32>", []>;
 def SVEDup0Undef_nxv2f32 : ComplexPattern<nxv2f32, 0, "SelectDupZeroOrUndef<64>", []>;
 def SVEDup0Undef_nxv2f64 : ComplexPattern<nxv2f64, 0, "SelectDupZeroOrUndef<128>", []>;
 def SVEDup0Undef_nxv4i32 : ComplexPattern<nxv4i32, 0, "SelectDupZeroOrUndef<128>", []>;
 def SVEDup0Undef_nxv4f16 : ComplexPattern<nxv4f16, 0, "SelectDupZeroOrUndef<64>", []>;
+def SVEDup0Undef_nxv4bf16 : ComplexPattern<nxv4bf16, 0, "SelectDupZeroOrUndef<64>", []>;
 def SVEDup0Undef_nxv4f32 : ComplexPattern<nxv4f32, 0, "SelectDupZeroOrUndef<128>", []>;
 def SVEDup0Undef_nxv8i16 : ComplexPattern<nxv8i16, 0, "SelectDupZeroOrUndef<128>", []>;
 def SVEDup0Undef_nxv8f16 : ComplexPattern<nxv8f16, 0, "SelectDupZeroOrUndef<128>", []>;
+def SVEDup0Undef_nxv8bf16 : ComplexPattern<nxv8bf16, 0, "SelectDupZeroOrUndef<128>", []>;
 def SVEDup0Undef_nxv16i8 : ComplexPattern<nxv16i8, 0, "SelectDupZeroOrUndef<128>", []>;
 
 let AddedComplexity = 1 in {
@@ -4098,7 +4105,8 @@ class sve_int_dup_imm_pred<bits<2> sz8_64, bit m, string asm,
 
 multiclass sve_int_dup_imm_pred_merge_inst<
     bits<2> sz8_64, string asm, ZPRRegOp zprty, ValueType intty,
-    ValueType predty, ValueType scalarty, imm8_opt_lsl cpyimm> {
+    ValueType predty, ValueType scalarty, imm8_opt_lsl cpyimm,
+    ComplexPattern lslimm=SVE8BitLslImm> {
   let Constraints = "$Zd = $_Zd" in
   def NAME : sve_int_dup_imm_pred<sz8_64, 1, asm, zprty,  "/m",
                                   (ins zprty:$_Zd, PPRAny:$Pg, cpyimm:$imm)>;
@@ -4106,7 +4114,7 @@ multiclass sve_int_dup_imm_pred_merge_inst<
                   (!cast<Instruction>(NAME) zprty:$Zd, PPRAny:$Pg, cpyimm:$imm), 1>;
   def : Pat<(intty
               (vselect predty:$Pg,
-                (intty (AArch64dup (scalarty (SVE8BitLslImm i32:$imm, i32:$shift)))),
+                (intty (AArch64dup (scalarty (lslimm i32:$imm, i32:$shift)))),
                 intty:$Zd)),
             (!cast<Instruction>(NAME) zprty:$Zd, $Pg, i32:$imm, i32:$shift)>;
 }
@@ -4119,7 +4127,7 @@ multiclass sve_int_dup_imm_pred_merge<string asm> {
   defm _S : sve_int_dup_imm_pred_merge_inst<0b10, asm, ZPR32, nxv4i32, nxv4i1,
                                             i32, cpy_imm8_opt_lsl_i32>;
   defm _D : sve_int_dup_imm_pred_merge_inst<0b11, asm, ZPR64, nxv2i64, nxv2i1,
-                                            i64, cpy_imm8_opt_lsl_i64>;
+                                            i64, cpy_imm8_opt_lsl_i64, SVE8BitLslImm64>;
 
   def : InstAlias<"fmov $Zd, $Pg/m, #0.0",
                   (!cast<Instruction>(NAME # _H) ZPR16:$Zd, PPRAny:$Pg, 0, 0), 0>;
@@ -4131,7 +4139,8 @@ multiclass sve_int_dup_imm_pred_merge<string asm> {
 
 multiclass sve_int_dup_imm_pred_zero_inst<
     bits<2> sz8_64, string asm, ZPRRegOp zprty, ValueType intty,
-    ValueType predty, ValueType scalarty, imm8_opt_lsl cpyimm> {
+    ValueType predty, ValueType scalarty, imm8_opt_lsl cpyimm,
+    ComplexPattern lslimm=SVE8BitLslImm> {
   def NAME : sve_int_dup_imm_pred<sz8_64, 0, asm, zprty, "/z",
                                   (ins PPRAny:$Pg, cpyimm:$imm)>;
   def : InstAlias<"mov $Zd, $Pg/z, $imm",
@@ -4144,7 +4153,7 @@ multiclass sve_int_dup_imm_pred_zero_inst<
             (!cast<Instruction>(NAME) PPRAny:$Ps1, 1, 0)>;
   def : Pat<(intty
               (vselect predty:$Pg,
-                (intty (AArch64dup (scalarty (SVE8BitLslImm i32:$imm, i32:$shift)))),
+                (intty (AArch64dup (scalarty (lslimm i32:$imm, i32:$shift)))),
                 (intty (AArch64dup (scalarty 0))))),
             (!cast<Instruction>(NAME) $Pg, i32:$imm, i32:$shift)>;
 }
@@ -4157,7 +4166,7 @@ multiclass sve_int_dup_imm_pred_zero<string asm> {
   defm _S : sve_int_dup_imm_pred_zero_inst<0b10, asm, ZPR32, nxv4i32, nxv4i1,
                                            i32, cpy_imm8_opt_lsl_i32>;
   defm _D : sve_int_dup_imm_pred_zero_inst<0b11, asm, ZPR64, nxv2i64, nxv2i1,
-                                           i64, cpy_imm8_opt_lsl_i64>;
+                                           i64, cpy_imm8_opt_lsl_i64, SVE8BitLslImm64>;
 }
 
 //===----------------------------------------------------------------------===//

@@ -3419,7 +3419,6 @@ def : InstAlias<"strb $Rt, [$Rn, $offset]",
                 (STURBBi GPR32:$Rt, GPR64sp:$Rn, simm9_offset_fb8:$offset), 0>;
 def : InstAlias<"strh $Rt, [$Rn, $offset]",
                 (STURHHi GPR32:$Rt, GPR64sp:$Rn, simm9_offset_fb16:$offset), 0>;
-}
 
 //---
 // (unscaled immediate, unprivileged)
@@ -3429,8 +3428,12 @@ defm STTRX : StoreUnprivileged<0b11, 0, 0b00, GPR64, "sttr">;
 defm STTRH : StoreUnprivileged<0b01, 0, 0b00, GPR32, "sttrh">;
 defm STTRB : StoreUnprivileged<0b00, 0, 0b00, GPR32, "sttrb">;
 
+} // Predicates = [HasNotC64]
+
 //---
 // (immediate pre-indexed)
+let Predicates = [HasNotC64] in {
+
 def STRWpre : StorePreIdx<0b10, 0, 0b00, GPR32z, "str",  pre_inc_store, i32>;
 def STRXpre : StorePreIdx<0b11, 0, 0b00, GPR64z, "str",  pre_inc_store, i64>;
 def STRBpre : StorePreIdx<0b00, 1, 0b00, FPR8Op,  "str",  pre_inc_store, untyped>;
@@ -3442,7 +3445,6 @@ def STRQpre : StorePreIdx<0b00, 1, 0b10, FPR128Op, "str", pre_inc_store, f128>;
 def STRBBpre : StorePreIdx<0b00, 0, 0b00, GPR32z, "strb", pre_inc_truncsti8, i32>;
 def STRHHpre : StorePreIdx<0b01, 0, 0b00, GPR32z, "strh", pre_inc_truncsti16, i32>;
 
-let Predicates = [HasNotC64] in {
 def : Pat<(pre_dec_store (i32 GPR32:$Rt), GPR64sp:$addr, (negsimm i64imm:$off)),
           (STRWpre GPR32:$Rt, GPR64sp:$addr, i64imm:$off)>;
 def : Pat<(pre_dec_store (i64 GPR64:$Rt), GPR64sp:$addr, (negsimm i64imm:$off)),
@@ -3552,10 +3554,12 @@ def : Pat<(pre_dec_store (v2f64 FPR128:$Rt), GPR64sp:$addr,
 def : Pat<(pre_dec_store (v8f16 FPR128:$Rt), GPR64sp:$addr,
                          (negsimm i64imm:$off)),
           (STRQpre FPR128:$Rt, GPR64sp:$addr, i64imm:$off)>;
-}
+} // Predicates = [HasNotC64]
 
 //---
 // (immediate post-indexed)
+let Predicates = [HasNotC64] in {
+
 def STRWpost : StorePostIdx<0b10, 0, 0b00, GPR32z,  "str", post_inc_store, i32>;
 def STRXpost : StorePostIdx<0b11, 0, 0b00, GPR64z,  "str", post_inc_store, i64>;
 def STRBpost : StorePostIdx<0b00, 1, 0b00, FPR8Op,   "str", post_inc_store, untyped>;
@@ -3569,7 +3573,6 @@ def STRBBpost : StorePostIdx<0b00, 0, 0b00, GPR32z, "strb", post_inc_truncsti8,
 def STRHHpost : StorePostIdx<0b01, 0, 0b00, GPR32z, "strh", post_inc_truncsti16,
                              i32>;
 
-let Predicates = [HasNotC64] in {
 def : Pat<(post_dec_store (i32 GPR32:$Rt), GPR64sp:$addr,
                           (negsimm i64imm:$off)),
           (STRWpost GPR32:$Rt, GPR64sp:$addr, i64imm:$off)>;
@@ -3680,12 +3683,13 @@ def : Pat<(post_dec_store (v2f64 FPR128:$Rt), GPR64sp:$addr, (negsimm i64imm:$of
           (STRQpost FPR128:$Rt, GPR64sp:$addr, i64imm:$off)>;
 def : Pat<(post_dec_store (v8f16 FPR128:$Rt), GPR64sp:$addr, (negsimm i64imm:$off)),
           (STRQpost FPR128:$Rt, GPR64sp:$addr, i64imm:$off)>;
-}
+} // Predicates = [HasNotC64]
 
 //===----------------------------------------------------------------------===//
 // Load/store exclusive instructions.
 //===----------------------------------------------------------------------===//
 
+let Predicates = [HasNotC64] in {
 def LDARW  : LoadAcquire   <0b10, 1, 1, 0, 1, GPR32, "ldar">;
 def LDARX  : LoadAcquire   <0b11, 1, 1, 0, 1, GPR64, "ldar">;
 def LDARB  : LoadAcquire   <0b00, 1, 1, 0, 1, GPR32, "ldarb">;
@@ -3727,6 +3731,7 @@ def STLXPX : StoreExclusivePair<0b11, 0, 0, 1, 1, GPR64, "stlxp">;
 
 def STXPW  : StoreExclusivePair<0b10, 0, 0, 1, 0, GPR32, "stxp">;
 def STXPX  : StoreExclusivePair<0b11, 0, 0, 1, 0, GPR64, "stxp">;
+} // Predicates = [HasNotC64]
 
 let Predicates = [HasLOR, HasNotC64] in {
   // v8.1a "Limited Order Region" extension load-acquire instructions

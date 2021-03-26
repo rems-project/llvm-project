@@ -76,6 +76,9 @@ let Predicates = [HasC64, IsLE], AddedComplexity = 10 in {
   def : Pat<(cstore (v4f16 FPR64:$Rt),
                    (am_cindexed64 Capsp:$Rn, uimm12s8:$offset)),
             (ASTRDui FPR64:$Rt, Capsp:$Rn, uimm12s8:$offset)>;
+  def : Pat<(cstore (v4bf16 FPR64:$Rt),
+                   (am_cindexed64 Capsp:$Rn, uimm12s8:$offset)),
+            (ASTRDui FPR64:$Rt, Capsp:$Rn, uimm12s8:$offset)>;
 }
 
 let Predicates = [HasC64], AddedComplexity = 10 in {
@@ -111,6 +114,9 @@ let Predicates = [HasC64, IsLE], AddedComplexity = 10 in {
   def : Pat<(cstore (v8f16 FPR128:$Rt),
                    (am_cindexed128 Capsp:$Rn, uimm12s16:$offset)),
             (ASTRQui FPR128:$Rt, Capsp:$Rn, uimm12s16:$offset)>;
+  def : Pat<(cstore (v8bf16 FPR128:$Rt),
+                   (am_cindexed128 Capsp:$Rn, uimm12s16:$offset)),
+            (ASTRQui FPR128:$Rt, Capsp:$Rn, uimm12s16:$offset)>;
 }
 
 let Predicates = [HasC64], AddedComplexity = 10 in {
@@ -130,28 +136,35 @@ def : Pat<(trunccstorei8 GPR64:$Rt, (am_cindexed8 Capsp:$Rn, uimm12s1:$offset)),
 }
 
 let Predicates = [HasC64] in {
-
-defm ALDRX : PLoadUI<0b11, 0, 0b01, GPR64, uimm12s8, "ldr",
-                   [(set GPR64:$Rt,
+//---
+// (unsigned immediate)
+//---
+defm ALDRX : PLoadUI<0b11, 0, 0b01, GPR64z, uimm12s8, "ldr",
+                   [(set GPR64z:$Rt,
                          (cload (am_cindexed64 Capsp:$Rn, uimm12s8:$offset)))]>;
-defm ALDRW : PLoadUI<0b10, 0, 0b01, GPR32, uimm12s4, "ldr",
-                   [(set GPR32:$Rt,
+defm ALDRW : PLoadUI<0b10, 0, 0b01, GPR32z, uimm12s4, "ldr",
+                   [(set GPR32z:$Rt,
                          (cload (am_cindexed32 Capsp:$Rn, uimm12s4:$offset)))]>;
-defm ALDRB : PLoadUI<0b00, 1, 0b01, FPR8, uimm12s1, "ldr",
-                   [(set FPR8:$Rt,
+defm ALDRB : PLoadUI<0b00, 1, 0b01, FPR8Op, uimm12s1, "ldr",
+                   [(set FPR8Op:$Rt,
                          (cload (am_cindexed8 Capsp:$Rn, uimm12s1:$offset)))]>;
-defm ALDRH : PLoadUI<0b01, 1, 0b01, FPR16, uimm12s2, "ldr",
-                   [(set (f16 FPR16:$Rt),
+defm ALDRH : PLoadUI<0b01, 1, 0b01, FPR16Op, uimm12s2, "ldr",
+                   [(set (f16 FPR16Op:$Rt),
                          (cload (am_cindexed16 Capsp:$Rn, uimm12s2:$offset)))]>;
-defm ALDRS : PLoadUI<0b10, 1, 0b01, FPR32, uimm12s4, "ldr",
-                   [(set (f32 FPR32:$Rt),
+defm ALDRS : PLoadUI<0b10, 1, 0b01, FPR32Op, uimm12s4, "ldr",
+                   [(set (f32 FPR32Op:$Rt),
                          (cload (am_cindexed32 Capsp:$Rn, uimm12s4:$offset)))]>;
-defm ALDRD : PLoadUI<0b11, 1, 0b01, FPR64, uimm12s8, "ldr",
-                   [(set (f64 FPR64:$Rt),
+defm ALDRD : PLoadUI<0b11, 1, 0b01, FPR64Op, uimm12s8, "ldr",
+                   [(set (f64 FPR64Op:$Rt),
                          (cload (am_cindexed64 Capsp:$Rn, uimm12s8:$offset)))]>;
-defm ALDRQ : PLoadUI<0b00, 1, 0b11, FPR128, uimm12s16, "ldr",
-                 [(set (f128 FPR128:$Rt),
+defm ALDRQ : PLoadUI<0b00, 1, 0b11, FPR128Op, uimm12s16, "ldr",
+                 [(set (f128 FPR128Op:$Rt),
                        (cload (am_cindexed128 Capsp:$Rn, uimm12s16:$offset)))]>;
+
+// bf16 load pattern
+def : Pat <(bf16 (load (am_cindexed64 Capsp:$Rn, uimm12s2:$offset))),
+           (ALDRHui Capsp:$Rn, uimm12s2:$offset)>;
+
 
 def : Pat <(v8i8 (scalar_to_vector (i32
                (extcloadi8 (am_cindexed8 Capsp:$Rn, uimm12s1:$offset))))),
@@ -199,6 +212,8 @@ let Predicates = [HasC64, IsLE] in {
             (ALDRDui Capsp:$Rn, uimm12s8:$offset)>;
   def : Pat<(v4f16 (cload (am_cindexed64 Capsp:$Rn, uimm12s8:$offset))),
             (ALDRDui Capsp:$Rn, uimm12s8:$offset)>;
+  def : Pat<(v4bf16 (cload (am_cindexed64 Capsp:$Rn, uimm12s8:$offset))),
+	    (ALDRDui Capsp:$Rn, uimm12s8:$offset)>;
 }
 
 let Predicates = [HasC64] in {
@@ -224,6 +239,8 @@ let Predicates = [HasC64, IsLE] in {
   def : Pat<(v2i64 (cload (am_cindexed128 Capsp:$Rn, uimm12s16:$offset))),
             (ALDRQui Capsp:$Rn, uimm12s16:$offset)>;
   def : Pat<(v8f16 (cload (am_cindexed128 Capsp:$Rn, uimm12s16:$offset))),
+            (ALDRQui Capsp:$Rn, uimm12s16:$offset)>;
+  def : Pat<(v8bf16 (cload (am_cindexed128 Capsp:$Rn, uimm12s16:$offset))),
             (ALDRQui Capsp:$Rn, uimm12s16:$offset)>;
 }
 
@@ -308,11 +325,11 @@ defm ALDRW  : PLoad32RO<0b10, 0, 0b01, GPR32, "ldr", i32, cload>;
 defm ALDRX  : PLoad64RO<0b11, 0, 0b01, GPR64, "ldr", i64, cload>;
 
 // Floating-point
-defm ALDRB : PLoad8RO<0b00,   1, 0b01, FPR8,   "ldr", untyped, cload>;
-defm ALDRH : PLoad16RO<0b01,  1, 0b01, FPR16,  "ldr", f16, cload>;
-defm ALDRS : PLoad32RO<0b10,  1, 0b01, FPR32,  "ldr", f32, cload>;
-defm ALDRD : PLoad64RO<0b11,  1, 0b01, FPR64,  "ldr", f64, cload>;
-defm ALDRQ : PLoad128RO<0b00, 1, 0b11, FPR128, "ldr", f128, cload>;
+defm ALDRB : PLoad8RO<0b00,   1, 0b01, FPR8Op,   "ldr", untyped, cload>;
+defm ALDRH : PLoad16RO<0b01,  1, 0b01, FPR16Op,  "ldr", f16, cload>;
+defm ALDRS : PLoad32RO<0b10,  1, 0b01, FPR32Op,  "ldr", f32, cload>;
+defm ALDRD : PLoad64RO<0b11,  1, 0b01, FPR64Op,  "ldr", f64, cload>;
+defm ALDRQ : PLoad128RO<0b00, 1, 0b11, FPR128Op, "ldr", f128, cload>;
 
 // Load sign-extended half-word
 defm ALDRSHW : PLoad16RO<0b01, 0, 0b11, GPR32, "ldrsh", i32, sextcloadi16>;
@@ -394,6 +411,7 @@ let Predicates = [HasC64, IsLE], AddedComplexity = 10 in {
   defm : PVecROLoadPat<cro64, v8i8,  ALDRDroW, ALDRDroX>;
   defm : PVecROLoadPat<cro64, v4i16, ALDRDroW, ALDRDroX>;
   defm : PVecROLoadPat<cro64, v4f16, ALDRDroW, ALDRDroX>;
+  defm : PVecROLoadPat<cro64, v4bf16, ALDRDroW, ALDRDroX>;
 }
 
 let Predicates = [HasC64], AddedComplexity = 10 in {
@@ -409,6 +427,7 @@ let Predicates = [HasC64, IsLE], AddedComplexity = 10 in {
   defm : PVecROLoadPat<cro128, v4f32,  ALDRQroW, ALDRQroX>;
   defm : PVecROLoadPat<cro128, v8i16,  ALDRQroW, ALDRQroX>;
   defm : PVecROLoadPat<cro128, v8f16,  ALDRQroW, ALDRQroX>;
+  defm : PVecROLoadPat<cro128, v8bf16,  ALDRQroW, ALDRQroX>;
   defm : PVecROLoadPat<cro128, v16i8,  ALDRQroW, ALDRQroX>;
 }
 
@@ -468,26 +487,26 @@ let AddedComplexity = 10 in {
 //---
 // (unscaled immediate)
 
-defm ALDURX : PLoadUnscaled<0b11, 0, 0b01, GPR64, "ldur",
-                    [(set GPR64:$Rt,
+defm ALDURX : PLoadUnscaled<0b11, 0, 0b01, GPR64z, "ldur",
+                    [(set GPR64z:$Rt,
                           (cload (am_pcunscaled64 Capsp:$Rn, simm9:$offset)))]>;
-defm ALDURW : PLoadUnscaled<0b10, 0, 0b01, GPR32, "ldur",
-                    [(set GPR32:$Rt,
+defm ALDURW : PLoadUnscaled<0b10, 0, 0b01, GPR32z, "ldur",
+                    [(set GPR32z:$Rt,
                           (cload (am_pcunscaled32 Capsp:$Rn, simm9:$offset)))]>;
-defm ALDURB : PLoadUnscaled<0b00, 1, 0b01, FPR8, "ldur",
-                    [(set FPR8:$Rt,
+defm ALDURB : PLoadUnscaled<0b00, 1, 0b01, FPR8Op, "ldur",
+                    [(set FPR8Op:$Rt,
                           (cload (am_pcunscaled8 Capsp:$Rn, simm9:$offset)))]>;
-defm ALDURH : PLoadUnscaled<0b01, 1, 0b01, FPR16, "ldur",
-                    [(set FPR16:$Rt,
+defm ALDURH : PLoadUnscaled<0b01, 1, 0b01, FPR16Op, "ldur",
+                    [(set (f16 FPR16Op:$Rt),
                           (cload (am_pcunscaled16 Capsp:$Rn, simm9:$offset)))]>;
-defm ALDURS : PLoadUnscaled<0b10, 1, 0b01, FPR32, "ldur",
-                    [(set (f32 FPR32:$Rt),
+defm ALDURS : PLoadUnscaled<0b10, 1, 0b01, FPR32Op, "ldur",
+                    [(set (f32 FPR32Op:$Rt),
                           (cload (am_pcunscaled32 Capsp:$Rn, simm9:$offset)))]>;
-defm ALDURD : PLoadUnscaled<0b11, 1, 0b01, FPR64, "ldur",
-                    [(set (f64 FPR64:$Rt),
+defm ALDURD : PLoadUnscaled<0b11, 1, 0b01, FPR64Op, "ldur",
+                    [(set (f64 FPR64Op:$Rt),
                           (cload (am_pcunscaled64 Capsp:$Rn, simm9:$offset)))]>;
-defm ALDURQ : PLoadUnscaled<0b00, 1, 0b11, FPR128, "ldur",
-                    [(set (f128 FPR128:$Rt),
+defm ALDURQ : PLoadUnscaled<0b00, 1, 0b11, FPR128Op, "ldur",
+                    [(set (f128 FPR128Op:$Rt),
                           (cload (am_pcunscaled128 Capsp:$Rn, simm9:$offset)))]>;
 
 defm ALDURHH
@@ -664,93 +683,125 @@ defm ALDTRSW  : PLoadUnprivileged<0b10, 0, 0b10, GPR64, "ldtrsw">;
 
 //---
 // (immediate pre-indexed)
-def ALDRWpre : PLoadPreIdx<0b10, 0, 0b01, GPR32, "ldr">;
-def ALDRXpre : PLoadPreIdx<0b11, 0, 0b01, GPR64, "ldr">;
-def ALDRBpre : PLoadPreIdx<0b00, 1, 0b01, FPR8,  "ldr">;
-def ALDRHpre : PLoadPreIdx<0b01, 1, 0b01, FPR16, "ldr">;
-def ALDRSpre : PLoadPreIdx<0b10, 1, 0b01, FPR32, "ldr">;
-def ALDRDpre : PLoadPreIdx<0b11, 1, 0b01, FPR64, "ldr">;
-def ALDRQpre : PLoadPreIdx<0b00, 1, 0b11, FPR128, "ldr">;
-
-// Pair (pre-indexed)
-def ALDPWpre : PLoadPairPreIdx<0b00, 0, GPR32, simm7s4, "ldp">;
-def ALDPXpre : PLoadPairPreIdx<0b10, 0, GPR64, simm7s8, "ldp">;
-def ALDPSpre : PLoadPairPreIdx<0b00, 1, FPR32, simm7s4, "ldp">;
-def ALDPDpre : PLoadPairPreIdx<0b01, 1, FPR64, simm7s8, "ldp">;
-def ALDPQpre : PLoadPairPreIdx<0b10, 1, FPR128, simm7s16, "ldp">;
-def ALDPSWpre : PLoadPairPreIdx<0b01, 0, GPR64, simm7s4, "ldpsw">;
-
-// Pair (post-indexed)
-def ALDPWpost : PLoadPairPostIdx<0b00, 0, GPR32, simm7s4, "ldp">;
-def ALDPXpost : PLoadPairPostIdx<0b10, 0, GPR64, simm7s8, "ldp">;
-def ALDPSpost : PLoadPairPostIdx<0b00, 1, FPR32, simm7s4, "ldp">;
-def ALDPDpost : PLoadPairPostIdx<0b01, 1, FPR64, simm7s8, "ldp">;
-def ALDPQpost : PLoadPairPostIdx<0b10, 1, FPR128, simm7s16, "ldp">;
-def ALDPSWpost : PLoadPairPostIdx<0b01, 0, GPR64, simm7s4, "ldpsw">;
-
-// Pair (no allocate)
-defm ALDNPW : PLoadPairNoAlloc<0b00, 0, GPR32, simm7s4, "ldnp">;
-defm ALDNPX : PLoadPairNoAlloc<0b10, 0, GPR64, simm7s8, "ldnp">;
-defm ALDNPS : PLoadPairNoAlloc<0b00, 1, FPR32, simm7s4, "ldnp">;
-defm ALDNPD : PLoadPairNoAlloc<0b01, 1, FPR64, simm7s8, "ldnp">;
-defm ALDNPQ : PLoadPairNoAlloc<0b10, 1, FPR128, simm7s16, "ldnp">;
+def ALDRWpre : PLoadPreIdx<0b10, 0, 0b01, GPR32z, "ldr">;
+def ALDRXpre : PLoadPreIdx<0b11, 0, 0b01, GPR64z, "ldr">;
+def ALDRBpre : PLoadPreIdx<0b00, 1, 0b01, FPR8Op,  "ldr">;
+def ALDRHpre : PLoadPreIdx<0b01, 1, 0b01, FPR16Op, "ldr">;
+def ALDRSpre : PLoadPreIdx<0b10, 1, 0b01, FPR32Op, "ldr">;
+def ALDRDpre : PLoadPreIdx<0b11, 1, 0b01, FPR64Op, "ldr">;
+def ALDRQpre : PLoadPreIdx<0b00, 1, 0b11, FPR128Op, "ldr">;
 
 // load sign-extended half-word
-def ALDRSHWpre : PLoadPreIdx<0b01, 0, 0b11, GPR32, "ldrsh">;
-def ALDRSHXpre : PLoadPreIdx<0b01, 0, 0b10, GPR64, "ldrsh">;
+def ALDRSHWpre : PLoadPreIdx<0b01, 0, 0b11, GPR32z, "ldrsh">;
+def ALDRSHXpre : PLoadPreIdx<0b01, 0, 0b10, GPR64z, "ldrsh">;
 
 // load sign-extended byte
-def ALDRSBWpre : PLoadPreIdx<0b00, 0, 0b11, GPR32, "ldrsb">;
-def ALDRSBXpre : PLoadPreIdx<0b00, 0, 0b10, GPR64, "ldrsb">;
+def ALDRSBWpre : PLoadPreIdx<0b00, 0, 0b11, GPR32z, "ldrsb">;
+def ALDRSBXpre : PLoadPreIdx<0b00, 0, 0b10, GPR64z, "ldrsb">;
 
 // load zero-extended byte
-def ALDRBBpre : PLoadPreIdx<0b00, 0, 0b01, GPR32, "ldrb">;
-def ALDRHHpre : PLoadPreIdx<0b01, 0, 0b01, GPR32, "ldrh">;
+def ALDRBBpre : PLoadPreIdx<0b00, 0, 0b01, GPR32z, "ldrb">;
+def ALDRHHpre : PLoadPreIdx<0b01, 0, 0b01, GPR32z, "ldrh">;
 
 // load sign-extended word
-def ALDRSWpre : PLoadPreIdx<0b10, 0, 0b10, GPR64, "ldrsw">;
+def ALDRSWpre : PLoadPreIdx<0b10, 0, 0b10, GPR64z, "ldrsw">;
 
 //---
 // (immediate post-indexed)
-def ALDRWpost : PLoadPostIdx<0b10, 0, 0b01, GPR32, "ldr">;
-def ALDRXpost : PLoadPostIdx<0b11, 0, 0b01, GPR64, "ldr">;
-def ALDRBpost : PLoadPostIdx<0b00, 1, 0b01, FPR8,  "ldr">;
-def ALDRHpost : PLoadPostIdx<0b01, 1, 0b01, FPR16, "ldr">;
-def ALDRSpost : PLoadPostIdx<0b10, 1, 0b01, FPR32, "ldr">;
-def ALDRDpost : PLoadPostIdx<0b11, 1, 0b01, FPR64, "ldr">;
-def ALDRQpost : PLoadPostIdx<0b00, 1, 0b11, FPR128, "ldr">;
+def ALDRWpost : PLoadPostIdx<0b10, 0, 0b01, GPR32z, "ldr">;
+def ALDRXpost : PLoadPostIdx<0b11, 0, 0b01, GPR64z, "ldr">;
+def ALDRBpost : PLoadPostIdx<0b00, 1, 0b01, FPR8Op,  "ldr">;
+def ALDRHpost : PLoadPostIdx<0b01, 1, 0b01, FPR16Op, "ldr">;
+def ALDRSpost : PLoadPostIdx<0b10, 1, 0b01, FPR32Op, "ldr">;
+def ALDRDpost : PLoadPostIdx<0b11, 1, 0b01, FPR64Op, "ldr">;
+def ALDRQpost : PLoadPostIdx<0b00, 1, 0b11, FPR128Op, "ldr">;
 
 // load sign-extended half-word
-def ALDRSHWpost : PLoadPostIdx<0b01, 0, 0b11, GPR32, "ldrsh">;
-def ALDRSHXpost : PLoadPostIdx<0b01, 0, 0b10, GPR64, "ldrsh">;
+def ALDRSHWpost : PLoadPostIdx<0b01, 0, 0b11, GPR32z, "ldrsh">;
+def ALDRSHXpost : PLoadPostIdx<0b01, 0, 0b10, GPR64z, "ldrsh">;
 
 // load sign-extended byte
-def ALDRSBWpost : PLoadPostIdx<0b00, 0, 0b11, GPR32, "ldrsb">;
-def ALDRSBXpost : PLoadPostIdx<0b00, 0, 0b10, GPR64, "ldrsb">;
+def ALDRSBWpost : PLoadPostIdx<0b00, 0, 0b11, GPR32z, "ldrsb">;
+def ALDRSBXpost : PLoadPostIdx<0b00, 0, 0b10, GPR64z, "ldrsb">;
 
 // load zero-extended byte
-def ALDRBBpost : PLoadPostIdx<0b00, 0, 0b01, GPR32, "ldrb">;
-def ALDRHHpost : PLoadPostIdx<0b01, 0, 0b01, GPR32, "ldrh">;
+def ALDRBBpost : PLoadPostIdx<0b00, 0, 0b01, GPR32z, "ldrb">;
+def ALDRHHpost : PLoadPostIdx<0b01, 0, 0b01, GPR32z, "ldrh">;
 
 // load sign-extended word
-def ALDRSWpost : PLoadPostIdx<0b10, 0, 0b10, GPR64, "ldrsw">;
+def ALDRSWpost : PLoadPostIdx<0b10, 0, 0b10, GPR64z, "ldrsw">;
 
 // Pair (indexed, offset)
-defm ALDPW : PLoadPairOffset<0b00, 0, GPR32, simm7s4, "ldp">;
-defm ALDPX : PLoadPairOffset<0b10, 0, GPR64, simm7s8, "ldp">;
-defm ALDPS : PLoadPairOffset<0b00, 1, FPR32, simm7s4, "ldp">;
-defm ALDPD : PLoadPairOffset<0b01, 1, FPR64, simm7s8, "ldp">;
-defm ALDPQ : PLoadPairOffset<0b10, 1, FPR128, simm7s16, "ldp">;
-defm ALDPSW : PLoadPairOffset<0b01, 0, GPR64, simm7s4, "ldpsw">;
+defm ALDPW : PLoadPairOffset<0b00, 0, GPR32z, simm7s4, "ldp">;
+defm ALDPX : PLoadPairOffset<0b10, 0, GPR64z, simm7s8, "ldp">;
+defm ALDPS : PLoadPairOffset<0b00, 1, FPR32Op, simm7s4, "ldp">;
+defm ALDPD : PLoadPairOffset<0b01, 1, FPR64Op, simm7s8, "ldp">;
+defm ALDPQ : PLoadPairOffset<0b10, 1, FPR128Op, simm7s16, "ldp">;
+defm ALDPSW : PLoadPairOffset<0b01, 0, GPR64z, simm7s4, "ldpsw">;
+
+
+// Pair (pre-indexed)
+def ALDPWpre : PLoadPairPreIdx<0b00, 0, GPR32z, simm7s4, "ldp">;
+def ALDPXpre : PLoadPairPreIdx<0b10, 0, GPR64z, simm7s8, "ldp">;
+def ALDPSpre : PLoadPairPreIdx<0b00, 1, FPR32Op, simm7s4, "ldp">;
+def ALDPDpre : PLoadPairPreIdx<0b01, 1, FPR64Op, simm7s8, "ldp">;
+def ALDPQpre : PLoadPairPreIdx<0b10, 1, FPR128Op, simm7s16, "ldp">;
+def ALDPSWpre : PLoadPairPreIdx<0b01, 0, GPR64z, simm7s4, "ldpsw">;
+
+// Pair (post-indexed)
+def ALDPWpost : PLoadPairPostIdx<0b00, 0, GPR32z, simm7s4, "ldp">;
+def ALDPXpost : PLoadPairPostIdx<0b10, 0, GPR64z, simm7s8, "ldp">;
+def ALDPSpost : PLoadPairPostIdx<0b00, 1, FPR32Op, simm7s4, "ldp">;
+def ALDPDpost : PLoadPairPostIdx<0b01, 1, FPR64Op, simm7s8, "ldp">;
+def ALDPQpost : PLoadPairPostIdx<0b10, 1, FPR128Op, simm7s16, "ldp">;
+def ALDPSWpost : PLoadPairPostIdx<0b01, 0, GPR64z, simm7s4, "ldpsw">;
+
+// Pair (no allocate)
+defm ALDNPW : PLoadPairNoAlloc<0b00, 0, GPR32z, simm7s4, "ldnp">;
+defm ALDNPX : PLoadPairNoAlloc<0b10, 0, GPR64z, simm7s8, "ldnp">;
+defm ALDNPS : PLoadPairNoAlloc<0b00, 1, FPR32Op, simm7s4, "ldnp">;
+defm ALDNPD : PLoadPairNoAlloc<0b01, 1, FPR64Op, simm7s8, "ldnp">;
+defm ALDNPQ : PLoadPairNoAlloc<0b10, 1, FPR128Op, simm7s16, "ldnp">;
 
 } // Predicates = [HasC64]
 
-// Stores
+//===----------------------------------------------------------------------===//
+// Store instructions.
+//===----------------------------------------------------------------------===//
+
+let Predicates = [HasC64] in {
+// Pair (indexed, offset)
+// FIXME: Use dedicated range-checked addressing mode operand here.
+defm ASTPW : PStorePairOffset<0b00, 0, GPR32z, simm7s4, "stp">;
+defm ASTPX : PStorePairOffset<0b10, 0, GPR64z, simm7s8, "stp">;
+defm ASTPS : PStorePairOffset<0b00, 1, FPR32Op, simm7s4, "stp">;
+defm ASTPD : PStorePairOffset<0b01, 1, FPR64Op, simm7s8, "stp">;
+defm ASTPQ : PStorePairOffset<0b10, 1, FPR128Op, simm7s16, "stp">;
+
+// Pair (pre-indexed)
+def ASTPWpre : PStorePairPreIdx<0b00, 0, GPR32z, simm7s4, "stp">;
+def ASTPXpre : PStorePairPreIdx<0b10, 0, GPR64z, simm7s8, "stp">;
+def ASTPSpre : PStorePairPreIdx<0b00, 1, FPR32Op, simm7s4, "stp">;
+def ASTPDpre : PStorePairPreIdx<0b01, 1, FPR64Op, simm7s8, "stp">;
+def ASTPQpre : PStorePairPreIdx<0b10, 1, FPR128Op, simm7s16, "stp">;
+
+// Pair (pre-indexed)
+def ASTPWpost : PStorePairPostIdx<0b00, 0, GPR32z, simm7s4, "stp">;
+def ASTPXpost : PStorePairPostIdx<0b10, 0, GPR64z, simm7s8, "stp">;
+def ASTPSpost : PStorePairPostIdx<0b00, 1, FPR32Op, simm7s4, "stp">;
+def ASTPDpost : PStorePairPostIdx<0b01, 1, FPR64Op, simm7s8, "stp">;
+def ASTPQpost : PStorePairPostIdx<0b10, 1, FPR128Op, simm7s16, "stp">;
+
+// Pair (no allocate)
+defm ASTNPW : PStorePairNoAlloc<0b00, 0, GPR32z, simm7s4, "stnp">;
+defm ASTNPX : PStorePairNoAlloc<0b10, 0, GPR64z, simm7s8, "stnp">;
+defm ASTNPS : PStorePairNoAlloc<0b00, 1, FPR32Op, simm7s4, "stnp">;
+defm ASTNPD : PStorePairNoAlloc<0b01, 1, FPR64Op, simm7s8, "stnp">;
+defm ASTNPQ : PStorePairNoAlloc<0b10, 1, FPR128Op, simm7s16, "stnp">;
 
 //---
 // Register offset
 
-let Predicates = [HasC64] in {
 // Integer
 defm ASTRBB : PStore8RO< 0b00, 0, 0b00, GPR32, "strb", i32, trunccstorei8>;
 defm ASTRHH : PStore16RO<0b01, 0, 0b00, GPR32, "strh", i32, trunccstorei16>;
@@ -758,11 +809,11 @@ defm ASTRW  : PStore32RO<0b10, 0, 0b00, GPR32, "str",  i32, cstore>;
 defm ASTRX  : PStore64RO<0b11, 0, 0b00, GPR64, "str",  i64, cstore>;
 
 // Floating point
-defm ASTRB : PStore8RO< 0b00,  1, 0b00, FPR8,   "str", untyped, cstore>;
-defm ASTRH : PStore16RO<0b01,  1, 0b00, FPR16,  "str", f16,     cstore>;
-defm ASTRS : PStore32RO<0b10,  1, 0b00, FPR32,  "str", f32,     cstore>;
-defm ASTRD : PStore64RO<0b11,  1, 0b00, FPR64,  "str", f64,     cstore>;
-defm ASTRQ : PStore128RO<0b00, 1, 0b10, FPR128, "str", f128,    cstore>;
+defm ASTRB : PStore8RO< 0b00,  1, 0b00, FPR8Op,   "str", untyped, cstore>;
+defm ASTRH : PStore16RO<0b01,  1, 0b00, FPR16Op,  "str", f16,     cstore>;
+defm ASTRS : PStore32RO<0b10,  1, 0b00, FPR32Op,  "str", f32,     cstore>;
+defm ASTRD : PStore64RO<0b11,  1, 0b00, FPR64Op,  "str", f64,     cstore>;
+defm ASTRQ : PStore128RO<0b00, 1, 0b10, FPR128Op, "str", f128,    cstore>;
 
 multiclass PTruncStoreFrom64ROPat<ROAddrMode ro, SDPatternOperator storeop,
                                   Instruction STRW, Instruction STRX> {
@@ -804,6 +855,7 @@ let Predicates = [IsLE, HasC64], AddedComplexity = 10 in {
   defm : PVecROStorePat<cro64, v4i16, FPR64, ASTRDroW, ASTRDroX>;
   defm : PVecROStorePat<cro64, v8i8, FPR64, ASTRDroW, ASTRDroX>;
   defm : PVecROStorePat<cro64, v4f16, FPR64, ASTRDroW, ASTRDroX>;
+  defm : PVecROStorePat<cro64, v4bf16, FPR64, ASTRDroW, ASTRDroX>;
 }
 
 let Predicates = [HasC64] in {
@@ -820,6 +872,7 @@ let Predicates = [IsLE, HasC64], AddedComplexity = 10 in {
   defm : PVecROStorePat<cro128, v8i16, FPR128, ASTRQroW, ASTRQroX>;
   defm : PVecROStorePat<cro128, v16i8, FPR128, ASTRQroW, ASTRQroX>;
   defm : PVecROStorePat<cro128, v8f16, FPR128, ASTRQroW, ASTRQroX>;
+  defm : PVecROStorePat<cro128, v8bf16, FPR128, ASTRQroW, ASTRQroX>;
 }
 
 // Match stores from lane 0 to the appropriate subreg's store.
@@ -839,23 +892,43 @@ multiclass PVecROStoreLane0Pat<ROAddrMode ro, SDPatternOperator storeop,
                   Capsp:$Rn, GPR64:$Rm, ro.Xext:$extend)>;
 }
 
+let AddedComplexity = 19, Predicates = [HasC64] in {
+  defm : PVecROStoreLane0Pat<cro16, trunccstorei16, v8i16, i32, hsub, ASTRHroW, ASTRHroX>;
+  defm : PVecROStoreLane0Pat<cro16,      cstore   , v8i16, i16, hsub, ASTRHroW, ASTRHroX>;
+  defm : PVecROStoreLane0Pat<cro32, trunccstorei32, v4i32, i32, ssub, ASTRSroW, ASTRSroX>;
+  defm : PVecROStoreLane0Pat<cro32,      cstore   , v4i32, i32, ssub, ASTRSroW, ASTRSroX>;
+  defm : PVecROStoreLane0Pat<cro32,      cstore   , v4f32, f32, ssub, ASTRSroW, ASTRSroX>;
+  defm : PVecROStoreLane0Pat<cro64,      cstore   , v2i64, i64, dsub, ASTRDroW, ASTRDroX>;
+  defm : PVecROStoreLane0Pat<cro64,      cstore   , v2f64, f64, dsub, ASTRDroW, ASTRDroX>;
+}
+
 let Predicates = [HasC64] in {
 
-let AddedComplexity = 19 in {
-  defm : PVecROStoreLane0Pat<cro16, trunccstorei16, v8i16, i32, hsub,
-                            ASTRHroW, ASTRHroX>;
-  defm : PVecROStoreLane0Pat<cro16,      cstore   , v8i16, i16, hsub,
-                            ASTRHroW, ASTRHroX>;
-  defm : PVecROStoreLane0Pat<cro32, trunccstorei32, v4i32, i32, ssub,
-                            ASTRSroW, ASTRSroX>;
-  defm : PVecROStoreLane0Pat<cro32,      cstore   , v4i32, i32, ssub,
-                            ASTRSroW, ASTRSroX>;
-  defm : PVecROStoreLane0Pat<cro32,      cstore   , v4f32, f32, ssub,
-                            ASTRSroW, ASTRSroX>;
-  defm : PVecROStoreLane0Pat<cro64,      cstore   , v2i64, i64, dsub,
-                            ASTRDroW, ASTRDroX>;
-  defm : PVecROStoreLane0Pat<cro64,      cstore   , v2f64, f64, dsub,
-                            ASTRDroW, ASTRDroX>;
+// bf16 store pattern
+def : Pat<(store (bf16 FPR16Op:$Rt),
+                 (am_cindexed16 Capsp:$Rn, uimm12s2:$offset)),
+          (ASTRHui FPR16:$Rt, Capsp:$Rn, uimm12s2:$offset)>;
+
+
+// Match stores from lane 0 to the appropriate subreg's store.
+multiclass PVecStoreLane0Pat<Operand UIAddrMode, SDPatternOperator storeop,
+                            ValueType VTy, ValueType STy,
+                            SubRegIndex SubRegIdx, Operand IndexType,
+                            Instruction STR> {
+  def : Pat<(storeop (STy (vector_extract (VTy VecListOne128:$Vt), 0)),
+                     (UIAddrMode Capsp:$Rn, IndexType:$offset)),
+            (STR (EXTRACT_SUBREG VecListOne128:$Vt, SubRegIdx),
+                 Capsp:$Rn, IndexType:$offset)>;
+}
+
+
+let AddedComplexity = 19, Predicates = [HasNotC64] in {
+  defm : PVecStoreLane0Pat<am_cindexed16, truncstorei16, v8i16, i32, hsub, uimm12s2, ASTRHui>;
+  defm : PVecStoreLane0Pat<am_cindexed16,         store, v8f16, f16, hsub, uimm12s2, ASTRHui>;
+  defm : PVecStoreLane0Pat<am_cindexed32,         store, v4i32, i32, ssub, uimm12s4, ASTRSui>;
+  defm : PVecStoreLane0Pat<am_cindexed32,         store, v4f32, f32, ssub, uimm12s4, ASTRSui>;
+  defm : PVecStoreLane0Pat<am_cindexed64,         store, v2i64, i64, dsub, uimm12s8, ASTRDui>;
+  defm : PVecStoreLane0Pat<am_cindexed64,         store, v2f64, f64, dsub, uimm12s8, ASTRDui>;
 }
 
 //---
@@ -890,7 +963,16 @@ defm ASTURBB : PStoreUnscaled<0b00, 0, 0b00, GPR32, "sturb",
 }
 
 // Match all store 64 bits width whose type is compatible with FPR64
-let Predicates = [HasC64, IsLE] in {
+let Predicates = [HasC64] in {
+def : Pat<(cstore (v1f64 FPR64:$Rt), (am_pcunscaled64 Capsp:$Rn, simm9:$offset)),
+          (ASTURDi FPR64:$Rt, Capsp:$Rn, simm9:$offset)>;
+def : Pat<(cstore (v1i64 FPR64:$Rt), (am_pcunscaled64 Capsp:$Rn, simm9:$offset)),
+          (ASTURDi FPR64:$Rt, Capsp:$Rn, simm9:$offset)>;
+}
+
+let AddedComplexity = 10 in {
+
+let Predicates = [IsLE, HasC64] in {
   // We must use ST1 to store vectors in big-endian.
   def : Pat<(cstore (v2f32 FPR64:$Rt),
                    (am_pcunscaled64 Capsp:$Rn, simm9:$offset)),
@@ -907,16 +989,16 @@ let Predicates = [HasC64, IsLE] in {
   def : Pat<(cstore (v4f16 FPR64:$Rt),
                    (am_pcunscaled64 Capsp:$Rn, simm9:$offset)),
             (ASTURDi FPR64:$Rt, Capsp:$Rn, simm9:$offset)>;
+  def : Pat<(store (v4bf16 FPR64:$Rt),
+                   (am_pcunscaled64 Capsp:$Rn, simm9:$offset)),
+            (ASTURDi FPR64:$Rt, Capsp:$Rn, simm9:$offset)>;
 }
 
-let Predicates = [HasC64] in {
-def : Pat<(cstore (v1f64 FPR64:$Rt), (am_pcunscaled64 Capsp:$Rn, simm9:$offset)),
-          (ASTURDi FPR64:$Rt, Capsp:$Rn, simm9:$offset)>;
-def : Pat<(cstore (v1i64 FPR64:$Rt), (am_pcunscaled64 Capsp:$Rn, simm9:$offset)),
-          (ASTURDi FPR64:$Rt, Capsp:$Rn, simm9:$offset)>;
-}
-
+let Predicates = [HasC64] in
 // Match all store 128 bits width whose type is compatible with FPR128
+def : Pat<(store (f128 FPR128:$Rt), (am_pcunscaled128 Capsp:$Rn, simm9:$offset)),
+          (ASTURQi FPR128:$Rt, Capsp:$Rn, simm9:$offset)>;
+
 let Predicates = [HasC64, IsLE] in {
   // We must use ST1 to store vectors in big-endian.
   def : Pat<(cstore (v4f32 FPR128:$Rt),
@@ -943,20 +1025,41 @@ let Predicates = [HasC64, IsLE] in {
   def : Pat<(cstore (v8f16 FPR128:$Rt),
                    (am_pcunscaled128 Capsp:$Rn, simm9:$offset)),
             (ASTURQi FPR128:$Rt, Capsp:$Rn, simm9:$offset)>;
+  def : Pat<(cstore (v8bf16 FPR128:$Rt),
+                   (am_pcunscaled128 Capsp:$Rn, simm9:$offset)),
+            (ASTURQi FPR128:$Rt, Capsp:$Rn, simm9:$offset)>;
 }
 
-let Predicates = [HasC64] in {
+} // AddedComplexity = 10
 
 // unscaled i64 truncating stores
+let Predicates = [HasC64] in {
 def : Pat<(trunccstorei32 GPR64:$Rt, (am_pcunscaled32 Capsp:$Rn, simm9:$offset)),
   (ASTURWi (EXTRACT_SUBREG GPR64:$Rt, sub_32), Capsp:$Rn, simm9:$offset)>;
 def : Pat<(trunccstorei16 GPR64:$Rt, (am_pcunscaled16 Capsp:$Rn, simm9:$offset)),
   (ASTURHHi (EXTRACT_SUBREG GPR64:$Rt, sub_32), Capsp:$Rn, simm9:$offset)>;
 def : Pat<(trunccstorei8 GPR64:$Rt, (am_pcunscaled8 Capsp:$Rn, simm9:$offset)),
   (ASTURBBi (EXTRACT_SUBREG GPR64:$Rt, sub_32), Capsp:$Rn, simm9:$offset)>;
+}
+// Match stores from lane 0 to the appropriate subreg's store.
+multiclass PVecStoreULane0Pat<SDPatternOperator StoreOp,
+                             ValueType VTy, ValueType STy,
+                             SubRegIndex SubRegIdx, Instruction STR> {
+  defm : PVecStoreLane0Pat<am_pcunscaled128, StoreOp, VTy, STy, SubRegIdx, simm9, STR>;
+}
+
+let AddedComplexity = 19, Predicates = [HasC64] in {
+  defm : PVecStoreULane0Pat<truncstorei16, v8i16, i32, hsub, ASTURHi>;
+  defm : PVecStoreULane0Pat<store,         v8f16, f16, hsub, ASTURHi>;
+  defm : PVecStoreULane0Pat<store,         v4i32, i32, ssub, ASTURSi>;
+  defm : PVecStoreULane0Pat<store,         v4f32, f32, ssub, ASTURSi>;
+  defm : PVecStoreULane0Pat<store,         v2i64, i64, dsub, ASTURDi>;
+  defm : PVecStoreULane0Pat<store,         v2f64, f64, dsub, ASTURDi>;
+}
 
 //---
 // STR mnemonics fall back to STUR for negative or unaligned offsets.
+let Predicates = [HasC64] in {
 def : InstAlias<"str $Rt, [$Rn, $offset]",
                 (ASTURXi GPR64:$Rt, Capsp:$Rn, simm9_offset_fb64:$offset), 0>;
 def : InstAlias<"str $Rt, [$Rn, $offset]",
@@ -989,22 +1092,18 @@ defm ASTTRB : PStoreUnprivileged<0b00, 0, 0b00, GPR32, "sttrb">;
 
 //---
 // (immediate pre-indexed)
-
 let Predicates = [HasC64] in {
 
-def ASTRWpre : PStorePreIdx<0b10, 0, 0b00, GPR32, "str",  pre_inc_cstore, i32>;
-def ASTRXpre : PStorePreIdx<0b11, 0, 0b00, GPR64, "str",  pre_inc_cstore, i64>;
-def ASTRBpre : PStorePreIdx<0b00, 1, 0b00, FPR8,  "str",  pre_inc_cstore,
-                            untyped>;
-def ASTRHpre : PStorePreIdx<0b01, 1, 0b00, FPR16, "str",  pre_inc_cstore, f16>;
-def ASTRSpre : PStorePreIdx<0b10, 1, 0b00, FPR32, "str",  pre_inc_cstore, f32>;
-def ASTRDpre : PStorePreIdx<0b11, 1, 0b00, FPR64, "str",  pre_inc_cstore, f64>;
-def ASTRQpre : PStorePreIdx<0b00, 1, 0b10, FPR128, "str", pre_inc_cstore, f128>;
+def ASTRWpre : PStorePreIdx<0b10, 0, 0b00, GPR32z, "str",  pre_inc_cstore, i32>;
+def ASTRXpre : PStorePreIdx<0b11, 0, 0b00, GPR64z, "str",  pre_inc_cstore, i64>;
+def ASTRBpre : PStorePreIdx<0b00, 1, 0b00, FPR8Op,  "str",  pre_inc_cstore, untyped>;
+def ASTRHpre : PStorePreIdx<0b01, 1, 0b00, FPR16Op, "str",  pre_inc_cstore, f16>;
+def ASTRSpre : PStorePreIdx<0b10, 1, 0b00, FPR32Op, "str",  pre_inc_cstore, f32>;
+def ASTRDpre : PStorePreIdx<0b11, 1, 0b00, FPR64Op, "str",  pre_inc_cstore, f64>;
+def ASTRQpre : PStorePreIdx<0b00, 1, 0b10, FPR128Op, "str", pre_inc_cstore, f128>;
 
-def ASTRBBpre : PStorePreIdx<0b00, 0, 0b00, GPR32, "strb", pre_inc_trunccsti8,
-                             i32>;
-def ASTRHHpre : PStorePreIdx<0b01, 0, 0b00, GPR32, "strh", pre_inc_trunccsti16,
-                             i32>;
+def ASTRBBpre : PStorePreIdx<0b00, 0, 0b00, GPR32z, "strb", pre_inc_trunccsti8, i32>;
+def ASTRHHpre : PStorePreIdx<0b01, 0, 0b00, GPR32z, "strh", pre_inc_trunccsti16, i32>;
 
 def : Pat<(pre_dec_cstore (i32 GPR32:$Rt), Capsp:$addr, (negsimm i64imm:$off)),
           (ASTRWpre GPR32:$Rt, Capsp:$addr, i64imm:$off)>;
@@ -1114,34 +1213,41 @@ def : Pat<(pre_dec_cstore (v8f16 FPR128:$Rt), Capsp:$addr, (negsimm i64imm:$off)
 // (immediate post-indexed)
 let Predicates = [HasC64] in {
 
-def ASTRWpost : PStorePostIdx<0b10, 0, 0b00, GPR32,  "str", post_inc_cstore, i32>;
-def ASTRXpost : PStorePostIdx<0b11, 0, 0b00, GPR64,  "str", post_inc_cstore, i64>;
-def ASTRBpost : PStorePostIdx<0b00, 1, 0b00, FPR8,   "str", post_inc_cstore,
-                              untyped>;
-def ASTRHpost : PStorePostIdx<0b01, 1, 0b00, FPR16,  "str", post_inc_cstore, f16>;
-def ASTRSpost : PStorePostIdx<0b10, 1, 0b00, FPR32,  "str", post_inc_cstore, f32>;
-def ASTRDpost : PStorePostIdx<0b11, 1, 0b00, FPR64,  "str", post_inc_cstore, f64>;
-def ASTRQpost : PStorePostIdx<0b00, 1, 0b10, FPR128, "str", post_inc_cstore, f128>;
+def ASTRWpost : PStorePostIdx<0b10, 0, 0b00, GPR32z,  "str", post_inc_cstore, i32>;
+def ASTRXpost : PStorePostIdx<0b11, 0, 0b00, GPR64z,  "str", post_inc_cstore, i64>;
+def ASTRBpost : PStorePostIdx<0b00, 1, 0b00, FPR8Op,   "str", post_inc_cstore, untyped>;
+def ASTRHpost : PStorePostIdx<0b01, 1, 0b00, FPR16Op,  "str", post_inc_cstore, f16>;
+def ASTRSpost : PStorePostIdx<0b10, 1, 0b00, FPR32Op,  "str", post_inc_cstore, f32>;
+def ASTRDpost : PStorePostIdx<0b11, 1, 0b00, FPR64Op,  "str", post_inc_cstore, f64>;
+def ASTRQpost : PStorePostIdx<0b00, 1, 0b10, FPR128Op, "str", post_inc_cstore, f128>;
 
-def ASTRBBpost : PStorePostIdx<0b00, 0, 0b00, GPR32, "strb", post_inc_trunccsti8,
+def ASTRBBpost : PStorePostIdx<0b00, 0, 0b00, GPR32z, "strb", post_inc_trunccsti8,
                                i32>;
-def ASTRHHpost : PStorePostIdx<0b01, 0, 0b00, GPR32, "strh", post_inc_trunccsti16,
+def ASTRHHpost : PStorePostIdx<0b01, 0, 0b00, GPR32z, "strh", post_inc_trunccsti16,
                                i32>;
 
-def : Pat<(post_dec_cstore (i32 GPR32:$Rt), Capsp:$addr, (negsimm i64imm:$off)),
+def : Pat<(post_dec_cstore (i32 GPR32:$Rt), Capsp:$addr,
+			   (negsimm i64imm:$off)),
           (ASTRWpost GPR32:$Rt, Capsp:$addr, i64imm:$off)>;
-def : Pat<(post_dec_cstore (i64 GPR64:$Rt), Capsp:$addr, (negsimm i64imm:$off)),
+def : Pat<(post_dec_cstore (i64 GPR64:$Rt), Capsp:$addr,
+                           (negsimm i64imm:$off)),
           (ASTRXpost GPR64:$Rt, Capsp:$addr, i64imm:$off)>;
-def : Pat<(post_dec_cstore (untyped FPR8:$Rt), Capsp:$addr, (negsimm i64imm:$off)),
+def : Pat<(post_dec_cstore (untyped FPR8:$Rt), Capsp:$addr,
+                           (negsimm i64imm:$off)),
           (ASTRBpost FPR8:$Rt, Capsp:$addr, i64imm:$off)>;
-def : Pat<(post_dec_cstore (f16 FPR16:$Rt), Capsp:$addr, (negsimm i64imm:$off)),
+def : Pat<(post_dec_cstore (f16 FPR16:$Rt), Capsp:$addr,
+                           (negsimm i64imm:$off)),
           (ASTRHpost FPR16:$Rt, Capsp:$addr, i64imm:$off)>;
-def : Pat<(post_dec_cstore (f32 FPR32:$Rt), Capsp:$addr, (negsimm i64imm:$off)),
+def : Pat<(post_dec_cstore (f32 FPR32:$Rt), Capsp:$addr,
+                           (negsimm i64imm:$off)),
           (ASTRSpost FPR32:$Rt, Capsp:$addr, i64imm:$off)>;
-def : Pat<(post_dec_cstore (f64 FPR64:$Rt), Capsp:$addr, (negsimm i64imm:$off)),
+def : Pat<(post_dec_cstore (f64 FPR64:$Rt), Capsp:$addr,
+                           (negsimm i64imm:$off)),
           (ASTRDpost FPR64:$Rt, Capsp:$addr, i64imm:$off)>;
-def : Pat<(post_dec_cstore (f128 FPR128:$Rt), Capsp:$addr, (negsimm i64imm:$off)),
+def : Pat<(post_dec_cstore (f128 FPR128:$Rt), Capsp:$addr,
+                           (negsimm i64imm:$off)),
           (ASTRQpost FPR128:$Rt, Capsp:$addr, i64imm:$off)>;
+
 
 def : Pat<(post_dec_trunccsti8 (i32 GPR32:$Rt), Capsp:$addr,
                              (negsimm i64imm:$off)),
@@ -1232,40 +1338,11 @@ def : Pat<(post_dec_cstore (v8f16 FPR128:$Rt), Capsp:$addr, (negsimm i64imm:$off
           (ASTRQpost FPR128:$Rt, Capsp:$addr, i64imm:$off)>;
 } // Predicates = [HasC64]
 
-let Predicates = [HasC64] in {
-// Pair (indexed, offset)
-// FIXME: Use dedicated range-checked addressing mode operand here.
-defm ASTPW : PStorePairOffset<0b00, 0, GPR32, simm7s4, "stp">;
-defm ASTPX : PStorePairOffset<0b10, 0, GPR64, simm7s8, "stp">;
-defm ASTPS : PStorePairOffset<0b00, 1, FPR32, simm7s4, "stp">;
-defm ASTPD : PStorePairOffset<0b01, 1, FPR64, simm7s8, "stp">;
-defm ASTPQ : PStorePairOffset<0b10, 1, FPR128, simm7s16, "stp">;
-
-// Pair (pre-indexed)
-def ASTPWpre : PStorePairPreIdx<0b00, 0, GPR32, simm7s4, "stp">;
-def ASTPXpre : PStorePairPreIdx<0b10, 0, GPR64, simm7s8, "stp">;
-def ASTPSpre : PStorePairPreIdx<0b00, 1, FPR32, simm7s4, "stp">;
-def ASTPDpre : PStorePairPreIdx<0b01, 1, FPR64, simm7s8, "stp">;
-def ASTPQpre : PStorePairPreIdx<0b10, 1, FPR128, simm7s16, "stp">;
-
-// Pair (pre-indexed)
-def ASTPWpost : PStorePairPostIdx<0b00, 0, GPR32, simm7s4, "stp">;
-def ASTPXpost : PStorePairPostIdx<0b10, 0, GPR64, simm7s8, "stp">;
-def ASTPSpost : PStorePairPostIdx<0b00, 1, FPR32, simm7s4, "stp">;
-def ASTPDpost : PStorePairPostIdx<0b01, 1, FPR64, simm7s8, "stp">;
-def ASTPQpost : PStorePairPostIdx<0b10, 1, FPR128, simm7s16, "stp">;
-
-// Pair (no allocate)
-defm ASTNPW : PStorePairNoAlloc<0b00, 0, GPR32, simm7s4, "stnp">;
-defm ASTNPX : PStorePairNoAlloc<0b10, 0, GPR64, simm7s8, "stnp">;
-defm ASTNPS : PStorePairNoAlloc<0b00, 1, FPR32, simm7s4, "stnp">;
-defm ASTNPD : PStorePairNoAlloc<0b01, 1, FPR64, simm7s8, "stnp">;
-defm ASTNPQ : PStorePairNoAlloc<0b10, 1, FPR128, simm7s16, "stnp">;
-
 //===----------------------------------------------------------------------===//
 // Load/store exclusive instructions.
 //===----------------------------------------------------------------------===//
 
+let Predicates = [HasC64] in {
 def ALDARW  : PLoadAcquire   <0b10, 1, 1, 0, 1, GPR32, "ldar">;
 def ALDARX  : PLoadAcquire   <0b11, 1, 1, 0, 1, GPR64, "ldar">;
 def ALDARB  : PLoadAcquire   <0b00, 1, 1, 0, 1, GPR32, "ldarb">;
@@ -1660,6 +1737,10 @@ def : Pat<(v4f16 (AArch64dup (f16 (cload Capsp:$Rn)))),
           (ALD1Rv4h Capsp:$Rn)>;
 def : Pat<(v8f16 (AArch64dup (f16 (cload Capsp:$Rn)))),
           (ALD1Rv8h Capsp:$Rn)>;
+def : Pat<(v4bf16 (AArch64dup (bf16 (cload Capsp:$Rn)))),
+	  (ALD1Rv4h Capsp:$Rn)>;
+def : Pat<(v8bf16 (AArch64dup (bf16 (cload Capsp:$Rn)))),
+	  (ALD1Rv8h Capsp:$Rn)>;
 } // Predicates = [HasNEON, HasC64]
 
 class ALd1Lane128Pat<SDPatternOperator scalar_load, Operand VecIndex,
@@ -1676,6 +1757,7 @@ def : ALd1Lane128Pat<cload,       VectorIndexS, v4f32, f32, ALD1i32>;
 def : ALd1Lane128Pat<cload,       VectorIndexD, v2i64, i64, ALD1i64>;
 def : ALd1Lane128Pat<cload,       VectorIndexD, v2f64, f64, ALD1i64>;
 def : ALd1Lane128Pat<cload,       VectorIndexH, v8f16, f16, ALD1i16>;
+def : ALd1Lane128Pat<cload,       VectorIndexH, v8bf16, bf16, ALD1i16>;
 
 class ALd1Lane64Pat<SDPatternOperator scalar_load, Operand VecIndex,
                    ValueType VTy, ValueType STy, Instruction LD1>
@@ -1692,6 +1774,7 @@ def : ALd1Lane64Pat<extcloadi16, VectorIndexH, v4i16, i32, ALD1i16>;
 def : ALd1Lane64Pat<cload,       VectorIndexS, v2i32, i32, ALD1i32>;
 def : ALd1Lane64Pat<cload,       VectorIndexS, v2f32, f32, ALD1i32>;
 def : ALd1Lane64Pat<cload,       VectorIndexH, v4f16, f16, ALD1i16>;
+def : ALd1Lane64Pat<cload,       VectorIndexH, v4bf16, bf16, ALD1i16>;
 
 let Predicates = [HasNEON, HasC64] in {
 defm ALD1 : PSIMDLdSt1SingleAliases<"ld1">;
@@ -1721,6 +1804,7 @@ def : ASt1Lane128Pat<cstore,         VectorIndexS, v4f32, f32, AST1i32>;
 def : ASt1Lane128Pat<cstore,         VectorIndexD, v2i64, i64, AST1i64>;
 def : ASt1Lane128Pat<cstore,         VectorIndexD, v2f64, f64, AST1i64>;
 def : ASt1Lane128Pat<cstore,         VectorIndexH, v8f16, f16, AST1i16>;
+def : ASt1Lane128Pat<cstore,         VectorIndexH, v8bf16, bf16, AST1i16>;
 
 let AddedComplexity = 19 in
 class ASt1Lane64Pat<SDPatternOperator scalar_store, Operand VecIndex,
@@ -1737,6 +1821,7 @@ def : ASt1Lane64Pat<truncstorei16, VectorIndexH, v4i16, i32, AST1i16>;
 def : ASt1Lane64Pat<store,         VectorIndexS, v2i32, i32, AST1i32>;
 def : ASt1Lane64Pat<store,         VectorIndexS, v2f32, f32, AST1i32>;
 def : ASt1Lane64Pat<store,         VectorIndexH, v4f16, f16, AST1i16>;
+def : ASt1Lane64Pat<store,         VectorIndexH, v4bf16, bf16, AST1i16>;
 
 multiclass ASt1LanePost64Pat<SDPatternOperator scalar_store, Operand VecIndex,
                              ValueType VTy, ValueType STy, Instruction ST1,
@@ -1761,6 +1846,7 @@ defm : ASt1LanePost64Pat<post_cstore, VectorIndexS, v2f32, f32, AST1i32_POST, 4>
 defm : ASt1LanePost64Pat<post_cstore, VectorIndexD, v1i64, i64, AST1i64_POST, 8>;
 defm : ASt1LanePost64Pat<post_cstore, VectorIndexD, v1f64, f64, AST1i64_POST, 8>;
 defm : ASt1LanePost64Pat<post_cstore, VectorIndexH, v4f16, f16, AST1i16_POST, 2>;
+defm : ASt1LanePost64Pat<post_cstore, VectorIndexH, v4bf16, bf16, AST1i16_POST, 2>;
 
 multiclass ASt1LanePost128Pat<SDPatternOperator scalar_store, Operand VecIndex,
                              ValueType VTy, ValueType STy, Instruction ST1,
@@ -1784,6 +1870,7 @@ defm : ASt1LanePost128Pat<post_cstore, VectorIndexS, v4f32, f32, AST1i32_POST, 4
 defm : ASt1LanePost128Pat<post_cstore, VectorIndexD, v2i64, i64, AST1i64_POST, 8>;
 defm : ASt1LanePost128Pat<post_cstore, VectorIndexD, v2f64, f64, AST1i64_POST, 8>;
 defm : ASt1LanePost128Pat<post_cstore, VectorIndexH, v8f16, f16, AST1i16_POST, 2>;
+defm : ASt1LanePost128Pat<post_cstore, VectorIndexH, v8bf16, bf16, AST1i16_POST, 2>;
 } // Predicates = [HasNEON, HasC64]
 
 let Predicates = [HasNEON, HasC64], mayStore = 1, hasSideEffects = 0 in {

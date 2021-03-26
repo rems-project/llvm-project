@@ -19,7 +19,7 @@ def ClearPerms  : SDNode<"AArch64ISD::ClearPerms",    SDTCapUnary>;
 
 let Predicates = [HasC64] in {
 
-multiclass PLoadUI<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
+multiclass PLoadUI<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
                   Operand indextype, string asm, list<dag> pattern> {
   let AddedComplexity = 10, mayLoad = 1, mayStore = 0, hasSideEffects = 0 in
   def ui : BaseLoadStoreUI<sz, V, opc, (outs regtype:$Rt),
@@ -33,7 +33,7 @@ multiclass PLoadUI<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
                   (!cast<Instruction>(NAME # "ui") regtype:$Rt, Capsp:$Rn, 0)>;
 
 }
-multiclass PStoreUI<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
+multiclass PStoreUI<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
              Operand indextype, string asm, list<dag> pattern> {
   let AddedComplexity = 10, mayLoad = 0, mayStore = 1, hasSideEffects = 0 in
   def ui : BaseLoadStoreUI<sz, V, opc, (outs),
@@ -350,7 +350,7 @@ multiclass PPrefetchRO<bits<2> sz, bit V, bits<2> opc, string asm> {
                                                  Capsp:$Rn, GPR64:$Rm, 0, 0)>;
 }
 
-multiclass PLoadUnscaled<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
+multiclass PLoadUnscaled<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
                          string asm, list<dag> pattern> {
   let AddedComplexity = 1 in // try this before LoadUI
   def i : BaseLoadStoreUnscale<sz, V, opc, (outs regtype:$Rt),
@@ -362,7 +362,7 @@ multiclass PLoadUnscaled<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
   def : InstAlias<asm # "\t$Rt, [$Rn]",
                   (!cast<Instruction>(NAME # "i") regtype:$Rt, Capsp:$Rn, 0)>;
 }
-multiclass PStoreUnscaled<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
+multiclass PStoreUnscaled<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
                           string asm, list<dag> pattern> {
   let AddedComplexity = 1 in // try this before StoreUI
   def i : BaseLoadStoreUnscale<sz, V, opc, (outs),
@@ -419,7 +419,7 @@ multiclass PStoreUnprivileged<bits<2> sz, bit V, bits<2> opc,
 
 let hasSideEffects = 0 in {
 let mayStore = 0, mayLoad = 1 in
-class PLoadPreIdx<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
+class PLoadPreIdx<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
              string asm>
     : BaseLoadStorePreIdx<sz, V, opc,
                      (outs Capsp:$wback, regtype:$Rt),
@@ -430,7 +430,7 @@ class PLoadPreIdx<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
 }
 
 let mayStore = 1, mayLoad = 0 in
-class PStorePreIdx<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
+class PStorePreIdx<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
                   string asm, SDPatternOperator storeop, ValueType Ty>
     : BaseLoadStorePreIdx<sz, V, opc,
                       (outs Capsp:$wback),
@@ -443,7 +443,7 @@ class PStorePreIdx<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
 }
 
 let mayStore = 0, mayLoad = 1 in
-class PLoadPostIdx<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
+class PLoadPostIdx<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
              string asm>
     : BaseLoadStorePostIdx<sz, V, opc,
                       (outs Capsp:$wback, regtype:$Rt),
@@ -454,7 +454,7 @@ class PLoadPostIdx<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
 }
 
 let mayStore = 1, mayLoad = 0 in
-class PStorePostIdx<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
+class PStorePostIdx<bits<2> sz, bit V, bits<2> opc, RegisterOperand regtype,
                    string asm, SDPatternOperator storeop, ValueType Ty>
     : BaseLoadStorePostIdx<sz, V, opc,
                       (outs Capsp:$wback),
@@ -468,7 +468,7 @@ class PStorePostIdx<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
 
 } // hasSideEffects = 0
 
-multiclass PLoadPairOffset<bits<2> opc, bit V, RegisterClass regtype,
+multiclass PLoadPairOffset<bits<2> opc, bit V, RegisterOperand regtype,
                           Operand indextype, string asm> {
   let hasSideEffects = 0, mayStore = 0, mayLoad = 1 in
   def i : BaseLoadStorePairOffset<opc, V, 1,
@@ -483,7 +483,7 @@ multiclass PLoadPairOffset<bits<2> opc, bit V, RegisterClass regtype,
                                                   Capsp:$Rn, 0)>;
 }
 
-multiclass PStorePairOffset<bits<2> opc, bit V, RegisterClass regtype,
+multiclass PStorePairOffset<bits<2> opc, bit V, RegisterOperand regtype,
                            Operand indextype, string asm> {
   let hasSideEffects = 0, mayLoad = 0, mayStore = 1 in
   def i : BaseLoadStorePairOffset<opc, V, 0, (outs),
@@ -500,7 +500,7 @@ multiclass PStorePairOffset<bits<2> opc, bit V, RegisterClass regtype,
 }
 
 let hasSideEffects = 0, mayStore = 0, mayLoad = 1 in
-class PLoadPairPreIdx<bits<2> opc, bit V, RegisterClass regtype,
+class PLoadPairPreIdx<bits<2> opc, bit V, RegisterOperand regtype,
                      Operand indextype, string asm>
     : BaseLoadStorePairPreIdx<opc, V, 1,
                               (outs Capsp:$wback, regtype:$Rt, regtype:$Rt2),
@@ -510,7 +510,7 @@ class PLoadPairPreIdx<bits<2> opc, bit V, RegisterClass regtype,
 }
 
 let hasSideEffects = 0, mayStore = 1, mayLoad = 0 in
-class PStorePairPreIdx<bits<2> opc, bit V, RegisterClass regtype,
+class PStorePairPreIdx<bits<2> opc, bit V, RegisterOperand regtype,
                       Operand indextype, string asm>
     : BaseLoadStorePairPreIdx<opc, V, 0, (outs Capsp:$wback),
                              (ins regtype:$Rt, regtype:$Rt2,
@@ -521,7 +521,7 @@ class PStorePairPreIdx<bits<2> opc, bit V, RegisterClass regtype,
 }
 
 let hasSideEffects = 0, mayStore = 0, mayLoad = 1 in
-class PLoadPairPostIdx<bits<2> opc, bit V, RegisterClass regtype,
+class PLoadPairPostIdx<bits<2> opc, bit V, RegisterOperand regtype,
                        Operand idxtype, string asm>
     : BaseLoadStorePairPostIdx<opc, V, 1,
                               (outs Capsp:$wback, regtype:$Rt, regtype:$Rt2),
@@ -531,7 +531,7 @@ class PLoadPairPostIdx<bits<2> opc, bit V, RegisterClass regtype,
 }
 
 let hasSideEffects = 0, mayStore = 1, mayLoad = 0 in
-class PStorePairPostIdx<bits<2> opc, bit V, RegisterClass regtype,
+class PStorePairPostIdx<bits<2> opc, bit V, RegisterOperand regtype,
                         Operand idxtype, string asm>
     : BaseLoadStorePairPostIdx<opc, V, 0, (outs Capsp:$wback),
                              (ins regtype:$Rt, regtype:$Rt2,
@@ -609,6 +609,7 @@ class PLoadExclusivePair<bits<2> sz, bit o2, bit L, bit o1, bit o0,
   let DecoderNamespace = "AArch64C64";
 }
 
+// Simple store release operations do not check the exclusive monitor.
 let mayLoad = 0, mayStore = 1 in
 class PStoreRelease<bits<2> sz, bit o2, bit L, bit o1, bit o0,
                     RegisterClass regtype, string asm>
