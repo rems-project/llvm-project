@@ -14,4 +14,4 @@ body: |
 # CHECK-NEXT:   bb.0:
 # CHECK-NEXT:     $x8 = SUBXri $sp, 8, 0
 # CHECK-NEXT:     $x0 = LDURXi killed $x8, -256
-# CHECK-NEXT:     RET_ReallyLR 0
+# CHECK-NEXT:     RET_ReallyLR

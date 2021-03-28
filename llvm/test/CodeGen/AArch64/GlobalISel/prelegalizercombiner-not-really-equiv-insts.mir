@@ -32,7 +32,7 @@ body:             |
     %load2:_(s32) = G_LOAD %ptr(p0) :: (load 4 from @g)
     %or:_(s32) = G_OR %load2, %load1
     G_STORE %or(s32), %ptr(p0) :: (store 4 into @g)
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -54,7 +54,7 @@ body:             |
     %load2:_(s32) = G_LOAD %ptr(p0) :: (dereferenceable invariant load 4 from @g)
     %or:_(s32) = G_OR %load2, %load1
     G_STORE %or(s32), %ptr(p0) :: (store 4 into @g)
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -78,5 +78,5 @@ body:             |
     %load2:_(s32) = G_LOAD %ptr(p0) :: (dereferenceable load 4 from @g)
     %or:_(s32) = G_OR %load2, %load1
     G_STORE %or(s32), %ptr(p0) :: (store 4 into @g)
-    RET_ReallyLR
+    RET_ReallyLR 0
 ...

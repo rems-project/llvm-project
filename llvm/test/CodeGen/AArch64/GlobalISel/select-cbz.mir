@@ -125,7 +125,7 @@ body:             |
   ; CHECK:   successors: %bb.2(0x80000000)
   ; CHECK:   STRXui $xzr, [[COPY]], 0 :: (store 8)
   ; CHECK: bb.2:
-  ; CHECK:   RET_ReallyLR 0
+  ; CHECK:   RET_ReallyLR
   bb.1:
     successors: %bb.2, %bb.3
     liveins: $x0
@@ -164,7 +164,7 @@ body:             |
   ; CHECK:   successors: %bb.2(0x80000000)
   ; CHECK:   STRXui $xzr, [[COPY]], 0 :: (store 8)
   ; CHECK: bb.2:
-  ; CHECK:   RET_ReallyLR 0
+  ; CHECK:   RET_ReallyLR
   bb.1:
     successors: %bb.2, %bb.3
     liveins: $x0

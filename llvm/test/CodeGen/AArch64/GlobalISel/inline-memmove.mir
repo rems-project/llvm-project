@@ -90,7 +90,7 @@ body:             |
     ; CHECK: [[C3:%[0-9]+]]:_(s64) = G_CONSTANT i64 32
     ; CHECK: [[GEP3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C3]](s64)
     ; CHECK: G_STORE [[LOAD2]](s128), [[GEP3]](p0) :: (store 16 into %ir.0 + 32, align 4)
-    ; CHECK: RET_ReallyLR 0
+    ; CHECK: RET_ReallyLR
     %0:_(p0) = COPY $x0
     %1:_(p0) = COPY $x1
     %2:_(s64) = G_CONSTANT i64 48
@@ -152,7 +152,7 @@ body:             |
     ; CHECK: [[C5:%[0-9]+]]:_(s64) = G_CONSTANT i64 48
     ; CHECK: [[GEP5:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C5]](s64)
     ; CHECK: G_STORE [[LOAD3]](s32), [[GEP5]](p0) :: (store 4 into %ir.0 + 48)
-    ; CHECK: RET_ReallyLR 0
+    ; CHECK: RET_ReallyLR
     %0:_(p0) = COPY $x0
     %1:_(p0) = COPY $x1
     %2:_(s64) = G_CONSTANT i64 52

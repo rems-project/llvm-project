@@ -626,7 +626,7 @@ body:             |
   ; CHECK:   [[MV:%[0-9]+]]:_(s128) = G_MERGE_VALUES [[PHI]](s64), [[PHI1]](s64)
   ; CHECK:   G_STORE [[MV]](s128), [[COPY1]](p0) :: (store 16)
   ; CHECK:   G_STORE [[PHI2]](s64), [[COPY1]](p0) :: (store 8)
-  ; CHECK:   RET_ReallyLR 0
+  ; CHECK:   RET_ReallyLR
   bb.0:
     successors: %bb.1(0x40000000)
     liveins: $x0, $x1

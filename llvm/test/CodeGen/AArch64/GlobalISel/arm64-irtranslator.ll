@@ -69,7 +69,7 @@ define void @allocai64() {
 ;
 ; Check that end contains the return instruction.
 ; CHECK: [[END:bb.[0-9]+]].{{[a-zA-Z0-9.]+}}:
-; CHECK-NEXT: RET_ReallyLR 0
+; CHECK-NEXT: RET_ReallyLR
 ;
 ; CHECK: bb.{{[0-9]+}}.{{[a-zA-Z0-9.]+}}:
 ; CHECK-NEXT: successors: %[[END]](0x80000000)
@@ -90,7 +90,7 @@ bb2:
 ; We don't emit a branch here, as we can fallthrough to the successor.
 ; CHECK-NOT: G_BR
 ; CHECK: [[END]].{{[a-zA-Z0-9.]+}}:
-; CHECK-NEXT: RET_ReallyLR 0
+; CHECK-NEXT: RET_ReallyLR
 define void @uncondbr_fallthrough() {
 entry:
   br label %end
@@ -117,9 +117,9 @@ end:
 ;
 ; Check that each successor contains the return instruction.
 ; CHECK: [[TRUE]].{{[a-zA-Z0-9.]+}}:
-; CHECK-NEXT: RET_ReallyLR 0
+; CHECK-NEXT: RET_ReallyLR
 ; CHECK: [[FALSE]].{{[a-zA-Z0-9.]+}}:
-; CHECK-NEXT: RET_ReallyLR 0
+; CHECK-NEXT: RET_ReallyLR
 define void @condbr(i1* %tstaddr) {
   %tst = load i1, i1* %tstaddr
   br i1 %tst, label %true, label %false
@@ -147,7 +147,7 @@ false:
 ;
 ; Check basic block L2 is the return basic block
 ; CHECK: [[BB_L2]].{{[a-zA-Z0-9.]+}} (address-taken):
-; CHECK-NEXT: RET_ReallyLR 0
+; CHECK-NEXT: RET_ReallyLR
 
 @indirectbr.L = internal unnamed_addr constant [3 x i8*] [i8* blockaddress(@indirectbr, %L1), i8* blockaddress(@indirectbr, %L2), i8* null], align 8
 
@@ -377,7 +377,7 @@ define i64 @load(i64* %addr, i64 addrspace(42)* %addr42) {
 ; CHECK: G_STORE [[VAL1]](s64), [[ADDR]](p0) :: (store 8 into %ir.addr, align 16)
 ; CHECK: G_STORE [[VAL2]](s64), [[ADDR42]](p42) :: (store 8 into %ir.addr42, addrspace 42)
 ; CHECK: G_STORE [[VAL1]](s64), [[ADDR]](p0) :: (volatile store 8 into %ir.addr)
-; CHECK: RET_ReallyLR 0
+; CHECK: RET_ReallyLR
 define void @store(i64* %addr, i64 addrspace(42)* %addr42, i64 %val1, i64 %val2) {
   store i64 %val1, i64* %addr, align 16
   store i64 %val2, i64 addrspace(42)* %addr42
@@ -393,7 +393,7 @@ define void @store(i64* %addr, i64 addrspace(42)* %addr42, i64 %val1, i64 %val2)
 ; CHECK: [[PTR_VEC:%[0-9]+]]:_(p0) = G_FRAME_INDEX %stack.0.ptr.vec
 ; CHECK: [[VEC:%[0-9]+]]:_(<8 x s8>) = G_LOAD [[PTR_VEC]]
 ; CHECK: G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.neon.st2), [[VEC]](<8 x s8>), [[VEC]](<8 x s8>), [[PTR]](p0)
-; CHECK: RET_ReallyLR 0
+; CHECK: RET_ReallyLR
 declare i8* @llvm.returnaddress(i32)
 declare void @llvm.aarch64.neon.st2.v8i8.p0i8(<8 x i8>, <8 x i8>, i8*)
 declare { <8 x i8>, <8 x i8> } @llvm.aarch64.neon.ld2.v8i8.p0v8i8(<8 x i8>*)
@@ -1237,7 +1237,7 @@ define void @test_va_end(i8* %list) {
 ; CHECK-LABEL: name: test_va_end
 ; CHECK-NOT: va_end
 ; CHECK-NOT: INTRINSIC
-; CHECK: RET_ReallyLR 0
+; CHECK: RET_ReallyLR
   call void @llvm.va_end.p0i8(i8* %list)
   ret void
 }
@@ -1448,7 +1448,7 @@ declare void @llvm.lifetime.start.p0i8(i64, i8*)
 declare void @llvm.lifetime.end.p0i8(i64, i8*)
 define void @test_lifetime_intrin() {
 ; CHECK-LABEL: name: test_lifetime_intrin
-; CHECK: RET_ReallyLR 0
+; CHECK: RET_ReallyLR
 ; O3-LABEL: name: test_lifetime_intrin
 ; O3: {{%[0-9]+}}:_(p0) = G_FRAME_INDEX %stack.0.slot
 ; O3-NEXT: LIFETIME_START %stack.0.slot
@@ -1876,7 +1876,7 @@ define void @test_phi_diamond({ i8, i16, i32 }* %a.ptr, { i8, i16, i32 }* %b.ptr
 ; CHECK: [[CST6:%[0-9]+]]:_(s64) = G_CONSTANT i64 4
 ; CHECK: [[GEP6:%[0-9]+]]:_(p0) = G_PTR_ADD [[ARG4]], [[CST6]](s64)
 ; CHECK: G_STORE [[PN3]](s32), [[GEP6]](p0) :: (store 4 into %ir.dst + 4)
-; CHECK: RET_ReallyLR 0
+; CHECK: RET_ReallyLR
 
 entry:
   br i1 %selector, label %store.a, label %store.b

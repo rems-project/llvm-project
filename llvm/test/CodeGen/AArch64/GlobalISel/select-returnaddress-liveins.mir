@@ -21,7 +21,7 @@ body:             |
   ; CHECK:   B %bb.1
   ; CHECK: bb.1:
   ; CHECK:   $x0 = COPY [[COPY]]
-  ; CHECK:   RET_ReallyLR implicit $x0
+  ; CHECK:   RET_ReallyLR 0, implicit $x0
   ; LR should be added as a livein to the entry block.
 
   bb.0:
@@ -31,7 +31,7 @@ body:             |
   bb.1:
     %4:gpr(p0) = G_INTRINSIC intrinsic(@llvm.returnaddress), 0
     $x0 = COPY %4
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 ---
 name:            already_live_in
@@ -48,7 +48,7 @@ body:             |
   ; CHECK:   B %bb.1
   ; CHECK: bb.1:
   ; CHECK:   $x0 = COPY [[COPY]]
-  ; CHECK:   RET_ReallyLR implicit $x0
+  ; CHECK:   RET_ReallyLR 0, implicit $x0
   ; We should not have LR listed as a livein twice.
 
   bb.0:
@@ -57,5 +57,5 @@ body:             |
   bb.1:
     %4:gpr(p0) = G_INTRINSIC intrinsic(@llvm.returnaddress), 0
     $x0 = COPY %4
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...

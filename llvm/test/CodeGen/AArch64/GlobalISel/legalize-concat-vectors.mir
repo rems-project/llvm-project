@@ -11,7 +11,7 @@ body: |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<2 x s32>) = COPY $d1
     ; CHECK: [[CONCAT_VECTORS:%[0-9]+]]:_(<4 x s32>) = G_CONCAT_VECTORS [[COPY]](<2 x s32>), [[COPY1]](<2 x s32>)
     ; CHECK: $q0 = COPY [[CONCAT_VECTORS]](<4 x s32>)
-    ; CHECK: RET_ReallyLR 0
+    ; CHECK: RET_ReallyLR
     %0:_(<2 x s32>) = COPY $d0
     %1:_(<2 x s32>) = COPY $d1
     %2:_(<4 x s32>) = G_CONCAT_VECTORS %0(<2 x s32>), %1(<2 x s32>)
@@ -28,7 +28,7 @@ body: |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<4 x s16>) = COPY $d1
     ; CHECK: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s16>) = G_CONCAT_VECTORS [[COPY]](<4 x s16>), [[COPY1]](<4 x s16>)
     ; CHECK: $q0 = COPY [[CONCAT_VECTORS]](<8 x s16>)
-    ; CHECK: RET_ReallyLR 0
+    ; CHECK: RET_ReallyLR
     %0:_(<4 x s16>) = COPY $d0
     %1:_(<4 x s16>) = COPY $d1
     %2:_(<8 x s16>) = G_CONCAT_VECTORS %0(<4 x s16>), %1(<4 x s16>)

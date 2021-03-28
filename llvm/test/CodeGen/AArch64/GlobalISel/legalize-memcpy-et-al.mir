@@ -20,7 +20,7 @@ body:             |
     ; CHECK: $x2 = COPY [[ZEXT]](s64)
     ; CHECK: BL &memcpy, csr_aarch64_aapcs, implicit-def $lr, implicit $sp, implicit $x0, implicit $x1, implicit $x2
     ; CHECK: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
-    ; CHECK: RET_ReallyLR 0
+    ; CHECK: RET_ReallyLR
     %0:_(p0) = COPY $x0
     %1:_(p0) = COPY $x1
     %2:_(s32) = COPY $w2
