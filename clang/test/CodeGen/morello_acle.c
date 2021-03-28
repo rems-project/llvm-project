@@ -170,13 +170,13 @@ uint32_t test_rev16(uint32_t t) {
 // CHECK-LABEL: test_rev16l
 // CHECK: [[T1:%.*]] = lshr i64 [[IN:%.*]], 32
 // CHECK: [[T2:%.*]] = trunc i64 [[T1]] to i32
-// CHECK: [[T3:%.*]] = tail call i32 @llvm.bswap.i32(i32 [[T2]])
-// CHECK: [[T6:%.*]] = tail call i32 @llvm.fshl.i32(i32 [[T3]], i32 [[T3]], i32 16)
+// CHECK: [[T3:%.*]] = call i32 @llvm.bswap.i32(i32 [[T2]])
+// CHECK: [[T6:%.*]] = call i32 @llvm.fshl.i32(i32 [[T3]], i32 [[T3]], i32 16)
 // CHECK: [[T7:%.*]] = zext i32 [[T6]] to i64
 // CHECK: [[T8:%.*]] = shl nuw i64 [[T7]], 32
 // CHECK: [[T9:%.*]] = trunc i64 [[IN]] to i32
-// CHECK: [[T10:%.*]] = tail call i32 @llvm.bswap.i32(i32 [[T9]])
-// CHECK: [[T13:%.*]] = tail call i32 @llvm.fshl.i32(i32 [[T10]], i32 [[T10]], i32 16)
+// CHECK: [[T10:%.*]] = call i32 @llvm.bswap.i32(i32 [[T9]])
+// CHECK: [[T13:%.*]] = call i32 @llvm.fshl.i32(i32 [[T10]], i32 [[T10]], i32 16)
 // CHECK: [[T14:%.*]] = zext i32 [[T13]] to i64
 // CHECK: [[T15:%.*]] = or i64 [[T8]], [[T14]]
 long test_rev16l(long t) {
@@ -186,13 +186,13 @@ long test_rev16l(long t) {
 // CHECK-LABEL: test_rev16ll
 // CHECK: [[T1:%.*]] = lshr i64 [[IN:%.*]], 32
 // CHECK: [[T2:%.*]] = trunc i64 [[T1]] to i32
-// CHECK: [[T3:%.*]] = tail call i32 @llvm.bswap.i32(i32 [[T2]])
-// CHECK: [[T6:%.*]] = tail call i32 @llvm.fshl.i32(i32 [[T3]], i32 [[T3]], i32 16)
+// CHECK: [[T3:%.*]] = call i32 @llvm.bswap.i32(i32 [[T2]])
+// CHECK: [[T6:%.*]] = call i32 @llvm.fshl.i32(i32 [[T3]], i32 [[T3]], i32 16)
 // CHECK: [[T7:%.*]] = zext i32 [[T6]] to i64
 // CHECK: [[T8:%.*]] = shl nuw i64 [[T7]], 32
 // CHECK: [[T9:%.*]] = trunc i64 [[IN]] to i32
-// CHECK: [[T10:%.*]] = tail call i32 @llvm.bswap.i32(i32 [[T9]])
-// CHECK: [[T13:%.*]] = tail call i32 @llvm.fshl.i32(i32 [[T10]], i32 [[T10]], i32 16)
+// CHECK: [[T10:%.*]] = call i32 @llvm.bswap.i32(i32 [[T9]])
+// CHECK: [[T13:%.*]] = call i32 @llvm.fshl.i32(i32 [[T10]], i32 [[T10]], i32 16)
 // CHECK: [[T14:%.*]] = zext i32 [[T13]] to i64
 // CHECK: [[T15:%.*]] = or i64 [[T8]], [[T14]]
 uint64_t test_rev16ll(uint64_t t) {
@@ -274,19 +274,19 @@ uint32_t test_crc32cd(uint32_t a, uint64_t b) {
 
 /* 10.1 Special register intrinsics */
 // CHECK-LABEL: test_rsr
-// CHECK: call i64 @llvm.read_register.i64(metadata ![[M0:[0-9]]])
+// CHECK: call i64 @llvm.read_volatile_register.i64(metadata ![[M0:[0-9]]])
 uint32_t test_rsr() {
   return __arm_rsr("1:2:3:4:5");
 }
 
 // CHECK-LABEL: test_rsr64
-// CHECK: call i64 @llvm.read_register.i64(metadata ![[M0:[0-9]]])
+// CHECK: call i64 @llvm.read_volatile_register.i64(metadata ![[M0:[0-9]]])
 uint64_t test_rsr64() {
   return __arm_rsr64("1:2:3:4:5");
 }
 
 // CHECK-LABEL: test_rsrp
-// CHECK: call i64 @llvm.read_register.i64(metadata ![[M1:[0-9]]])
+// CHECK: call i64 @llvm.read_volatile_register.i64(metadata ![[M1:[0-9]]])
 void *test_rsrp() {
   return __arm_rsrp("sysreg");
 }
