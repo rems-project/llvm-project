@@ -29,7 +29,7 @@ entry:
   %a = alloca i32, align 4, addrspace(200)
   %0 = call i8 addrspace(200)* @llvm.cheri.pcc.get()
   %1 = call i64 @llvm.cheri.cap.base.get(i8 addrspace(200)* %0)
-  %ptroffset = sub i64 ptrtoint (void (i32 addrspace(200)*)* @baz to i64), %1
+  %ptroffset = sub i64 ptrtoint (void (i32 addrspace(200)*) addrspace(200)* @baz to i64), %1
   %2 = call i8 addrspace(200)* @llvm.cheri.cap.offset.set(i8 addrspace(200)* %0, i64 %ptroffset)
   %3 = bitcast i8 addrspace(200)* %2 to void (i32 addrspace(200)*) addrspace(200)*
   call void %3(i32 addrspace(200)* %a)

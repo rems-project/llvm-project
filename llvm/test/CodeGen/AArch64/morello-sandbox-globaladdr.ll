@@ -53,7 +53,7 @@ define i8 addrspace(200)* @testFuncAddress() {
 entry:
   %0 = tail call i8 addrspace(200)* @llvm.cheri.pcc.get()
   %1 = tail call i64 @llvm.cheri.cap.base.get(i8 addrspace(200)* %0)
-  %ptroffset = sub i64 ptrtoint (i32 (...)* @myfunc to i64), %1
+  %ptroffset = sub i64 ptrtoint (i32 (...) addrspace(200)* @myfunc to i64), %1
   %2 = tail call i8 addrspace(200)* @llvm.cheri.cap.offset.set(i8 addrspace(200)* %0, i64 %ptroffset)
   ret i8 addrspace(200)* %2
 }

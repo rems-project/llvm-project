@@ -1,5 +1,5 @@
-; RUN: llc -march=arm64 -mattr=+morello -o - %s -verify-machineinstrs | FileCheck %s
-; RUN: llc -march=arm64 -mattr=+morello,+c64 -target-abi purecap  -o - %s -verify-machineinstrs | FileCheck %s
+; RUN: sed 's/addrspace(P)/addrspace(0)/g' %s | llc -march=arm64 -mattr=+morello -verify-machineinstrs | FileCheck %s
+; RUN: sed 's/addrspace(P)/addrspace(200)/g' %s | llc -march=arm64 -mattr=+morello,+c64 -target-abi purecap -verify-machineinstrs | FileCheck %s
 
 declare i32 @foo(...)
 declare i32 @bar(...)
@@ -13,11 +13,11 @@ entry:
   br i1 %cmp, label %cond.true, label %cond.false
 
 cond.true:
-  %call = tail call i32 bitcast (i32 (...)* @foo to i32 ()*)()
+  %call = tail call i32 bitcast (i32 (...) addrspace(P)* @foo to i32 () addrspace(P)*)()
   br label %cond.end
 
 cond.false:
-  %call1 = tail call i32 bitcast (i32 (...)* @bar to i32 ()*)()
+  %call1 = tail call i32 bitcast (i32 (...) addrspace(P)* @bar to i32 () addrspace(P)*)()
   br label %cond.end
 
 cond.end:

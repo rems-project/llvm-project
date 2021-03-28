@@ -10,11 +10,11 @@ entry:
   br i1 %cmp, label %cond.true, label %cond.false
 
 cond.true:
-  %call = tail call i32 bitcast (i32 (...)* @foo to i32 ()*)()
+  %call = tail call i32 bitcast (i32 (...) addrspace(200)* @foo to i32 () addrspace(200)*)()
   br label %cond.end
 
 cond.false:
-  %call1 = tail call i32 bitcast (i32 (...)* @bar to i32 ()*)()
+  %call1 = tail call i32 bitcast (i32 (...) addrspace(200)* @bar to i32 () addrspace(200)*)()
   br label %cond.end
 
 cond.end:
