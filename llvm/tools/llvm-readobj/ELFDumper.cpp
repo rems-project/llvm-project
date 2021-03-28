@@ -3410,8 +3410,8 @@ template <class ELFT> void ELFDumper<ELFT>::printCheriCapRelocs() {
   StringRef StrTable;
   bool UsingDynsym = false;
   if (DotSymtabSec) {
-    StrTable = unwrapOrError(
-        ObjF.getFileName(), Obj.getStringTableForSymtab(*DotSymtabSec));
+    StrTable = unwrapOrError(ObjF.getFileName(),
+                             Obj.getStringTableForSymtab(*DotSymtabSec));
     Syms = unwrapOrError(ObjF.getFileName(), Obj.symbols(DotSymtabSec));
   } else {
     StrTable = DynamicStringTable;
@@ -3578,8 +3578,8 @@ template <class ELFT> void ELFDumper<ELFT>::printCheriCapTable() {
   StringRef StrTable;
   bool UsingDynsym = false;
   if (DotSymtabSec) {
-    StrTable = unwrapOrError(
-        ObjF.getFileName(), Obj.getStringTableForSymtab(*DotSymtabSec));
+    StrTable = unwrapOrError(ObjF.getFileName(),
+                             Obj.getStringTableForSymtab(*DotSymtabSec));
     Syms = unwrapOrError(ObjF.getFileName(), Obj.symbols(DotSymtabSec));
   } else {
     StrTable = DynamicStringTable;
@@ -3662,8 +3662,8 @@ template <class ELFT> void ELFDumper<ELFT>::printCheriCapTable() {
       StringRef TargetName;
       Obj.getRelocationTypeName(R.getType(Obj.isMips64EL()), RelocName);
 
-      const Elf_Sym *Sym = unwrapOrError(ObjF.getFileName(),
-                                         Obj.getRelocationSymbol(R, SymTab));
+      const Elf_Sym *Sym =
+          unwrapOrError(ObjF.getFileName(), Obj.getRelocationSymbol(R, SymTab));
       if (Sym) {
         TargetName = unwrapOrError(
             ObjF.getFileName(), Sym->getName(getDynamicStringTable()));
@@ -3690,8 +3690,8 @@ template <class ELFT> void ELFDumper<ELFT>::printCheriCapTableMapping() {
   StringRef StrTable;
   bool UsingDynsym = false;
   if (DotSymtabSec) {
-    StrTable = unwrapOrError(
-        ObjF.getFileName(), Obj.getStringTableForSymtab(*DotSymtabSec));
+    StrTable = unwrapOrError(ObjF.getFileName(),
+                             Obj.getStringTableForSymtab(*DotSymtabSec));
     Syms = unwrapOrError(ObjF.getFileName(), Obj.symbols(DotSymtabSec));
   } else {
     StrTable = DynamicStringTable;
