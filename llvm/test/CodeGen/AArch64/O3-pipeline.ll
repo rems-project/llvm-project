@@ -1,4 +1,6 @@
 ; RUN: llc --debugify-and-strip-all-safe=0 -mtriple=arm64-- -O3 -debug-pass=Structure < %s -o /dev/null 2>&1 | \
+; RUN:     grep -v "Verify generated machine code"
+; RUN: llc --debugify-and-strip-all-safe=0 -mtriple=arm64-- -O3 -debug-pass=Structure < %s -o /dev/null 2>&1 | \
 ; RUN:     grep -v "Verify generated machine code" | FileCheck %s
 
 ; REQUIRES: asserts
@@ -80,9 +82,6 @@
 ; CHECK-NEXT:       Natural Loop Information
 ; CHECK-NEXT:       Scalar Evolution Analysis
 ; CHECK-NEXT:       AArch64 sandbox setup
-; CHECK-NEXT:       Basic Alias Analysis (stateless AA impl)
-; CHECK-NEXT:       Function Alias Analysis Results
-; CHECK-NEXT:       AArch64 Stack Tagging
 ; CHECK-NEXT:       CodeGen Prepare
 ; CHECK-NEXT:     Rewrite Symbols
 ; CHECK-NEXT:     FunctionPass Manager

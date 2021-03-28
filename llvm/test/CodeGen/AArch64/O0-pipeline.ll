@@ -24,12 +24,12 @@
 ; CHECK-NEXT:       Instrument function entry/exit with calls to e.g. mcount() (post inlining)
 ; CHECK-NEXT:       Scalarize Masked Memory Intrinsics
 ; CHECK-NEXT:       Expand reduction intrinsics
+; CHECK-NEXT:       AArch64 Stack Tagging
 ; CHECK-NEXT:       Morello range checker
 ; CHECK-NEXT:       Dominator Tree Construction
 ; CHECK-NEXT:       Natural Loop Information
 ; CHECK-NEXT:       Scalar Evolution Analysis
 ; CHECK-NEXT:       AArch64 sandbox setup
-; CHECK-NEXT:       AArch64 Stack Tagging
 ; CHECK-NEXT:     Rewrite Symbols
 ; CHECK-NEXT:     FunctionPass Manager
 ; CHECK-NEXT:       Exception handling preparation
