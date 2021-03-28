@@ -279,6 +279,7 @@ bool AArch64::needsThunk(RelExpr expr, RelType type, const InputFile *file,
            !inBranchRange(type, branchAddr, dst);
   case R_MORELLO_CALL26:
   case R_MORELLO_JUMP26:
+  case R_AARCH64_PLT32:
     // Source is C64, need to interwork if a STT_FUNC Symbol has bit 0 clear
     // (AArch64).
     return (s.isFunc() && (dst & 1) == 0) ||
