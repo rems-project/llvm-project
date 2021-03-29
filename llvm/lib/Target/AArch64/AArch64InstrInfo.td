@@ -2121,7 +2121,7 @@ let Predicates = [HasNotC64] in
   def : InstAlias<"ret", (RET LR)>;
 
 let isCall = 1, Defs = [LR], Uses = [SP] in {
-def BLR : BranchReg<0b0001, "blr", [(AArch64call GPR64:$Rn)]>;
+def BLR : BranchReg<0b0001, "blr", []>;
 def BLRNoIP : Pseudo<(outs), (ins GPR64noip:$Rn), []>,
 	      Sched<[WriteBrReg]>,
 	      PseudoInstExpansion<(BLR GPR64:$Rn)>;
