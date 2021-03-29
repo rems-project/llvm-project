@@ -2,11 +2,11 @@
 ; REQUIRES: mips-registered-target, riscv-registered-target
 ; Check that we can handle varargs functions with byval arguments
 ; First check that non-CHERI targets add a memcpy
-; RUN: sed -e 's/addrspace(200)/addrspace(0)/g' -e 's/p200i8/p0i8/g' %s | llc -mtriple riscv64-unknown-freebsd -o - -relocation-model=pic | FileCheck %s --check-prefixes CHECK,RV64
-; RUN: sed -e 's/addrspace(200)/addrspace(0)/g' -e 's/p200i8/p0i8/g' %s | llc -mtriple mips64-unknown-freebsd -o - -relocation-model=pic  | FileCheck %s --check-prefixes CHECK,MIPS
+; RUN: sed -e 's/addrspace(200)/addrspace(0)/g' -e 's/p200i8/p0i8/g' %s | llc -mtriple riscv64-unknown-freebsd -o - -relocation-model=pic | FileCheck %s --check-prefixes RV64
+; RUN: sed -e 's/addrspace(200)/addrspace(0)/g' -e 's/p200i8/p0i8/g' %s | llc -mtriple mips64-unknown-freebsd -o - -relocation-model=pic  | FileCheck %s --check-prefixes MIPS
 ; Next check purecap targets:
-; RUN: %riscv64_cheri_purecap_llc -o - %s | FileCheck %s --check-prefixes CHECK,PURECAP-RV64
-; RUN: %cheri_purecap_llc -o - %s | FileCheck %s --check-prefixes CHECK,PURECAP-MIPS
+; RUN: %riscv64_cheri_purecap_llc -o - %s | FileCheck %s --check-prefixes PURECAP-RV64
+; RUN: %cheri_purecap_llc -o - %s | FileCheck %s --check-prefixes PURECAP-MIPS
 
 
 ; Note: This test case was generated from the following C
