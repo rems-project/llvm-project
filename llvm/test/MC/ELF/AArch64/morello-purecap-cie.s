@@ -16,6 +16,7 @@ purecap_func:
 // CHECK-LABEL: .debug_frame contents:
 //
 // CHECK: 00000000 00000014 ffffffff CIE
+// CHECK-NEXT:   Format:                DWARF32
 // CHECK-NEXT:   Version:               4
 // CHECK-NEXT:   Augmentation:          "C"
 // CHECK-NEXT:   Address size:          8
@@ -30,6 +31,7 @@ purecap_func:
 // CHECK-LABEL: .eh_frame contents:
 //
 // CHECK: 00000000 00000014 00000000 CIE
+// CHECK-NEXT:   Format:                DWARF32
 // CHECK-NEXT:   Version:               1
 // CHECK-NEXT:   Augmentation:          "zRC"
 // CHECK-NEXT:   Code alignment factor: 1
