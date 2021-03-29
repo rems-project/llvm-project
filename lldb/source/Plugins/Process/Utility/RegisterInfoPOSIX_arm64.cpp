@@ -111,7 +111,7 @@ static const uint32_t g_gpr_regnums_arm64[] = {
     gpr_x16, gpr_x17,  gpr_x18, gpr_x19,
     gpr_x20, gpr_x21,  gpr_x22, gpr_x23,
     gpr_x24, gpr_x25,  gpr_x26, gpr_x27,
-    gpr_x28, gpr_fp,   gpr_lr,  gpr_sp,
+    gpr_x28, gpr_x29,  gpr_lr,  gpr_sp,
     gpr_pc,  gpr_cpsr, gpr_w0,  gpr_w1,
     gpr_w2,  gpr_w3,   gpr_w4,  gpr_w5,
     gpr_w6,  gpr_w7,   gpr_w8,  gpr_w9,
@@ -189,7 +189,8 @@ RegisterInfoPOSIX_arm64::RegisterInfoPOSIX_arm64(
     : lldb_private::RegisterInfoAndSetInterface(target_arch),
       m_register_info_p(GetRegisterInfoPtr(target_arch)),
       m_register_info_count(GetRegisterInfoCount(target_arch)) {
-
+  MarkAsFP(g_register_infos_arm64_le[gpr_x29], /*isCapability=*/false);
+  MarkAsFP(g_register_infos_arm64_le[cap_c29], /*isCapability=*/true);
   switch (target_arch.GetMachine()) {
   case llvm::Triple::aarch64:
   case llvm::Triple::aarch64_32:

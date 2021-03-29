@@ -164,7 +164,7 @@ TEST_F(TestArm64InstEmulation, TestSimpleDarwinFunction) {
   EXPECT_TRUE(row_sp->GetCFAValue().IsRegisterPlusOffset() == true);
   EXPECT_EQ(16, row_sp->GetCFAValue().GetOffset());
 
-  EXPECT_TRUE(row_sp->GetRegisterInfo(gpr_fp_arm64, regloc));
+  EXPECT_TRUE(row_sp->GetRegisterInfo(gpr_x29_arm64, regloc));
   EXPECT_TRUE(regloc.IsAtCFAPlusOffset());
   EXPECT_EQ(-16, regloc.GetOffset());
 
@@ -175,11 +175,11 @@ TEST_F(TestArm64InstEmulation, TestSimpleDarwinFunction) {
   // CFA=fp+16 => fp=[CFA-16] lr=[CFA-8]
   row_sp = unwind_plan.GetRowForFunctionOffset(8);
   EXPECT_EQ(8ull, row_sp->GetOffset());
-  EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == gpr_fp_arm64);
+  EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == gpr_x29_arm64);
   EXPECT_TRUE(row_sp->GetCFAValue().IsRegisterPlusOffset() == true);
   EXPECT_EQ(16, row_sp->GetCFAValue().GetOffset());
 
-  EXPECT_TRUE(row_sp->GetRegisterInfo(gpr_fp_arm64, regloc));
+  EXPECT_TRUE(row_sp->GetRegisterInfo(gpr_x29_arm64, regloc));
   EXPECT_TRUE(regloc.IsAtCFAPlusOffset());
   EXPECT_EQ(-16, regloc.GetOffset());
 
@@ -194,7 +194,7 @@ TEST_F(TestArm64InstEmulation, TestSimpleDarwinFunction) {
   EXPECT_TRUE(row_sp->GetCFAValue().IsRegisterPlusOffset() == true);
   EXPECT_EQ(16, row_sp->GetCFAValue().GetOffset());
 
-  EXPECT_TRUE(row_sp->GetRegisterInfo(gpr_fp_arm64, regloc));
+  EXPECT_TRUE(row_sp->GetRegisterInfo(gpr_x29_arm64, regloc));
   EXPECT_TRUE(regloc.IsAtCFAPlusOffset());
   EXPECT_EQ(-16, regloc.GetOffset());
 
@@ -309,7 +309,7 @@ TEST_F(TestArm64InstEmulation, TestMediumDarwinFunction) {
   EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == gpr_sp_arm64);
   EXPECT_EQ(48, row_sp->GetCFAValue().GetOffset());
 
-  EXPECT_TRUE(row_sp->GetRegisterInfo(gpr_fp_arm64, regloc));
+  EXPECT_TRUE(row_sp->GetRegisterInfo(gpr_x29_arm64, regloc));
   EXPECT_TRUE(regloc.IsAtCFAPlusOffset());
   EXPECT_EQ(-16, regloc.GetOffset());
 
@@ -321,7 +321,7 @@ TEST_F(TestArm64InstEmulation, TestMediumDarwinFunction) {
   // fp=[CFA-16] lr=[CFA-8]
   row_sp = unwind_plan.GetRowForFunctionOffset(16);
   EXPECT_EQ(16ull, row_sp->GetOffset());
-  EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == gpr_fp_arm64);
+  EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == gpr_x29_arm64);
   EXPECT_TRUE(row_sp->GetCFAValue().IsRegisterPlusOffset() == true);
   EXPECT_EQ(16, row_sp->GetCFAValue().GetOffset());
 
@@ -340,7 +340,7 @@ TEST_F(TestArm64InstEmulation, TestMediumDarwinFunction) {
 
   // I'd prefer if these restored registers were cleared entirely instead of set
   // to IsSame...
-  EXPECT_TRUE(row_sp->GetRegisterInfo(gpr_fp_arm64, regloc));
+  EXPECT_TRUE(row_sp->GetRegisterInfo(gpr_x29_arm64, regloc));
   EXPECT_TRUE(regloc.IsSame());
 
   EXPECT_TRUE(row_sp->GetRegisterInfo(gpr_lr_arm64, regloc));
@@ -443,7 +443,7 @@ TEST_F(TestArm64InstEmulation, TestFramelessThreeEpilogueFunction) {
   EXPECT_FALSE(row_sp->GetRegisterInfo(gpr_x26_arm64, regloc));
   EXPECT_FALSE(row_sp->GetRegisterInfo(gpr_x27_arm64, regloc));
   EXPECT_FALSE(row_sp->GetRegisterInfo(gpr_x28_arm64, regloc));
-  EXPECT_FALSE(row_sp->GetRegisterInfo(gpr_fp_arm64, regloc));
+  EXPECT_FALSE(row_sp->GetRegisterInfo(gpr_x29_arm64, regloc));
   EXPECT_FALSE(row_sp->GetRegisterInfo(gpr_lr_arm64, regloc));
 
   row_sp = unwind_plan.GetRowForFunctionOffset(36);
@@ -550,7 +550,7 @@ TEST_F(TestArm64InstEmulation, TestRegisterSavedTwice) {
 
   row_sp = unwind_plan.GetRowForFunctionOffset(36);
   EXPECT_EQ(28ull, row_sp->GetOffset());
-  EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == gpr_fp_arm64);
+  EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == gpr_x29_arm64);
   EXPECT_TRUE(row_sp->GetCFAValue().IsRegisterPlusOffset() == true);
   EXPECT_EQ(16, row_sp->GetCFAValue().GetOffset());
 
@@ -560,7 +560,7 @@ TEST_F(TestArm64InstEmulation, TestRegisterSavedTwice) {
 
   row_sp = unwind_plan.GetRowForFunctionOffset(40);
   EXPECT_EQ(28ull, row_sp->GetOffset());
-  EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == gpr_fp_arm64);
+  EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == gpr_x29_arm64);
   EXPECT_TRUE(row_sp->GetCFAValue().IsRegisterPlusOffset() == true);
   EXPECT_EQ(16, row_sp->GetCFAValue().GetOffset());
 
@@ -666,7 +666,7 @@ TEST_F(TestArm64InstEmulation, TestRegisterDoubleSpills) {
   //  d13=[CFA-80] d14=[CFA-88] d15=[CFA-96]
   row_sp = unwind_plan.GetRowForFunctionOffset(28);
   EXPECT_EQ(28ull, row_sp->GetOffset());
-  EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == gpr_fp_arm64);
+  EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == gpr_x29_arm64);
   EXPECT_TRUE(row_sp->GetCFAValue().IsRegisterPlusOffset() == true);
   EXPECT_EQ(16, row_sp->GetCFAValue().GetOffset());
 
@@ -747,7 +747,7 @@ TEST_F(TestArm64InstEmulation, TestSUB) {
   };
 
   UnwindPlan unwind_plan =
-      GetUnwindPlan("aarch64-none-elf", data, sizeof(data));
+      GetUnwindPlan("aarch64-linux-android", data, sizeof(data));
 
   {
     SCOPED_TRACE(" 0: CFA = sp + 0 =>");
@@ -767,7 +767,7 @@ TEST_F(TestArm64InstEmulation, TestADD) {
   };
 
   UnwindPlan unwind_plan =
-      GetUnwindPlan("aarch64-none-elf", data, sizeof(data));
+      GetUnwindPlan("aarch64-linux-android", data, sizeof(data));
 
   {
     SCOPED_TRACE(" 0: CFA = sp + 0 =>");
@@ -788,7 +788,7 @@ TEST_F(TestArm64InstEmulation, TestSTPLDP_Post) {
   };
 
   UnwindPlan unwind_plan =
-      GetUnwindPlan("aarch64-none-elf", data, sizeof(data));
+      GetUnwindPlan("aarch64-linux-android", data, sizeof(data));
 
   {
     SCOPED_TRACE(" 0: CFA = sp + 0 =>");
@@ -799,9 +799,9 @@ TEST_F(TestArm64InstEmulation, TestSTPLDP_Post) {
     SCOPED_TRACE(" 4: CFA = sp + 32 => (c)fp = [CFA], (c)lr = [CFA + 16]");
     UnwindPlanForFunctionOffset(unwind_plan, 4)
         .ShouldHaveCFA(gpr_sp_arm64, 32)
-        .ShouldHaveRegAtCFAPlusOffset(gpr_fp_arm64, 0)
+        .ShouldHaveRegAtCFAPlusOffset(gpr_x29_arm64, 0)
         .ShouldHaveRegAtCFAPlusOffset(gpr_lr_arm64, 16)
-        .ShouldHaveRegAtCFAPlusOffset(cap_cfp_arm64, 0)
+        .ShouldHaveRegAtCFAPlusOffset(cap_c29_arm64, 0)
         .ShouldHaveRegAtCFAPlusOffset(cap_clr_arm64, 16);
   }
 
@@ -809,9 +809,9 @@ TEST_F(TestArm64InstEmulation, TestSTPLDP_Post) {
     SCOPED_TRACE(" 8: CFA = sp => (c)fp = [CFA], (c)lr = [CFA + 16]");
     UnwindPlanForFunctionOffset(unwind_plan, 8)
         .ShouldHaveCFA(gpr_sp_arm64, 0)
-        .ShouldHaveRegAtCFAPlusOffset(gpr_fp_arm64, 0)
+        .ShouldHaveRegAtCFAPlusOffset(gpr_x29_arm64, 0)
         .ShouldHaveRegAtCFAPlusOffset(gpr_lr_arm64, 16)
-        .ShouldHaveRegAtCFAPlusOffset(cap_cfp_arm64, 0)
+        .ShouldHaveRegAtCFAPlusOffset(cap_c29_arm64, 0)
         .ShouldHaveRegAtCFAPlusOffset(cap_clr_arm64, 16);
   }
 }
@@ -823,7 +823,7 @@ TEST_F(TestArm64InstEmulation, TestSTPLDP_Pre) {
   };
 
   UnwindPlan unwind_plan =
-      GetUnwindPlan("aarch64-none-elf", data, sizeof(data));
+      GetUnwindPlan("aarch64-linux-android", data, sizeof(data));
 
   {
     SCOPED_TRACE(" 0: CFA = sp + 0 =>");
@@ -834,9 +834,9 @@ TEST_F(TestArm64InstEmulation, TestSTPLDP_Pre) {
     SCOPED_TRACE(" 4: CFA = sp + 16 => (c)fp = [CFA-16], (c)lr = [CFA]");
     RowExpectations(unwind_plan, 4)
         .ShouldHaveCFA(gpr_sp_arm64, 16)
-        .ShouldHaveRegAtCFAPlusOffset(gpr_fp_arm64, -16)
+        .ShouldHaveRegAtCFAPlusOffset(gpr_x29_arm64, -16)
         .ShouldHaveRegAtCFAPlusOffset(gpr_lr_arm64, 0)
-        .ShouldHaveRegAtCFAPlusOffset(cap_cfp_arm64, -16)
+        .ShouldHaveRegAtCFAPlusOffset(cap_c29_arm64, -16)
         .ShouldHaveRegAtCFAPlusOffset(cap_clr_arm64, 0);
   }
 
@@ -844,9 +844,9 @@ TEST_F(TestArm64InstEmulation, TestSTPLDP_Pre) {
     SCOPED_TRACE(" 8: CFA = sp => (c)fp = [CFA-16], (c)lr = [CFA]");
     RowExpectations(unwind_plan, 8)
         .ShouldHaveCFA(gpr_sp_arm64, 0)
-        .ShouldHaveRegAtCFAPlusOffset(gpr_fp_arm64, -16)
+        .ShouldHaveRegAtCFAPlusOffset(gpr_x29_arm64, -16)
         .ShouldHaveRegAtCFAPlusOffset(gpr_lr_arm64, 0)
-        .ShouldHaveRegAtCFAPlusOffset(cap_cfp_arm64, -16)
+        .ShouldHaveRegAtCFAPlusOffset(cap_c29_arm64, -16)
         .ShouldHaveRegAtCFAPlusOffset(cap_clr_arm64, 0);
   }
 }
@@ -857,7 +857,7 @@ TEST_F(TestArm64InstEmulation, TestSTP_Off) {
   };
 
   UnwindPlan unwind_plan =
-      GetUnwindPlan("aarch64-none-elf", data, sizeof(data));
+      GetUnwindPlan("aarch64-linux-android", data, sizeof(data));
 
   {
     SCOPED_TRACE(" 0: CFA = sp + 0 =>");
@@ -868,9 +868,9 @@ TEST_F(TestArm64InstEmulation, TestSTP_Off) {
     SCOPED_TRACE(" 4: CFA = sp => (c)fp = [CFA+16], (c)lr = [CFA+32]");
     RowExpectations(unwind_plan, 4)
         .ShouldHaveCFA(gpr_sp_arm64, 0)
-        .ShouldHaveRegAtCFAPlusOffset(gpr_fp_arm64, 16)
+        .ShouldHaveRegAtCFAPlusOffset(gpr_x29_arm64, 16)
         .ShouldHaveRegAtCFAPlusOffset(gpr_lr_arm64, 32)
-        .ShouldHaveRegAtCFAPlusOffset(cap_cfp_arm64, 16)
+        .ShouldHaveRegAtCFAPlusOffset(cap_c29_arm64, 16)
         .ShouldHaveRegAtCFAPlusOffset(cap_clr_arm64, 32);
   }
 }
@@ -888,7 +888,7 @@ TEST_F(TestArm64InstEmulation, TestSimpleC64PurecapFunction) {
   };
 
   UnwindPlan unwind_plan =
-      GetUnwindPlan("aarch64-none-elf", data, sizeof(data));
+      GetUnwindPlan("aarch64-linux-android", data, sizeof(data));
 
   // UnwindPlan we expect:
   //   0: CFA=sp +0 =>
@@ -915,21 +915,17 @@ TEST_F(TestArm64InstEmulation, TestSimpleC64PurecapFunction) {
         "   8: CFA=sp+48 => fp=[CFA-32] lr=[CFA-16] cfp=[CFA-32] clr=[CFA-16]");
     UnwindPlanForFunctionOffset(unwind_plan, 8)
         .ShouldHaveCFA(gpr_sp_arm64, 48)
-        .ShouldHaveRegAtCFAPlusOffset(gpr_fp_arm64, -32)
+        .ShouldHaveRegAtCFAPlusOffset(gpr_x29_arm64, -32)
         .ShouldHaveRegAtCFAPlusOffset(gpr_lr_arm64, -16)
-        .ShouldHaveRegAtCFAPlusOffset(cap_cfp_arm64, -32)
+        .ShouldHaveRegAtCFAPlusOffset(cap_c29_arm64, -32)
         .ShouldHaveRegAtCFAPlusOffset(cap_clr_arm64, -16);
   }
 
   {
     SCOPED_TRACE(
-        "  12: CFA=fp+32 => fp=[CFA-32] lr=[CFA-16] cfp=[CFA-32] clr=[CFA-16]");
-    UnwindPlanForFunctionOffset(unwind_plan, 12)
-        .ShouldHaveCFA(gpr_fp_arm64, 32)
-        .ShouldHaveRegAtCFAPlusOffset(gpr_fp_arm64, -32)
-        .ShouldHaveRegAtCFAPlusOffset(gpr_lr_arm64, -16)
-        .ShouldHaveRegAtCFAPlusOffset(cap_cfp_arm64, -32)
-        .ShouldHaveRegAtCFAPlusOffset(cap_clr_arm64, -16);
+        "  12: The CFA remains relative to the SP even if the FP changes");
+    EXPECT_EQ(unwind_plan.GetRowForFunctionOffset(12),
+              unwind_plan.GetRowForFunctionOffset(8));
   }
 
   {
@@ -937,9 +933,9 @@ TEST_F(TestArm64InstEmulation, TestSimpleC64PurecapFunction) {
         "  16: CFA=sp+48 => fp= <same> lr= <same> cfp= <same> clr= <same>");
     UnwindPlanForFunctionOffset(unwind_plan, 16)
         .ShouldHaveCFA(gpr_sp_arm64, 48)
-        .ShouldHaveRegSame(gpr_fp_arm64)
+        .ShouldHaveRegSame(gpr_x29_arm64)
         .ShouldHaveRegSame(gpr_lr_arm64)
-        .ShouldHaveRegSame(cap_cfp_arm64)
+        .ShouldHaveRegSame(cap_c29_arm64)
         .ShouldHaveRegSame(cap_clr_arm64);
   }
 
@@ -948,9 +944,9 @@ TEST_F(TestArm64InstEmulation, TestSimpleC64PurecapFunction) {
         "  20: CFA=sp +0 => fp= <same> lr= <same> cfp= <same> clr= <same>");
     UnwindPlanForFunctionOffset(unwind_plan, 20)
         .ShouldHaveCFA(gpr_sp_arm64, 0)
-        .ShouldHaveRegSame(gpr_fp_arm64)
+        .ShouldHaveRegSame(gpr_x29_arm64)
         .ShouldHaveRegSame(gpr_lr_arm64)
-        .ShouldHaveRegSame(cap_cfp_arm64)
+        .ShouldHaveRegSame(cap_c29_arm64)
         .ShouldHaveRegSame(cap_clr_arm64);
   }
 }
@@ -1033,7 +1029,7 @@ TEST_F(TestArm64InstEmulation, TestCFARegisterTrackedAcrossJumps) {
   // After the 'ret', confirm we're back to the correct CFA of $fp+16
   row_sp = unwind_plan.GetRowForFunctionOffset(44);
   EXPECT_EQ(44ull, row_sp->GetOffset());
-  EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == gpr_fp_arm64);
+  EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == gpr_x29_arm64);
   EXPECT_TRUE(row_sp->GetCFAValue().IsRegisterPlusOffset() == true);
   EXPECT_EQ(16, row_sp->GetCFAValue().GetOffset());
 
@@ -1041,7 +1037,7 @@ TEST_F(TestArm64InstEmulation, TestCFARegisterTrackedAcrossJumps) {
   // real epilogue -- we still get the Row at offset 44.
   row_sp = unwind_plan.GetRowForFunctionOffset(60);
   EXPECT_EQ(44ull, row_sp->GetOffset());
-  EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == gpr_fp_arm64);
+  EXPECT_TRUE(row_sp->GetCFAValue().GetRegisterNumber() == gpr_x29_arm64);
   EXPECT_TRUE(row_sp->GetCFAValue().IsRegisterPlusOffset() == true);
   EXPECT_EQ(16, row_sp->GetCFAValue().GetOffset());
 

@@ -148,6 +148,8 @@ EmulateInstructionARM64::CreateInstance(const ArchSpec &arch,
           inst_type)) {
     if (arch.GetTriple().getArch() == llvm::Triple::aarch64 ||
         arch.GetTriple().getArch() == llvm::Triple::aarch64_32) {
+      MarkAsFP(g_register_infos_arm64_le[gpr_x29], /*isCapability=*/false);
+      MarkAsFP(g_register_infos_arm64_le[cap_c29], /*isCapability=*/true);
       return new EmulateInstructionARM64(arch);
     }
   }
@@ -179,7 +181,7 @@ bool EmulateInstructionARM64::GetRegisterInfo(RegisterKind reg_kind,
       break;
     case LLDB_REGNUM_GENERIC_FP:
       reg_kind = eRegisterKindLLDB;
-      reg_num = gpr_fp_arm64;
+      reg_num = gpr_x29_arm64;
       break;
     case LLDB_REGNUM_GENERIC_RA:
       reg_kind = eRegisterKindLLDB;
@@ -509,7 +511,7 @@ uint32_t EmulateInstructionARM64::GetFramePointerRegisterNumber() const {
   if (m_arch.GetTriple().isAndroid())
     return LLDB_INVALID_REGNUM; // Don't use frame pointer on android
 
-  return gpr_fp_arm64;
+  return gpr_x29_arm64;
 }
 
 bool EmulateInstructionARM64::UsingAArch32() {

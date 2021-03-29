@@ -1,5 +1,5 @@
-; RUN: sed 's/addrspace(P)/addrspace(0)/g' %s | llc -march=arm64 -mattr=+morello -verify-machineinstrs | FileCheck %s
-; RUN: sed 's/addrspace(P)/addrspace(200)/g' %s | llc -march=arm64 -mattr=+morello,+c64 -target-abi purecap -verify-machineinstrs | FileCheck %s
+; RUN: sed 's/addrspace(P)/addrspace(0)/g' %s | llc -mtriple=arm64 -mattr=+morello -verify-machineinstrs | FileCheck %s
+; RUN: sed 's/addrspace(P)/addrspace(200)/g' %s | llc -mtriple=arm64 -mattr=+morello,+c64 -target-abi purecap -verify-machineinstrs | FileCheck %s
 
 declare i32 @foo(...)
 declare i32 @bar(...)

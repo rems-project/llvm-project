@@ -863,7 +863,7 @@ Status NativeRegisterContextLinux_arm64::ReadCapabilityRegister(
     GET_CAP_DATA(c26, cregs[26]);
     GET_CAP_DATA(c27, cregs[27]);
     GET_CAP_DATA(c28, cregs[28]);
-    GET_CAP_DATA(cfp, cregs[29]);
+    GET_CAP_DATA(c29, cregs[29]);
     GET_CAP_DATA(clr, cregs[30]);
     GET_CAP_DATA(pcc, pcc);
 #undef GET_CAP_DATA
