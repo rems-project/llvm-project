@@ -26,8 +26,8 @@ _Pragma("pointer_interpretation default")
 //CHECK: %struct.test2 = type { i32*, i32*, i32* }
 //CHECK: %struct.test3 = type { i32*, i32*, i32* }
 
-// morello: define i32 @x()
-// cheri: define signext i32 @x()
+// morello: define dso_local i32 @x()
+// cheri: define dso_local signext i32 @x()
 int x(void)
 {
 	// CHECK: load i32 addrspace(200)*, i32 addrspace(200)**
@@ -35,16 +35,16 @@ int x(void)
 	return *t.a;
 }
 
-// morello: define i32 @y()
-// cheri: define signext i32 @y()
+// morello: define dso_local i32 @y()
+// cheri: define dso_local signext i32 @y()
 int y(void)
 {
 	// CHECK: load i32*, i32**
 	// CHECK: load i32, i32*
 	return *t2.a;
 }
-// morello: define i32 @z()
-// cheri: define signext i32 @z()
+// morello: define dso_local i32 @z()
+// cheri: define dso_local signext i32 @z()
 int z(void)
 {
 	// CHECK: load i32*, i32**
