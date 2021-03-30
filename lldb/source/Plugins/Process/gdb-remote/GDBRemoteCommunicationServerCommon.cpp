@@ -863,6 +863,7 @@ GDBRemoteCommunicationServerCommon::Handle_qSupported(
 #if defined(__linux__)
   response.PutCString(";qXfer:siginfo:read+");
 #endif // defined(__linux__)
+  response.PutCString(";multiprocess+");
 
   return SendPacketNoLock(response.GetString());
 }
