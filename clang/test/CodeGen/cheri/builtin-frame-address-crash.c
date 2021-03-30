@@ -2,9 +2,8 @@
 // RUN: %clang_cc1 -triple cheri-none--elf -target-cpu mips64 -target-abi purecap -o - -O0 -emit-llvm  %s | FileCheck %s -check-prefixes CHECK,PURECAP
 
 // Also check that we can lower it to assembly correctly (should be tested in LLVM, but this is easier)
-// RXUN: %clang_cc1 -triple cheri-none--elf -target-cpu mips64 -target-abi n64 -o - -S -O2 %s | FileCheck %s -check-prefixes ASM,n64-ASM
+// RXUN: %clang_cc1 -triple cheri-none--elf -target-cpu mips64 -target-abi n64 -o - -S -O2 %s | FileCheck %s -check-prefixes ASM,N64-ASM
 // RXUN: %clang_cc1 -triple cheri-none--elf -target-cpu mips64 -target-abi purecap -o - -S -O2 %s | FileCheck %s -check-prefixes ASM,PURECAP-ASM
-
 
 void *frameaddr(void) {
   // https://github.com/CTSRD-CHERI/clang/issues/200
@@ -31,8 +30,8 @@ void *retaddr(void) {
   void *b = __builtin_return_address(0);
 
   // ASM-LABEL: retaddr:
-  // N64-ASM: move	$2, $ra
   // N64-ASM: jr	$ra
+  // N64-ASM-NEXT: move	$2, $ra
   // in purecap this is moved to the delay slot
   // PURECAP-ASM: cjr	$c17
   // PURECAP-ASM-NEXT: cmove	$c3,  $c17
