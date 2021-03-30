@@ -1056,15 +1056,12 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
       return true;
     }
     if (Name == "var.annotation") {
-       NewFn = Intrinsic::getDeclaration(F->getParent(),
-                                         Intrinsic::var_annotation, ArgTy);
-       if (F->arg_size() == 4 || NewFn != F) {
-         if (F->arg_size() == 4)
-           rename(F);
-         return true;
-       } else {
-         NewFn = nullptr;
-       }
+      NewFn = Intrinsic::getDeclaration(F->getParent(),
+                                        Intrinsic::var_annotation, ArgTy);
+      if (F->arg_size() == 4) {
+        rename(F);
+      }
+      return true;
     }
     break;
   }
