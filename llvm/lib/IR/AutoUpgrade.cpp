@@ -995,12 +995,6 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         NewFn = nullptr;
       }
     }
-    if (Name == "prefetch") {
-      auto *ArgTy = F->arg_begin()->getType();
-      NewFn = Intrinsic::getDeclaration(F->getParent(), Intrinsic::prefetch,
-                                        ArgTy);
-      return true;
-    }
     break;
 
   case 'r':
@@ -1057,10 +1051,13 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
     if (Name == "var.annotation") {
       NewFn = Intrinsic::getDeclaration(F->getParent(),
                                         Intrinsic::var_annotation, ArgTy);
-      if (F->arg_size() == 4) {
-        rename(F);
+      if (F->arg_size() == 4 || NewFn != F) {
+        if (F->arg_size() == 4)
+          rename(F);
+        return true;
+      } else {
+        NewFn = nullptr;
       }
-      return true;
     }
     break;
   }
@@ -3853,9 +3850,10 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     return;
 
   case Intrinsic::ptr_annotation:
-    // Upgrade from versions that lacked the annotation attribute argument.
-    // assert(CI->getNumArgOperands() == 4 &&
-    //       "Before LLVM 12.0 this intrinsic took four arguments");
+    // Upgrade from versions that lacked the annotation attribute argument or
+    // the added overloaded type
+    //    assert(CI->getNumArgOperands() == 4 &&
+    //           "Before LLVM 12.0 this intrinsic took four arguments");
     // Create a new call with an added null annotation attribute argument.
     NewCall = Builder.CreateCall(
         NewFn,
@@ -3867,9 +3865,10 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     return;
 
   case Intrinsic::var_annotation:
-    // Upgrade from versions that lacked the annotation attribute argument.
-    // assert(CI->getNumArgOperands() == 4 &&
-    //        "Before LLVM 12.0 this intrinsic took four arguments");
+    // Upgrade from versions that lacked the annotation attribute argument or
+    // the added overloaded type
+    //    assert(CI->getNumArgOperands() == 4 &&
+    //           "Before LLVM 12.0 this intrinsic took four arguments");
     // Create a new call with an added null annotation attribute argument.
     NewCall = Builder.CreateCall(
         NewFn,
