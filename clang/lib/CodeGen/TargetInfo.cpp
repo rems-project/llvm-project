@@ -5869,23 +5869,12 @@ private:
   }
 };
 
-class AArch64TargetCodeGenInfo : public TargetCodeGenInfo, CHERICapClassifier {
-  mutable llvm::Function *GetOffset = nullptr;
-  mutable llvm::Function *SetOffset = nullptr;
-  mutable llvm::Function *SetAddr = nullptr;
-  mutable llvm::Function *GetBase = nullptr;
-  mutable llvm::Function *GetAddress = nullptr;
-  mutable llvm::Function *SetBounds = nullptr;
-  mutable llvm::PointerType *I8Cap = nullptr;
-  llvm::PointerType *getI8CapTy(CodeGen::CodeGenFunction &CGF) const {
-    if (!I8Cap)
-      I8Cap = llvm::PointerType::get(CGF.Int8Ty, 200);
-    return I8Cap;
-  }
+class AArch64TargetCodeGenInfo : public CommonCheriTargetCodeGenInfo,
+    CHERICapClassifier {
 public:
   AArch64TargetCodeGenInfo(CodeGenTypes &CGT, AArch64ABIInfo::ABIKind Kind,
                            bool hasPureCap)
-      : TargetCodeGenInfo(std::make_unique<AArch64ABIInfo>(CGT, Kind, hasPureCap)),
+      : CommonCheriTargetCodeGenInfo(std::make_unique<AArch64ABIInfo>(CGT, Kind, hasPureCap)),
         CHERICapClassifier(CGT.getContext()) {}
 
   StringRef getARCRetainAutoreleasedReturnValueMarker() const override {
@@ -5897,86 +5886,6 @@ public:
   }
 
   bool doesReturnSlotInterfereWithArgs() const override { return false; }
-
-  llvm::Value *getPointerOffset(CodeGen::CodeGenFunction &CGF,
-                                        llvm::Value *V) const override {
-    if (!GetOffset)
-      GetOffset = CGF.CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_offset_get,
-                                       CGF.SizeTy);
-    V = CGF.Builder.CreateBitCast(V, getI8CapTy(CGF));
-    return CGF.Builder.CreateCall(GetOffset, V);
-  }
-
-  llvm::Value *setPointerOffset(CodeGen::CodeGenFunction &CGF,
-          llvm::Value *Ptr, llvm::Value *Offset) const override {
-    if (!SetOffset)
-      SetOffset = CGF.CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_offset_set,
-                                       CGF.SizeTy);
-    llvm::Type *DstTy = Ptr->getType();
-    auto &B = CGF.Builder;
-    Ptr = B.CreateBitCast(Ptr, getI8CapTy(CGF));
-    return B.CreateBitCast(B.CreateCall(SetOffset, {Ptr, Offset}), DstTy);
-  }
-  llvm::Value *getPointerBase(CodeGen::CodeGenFunction &CGF,
-                              llvm::Value *V) const override {
-    if (!GetBase)
-      GetBase = CGF.CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_base_get,
-                                     CGF.IntPtrTy);
-    V = CGF.Builder.CreateBitCast(V, getI8CapTy(CGF));
-    return CGF.Builder.CreateCall(GetBase, V);
-  }
-  llvm::Value *getPointerAddress(CodeGen::CodeGenFunction &CGF, llvm::Value *V,
-                              const llvm::Twine &Name) const override {
-    // CHERI expands this as base + offset, so this is the raw VA and shouldn't
-    // take into consideration the tag.
-    if (!GetAddress)
-      GetAddress = CGF.CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_address_get,
-                                        CGF.IntPtrTy);
-    V = CGF.Builder.CreateBitCast(V, getI8CapTy(CGF));
-    return CGF.Builder.CreateCall(GetAddress, V, Name);
-  }
-  llvm::Value *setPointerAddress(CodeGen::CodeGenFunction &CGF,
-                                 llvm::Value *Ptr,
-                                 llvm::Value *Offset) const override {
-    if (!SetAddr)
-      SetAddr = CGF.CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_address_set,
-                                     CGF.IntPtrTy);
-    llvm::Type *DstTy = Ptr->getType();
-    auto &B = CGF.Builder;
-    Ptr = B.CreateBitCast(Ptr, getI8CapTy(CGF));
-    return B.CreateBitCast(B.CreateCall(SetAddr, {Ptr, Offset}), DstTy);
-  }
-  llvm::Value *setPointerBounds(CodeGen::CodeGenFunction &CGF, llvm::Value *Ptr,
-                                llvm::Value *Size,
-                                const llvm::Twine &Name) const override {
-    if (!SetBounds)
-      SetBounds = CGF.CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_bounds_set,
-                                       CGF.SizeTy);
-    llvm::Type *DstTy = Ptr->getType();
-    auto &B = CGF.Builder;
-    Ptr = B.CreateBitCast(Ptr, getI8CapTy(CGF));
-    return B.CreateBitCast(B.CreateCall(SetBounds, {Ptr, Size}), DstTy, Name);
-  }
-
-  llvm::Value *getPointerFromCapability(CodeGen::CodeGenFunction &CGF,
-                                        llvm::Value *V,
-                                        llvm::Type *DestTy) const override {
-    unsigned AS = getCHERICapabilityAS();
-    llvm::Type *VTy = V->getType();
-    auto &B = CGF.Builder;
-    assert(VTy->isPointerTy() &&
-           VTy->getPointerAddressSpace() == AS);
-    V = B.CreateBitCast(V, getI8CapTy(CGF));
-    V = B.CreateCall(
-        CGF.CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_to_pointer,
-                             CGF.IntPtrTy),
-        {llvm::Constant::getNullValue(getI8CapTy(CGF)), V});
-    if (DestTy->isPointerTy()) {
-      assert(DestTy->getPointerAddressSpace() == 0);
-      return B.CreateIntToPtr(V, DestTy);
-    }
-    return V;
-  }
   uint64_t getLoadPerm() const override { return 1 << 17; }
   uint64_t getLoadCapPerm() const override { return 1 << 14; }
   uint64_t getStorePerm() const override { return 1 << 16; }
@@ -6680,7 +6589,8 @@ Address AArch64ABIInfo::EmitAAPCSVAArg(Address VAListAddr,
         OnStackPtr, llvm::ConstantInt::get(CGF.Int64Ty, -Align),
         "align_stack");
     if (hasPureCap)
-      OnStackPtr = CGF.setPointerAddress(OriginalSP, OnStackPtr);
+      OnStackPtr = CGF.getTargetHooks().setPointerAddress(CGF, OriginalSP,
+          OnStackPtr, "", CGF.CurCodeDecl->getLocation());
     else
       OnStackPtr = CGF.Builder.CreateIntToPtr(OnStackPtr, CGF.Int8PtrTy);
   }

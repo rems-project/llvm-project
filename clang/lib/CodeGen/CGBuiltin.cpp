@@ -274,7 +274,8 @@ static RValue EmitBinaryAtomicPost(CodeGenFunction &CGF,
 
     llvm::Type *OldTy = Result->getType();
     Result = CGF.Builder.CreateBitCast(Result, Void);
-    Result = CGF.setPointerAddress(Result, NewResult);
+    Result = CGF.getTargetHooks().setPointerAddress(CGF, Result, NewResult, "",
+        CGF.CurCodeDecl->getLocation());
     Result = CGF.Builder.CreateBitCast(Result, OldTy);
   } else {
     Result = CGF.Builder.CreateBinOp(Op, Result, Args[1]);
@@ -4510,7 +4511,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
       if (!Source)
         Source =
           llvm::Constant::getNullValue(CGM.getTypes().ConvertType(ResultQTy));
-      Result = setCapabilityIntegerValue(Source, Result);
+      Result = setCapabilityIntegerValue(Source, Result, E->getExprLoc());
     }
 
     // Finally, store the result using the pointer.

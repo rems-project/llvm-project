@@ -39,7 +39,7 @@ int add3(int a, int b, __intcap_t *c) {
 // CHECK: @llvm.sadd.with.overflow.i64
 // CHECK: extractvalue { i64, i1 } {{.*}}, 1
 // CHECK: extractvalue { i64, i1 } {{.*}}, 0
-// CHECK: call i8 addrspace(200)* @llvm.cheri.cap.address.set.i64(i8 addrspace(200)* null, i64 {{.*}})
+// CHECK: getelementptr i8, i8 addrspace(200)* null, i64 {{.*}}
   return __builtin_add_overflow(a,b, c);
 }
 
@@ -82,7 +82,7 @@ int sub3(int a, int b, __intcap_t *c) {
 // CHECK: @llvm.ssub.with.overflow.i64
 // CHECK: extractvalue { i64, i1 } {{.*}}, 1
 // CHECK: extractvalue { i64, i1 } {{.*}}, 0
-// CHECK: call i8 addrspace(200)* @llvm.cheri.cap.address.set.i64(i8 addrspace(200)* null, i64 {{.*}})
+// CHECK: getelementptr i8, i8 addrspace(200)* null, i64 {{.*}}
   return __builtin_sub_overflow(a,b, c);
 }
 
@@ -125,7 +125,7 @@ int mul3(int a, int b, __intcap_t *c) {
 // CHECK: @llvm.smul.with.overflow.i64
 // CHECK: extractvalue { i64, i1 } {{.*}}, 1
 // CHECK: extractvalue { i64, i1 } {{.*}}, 0
-// CHECK: call i8 addrspace(200)* @llvm.cheri.cap.address.set.i64(i8 addrspace(200)* null, i64 {{.*}})
+// CHECK: getelementptr i8, i8 addrspace(200)* null, i64 {{.*}}
   return __builtin_mul_overflow(a,b, c);
 }
 

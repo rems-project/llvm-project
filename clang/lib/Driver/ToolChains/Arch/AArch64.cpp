@@ -221,7 +221,7 @@ getAArch64MicroArchFeaturesFromMcpu(const Driver &D, StringRef Mcpu,
 }
 
 bool aarch64::isPurecap(const llvm::opt::ArgList &Args, llvm::Triple &Triple) {
-  if (Triple.isPurecap() == llvm::Triple::GNUPurecap)
+  if (Triple.isPurecap())
     return true;
   if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ))
     return strcmp(A->getValue(), "purecap") == 0;
