@@ -2208,7 +2208,7 @@ static void handleCHERIMethodClass(Sema &S, Decl *D, const ParsedAttr &Attr) {
   if (Lookup.empty() || !Lookup.isSingleResult() ||
       !isa<VarDecl>(*Lookup.begin())) {
     S.Diag(Attr.getLoc(), diag::err_cheri_method_class_must_exist)
-      << Attr.getAttrName() << Attr.getRange();
+        << Attr.getAttrName() << Attr.getRange();
     return;
   }
   auto Cls = Lookup.find_first<VarDecl>();
