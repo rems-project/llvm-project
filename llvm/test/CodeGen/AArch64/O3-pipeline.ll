@@ -83,8 +83,6 @@
 ; CHECK-NEXT:       Scalar Evolution Analysis
 ; CHECK-NEXT:       AArch64 sandbox setup
 ; CHECK-NEXT:       CodeGen Prepare
-; CHECK-NEXT:     Rewrite Symbols
-; CHECK-NEXT:     FunctionPass Manager
 ; CHECK-NEXT:       Dominator Tree Construction
 ; CHECK-NEXT:       Exception handling preparation
 ; CHECK-NEXT:       AArch64 sandbox memory operation lowering
