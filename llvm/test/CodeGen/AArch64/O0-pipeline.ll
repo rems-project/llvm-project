@@ -29,8 +29,6 @@
 ; CHECK-NEXT:       Natural Loop Information
 ; CHECK-NEXT:       Scalar Evolution Analysis
 ; CHECK-NEXT:       AArch64 sandbox setup
-; CHECK-NEXT:     Rewrite Symbols
-; CHECK-NEXT:     FunctionPass Manager
 ; CHECK-NEXT:       Exception handling preparation
 ; CHECK-NEXT:       AArch64 sandbox memory operation lowering
 ; CHECK-NEXT:       Safe Stack instrumentation pass
