@@ -99,7 +99,10 @@ GetRegisterInfoPtr(const lldb_private::ArchSpec &target_arch) {
 enum {
   k_num_gpr_registers = gpr_w28 - gpr_x0 + 1,
   k_num_fpr_registers = fpu_fpcr - fpu_v0 + 1,
-  k_num_register_sets = 2
+  k_num_cap_registers = cap_ddc - cap_c0 + 1,
+  k_num_state_registers = state_rddc_el0 - state_sp_el0 + 1,
+  k_num_thread_registers = thread_ctpidr_el0 - thread_tpidr_el0 + 1,
+  k_num_register_sets = 5
 };
 
 // ARM64 general purpose registers.
@@ -163,13 +166,46 @@ static const uint32_t g_fpu_regnums_arm64[] = {
 static_assert(((sizeof g_fpu_regnums_arm64 / sizeof g_fpu_regnums_arm64[0]) -
                1) == k_num_fpr_registers,
               "g_fpu_regnums_arm64 has wrong number of register infos");
+
+// ARM64 capability registers.
+static const uint32_t g_cap_regnums_arm64[] = {
+    cap_c0,  cap_c1,  cap_c2,  cap_c3,  cap_c4,  cap_c5,  cap_c6,
+    cap_c7,  cap_c8,  cap_c9,  cap_c10, cap_c11, cap_c12, cap_c13,
+    cap_c14, cap_c15, cap_c16, cap_c17, cap_c18, cap_c19, cap_c20,
+    cap_c21, cap_c22, cap_c23, cap_c24, cap_c25, cap_c26, cap_c27,
+    cap_c28, cap_c29, cap_clr, cap_csp, cap_pcc, cap_ddc, LLDB_INVALID_REGNUM};
+static_assert(((sizeof g_cap_regnums_arm64 / sizeof g_cap_regnums_arm64[0]) -
+               1) == k_num_cap_registers,
+              "g_cap_regnums_arm64 has wrong number of register infos");
+
+// ARM64 state/backing registers.
+static const uint32_t g_state_regnums_arm64[] = {
+    state_sp_el0,  state_rsp_el0,  state_csp_el0,      state_rcsp_el0,
+    state_ddc_el0, state_rddc_el0, LLDB_INVALID_REGNUM};
+static_assert(((sizeof g_state_regnums_arm64 /
+                sizeof g_state_regnums_arm64[0]) -
+               1) == k_num_state_registers,
+              "g_state_regnums_arm64 has wrong number of register infos");
+
+// ARM64 thread pointer registers.
+static const uint32_t g_thread_regnums_arm64[] = {
+    thread_tpidr_el0, thread_ctpidr_el0, LLDB_INVALID_REGNUM};
+static_assert(((sizeof g_thread_regnums_arm64 /
+                sizeof g_thread_regnums_arm64[0]) -
+               1) == k_num_thread_registers,
+              "g_thread_regnums_arm64 has wrong number of register infos");
+
 // clang-format on
 // Register sets for ARM64.
 static const lldb_private::RegisterSet g_reg_sets_arm64[k_num_register_sets] = {
     {"General Purpose Registers", "gpr", k_num_gpr_registers,
      g_gpr_regnums_arm64},
     {"Floating Point Registers", "fpu", k_num_fpr_registers,
-     g_fpu_regnums_arm64}};
+     g_fpu_regnums_arm64},
+    {"Capability Registers", "cap", k_num_cap_registers, g_cap_regnums_arm64},
+    {"State Registers", "state", k_num_state_registers, g_state_regnums_arm64},
+    {"Thread Pointer Registers", "thread", k_num_thread_registers,
+     g_thread_regnums_arm64}};
 
 static uint32_t
 GetRegisterInfoCount(const lldb_private::ArchSpec &target_arch) {
@@ -194,12 +230,17 @@ RegisterInfoPOSIX_arm64::RegisterInfoPOSIX_arm64(
   switch (target_arch.GetMachine()) {
   case llvm::Triple::aarch64:
   case llvm::Triple::aarch64_32:
-    num_registers = k_num_gpr_registers + k_num_fpr_registers;
+    num_registers = k_num_gpr_registers + k_num_fpr_registers +
+                    k_num_cap_registers + k_num_state_registers +
+                    k_num_thread_registers;
     num_gpr_registers = k_num_gpr_registers;
     num_fpr_registers = k_num_fpr_registers;
     last_gpr = gpr_w28;
     first_fpr = fpu_v0;
     last_fpr = fpu_fpcr;
+    last_cap = cap_ddc;
+    last_state = state_rddc_el0;
+    last_thread = thread_ctpidr_el0;
     break;
   default:
     assert(false && "Unhandled target architecture.");
@@ -208,7 +249,7 @@ RegisterInfoPOSIX_arm64::RegisterInfoPOSIX_arm64(
 }
 
 uint32_t RegisterInfoPOSIX_arm64::GetRegisterCount() const {
-  return num_gpr_registers + num_fpr_registers;
+  return num_registers;
 }
 
 size_t RegisterInfoPOSIX_arm64::GetGPRSize() const {
@@ -234,6 +275,12 @@ size_t RegisterInfoPOSIX_arm64::GetRegisterSetFromRegisterIndex(
     return GPRegSet;
   else if (reg_index <= last_fpr)
     return FPRegSet;
+  if (reg_index <= last_cap)
+    return CapRegSet;
+  if (reg_index <= last_state)
+    return StateRegSet;
+  if (reg_index <= last_thread)
+    return ThreadRegSet;
   return LLDB_INVALID_REGNUM;
 }
 

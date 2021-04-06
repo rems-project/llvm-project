@@ -22,6 +22,7 @@
 #include "Plugins/Process/Linux/NativeProcessLinux.h"
 #include "Plugins/Process/Linux/Procfs.h"
 #include "Plugins/Process/POSIX/ProcessPOSIXLog.h"
+#include "Plugins/Process/Utility/lldb-arm64-register-enums.h"
 
 #include "Utility/ARM64_DWARF_Registers.h"
 //
@@ -283,15 +284,18 @@ bool NativeRegisterContextLinux_arm64::IsFPR(unsigned reg) const {
 }
 
 bool NativeRegisterContextLinux_arm64::IsCapR(unsigned reg) const {
-  return (m_reg_info.first_cap <= reg && reg <= m_reg_info.last_cap);
+  return (GetRegisterInfo().GetRegisterSetFromRegisterIndex(reg) ==
+          RegisterInfoPOSIX_arm64::CapRegSet);
 }
 
 bool NativeRegisterContextLinux_arm64::IsStateR(unsigned reg) const {
-  return (m_reg_info.first_state <= reg && reg <= m_reg_info.last_state);
+  return (GetRegisterInfo().GetRegisterSetFromRegisterIndex(reg) ==
+          RegisterInfoPOSIX_arm64::StateRegSet);
 }
 
 bool NativeRegisterContextLinux_arm64::IsThreadR(unsigned reg) const {
-  return (m_reg_info.first_thread <= reg && reg <= m_reg_info.last_thread);
+  return (GetRegisterInfo().GetRegisterSetFromRegisterIndex(reg) ==
+          RegisterInfoPOSIX_arm64::ThreadRegSet);
 }
 
 uint32_t NativeRegisterContextLinux_arm64::NumSupportedHardwareBreakpoints() {

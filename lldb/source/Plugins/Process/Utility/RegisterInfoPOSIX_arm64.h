@@ -16,7 +16,7 @@
 class RegisterInfoPOSIX_arm64
     : public lldb_private::RegisterInfoAndSetInterface {
 public:
-  enum { GPRegSet = 0, FPRegSet };
+  enum { GPRegSet = 0, FPRegSet, CapRegSet, StateRegSet, ThreadRegSet };
 
   // based on RegisterContextDarwin_arm64.h
   struct GPR {
@@ -106,6 +106,9 @@ private:
   uint32_t last_gpr;
   uint32_t first_fpr;
   uint32_t last_fpr;
+  uint32_t last_cap;
+  uint32_t last_state;
+  uint32_t last_thread;
 
   const lldb_private::RegisterInfo *m_register_info_p;
   uint32_t m_register_info_count;
