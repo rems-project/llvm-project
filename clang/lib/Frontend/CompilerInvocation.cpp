@@ -3711,30 +3711,6 @@ bool CompilerInvocation::ParseLangArgs(LangOptions &Opts, ArgList &Args,
       Args.hasFlag(OPT_cheri_comparison_exact, OPT_cheri_comparison_address,
                    Opts.CheriCompareExact);
 
-  auto GetCapIntMode = [&](const Arg *A) {
-    auto Mode =
-        llvm::StringSwitch<LangOptions::CheriCapIntConversion>(A->getValue())
-            .Case("explicit", LangOptions::CapInt_Explicit)
-            .Case("strict", LangOptions::CapInt_Strict)
-            .Case("address", LangOptions::CapInt_Address)
-            .Case("relative", LangOptions::CapInt_Relative)
-            .Default(LangOptions::CapInt_Invalid);
-    if (Mode == LangOptions::CapInt_Invalid)
-      Diags.Report(diag::err_drv_invalid_value)
-          << A->getAsString(Args) << A->getValue();
-    return Mode;
-  };
-  if (const Arg *A = Args.getLastArg(OPT_cheri_cap_to_int_EQ)) {
-    auto Mode = GetCapIntMode(A);
-    if (Mode != LangOptions::CapInt_Invalid)
-      Opts.setCheriCapToInt(Mode);
-  }
-  if (const Arg *A = Args.getLastArg(OPT_cheri_int_to_cap_EQ)) {
-    auto Mode = GetCapIntMode(A);
-    if (Mode != LangOptions::CapInt_Invalid)
-      Opts.setCheriIntToCap(Mode);
-  }
-
   // Handle the CHERI memops inlining language option.
   if (const Arg *A = Args.getLastArg(OPT_cheri_inline_memops)) {
     auto MemCpyMode =
