@@ -265,6 +265,8 @@ Status GDBRemoteCommunicationServerLLGS::LaunchProcess() {
     m_continue_process = m_current_process = m_debugged_process_up.get();
   }
 
+  SetEnabledExtensions(*m_current_process);
+
   // Handle mirroring of inferior stdout/stderr over the gdb-remote protocol as
   // needed. llgs local-process debugging may specify PTY paths, which will
   // make these file actions non-null process launch -i/e/o will also make
@@ -333,6 +335,7 @@ Status GDBRemoteCommunicationServerLLGS::AttachToProcess(lldb::pid_t pid) {
   }
   m_debugged_process_up = std::move(*process_or);
   m_continue_process = m_current_process = m_debugged_process_up.get();
+  SetEnabledExtensions(*m_current_process);
 
   // Setup stdout/stderr mapping from inferior.
   auto terminal_fd = m_debugged_process_up->GetTerminalFileDescriptor();
@@ -3744,11 +3747,11 @@ llvm::Expected<lldb::tid_t> GDBRemoteCommunicationServerLLGS::ReadTid(
 
 std::vector<std::string> GDBRemoteCommunicationServerLLGS::HandleFeatures(
     const llvm::ArrayRef<llvm::StringRef> client_features) {
-  auto ret =
+  std::vector<std::string> ret =
       GDBRemoteCommunicationServerCommon::HandleFeatures(client_features);
   ret.insert(ret.end(), {
     "QThreadSuffixSupported+", "QListThreadsInStopReply+",
-        "qXfer:features:read+", "multiprocess+",
+        "qXfer:features:read+",
 #if defined(__linux__) || defined(__NetBSD__) || defined(__FreeBSD__)
         "QPassSignals+", "qXfer:auxv:read+", "qXfer:libraries-svr4:read+",
 #endif
@@ -3761,5 +3764,39 @@ std::vector<std::string> GDBRemoteCommunicationServerLLGS::HandleFeatures(
         "qXfer:siginfo:read+",
 #endif // defined(__linux__)
   });
+
+  // check for client features
+  using Extension = NativeProcessProtocol::Extension;
+  m_extensions_supported = {};
+  for (llvm::StringRef x : client_features)
+    m_extensions_supported |=
+        llvm::StringSwitch<Extension>(x)
+            .Case("multiprocess+", Extension::multiprocess)
+            .Case("fork-events+", Extension::fork)
+            .Case("vfork-events+", Extension::vfork)
+            .Default({});
+  m_extensions_supported &= m_process_factory.GetSupportedExtensions();
+
+  // fork & vfork require multiprocess
+  if (!bool(m_extensions_supported & Extension::multiprocess))
+    m_extensions_supported &= ~(Extension::fork | Extension::vfork);
+
+  // report only if actually supported
+  if (bool(m_extensions_supported & Extension::multiprocess))
+    ret.push_back("multiprocess+");
+  if (bool(m_extensions_supported & Extension::fork))
+    ret.push_back("fork-events+");
+  if (bool(m_extensions_supported & Extension::vfork))
+    ret.push_back("vfork-events+");
+
+  if (m_debugged_process_up)
+    SetEnabledExtensions(*m_debugged_process_up);
   return ret;
+}
+
+void GDBRemoteCommunicationServerLLGS::SetEnabledExtensions(
+    NativeProcessProtocol &process) {
+  NativeProcessProtocol::Extension flags = m_extensions_supported;
+  assert(!bool(flags & ~m_process_factory.GetSupportedExtensions()));
+  process.SetEnabledExtensions(flags);
 }
