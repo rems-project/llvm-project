@@ -517,7 +517,7 @@ def cheri_inline_memops : Joined<["-"], "cheri-inline-memops=">,
   HelpText<"Select behaviour for inlining memcpy/memmove">,
   Values<"legacy,new">;
 
-def cheri_bounds_EQ : Joined<["-"], "cheri-bounds=">, Flags<[CC1Option, NoDriverOption]>, Group<cheri_Group>,
+def cheri_bounds_EQ : Joined<["-"], "cheri-bounds=">, Flags<[CC1Option]>, Group<cheri_Group>,
   HelpText<"Choose when to tighten bounds on capabilities. Choices are: "
            "'conservative' (only stack allocations, default), "
            "'references-only' (also set bounds on C++ references that are definitely fixed size) "
