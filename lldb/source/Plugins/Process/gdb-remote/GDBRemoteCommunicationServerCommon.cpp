@@ -838,34 +838,10 @@ GDBRemoteCommunicationServerCommon::Handle_qPlatform_chmod(
 GDBRemoteCommunication::PacketResult
 GDBRemoteCommunicationServerCommon::Handle_qSupported(
     StringExtractorGDBRemote &packet) {
-  StreamGDBRemote response;
-
-  // Features common to lldb-platform and llgs.
-  uint32_t max_packet_size = 128 * 1024; // 128KBytes is a reasonable max packet
-                                         // size--debugger can always use less
-  response.Printf("PacketSize=%x", max_packet_size);
-
-  response.PutCString(";QStartNoAckMode+");
-  response.PutCString(";QThreadSuffixSupported+");
-  response.PutCString(";QListThreadsInStopReply+");
-  response.PutCString(";qEcho+");
-  response.PutCString(";qXfer:features:read+");
-#if defined(__linux__) || defined(__NetBSD__) || defined(__FreeBSD__)
-  response.PutCString(";QPassSignals+");
-  response.PutCString(";qXfer:auxv:read+");
-#if defined(__arm64__) || defined(__aarch64__)
-  // The packet currently makes sense only on AArch64 so report it is available
-  // only there.
-  response.PutCString(";qXfer:capa:read+");
-#endif // defined(__arm64__) || defined(__aarch64__)
-  response.PutCString(";qXfer:libraries-svr4:read+");
-#endif // defined(__linux__) || defined(__NetBSD__)
-#if defined(__linux__)
-  response.PutCString(";qXfer:siginfo:read+");
-#endif // defined(__linux__)
-  response.PutCString(";multiprocess+");
-
-  return SendPacketNoLock(response.GetString());
+  // Parse client-indicated features.
+  llvm::SmallVector<llvm::StringRef, 4> client_features;
+  packet.GetStringRef().split(client_features, ';');
+  return SendPacketNoLock(llvm::join(HandleFeatures(client_features), ";"));
 }
 
 GDBRemoteCommunication::PacketResult
@@ -1326,4 +1302,19 @@ GDBRemoteCommunicationServerCommon::GetModuleInfo(llvm::StringRef module_path,
     return ModuleSpec();
 
   return matched_module_spec;
+}
+
+std::vector<std::string> GDBRemoteCommunicationServerCommon::HandleFeatures(
+    const llvm::ArrayRef<llvm::StringRef> client_features) {
+  // 128KBytes is a reasonable max packet size--debugger can always use less.
+  constexpr uint32_t max_packet_size = 128 * 1024;
+
+  // Features common to platform server and llgs.
+  return {
+      llvm::formatv("PacketSize={0}", max_packet_size),
+      "QStartNoAckMode+",
+      "QThreadSuffixSupported+",
+      "QListThreadsInStopReply+",
+      "qEcho+",
+  };
 }
