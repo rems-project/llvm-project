@@ -114,16 +114,14 @@ define void @callee_test_scalars(i32 %count, ...) local_unnamed_addr addrspace(2
 ; CHECK-LABEL: callee_test_scalars:
 ; CHECK:       .Lfunc_begin4:
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    sub csp, csp, #48 // =48
+; CHECK-NEXT:    str c9, [csp, #-48]!
 ; CHECK-NEXT:    add c0, csp, #16 // =16
 ; CHECK-NEXT:    scbnds c0, c0, #16 // =16
-; CHECK-NEXT:    str c9, [csp, #0]
 ; CHECK-NEXT:    str c9, [c0, #0]
 ; CHECK-NEXT:    ldr c0, [csp, #16]
-; CHECK-NEXT:    str c30, [csp, #32] // 16-byte Folded Spill
 ; CHECK-NEXT:    mov c1, c0
 ; CHECK-NEXT:    ldr s1, [c1, #16]!
-; CHECK-NEXT:    str c1, [csp, #16]
+; CHECK-NEXT:    stp c1, c30, [csp, #16] // 16-byte Folded Spill
 ; CHECK-NEXT:    ldr d0, [c0], #32
 ; CHECK-NEXT:    str c0, [csp, #16]
 ; CHECK-NEXT:    bl call1
