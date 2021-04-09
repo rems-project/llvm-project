@@ -87,6 +87,10 @@ private:
 
   void SetStoppedByTrace();
 
+  void SetStoppedByFork(bool is_vfork, lldb::pid_t child_pid);
+
+  void SetStoppedByVForkDone();
+
   void SetStoppedWithNoReason();
 
   void SetStoppedByProcessorTrace(llvm::StringRef description);
