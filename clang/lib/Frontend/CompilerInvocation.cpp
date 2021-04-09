@@ -3718,13 +3718,6 @@ bool CompilerInvocation::ParseLangArgs(LangOptions &Opts, ArgList &Args,
       Opts.setCheriMemopsInlineBehaviour(MemCpyMode);
   }
 
-  Opts.CheriDataDependentProvenance =
-      Args.hasArg(OPT_cheri_data_dependent_provenance);
-
-
-
-
-
   Opts.MSCompatibilityVersion = 0;
   if (const Arg *A = Args.getLastArg(OPT_fms_compatibility_version)) {
     VersionTuple VT;
