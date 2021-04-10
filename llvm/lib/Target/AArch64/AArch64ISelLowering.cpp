@@ -5182,7 +5182,10 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
       else if (ActualMVT == MVT::i16)
         ValVT = MVT::i16;
     }
-    CCAssignFn *AssignFn = CCAssignFnForCall(CallConv, /*IsVarArg=*/false);
+    bool UseVarArgCC = false;
+    if (IsWin64)
+      UseVarArgCC = isVarArg;
+    CCAssignFn *AssignFn = CCAssignFnForCall(CallConv, UseVarArgCC);
     bool Res =
         AssignFn(i, ValVT, ValVT, CCValAssign::Full, Ins[i].Flags, CCInfo);
     assert(!Res && "Call operand has unhandled type");
@@ -5891,6 +5894,8 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
   bool TailCallOpt = MF.getTarget().Options.GuaranteedTailCallOpt;
   bool IsSibCall = false;
   bool HasVarArgs = false;
+  bool IsWin64 =
+      Subtarget->isCallingConvWin64(MF.getFunction().getCallingConv());
 
   // Check callee args/returns for SVE registers and set calling convention
   // accordingly.
@@ -5940,8 +5945,12 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
                            "currently not supported");
 
       ISD::ArgFlagsTy ArgFlags = Outs[i].Flags;
-      CCAssignFn *AssignFn = CCAssignFnForCall(CallConv,
-                                               /*IsVarArg=*/ !Outs[i].IsFixed);
+      bool UseVarArgCC = !Outs[i].IsFixed;
+      // On Windows, the fixed arguments in a vararg call are passed in GPRs
+      // too, so use the vararg CC to force them to integer registers.
+      if (IsWin64)
+        UseVarArgCC = true;
+      CCAssignFn *AssignFn = CCAssignFnForCall(CallConv, UseVarArgCC);
       bool Res = AssignFn(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo);
       assert(!Res && "Call operand has unhandled type");
       HasVarArgs = HasVarArgs || !Outs[i].IsFixed;

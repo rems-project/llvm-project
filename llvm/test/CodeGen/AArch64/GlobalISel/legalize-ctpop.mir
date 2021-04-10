@@ -12,11 +12,11 @@ body:             |
     ; CHECK: %copy:_(<8 x s8>) = COPY $d0
     ; CHECK: %ctpop:_(<8 x s8>) = G_CTPOP %copy(<8 x s8>)
     ; CHECK: $d0 = COPY %ctpop(<8 x s8>)
-    ; CHECK: RET_ReallyLR implicit $d0
+    ; CHECK: RET_ReallyLR 0, implicit $d0
     %copy:_(<8 x s8>) = COPY $d0
     %ctpop:_(<8 x s8>) = G_CTPOP %copy(<8 x s8>)
     $d0 = COPY %ctpop(<8 x s8>)
-    RET_ReallyLR implicit $d0
+    RET_ReallyLR 0, implicit $d0
 
 ...
 ---
@@ -30,10 +30,10 @@ body:             |
     ; CHECK: %copy:_(<16 x s8>) = COPY $q0
     ; CHECK: %ctpop:_(<16 x s8>) = G_CTPOP %copy(<16 x s8>)
     ; CHECK: $q0 = COPY %ctpop(<16 x s8>)
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %copy:_(<16 x s8>) = COPY $q0
     %ctpop:_(<16 x s8>) = G_CTPOP %copy(<16 x s8>)
     $q0 = COPY %ctpop(<16 x s8>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 
 ...
