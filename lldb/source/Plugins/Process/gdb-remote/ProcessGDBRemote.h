@@ -479,6 +479,9 @@ private:
 
   ProcessGDBRemote(const ProcessGDBRemote &) = delete;
   const ProcessGDBRemote &operator=(const ProcessGDBRemote &) = delete;
+
+  // fork helpers
+  void DidForkSwitchSoftwareBreakpoints(bool enable);
 };
 
 } // namespace process_gdb_remote
