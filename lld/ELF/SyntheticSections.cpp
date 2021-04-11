@@ -1714,14 +1714,6 @@ void RelocationBaseSection::addReloc(const DynamicReloc &reloc) {
   else if (config->emachine == EM_AARCH64 && reloc.type == R_MORELLO_RELATIVE)
     ++numRelativeRelocs;
   relocs.push_back(reloc);
-  auto isec = reloc.inputSec;
-  if (!config->isRela && isec->areRelocsRela) {
-    // HACK for FreeBSD mips n64/CHERI: input is RELA, output is REL -> write the addend to the output
-    // But don't do it for R_MIPS_CHERI_CAPABILITY relocations since they are handled differently
-    // TODO: remove this hack
-    if (reloc.type != R_MIPS_CHERI_CAPABILITY)
-      const_cast<InputSectionBase*>(isec)->freeBSDMipsRelocationsHack.push_back(reloc);
-  }
   if (config->isCheriAbi && config->relativeCapRelocsOnly &&
       reloc.inputSec->name == "__cap_relocs") {
     warn("attempting to add a dynamic relocation against the __cap_relocs "
