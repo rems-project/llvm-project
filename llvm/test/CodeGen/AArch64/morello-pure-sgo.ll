@@ -36,7 +36,8 @@ entry:
 
 define internal i8 addrspace(200)* @baz(i32 %x, i32 %y) addrspace(200) #0 {
 ; CHECK-LABEL: baz:
-; CHECK:       // %bb.0: // %entry
+; CHECK:       .Lfunc_begin1:
+; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    adrp c1, :got:a
 ; CHECK-NEXT:    ldr c1, [c1, :got_lo12:a]
 ; CHECK-NEXT:    // kill: def $w0 killed $w0 def $x0

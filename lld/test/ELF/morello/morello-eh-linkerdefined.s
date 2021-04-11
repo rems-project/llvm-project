@@ -59,29 +59,29 @@ _start: ret
 
 // CHECK: CHERI __cap_relocs [
 // CHECK-NEXT: Relocation {
-// CHECK-NEXT:   Location: 0x25B400 ($d.2)
-// CHECK-NEXT:   Base: __eh_frame_start (0x213E00)
+// CHECK-NEXT:   Location: 0x25AC80 ($d.2)
+// CHECK-NEXT:   Base: __eh_frame_start (0x213AC0)
 // CHECK-NEXT:   Offset: 0
-// CHECK-NEXT:   Length: 160256
+// CHECK-NEXT:   Length: 160064
 // CHECK-NEXT:   Permissions: (RODATA) (0x1BFBE)
 // CHECK-NEXT: }
 // CHECK-NEXT: Relocation {
-// CHECK-NEXT:   Location: 0x25B410
-// CHECK-NEXT:   Base: __eh_frame_end (0x23AF14)
+// CHECK-NEXT:   Location: 0x25AC90
+// CHECK-NEXT:   Base: __eh_frame_end (0x23ABD4)
 // CHECK-NEXT:   Offset: 0
 // CHECK-NEXT:   Length: 0
 // CHECK-NEXT:   Permissions: (RODATA) (0x1BFBE)
 // CHECK-NEXT: }
 // CHECK-NEXT:  Relocation {
-// CHECK-NEXT:    Location: 0x25B420
-// CHECK-NEXT:    Base: __eh_frame_hdr_start (0x200400)
+// CHECK-NEXT:    Location: 0x25ACA0
+// CHECK-NEXT:    Base: __eh_frame_hdr_start (0x200200)
 // CHECK-NEXT:    Offset: 0
-// CHECK-NEXT:    Length: 80128
+// CHECK-NEXT:    Length: 80032
 // CHECK-NEXT:    Permissions: (RODATA) (0x1BFBE)
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Relocation {
-// CHECK-NEXT:    Location: 0x25B430
-// CHECK-NEXT:    Base: __eh_frame_hdr_end (0x213C8C)
+// CHECK-NEXT:    Location: 0x25ACB0
+// CHECK-NEXT:    Base: __eh_frame_hdr_end (0x213A8C)
 // CHECK-NEXT:    Offset: 0
 // CHECK-NEXT:    Length: 0
 // CHECK-NEXT:    Permissions: (RODATA) (0x1BFBE)

@@ -120,6 +120,7 @@ add_llvm_component_library(LLVMSupport
   MemAlloc.cpp
   MemoryBuffer.cpp
   MD5.cpp
+  Morello.cpp
   NativeFormatting.cpp
   OptimizedStructLayout.cpp
   Optional.cpp
