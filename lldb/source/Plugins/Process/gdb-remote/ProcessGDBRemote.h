@@ -237,6 +237,7 @@ public:
   void DidFork(lldb::pid_t child_pid, lldb::tid_t child_tid) override;
   void DidVFork(lldb::pid_t child_pid, lldb::tid_t child_tid) override;
   void DidVForkDone() override;
+  void DidExec() override;
 
 protected:
   friend class ThreadGDBRemote;
@@ -485,6 +486,7 @@ private:
 
   // fork helpers
   void DidForkSwitchSoftwareBreakpoints(bool enable);
+  void DidForkSwitchHardwareTraps(bool enable);
 };
 
 } // namespace process_gdb_remote
