@@ -2551,7 +2551,7 @@ void DWARFASTParserClang::ParseSingleMember(
       if (accessibility == eAccessNone)
         accessibility = eAccessPublic;
       TypeSystemClang::AddVariableToRecordType(
-          class_clang_type, name, var_type->GetLayoutCompilerType(),
+          class_clang_type, name, var_type->GetForwardCompilerType(),
           accessibility);
     }
     return;
