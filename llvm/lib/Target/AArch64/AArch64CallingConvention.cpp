@@ -105,17 +105,11 @@ static bool finishStackBlock(SmallVectorImpl<CCValAssign> &PendingMembers,
     return true;
   }
 
-  const Align StackAlign =
-      State.getMachineFunction().getDataLayout().getStackAlignment();
-  const Align OrigAlign = ArgFlags.getNonZeroOrigAlign();
-  const Align Alignment = std::min(OrigAlign, StackAlign);
-
+  unsigned Size = LocVT.getSizeInBits() / 8;
   for (auto &It : PendingMembers) {
-    unsigned Size = It.getLocVT().getSizeInBits() / 8;
-    Align RegAlign = std::max(Alignment, SlotAlign);
-    if (It.getLocVT() == MVT::iFATPTR128)
-      RegAlign = std::max(RegAlign, Align(16u));
-    It.convertToMem(State.AllocateStack(Size, RegAlign));
+    It.convertToMem(State.AllocateStack(Size,
+        It.getLocVT() == MVT::iFATPTR128 ? std::max(SlotAlign, Align(16u))
+                                         : SlotAlign));
     State.addLoc(It);
     SlotAlign = Align(1);
   }
@@ -274,9 +268,12 @@ static bool CC_AArch64_Custom_Block(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
       State.AllocateReg(Reg);
   }
 
-  const Align SlotAlign = Subtarget.isTargetDarwin()
-                              ? Align(1)
-                              : Align(Subtarget.hasPureCap() ? 16 : 8);
+  const Align StackAlign =
+      State.getMachineFunction().getDataLayout().getStackAlignment();
+  const Align MemAlign = ArgFlags.getNonZeroMemAlign();
+  Align SlotAlign = std::min(MemAlign, StackAlign);
+  if (!Subtarget.isTargetDarwin())
+    SlotAlign = std::max(SlotAlign, Align(8));
 
   return finishStackBlock(PendingMembers, LocVT, ArgFlags, State, SlotAlign);
 }
