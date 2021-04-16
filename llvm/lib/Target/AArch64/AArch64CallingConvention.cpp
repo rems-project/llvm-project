@@ -105,8 +105,8 @@ static bool finishStackBlock(SmallVectorImpl<CCValAssign> &PendingMembers,
     return true;
   }
 
-  unsigned Size = LocVT.getSizeInBits() / 8;
   for (auto &It : PendingMembers) {
+    unsigned Size = It.getLocVT().getSizeInBits() / 8;
     It.convertToMem(State.AllocateStack(Size,
         It.getLocVT() == MVT::iFATPTR128 ? std::max(SlotAlign, Align(16u))
                                          : SlotAlign));
