@@ -5913,8 +5913,7 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
   bool TailCallOpt = MF.getTarget().Options.GuaranteedTailCallOpt;
   bool IsSibCall = false;
   bool HasVarArgs = false;
-  bool IsWin64 =
-      Subtarget->isCallingConvWin64(MF.getFunction().getCallingConv());
+  bool IsCalleeWin64 = Subtarget->isCallingConvWin64(CallConv);
 
   // Check callee args/returns for SVE registers and set calling convention
   // accordingly.
@@ -5967,7 +5966,7 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
       bool UseVarArgCC = !Outs[i].IsFixed;
       // On Windows, the fixed arguments in a vararg call are passed in GPRs
       // too, so use the vararg CC to force them to integer registers.
-      if (IsWin64)
+      if (IsCalleeWin64)
         UseVarArgCC = true;
       CCAssignFn *AssignFn = CCAssignFnForCall(CallConv, UseVarArgCC);
       bool Res = AssignFn(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo);
