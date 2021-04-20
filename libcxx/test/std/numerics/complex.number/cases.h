@@ -228,4 +228,4 @@ void is_about(long double x, long double y)
 }
 #endif //! _LIBCPP_HAS_NEWLIB
 
-#endif  // CASES_H
+#endif // CASES_H
