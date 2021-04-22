@@ -54,7 +54,7 @@ if not config.environment['LLDB_EXECUTABLE']:
 
 config.environment['FILECHECK_EXECUTABLE'] = shutil.which(
         'FileCheck', path=llvm_tools_dir)
-if not config.environment['LLDB_EXECUTABLE']:
+if not config.environment['FILECHECK_EXECUTABLE']:
     sys.exit("Couldn't find FileCheck in {}".format(llvm_tools_dir))
 
 # suffixes: A list of file extensions to treat as test files. This is overriden

@@ -1,4 +1,4 @@
-breakpoint set -n last
+breakpoint set -p "Break here"
 process launch --
 
 thread backtrace
@@ -12,7 +12,7 @@ frame variable x
 # CHECK: x = 36
 
 frame variable y
-# TODO: y = 2 - This is currently broken.
+# CHECK: y = 2
 
 frame select 1
 # CHECK-LABEL: (lldb) frame select 1

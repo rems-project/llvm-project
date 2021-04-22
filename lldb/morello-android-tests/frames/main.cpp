@@ -1,6 +1,6 @@
 int last(int x) {
   int y = 2;
-  return x * y;
+  return x * y; // Break here
 }
 
 int second(int *x0, int x1, int x2, int x3,
