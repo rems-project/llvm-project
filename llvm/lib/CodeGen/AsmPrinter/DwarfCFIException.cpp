@@ -55,8 +55,7 @@ void DwarfCFIExceptionBase::endFragment() {
 
 DwarfCFIException::DwarfCFIException(AsmPrinter *A)
     : DwarfCFIExceptionBase(A), shouldEmitPersonality(false),
-      forceEmitPersonality(false), shouldEmitLSDA(false),
-      shouldEmitMoves(false) {}
+      forceEmitPersonality(false), shouldEmitLSDA(false) {}
 
 DwarfCFIException::~DwarfCFIException() {}
 
@@ -89,7 +88,7 @@ static MCSymbol *getExceptionSym(AsmPrinter *Asm,
 }
 
 void DwarfCFIException::beginFunction(const MachineFunction *MF) {
-  shouldEmitMoves = shouldEmitPersonality = shouldEmitLSDA = false;
+  shouldEmitPersonality = shouldEmitLSDA = false;
   const Function &F = MF->getFunction();
 
   // If any landing pads survive, we need an EH table.
@@ -98,7 +97,7 @@ void DwarfCFIException::beginFunction(const MachineFunction *MF) {
   // See if we need frame move info.
   AsmPrinter::CFIMoveType MoveType = Asm->needsCFIMoves();
 
-  shouldEmitMoves = MoveType != AsmPrinter::CFI_M_None;
+  bool shouldEmitMoves = MoveType != AsmPrinter::CFI_M_None;
 
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
   unsigned PerEncoding = TLOF.getPersonalityEncoding();
