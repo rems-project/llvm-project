@@ -2971,8 +2971,8 @@ GDBRemoteCommunicationServerLLGS::Handle_qXfer_capa_read(
     StringExtractorGDBRemote &packet) {
   Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PROCESS));
 
-  if (!m_debugged_process_up ||
-      (m_debugged_process_up->GetID() == LLDB_INVALID_PROCESS_ID)) {
+  if (!m_current_process ||
+      (m_current_process->GetID() == LLDB_INVALID_PROCESS_ID)) {
     LLDB_LOG(log, "no process available");
     return SendErrorResponse(0x15);
   }
@@ -3009,17 +3009,17 @@ GDBRemoteCommunicationServerLLGS::Handle_qXfer_capa_read(
 
   // Retrieve the process memory.
   size_t bytes_read = 0;
-  error = m_debugged_process_up->ReadMemoryWithoutTrap(
+  error = m_current_process->ReadMemoryWithoutTrap(
       read_addr, &buf[0], byte_count, bytes_read, eMemoryContentCap128);
   if (error.Fail()) {
     LLDB_LOG(log, "pid {0} mem {1:x}: failed to read. Error: {2}",
-             m_debugged_process_up->GetID(), read_addr, error);
+             m_current_process->GetID(), read_addr, error);
     return SendErrorResponse(0x08);
   }
 
   if (bytes_read != byte_count) {
     LLDB_LOG(log, "pid {0} mem {1:x}: read {2} of {3} requested bytes",
-             m_debugged_process_up->GetID(), read_addr, bytes_read, byte_count);
+             m_current_process->GetID(), read_addr, bytes_read, byte_count);
     return SendErrorResponse(0x08);
   }
 
@@ -3781,23 +3781,30 @@ std::vector<std::string> GDBRemoteCommunicationServerLLGS::HandleFeatures(
   std::vector<std::string> ret =
       GDBRemoteCommunicationServerCommon::HandleFeatures(client_features);
   ret.insert(ret.end(), {
-    "QThreadSuffixSupported+", "QListThreadsInStopReply+",
-        "qXfer:features:read+",
-#if defined(__linux__) || defined(__NetBSD__) || defined(__FreeBSD__)
-        "QPassSignals+", "qXfer:auxv:read+", "qXfer:libraries-svr4:read+",
-#endif
+                            "QThreadSuffixSupported+",
+                            "QListThreadsInStopReply+",
+                            "qXfer:features:read+",
 #if defined(__arm64__) || defined(__aarch64__)
-        // The packet currently makes sense only on AArch64 so report it is
-        // available only there.
-        "qXfer:capa:read+",
+                            // The packet currently makes sense only on AArch64
+                            // so report it is available only there.
+                            "qXfer:capa:read+",
 #endif // defined(__arm64__) || defined(__aarch64__)
 #if defined(__linux__)
-        "qXfer:siginfo:read+",
+                            "qXfer:siginfo:read+",
 #endif // defined(__linux__)
-  });
+                        });
+
+  // report server-only features
+  using Extension = NativeProcessProtocol::Extension;
+  Extension plugin_features = m_process_factory.GetSupportedExtensions();
+  if (bool(plugin_features & Extension::pass_signals))
+    ret.push_back("QPassSignals+");
+  if (bool(plugin_features & Extension::auxv))
+    ret.push_back("qXfer:auxv:read+");
+  if (bool(plugin_features & Extension::libraries_svr4))
+    ret.push_back("qXfer:libraries-svr4:read+");
 
   // check for client features
-  using Extension = NativeProcessProtocol::Extension;
   m_extensions_supported = {};
   for (llvm::StringRef x : client_features)
     m_extensions_supported |=
@@ -3806,7 +3813,8 @@ std::vector<std::string> GDBRemoteCommunicationServerLLGS::HandleFeatures(
             .Case("fork-events+", Extension::fork)
             .Case("vfork-events+", Extension::vfork)
             .Default({});
-  m_extensions_supported &= m_process_factory.GetSupportedExtensions();
+
+  m_extensions_supported &= plugin_features;
 
   // fork & vfork require multiprocess
   if (!bool(m_extensions_supported & Extension::multiprocess))
