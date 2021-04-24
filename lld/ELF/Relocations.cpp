@@ -1182,7 +1182,7 @@ static void addGotEntry(Symbol &sym) {
 
   // Otherwise, we emit a dynamic relocation to .rel[a].dyn so that
   // the GOT slot will be fixed at load-time.
-  if (!sym.isTls() && !sym.isPreemptible && config->isPic && !isAbsolute(sym)) {
+  if (!sym.isTls() && !sym.isPreemptible && config->isPic) {
     if (config->morelloC64Plt)
       // As well as writing the Relative relocation there are additional
       // static relocations needed to initialize the GOT entry. Delegate this
