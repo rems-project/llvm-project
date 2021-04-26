@@ -235,12 +235,6 @@ public:
                      /// default)
   };
 
-  enum CheriMemopsInlineBehaviourMode {
-    CheriMemopsInlineBehaviour_Legacy, /// All calls to memcpy/memmove preserve tags
-    CheriMemopsInlineBehaviour_New, /// Inline memcpy calls without preseving tags
-                                    /// if the source type doesn't contain capabilities.
-  };
-
   // TODO: this should probably be flags
 #if 0
     CBM_ReferencesAggressive, /// (unused for now, might set more bounds)

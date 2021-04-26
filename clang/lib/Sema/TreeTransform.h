@@ -4994,11 +4994,6 @@ QualType TreeTransform<Derived>::TransformPointerType(TypeLocBuilder &TLB,
     return QualType();
 
   QualType Result = TL.getType();
-
-  bool IsCapability = false;
-  if (const PointerType *PT = Result->getAs<PointerType>())
-    IsCapability = PT->isCHERICapability();
-
   if (PointeeType->getAs<ObjCObjectType>()) {
     // A dependent pointer type 'T *' has is being transformed such
     // that an Objective-C class type is being replaced for 'T'. The

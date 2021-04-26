@@ -551,10 +551,6 @@ def cheri_data_dependent_provenance : Flag<["-"], "cheri-data-dependent-provenan
   Flags<[CC1Option, NoDriverOption, HelpHidden]>, Group<cheri_Group>,
   HelpText<"Use the LHS or NULL provenance of a bitwise-and operation depending on the value of the RHS">,
   MarshallingInfoFlag<LangOpts<"CheriDataDependentProvenance">>;
-def cheri_inline_memops : Joined<["-"], "cheri-inline-memops=">,
-  Flags<[CC1Option]>, Group<cheri_Group>,
-  HelpText<"Select behaviour for inlining memcpy/memmove">,
-  Values<"legacy,new">;
 
 def cheri_bounds_EQ : Joined<["-"], "cheri-bounds=">, Flags<[CC1Option]>, Group<cheri_Group>,
   HelpText<"Choose when to tighten bounds on capabilities. Choices are: "

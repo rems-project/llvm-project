@@ -3780,20 +3780,6 @@ bool CompilerInvocation::ParseLangArgs(LangOptions &Opts, ArgList &Args,
   else if (Args.hasArg(OPT_fwrapv))
     Opts.setSignedOverflowBehavior(LangOptions::SOB_Defined);
 
-  // Handle the CHERI memops inlining language option.
-  if (const Arg *A = Args.getLastArg(OPT_cheri_inline_memops)) {
-    auto MemCpyMode =
-        llvm::StringSwitch<LangOptions::CheriMemopsInlineBehaviourMode>(A->getValue())
-            .Case("legacy", LangOptions::CheriMemopsInlineBehaviour_Legacy)
-            .Case("new", LangOptions::CheriMemopsInlineBehaviour_New)
-            .Default((LangOptions::CheriMemopsInlineBehaviourMode)-1);
-    if (MemCpyMode == (LangOptions::CheriMemopsInlineBehaviourMode)-1) {
-      Diags.Report(diag::err_drv_invalid_value)
-          << A->getAsString(Args) << A->getValue();
-    } else
-      Opts.setCheriMemopsInlineBehaviour(MemCpyMode);
-  }
-
   Opts.MorelloNewVarArg =
       Args.hasFlag(OPT_morello_vararg_new, OPT_morello_vararg_legacy,
                    Opts.MorelloNewVarArg);

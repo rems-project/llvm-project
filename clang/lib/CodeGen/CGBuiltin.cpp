@@ -624,11 +624,9 @@ static Value *EmitSignBit(CodeGenFunction &CGF, Value *V) {
 }
 
 static RValue emitLibraryCall(CodeGenFunction &CGF, const FunctionDecl *FD,
-                              const CallExpr *E, llvm::Value *calleeValue,
-                              bool PreserveTags = false) {
+                              const CallExpr *E, llvm::Value *calleeValue) {
   CGCallee callee = CGCallee(GlobalDecl(FD), calleeValue);
-  return CGF.EmitCall(E->getCallee()->getType(), callee, E, ReturnValueSlot(),
-                      nullptr, PreserveTags);
+  return CGF.EmitCall(E->getCallee()->getType(), callee, E, ReturnValueSlot());
 }
 
 /// Emit a call to llvm.{sadd,uadd,ssub,usub,smul,umul}.with.overflow.*
@@ -2188,17 +2186,8 @@ diagnoseMisalignedCapabiliyCopyDest(CodeGenFunction &CGF, StringRef Function,
   UnderlyingSrcTy =
       QualType(UnderlyingSrcTy->getPointeeOrArrayElementType(), 0);
   auto &Ctx = CGF.CGM.getContext();
-  bool Legacy = false;
-  if (CGF.getLangOpts().getCheriMemopsInlineBehaviour() ==
-      LangOptions::CheriMemopsInlineBehaviour_New) {
-    if (!Ctx.containsCapabilities(UnderlyingSrcTy))
-      return;
-  } else {
-    // The legacy behaviour is that all memory transfer calls preserve tags.
-    if (!Ctx.getTargetInfo().SupportsCapabilities())
-      return;
-    Legacy = true;
-  }
+  if (!Ctx.containsCapabilities(UnderlyingSrcTy))
+    return;
 
   // Add a must_preserve_cheri_tags attribute to the memcpy/memmove
   // intrinsic to ensure that the backend will not lower it to an inlined
@@ -2209,8 +2198,7 @@ diagnoseMisalignedCapabiliyCopyDest(CodeGenFunction &CGF, StringRef Function,
   if (MemInst) {
     // If we have a memory intrinsic let the backend diagnose this issue:
     // First, tell the backend that this copy must preserve tags
-    MemInst->addAttribute(llvm::AttributeList::FunctionIndex,
-                          llvm::Attribute::MustPreserveCheriTags);
+    MemInst->addFnAttr(llvm::Attribute::MustPreserveCheriTags);
     // And also tell it what the underlying type was for improved diagnostics.
     std::string TypeName = UnderlyingSrcTy.getAsString();
     std::string CanonicalStr = UnderlyingSrcTy.getCanonicalType().getAsString();
@@ -2218,16 +2206,10 @@ diagnoseMisalignedCapabiliyCopyDest(CodeGenFunction &CGF, StringRef Function,
       TypeName = "'" + TypeName + "' (aka '" + CanonicalStr + "')";
     else
       TypeName = "'" + TypeName + "'";
-    if (Legacy)
-      return;
-    MemInst->addAttribute(llvm::AttributeList::FunctionIndex,
-                          llvm::Attribute::get(CGF.getLLVMContext(),
-                                               "frontend-memtransfer-type",
-                                               TypeName));
+    MemInst->addFnAttr(llvm::Attribute::get(
+        CGF.getLLVMContext(), "frontend-memtransfer-type", TypeName));
     return;
   }
-  if (Legacy)
-    return;
   // Otherwise attempt to diagnose it here (likely to cause false positives)
   uint64_t CapSizeBytes =
       Ctx.toCharUnitsFromBits(Ctx.getTargetInfo().getCHERICapabilityAlign())
@@ -2385,7 +2367,6 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
                                                Result.Val.getFloat()));
   }
   unsigned DefaultAS = CGM.getTargetCodeGenInfo().getDefaultAS();
-  bool PreserveTags = false;
 
   // If current long-double semantics is IEEE 128-bit, replace math builtins
   // of long-double with f128 equivalent.
@@ -3539,8 +3520,6 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
 
   case Builtin::BI__builtin___memcpy_chk: {
     // fold __builtin_memcpy_chk(x, y, cst1, cst2) to memcpy iff cst1<=cst2.
-    if (CGM.getContext().getTargetInfo().SupportsCapabilities())
-      PreserveTags = true;
     Expr::EvalResult SizeResult, DstSizeResult;
     if (!E->getArg(2)->EvaluateAsInt(SizeResult, CGM.getContext()) ||
         !E->getArg(3)->EvaluateAsInt(DstSizeResult, CGM.getContext())) {
@@ -3576,8 +3555,6 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
 
   case Builtin::BI__builtin___memmove_chk: {
     // fold __builtin_memmove_chk(x, y, cst1, cst2) to memmove iff cst1<=cst2.
-    if (CGM.getContext().getTargetInfo().SupportsCapabilities())
-      PreserveTags = true;
     Expr::EvalResult SizeResult, DstSizeResult;
     if (!E->getArg(2)->EvaluateAsInt(SizeResult, CGM.getContext()) ||
         !E->getArg(3)->EvaluateAsInt(DstSizeResult, CGM.getContext())) {
@@ -5581,14 +5558,12 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
   // version of the function name.
   if (getContext().BuiltinInfo.isLibFunction(BuiltinID))
     return emitLibraryCall(*this, FD, E,
-                           CGM.getBuiltinLibFunction(FD, BuiltinID),
-                           PreserveTags);
+                           CGM.getBuiltinLibFunction(FD, BuiltinID));
 
   // If this is a predefined lib function (e.g. malloc), emit the call
   // using exactly the normal call path.
   if (getContext().BuiltinInfo.isPredefinedLibFunction(BuiltinID))
-    return emitLibraryCall(*this, FD, E, EmitScalarExpr(E->getCallee()),
-                           PreserveTags);
+    return emitLibraryCall(*this, FD, E, EmitScalarExpr(E->getCallee()));
 
   // Check that a call to a target specific builtin has the correct target
   // features.

@@ -1,5 +1,5 @@
-// RUN: %cheri128_purecap_cc1 -O0 -o - -emit-llvm %s -w -cheri-inline-memops=new | FileCheck %s
-// RUN: %cheri128_purecap_cc1 -DBUILTIN  -O0 -o - -emit-llvm %s -w -cheri-inline-memops=new | FileCheck %s
+// RUN: %cheri128_purecap_cc1 -O0 -o - -emit-llvm %s -w | FileCheck %s
+// RUN: %cheri128_purecap_cc1 -DBUILTIN  -O0 -o - -emit-llvm %s -w | FileCheck %s
 
 // This diagnostic is disabled at -O0 -> must check at -O2
 // RXUN: %cheri128_purecap_cc1 -debug-info-kind=standalone -O2 -S -o /dev/null %s -verify

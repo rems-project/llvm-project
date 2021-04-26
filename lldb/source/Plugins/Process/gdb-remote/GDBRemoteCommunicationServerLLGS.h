@@ -225,6 +225,9 @@ protected:
 
   PacketResult SendqXferResponse(llvm::StringRef data, uint64_t offset,
                                  uint64_t length, bool *end_reached = nullptr);
+
+  PacketResult Handle_qSaveCore(StringExtractorGDBRemote &packet);
+
   PacketResult Handle_g(StringExtractorGDBRemote &packet);
 
   PacketResult Handle_qMemTags(StringExtractorGDBRemote &packet);
