@@ -1736,7 +1736,7 @@ void RelocationBaseSection::finalizeContents() {
 
   if (in.relaPlt == this) {
     getParent()->flags |= ELF::SHF_INFO_LINK;
-    // For MIPS CheriABI we use the captable as the sh_info value
+    // For CheriABI we use the captable as the sh_info value
     if (config->isCheriAbi && in.cheriCapTable && in.cheriCapTable->isNeeded()) {
       assert(in.cheriCapTable->getParent()->sectionIndex != UINT32_MAX);
       getParent()->info = in.cheriCapTable->getParent()->sectionIndex;
@@ -1746,7 +1746,7 @@ void RelocationBaseSection::finalizeContents() {
   }
   if (in.relaIplt == this) {
     getParent()->flags |= ELF::SHF_INFO_LINK;
-    // For MIPS CheriABI we use the captable as the sh_info value
+    // For CheriABI we use the captable as the sh_info value
     if (config->isCheriAbi && in.cheriCapTable && in.cheriCapTable->isNeeded()) {
       assert(in.cheriCapTable->getParent()->sectionIndex != UINT32_MAX);
       getParent()->info = in.cheriCapTable->getParent()->sectionIndex;
