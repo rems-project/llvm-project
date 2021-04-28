@@ -128,9 +128,9 @@ bool AArch64RedundantCopyElimination::knownRegValInBlock(
 
   // Check if the current basic block is the target block to which the
   // CBZ/CBNZ instruction jumps when its Wt/Xt is zero.
-  if (((Opc == AArch64::CBZW || Opc == AArch64::CBZX || Opc == AArch64::CBZC) &&
+  if (((Opc == AArch64::CBZW || Opc == AArch64::CBZX) &&
        MBB == CondBr.getOperand(1).getMBB()) ||
-      ((Opc == AArch64::CBNZW || Opc == AArch64::CBNZX || Opc == AArch64::CBNZC) &&
+      ((Opc == AArch64::CBNZW || Opc == AArch64::CBNZX) &&
        MBB != CondBr.getOperand(1).getMBB())) {
     FirstUse = CondBr;
     KnownRegs.push_back(RegImm(CondBr.getOperand(0).getReg(), 0));
