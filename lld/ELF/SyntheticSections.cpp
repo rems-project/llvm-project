@@ -1660,9 +1660,10 @@ int64_t DynamicReloc::computeAddend() const {
 
 uint32_t DynamicReloc::getSymIndex(SymbolTableBaseSection *symTab) const {
   if (sym && !useSymVA) {
-    // It is fine to have a dynsymindex of 0 for the TLS module relocations
-    if (sym->dynsymIndex == 0 && config->warnNoDymSym &&
-        type != target->tlsModuleIndexRel) {
+    // It is fine to have a dynsymindex of 0 for the TLS module and TP offset
+    // relocations as both are emitted for non-preemptible symbols in DSOs.
+    if (sym->dynsymIndex == 0 && type != target->tlsModuleIndexRel &&
+        type != target->tlsGotRel && config->warnNoDymSym) {
       warn("DynsymIndex == 0 for " + toString(type) + " relocation against " +
            verboseToString(sym) + "+" + Twine(addend));
     }
