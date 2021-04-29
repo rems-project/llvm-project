@@ -115,12 +115,28 @@ declare i8 addrspace(200)* @llvm.cheri.cap.seal(i8 addrspace(200)*, i8 addrspace
 declare i8 addrspace(200)* @llvm.cheri.cap.unseal(i8 addrspace(200)*, i8 addrspace(200)*)
 declare i8 addrspace(200)* @llvm.cheri.cap.bounds.set(i8 addrspace(200)*, i64)
 declare i8 addrspace(200)* @llvm.cheri.cap.bounds.set.exact(i8 addrspace(200)*, i64)
+declare i8 addrspace(200)* @llvm.cheri.bounded.stack.cap(i8 addrspace(200)*, i64)
 declare i8 addrspace(200)* @llvm.cheri.cap.tag.clear(i8 addrspace(200)*)
 declare i8 addrspace(200)* @llvm.cheri.cap.offset.set(i8 addrspace(200)*, i64)
 declare i8 addrspace(200)* @llvm.cheri.cap.flags.set(i8 addrspace(200)*, i64)
 declare i8 addrspace(200)* @llvm.cheri.cap.copy.to.high.i64(i8 addrspace(200)*, i64)
 declare {i8 addrspace(200)*, i1} @llvm.morello.subset.test.unseal(i8 addrspace(200)*, i8 addrspace(200)*)
 declare i8 addrspace(200)* @llvm.morello.convert.to.offset.null.cap.zero.semantics(i8 addrspace(200)*, i64)
+
+; CHECK-LABEL: testBoundedStackCapImm
+define i8 addrspace(200)* @testBoundedStackCapImm(i8 addrspace(200)* %foo) {
+; CHECK: scbnds c0, c0, #11
+  %C = call i8 addrspace(200)* @llvm.cheri.bounded.stack.cap(i8 addrspace(200)* %foo, i64 11)
+  ret i8 addrspace(200)* %C
+}
+
+; CHECK-LABEL: testBoundedStackCapReg
+define i8 addrspace(200)* @testBoundedStackCapReg(i8 addrspace(200)* %foo, i64 %val) {
+; CHECK: scbnds c0, c0, x1
+  %C = call i8 addrspace(200)* @llvm.cheri.bounded.stack.cap(i8 addrspace(200)* %foo, i64 %val)
+  ret i8 addrspace(200)* %C
+}
+
 
 ; CHECK-LABEL: @testGetProgramCounter
 define i8 addrspace(200)* @testGetProgramCounter() {
