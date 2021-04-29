@@ -1300,6 +1300,9 @@ bool AArch64TargetLowering::allowsMisalignedMemoryAccesses(
   if (Subtarget->requiresStrictAlign())
     return false;
 
+  if (VT.isFatPointer())
+    return false;
+
   if (Fast) {
     // Some CPUs are fine with unaligned stores except for 128-bit ones.
     *Fast = !Subtarget->isMisaligned128StoreSlow() || VT.getStoreSize() != 16 ||
