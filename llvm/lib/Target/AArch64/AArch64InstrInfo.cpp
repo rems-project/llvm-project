@@ -158,8 +158,6 @@ static void parseCondBranch(MachineInstr *LastInst, MachineBasicBlock *&Target,
   case AArch64::CBZX:
   case AArch64::CBNZW:
   case AArch64::CBNZX:
-  case AArch64::CBZC:
-  case AArch64::CBNZC:
     Target = LastInst->getOperand(1).getMBB();
     Cond.push_back(MachineOperand::CreateImm(-1));
     Cond.push_back(MachineOperand::CreateImm(LastInst->getOpcode()));
@@ -193,8 +191,6 @@ static unsigned getBranchDisplacementBits(unsigned Opc) {
   case AArch64::CBZW:
   case AArch64::CBNZX:
   case AArch64::CBZX:
-  case AArch64::CBZC:
-  case AArch64::CBNZC:
     return CBZDisplacementBits;
   case AArch64::Bcc:
     return BCCDisplacementBits;
@@ -226,8 +222,6 @@ AArch64InstrInfo::getBranchDestBlock(const MachineInstr &MI) const {
   case AArch64::CBZX:
   case AArch64::CBNZX:
   case AArch64::Bcc:
-  case AArch64::CBZC:
-  case AArch64::CBNZC:
     return MI.getOperand(1).getMBB();
   }
 }
@@ -354,12 +348,6 @@ bool AArch64InstrInfo::reverseBranchCondition(
       break;
     case AArch64::TBNZX:
       Cond[1].setImm(AArch64::TBZX);
-      break;
-    case AArch64::CBZC:
-      Cond[1].setImm(AArch64::CBNZC);
-      break;
-    case AArch64::CBNZC:
-      Cond[1].setImm(AArch64::CBZC);
       break;
     }
   }
@@ -5916,12 +5904,10 @@ bool AArch64InstrInfo::optimizeCondBranch(MachineInstr &MI) const {
     return false;
   case AArch64::CBZW:
   case AArch64::CBZX:
-  case AArch64::CBZC:
     TargetBBInMI = 1;
     break;
   case AArch64::CBNZW:
   case AArch64::CBNZX:
-  case AArch64::CBNZC:
     TargetBBInMI = 1;
     IsNegativeBranch = true;
     break;
