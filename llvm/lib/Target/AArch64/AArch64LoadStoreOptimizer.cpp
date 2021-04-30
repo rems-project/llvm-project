@@ -259,52 +259,72 @@ static unsigned getMatchingNonSExtOpcode(unsigned Opc,
     return std::numeric_limits<unsigned>::max();
   case AArch64::STRDui:
   case AArch64::STURDi:
+  case AArch64::STRDpre:
   case AArch64::STRQui:
   case AArch64::STURQi:
+  case AArch64::STRQpre:
   case AArch64::STRBBui:
   case AArch64::STURBBi:
   case AArch64::STRHHui:
   case AArch64::STURHHi:
   case AArch64::STRWui:
+  case AArch64::STRWpre:
   case AArch64::STURWi:
   case AArch64::STRXui:
+  case AArch64::STRXpre:
   case AArch64::STURXi:
   case AArch64::LDRDui:
   case AArch64::LDURDi:
+  case AArch64::LDRDpre:
   case AArch64::LDRQui:
   case AArch64::LDURQi:
+  case AArch64::LDRQpre:
   case AArch64::LDRWui:
   case AArch64::LDURWi:
+  case AArch64::LDRWpre:
   case AArch64::LDRXui:
   case AArch64::LDURXi:
+  case AArch64::LDRXpre:
   case AArch64::STRSui:
   case AArch64::STURSi:
+  case AArch64::STRSpre:
   case AArch64::LDRSui:
   case AArch64::LDURSi:
+  case AArch64::LDRSpre:
   case AArch64::ASTRDui:
   case AArch64::ASTURDi:
+  case AArch64::ASTRDpre:
   case AArch64::ASTRQui:
   case AArch64::ASTURQi:
+  case AArch64::ASTRQpre:
   case AArch64::ASTRBBui:
   case AArch64::ASTURBBi:
   case AArch64::ASTRHHui:
   case AArch64::ASTURHHi:
   case AArch64::ASTRWui:
+  case AArch64::ASTRWpre:
   case AArch64::ASTURWi:
   case AArch64::ASTRXui:
+  case AArch64::ASTRXpre:
   case AArch64::ASTURXi:
   case AArch64::ALDRDui:
   case AArch64::ALDURDi:
+  case AArch64::ALDRDpre:
   case AArch64::ALDRQui:
   case AArch64::ALDURQi:
+  case AArch64::ALDRQpre:
   case AArch64::ALDRWui:
   case AArch64::ALDURWi:
+  case AArch64::ALDRWpre:
   case AArch64::ALDRXui:
   case AArch64::ALDURXi:
+  case AArch64::ALDRXpre:
   case AArch64::ASTRSui:
   case AArch64::ASTURSi:
+  case AArch64::ASTRSpre:
   case AArch64::ALDRSui:
   case AArch64::ALDURSi:
+  case AArch64::ALDRSpre:
   case AArch64::PCapStoreImmPre:
   case AArch64::PCapLoadImmPre:
   case AArch64::CapStoreImmPre:
@@ -363,33 +383,53 @@ static unsigned getMatchingPairOpcode(unsigned Opc) {
   case AArch64::STRSui:
   case AArch64::STURSi:
     return AArch64::STPSi;
+  case AArch64::STRSpre:
+    return AArch64::STPSpre;
   case AArch64::STRDui:
   case AArch64::STURDi:
     return AArch64::STPDi;
+  case AArch64::STRDpre:
+    return AArch64::STPDpre;
   case AArch64::STRQui:
   case AArch64::STURQi:
     return AArch64::STPQi;
+  case AArch64::STRQpre:
+    return AArch64::STPQpre;
   case AArch64::STRWui:
   case AArch64::STURWi:
     return AArch64::STPWi;
+  case AArch64::STRWpre:
+    return AArch64::STPWpre;
   case AArch64::STRXui:
   case AArch64::STURXi:
     return AArch64::STPXi;
+  case AArch64::STRXpre:
+    return AArch64::STPXpre;
   case AArch64::LDRSui:
   case AArch64::LDURSi:
     return AArch64::LDPSi;
+  case AArch64::LDRSpre:
+    return AArch64::LDPSpre;
   case AArch64::LDRDui:
   case AArch64::LDURDi:
     return AArch64::LDPDi;
+  case AArch64::LDRDpre:
+    return AArch64::LDPDpre;
   case AArch64::LDRQui:
   case AArch64::LDURQi:
     return AArch64::LDPQi;
+  case AArch64::LDRQpre:
+    return AArch64::LDPQpre;
   case AArch64::LDRWui:
   case AArch64::LDURWi:
     return AArch64::LDPWi;
+  case AArch64::LDRWpre:
+    return AArch64::LDPWpre;
   case AArch64::LDRXui:
   case AArch64::LDURXi:
     return AArch64::LDPXi;
+  case AArch64::LDRXpre:
+    return AArch64::LDPXpre;
   case AArch64::LDRSWui:
   case AArch64::LDURSWi:
     return AArch64::LDPSWi;
@@ -909,6 +949,57 @@ static bool isCapabilityLdSt(unsigned Opc) {
   return isMorelloCapabilityLdSt(Opc);
 }
 
+static bool isPreLdStPairCandidate(MachineInstr &FirstMI, MachineInstr &MI) {
+
+  unsigned OpcA = FirstMI.getOpcode();
+  unsigned OpcB = MI.getOpcode();
+
+  switch (OpcA) {
+  default:
+    return false;
+  case AArch64::STRSpre:
+    return (OpcB == AArch64::STRSui) || (OpcB == AArch64::STURSi);
+  case AArch64::STRDpre:
+    return (OpcB == AArch64::STRDui) || (OpcB == AArch64::STURDi);
+  case AArch64::STRQpre:
+    return (OpcB == AArch64::STRQui) || (OpcB == AArch64::STURQi);
+  case AArch64::STRWpre:
+    return (OpcB == AArch64::STRWui) || (OpcB == AArch64::STURWi);
+  case AArch64::STRXpre:
+    return (OpcB == AArch64::STRXui) || (OpcB == AArch64::STURXi);
+  case AArch64::LDRSpre:
+    return (OpcB == AArch64::LDRSui) || (OpcB == AArch64::LDURSi);
+  case AArch64::LDRDpre:
+    return (OpcB == AArch64::LDRDui) || (OpcB == AArch64::LDURDi);
+  case AArch64::LDRQpre:
+    return (OpcB == AArch64::LDRQui) || (OpcB == AArch64::LDURQi);
+  case AArch64::LDRWpre:
+    return (OpcB == AArch64::LDRWui) || (OpcB == AArch64::LDURWi);
+  case AArch64::LDRXpre:
+    return (OpcB == AArch64::LDRXui) || (OpcB == AArch64::LDURXi);
+  case AArch64::ASTRSpre:
+    return (OpcB == AArch64::ASTRSui) || (OpcB == AArch64::ASTURSi);
+  case AArch64::ASTRDpre:
+    return (OpcB == AArch64::ASTRDui) || (OpcB == AArch64::ASTURDi);
+  case AArch64::ASTRQpre:
+    return (OpcB == AArch64::ASTRQui) || (OpcB == AArch64::ASTURQi);
+  case AArch64::ASTRWpre:
+    return (OpcB == AArch64::ASTRWui) || (OpcB == AArch64::ASTURWi);
+  case AArch64::ASTRXpre:
+    return (OpcB == AArch64::ASTRXui) || (OpcB == AArch64::ASTURXi);
+  case AArch64::ALDRSpre:
+    return (OpcB == AArch64::ALDRSui) || (OpcB == AArch64::ALDURSi);
+  case AArch64::ALDRDpre:
+    return (OpcB == AArch64::ALDRDui) || (OpcB == AArch64::ALDURDi);
+  case AArch64::ALDRQpre:
+    return (OpcB == AArch64::ALDRQui) || (OpcB == AArch64::ALDURQi);
+  case AArch64::ALDRWpre:
+    return (OpcB == AArch64::ALDRWui) || (OpcB == AArch64::ALDURWi);
+  case AArch64::ALDRXpre:
+    return (OpcB == AArch64::ALDRXui) || (OpcB == AArch64::ALDURXi);
+  }
+}
+
 // Returns the scale and offset range of pre/post indexed variants of MI.
 static void getPrePostIndexedMemOpInfo(const MachineInstr &MI, int &Scale,
                                        int &MinOffset, int &MaxOffset) {
@@ -933,17 +1024,20 @@ static void getPrePostIndexedMemOpInfo(const MachineInstr &MI, int &Scale,
 static MachineOperand &getLdStRegOp(MachineInstr &MI,
                                     unsigned PairedRegOp = 0) {
   assert(PairedRegOp < 2 && "Unexpected register operand idx.");
-  unsigned Idx = isPairedLdSt(MI) ? PairedRegOp : 0;
+  bool IsPreLdSt = AArch64InstrInfo::isPreLdSt(MI);
+  if (IsPreLdSt)
+    PairedRegOp += 1;
+  unsigned Idx = isPairedLdSt(MI) || IsPreLdSt ? PairedRegOp : 0;
   return MI.getOperand(Idx);
 }
 
 static const MachineOperand &getLdStBaseOp(const MachineInstr &MI) {
-  unsigned Idx = isPairedLdSt(MI) ? 2 : 1;
+  unsigned Idx = isPairedLdSt(MI) || AArch64InstrInfo::isPreLdSt(MI) ? 2 : 1;
   return MI.getOperand(Idx);
 }
 
 static const MachineOperand &getLdStOffsetOp(const MachineInstr &MI) {
-  unsigned Idx = isPairedLdSt(MI) ? 3 : 2;
+  unsigned Idx = isPairedLdSt(MI) || AArch64InstrInfo::isPreLdSt(MI) ? 3 : 2;
   return MI.getOperand(Idx);
 }
 
@@ -953,10 +1047,10 @@ static bool isLdOffsetInRangeOfSt(MachineInstr &LoadInst,
   assert(isMatchingStore(LoadInst, StoreInst) && "Expect only matched ld/st.");
   int LoadSize = TII->getMemScale(LoadInst);
   int StoreSize = TII->getMemScale(StoreInst);
-  int UnscaledStOffset = TII->isUnscaledLdSt(StoreInst)
+  int UnscaledStOffset = TII->hasUnscaledLdStOffset(StoreInst)
                              ? getLdStOffsetOp(StoreInst).getImm()
                              : getLdStOffsetOp(StoreInst).getImm() * StoreSize;
-  int UnscaledLdOffset = TII->isUnscaledLdSt(LoadInst)
+  int UnscaledLdOffset = TII->hasUnscaledLdStOffset(LoadInst)
                              ? getLdStOffsetOp(LoadInst).getImm()
                              : getLdStOffsetOp(LoadInst).getImm() * LoadSize;
   return (UnscaledStOffset <= UnscaledLdOffset) &&
@@ -1113,7 +1207,7 @@ AArch64LoadStoreOpt::mergeNarrowZeroStores(MachineBasicBlock::iterator I,
     NextI = next_nodbg(NextI, E);
 
   unsigned Opc = I->getOpcode();
-  bool IsScaled = !TII->isUnscaledLdSt(Opc);
+  bool IsScaled = !TII->hasUnscaledLdStOffset(Opc);
   int OffsetStride = IsScaled ? 1 : TII->getMemScale(*I);
 
   bool MergeForward = Flags.getMergeForward();
@@ -1219,7 +1313,7 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
   int SExtIdx = Flags.getSExtIdx();
   unsigned Opc =
       SExtIdx == -1 ? I->getOpcode() : getMatchingNonSExtOpcode(I->getOpcode());
-  bool IsUnscaled = TII->isUnscaledLdSt(Opc);
+  bool IsUnscaled = TII->hasUnscaledLdStOffset(Opc);
   int OffsetStride = IsUnscaled ? TII->getMemScale(*I) : 1;
 
   bool MergeForward = Flags.getMergeForward();
@@ -1300,7 +1394,7 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
 
   int Offset = getLdStOffsetOp(*I).getImm();
   int PairedOffset = getLdStOffsetOp(*Paired).getImm();
-  bool PairedIsUnscaled = TII->isUnscaledLdSt(Paired->getOpcode());
+  bool PairedIsUnscaled = TII->hasUnscaledLdStOffset(Paired->getOpcode());
   if (IsUnscaled != PairedIsUnscaled) {
     // We're trying to pair instructions that differ in how they are scaled.  If
     // I is scaled then scale the offset of Paired accordingly.  Otherwise, do
@@ -1318,8 +1412,11 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
   }
 
   // Which register is Rt and which is Rt2 depends on the offset order.
+  // However, for pre load/stores the Rt should be the one of the pre
+  // load/store.
   MachineInstr *RtMI, *Rt2MI;
-  if (Offset == PairedOffset + OffsetStride) {
+  if (Offset == PairedOffset + OffsetStride &&
+      !AArch64InstrInfo::isPreLdSt(*I)) {
     RtMI = &*Paired;
     Rt2MI = &*I;
     // Here we swapped the assumption made for SExtIdx.
@@ -1333,7 +1430,7 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
   }
   int OffsetImm = getLdStOffsetOp(*RtMI).getImm();
   // Scale the immediate offset, if necessary.
-  if (TII->isUnscaledLdSt(RtMI->getOpcode())) {
+  if (TII->hasUnscaledLdStOffset(RtMI->getOpcode())) {
     assert(!(OffsetImm % TII->getMemScale(*RtMI)) &&
            "Unscaled offset cannot be scaled.");
     OffsetImm /= TII->getMemScale(*RtMI);
@@ -1364,13 +1461,20 @@ AArch64LoadStoreOpt::mergePairedInsns(MachineBasicBlock::iterator I,
         MI.clearRegisterKills(Reg, TRI);
     }
   }
-  MIB = BuildMI(*MBB, InsertionPoint, DL, TII->get(getMatchingPairOpcode(Opc)))
-            .add(RegOp0)
-            .add(RegOp1)
-            .add(BaseRegOp)
-            .addImm(OffsetImm)
-            .cloneMergedMemRefs({&*I, &*Paired})
-            .setMIFlags(I->mergeFlagsWith(*Paired));
+
+  unsigned int MatchPairOpcode = getMatchingPairOpcode(Opc);
+  MIB = BuildMI(*MBB, InsertionPoint, DL, TII->get(MatchPairOpcode));
+
+  // Adds the pre-index operand for pre-indexed ld/st pairs.
+  if (AArch64InstrInfo::isPreLdSt(*RtMI))
+    MIB.addReg(BaseRegOp.getReg(), RegState::Define);
+
+  MIB.add(RegOp0)
+      .add(RegOp1)
+      .add(BaseRegOp)
+      .addImm(OffsetImm)
+      .cloneMergedMemRefs({&*I, &*Paired})
+      .setMIFlags(I->mergeFlagsWith(*Paired));
 
   (void)MIB;
 
@@ -1478,8 +1582,8 @@ AArch64LoadStoreOpt::promoteLoadFromStore(MachineBasicBlock::iterator LoadI,
     // performance and correctness are verified only in little-endian.
     if (!Subtarget->isLittleEndian())
       return NextI;
-    bool IsUnscaled = TII->isUnscaledLdSt(*LoadI);
-    assert(IsUnscaled == TII->isUnscaledLdSt(*StoreI) &&
+    bool IsUnscaled = TII->hasUnscaledLdStOffset(*LoadI);
+    assert(IsUnscaled == TII->hasUnscaledLdStOffset(*StoreI) &&
            "Unsupported ld/st match");
     assert(LoadSize <= StoreSize && "Invalid load size");
     int UnscaledLdOffset = IsUnscaled
@@ -1661,9 +1765,9 @@ static bool areCandidatesToMergeOrPair(MachineInstr &FirstMI, MachineInstr &MI,
   unsigned OpcA = FirstMI.getOpcode();
   unsigned OpcB = MI.getOpcode();
 
-  // Opcodes match: nothing more to check.
+  // Opcodes match: If the opcodes are pre ld/st there is nothing more to check.
   if (OpcA == OpcB)
-    return true;
+    return !AArch64InstrInfo::isPreLdSt(FirstMI);
 
   // Try to match a sign-extended load/store with a zero-extended load/store.
   bool IsValidLdStrOpc, PairIsValidLdStrOpc;
@@ -1686,8 +1790,14 @@ static bool areCandidatesToMergeOrPair(MachineInstr &FirstMI, MachineInstr &MI,
   if (isNarrowStore(OpcA) || isNarrowStore(OpcB))
     return false;
 
+  // The STR<S,D,Q,W,X>pre - STR<S,D,Q,W,X>ui and
+  // LDR<S,D,Q,W,X>pre-LDR<S,D,Q,W,X>ui
+  // are candidate pairs that can be merged.
+  if (isPreLdStPairCandidate(FirstMI, MI))
+    return true;
+
   // Try to match an unscaled load/store with a scaled load/store.
-  return TII->isUnscaledLdSt(OpcA) != TII->isUnscaledLdSt(OpcB) &&
+  return TII->hasUnscaledLdStOffset(OpcA) != TII->hasUnscaledLdStOffset(OpcB) &&
          getMatchingPairOpcode(OpcA) == getMatchingPairOpcode(OpcB);
 
   // FIXME: Can we also match a mixed sext/zext unscaled/scaled pair?
@@ -1877,7 +1987,7 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
   MBBI = next_nodbg(MBBI, E);
 
   bool MayLoad = FirstMI.mayLoad();
-  bool IsUnscaled = TII->isUnscaledLdSt(FirstMI);
+  bool IsUnscaled = TII->hasUnscaledLdStOffset(FirstMI);
   Register Reg = getLdStRegOp(FirstMI).getReg();
   Register BaseReg = getLdStBaseOp(FirstMI).getReg();
   int Offset = getLdStOffsetOp(FirstMI).getImm();
@@ -1925,7 +2035,7 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
       // a relocation.
       Register MIBaseReg = getLdStBaseOp(MI).getReg();
       int MIOffset = getLdStOffsetOp(MI).getImm();
-      bool MIIsUnscaled = TII->isUnscaledLdSt(MI);
+      bool MIIsUnscaled = TII->hasUnscaledLdStOffset(MI);
       if (IsUnscaled != MIIsUnscaled) {
         // We're trying to pair instructions that differ in how they are scaled.
         // If FirstMI is scaled then scale the offset of MI accordingly.
@@ -1946,8 +2056,35 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
         }
       }
 
-      if (BaseReg == MIBaseReg && ((Offset == MIOffset + OffsetStride) ||
-                                   (Offset + OffsetStride == MIOffset))) {
+      bool IsPreLdSt = isPreLdStPairCandidate(FirstMI, MI);
+
+      if (BaseReg == MIBaseReg) {
+        // If the offset of the second ld/st is not equal to the size of the
+        // destination register it can’t be paired with a pre-index ld/st
+        // pair. Additionally if the base reg is used or modified the operations
+        // can't be paired: bail and keep looking.
+        if (IsPreLdSt) {
+          bool IsOutOfBounds = MIOffset != TII->getMemScale(MI);
+          bool IsBaseRegUsed =
+              !UsedRegUnits.available(getLdStBaseOp(MI).getReg());
+          bool IsBaseRegModified =
+              !ModifiedRegUnits.available(getLdStBaseOp(MI).getReg());
+          if (IsOutOfBounds || IsBaseRegUsed || IsBaseRegModified) {
+            LiveRegUnits::accumulateUsedDefed(MI, ModifiedRegUnits,
+                                              UsedRegUnits, TRI);
+            MemInsns.push_back(&MI);
+            continue;
+          }
+        } else {
+          if ((Offset != MIOffset + OffsetStride) &&
+              (Offset + OffsetStride != MIOffset)) {
+            LiveRegUnits::accumulateUsedDefed(MI, ModifiedRegUnits,
+                                              UsedRegUnits, TRI);
+            MemInsns.push_back(&MI);
+            continue;
+          }
+        }
+
         int MinOffset = Offset < MIOffset ? Offset : MIOffset;
         if (FindNarrowMerge) {
           // If the alignment requirements of the scaled wide load/store
@@ -2440,7 +2577,7 @@ bool AArch64LoadStoreOpt::tryToPairLdStInst(MachineBasicBlock::iterator &MBBI) {
   // Early exit if the offset is not possible to match. (6 bits of positive
   // range, plus allow an extra one in case we find a later insn that matches
   // with Offset-1)
-  bool IsUnscaled = TII->isUnscaledLdSt(MI);
+  bool IsUnscaled = TII->hasUnscaledLdStOffset(MI);
   int Offset = getLdStOffsetOp(MI).getImm();
   int OffsetStride = IsUnscaled ? TII->getMemScale(MI) : 1;
   // Allow one more for offset.
@@ -2455,7 +2592,7 @@ bool AArch64LoadStoreOpt::tryToPairLdStInst(MachineBasicBlock::iterator &MBBI) {
       findMatchingInsn(MBBI, Flags, LdStLimit, /* FindNarrowMerge = */ false);
   if (Paired != E) {
     ++NumPairCreated;
-    if (TII->isUnscaledLdSt(MI))
+    if (TII->hasUnscaledLdStOffset(MI))
       ++NumUnscaledPairCreated;
     // Keeping the iterator straight is a pain, so we let the merge routine tell
     // us what the next instruction is after it's done mucking about.
@@ -2490,7 +2627,7 @@ bool AArch64LoadStoreOpt::tryToMergeLdStUpdate
   }
 
   // Don't know how to handle unscaled pre/post-index versions below, so bail.
-  if (TII->isUnscaledLdSt(MI.getOpcode()))
+  if (TII->hasUnscaledLdStOffset(MI.getOpcode()))
     return false;
 
   // Look back to try to find a pre-index instruction. For example,
