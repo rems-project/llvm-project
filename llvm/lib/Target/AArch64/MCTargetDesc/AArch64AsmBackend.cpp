@@ -104,10 +104,6 @@ public:
                         const MCSubtargetInfo &STI) const override;
   bool writeNopData(raw_ostream &OS, uint64_t Count) const override;
 
-  void HandleAssemblerFlag(MCAssemblerFlag Flag) {}
-
-  unsigned getPointerSize() const { return 8; }
-
   bool shouldClearThumbBitOnReloc() const override { return false; }
 
   unsigned getFixupKindContainereSizeInBytes(unsigned Kind) const;
