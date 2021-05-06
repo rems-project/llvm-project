@@ -1575,9 +1575,12 @@ template <class ELFT> void SharedFile::parse() {
             saver.save((name + "@" + verName).toStringRef(versionedNameBuffer));
       }
       if (config->exportUndefDynSyms) {
-        Symbol *s = symtab->addSymbol(Undefined{this, name, sym.getBinding(),
-                                                sym.st_other, sym.getType()});
+        Symbol *s = symtab->addSymbol(
+            Undefined{this, name, sym.getBinding(), sym.st_other, sym.getType()});
         s->exportDynamic = true;
+        if (s->isUndefined() && !s->isWeak() &&
+            config->unresolvedSymbolsInShlib != UnresolvedPolicy::Ignore)
+          requiredSymbols.push_back(s);
       } else {
         this->Undefs.insert(name);
       }
