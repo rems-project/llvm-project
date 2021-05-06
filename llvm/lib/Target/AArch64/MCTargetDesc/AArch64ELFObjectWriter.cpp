@@ -521,8 +521,6 @@ unsigned AArch64ELFObjectWriter::getRelocType(MCContext &Ctx,
       Ctx.reportError(Fixup.getLoc(),
                       "invalid fixup for movz/movk instruction");
       return ELF::R_AARCH64_NONE;
-    case AArch64::fixup_aarch64_tlsdesc_call:
-      return R_CLS(TLSDESC_CALL);
     case AArch64::fixup_morello_tlsdesc_call:
       return ELF::R_MORELLO_TLSDESC_CALL;
     case AArch64::fixup_morello_desc_call:

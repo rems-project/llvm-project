@@ -67,9 +67,6 @@ enum Fixups {
   fixup_morello_desc_call,
   fixup_morello_desc_tcall,
 
-  // zero-space placeholder for the ELF R_AARCH64_TLSDESC_CALL relocation.
-  fixup_aarch64_tlsdesc_call,
-
   // zero-space placeholder for the ELF R_MORELLO_TLSDESC_CALL relocation.
   fixup_morello_tlsdesc_call,
 
