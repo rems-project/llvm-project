@@ -5076,7 +5076,6 @@ PreservedAnalyses SROA::runImpl(Function &F, DominatorTree &RunDT,
 
   PreservedAnalyses PA;
   PA.preserveSet<CFGAnalyses>();
-  PA.preserve<GlobalsAA>();
   return PA;
 }
 
