@@ -114,14 +114,14 @@ define i8 addrspace(200)* @select_lt(i8 addrspace(200)* %a, i8 addrspace(200)* %
 ; HYBRID-LABEL: select_lt:
 ; HYBRID:       // %bb.0: // %entry
 ; HYBRID-NEXT:    cmp x0, x1
-; HYBRID-NEXT:    csel c0, c0, c1, lt
+; HYBRID-NEXT:    csel c0, c0, c1, lo
 ; HYBRID-NEXT:    ret
 ;
 ; PURECAP-LABEL: select_lt:
 ; PURECAP:       .Lfunc_begin4:
 ; PURECAP-NEXT:  // %bb.0: // %entry
 ; PURECAP-NEXT:    cmp x0, x1
-; PURECAP-NEXT:    csel c0, c0, c1, lt
+; PURECAP-NEXT:    csel c0, c0, c1, lo
 ; PURECAP-NEXT:    ret c30
 entry:
   %cmp = icmp ult i8 addrspace(200)* %a, %b
@@ -133,14 +133,14 @@ define i8 addrspace(200)* @select_le(i8 addrspace(200)* %a, i8 addrspace(200)* %
 ; HYBRID-LABEL: select_le:
 ; HYBRID:       // %bb.0: // %entry
 ; HYBRID-NEXT:    cmp x0, x1
-; HYBRID-NEXT:    csel c0, c0, c1, le
+; HYBRID-NEXT:    csel c0, c0, c1, ls
 ; HYBRID-NEXT:    ret
 ;
 ; PURECAP-LABEL: select_le:
 ; PURECAP:       .Lfunc_begin5:
 ; PURECAP-NEXT:  // %bb.0: // %entry
 ; PURECAP-NEXT:    cmp x0, x1
-; PURECAP-NEXT:    csel c0, c0, c1, le
+; PURECAP-NEXT:    csel c0, c0, c1, ls
 ; PURECAP-NEXT:    ret c30
 entry:
   %cmp = icmp ule i8 addrspace(200)* %a, %b
@@ -171,14 +171,14 @@ define i8 addrspace(200)* @select_ge(i8 addrspace(200)* %a, i8 addrspace(200)* %
 ; HYBRID-LABEL: select_ge:
 ; HYBRID:       // %bb.0: // %entry
 ; HYBRID-NEXT:    cmp x0, x1
-; HYBRID-NEXT:    csel c0, c0, c1, pl
+; HYBRID-NEXT:    csel c0, c0, c1, hs
 ; HYBRID-NEXT:    ret
 ;
 ; PURECAP-LABEL: select_ge:
 ; PURECAP:       .Lfunc_begin7:
 ; PURECAP-NEXT:  // %bb.0: // %entry
 ; PURECAP-NEXT:    cmp x0, x1
-; PURECAP-NEXT:    csel c0, c0, c1, pl
+; PURECAP-NEXT:    csel c0, c0, c1, hs
 ; PURECAP-NEXT:    ret c30
 entry:
   %cmp = icmp uge i8 addrspace(200)* %a, %b

@@ -138,7 +138,7 @@ define i8 addrspace(200)* @test_atomic_load_max_ptr(i8 addrspace(200)* %offset, 
 define i8 addrspace(200)* @test_atomic_load_umin_ptr(i8 addrspace(200)* %offset, i8 addrspace(200) * addrspace(200)* %ptr) nounwind {
 ; CHECK: ldxr c[[OLD:[0-9]+]], [c1]
 ; CHECK: cmp x[[OLD]], x[[TMP:[0-9]+]]
-; CHECK: csel c[[RES:[0-9]+]], c[[OLD]], c[[TMP]], le
+; CHECK: csel c[[RES:[0-9]+]], c[[OLD]], c[[TMP]], ls
 ; CHECK: stxr   w[[TOK:[0-9]+]], c[[RES]], [c1]
 ; CHECK: cbnz    w[[TOK]],
    %old = atomicrmw umin i8 addrspace(200)* addrspace(200)* %ptr, i8 addrspace(200) * %offset monotonic

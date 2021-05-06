@@ -30,7 +30,7 @@ entry:
   %cond = select i1 %cmp, i32 %c, i32 %d
   ret i32 %cond
 ; CHECK:	cmp x0, x1
-; CHECK-NEXT:	csel	w0, w2, w3, lt
+; CHECK-NEXT:	csel	w0, w2, w3, lo
 }
 
 ; CHECK-LABEL: testCsel2:
@@ -40,7 +40,7 @@ entry:
   %cond = select i1 %cmp, i32 addrspace(200)* %a, i32 addrspace(200)* %b
   ret i32 addrspace(200)* %cond
 ; CHECK:	cmp x0, x1
-; CHECK-NEXT:	csel	c0, c0, c1, lt
+; CHECK-NEXT:	csel	c0, c0, c1, lo
 }
 
 ; CHECK-LABEL: testCsel3:

@@ -6223,9 +6223,8 @@ SDValue AArch64TargetLowering::LowerSELECT_CC(ISD::CondCode CC, SDValue LHS,
       }
     }
     SDValue Cmp = emitComparison(LHS, RHS, CC, dl, DAG);
-    AArch64CC::CondCode CC1, CC2;
-    changeFPCCToAArch64CC(CC, CC1, CC2);
-    SDValue CCVal = DAG.getConstant(CC1, dl, MVT::i32);
+    AArch64CC::CondCode AArch64CC = changeIntCCToAArch64CC(CC);
+    SDValue CCVal = DAG.getConstant(AArch64CC, dl, MVT::i32);
     EVT VT = TVal.getValueType();
     return DAG.getNode(AArch64ISD::CSEL, dl, VT, TVal, FVal, CCVal, Cmp);
   }
