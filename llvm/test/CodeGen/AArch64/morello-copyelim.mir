@@ -1,8 +1,10 @@
 # RUN: llc -mtriple=aarch64--linux-gnu -run-pass=aarch64-copyelim %s -verify-machineinstrs -o - -mattr=+c64,+morello -target-abi purecap | FileCheck %s
 ---
-# Check that bb.0 COPY is seen through to allow the bb.1 COPY of CZR to be removed.
+# CB(N)ZC compares the only the virtual address so we can't assume that the entire register
+# is null. Make sure this doesn't remove the COPY instructions.
+
 # CHECK-LABEL: name: test1
-# CHECK-NOT: COPY $czr
+# CHECK: COPY $czr
 name:            test1
 tracksRegLiveness: true
 body:             |
@@ -29,7 +31,7 @@ body:             |
 ...
 # Similar to test1, but with reversed COPY.
 # CHECK-LABEL: name: test2
-# CHECK-NOT: COPY $czr
+# CHECK: COPY $czr
 name:            test2
 tracksRegLiveness: true
 body:             |
@@ -140,7 +142,7 @@ body:             |
 ...
 # Similar to test1, but with two levels of COPYs.
 # CHECK-LABEL: name: test6
-# CHECK-NOT: COPY $czr
+# CHECK: COPY $czr
 name:            test6
 tracksRegLiveness: true
 body:             |
