@@ -63,6 +63,7 @@ features = [
 # `libcpp-xxx-yyy-zzz`. When a macro is defined to a specific value
 # (e.g. `_LIBCPP_ABI_VERSION=2`), the feature is `libcpp-xxx-yyy-zzz=<value>`.
 macros = {
+  '_LIBCPP_HAS_NEWLIB': 'libcpp-has-newlib',
   '_LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE': 'libcpp-has-no-global-filesystem-namespace',
   '_LIBCPP_HAS_NO_MONOTONIC_CLOCK': 'libcpp-has-no-monotonic-clock',
   '_LIBCPP_HAS_NO_STDIN': 'libcpp-has-no-stdin',
