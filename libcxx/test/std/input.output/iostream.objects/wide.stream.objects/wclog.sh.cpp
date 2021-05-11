@@ -10,6 +10,10 @@
 
 // istream wclog;
 
+// The FVP for now doesn't output to stderr so this doesn't work.
+// Temporarily xfailing this.
+// XFAIL: libcpp-has-newlib
+
 // RUN: %{build}
 // RUN: %{exec} %t.exe 2> %t.err
 // RUN: grep -e 'Hello World!' %t.err

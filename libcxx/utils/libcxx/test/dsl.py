@@ -138,11 +138,27 @@ def hasLocale(config, locale):
   program = """
     #include <locale.h>
     int main(int, char** argv) {
+      if (::newlocale(LC_ALL_MASK, argv[1], 0) == NULL) return 1;
       if (::setlocale(LC_ALL, argv[1]) != NULL) return 0;
       else                                      return 1;
     }
   """
   return programOutput(config, program, args=[pipes.quote(locale)]) != None
+
+def hasNewLocale(config):
+  """
+  Return whether the runtime execution environment supports newlocale.
+  Some C libraries (e.g. some verision of newlib) don't.
+  """
+  program = """
+    #include <locale.h>
+    int main() {
+      if (::newlocale(LC_ALL_MASK, "C", 0) != NULL) return 0;
+      return 1;
+    }
+  """
+  return programOutput(config, program) != None
+
 
 def compilerMacros(config, flags=''):
   """

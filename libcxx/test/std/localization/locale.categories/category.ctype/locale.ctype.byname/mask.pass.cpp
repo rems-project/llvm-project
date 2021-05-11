@@ -6,6 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+// REQUIRES: newlocale
+
 // <locale>
 
 // template <class charT> class ctype_byname;

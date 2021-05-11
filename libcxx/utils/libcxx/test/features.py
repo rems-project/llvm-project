@@ -32,6 +32,7 @@ features = [
   Feature(name='objective-c++',                 when=lambda cfg: hasCompileFlag(cfg, '-xobjective-c++ -fobjc-arc')),
   Feature(name='diagnose-if-support',           when=lambda cfg: hasCompileFlag(cfg, '-Wuser-defined-warnings'), compileFlag='-Wuser-defined-warnings'),
   Feature(name='modules-support',               when=lambda cfg: hasCompileFlag(cfg, '-fmodules')),
+  Feature(name='newlocale',                     when=lambda cfg: hasNewLocale(cfg)),
   Feature(name='non-lockfree-atomics',          when=lambda cfg: sourceBuilds(cfg, """
                                                                   #include <atomic>
                                                                   struct Large { int storage[100]; };
