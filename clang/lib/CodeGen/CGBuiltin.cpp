@@ -4670,8 +4670,9 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
   case Builtin::BI__builtin_thread_pointer: {
     if (!getContext().getTargetInfo().isTLSSupported())
       CGM.ErrorUnsupported(E, "__builtin_thread_pointer");
-    // Fall through - it's already mapped to the intrinsic by GCCBuiltin.
-    break;
+
+    return RValue::get(Builder.CreateIntrinsic(
+        llvm::Intrinsic::thread_pointer, {Int8PtrTy}, {}));
   }
   case Builtin::BI__builtin_os_log_format:
     return emitBuiltinOSLogFormat(*E);
