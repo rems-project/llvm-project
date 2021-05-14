@@ -152,8 +152,8 @@ struct Configuration {
   bool forceMorelloC64Plt = false;
   bool disableWarnOnMorelloABIMismatch = false;
   bool asNeeded = false;
-  bool bsymbolic;
-  bool bsymbolicFunctions;
+  bool bsymbolic = false;
+  bool bsymbolicFunctions = false;
   // make dynamic relocations that are not supported by
   // FreeBSD _rtld_relocate_nonplt_self an error.
   bool buildingFreeBSDRtld;
