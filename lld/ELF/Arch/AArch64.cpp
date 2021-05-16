@@ -862,6 +862,7 @@ AArch64C64::AArch64C64() {
   gotRel = R_MORELLO_GLOB_DAT;
   pltRel = R_MORELLO_JUMP_SLOT;
   tlsDescRel = R_MORELLO_TLSDESC;
+  gotEntrySize = 16;
 }
 
 void AArch64C64::writePltHeader(uint8_t *buf) const {

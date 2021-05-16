@@ -204,9 +204,9 @@ def SVELogicalImm16Pat : ComplexPattern<i32, 1, "SelectSVELogicalImm<MVT::i16>",
 def SVELogicalImm32Pat : ComplexPattern<i32, 1, "SelectSVELogicalImm<MVT::i32>", []>;
 def SVELogicalImm64Pat : ComplexPattern<i64, 1, "SelectSVELogicalImm<MVT::i64>", []>;
 
-def SVELogicalImm8NotPat  : ComplexPattern<i64, 1, "SelectSVELogicalImm<MVT::i8, true>", []>;
-def SVELogicalImm16NotPat : ComplexPattern<i64, 1, "SelectSVELogicalImm<MVT::i16, true>", []>;
-def SVELogicalImm32NotPat : ComplexPattern<i64, 1, "SelectSVELogicalImm<MVT::i32, true>", []>;
+def SVELogicalImm8NotPat  : ComplexPattern<i32, 1, "SelectSVELogicalImm<MVT::i8, true>", []>;
+def SVELogicalImm16NotPat : ComplexPattern<i32, 1, "SelectSVELogicalImm<MVT::i16, true>", []>;
+def SVELogicalImm32NotPat : ComplexPattern<i32, 1, "SelectSVELogicalImm<MVT::i32, true>", []>;
 def SVELogicalImm64NotPat : ComplexPattern<i64, 1, "SelectSVELogicalImm<MVT::i64, true>", []>;
 
 def SVE8BitLslImm : ComplexPattern<i32, 2, "SelectSVE8BitLslImm", [imm]>;
