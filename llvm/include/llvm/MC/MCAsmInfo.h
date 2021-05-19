@@ -148,6 +148,10 @@ protected:
   /// Default is true.
   bool AllowAdditionalComments = true;
 
+  /// Should we emit the '\t' as the starting indentation marker for GNU inline
+  /// asm statements. Defaults to true.
+  bool EmitGNUAsmStartIndentationMarker = true;
+
   /// This is appended to emitted labels.  Defaults to ":"
   const char *LabelSuffix;
 
@@ -630,6 +634,9 @@ public:
     return RestrictCommentStringToStartOfStatement;
   }
   bool shouldAllowAdditionalComments() const { return AllowAdditionalComments; }
+  bool getEmitGNUAsmStartIndentationMarker() const {
+    return EmitGNUAsmStartIndentationMarker;
+  }
   const char *getLabelSuffix() const { return LabelSuffix; }
 
   bool useAssignmentForEHBegin() const { return UseAssignmentForEHBegin; }
