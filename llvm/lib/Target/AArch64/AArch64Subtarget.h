@@ -249,6 +249,7 @@ protected:
   bool AllowTaggedGlobals = false;
   bool HardenSlsRetBr = false;
   bool HardenSlsBlr = false;
+  bool HardenSlsNoComdat = false;
   uint8_t MaxInterleaveFactor = 2;
   uint8_t VectorInsertExtractBaseCost = 3;
   uint16_t CacheLineSize = 0;
@@ -412,6 +413,7 @@ public:
 
   bool hardenSlsRetBr() const { return HardenSlsRetBr; }
   bool hardenSlsBlr() const { return HardenSlsBlr; }
+  bool hardenSlsNoComdat() const { return HardenSlsNoComdat; }
 
   bool useEL1ForTP() const { return UseEL1ForTP; }
   bool useEL2ForTP() const { return UseEL2ForTP; }
