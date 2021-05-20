@@ -3059,8 +3059,9 @@ static const EnumEntry<uint64_t> CapRelocsPermsFlags[] = {
     {"Function", 0x8000000000000000ULL}};
 
 static bool isAArch64C64MapSymbol(StringRef Name) {
-  return Name.startswith_lower("$d.") || Name.startswith_lower("$c.") ||
-    Name.startswith_lower("$x.");
+  return Name.startswith_insensitive("$d.") ||
+    Name.startswith_insensitive("$c.") ||
+    Name.startswith_insensitive("$x.");
 }
 
 template <class ELFT> void ELFDumper<ELFT>::printCheriCapRelocs() {
