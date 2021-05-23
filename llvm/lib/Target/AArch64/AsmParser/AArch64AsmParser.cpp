@@ -6330,9 +6330,7 @@ bool AArch64AsmParser::parseDirectiveInst(SMLoc Loc) {
     return false;
   };
 
-  if (parseMany(parseOp))
-    return addErrorSuffix(" in '.inst' directive");
-  return false;
+  return parseMany(parseOp);
 }
 
 // parseDirectiveTLSDescCall:
@@ -6488,9 +6486,7 @@ bool AArch64AsmParser::parseDirectiveUnreq(SMLoc L) {
     return TokError("unexpected input in .unreq directive.");
   RegisterReqs.erase(Parser.getTok().getIdentifier().lower());
   Parser.Lex(); // Eat the identifier.
-  if (parseToken(AsmToken::EndOfStatement))
-    return addErrorSuffix("in '.unreq' directive");
-  return false;
+  return parseToken(AsmToken::EndOfStatement);
 }
 
 bool AArch64AsmParser::parseDirectiveCFINegateRAState() {
@@ -6523,16 +6519,13 @@ bool AArch64AsmParser::parseDirectiveVariantPCS(SMLoc L) {
 
   MCSymbol *Sym = getContext().lookupSymbol(SymbolName);
   if (!Sym)
-    return TokError("unknown symbol in '.variant_pcs' directive");
+    return TokError("unknown symbol");
 
   Parser.Lex(); // Eat the symbol
 
-  // Shouldn't be any more tokens
-  if (parseToken(AsmToken::EndOfStatement))
-    return addErrorSuffix(" in '.variant_pcs' directive");
-
+  if (parseEOL())
+    return true;
   getTargetStreamer().emitDirectiveVariantPCS(Sym);
-
   return false;
 }
 
