@@ -553,13 +553,6 @@ bool AArch64AsmBackend::shouldForceRelocation(const MCAssembler &Asm,
     return true;
   }
 
-  AArch64MCExpr::VariantKind RefKind =
-      static_cast<AArch64MCExpr::VariantKind>(Target.getRefKind());
-  AArch64MCExpr::VariantKind SymLoc = AArch64MCExpr::getSymbolLoc(RefKind);
-  // LDR GOT relocations need a relocation
-  if (Kind == AArch64::fixup_aarch64_ldr_pcrel_imm19 &&
-      SymLoc == AArch64MCExpr::VK_GOT)
-    return true;
   return false;
 }
 
