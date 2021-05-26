@@ -3830,6 +3830,9 @@ def : Pat<(post_dec_truncsti8 GPR64:$Rt, GPR64sp:$addr, (negsimm i64imm:$off)),
   (STRBBpost (EXTRACT_SUBREG GPR64:$Rt, sub_32), GPR64sp:$addr,
              i64imm:$off)>;
 
+def : Pat<(post_inc_store (bf16 FPR16:$Rt), GPR64sp:$addr, simm9:$off),
+          (STRHpost FPR16:$Rt, GPR64sp:$addr, simm9:$off)>;
+
 def : Pat<(post_inc_store (v8i8 FPR64:$Rt), GPR64sp:$addr, simm9:$off),
           (STRDpost FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
 def : Pat<(post_inc_store (v4i16 FPR64:$Rt), GPR64sp:$addr, simm9:$off),
@@ -3843,6 +3846,8 @@ def : Pat<(post_inc_store (v1i64 FPR64:$Rt), GPR64sp:$addr, simm9:$off),
 def : Pat<(post_inc_store (v1f64 FPR64:$Rt), GPR64sp:$addr, simm9:$off),
           (STRDpost FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
 def : Pat<(post_inc_store (v4f16 FPR64:$Rt), GPR64sp:$addr, simm9:$off),
+          (STRDpost FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
+def : Pat<(post_store (v4bf16 FPR64:$Rt), GPR64sp:$addr, simm9:$off),
           (STRDpost FPR64:$Rt, GPR64sp:$addr, simm9:$off)>;
 
 def : Pat<(post_dec_store (v8i8 FPR64:$Rt), GPR64sp:$addr, (negsimm i64imm:$off)),
@@ -3873,6 +3878,8 @@ def : Pat<(post_inc_store (v2i64 FPR128:$Rt), GPR64sp:$addr, simm9:$off),
 def : Pat<(post_inc_store (v2f64 FPR128:$Rt), GPR64sp:$addr, simm9:$off),
           (STRQpost FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
 def : Pat<(post_inc_store (v8f16 FPR128:$Rt), GPR64sp:$addr, simm9:$off),
+          (STRQpost FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
+def : Pat<(post_store (v8bf16 FPR128:$Rt), GPR64sp:$addr, simm9:$off),
           (STRQpost FPR128:$Rt, GPR64sp:$addr, simm9:$off)>;
 
 def : Pat<(post_dec_store (v16i8 FPR128:$Rt), GPR64sp:$addr, (negsimm i64imm:$off)),

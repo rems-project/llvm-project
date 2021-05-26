@@ -6988,7 +6988,7 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, const SDLoc &dl, SDValue Dst,
     return getMemcpyLoadsAndStores(
         *this, dl, Chain, Dst, Src, ConstantSize->getZExtValue(), Alignment,
         isVol, true, MustPreserveCheriCapabilities, DstPtrInfo, SrcPtrInfo,
-        CopyType, OptLevel, AAInfo);
+        AAInfo, CopyType, OptLevel);
   }
 
   if (!Dst.getValueType().isFatPointer())
