@@ -35,9 +35,9 @@
 #include <memory>
 #include <string>
 
-#include <assert.h>
-#include <ctype.h>
-#include <inttypes.h>
+#include <cassert>
+#include <cctype>
+#include <cinttypes>
 #include <cmath>
 
 #include <bitset>

@@ -9,7 +9,7 @@
 #include "NativeThreadLinux.h"
 
 #include <cstring>
-#include <signal.h>
+#include <csignal>
 #include <sstream>
 
 #include "NativeProcessLinux.h"
