@@ -1439,6 +1439,9 @@ void AArch64TTIImpl::getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
     UP.UpperBound = true;
     UP.UnrollRemainder = true;
     UP.DefaultUnrollRuntimeCount = 4;
+
+    UP.UnrollAndJam = true;
+    UP.UnrollAndJamInnerLoopThreshold = 60;
   }
 }
 
