@@ -3944,7 +3944,7 @@ void SelectionDAGLegalize::ConvertNodeToLibcall(SDNode *Node) {
     bool FatPtrBase =
       cast<AtomicSDNode>(Node)->getBasePtr().getValueType().isFatPointer();
     MVT VT = cast<AtomicSDNode>(Node)->getMemoryVT().getSimpleVT();
-    AtomicOrdering Order = cast<AtomicSDNode>(Node)->getOrdering();
+    AtomicOrdering Order = cast<AtomicSDNode>(Node)->getMergedOrdering();
     RTLIB::Libcall LC = RTLIB::getOUTLINE_ATOMIC(Opc, Order, VT, FatPtrBase);
     EVT RetVT = Node->getValueType(0);
     TargetLowering::MakeLibCallOptions CallOptions;

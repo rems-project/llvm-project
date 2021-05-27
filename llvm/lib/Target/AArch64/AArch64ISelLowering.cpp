@@ -17925,7 +17925,7 @@ static void ReplaceCMP_SWAP_128Results(SDNode *N,
     MachineMemOperand *MemOp = cast<MemSDNode>(N)->getMemOperand();
 
     unsigned Opcode;
-    switch (MemOp->getOrdering()) {
+    switch (MemOp->getMergedOrdering()) {
     case AtomicOrdering::Monotonic:
       Opcode = HasC64 ? AArch64::ACASPX : AArch64::CASPX;
       break;

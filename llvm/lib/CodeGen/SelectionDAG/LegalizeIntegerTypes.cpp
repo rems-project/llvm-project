@@ -2246,7 +2246,7 @@ std::pair <SDValue, SDValue> DAGTypeLegalizer::ExpandAtomic(SDNode *Node) {
   MVT VT = cast<AtomicSDNode>(Node)->getMemoryVT().getSimpleVT();
   bool FatPtrBase =
     cast<AtomicSDNode>(Node)->getBasePtr().getValueType().isFatPointer();
-  AtomicOrdering order = cast<AtomicSDNode>(Node)->getOrdering();
+  AtomicOrdering order = cast<AtomicSDNode>(Node)->getMergedOrdering();
   // Lower to outline atomic libcall if outline atomics enabled,
   // or to sync libcall otherwise
   RTLIB::Libcall LC = RTLIB::getOUTLINE_ATOMIC(Opc, order, VT, FatPtrBase);

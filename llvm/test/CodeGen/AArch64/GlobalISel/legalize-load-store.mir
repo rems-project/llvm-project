@@ -538,5 +538,5 @@ body:             |
     %val:_(<6 x s64>) = G_IMPLICIT_DEF
     %ptr:_(p0) = COPY $x0
     G_STORE %val(<6 x s64>), %ptr(p0) :: (store 48, align 16)
-    RET_ReallyLR
+    RET_ReallyLR 0
 ...
