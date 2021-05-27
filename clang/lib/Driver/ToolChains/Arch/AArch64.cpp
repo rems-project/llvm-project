@@ -78,6 +78,7 @@ static bool DecodeAArch64Features(const Driver &D, StringRef text,
     // Special case a64c and c64 since they are mutually exclusive and
     // also reject ambiguous combinations.
     if (Feature == "a64c") {
+      Features.push_back("-c64");
       UseA64C = true;
       continue;
     }
@@ -95,6 +96,7 @@ static bool DecodeAArch64Features(const Driver &D, StringRef text,
       continue;
     }
     if (Feature == "noc64") {
+      Features.push_back("-c64");
       if (UseC64) {
         D.Diag(clang::diag::err_ambiguous_c64_arch);
         return false;
@@ -220,6 +222,55 @@ getAArch64MicroArchFeaturesFromMcpu(const Driver &D, StringRef Mcpu,
   return getAArch64MicroArchFeaturesFromMtune(D, CPU, Args, Features);
 }
 
+static bool
+getAArch64EncodingModeFromAbi(const Driver &D, const ArgList &Args,
+                              const llvm::Triple &Triple,
+                              std::vector<StringRef> &Features) {
+  const std::array<StringRef, 2> ExtFeatures = { "-morello", "+morello" };
+  const auto ItExtFeature =
+      std::find_first_of(Features.rbegin(), Features.rend(),
+                         ExtFeatures.begin(), ExtFeatures.end());
+  Arg *MabiArg = Args.getLastArg(clang::driver::options::OPT_mabi_EQ);
+  StringRef Abi = MabiArg ? MabiArg->getValue()
+                          : Triple.isPurecap() ? "purecap" : "aapcs";
+
+  // If Morello support has not been enabled, validate that a purecap ABI has
+  // not been requested.
+  if ((ItExtFeature == Features.rend() || *ItExtFeature == "-morello") &&
+      Abi == "purecap") {
+      D.Diag(clang::diag::err_target_feature_unsupported_abi)
+          << Abi << "morello";
+      return false;
+  }
+
+  const std::array<StringRef, 2> ModeFeatures = { "-c64", "+c64" };
+  const auto ItModeFeature =
+      std::find_first_of(Features.rbegin(), Features.rend(),
+                         ModeFeatures.begin(), ModeFeatures.end());
+
+  // If we have an explicit mode set, validate the ABI against it and leave the
+  // feature string untouched.
+  if (ItModeFeature != Features.rend()) {
+    if ((*ItModeFeature == "+c64") != (Abi == "purecap")) {
+      StringRef Mode = *ItModeFeature == "+c64" ? "C64" : "A64";
+      D.Diag(clang::diag::err_invalid_c64_abi_combination) << Mode << Abi;
+      return false;
+    }
+    return true;
+  }
+
+  // If we don't have an explicit mode set, infer it if an explicit ABI is
+  // requested.
+  if (MabiArg || Triple.isPurecap()) {
+    if (Abi == "purecap")
+      Features.push_back("+c64");
+    else
+      Features.push_back("-c64");
+  }
+
+  return true;
+}
+
 bool aarch64::isPurecap(const llvm::opt::ArgList &Args, llvm::Triple &Triple) {
   if (Triple.isPurecap())
     return true;
@@ -312,6 +363,8 @@ void aarch64::getAArch64TargetFeatures(const Driver &D,
 
   if (!success)
     D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
+
+  (void)getAArch64EncodingModeFromAbi(D, Args, Triple, Features);
 
   if (Args.getLastArg(options::OPT_mgeneral_regs_only)) {
     Features.push_back("-fp-armv8");

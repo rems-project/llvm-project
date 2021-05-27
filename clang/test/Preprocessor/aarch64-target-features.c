@@ -109,6 +109,7 @@
 // CHECK-ELF: __ELF__ 1
 
 // RUN: %clang -target aarch64-none-linux-gnu -march=morello -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-MORELLO %s
+// RUN: %clang -target aarch64-none-linux-gnu -march=morello+a64c -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-MORELLO %s
 // RUN: %clang -target aarch64-none-linux-gnu -march=armv8-a+a64c -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-MORELLO %s
 // CHECK-MORELLO-NOT: __ARM_FEATURE_C64 1
 // CHECK-MORELLO-NOT: __CHERI_PURE_CAPABILITY
@@ -130,12 +131,7 @@
 // CHECK-MORELLO: __CHERI_CAP_PERMISSION_PERMIT_UNSEAL__ 1024
 // CHECK-MORELLO: __CHERI__ 1
 
-// RUN: %clang -target aarch64-none-linux-gnu -march=morello -mabi=purecap -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-MORELLO-SANDBOX %s
-// RUN: %clang -target aarch64-none-linux-gnu -march=armv8-a+a64c -mabi=purecap -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-MORELLO-SANDBOX %s
-// CHECK-MORELLO-SANDBOX-NOT: __ARM_FEATURE_C64 1
-// CHECK-MORELLO-SANDBOX: __CHERI_PURE_CAPABILITY__ 2
-// CHECK-MORELLO-SANDBOX: __CHERI__ 1
-
+// RUN: %clang -target aarch64-none-linux-gnu -march=morello -mabi=purecap -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-MORELLO-PURECAP %s
 // RUN: %clang -target aarch64-none-linux-gnu -march=morello+c64 -mabi=purecap -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-MORELLO-PURECAP %s
 // RUN: %clang -target arm64-none-linux-gnu -march=armv8-a+c64 -mabi=purecap -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-MORELLO-PURECAP %s
 // CHECK-MORELLO-PURECAP: __ARM_CAP_PERMISSION_BRANCH_SEALED_PAIR__ 256
@@ -160,14 +156,6 @@
 // CHECK-MORELLO-PURECAP: __CHERI_PURE_CAPABILITY__ 2
 // CHECK-MORELLO-PURECAP: __CHERI_SANDBOX__ 4
 // CHECK-MORELLO-PURECAP: __CHERI__ 1
-
-// RUN: %clang -target aarch64-none-linux-gnu -march=morello+c64 -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-MORELLO-C64-NOSANDBOX %s
-// RUN: %clang -target aarch64-none-linux-gnu -march=morello+c64 -mabi=aapcs -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-MORELLO-C64-NOSANDBOX %s
-// RUN: %clang -target arm64-none-linux-gnu -march=armv8-a+c64 -mabi=aapcs -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-MORELLO-C64-NOSANDBOX %s
-
-// CHECK-MORELLO-C64-NOSANDBOX-NOT: __CHERI_PURE_CAPABILITY__
-// CHECK-MORELLO-C64-NOSANDBOX: __ARM_FEATURE_C64 1
-// CHECK-MORELLO-C64-NOSANDBOX: __CHERI__ 1
 
 // RUN: %clang -target aarch64-none-linux-gnu -fno-math-errno -fno-signed-zeros\
 // RUN:        -fno-trapping-math -fassociative-math -freciprocal-math\

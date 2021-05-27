@@ -16,13 +16,13 @@
 // RUN:   | FileCheck --check-prefix=CHECK-A64 %s
 
 // RUN: %clang -target aarch64-none-elf -march=morello -mabi=purecap %s -### -o %t.o 2>&1 \
-// RUN:   | FileCheck --check-prefix=CHECK-A64CSANDBOX %s
+// RUN:   | FileCheck --check-prefix=CHECK-C64PURECAP %s
 
 // RUN: %clang -target aarch64-none-elf -march=morello -m16-cap-regs %s -### -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-16CAPREGS %s
 
 // RUN: %clang -target aarch64-none-elf -march=morello+c64 -mabi=purecap %s -### -o %t.o 2>&1 \
-// RUN:   | FileCheck --check-prefix=CHECK-C64SANDBOX %s
+// RUN:   | FileCheck --check-prefix=CHECK-C64PURECAP %s
 
 // RUN: %clang -target aarch64-none-elf -march=morello+c64 %s -### -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-C64HYBRID %s
@@ -59,26 +59,16 @@
 // CHECK-A64-DAG: "-target-feature" "+ssbs"
 // CHECK-A64-DAG: "-target-feature" "+rcpc"
 
-// CHECK-A64CSANDBOX: "-target-feature" "+v8.2a"
-// CHECK-A64CSANDBOX: "-target-feature" "+fp-armv8"
-// CHECK-A64CSANDBOX: "-target-feature" "+dotprod"
-// CHECK-A64CSABDBOX: "-target-feature" "+fullfp16"
-// CHECK-A64CSABDBOX: "-target-feature" "+spe"
-// CHECK-A64CSANDBOX: "-target-feature" "+ssbs"
-// CHECK-A64CSANDBOX: "-target-feature" "+rcpc"
-// CHECK-A64CSANDBOX: "-target-feature" "+morello"
-// CHECK-A64CSANDBOX: "-target-abi" "purecap"
-
-// CHECK-C64SANDBOX: "-target-feature" "+v8.2a"
-// CHECK-C64SANDBOX: "-target-feature" "+fp-armv8"
-// CHECK-C64SANDBOX: "-target-feature" "+dotprod"
-// CHECK-C64SANDBOX: "-target-feature" "+fullfp16"
-// CHECK-C64SANDBOX: "-target-feature" "+spe"
-// CHECK-C64SANDBOX: "-target-feature" "+ssbs"
-// CHECK-C64SANDBOX: "-target-feature" "+rcpc"
-// CHECK-C64SANDBOX: "-target-feature" "+morello"
-// CHECK-C64SANDBOX: "-target-feature" "+c64"
-// CHECK-C64SANDBOX: "-target-abi" "purecap"
+// CHECK-C64PURECAP: "-target-feature" "+v8.2a"
+// CHECK-C64PURECAP: "-target-feature" "+fp-armv8"
+// CHECK-C64PURECAP: "-target-feature" "+dotprod"
+// CHECK-C64PURECAP: "-target-feature" "+fullfp16"
+// CHECK-C64PURECAP: "-target-feature" "+spe"
+// CHECK-C64PURECAP: "-target-feature" "+ssbs"
+// CHECK-C64PURECAP: "-target-feature" "+rcpc"
+// CHECK-C64PURECAP: "-target-feature" "+morello"
+// CHECK-C64PURECAP: "-target-feature" "+c64"
+// CHECK-C64PURECAP: "-target-abi" "purecap"
 
 // CHECK-C64HYBRID: "-target-feature" "+v8.2a"
 // CHECK-C64HYBRID: "-target-feature" "+fp-armv8"
