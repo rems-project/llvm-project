@@ -1254,21 +1254,6 @@ bool AArch64ExpandPseudo::expandMI(MachineBasicBlock &MBB,
     MI.eraseFromParent();
     return true;
   }
-  case AArch64::CBNZC:
-  case AArch64::CBZC: {
-    MachineOperand MO = MI.getOperand(0);
-    MO.setImplicit();
-    unsigned NewOpcode =
-        (Opcode == AArch64::CBZC ? AArch64::CBZX : AArch64::CBNZX);
-    MachineInstrBuilder MIB =
-        BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(NewOpcode))
-            .addReg(TRI->getSubReg(MO.getReg(), AArch64::sub_64))
-            .add(MI.getOperand(1))
-            .add(MO);
-    transferImpOps(MI, MIB, MIB);
-    MI.eraseFromParent();
-    return true;
-  }
   case AArch64::AESMCrrTied:
   case AArch64::AESIMCrrTied: {
     MachineInstrBuilder MIB =

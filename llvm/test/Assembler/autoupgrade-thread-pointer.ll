@@ -6,14 +6,14 @@ declare i8* @llvm.arm.thread.pointer()
 
 define i8* @test1() {
 ; CHECK: test1()
-; CHECK: call i8* @llvm.thread.pointer()
+; CHECK: call i8* @llvm.thread.pointer.p0i8()
   %1 = call i8* @llvm.aarch64.thread.pointer()
   ret i8 *%1
 }
 
 define i8* @test2() {
 ; CHECK: test2()
-; CHECK: call i8* @llvm.thread.pointer()
+; CHECK: call i8* @llvm.thread.pointer.p0i8()
   %1 = call i8* @llvm.arm.thread.pointer()
   ret i8 *%1
 }

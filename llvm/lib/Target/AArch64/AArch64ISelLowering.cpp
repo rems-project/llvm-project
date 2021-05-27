@@ -1397,6 +1397,9 @@ bool AArch64TargetLowering::allowsMisalignedMemoryAccesses(
   if (Subtarget->requiresStrictAlign())
     return false;
 
+  if (VT.isFatPointer())
+    return false;
+
   if (Fast) {
     // Some CPUs are fine with unaligned stores except for 128-bit ones.
     *Fast = !Subtarget->isMisaligned128StoreSlow() || VT.getStoreSize() != 16 ||
@@ -6064,24 +6067,16 @@ SDValue AArch64TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
   }
 
   if (LHS.getValueType().isFatPointer()) {
-    if (isNullCapConstant(RHS)) {
-        if (CC == ISD::SETEQ)
-          return DAG.getNode(AArch64ISD::CBZ, dl, MVT::Other, Chain, LHS, Dest);
-        else if (CC == ISD::SETNE)
-          return DAG.getNode(AArch64ISD::CBNZ, dl, MVT::Other, Chain, LHS, Dest);
-    }
-    if (isNullCapConstant(LHS)) {
-        if (CC == ISD::SETEQ)
-          return DAG.getNode(AArch64ISD::CBZ, dl, MVT::Other, Chain, RHS, Dest);
-        else if (CC == ISD::SETNE)
-          return DAG.getNode(AArch64ISD::CBNZ, dl, MVT::Other, Chain, RHS, Dest);
-    }
+    auto GetOperand = [&](SDValue Op) {
+      if (Op.getOpcode() == ISD::INTTOPTR)
+        return Op.getOperand(0);
+      SDValue SubReg = DAG.getTargetConstant(AArch64::sub_64, dl, MVT::i32);
+      return SDValue(DAG.getMachineNode(TargetOpcode::EXTRACT_SUBREG,
+                                        dl, MVT::i64, Op, SubReg), 0);
+    };
 
-    SDValue Cmp = emitComparison(LHS, RHS, CC, dl, DAG);
-    AArch64CC::CondCode CC1 = changeIntCCToAArch64CC(CC);
-    SDValue CCVal = DAG.getConstant(CC1, dl, MVT::i32);
-    return DAG.getNode(AArch64ISD::BRCOND, dl, MVT::Other, Chain, Dest, CCVal,
-                       Cmp);
+    RHS = GetOperand(RHS);
+    LHS = GetOperand(LHS);
   }
 
   // Optimize {s|u}{add|sub|mul}.with.overflow feeding into a branch
@@ -6465,9 +6460,8 @@ SDValue AArch64TargetLowering::LowerSELECT_CC(ISD::CondCode CC, SDValue LHS,
       }
     }
     SDValue Cmp = emitComparison(LHS, RHS, CC, dl, DAG);
-    AArch64CC::CondCode CC1, CC2;
-    changeFPCCToAArch64CC(CC, CC1, CC2);
-    SDValue CCVal = DAG.getConstant(CC1, dl, MVT::i32);
+    AArch64CC::CondCode AArch64CC = changeIntCCToAArch64CC(CC);
+    SDValue CCVal = DAG.getConstant(AArch64CC, dl, MVT::i32);
     EVT VT = TVal.getValueType();
     return DAG.getNode(AArch64ISD::CSEL, dl, VT, TVal, FVal, CCVal, Cmp);
   }
@@ -16079,7 +16073,8 @@ bool AArch64TargetLowering::shouldNormalizeToSelectSequence(LLVMContext &,
 static Value *UseTlsOffset(IRBuilder<> &IRB, unsigned Offset) {
   Module *M = IRB.GetInsertBlock()->getParent()->getParent();
   Function *ThreadPointerFunc =
-      Intrinsic::getDeclaration(M, Intrinsic::thread_pointer);
+      Intrinsic::getDeclaration(M, Intrinsic::thread_pointer,
+                                IRB.getInt8PtrTy());
   return IRB.CreatePointerCast(
       IRB.CreateConstGEP1_32(IRB.getInt8Ty(), IRB.CreateCall(ThreadPointerFunc),
                              Offset),

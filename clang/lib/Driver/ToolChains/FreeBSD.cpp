@@ -259,6 +259,15 @@ void freebsd::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-m");
     CmdArgs.push_back("elf64lriscv");
     break;
+  case llvm::Triple::aarch64:
+    // XXX: This is a workaround due to the lack of an ELF flag that
+    // LLD can read to determine the ABI. Should be removed once we add
+    // the ELF flag.
+    if (IsCHERIPureCapABI) {
+      CmdArgs.push_back("-m");
+      CmdArgs.push_back("aarch64elf_cheri");
+    }
+    break;
   default:
     break;
   }

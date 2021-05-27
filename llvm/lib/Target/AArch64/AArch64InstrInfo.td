@@ -208,7 +208,6 @@ def SDT_AArch64Brcond  : SDTypeProfile<0, 3,
                                      [SDTCisVT<0, OtherVT>, SDTCisVT<1, i32>,
                                       SDTCisVT<2, i32>]>;
 def SDT_AArch64cbz : SDTypeProfile<0, 2, [SDTCisInt<0>, SDTCisVT<1, OtherVT>]>;
-def SDT_AArch64cbzc : SDTypeProfile<0, 2, [SDTCisFatPtrTy<0>, SDTCisVT<1, OtherVT>]>;
 def SDT_AArch64tbz : SDTypeProfile<0, 3, [SDTCisInt<0>, SDTCisInt<1>,
                                         SDTCisVT<2, OtherVT>]>;
 
@@ -466,11 +465,6 @@ def AArch64cbnz           : SDNode<"AArch64ISD::CBNZ", SDT_AArch64cbz,
 def AArch64tbz           : SDNode<"AArch64ISD::TBZ", SDT_AArch64tbz,
                                 [SDNPHasChain]>;
 def AArch64tbnz           : SDNode<"AArch64ISD::TBNZ", SDT_AArch64tbz,
-                                [SDNPHasChain]>;
-
-def AArch64cbzc           : SDNode<"AArch64ISD::CBZ", SDT_AArch64cbzc,
-                                [SDNPHasChain]>;
-def AArch64cbnzc           : SDNode<"AArch64ISD::CBNZ", SDT_AArch64cbzc,
                                 [SDNPHasChain]>;
 
 def AArch64csel          : SDNode<"AArch64ISD::CSEL", SDT_AArch64CSel>;

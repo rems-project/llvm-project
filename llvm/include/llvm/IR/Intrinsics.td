@@ -505,7 +505,7 @@ def int_stackrestore  : Intrinsic<[], [llvm_anyptr_ty]>,
 
 def int_get_dynamic_area_offset : Intrinsic<[llvm_anyint_ty]>;
 
-def int_thread_pointer : Intrinsic<[llvm_ptr_ty], [], [IntrNoMem]>,
+def int_thread_pointer : Intrinsic<[llvm_anyptr_ty], [], [IntrNoMem]>,
                          GCCBuiltin<"__builtin_thread_pointer">;
 
 // IntrInaccessibleMemOrArgMemOnly is a little more pessimistic than strictly

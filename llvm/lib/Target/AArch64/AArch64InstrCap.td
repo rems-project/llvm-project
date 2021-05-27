@@ -25,13 +25,6 @@ let isCall = 1, isTerminator = 1, isReturn = 1,
   def ClearCTCRETURNr : Pseudo<(outs), (ins tcCap:$dst, i32imm:$FPDiff), []>;
 }
 
-let isBranch = 1, isTerminator = 1 in {
-  def CBNZC : Pseudo<(outs), (ins Cap:$dst, am_brcond:$target),
-                     [(AArch64cbnzc Cap:$dst, bb:$target)]>;
-  def CBZC : Pseudo<(outs), (ins Cap:$dst, am_brcond:$target),
-                    [(AArch64cbzc Cap:$dst, bb:$target)]>;
-}
-
 // This models the case where DDC is assumed to be time invariant, like when we
 // need to construct a capability from global variable address.
 let mayLoad = 0, hasSideEffects = 0, mayStore = 0 in
