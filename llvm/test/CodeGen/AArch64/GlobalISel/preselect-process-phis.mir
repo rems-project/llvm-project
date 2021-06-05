@@ -191,5 +191,5 @@ body:             |
     G_STORE %use_gp_phi1(s16), %ptr(p0) :: (store 2)
     G_STORE %use_gp_phi2(s16), %ptr(p0) :: (store 2)
     G_STORE %use_gp_phi3(s16), %ptr(p0) :: (store 2)
-    RET_ReallyLR
+    RET_ReallyLR 0
 ...
