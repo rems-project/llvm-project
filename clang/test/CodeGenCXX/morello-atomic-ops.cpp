@@ -16,16 +16,16 @@ int __attribute__((vector_size(8))) i64;
 // CHECK-LABEL: fun1
 // CHECK-NOT: i128
 void fun1(_Atomic(int) *i, const _Atomic(int) *ci,
-       _Atomic(int*) *p, _Atomic(float) *d,
-       int *I, const int *CI,
-       int **P, float *D, struct S *s1, struct S *s2) {
+          _Atomic(int*) *p, _Atomic(float) *d,
+          int *I, const int *CI,
+          int **P, float *D, struct S *s1, struct S *s2) {
   __c11_atomic_store(i, 0, memory_order_relaxed);
   __c11_atomic_load(i, memory_order_seq_cst);
   __c11_atomic_load(p, memory_order_seq_cst);
   __c11_atomic_load(d, memory_order_seq_cst);
 
-int load_n_1 = __atomic_load_n(I, memory_order_relaxed);
-int *load_n_2 = __atomic_load_n(P, memory_order_relaxed);
+  int load_n_1 = __atomic_load_n(I, memory_order_relaxed);
+  int *load_n_2 = __atomic_load_n(P, memory_order_relaxed);
   load_n_1 = __atomic_load_n(CI, memory_order_relaxed);
 
   __atomic_load(CI, I, memory_order_relaxed);
@@ -40,23 +40,23 @@ int *load_n_2 = __atomic_load_n(P, memory_order_relaxed);
   __atomic_store_n(I, 4.0, memory_order_release);
 
   __atomic_store(I, *P, memory_order_release);
- __atomic_store(s1, s2, memory_order_release);
+  __atomic_store(s1, s2, memory_order_release);
 
   int exchange_1 = __c11_atomic_exchange(i, 1, memory_order_seq_cst);
   int exchange_4 = __atomic_exchange_n(I, 1, memory_order_seq_cst);
 
-__atomic_exchange(s1, s2, s2, memory_order_seq_cst);
-__atomic_exchange(I, I, I, memory_order_seq_cst);
+  __atomic_exchange(s1, s2, s2, memory_order_seq_cst);
+  __atomic_exchange(I, I, I, memory_order_seq_cst);
 
-__c11_atomic_fetch_add(i, 1, memory_order_seq_cst);
-__c11_atomic_fetch_add(p, 1, memory_order_seq_cst);
+  __c11_atomic_fetch_add(i, 1, memory_order_seq_cst);
+  __c11_atomic_fetch_add(p, 1, memory_order_seq_cst);
 
-__atomic_fetch_sub(I, 3, memory_order_seq_cst);
-__atomic_fetch_sub(P, 3, memory_order_seq_cst);
+  __atomic_fetch_sub(I, 3, memory_order_seq_cst);
+  __atomic_fetch_sub(P, 3, memory_order_seq_cst);
 
-__c11_atomic_fetch_and(i, 1, memory_order_seq_cst);
+  __c11_atomic_fetch_and(i, 1, memory_order_seq_cst);
 
-__atomic_fetch_or(I, 3, memory_order_seq_cst);
+  __atomic_fetch_or(I, 3, memory_order_seq_cst);
 
 
   bool cmpexch_1 = __c11_atomic_compare_exchange_strong(i, I, 1, memory_order_seq_cst, memory_order_seq_cst);
@@ -72,44 +72,44 @@ __atomic_fetch_or(I, 3, memory_order_seq_cst);
 
   bool cmpexch_10 = __c11_atomic_compare_exchange_strong((_Atomic int *)0x308, (int *)0x309, 1, memory_order_seq_cst, memory_order_seq_cst);
 
-const volatile int flag_k = 0;
-volatile int flag = 0;
-(void)(int)__atomic_test_and_set(&flag, memory_order_seq_cst);
-__atomic_clear(&flag, memory_order_seq_cst);
+  const volatile int flag_k = 0;
+  volatile int flag = 0;
+  (void)(int)__atomic_test_and_set(&flag, memory_order_seq_cst);
+  __atomic_clear(&flag, memory_order_seq_cst);
 
-atomic_int n = ATOMIC_VAR_INIT(123);
-atomic_init(&n, 456);
+  atomic_int n = ATOMIC_VAR_INIT(123);
+  atomic_init(&n, 456);
 
-atomic_wchar_t awt;
-atomic_init(&awt, L'x');
+  atomic_wchar_t awt;
+  atomic_init(&awt, L'x');
 
-int x = kill_dependency(12);
+  int x = kill_dependency(12);
 
-atomic_thread_fence(memory_order_seq_cst);
-atomic_signal_fence(memory_order_seq_cst);
-void (*pfn)(memory_order) = &atomic_thread_fence;
-pfn = &atomic_signal_fence;
+  atomic_thread_fence(memory_order_seq_cst);
+  atomic_signal_fence(memory_order_seq_cst);
+  void (*pfn)(memory_order) = &atomic_thread_fence;
+  pfn = &atomic_signal_fence;
 
-int k = atomic_load_explicit(&n, memory_order_relaxed);
-atomic_store_explicit(&n, k, memory_order_relaxed);
-atomic_store(&n, atomic_load(&n));
+  int k = atomic_load_explicit(&n, memory_order_relaxed);
+  atomic_store_explicit(&n, k, memory_order_relaxed);
+  atomic_store(&n, atomic_load(&n));
 
-k = atomic_exchange(&n, 72);
-k = atomic_exchange_explicit(&n, k, memory_order_release);
+  k = atomic_exchange(&n, 72);
+  k = atomic_exchange_explicit(&n, k, memory_order_release);
 
-atomic_compare_exchange_weak(&n, &k, k);
-atomic_compare_exchange_weak_explicit(&n, &k, k, memory_order_seq_cst, memory_order_acquire);
+  atomic_compare_exchange_weak(&n, &k, k);
+  atomic_compare_exchange_weak_explicit(&n, &k, k, memory_order_seq_cst, memory_order_acquire);
 
-k = atomic_fetch_add(&n, k);
-k = atomic_fetch_sub(&n, k);
-k = atomic_fetch_and(&n, k);
-k = atomic_fetch_or(&n, k);
-k = atomic_fetch_xor(&n, k);
-k = atomic_fetch_add_explicit(&n, k, memory_order_acquire);
-k = atomic_fetch_sub_explicit(&n, k, memory_order_release);
-k = atomic_fetch_and_explicit(&n, k, memory_order_acq_rel);
-k = atomic_fetch_or_explicit(&n, k, memory_order_consume);
-k = atomic_fetch_xor_explicit(&n, k, memory_order_relaxed);
+  k = atomic_fetch_add(&n, k);
+  k = atomic_fetch_sub(&n, k);
+  k = atomic_fetch_and(&n, k);
+  k = atomic_fetch_or(&n, k);
+  k = atomic_fetch_xor(&n, k);
+  k = atomic_fetch_add_explicit(&n, k, memory_order_acquire);
+  k = atomic_fetch_sub_explicit(&n, k, memory_order_release);
+  k = atomic_fetch_and_explicit(&n, k, memory_order_acq_rel);
+  k = atomic_fetch_or_explicit(&n, k, memory_order_consume);
+  k = atomic_fetch_xor_explicit(&n, k, memory_order_relaxed);
 }
 
 // CHECK-LABEL: memory_checks
@@ -328,7 +328,7 @@ _Atomic(int*) p;
 // CHECK-LABEL: atomictest
 // CHECK-NOT: i128
 void atomictest(void){
-    p2 = p;
-   p = p2;
-   __c11_atomic_store(&p,p2,__ATOMIC_SEQ_CST);
+  p2 = p;
+  p = p2;
+  __c11_atomic_store(&p,p2,__ATOMIC_SEQ_CST);
 }
