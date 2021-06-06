@@ -2902,14 +2902,20 @@ RValue CodeGenFunction::EmitLoadOfGlobalRegLValue(LValue LV) {
   // We accept integer and pointer types only
   llvm::Type *OrigTy = CGM.getTypes().ConvertType(LV.getType());
   llvm::Type *Ty = OrigTy;
-  if (OrigTy->isPointerTy())
+  // For CHERI capabilities we have to use a pointer-type read, all other
+  // architectures read an integer type for pointers
+  if (CGM.getDataLayout().isFatPointer(OrigTy))
+    Ty = CGM.Int8Ty->getPointerTo(OrigTy->getPointerAddressSpace());
+  else if (OrigTy->isPointerTy())
     Ty = CGM.getTypes().getDataLayout().getIntPtrType(OrigTy);
   llvm::Type *Types[] = { Ty };
 
   llvm::Function *F = CGM.getIntrinsic(llvm::Intrinsic::read_register, Types);
   llvm::Value *Call = Builder.CreateCall(
       F, llvm::MetadataAsValue::get(Ty->getContext(), RegName));
-  if (OrigTy->isPointerTy())
+  if (CGM.getDataLayout().isFatPointer(OrigTy))
+    Call = Builder.CreateBitCast(Call, OrigTy);
+  else if (OrigTy->isPointerTy())
     Call = Builder.CreateIntToPtr(Call, OrigTy);
   return RValue::get(Call);
 }
@@ -3176,13 +3182,17 @@ void CodeGenFunction::EmitStoreThroughGlobalRegLValue(RValue Src, LValue Dst) {
   // We accept integer and pointer types only
   llvm::Type *OrigTy = CGM.getTypes().ConvertType(Dst.getType());
   llvm::Type *Ty = OrigTy;
-  if (OrigTy->isPointerTy())
+  if (CGM.getDataLayout().isFatPointer(OrigTy))
+    Ty = CGM.Int8Ty->getPointerTo(OrigTy->getPointerAddressSpace());
+  else if (OrigTy->isPointerTy())
     Ty = CGM.getTypes().getDataLayout().getIntPtrType(OrigTy);
   llvm::Type *Types[] = { Ty };
 
   llvm::Function *F = CGM.getIntrinsic(llvm::Intrinsic::write_register, Types);
   llvm::Value *Value = Src.getScalarVal();
-  if (OrigTy->isPointerTy())
+  if (CGM.getDataLayout().isFatPointer(OrigTy))
+    Value = Builder.CreateBitCast(Value, Ty);
+  else if (OrigTy->isPointerTy())
     Value = Builder.CreatePtrToInt(Value, Ty);
   Builder.CreateCall(
       F, {llvm::MetadataAsValue::get(Ty->getContext(), RegName), Value});
@@ -6158,8 +6168,7 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, const CGCallee &OrigCallee
     // Load the global and use it in the call
     // FIXME: EmitSandboxRequiredMethod should return an Address so that we
     // don't have to know the alignment here.
-    auto *MethodNum =
-        Builder.CreateLoad(Address(MethodNumVar, CharUnits::fromQuantity(8)));
+    auto *MethodNum = Builder.CreateLoad(Address(MethodNumVar, CharUnits::fromQuantity(8)));
     MethodNum->setMetadata(CGM.getModule().getMDKindID("invariant.load"),
         llvm::MDNode::get(getLLVMContext(), None));
     CallArg MethodNumArg(RValue::get(MethodNum), NumTy);
@@ -6200,9 +6209,8 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, const CGCallee &OrigCallee
     auto Params = FnPType->getParamTypes();
     FunctionProtoType::ExtProtoInfo EPI = FnPType->getExtProtoInfo();
     NewParams.insert(NewParams.end(), Params.begin(), Params.end());
-    FnType = getContext()
-                 .getFunctionType(FnPType->getReturnType(), NewParams, EPI)
-                 ->getAs<FunctionType>();
+    FnType = getContext().getFunctionType(FnPType->getReturnType(),
+        NewParams, EPI)->getAs<FunctionType>();
   }
   const CGFunctionInfo &FnInfo = CGM.getTypes().arrangeFreeFunctionCall(
       Args, FnType, /*ChainCall=*/Chain);

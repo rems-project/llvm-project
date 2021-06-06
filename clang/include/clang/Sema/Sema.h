@@ -1667,7 +1667,7 @@ public:
                               const DeclSpec *DS = nullptr);
   QualType BuildPointerType(QualType T, SourceLocation Loc,
                             DeclarationName Entity, bool* ValidPointer,
-                            ASTContext::PointerInterpretationKind Kind);
+                            PointerInterpretationKind Kind);
   QualType BuildReferenceType(QualType T, bool LValueRef,
                               SourceLocation Loc, DeclarationName Entity);
   QualType BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
@@ -1685,6 +1685,10 @@ public:
   /// Same as above, but constructs the AddressSpace index if not provided.
   QualType BuildAddressSpaceAttr(QualType &T, Expr *AddrSpace,
                                  SourceLocation AttrLoc);
+
+  QualType BuildPointerInterpretationAttr(QualType T,
+                                          PointerInterpretationKind PIK,
+                                          SourceLocation QualifierLoc);
 
   bool CheckQualifiedFunctionForTypeId(QualType T, SourceLocation Loc);
 
@@ -9608,14 +9612,14 @@ public:
   void ActOnPragmaOptionsAlign(PragmaOptionsAlignKind Kind,
                                SourceLocation PragmaLoc);
 
-  ASTContext::PointerInterpretationKind PointerInterpretation = ASTContext::PIK_Default;
-  llvm::SmallVector<ASTContext::PointerInterpretationKind, 4> PointerInterpretationStack;
+  PointerInterpretationKind PointerInterpretation;
+  llvm::SmallVector<PointerInterpretationKind, 4> PointerInterpretationStack;
 
   /// ActOnPragmaPack - Called on well formed \#pragma pack(...).
   void ActOnPragmaPack(SourceLocation PragmaLoc, PragmaMsStackAction Action,
                        StringRef SlotLabel, Expr *Alignment);
 
-  void ActOnPragmaPointerInterpretation(ASTContext::PointerInterpretationKind K);
+  void ActOnPragmaPointerInterpretation(PointerInterpretationKind K);
   void ActOnPragmaPointerInterpretationPush() {
     PointerInterpretationStack.push_back(PointerInterpretation);
   }

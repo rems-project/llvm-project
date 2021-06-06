@@ -61,9 +61,9 @@ namespace libunwind {
   {
     const struct mach_header*   mh;
     const void*                 dwarf_section;
+    uintptr_t                   dwarf_section_length;
     const void*                 compact_unwind_section;
-    size_t                      dwarf_section_length;
-    size_t                      compact_unwind_section_length;
+    uintptr_t                   compact_unwind_section_length;
   };
   #if (defined(__MAC_OS_X_VERSION_MIN_REQUIRED) \
                                  && (__MAC_OS_X_VERSION_MIN_REQUIRED >= 1070)) \
@@ -247,6 +247,13 @@ public:
     LocalProgramCounter(uint64_t) = delete;
     LocalProgramCounter(int64_t) = delete;
 #endif
+    bool isImmutable() const {
+#ifdef __CHERI_PURE_CAPABILITY__
+      return __builtin_cheri_sealed_get(value);
+#else
+      return false;
+#endif
+    }
     LocalProgramCounter assertInBounds(addr_t addr) const {
 #ifdef __CHERI_PURE_CAPABILITY__
       if (!__builtin_cheri_tag_get(value)) {
@@ -263,10 +270,14 @@ public:
                              "value " _LIBUNWIND_FMT_PTR,
                              (uintmax_t)addr, value);
       }
-      // For sentries we have to modify the addend instead of creating a new
-      // capability from value.
-      uint64_t new_addend = addr - (ptraddr_t)(uintptr_t)value;
-      return LocalProgramCounter(value, new_addend);
+      if (isImmutable()) {
+        // For sentries we have to modify the addend instead of creating a new
+        // capability from value.
+        return LocalProgramCounter(value,
+                                   addr - __builtin_cheri_address_get(value));
+      } else {
+        return LocalProgramCounter(__builtin_cheri_address_set(value, addr), 0);
+      }
 #else
       return LocalProgramCounter(addr);
 #endif
@@ -348,7 +359,7 @@ public:
 
   pint_t getEncodedP(pint_t &addr, pint_t end, uint8_t encoding,
                      pint_t datarelBase = 0);
-  bool findFunctionName(pc_t addr, char *buf, size_t bufLen, size_t *offset);
+  bool findFunctionName(pc_t ip, char *buf, size_t bufLen, size_t *offset);
   bool findUnwindSections(pc_t targetAddr, UnwindInfoSections &info);
   bool findOtherFDE(addr_t targetAddr, pint_t &fde);
 
@@ -670,8 +681,10 @@ static LocalAddressSpace::pint_t getPhdrCapability(uintptr_t image_base,
   // just set the address to match the vaddr
   if (&_DYNAMIC == NULL) {
     // static linking / position dependent workaround:
-    vaddr_t base = __builtin_cheri_base_get((void *)image_base);
-    vaddr_t end = base + __builtin_cheri_length_get((void *)image_base);
+    LocalAddressSpace::addr_t base =
+        __builtin_cheri_base_get((void *)image_base);
+    LocalAddressSpace::addr_t end =
+        base + __builtin_cheri_length_get((void *)image_base);
     if (phdr->p_vaddr >= base && phdr->p_vaddr < end) {
       return (uintptr_t)__builtin_cheri_address_set((void *)image_base,
                                                     phdr->p_vaddr);
@@ -859,10 +872,10 @@ inline bool LocalAddressSpace::findUnwindSections(pc_t targetAddr,
                                                   UnwindInfoSections &info) {
 #ifdef __APPLE__
   dyld_unwind_sections dyldInfo;
-  if (_dyld_find_unwind_sections((void *)targetAddr, &dyldInfo)) {
+  if (_dyld_find_unwind_sections(targetAddr.get(), &dyldInfo)) {
     info.dso_base                      = (uintptr_t)dyldInfo.mh;
  #if defined(_LIBUNWIND_SUPPORT_DWARF_UNWIND)
-    info.dwarf_section                 = (uintptr_t)dyldInfo.dwarf_section;
+    info.set_dwarf_section((uintptr_t)dyldInfo.dwarf_section);
     info.dwarf_section_length          = dyldInfo.dwarf_section_length;
  #endif
     info.compact_unwind_section        = (uintptr_t)dyldInfo.compact_unwind_section;

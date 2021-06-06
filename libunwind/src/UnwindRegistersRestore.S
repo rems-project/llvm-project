@@ -683,7 +683,7 @@ DEFINE_LIBUNWIND_FUNCTION(_ZN9libunwind15Registers_arm646jumptoEv)
   ldp    c28,c29, [c0, #0x1c0]
   ldr    c30,     [c0, #0x200]  // restore pcc into clr
 
-  add    c16, c0, #0x220
+  add    c16,c0, #0x220
   ldp    d0, d1,  [c16, #0x000]
   ldp    d2, d3,  [c16, #0x010]
   ldp    d4, d5,  [c16, #0x020]
@@ -1288,7 +1288,6 @@ DEFINE_LIBUNWIND_FUNCTION(_ZN9libunwind15Registers_riscv6jumptoEv)
 #else
   ld    x1, (8 * 0)(a0) // restore pc into ra
 #endif
-  restore_gpr 1
   restore_gpr 2
   restore_gpr 3
   restore_gpr 4

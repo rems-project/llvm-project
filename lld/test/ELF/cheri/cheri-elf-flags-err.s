@@ -1,35 +1,30 @@
 
-# RUN: %cheri256_purecap_llvm-mc -filetype=obj %s -o %t-cheri256-main.o
-# RUN: %cheri128_purecap_llvm-mc -filetype=obj %s -o %t-cheri128-main.o
-# RUN: %cheri256_llvm-mc -filetype=obj -target-abi n64 %s -o %t-cheri256-hybrid-main.o
-# RUN: %cheri128_llvm-mc -filetype=obj -target-abi n64 %s -o %t-cheri128-hybrid-main.o
-# RUN: llvm-mc -triple=mips64-unknown-freebsd -filetype=obj -target-abi n64 -mcpu=beri %s -o %t-beri-main.o
-# RUN: %cheri256_purecap_llvm-mc -filetype=obj %S/../Inputs/mips-dynamic.s -o %t-cheri256-lib.o
-# RUN: %cheri128_purecap_llvm-mc -filetype=obj %S/../Inputs/mips-dynamic.s -o %t-cheri128-lib.o
-# RUN: %cheri256_llvm-mc -filetype=obj -target-abi n64 %S/../Inputs/mips-dynamic.s -o %t-cheri256-hybrid-lib.o
-# RUN: %cheri128_llvm-mc -filetype=obj -target-abi n64 %S/../Inputs/mips-dynamic.s -o %t-cheri128-hybrid-lib.o
+# RUN: llvm-mc -triple=mips64-unknown-freebsd -mcpu=cheri256 -target-abi purecap -position-independent -filetype=obj %s -o %t-cheri256-main.o
+# RUN: llvm-mc -triple=mips64-unknown-freebsd -mcpu=cheri128 -target-abi purecap -position-independent -filetype=obj %s -o %t-cheri128-main.o
+# RUN: llvm-mc -triple=mips64-unknown-freebsd -mcpu=cheri256 -target-abi n64 -position-independent -filetype=obj %s -o %t-cheri256-hybrid-main.o
+# RUN: llvm-mc -triple=mips64-unknown-freebsd -mcpu=cheri128 -target-abi n64 -position-independent -filetype=obj %s -o %t-cheri128-hybrid-main.o
+# RUN: llvm-mc -triple=mips64-unknown-freebsd -mcpu=beri     -target-abi n64 -position-independent -filetype=obj %s -o %t-beri-main.o
+# RUN: llvm-mc -triple=mips64-unknown-freebsd -mcpu=cheri256 -target-abi purecap -position-independent -filetype=obj %S/../Inputs/mips-dynamic.s -o %t-cheri256-lib.o
+# RUN: llvm-mc -triple=mips64-unknown-freebsd -mcpu=cheri128 -target-abi purecap -position-independent -filetype=obj %S/../Inputs/mips-dynamic.s -o %t-cheri128-lib.o
+# RUN: llvm-mc -triple=mips64-unknown-freebsd -mcpu=cheri256 -target-abi n64 -position-independent -filetype=obj %S/../Inputs/mips-dynamic.s -o %t-cheri256-hybrid-lib.o
+# RUN: llvm-mc -triple=mips64-unknown-freebsd -mcpu=cheri128 -target-abi n64 -position-independent -filetype=obj %S/../Inputs/mips-dynamic.s -o %t-cheri128-hybrid-lib.o
 # RUN: llvm-readobj -h %t-cheri128-main.o | FileCheck --check-prefix=CHERI128-FLAGS %s
 # RUN: llvm-readobj -h %t-cheri256-main.o | FileCheck --check-prefix=CHERI256-FLAGS %s
 # RUN: llvm-readobj -h %t-cheri128-hybrid-main.o | FileCheck --check-prefix=CHERI128-HYBRID-FLAGS %s
 # RUN: llvm-readobj -h %t-cheri256-hybrid-main.o | FileCheck --check-prefix=CHERI256-HYBRID-FLAGS %s
 
 
-# Check that setting an explicit emulation doesn't infer the target ABI from the first .o:
+# Check that setting an explicit CHERI emulation overrides the target ABI from the first .o:
 # Check that it links fine if we don't pass a -m flag:
 # RUN: ld.lld %t-cheri128-hybrid-lib.o %t-cheri128-hybrid-main.o -o /dev/null
 # But with -melf64btsmip_cheri_fbsd the target ABI should be purecap (and therefore linking should fail)!
 # RUN: not ld.lld -melf64btsmip_cheri_fbsd %t-cheri128-hybrid-lib.o %t-cheri128-hybrid-main.o -o %t.exe 2>&1 | FileCheck -DCHERI_TYPE=cheri128 -check-prefix HYBRID-input-with-explicit-PURECAP %s
-# HYBRID-input-with-explicit-PURECAP: error: {{.*}}-cheri128-hybrid-lib.o: ABI 'n64' is incompatible with explicitly selected linker emulation 'elf64btsmip_cheri_fbsd'
-# HYBRID-input-with-explicit-PURECAP: error: {{.*}}-cheri128-hybrid-lib.o: ABI 'n64' is incompatible with target ABI 'purecap'
-# HYBRID-input-with-explicit-PURECAP: error: {{.*}}-cheri128-hybrid-main.o: ABI 'n64' is incompatible with target ABI 'purecap'
+# HYBRID-input-with-explicit-PURECAP: error: {{.*}}-cheri128-hybrid-lib.o: object file is non-CheriABI but emulation forces it
 
 # Similarly purecap input should work fine without a -m flag:
 # RUN: ld.lld %t-cheri128-lib.o %t-cheri128-main.o -o /dev/null
-# But it should fail if we use -melf64btsmip_fbsd explicitly
-# RUN: not ld.lld -melf64btsmip_fbsd %t-cheri128-lib.o %t-cheri128-main.o -o %t.exe 2>&1 | FileCheck -DCHERI_TYPE=cheri256 -check-prefix PURECAP-input-with-explicit-N64 %s
-# PURECAP-input-with-explicit-N64: error: {{.*}}-cheri128-lib.o: ABI 'purecap' is incompatible with explicitly selected linker emulation 'elf64btsmip_fbsd'
-# PURECAP-input-with-explicit-N64: error: {{.*}}-cheri128-lib.o: ABI 'purecap' is incompatible with target ABI 'n64'
-# PURECAP-input-with-explicit-N64: error: {{.*}}-cheri128-main.o: ABI 'purecap' is incompatible with target ABI 'n64'
+# But with -melf64btsmip_fbsd the target ABI should be inferred as purecap and allowed:
+# RUN: ld.lld -melf64btsmip_fbsd %t-cheri128-lib.o %t-cheri128-main.o -o /dev/null
 
 # Now check that lld does not allow to link incompatible CHERI files
 

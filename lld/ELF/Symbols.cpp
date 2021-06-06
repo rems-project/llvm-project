@@ -279,7 +279,7 @@ uint64_t Symbol::getPltVA() const {
 
 uint64_t Symbol::getSize(bool forCheriCap) const {
   if (const auto *dr = dyn_cast<Defined>(this)) {
-    if ((config->isCheriABI() || forCheriCap) && dr->isSectionStartSymbol) {
+    if ((config->isCheriAbi || forCheriCap) && dr->isSectionStartSymbol) {
       assert(dr->value == 0 && "Bad section start symbol?");
       if (!dr->section)
         return 0; // Section is not included in the output

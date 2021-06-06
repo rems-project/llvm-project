@@ -41,6 +41,11 @@ def _getTempPaths(test):
     tmpBase = os.path.join(tmpDir, 't')
     return tmpDir, tmpBase
 
+def _checkBaseSubstitutions(substitutions):
+    substitutions = [s for (s, _) in substitutions]
+    for s in ['%{cxx}', '%{compile_flags}', '%{link_flags}', '%{flags}', '%{exec}']:
+        assert s in substitutions, "Required substitution {} was not provided".format(s)
+
 def parseScript(test, preamble):
     """
     Extract the script from a test, with substitutions applied.
@@ -63,12 +68,14 @@ def parseScript(test, preamble):
     substitutions = lit.TestRunner.getDefaultSubstitutions(test, tmpDir, tmpBase,
                                                            normalize_slashes=useExternalSh)
 
-    # Add the %{build} and %{run} convenience substitutions
+    # Check base substitutions and add the %{build} and %{run} convenience substitutions
+    _checkBaseSubstitutions(substitutions)
     substitutions.append(('%{build}', '%{cxx} %s %{flags} %{compile_flags} %{link_flags} -o %t.exe'))
     substitutions.append(('%{run}', '%{exec} %t.exe'))
 
     # Parse the test file, including custom directives
     additionalCompileFlags = []
+    additionalLinkFlags = []
     fileDependencies = []
     parsers = [
         lit.TestRunner.IntegratedTestKeywordParser('FILE_DEPENDENCIES:',
@@ -76,7 +83,10 @@ def parseScript(test, preamble):
                                                    initial_value=fileDependencies),
         lit.TestRunner.IntegratedTestKeywordParser('ADDITIONAL_COMPILE_FLAGS:',
                                                    lit.TestRunner.ParserKind.LIST,
-                                                   initial_value=additionalCompileFlags)
+                                                   initial_value=additionalCompileFlags),
+        lit.TestRunner.IntegratedTestKeywordParser('ADDITIONAL_LINK_FLAGS:',
+                                                   lit.TestRunner.ParserKind.LIST,
+                                                   initial_value=additionalLinkFlags),
     ]
 
     scriptInTest = lit.TestRunner.parseIntegratedTestScript(test, additional_parsers=parsers,
@@ -94,9 +104,11 @@ def parseScript(test, preamble):
     script += preamble
     script += scriptInTest
 
+
     # Add compile flags specified with ADDITIONAL_COMPILE_FLAGS.
     substitutions = [(s, x + ' ' + ' '.join(additionalCompileFlags)) if s == '%{compile_flags}'
-                            else (s, x) for (s, x) in substitutions]
+                     else (s, x + ' ' + ' '.join(additionalLinkFlags)) if s == '%{link_flags}' else (s, x) for
+                     (s, x) in substitutions]
 
     # Perform substitutions in the script itself.
     script = lit.TestRunner.applySubstitutions(script, substitutions,
@@ -207,18 +219,12 @@ class CxxStandardLibraryTest(lit.formats.TestFormat):
                 if any([re.search(ext, filename) for ext in SUPPORTED_SUFFIXES]):
                     yield lit.Test.Test(testSuite, pathInSuite + (filename,), localConfig)
 
-    def _checkBaseSubstitutions(self, substitutions):
-        substitutions = [s for (s, _) in substitutions]
-        for s in ['%{cxx}', '%{compile_flags}', '%{link_flags}', '%{flags}', '%{exec}']:
-            assert s in substitutions, "Required substitution {} was not provided".format(s)
-
     def _disableWithModules(self, test):
         with open(test.getSourcePath(), 'rb') as f:
             contents = f.read()
         return b'#define _LIBCPP_ASSERT' in contents
 
     def execute(self, test, litConfig):
-        self._checkBaseSubstitutions(test.config.substitutions)
         VERIFY_FLAGS = '-Xclang -verify -Xclang -verify-ignore-unexpected=note -ferror-limit=0'
         supportsVerify = _supportsVerify(test.config)
         filename = test.path_in_suite[-1]

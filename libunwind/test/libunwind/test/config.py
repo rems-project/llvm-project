@@ -19,7 +19,6 @@ class Configuration(LibcxxConfiguration):
         self.libunwind_obj_root = None
         self.abi_library_path = None
         self.libcxx_src_root = None
-        self.default_cxx_abi_library = None  # set later
 
     def configure_src_root(self):
         self.libunwind_src_root = (self.get_lit_conf('libunwind_src_root')
@@ -61,7 +60,8 @@ class Configuration(LibcxxConfiguration):
         # in the search order. This is especially important for static linking.
         if self.link_shared:
             # dladdr needs libdl on Linux
-            self.cxx.link_flags += ['-lunwind', '-ldl']
+            self.cxx.link_flags += ['-L', os.path.join(self.libunwind_obj_root, "lib"),
+                                    '-lunwind', '-ldl']
         else:
             libname = self.make_static_lib_name('unwind')
             abs_path = os.path.join(self.libunwind_obj_root, "lib", libname)
@@ -98,9 +98,6 @@ class Configuration(LibcxxConfiguration):
             self.lit_config.fatal("libunwind_headers='%s' is not a directory."
                                   % libunwind_headers)
         self.cxx.compile_flags += ['-I' + libunwind_headers]
-
-    def configure_compile_flags_rtti(self):
-        pass
 
     def configure_link_flags_cxx_library(self):
         # libunwind tests should not link with libc++

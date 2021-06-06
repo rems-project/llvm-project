@@ -10,7 +10,7 @@ target triple = "aarch64-none-unknown-elf"
 
 ; CHECK-LABEL: foo
 ; CHECK: call void @llvm.memcpy.p200i8.p200i8.i64{{.*}} [[ATTRIBUTE:#[0-9]+]]
-; CHECK: attributes [[ATTRIBUTE]] = { "must-preserve-cheri-tags" }
+; CHECK: attributes [[ATTRIBUTE]] = { must_preserve_cheri_tags }
 define dso_local void @foo(%class.ay addrspace(200)* %this, %struct.y addrspace(200)* dereferenceable(16) %t) addrspace(200) align 2 {
 entry:
   %this.addr = alloca %class.ay addrspace(200)*, align 16, addrspace(200)
@@ -26,4 +26,4 @@ entry:
 
 declare dso_local i8 addrspace(200)* @memcpy(i8 addrspace(200)*, i8 addrspace(200)*, i64) addrspace(200)
 
-attributes #0 = { "must-preserve-cheri-tags" }
+attributes #0 = { must_preserve_cheri_tags }

@@ -244,20 +244,20 @@ def select_subobject_bounds_kind : TextSubstitution<
 
 def remark_setting_cheri_subobject_bounds :
   Remark<"setting %select{|sub-object }0bounds for %sub{select_subobject_bounds_kind}1 %2 to %3 bytes%4">,
-  InGroup<CheriSubobjectBounds>;
+  InGroup<CheriSubobjectBoundsRemarks>;
 def remark_setting_cheri_subobject_bounds_field :
   Remark<"setting sub-object bounds for field %0 (%sub{select_subobject_bounds_kind}1 %2) to %3 bytes%4">,
-  InGroup<CheriSubobjectBounds>;
+  InGroup<CheriSubobjectBoundsRemarks>;
 def remark_subobject_using_container_size :
   Remark<"using size of containing type %0 instead of object type %1 for "
-         "subobject bounds on %2">, InGroup<CheriSubobjectBounds>;
+         "subobject bounds on %2">, InGroup<CheriSubobjectBoundsRemarks>;
 def remark_no_cheri_subobject_bounds :
   Remark<"not setting bounds for %sub{select_subobject_bounds_kind}0 %1 (%2)">,
-  InGroup<CheriSubobjectBounds>;
+  InGroup<CheriSubobjectBoundsRemarks>;
 
 def warn_subobject_bounds_addressof_subscript :
   Warning<"pointer created from reference returned by %0 will be bounded to a single element">,
-  InGroup<CheriSubobjectBounds>, DefaultWarnNoWerror;
+  InGroup<CheriSubobjectBoundsSuspicous>, DefaultWarnNoWerror;
 // TODO: add a better suggestion for known classes such as std::string/std::vector
 def note_subobject_bounds_addressof_subscript_fixit :
   Note<"add an explicit cast to %0 to silence this warning or if you intended to "
@@ -266,7 +266,7 @@ def note_subobject_bounds_addressof_subscript_fixit :
 
 def warn_subobject_bounds_unknown_type :
   Warning<"unhandled type %0 in CHERI bounds setting">,
-  InGroup<CheriSubobjectBounds>, DefaultWarnNoWerror;
+  InGroup<CheriSubobjectBoundsSuspicous>, DefaultWarnNoWerror;
 
 def warn_cheri_memintrin_misaligned_inefficient : Warning<
   "%0 operation with capability argument %2 and underaligned destination"
@@ -275,7 +275,7 @@ def warn_cheri_memintrin_misaligned_inefficient : Warning<
 def warn_fe_backend_cheri_inefficient : Warning<"%0">, BackendInfo,
     InGroup<BackendCheriInefficient>, DefaultWarn, DefaultWarnNoWerror;
 def note_cheri_memintrin_misaligned_fixit : Note<
-  "use __builtin_assume_aligned() or cast to __intcap_t* if you know that the"
+  "use __builtin_assume_aligned() or cast to (u)int%select{cap|ptr}1_t* if you know that the"
   " pointer is actually aligned to capability size; this will allow the %0"
   " call to be inlined if the size is constant (otherwise a library call must"
   " be used to maintain tag bits). For more information see"
@@ -335,7 +335,7 @@ def err_ifunc_resolver_return : Error<
   "ifunc resolver function must return a pointer">;
 
 def warn_atomic_op_misaligned : Warning<
-  "%select{large|misaligned}0 atomic operation may incur "
+  "%select{large|misaligned|unsupported}0 atomic operation may incur "
   "significant performance penalty">, InGroup<DiagGroup<"atomic-alignment">>;
 
 def warn_alias_with_section : Warning<

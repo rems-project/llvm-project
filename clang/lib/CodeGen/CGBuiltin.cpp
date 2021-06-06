@@ -1770,7 +1770,7 @@ diagnoseMisalignedCapabiliyCopyDest(CodeGenFunction &CGF, StringRef Function,
     Legacy = true;
   }
 
-  // Add a "must-preserve-cheri-tags" attribute to the memcpy/memmove
+  // Add a must_preserve_cheri_tags attribute to the memcpy/memmove
   // intrinsic to ensure that the backend will not lower it to an inlined
   // sequence of 1/2/4/8 byte loads and stores which would strip the tag bits.
   // TODO: a clc/csc that works on unaligned data but traps for a csc
@@ -1779,9 +1779,8 @@ diagnoseMisalignedCapabiliyCopyDest(CodeGenFunction &CGF, StringRef Function,
   if (MemInst) {
     // If we have a memory intrinsic let the backend diagnose this issue:
     // First, tell the backend that this copy must preserve tags
-    MemInst->addAttribute(
-        llvm::AttributeList::FunctionIndex,
-        llvm::Attribute::get(CGF.getLLVMContext(), "must-preserve-cheri-tags"));
+    MemInst->addAttribute(llvm::AttributeList::FunctionIndex,
+                          llvm::Attribute::MustPreserveCheriTags);
     // And also tell it what the underlying type was for improved diagnostics.
     std::string TypeName = UnderlyingSrcTy.getAsString();
     std::string CanonicalStr = UnderlyingSrcTy.getCanonicalType().getAsString();
@@ -1840,7 +1839,7 @@ diagnoseMisalignedCapabiliyCopyDest(CodeGenFunction &CGF, StringRef Function,
     // TODO: add a fixit?
     CGF.CGM.getDiags().Report(Src->getExprLoc(),
                               diag::note_cheri_memintrin_misaligned_fixit)
-        << Function;
+        << Function << Ctx.getTargetInfo().areAllPointersCapabilities();
   }
 }
 
@@ -4248,11 +4247,11 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
         {EmitScalarExpr(E->getArg(0)), EmitScalarExpr(E->getArg(1))}));
 
   case Builtin::BI__builtin_cheri_callback_create: {
-    StringRef ClassName = cast<StringLiteral>(E->getArg(0))->getString();
+    std::string ClassName =
+        cast<StringLiteral>(E->getArg(0))->getString().str();
     auto Fn = cast<DeclRefExpr>(E->getArg(2));
-    StringRef FunctionName = cast<NamedDecl>(Fn->getDecl())->getName().str();
-    auto *MethodNumVar =
-      CGM.EmitSandboxRequiredMethod(ClassName, FunctionName);
+    std::string FunctionName = cast<NamedDecl>(Fn->getDecl())->getName().str();
+    auto *MethodNumVar = CGM.EmitSandboxRequiredMethod(ClassName, FunctionName);
     // Load the global and use it in the call
     // FIXME: EmitSandboxRequiredMethod should return an Address so that we
     // don't have to know the alignment here.

@@ -1235,30 +1235,14 @@ TypedefDecl *ASTContext::buildImplicitTypedef(QualType T,
 }
 
 TypedefDecl *ASTContext::getIntCapDecl() const {
-  if (!IntCapDecl) {
-    TypeSourceInfo *TInfo = getTrivialTypeSourceInfo(IntCapTy);
-    IntCapDecl = TypedefDecl::Create(const_cast<ASTContext &>(*this),
-                                     getTranslationUnitDecl(),
-                                     SourceLocation(),
-                                     SourceLocation(),
-                                     &Idents.get("__intcap_t"),
-                                     TInfo);
-  }
-
+  if (!IntCapDecl)
+    IntCapDecl = buildImplicitTypedef(IntCapTy, "__intcap_t");
   return IntCapDecl;
 }
 
 TypedefDecl *ASTContext::getUIntCapDecl() const {
-  if (!UIntCapDecl) {
-    TypeSourceInfo *TInfo = getTrivialTypeSourceInfo(UnsignedIntCapTy);
-    UIntCapDecl = TypedefDecl::Create(const_cast<ASTContext &>(*this),
-                                     getTranslationUnitDecl(),
-                                     SourceLocation(),
-                                     SourceLocation(),
-                                     &Idents.get("__uintcap_t"),
-                                     TInfo);
-  }
-
+  if (!UIntCapDecl)
+    UIntCapDecl = buildImplicitTypedef(UnsignedIntCapTy, "__uintcap_t");
   return UIntCapDecl;
 }
 
@@ -3160,30 +3144,19 @@ QualType ASTContext::getComplexType(QualType T) const {
   return QualType(New, 0);
 }
 
-bool ASTContext::shouldUseCHERICap(PointerInterpretationKind PIK) const {
-  switch (PIK) {
-    case PIK_Capability:
-      return true;
-    case PIK_Integer:
-      assert(!getTargetInfo().areAllPointersCapabilities() &&
-              "Can't use PointerType with integer representation in pure ABI");
-      return false;
-    case PIK_Default:
-      return getTargetInfo().areAllPointersCapabilities();
-    default:
-      llvm_unreachable("Invalid pointer interpretation!");
-  }
-  llvm_unreachable("Unknown pointer interpretation kind");
+PointerInterpretationKind
+ASTContext::getDefaultPointerInterpretation() const {
+  return getTargetInfo().areAllPointersCapabilities()
+      ? PIK_Capability : PIK_Integer;
 }
 
 /// getPointerType - Return the uniqued reference to the type for a pointer to
 /// the specified type.
 QualType ASTContext::getPointerType(QualType T, PointerInterpretationKind PIK) const {
-  bool isCHERICap = shouldUseCHERICap(PIK);
   // Unique pointers, to guarantee there is only one pointer of a particular
   // structure.
   llvm::FoldingSetNodeID ID;
-  PointerType::Profile(ID, T, isCHERICap);
+  PointerType::Profile(ID, T, PIK);
 
   void *InsertPos = nullptr;
   if (PointerType *PT = PointerTypes.FindNodeOrInsertPos(ID, InsertPos))
@@ -3199,7 +3172,7 @@ QualType ASTContext::getPointerType(QualType T, PointerInterpretationKind PIK) c
     PointerType *NewIP = PointerTypes.FindNodeOrInsertPos(ID, InsertPos);
     assert(!NewIP && "Shouldn't be in the map!"); (void)NewIP;
   }
-  auto *New = new (*this, TypeAlignment) PointerType(T, Canonical, isCHERICap);
+  auto *New = new (*this, TypeAlignment) PointerType(T, Canonical, PIK);
   Types.push_back(New);
   PointerTypes.InsertNode(New, InsertPos);
   return QualType(New, 0);
@@ -3303,12 +3276,10 @@ ASTContext::getLValueReferenceType(QualType T, bool SpelledAsLValue, PointerInte
   assert(getCanonicalType(T) != OverloadTy &&
          "Unresolved overloaded function type");
 
-  bool isCHERICap = shouldUseCHERICap(PIK);
-
   // Unique pointers, to guarantee there is only one pointer of a particular
   // structure.
   llvm::FoldingSetNodeID ID;
-  ReferenceType::Profile(ID, T, SpelledAsLValue, isCHERICap);
+  ReferenceType::Profile(ID, T, SpelledAsLValue, PIK);
 
   void *InsertPos = nullptr;
   if (LValueReferenceType *RT =
@@ -3332,7 +3303,7 @@ ASTContext::getLValueReferenceType(QualType T, bool SpelledAsLValue, PointerInte
 
   auto *New = new (*this, TypeAlignment) LValueReferenceType(T, Canonical,
                                                              SpelledAsLValue,
-                                                             isCHERICap);
+                                                             PIK);
   Types.push_back(New);
   LValueReferenceTypes.InsertNode(New, InsertPos);
 
@@ -3344,10 +3315,8 @@ ASTContext::getLValueReferenceType(QualType T, bool SpelledAsLValue, PointerInte
 QualType ASTContext::getRValueReferenceType(QualType T, PointerInterpretationKind PIK) const {
   // Unique pointers, to guarantee there is only one pointer of a particular
   // structure.
-  bool isCHERICap = shouldUseCHERICap(PIK);
-
   llvm::FoldingSetNodeID ID;
-  ReferenceType::Profile(ID, T, false, isCHERICap);
+  ReferenceType::Profile(ID, T, false, PIK);
 
   void *InsertPos = nullptr;
   if (RValueReferenceType *RT =
@@ -3370,7 +3339,7 @@ QualType ASTContext::getRValueReferenceType(QualType T, PointerInterpretationKin
   }
 
   auto *New = new (*this, TypeAlignment) RValueReferenceType(T, Canonical,
-                                                             isCHERICap);
+                                                             PIK);
   Types.push_back(New);
   RValueReferenceTypes.InsertNode(New, InsertPos);
   return QualType(New, 0);
@@ -3489,6 +3458,7 @@ QualType ASTContext::getVariableArrayDecayedType(QualType type) const {
   case Type::ConstantMatrix:
   case Type::DependentSizedMatrix:
   case Type::DependentAddressSpace:
+  case Type::DependentPointer:
   case Type::ObjCObject:
   case Type::ObjCInterface:
   case Type::ObjCObjectPointer:
@@ -4013,6 +3983,36 @@ QualType ASTContext::getDependentAddressSpaceType(QualType PointeeType,
   return QualType(sugaredType, 0);
 }
 
+QualType ASTContext::getDependentPointerType(QualType PointerType,
+                                             PointerInterpretationKind PIK,
+                                             SourceLocation QualifierLoc) const {
+  QualType CanonPointerType = getCanonicalType(PointerType);
+
+  void *InsertPos = nullptr;
+  llvm::FoldingSetNodeID ID;
+  DependentPointerType::Profile(ID, *this, CanonPointerType, PIK);
+
+  DependentPointerType *Canon =
+    DependentPointerTypes.FindNodeOrInsertPos(ID, InsertPos);
+
+  if (!Canon) {
+    Canon = new (*this, TypeAlignment) DependentPointerType(
+        *this, CanonPointerType, QualType(), PIK, QualifierLoc);
+    DependentPointerTypes.InsertNode(Canon, InsertPos);
+    Types.push_back(Canon);
+  }
+
+  if (CanonPointerType == PointerType &&
+      Canon->getPointerInterpretation() == PIK)
+    return QualType(Canon, 0);
+
+  DependentPointerType *New = new (*this, TypeAlignment)
+      DependentPointerType(*this, PointerType, QualType(Canon, 0), PIK,
+                           QualifierLoc);
+  Types.push_back(New);
+  return QualType(New, 0);
+}
+
 /// Determine whether \p T is canonical as the result type of a function.
 static bool isCanonicalResultType(QualType T) {
   return T.isCanonical() &&
@@ -4392,7 +4392,7 @@ ASTContext::getTypedefType(const TypedefNameDecl *Decl,
       // Create a copy of the typedef whose name is prefixed by "__chericap_"
       // and whose underlying type is the cheri_capability qualified version of
       // the pointer type
-      Canonical = getPointerType(PT->getPointeeType(), ASTContext::PIK_Capability);
+      Canonical = getPointerType(PT->getPointeeType(), PIK_Capability);
       TypeSourceInfo *TInfo = getTrivialTypeSourceInfo(Canonical, Decl->getBeginLoc());
       DeclContext *DC = const_cast<DeclContext *>(Decl->getDeclContext());
       std::string typedefName = "__chericap_" + Decl->getNameAsString();
@@ -7809,7 +7809,7 @@ RecordDecl *ASTContext::getCHERIClassDecl() const {
     RD = buildImplicitRecord("cheri_object");
     RD->startDefinition();
 
-    QualType CapTy = getPointerType(VoidTy, ASTContext::PIK_Capability);
+    QualType CapTy = getPointerType(VoidTy, PIK_Capability);
 
     QualType FieldTypes[] = { CapTy, CapTy };
     static const char *const FieldNames[] = { "co_codecap", "co_datacap" };
@@ -10346,9 +10346,10 @@ static QualType DecodeTypeFromStr(const char *&Str, const ASTContext &Context,
         Str = End;
       }
       if (c == '*') {
-        ASTContext::PointerInterpretationKind PIK = ASTContext::PIK_Default;
+        PointerInterpretationKind PIK =
+            Context.getDefaultPointerInterpretation();
         if (*Str == 'm') {
-          PIK = ASTContext::PIK_Capability;
+          PIK = PIK_Capability;
           Str++;
         }
         Type = Context.getPointerType(Type, PIK);

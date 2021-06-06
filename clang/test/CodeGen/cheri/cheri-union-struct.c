@@ -1,5 +1,5 @@
 // RUN: %cheri_purecap_cc1 %s -O0 -emit-llvm -o - | %cheri_FileCheck %s
-// RXUN: %cheri_purecap_cc1 %s -O2 -S -o - -mllvm -cheri-cap-table-abi=plt -mllvm -cheri-stack-bounds=if-needed | %cheri_FileCheck %s -check-prefixes ASM,%cheri_type
+// RXUN: %cheri_purecap_cc1 %s -O2 -S -o - | %cheri_FileCheck %s -check-prefixes ASM
 
 // example union from WebKit
 union CallData {
@@ -139,8 +139,8 @@ int test_semun_pass_int(union semun s) {
 
 int test_semun_pass_int_2() {
   // ASM-LABEL: test_semun_pass_int_2:
-  // CHERI256 does a memset to zero before (this happens because clang thinks it
-  // should do it for aggregates > 16
+  // CHERI256 did a memset to zero before (this happens because clang thinks it
+  // should do it for aggregates > 16)
   // TODO: do it for (> 16 || containsCaps)?
   // CHERI256:        csetbounds $c1, $c11, 32
   // CHERI256:        csc $cnull, $zero, 0($c1)

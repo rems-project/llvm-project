@@ -40,7 +40,7 @@ typedef __uintcap_t fake_capability_t;
     _LIBUNWIND_ABORT("no CHERI capability registers");                         \
   }                                                                            \
   inline void setCapabilityRegister(int, fake_capability_t) {                    \
-    _LIBUNWIND_ABORT("no x86 vector registers");                               \
+    _LIBUNWIND_ABORT("no CHERI capability registers");                         \
   }
 
 enum {
@@ -1829,11 +1829,11 @@ public:
   CAPABILITIES_NOT_SUPPORTED
 #endif
 
-  uintptr_t  getSP() const         { return _registers.__sp; }
+  uintptr_t  getSP() const          { return _registers.__sp; }
   void       setSP(uintptr_t value) { _registers.__sp = value; }
-  uintptr_t  getIP() const         { return _registers.__pc; }
+  uintptr_t  getIP() const          { return _registers.__pc; }
   void       setIP(uintptr_t value) { _registers.__pc = value; }
-  uintptr_t  getFP() const         { return _registers.__fp; }
+  uintptr_t  getFP() const          { return _registers.__fp; }
   void       setFP(uintptr_t value) { _registers.__fp = value; }
 
 private:
@@ -1883,7 +1883,7 @@ inline bool Registers_arm64::validRegister(int regNum) const {
   if (regNum < 0)
     return false;
 #ifdef __CHERI_PURE_CAPABILITY__
-  if (regNum >= UNW_ARM64_C0 && regNum <= UNW_ARM64_C31)
+  if ((regNum >= UNW_ARM64_C0) && (regNum <= UNW_ARM64_C31))
     return true;
 #endif
   if (regNum > 95)
@@ -1905,7 +1905,7 @@ inline uintptr_t Registers_arm64::getRegister(int regNum) const {
   if ((regNum >= 0) && (regNum < 32))
     return (uint64_t)_registers.__x[regNum];
 #ifdef __CHERI_PURE_CAPABILITY__
-  if ((regNum >= UNW_ARM64_C0 && regNum <= UNW_ARM64_C31))
+  if ((regNum >= UNW_ARM64_C0) && (regNum <= UNW_ARM64_C31))
     return _registers.__x[regNum - UNW_ARM64_C0];
 #endif
   _LIBUNWIND_ABORT("unsupported arm64 register");
@@ -1934,7 +1934,7 @@ inline bool Registers_arm64::validCapabilityRegister(int regNum) const {
     return true;
   if (regNum == UNW_REG_SP)
     return true;
-  if (regNum >= UNW_ARM64_C0 && regNum <= UNW_ARM64_C31)
+  if ((regNum >= UNW_ARM64_C0) && (regNum <= UNW_ARM64_C31))
     return true;
   return false;
 }
@@ -4247,18 +4247,15 @@ public:
   CAPABILITIES_NOT_SUPPORTED
 #endif
 
-  uintptr_t  getSP() const         { return _registers[2]; }
-  void      setSP(uintptr_t value) { _registers[2] = value; }
-  uintptr_t  getIP() const         { return _registers[0]; }
-  void      setIP(uintptr_t value) { _registers[0] = value; }
+  uintptr_t  getSP() const          { return _registers[2]; }
+  void       setSP(uintptr_t value) { _registers[2] = value; }
+  uintptr_t  getIP() const          { return _registers[0]; }
+  void       setIP(uintptr_t value) { _registers[0] = value; }
 
 private:
   // _registers[0] holds the pc
   uintptr_t _registers[32];
   double   _floats[32];
-#ifdef __CHERI_PURE_CAPABILITY__
-  uintcap_t _ddc;
-#endif
 };
 
 inline Registers_riscv::Registers_riscv(const void *registers) {
@@ -4275,21 +4272,11 @@ inline Registers_riscv::Registers_riscv(const void *registers) {
   memcpy(&_floats,
          static_cast<const uint8_t *>(registers) + sizeof(_registers),
          sizeof(_floats));
-#ifdef __CHERI_PURE_CAPABILITY__
-  static_assert(sizeof(_registers) + sizeof(_floats) == 0x300,
-                "expected float registers to be at offset 768");
-  memcpy(&_ddc,
-         static_cast<const uint8_t *>(registers) + sizeof(_registers) + sizeof(_floats),
-         sizeof(_ddc));
-#endif
 }
 
 inline Registers_riscv::Registers_riscv() {
   memset(&_registers, 0, sizeof(_registers));
   memset(&_floats, 0, sizeof(_floats));
-#ifdef __CHERI_PURE_CAPABILITY__
-  memset(&_ddc, 0, sizeof(_ddc));
-#endif
 }
 
 inline bool Registers_riscv::validRegister(int regNum) const {
@@ -4299,10 +4286,6 @@ inline bool Registers_riscv::validRegister(int regNum) const {
     return true;
   if (regNum < 0)
     return false;
-#ifdef __CHERI_PURE_CAPABILITY__
-  if (regNum == UNW_RISCV_DDC)
-    return true;
-#endif
   if (regNum > UNW_RISCV_F31)
     return false;
   return true;
@@ -4317,10 +4300,6 @@ inline uintptr_t Registers_riscv::getRegister(int regNum) const {
     return 0;
   if ((regNum > 0) && (regNum < 32))
     return _registers[regNum];
-#ifdef __CHERI_PURE_CAPABILITY__
-  if (regNum == UNW_RISCV_DDC)
-    return _ddc;
-#endif
   _LIBUNWIND_ABORT("unsupported riscv register");
 }
 
@@ -4332,10 +4311,6 @@ inline void Registers_riscv::setRegister(int regNum, uintptr_t value) {
   else if (regNum == UNW_RISCV_X0)
     /* x0 is hardwired to zero */
     return;
-#ifdef __CHERI_PURE_CAPABILITY__
-  else if (regNum == UNW_RISCV_DDC)
-    _ddc = value;
-#endif
   else if ((regNum > 0) && (regNum < 32))
     _registers[regNum] = value;
   else
@@ -4350,8 +4325,6 @@ inline bool Registers_riscv::validCapabilityRegister(int regNum) const {
     return true;
   if (regNum < 0)
     return false;
-  if (regNum == UNW_RISCV_DDC)
-    return true;
   if (regNum > UNW_RISCV_X31)
     return false;
   return true;
@@ -4364,7 +4337,7 @@ inline uintcap_t Registers_riscv::getCapabilityRegister(int regNum) const {
 
 inline void Registers_riscv::setCapabilityRegister(int regNum, uintcap_t value) {
   assert(validCapabilityRegister(regNum));
-  return setRegister(regNum, value);
+  setRegister(regNum, value);
 }
 #endif
 
@@ -4502,10 +4475,6 @@ inline const char *Registers_riscv::getRegisterName(int regNum) {
     return "ft10";
   case UNW_RISCV_F31:
     return "ft11";
-#ifdef __CHERI_PURE_CAPABILITY__
-  case UNW_RISCV_DDC:
-    return "ddc";
-#endif
   default:
     return "unknown register";
   }

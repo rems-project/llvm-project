@@ -1,16 +1,9 @@
-
 // REQUIRES: clang, mips
 
 // RUN: %cheri128_purecap_cc1 -mllvm -mxcaptable -emit-obj -O2 -mllvm -cheri-cap-table-abi=plt %s -o %t-128.o
-// RUN: %cheri256_purecap_cc1 -mllvm -mxcaptable -emit-obj -O2 -mllvm -cheri-cap-table-abi=plt %s -o %t-256.o
 // RUN: llvm-readobj -r %t-128.o | FileCheck %s --check-prefix RELOCS
-// RUN: llvm-readobj -r %t-256.o | FileCheck %s --check-prefix RELOCS
 // RUN: ld.lld -o %t-128.exe %t-128.o
-// RUNNOT: ld.lld -o %t-256.exe %t-256.o
-// RUN: llvm-objdump -d -r --cap-relocs -t %t-128.exe | FileCheck %s --check-prefixes EXE,EXE128
-// RUNNOT: llvm-objdump -d -r --cap-relocs -t %t-256.exe | FileCheck %s --check-prefixes EXE,EXE256
-
-
+// RUN: llvm-objdump -d -r --cap-relocs -t %t-128.exe | FileCheck %s --check-prefixes EXE
 
 
 // RELOCS-LABEL: Section (3) .rela.text {
@@ -30,14 +23,14 @@
 // RELOCS-NEXT:  }
 
 // EXE-LABEL: CAPABILITY RELOCATION RECORDS:
-// EXE-NEXT: 0x0000000120020470	Base: functions (0x00000001200304b0)	Offset: 0x0000000000000000	Length: 0x0000000000000040	Permissions: 0x00000000
-// EXE-NEXT: 0x0000000120020480	Base: string (0x00000001200304a0)	Offset: 0x0000000000000000	Length: 0x0000000000000010	Permissions: 0x00000000
-// EXE-NEXT: 0x0000000120030490	Base: func (0x00000001200103e0)	Offset: 0x0000000000000000	Length: 0x0000000000000008	Permissions: 0x8000000000000000 (Function)
-// EXE-NEXT: 0x00000001200304a0	Base: <Unnamed symbol> (0x000000012000027e)	Offset: 0x0000000000000000	Length: 0x000000000000000e	Permissions: 0x4000000000000000 (Constant)
-// EXE-NEXT: 0x00000001200304b0	Base: <Unnamed symbol> (0x0000000120000278)	Offset: 0x0000000000000000	Length: 0x0000000000000006	Permissions: 0x4000000000000000 (Constant)
-// EXE-NEXT: 0x00000001200304c0	Base: func1 (0x00000001200103e8)	Offset: 0x0000000000000000	Length: 0x0000000000000008	Permissions: 0x8000000000000000 (Function)
-// EXE-NEXT: 0x00000001200304d0	Base: <Unnamed symbol> (0x000000012000028c)	Offset: 0x0000000000000000	Length: 0x0000000000000007	Permissions: 0x4000000000000000 (Constant)
-// EXE-NEXT: 0x00000001200304e0	Base: func2 (0x00000001200103f0)	Offset: 0x0000000000000000	Length: 0x0000000000000008	Permissions: 0x8000000000000000 (Function)
+// EXE-NEXT: 0x0000000000030470	Base: functions (0x00000000000404b0)	Offset: 0x0000000000000000	Length: 0x0000000000000040	Permissions: 0x00000000
+// EXE-NEXT: 0x0000000000030480	Base: string (0x00000000000404a0)	Offset: 0x0000000000000000	Length: 0x0000000000000010	Permissions: 0x00000000
+// EXE-NEXT: 0x0000000000040490	Base: func (0x00000000000203e0)	Offset: 0x0000000000000000	Length: 0x0000000000000008	Permissions: 0x8000000000000000 (Function)
+// EXE-NEXT: 0x00000000000404a0	Base: <Unnamed symbol> (0x000000000001027e)	Offset: 0x0000000000000000	Length: 0x000000000000000e	Permissions: 0x4000000000000000 (Constant)
+// EXE-NEXT: 0x00000000000404b0	Base: <Unnamed symbol> (0x0000000000010278)	Offset: 0x0000000000000000	Length: 0x0000000000000006	Permissions: 0x4000000000000000 (Constant)
+// EXE-NEXT: 0x00000000000404c0	Base: func1 (0x00000000000203e8)	Offset: 0x0000000000000000	Length: 0x0000000000000008	Permissions: 0x8000000000000000 (Function)
+// EXE-NEXT: 0x00000000000404d0	Base: <Unnamed symbol> (0x000000000001028c)	Offset: 0x0000000000000000	Length: 0x0000000000000007	Permissions: 0x4000000000000000 (Constant)
+// EXE-NEXT: 0x00000000000404e0	Base: func2 (0x00000000000203f0)	Offset: 0x0000000000000000	Length: 0x0000000000000008	Permissions: 0x8000000000000000 (Function)
 
 
 void func(int a) {

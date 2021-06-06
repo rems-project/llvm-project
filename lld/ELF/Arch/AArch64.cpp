@@ -31,6 +31,7 @@ namespace {
 class AArch64 : public TargetInfo {
 public:
   AArch64();
+  bool calcIsCheriAbi() const override;
   RelExpr getRelExpr(RelType type, const Symbol &s,
                      const uint8_t *loc) const override;
   RelType getDynRel(RelType type) const override;
@@ -80,6 +81,20 @@ AArch64::AArch64() {
   defaultImageBase = 0x200000;
 
   needsThunks = true;
+}
+
+bool AArch64::calcIsCheriAbi() const {
+  bool isCheriAbi = config->eflags & EF_AARCH64_CHERI_PURECAP;
+
+  // XXX: Enable once enough time has passed that users should have rebuilt
+  // their binaries with a toolchain that sets the flag (including LLD itself).
+#if 0
+  if (config->isCheriAbi && !objectFiles.empty() && !isCheriAbi)
+    error(toString(objectFiles.front()) +
+          ": object file is non-CheriABI but emulation forces it");
+#endif
+
+  return isCheriAbi;
 }
 
 RelExpr AArch64::getRelExpr(RelType type, const Symbol &s,

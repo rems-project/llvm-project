@@ -1349,8 +1349,8 @@ static TryCastResult TryStaticCast(Sema &Self, ExprResult &SrcExpr,
   // just the usual constness stuff.
   if (const PointerType *SrcPointer = SrcType->getAs<PointerType>()) {
     QualType SrcPointee = SrcPointer->getPointeeType();
-    if (SrcPointer->isCHERICapability() &&
-        !DestType->isCHERICapabilityType(Self.Context)) {
+    if (SrcPointer->isCHERICapability() !=
+        DestType->isCHERICapabilityType(Self.Context)) {
       // Changing the capability qualifier is not possible with static_cast.
       // Return a more specific message than "is not allowed" for pointer casts.
       if (DestType->isAnyPointerType())
@@ -2237,7 +2237,7 @@ void checkNonCapToCapCast(const SourceRange &OpRange, const Expr *SrcExpr,
       // fixed differently.
       if (IsIntConstant)
         Self.Diag(OpRange.getBegin(), diag::note_capability_no_provenance_fixit)
-            << !IsPurecap;
+            << IsPurecap << SrcType->isSignedIntegerType();
     }
   }
 }
@@ -2967,6 +2967,8 @@ void CastOperation::CheckCapabilityConversions() {
       break;
     default:
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
+      llvm::errs() << "Invalid cast kind: " << CastExpr::getCastKindName(Kind)
+                   << "\n";
       SrcExpr.get()->dump();
       SrcExpr.get()->getSourceRange().dump(Self.getSourceManager());
       DestType->dump();
@@ -3574,7 +3576,7 @@ bool Sema::CheckCHERIAssignCompatible(QualType LHS, QualType RHS,
         bool RHSIsCap = RHS->isCHERICapabilityType(Context, false);
         QualType BitCastTy = Context.getPointerType(
             LHS->getAs<PointerType>()->getPointeeType(),
-            RHSIsCap ? ASTContext::PIK_Capability : ASTContext::PIK_Integer);
+            RHSIsCap ? PIK_Capability : PIK_Integer);
         RHSExpr = ImplicitCastExpr::Create(Context, BitCastTy, CK_BitCast,
                                            RHSExpr, nullptr, VK_RValue);
       }

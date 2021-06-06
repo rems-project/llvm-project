@@ -32,6 +32,8 @@ using namespace llvm;
 #define GET_INSTRINFO_CTOR_DTOR
 #include "RISCVGenInstrInfo.inc"
 
+#define DEBUG_TYPE "riscv-isntrinfo"
+
 RISCVInstrInfo::RISCVInstrInfo(RISCVSubtarget &STI)
     : RISCVGenInstrInfo(RISCVABI::isCheriPureCapABI(STI.getTargetABI())
                             ? RISCV::ADJCALLSTACKDOWNCAP
@@ -349,7 +351,7 @@ bool RISCVInstrInfo::analyzeBranch(MachineBasicBlock &MBB,
 
   // Handle a single unconditional branch.
   if (NumTerminators == 1 && I->getDesc().isUnconditionalBranch()) {
-    TBB = I->getOperand(0).getMBB();
+    TBB = getBranchDestBlock(*I);
     return false;
   }
 
@@ -363,7 +365,7 @@ bool RISCVInstrInfo::analyzeBranch(MachineBasicBlock &MBB,
   if (NumTerminators == 2 && std::prev(I)->getDesc().isConditionalBranch() &&
       I->getDesc().isUnconditionalBranch()) {
     parseCondBranch(*std::prev(I), TBB, Cond);
-    FBB = I->getOperand(0).getMBB();
+    FBB = getBranchDestBlock(*I);
     return false;
   }
 
@@ -454,34 +456,48 @@ unsigned RISCVInstrInfo::insertIndirectBranch(MachineBasicBlock &MBB,
 
   MachineFunction *MF = MBB.getParent();
   MachineRegisterInfo &MRI = MF->getRegInfo();
-  const auto &TM = static_cast<const RISCVTargetMachine &>(MF->getTarget());
-
-  if (TM.isPositionIndependent())
-    report_fatal_error("Unable to insert indirect branch");
+  const RISCVSubtarget &ST = MF->getSubtarget<RISCVSubtarget>();
 
   if (!isInt<32>(BrOffset))
     report_fatal_error(
         "Branch offsets outside of the signed 32-bit range not supported");
 
+  const TargetRegisterClass *RC;
+  if (RISCVABI::isCheriPureCapABI(ST.getTargetABI())) {
+    RC = &RISCV::GPCRRegClass;
+  } else {
+    RC = &RISCV::GPRRegClass;
+  }
+
   // FIXME: A virtual register must be used initially, as the register
   // scavenger won't work with empty blocks (SIInstrInfo::insertIndirectBranch
   // uses the same workaround).
-  Register ScratchReg = MRI.createVirtualRegister(&RISCV::GPRRegClass);
+  Register ScratchReg = MRI.createVirtualRegister(RC);
   auto II = MBB.end();
 
-  MachineInstr &LuiMI = *BuildMI(MBB, II, DL, get(RISCV::LUI), ScratchReg)
-                             .addMBB(&DestBB, RISCVII::MO_HI);
-  BuildMI(MBB, II, DL, get(RISCV::PseudoBRIND))
-      .addReg(ScratchReg, RegState::Kill)
-      .addMBB(&DestBB, RISCVII::MO_LO);
+  MachineInstr *MI;
+  unsigned InstBytes;
+  if (RISCVABI::isCheriPureCapABI(ST.getTargetABI())) {
+    MI = BuildMI(MBB, II, DL, get(RISCV::PseudoCLLC))
+             .addReg(ScratchReg, RegState::Define)
+             .addMBB(&DestBB);
+    BuildMI(MBB, II, DL, get(RISCV::PseudoCapBRIND))
+        .addReg(ScratchReg);
+    InstBytes = 12;
+  } else {
+    MI = BuildMI(MBB, II, DL, get(RISCV::PseudoJump))
+             .addReg(ScratchReg, RegState::Define | RegState::Dead)
+             .addMBB(&DestBB, RISCVII::MO_CALL);
+    InstBytes = 8;
+  }
 
   RS->enterBasicBlockEnd(MBB);
-  unsigned Scav = RS->scavengeRegisterBackwards(RISCV::GPRRegClass,
-                                                LuiMI.getIterator(), false, 0);
+  unsigned Scav = RS->scavengeRegisterBackwards(*RC,
+                                                MI->getIterator(), false, 0);
   MRI.replaceRegWith(ScratchReg, Scav);
   MRI.clearVirtRegs();
   RS->setRegUsed(Scav);
-  return 8;
+  return InstBytes;
 }
 
 bool RISCVInstrInfo::reverseBranchCondition(
@@ -501,6 +517,7 @@ RISCVInstrInfo::getBranchDestBlock(const MachineInstr &MI) const {
 
 bool RISCVInstrInfo::isBranchOffsetInRange(unsigned BranchOp,
                                            int64_t BrOffset) const {
+  unsigned XLen = STI.getXLen();
   // Ideally we could determine the supported branch offset from the
   // RISCVII::FormMask, but this can't be used for Pseudo instructions like
   // PseudoBR.
@@ -517,6 +534,8 @@ bool RISCVInstrInfo::isBranchOffsetInRange(unsigned BranchOp,
   case RISCV::JAL:
   case RISCV::PseudoBR:
     return isIntN(21, BrOffset);
+  case RISCV::PseudoJump:
+    return isIntN(32, SignExtend64(BrOffset + 0x800, XLen));
   }
 }
 
@@ -552,7 +571,10 @@ unsigned RISCVInstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
   case RISCV::PseudoLA:
   case RISCV::PseudoLA_TLS_IE:
   case RISCV::PseudoLA_TLS_GD:
+  case RISCV::PseudoCLLC:
   case RISCV::PseudoCLGC:
+  case RISCV::PseudoCLA_TLS_IE:
+  case RISCV::PseudoCLC_TLS_GD:
     return 8;
   case RISCV::PseudoAtomicLoadNand32:
   case RISCV::PseudoAtomicLoadNand64:
@@ -574,6 +596,41 @@ unsigned RISCVInstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
     return 16;
   case RISCV::PseudoMaskedCmpXchg32:
     return 32;
+  case RISCV::PseudoCmpXchgCap:
+  case RISCV::PseudoCheriCmpXchgCap:
+    return 16;
+  case RISCV::PseudoCheriAtomicSwap8:
+  case RISCV::PseudoCheriAtomicSwap16:
+  case RISCV::PseudoCheriAtomicLoadAdd8:
+  case RISCV::PseudoCheriAtomicLoadAdd16:
+  case RISCV::PseudoCheriAtomicLoadAnd8:
+  case RISCV::PseudoCheriAtomicLoadAnd16:
+  case RISCV::PseudoCheriAtomicLoadOr8:
+  case RISCV::PseudoCheriAtomicLoadOr16:
+  case RISCV::PseudoCheriAtomicLoadXor8:
+  case RISCV::PseudoCheriAtomicLoadXor16:
+  case RISCV::PseudoCheriAtomicLoadSub8:
+  case RISCV::PseudoCheriAtomicLoadSub16:
+    return 16;
+  case RISCV::PseudoCheriAtomicLoadNand8:
+  case RISCV::PseudoCheriAtomicLoadNand16:
+  case RISCV::PseudoCheriAtomicLoadNand32:
+  case RISCV::PseudoCheriAtomicLoadNand64:
+    return 20;
+  case RISCV::PseudoCheriAtomicLoadMax8:
+  case RISCV::PseudoCheriAtomicLoadMax16:
+  case RISCV::PseudoCheriAtomicLoadMin8:
+  case RISCV::PseudoCheriAtomicLoadMin16:
+  case RISCV::PseudoCheriAtomicLoadUMax8:
+  case RISCV::PseudoCheriAtomicLoadUMax16:
+  case RISCV::PseudoCheriAtomicLoadUMin8:
+  case RISCV::PseudoCheriAtomicLoadUMin16:
+    return 24;
+  case RISCV::PseudoCheriCmpXchg8:
+  case RISCV::PseudoCheriCmpXchg16:
+  case RISCV::PseudoCheriCmpXchg32:
+  case RISCV::PseudoCheriCmpXchg64:
+    return 16;
   case TargetOpcode::INLINEASM:
   case TargetOpcode::INLINEASM_BR: {
     const MachineFunction &MF = *MI.getParent()->getParent();
@@ -586,15 +643,97 @@ unsigned RISCVInstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
 
 bool RISCVInstrInfo::isAsCheapAsAMove(const MachineInstr &MI) const {
   const unsigned Opcode = MI.getOpcode();
-  switch(Opcode) {
-    default:
-      break;
-    case RISCV::ADDI:
-    case RISCV::ORI:
-    case RISCV::XORI:
-      return (MI.getOperand(1).isReg() && MI.getOperand(1).getReg() == RISCV::X0);
+  switch (Opcode) {
+  default:
+    break;
+  case RISCV::CMove:
+    return true;
+  case RISCV::CIncOffset:
+    // Creating a NULL-derived capability is fast since it's the same as moving
+    // to another register and zeroing the capability metadata.
+    // While incrementing a capability by zero is not quite as fast as a move
+    // since it needs to special-case sealed capabilities, we should return true
+    // here to allow for improved code generation.
+    //
+    // Note: this name of hook is confusing and should probably be something
+    // like "isAlmostAsCheapAsAMove" instead since other targets (e.g. AArch64)
+    // also return true for any fast and re-materializable instructions.
+    // Returning true here is required for rematerialization since it will not
+    // be attempted unless isAsCheapAsAMove returns true!
+    return (MI.getOperand(2).isReg() &&
+            MI.getOperand(2).getReg() == RISCV::X0) ||
+           (MI.getOperand(1).isReg() && MI.getOperand(1).getReg() == RISCV::C0);
+  case RISCV::CIncOffsetImm:
+    return (MI.getOperand(2).isImm() && MI.getOperand(2).getImm() == 0) ||
+           (MI.getOperand(1).isReg() && MI.getOperand(1).getReg() == RISCV::C0);
+  case RISCV::FSGNJ_D:
+  case RISCV::FSGNJ_S:
+    // The canonical floatig-point move is fsgnj rd, rs, rs.
+    return MI.getOperand(1).isReg() && MI.getOperand(2).isReg() &&
+           MI.getOperand(1).getReg() == MI.getOperand(2).getReg();
+  case RISCV::ADDI:
+  case RISCV::ORI:
+  case RISCV::XORI:
+    return (MI.getOperand(1).isReg() &&
+            MI.getOperand(1).getReg() == RISCV::X0) ||
+           (MI.getOperand(2).isImm() && MI.getOperand(2).getImm() == 0);
   }
   return MI.isAsCheapAsAMove();
+}
+
+Optional<int64_t>
+RISCVInstrInfo::getAsIntImmediate(const MachineOperand &Op,
+                                  const MachineRegisterInfo &MRI) const {
+  if (Op.isImm())
+    return Op.getImm();
+  if (Op.isReg()) {
+    Register Reg = Op.getReg();
+    if (Reg == RISCV::X0)
+      return 0;
+    if (Reg.isVirtual()) {
+      auto *Def = MRI.getUniqueVRegDef(Reg);
+      switch (Def->getOpcode()) {
+      default:
+        return None; // Unknown immediate
+      case RISCV::ADDI:
+      case RISCV::ADDIW:
+      case RISCV::ORI:
+        if (Def->getOperand(1).getReg() == RISCV::X0)
+          return Def->getOperand(2).getImm();
+        return None;
+      }
+    }
+  }
+  return None; // Unknown immediate
+}
+
+bool RISCVInstrInfo::isSetBoundsInstr(const MachineInstr &I,
+                                      const MachineOperand *&Base,
+                                      const MachineOperand *&Size) const {
+  switch (I.getOpcode()) {
+  default:
+    return false;
+  case RISCV::CSetBounds:
+  case RISCV::CSetBoundsExact:
+  case RISCV::CSetBoundsImm:
+    Base = &I.getOperand(1);
+    Size = &I.getOperand(2);
+    return true;
+  }
+}
+
+bool RISCVInstrInfo::isPtrAddInstr(const MachineInstr &I,
+                                   const MachineOperand *&Base,
+                                   const MachineOperand *&Increment) const {
+  switch (I.getOpcode()) {
+  default:
+    return false;
+  case RISCV::CIncOffsetImm:
+  case RISCV::CIncOffset:
+    Base = &I.getOperand(1);
+    Increment = &I.getOperand(2);
+    return true;
+  }
 }
 
 bool RISCVInstrInfo::verifyInstruction(const MachineInstr &MI,

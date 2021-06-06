@@ -4973,12 +4973,14 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
     }
   }
 
+  if (PreserveTags)
+    Attrs =
+        Attrs.addAttribute(getLLVMContext(), llvm::AttributeList::FunctionIndex,
+                           llvm::Attribute::MustPreserveCheriTags);
+
   // Apply the attributes and calling convention.
   CI->setAttributes(Attrs);
   CI->setCallingConv(static_cast<llvm::CallingConv::ID>(CallingConv));
-
-  if (PreserveTags)
-    cast<llvm::CallInst>(CI)->setPreservesTags();
 
   // Apply various metadata.
 

@@ -34,11 +34,9 @@ SUBST = {
     '%cheri_cc1': ['-cc1', "-triple=mips64-unknown-freebsd", "-target-cpu", "cheri128", "-cheri-size", "128"],
     '%cheri_clang': ['-target', 'mips64-unknown-freebsd', '-cheri'],
     '%cheri128_cc1': ['-cc1', "-triple=mips64-unknown-freebsd", "-target-cpu", "cheri128", "-cheri-size", "128"],
-    '%cheri256_cc1': ['-cc1', "-triple=mips64-unknown-freebsd", "-target-cpu", "cheri256", "-cheri-size", "256"],
     '%cheri_purecap_clang': ['-target', 'mips64-unknown-freebsd', '-mabi=purecap'],
     '%cheri_purecap_cc1': ['-cc1', "-triple=mips64-unknown-freebsd", "-target-abi", "purecap", "-target-cpu", "cheri128", "-cheri-size", "128"],
     '%cheri128_purecap_cc1': ['-cc1', "-triple=mips64-unknown-freebsd", "-target-abi", "purecap", "-target-cpu", "cheri128", "-cheri-size", "128"],
-    '%cheri256_purecap_cc1': ['-cc1', "-triple=mips64-unknown-freebsd", "-target-abi", "purecap", "-target-cpu", "cheri256", "-cheri-size", "256"],
     '%riscv32_cheri_cc1': ['-cc1', "-triple=riscv32-unknown-freebsd", "-target-feature", "+xcheri"],
     '%riscv64_cheri_cc1': ['-cc1', "-triple=riscv64-unknown-freebsd", "-target-feature", "+xcheri"],
     '%riscv32_cheri_purecap_cc1': ['-cc1', "-triple=riscv32-unknown-freebsd", "-target-feature", "+xcheri", "-target-abi", "il32pc64", '-target-feature', '+cap-mode'],
@@ -126,13 +124,13 @@ def str_to_commandline(value):
 
 
 def infer_dependent_args(args):
-  if args.clang is None:
-    if args.llvm_bin is None:
+  if not args.clang:
+    if not args.llvm_bin:
       args.clang = 'clang'
     else:
       args.clang = os.path.join(args.llvm_bin, 'clang')
-  if args.opt is None:
-    if args.llvm_bin is None:
+  if not args.opt:
+    if not args.llvm_bin:
       args.opt = 'opt'
     else:
       args.opt = os.path.join(args.llvm_bin, 'opt')
@@ -157,6 +155,8 @@ def config():
       help='Use more regex for x86 matching to reduce diffs between various subtargets')
   parser.add_argument('--function-signature', action='store_true',
                       help='Keep function signature information around for the check line')
+  parser.add_argument('--check-attributes', action='store_true',
+                      help='Check "Function Attributes" for functions')
   parser.add_argument('tests', nargs='+')
   args = common.parse_commandline_args(parser)
   infer_dependent_args(args)
@@ -206,7 +206,7 @@ def get_function_body(args, filename, clang_args, extra_commands, prefixes, trip
   if '-emit-llvm' in clang_args:
     common.build_function_body_dictionary(
             common.OPT_FUNCTION_RE, common.scrub_body, [],
-            raw_tool_output, prefixes, func_dict, args.verbose, args.function_signature)
+            raw_tool_output, prefixes, func_dict, args.verbose, args.function_signature, args.check_attributes)
   else:
     print('The clang command line should include -emit-llvm as asm tests '
           'are discouraged in Clang testsuite.', file=sys.stderr)
@@ -280,6 +280,7 @@ def main():
       for k, v in get_line2spell_and_mangled(ti.args, clang_args).items():
         line2spell_and_mangled_list[k].append(v)
 
+    global_vars_seen_dict = {}
     prefix_set = set([prefix for p in run_list for prefix in p[0]])
     output_lines = []
     for line_info in ti.iterlines(output_lines):
@@ -311,7 +312,7 @@ def main():
               output_lines.append('//')
             added.add(mangled)
             common.add_ir_checks(output_lines, '//', run_list, func_dict, mangled,
-                                 False, args.function_signature)
+                                 False, args.function_signature, global_vars_seen_dict)
             if line.rstrip('\n') == '//':
               include_line = False
 

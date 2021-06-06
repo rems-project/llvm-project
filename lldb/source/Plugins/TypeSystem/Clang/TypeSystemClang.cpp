@@ -4026,6 +4026,7 @@ TypeSystemClang::GetTypeClass(lldb::opaque_compiler_type_t type) {
   case clang::Type::BlockPointer:
     return lldb::eTypeClassBlockPointer;
   case clang::Type::Pointer:
+  case clang::Type::DependentPointer:
     return lldb::eTypeClassPointer;
   case clang::Type::LValueReference:
     return lldb::eTypeClassReference;
@@ -4446,11 +4447,12 @@ TypeSystemClang::GetPointeeType(lldb::opaque_compiler_type_t type) {
   return CompilerType();
 }
 
-static ASTContext::PointerInterpretationKind
-GetPointerInterpretationKindFromAddressSpace(AddressSpace address_space) {
+static PointerInterpretationKind
+GetPointerInterpretationKindFromAddressSpace(const clang::ASTContext &ast,
+                                             AddressSpace address_space) {
   if (address_space == eAddressSpaceCapability)
-    return ASTContext::PIK_Capability;
-  return ASTContext::PIK_Default;
+    return PIK_Capability;
+  return ast.getDefaultPointerInterpretation();
 }
 
 CompilerType
@@ -4466,7 +4468,8 @@ TypeSystemClang::GetPointerType(lldb::opaque_compiler_type_t type,
 
     default:
       return GetType(getASTContext().getPointerType(qual_type,
-              GetPointerInterpretationKindFromAddressSpace(address_space)));
+              GetPointerInterpretationKindFromAddressSpace(getASTContext(),
+                                                           address_space)));
     }
   }
   return CompilerType();
@@ -4476,7 +4479,8 @@ CompilerType
 TypeSystemClang::GetLValueReferenceType(lldb::opaque_compiler_type_t type,
                                         AddressSpace address_space) {
   if (type) {
-    auto IK = GetPointerInterpretationKindFromAddressSpace(address_space);
+    auto IK = GetPointerInterpretationKindFromAddressSpace(getASTContext(),
+                                                           address_space);
     return GetType(getASTContext().getLValueReferenceType(
         GetQualType(type), /*SpelledAsLValue*/ true, IK));
   } else
@@ -4487,7 +4491,8 @@ CompilerType
 TypeSystemClang::GetRValueReferenceType(lldb::opaque_compiler_type_t type,
                                         AddressSpace address_space) {
   if (type) {
-    auto IK = GetPointerInterpretationKindFromAddressSpace(address_space);
+    auto IK = GetPointerInterpretationKindFromAddressSpace(getASTContext(),
+                                                           address_space);
     return GetType(getASTContext().getRValueReferenceType(
                                        GetQualType(type), IK));
   } else
@@ -4931,6 +4936,7 @@ lldb::Encoding TypeSystemClang::GetEncoding(lldb::opaque_compiler_type_t type,
   case clang::Type::ObjCObjectPointer:
   case clang::Type::BlockPointer:
   case clang::Type::Pointer:
+  case clang::Type::DependentPointer:
   case clang::Type::LValueReference:
   case clang::Type::RValueReference:
   case clang::Type::MemberPointer:
@@ -5109,6 +5115,7 @@ lldb::Format TypeSystemClang::GetFormat(lldb::opaque_compiler_type_t type) {
   case clang::Type::BlockPointer:
     return lldb::eFormatHex;
   case clang::Type::Pointer:
+  case clang::Type::DependentPointer:
   case clang::Type::LValueReference:
   case clang::Type::RValueReference:
     if (qual_type->isCHERICapabilityType(getASTContext()))

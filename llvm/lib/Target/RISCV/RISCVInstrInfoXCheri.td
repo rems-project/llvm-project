@@ -34,6 +34,8 @@ def riscv_cap_sealed_get  : SDNode<"RISCVISD::CAP_SEALED_GET",
                                    SDT_RISCVCheriBoolUnary>;
 def riscv_cap_subset_test : SDNode<"RISCVISD::CAP_SUBSET_TEST",
                                    SDT_RISCVCheriBoolBinary>;
+def riscv_cap_equal_exact : SDNode<"RISCVISD::CAP_EQUAL_EXACT",
+                                   SDT_RISCVCheriBoolBinary>;
 
 //===----------------------------------------------------------------------===//
 // Operand and SDNode transformation definitions.
@@ -247,22 +249,37 @@ def CGetAddr   : Cheri_r<0xf, "cgetaddr">;
 //===----------------------------------------------------------------------===//
 
 let Predicates = [HasCheri] in {
+let Constraints = "@traps_if_sealed $rs1" in {
+let mayTrap = 1 in {
+let defsCanBeSealed = 1 in
 def CSeal           : Cheri_rr<0xb, "cseal", GPCR, GPCR>;
 def CUnseal         : Cheri_rr<0xc, "cunseal", GPCR, GPCR>;
 def CAndPerm        : Cheri_rr<0xd, "candperm">;
+} // let mayTrap = 1
 def CSetFlags       : Cheri_rr<0xe, "csetflags">;
 def CSetOffset      : Cheri_rr<0xf, "csetoffset">;
 def CSetAddr        : Cheri_rr<0x10, "csetaddr">;
+let isReMaterializable = 1, isAsCheapAsAMove = 1 in
 def CIncOffset      : Cheri_rr<0x11, "cincoffset">;
+let isReMaterializable = 1, isAsCheapAsAMove = 1 in
 def CIncOffsetImm   : Cheri_ri<0x1, "cincoffset", 1>;
+// Note: mayTrap is optimized in RISCVInstrInfo::isGuaranteedNotToTrap()
+let mayTrap = 1 in {
 def CSetBounds      : Cheri_rr<0x8, "csetbounds">;
 def CSetBoundsExact : Cheri_rr<0x9, "csetboundsexact">;
 def CSetBoundsImm   : Cheri_ri<0x2, "csetbounds", 0>;
+} // mayTrap = 1
+} // let Constraints = "@traps_if_sealed $rs1"
 def CClearTag       : Cheri_r<0xb, "ccleartag", GPCR>;
-def CBuildCap       : Cheri_rr<0x1d, "cbuildcap", GPCR, GPCR>;
+let mayTrap = 1 in {
+let defsCanBeSealed = 1 in
+def CBuildCap       : Cheri_rr<0x1d, "cbuildcap", GPCR, GPCR, GPCRC0IsDDC>;
 def CCopyType       : Cheri_rr<0x1e, "ccopytype", GPCR, GPCR>;
+let defsCanBeSealed = 1 in
 def CCSeal          : Cheri_rr<0x1f, "ccseal", GPCR, GPCR>;
+let defsCanBeSealed = 1 in
 def CSealEntry      : Cheri_r<0x11, "csealentry", GPCR>;
+} // let mayTrap = 1
 
 def : InstAlias<"cincoffsetimm $cd, $cs1, $imm",
                 (CIncOffsetImm GPCR:$cd, GPCR:$cs1, simm12:$imm), 0>;
@@ -275,9 +292,13 @@ def : InstAlias<"csetboundsimm $cd, $cs1, $imm",
 //===----------------------------------------------------------------------===//
 
 let Predicates = [HasCheri] in {
+let mayTrap = 1 in {
 def CToPtr      : Cheri_rr<0x12, "ctoptr", GPR, GPCRC0IsDDC>;
 def CFromPtr    : Cheri_rr<0x13, "cfromptr", GPCR, GPR, GPCRC0IsDDC>;
+}
 def CSub        : Cheri_rr<0x14, "csub", GPR, GPCR>;
+let isMoveReg = 1, isReMaterializable = 1, isAsCheapAsAMove = 1,
+    defsCanBeSealed = 1 in
 def CMove       : Cheri_r<0xa, "cmove", GPCR>;
 }
 
@@ -291,9 +312,9 @@ def CJALR : RVInstCheriSrcDst<0x7f, 0xc, 0, OPC_CHERI, (outs GPCR:$rd),
                               (ins GPCR:$rs1), "cjalr", "$rd, $rs1">;
 
 let isCall = 1, hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
-def CCall : RVInstCheriTwoSrc<0x7e, 0x1, 0, OPC_CHERI, (outs),
-                              (ins GPCR:$rs1, GPCR:$rs2),
-                              "ccall", "$rs1, $rs2">;
+def CInvoke : RVInstCheriTwoSrc<0x7e, 0x1, 0, OPC_CHERI, (outs),
+                                (ins GPCR:$rs1, GPCR:$rs2),
+                                "cinvoke", "$rs1, $rs2">;
 
 def : InstAlias<"cjalr $cs1", (CJALR C1, GPCR:$cs1), 1>;
 def : InstAlias<"cjr $cs1", (CJALR C0, GPCR:$cs1), 1>;
@@ -322,7 +343,10 @@ def PseudoCapTAILIndirect : Pseudo<(outs), (ins GPCRTC:$rs1),
 //===----------------------------------------------------------------------===//
 
 let Predicates = [HasCheri] in {
-def CTestSubset : Cheri_rr<0x20, "ctestsubset", GPR, GPCR>;
+def CTestSubset : Cheri_rr<0x20, "ctestsubset", GPR, GPCR, GPCRC0IsDDC>;
+def CSEQX       : Cheri_rr<0x21, "csetequalexact", GPR, GPCR, GPCR>;
+
+def : InstAlias<"cseqx $rd, $cs1, $cs2", (CSEQX GPR:$rd, GPCR:$cs1, GPCR:$cs2)>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -345,7 +369,7 @@ def : InstAlias<"cspecialw $scr, $cs",
 // Fast Register-Clearing Instructions
 //===----------------------------------------------------------------------===//
 
-let Predicates = [HasCheri] in {
+let Predicates = [HasCheri], hasSideEffects = 1 in {
 def Clear   : Cheri_clear<0xd, "clear">;
 def FPClear : Cheri_clear<0x10, "fpclear">;
 }
@@ -848,6 +872,7 @@ def : PatGpcr<int_cheri_cap_seal_entry, CSealEntry>;
 
 // TODO: Make this rematerialisable like MIPS
 def : PatGpcrGpr<int_cheri_bounded_stack_cap, CSetBounds>;
+def : PatGpcrUimm12<int_cheri_bounded_stack_cap, CSetBoundsImm>;
 
 /// Pointer-Arithmetic Instructions
 
@@ -994,6 +1019,7 @@ def : Pat<(brind GPCR:$rs1), (PseudoCapBRIND GPCR:$rs1)>;
 /// Assertion Instructions
 
 def : PatGpcrGpcr<riscv_cap_subset_test, CTestSubset>;
+def : PatGpcrGpcr<riscv_cap_equal_exact, CSEQX>;
 
 /// Special Capability Register Access Instructions
 
@@ -1014,13 +1040,9 @@ def : Pat<(int_cheri_pcc_get), (CSpecialRW SCR_PCC.Encoding, C0)>;
 def : PatGpr<int_cheri_round_representable_length, CRRL>;
 def : PatGpr<int_cheri_representable_alignment_mask, CRAM>;
 
-// TODO: int_cheri_cap_load_tags, int_cheri_bounded_stack_cap
+// TODO: int_cheri_cap_load_tags
 
 /// Memory-Access with Explicit Address Type Instructions
-
-// TODO: Need int<->float patterns for pointers in capabilty mode and
-// capabilities without capability mode (which requires BuildPairF64 and
-// SplitF64 for doubles on RV32I).
 
 multiclass CheriExplicitLdPat<PatFrag LoadOp, RVInst Inst,
                               RegisterClass AddrTy> {
@@ -1496,6 +1518,12 @@ defm : CheriStPat<store, CFSW, FPR32>;
 
 } // Predicates = [HasCheri, HasStdExtF, IsCapMode]
 
+let Predicates = [HasCheri, HasStdExtF, NotCapMode] in {
+// TODO: We may want to add int<->float patterns for integer pointers in capability mode.
+def : Pat<(load GPCR:$rs1), (FMV_W_X (LW_CAP GPCR:$rs1))>;
+def : Pat<(store FPR32:$rs2, GPCR:$rs1), (SW_CAP (FMV_X_W FPR32:$rs2), GPCR:$rs1)>;
+} // Predicates = [HasCheri, HasStdExtF, NotCapMode]
+
 /// 'D' (Single-Precision Floating-Point) extension
 
 let Predicates = [HasCheri, HasStdExtD, IsCapMode] in {
@@ -1509,6 +1537,12 @@ defm : CheriLdPat<load, CFLD>;
 defm : CheriStPat<store, CFSD, FPR64>;
 
 } // Predicates = [HasCheri, HasStdExtD, IsCapMode]
+
+let Predicates = [HasCheri, HasStdExtD, IsRV64, NotCapMode] in {
+// TODO: double patterns for RV32 (which requires BuildPairF64 and SplitF64)
+def : Pat<(load GPCR:$rs1), (FMV_D_X (LD_CAP GPCR:$rs1))>;
+def : Pat<(store FPR64:$rs2, GPCR:$rs1), (SD_CAP (FMV_X_D FPR64:$rs2), GPCR:$rs1)>;
+} // Predicates = [HasCheri, HasStdExtD, IsRV64, NotCapMode]
 
 /// 'XCheri' extension
 

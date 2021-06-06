@@ -1453,6 +1453,15 @@ enum class AutoTypeKeyword {
   GNUAutoType
 };
 
+/// The interpretation to use for a given pointer.
+enum PointerInterpretationKind {
+  /// The pointer should always be interpreted as a capability.
+  PIK_Capability,
+
+  /// The pointer should always be interpreted as an integer.
+  PIK_Integer,
+};
+
 /// The base class of the type hierarchy.
 ///
 /// A central concept with types is that each type always has a canonical
@@ -1628,10 +1637,32 @@ protected:
     unsigned IsKindOf : 1;
   };
 
+  class PointerTypeBitfields {
+    friend class PointerType;
+
+    unsigned : NumTypeBits;
+
+    /// The interpretation (PointerInterpretationKind) to use for this pointer.
+    unsigned PIK : 1;
+  };
+
+  class DependentPointerTypeBitfields {
+    friend class DependentPointerType;
+
+    unsigned : NumTypeBits;
+
+    /// The interpretation (PointerInterpretationKind) to use for this pointer.
+    unsigned PIK : 1;
+  };
+
   class ReferenceTypeBitfields {
     friend class ReferenceType;
 
     unsigned : NumTypeBits;
+
+    /// The interpretation (PointerInterpretationKind) to use for the pointer
+    /// backing this reference type.
+    unsigned PIK : 1;
 
     /// True if the type was originally spelled with an lvalue sigil.
     /// This is never true of rvalue references but can also be false
@@ -1803,6 +1834,8 @@ protected:
     BuiltinTypeBitfields BuiltinTypeBits;
     FunctionTypeBitfields FunctionTypeBits;
     ObjCObjectTypeBitfields ObjCObjectTypeBits;
+    PointerTypeBitfields PointerTypeBits;
+    DependentPointerTypeBitfields DependentPointerTypeBits;
     ReferenceTypeBitfields ReferenceTypeBits;
     TypeWithKeywordBitfields TypeWithKeywordBits;
     ElaboratedTypeBitfields ElaboratedTypeBits;
@@ -1828,6 +1861,10 @@ protected:
                   "FunctionTypeBitfields is larger than 8 bytes!");
     static_assert(sizeof(ObjCObjectTypeBitfields) <= 8,
                   "ObjCObjectTypeBitfields is larger than 8 bytes!");
+    static_assert(sizeof(PointerTypeBitfields) <= 8,
+                  "PointerTypeBitfields is larger than 8 bytes!");
+    static_assert(sizeof(DependentPointerTypeBitfields) <= 8,
+                  "DependentPointerTypeBitfields is larger than 8 bytes!");
     static_assert(sizeof(ReferenceTypeBitfields) <= 8,
                   "ReferenceTypeBitfields is larger than 8 bytes!");
     static_assert(sizeof(TypeWithKeywordBitfields) <= 8,
@@ -2092,6 +2129,7 @@ public:
   bool isMatrixType() const;                    // Matrix type.
   bool isConstantMatrixType() const;            // Constant matrix type.
   bool isDependentAddressSpaceType() const;     // value-dependent address space qualifier
+  bool isDependentPointerType() const;          // Dependent type with PIK qualifier
   bool isObjCObjectPointerType() const;         // pointer to ObjC object
   bool isObjCRetainableType() const;            // ObjC object or block pointer
   bool isObjCLifetimeType() const;              // (array of)* retainable type
@@ -2674,32 +2712,56 @@ public:
   static bool classof(const Type *T) { return T->getTypeClass() == Paren; }
 };
 
+/// This class augments a type with a pointer interpretation.
+template <class T>
+class PointerInterpretationTrait {
+protected:
+  PointerInterpretationTrait() = default;
+
+public:
+  bool isCHERICapability() const {
+    return getPointerInterpretation() == PIK_Capability;
+  }
+
+  PointerInterpretationKind getPointerInterpretation() const {
+    return static_cast<const T *>(this)->getPointerInterpretationImpl();
+  }
+};
+
 /// PointerType - C99 6.7.5.1 - Pointer Declarators.
-class PointerType : public Type, public llvm::FoldingSetNode {
+class PointerType : public Type,
+                    public PointerInterpretationTrait<PointerType>,
+                    public llvm::FoldingSetNode {
   friend class ASTContext; // ASTContext creates these.
+  friend class PointerInterpretationTrait<PointerType>;
 
   QualType PointeeType;
-  bool IsCHERICapability : 1;
 
-  PointerType(QualType Pointee, QualType CanonicalPtr, bool IsCHERICap = false)
+  PointerType(QualType Pointee, QualType CanonicalPtr,
+              PointerInterpretationKind PIK)
       : Type(Pointer, CanonicalPtr, Pointee->getDependence()),
-        PointeeType(Pointee), IsCHERICapability(IsCHERICap) {}
+        PointeeType(Pointee) {
+    PointerTypeBits.PIK = PIK;
+  }
+
+  PointerInterpretationKind getPointerInterpretationImpl() const {
+    return static_cast<PointerInterpretationKind>(PointerTypeBits.PIK);
+  }
 
 public:
   QualType getPointeeType() const { return PointeeType; }
-
-  bool isCHERICapability() const { return IsCHERICapability; }
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getPointeeType(), isCHERICapability());
+    Profile(ID, getPointeeType(), getPointerInterpretation());
   }
 
-  static void Profile(llvm::FoldingSetNodeID &ID, QualType Pointee, bool IsCHERICap) {
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType Pointee,
+                      PointerInterpretationKind PIK) {
     ID.AddPointer(Pointee.getAsOpaquePtr());
-    ID.AddBoolean(IsCHERICap);
+    ID.AddInteger(PIK);
   }
 
   static bool classof(const Type *T) { return T->getTypeClass() == Pointer; }
@@ -2790,15 +2852,23 @@ public:
 };
 
 /// Base for LValueReferenceType and RValueReferenceType
-class ReferenceType : public Type, public llvm::FoldingSetNode {
+class ReferenceType : public Type,
+                      public PointerInterpretationTrait<ReferenceType>,
+                      public llvm::FoldingSetNode {
+  friend class PointerInterpretationTrait<ReferenceType>;
+
   QualType PointeeType;
-  bool IsCHERICapability : 1;
+
+  PointerInterpretationKind getPointerInterpretationImpl() const {
+    return static_cast<PointerInterpretationKind>(ReferenceTypeBits.PIK);
+  }
 
 protected:
   ReferenceType(TypeClass tc, QualType Referencee, QualType CanonicalRef,
-                bool SpelledAsLValue, bool IsCHERICap = false)
+                bool SpelledAsLValue, PointerInterpretationKind PIK)
       : Type(tc, CanonicalRef, Referencee->getDependence()),
-        PointeeType(Referencee), IsCHERICapability(IsCHERICap) {
+        PointeeType(Referencee) {
+    ReferenceTypeBits.PIK = PIK;
     ReferenceTypeBits.SpelledAsLValue = SpelledAsLValue;
     ReferenceTypeBits.InnerRef = Referencee->isReferenceType();
   }
@@ -2817,19 +2887,17 @@ public:
     return T->PointeeType;
   }
 
-  bool isCHERICapability() const { return IsCHERICapability; }
-
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, PointeeType, isSpelledAsLValue(), isCHERICapability());
+    Profile(ID, PointeeType, isSpelledAsLValue(), getPointerInterpretation());
   }
 
   static void Profile(llvm::FoldingSetNodeID &ID,
                       QualType Referencee,
                       bool SpelledAsLValue,
-                      bool IsCHERICap) {
+                      PointerInterpretationKind PIK) {
     ID.AddPointer(Referencee.getAsOpaquePtr());
     ID.AddBoolean(SpelledAsLValue);
-    ID.AddBoolean(IsCHERICap);
+    ID.AddInteger(PIK);
   }
 
   static bool classof(const Type *T) {
@@ -2843,9 +2911,9 @@ class LValueReferenceType : public ReferenceType {
   friend class ASTContext; // ASTContext creates these
 
   LValueReferenceType(QualType Referencee, QualType CanonicalRef,
-                      bool SpelledAsLValue, bool IsCHERICap = false)
+                      bool SpelledAsLValue, PointerInterpretationKind PIK)
       : ReferenceType(LValueReference, Referencee, CanonicalRef,
-                      SpelledAsLValue, IsCHERICap) {}
+                      SpelledAsLValue, PIK) {}
 
 public:
   bool isSugared() const { return false; }
@@ -2860,8 +2928,10 @@ public:
 class RValueReferenceType : public ReferenceType {
   friend class ASTContext; // ASTContext creates these
 
-  RValueReferenceType(QualType Referencee, QualType CanonicalRef, bool IsCHERICap = false)
-       : ReferenceType(RValueReference, Referencee, CanonicalRef, false, IsCHERICap) {}
+  RValueReferenceType(QualType Referencee, QualType CanonicalRef,
+                      PointerInterpretationKind PIK)
+       : ReferenceType(RValueReference, Referencee, CanonicalRef, false,
+                       PIK) {}
 
 public:
   bool isSugared() const { return false; }
@@ -3221,6 +3291,44 @@ public:
 
   static void Profile(llvm::FoldingSetNodeID &ID, const ASTContext &Context,
                       QualType PointeeType, Expr *AddrSpaceExpr);
+};
+
+class DependentPointerType : public Type,
+                             public PointerInterpretationTrait<DependentPointerType>,
+                             public llvm::FoldingSetNode {
+  friend class ASTContext;
+  friend class PointerInterpretationTrait<DependentPointerType>;
+
+  const ASTContext &Context;
+  QualType PointerType;
+  SourceLocation Loc;
+
+  DependentPointerType(const ASTContext &Context, QualType PointerType,
+                       QualType Canonical, PointerInterpretationKind PIK,
+                       SourceLocation Loc);
+
+  PointerInterpretationKind getPointerInterpretationImpl() const {
+    return static_cast<PointerInterpretationKind>(
+        DependentPointerTypeBits.PIK);
+  }
+
+public:
+  QualType getPointerType() const { return PointerType; }
+  SourceLocation getQualifierLoc() const { return Loc; }
+
+  bool isSugared() const { return false; }
+  QualType desugar() const { return QualType(this, 0); }
+
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == DependentPointer;
+  }
+
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, Context, getPointerType(), getPointerInterpretation());
+  }
+
+  static void Profile(llvm::FoldingSetNodeID &Id, const ASTContext &Context,
+                      QualType PointerType, PointerInterpretationKind PIK);
 };
 
 /// Represents an extended vector type where either the type or size is
@@ -6809,6 +6917,10 @@ inline bool Type::isConstantMatrixType() const {
 
 inline bool Type::isDependentAddressSpaceType() const {
   return isa<DependentAddressSpaceType>(CanonicalType);
+}
+
+inline bool Type::isDependentPointerType() const {
+  return isa<DependentPointerType>(CanonicalType);
 }
 
 inline bool Type::isObjCObjectPointerType() const {

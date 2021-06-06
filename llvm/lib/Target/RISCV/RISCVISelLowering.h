@@ -60,6 +60,8 @@ enum NodeType : unsigned {
   CAP_SEALED_GET,
   /// Legalised int_cheri_cap_subset_test
   CAP_SUBSET_TEST,
+  /// Legalised int_cheri_cap_equal_exact
+  CAP_EQUAL_EXACT,
 };
 }
 
@@ -206,6 +208,10 @@ public:
   bool decomposeMulByConstant(LLVMContext &Context, EVT VT,
                               SDValue C) const override;
 
+  bool supportsAtomicOperation(const DataLayout &DL, const Instruction *AI,
+                               Type *ValueTy, Type *PointerTy,
+                               Align Alignment) const override;
+
   TargetLowering::AtomicExpansionKind
   shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const override;
   Value *emitMaskedAtomicRMWIntrinsic(IRBuilder<> &Builder, AtomicRMWInst *AI,
@@ -258,9 +264,6 @@ private:
   bool isEligibleForTailCallOptimization(
       CCState &CCInfo, CallLoweringInfo &CLI, MachineFunction &MF,
       const SmallVector<CCValAssign, 16> &ArgLocs) const;
-
-  virtual bool canLowerPointerTypeCmpXchg(
-      const DataLayout &DL, AtomicCmpXchgInst *AI) const override;
 
   /// Generate error diagnostics if any register used by CC has been marked
   /// reserved.

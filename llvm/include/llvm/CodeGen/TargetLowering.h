@@ -1861,6 +1861,13 @@ public:
     return false;
   }
 
+  /// Whether the atomic operation \p AI with type \p ValueTy and alignment
+  /// \p Alignment via \p PointerTy is natively supported or requires an
+  /// __atomic_* libcall.
+  virtual bool supportsAtomicOperation(const DataLayout &DL,
+                                       const Instruction *AI, Type *ValueTy,
+                                       Type *PointerTy, Align Alignment) const;
+
   /// Perform a load-linked operation on Addr, returning a "Value *" with the
   /// corresponding pointee type. This may entail some non-trivial operations to
   /// truncate or reconstruct types that will be illegal in the backend. See
@@ -1987,9 +1994,12 @@ public:
 
   /// Return true if the backend can lower of pointer-type cmpxchg.
   /// Otherwise it will be converted to an integer-type cmpxchg in the IR
+  /// TODO: remove this hook
   virtual bool canLowerPointerTypeCmpXchg(const DataLayout &DL,
                                           AtomicCmpXchgInst *AI) const {
-    return false;
+    // Capability-type cmxchg always needs to use i8 addrspace(200)* instead of
+    // converting arguments to integer types.
+    return DL.isFatPointer(AI->getCompareOperand()->getType());
   }
 
   /// Returns how the IR-level AtomicExpand pass should expand the given

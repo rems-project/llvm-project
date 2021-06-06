@@ -765,7 +765,7 @@ private:
     Align MinAlign = {};
     const DataLayout &DL = AS.AI.getModule()->getDataLayout();
     if ((ReadsTags || WritesTags) && !IsSplittable)
-      MinAlign = Align(getCapabilitySize(DL));
+      MinAlign = commonAlignment(Align(getCapabilitySize(DL)), BeginOffset);
 
     AS.Slices.push_back(Slice(BeginOffset, EndOffset, MinAlign, ReadsTags,
                               WritesTags, U, IsSplittable, IsStrictAlignSlice));
@@ -925,19 +925,6 @@ private:
       return false;
 
     if (!canRangeContainCapabilities(CapSize, Offset, Offset + Size))
-      return false;
-
-    if (II.preservesTags())
-      return true;
-
-    if (Offset % CapSize != 0)
-      return false;
-
-    auto SrcAlign = II.getSourceAlign();
-    auto DstAlign = II.getDestAlign();
-    if (SrcAlign && *SrcAlign < CapAlign)
-      return false;
-    if (DstAlign && *DstAlign < CapAlign)
       return false;
 
     return true;

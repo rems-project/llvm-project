@@ -173,7 +173,7 @@ static bool SemaBuiltinCHERICapCreate(Sema &S, CallExpr *TheCall) {
   auto BaseFnTy = cast<FunctionProtoType>(FnAttrType->getModifiedType());
   auto ReturnFnTy = C.adjustFunctionType(BaseFnTy,
       BaseFnTy->getExtInfo().withCallingConv(CC_CHERICCallback));
-  auto ReturnTy = C.getPointerType(QualType(ReturnFnTy, 0), ASTContext::PIK_Default);
+  auto ReturnTy = C.getPointerType(QualType(ReturnFnTy, 0));
 
   TheCall->setType(ReturnTy);
   return false;
@@ -195,7 +195,7 @@ static bool checkCapArg(Sema &S, CallExpr *TheCall, unsigned ArgIndex,
       Source->isNullPointerConstant(Ctx, Expr::NPC_ValueDependentIsNull))
     SrcTy = Ctx.getPointerType(SrcTy->isPointerType() ? SrcTy->getPointeeType()
                                                       : Ctx.VoidTy,
-                               ASTContext::PIK_Capability);
+                               PIK_Capability);
   if (ResultingSrcTy)
     *ResultingSrcTy = SrcTy;
   if (!SrcTy->isCapabilityPointerType() && !SrcTy->isIntCapType()) {
@@ -1492,6 +1492,8 @@ bool Sema::CheckTSBuiltinFunctionCall(const TargetInfo &TI, unsigned BuiltinID,
   }
 }
 
+static bool checkBuiltinArgument(Sema &S, CallExpr *E, unsigned ArgIndex);
+
 ExprResult
 Sema::CheckBuiltinFunctionCall(FunctionDecl *FDecl, unsigned BuiltinID,
                                CallExpr *TheCall) {
@@ -1998,7 +2000,7 @@ Sema::CheckBuiltinFunctionCall(FunctionDecl *FDecl, unsigned BuiltinID,
       if (SrcTy->getPointeeType().isConstQualified())
         ResultPointeeTy.addConst();
       TheCall->setType(
-          Context.getPointerType(ResultPointeeTy, ASTContext::PIK_Capability));
+          Context.getPointerType(ResultPointeeTy, PIK_Capability));
     }
     break;
   }
@@ -2035,7 +2037,7 @@ Sema::CheckBuiltinFunctionCall(FunctionDecl *FDecl, unsigned BuiltinID,
     }
     // Result is always void * __capability
     TheCall->setType(
-        Context.getPointerType(Context.VoidTy, ASTContext::PIK_Capability));
+        Context.getPointerType(Context.VoidTy, PIK_Capability));
     break;
   }
   case Builtin::BI__builtin_cheri_tag_clear:
@@ -2049,8 +2051,9 @@ Sema::CheckBuiltinFunctionCall(FunctionDecl *FDecl, unsigned BuiltinID,
     TheCall->setType(SrcTy);
     break;
   }
-  case Builtin::BI__builtin_cheri_type_check:
-  case Builtin::BI__builtin_cheri_subset_test: {
+  case Builtin::BI__builtin_cheri_equal_exact:
+  case Builtin::BI__builtin_cheri_subset_test:
+  case Builtin::BI__builtin_cheri_type_check: {
     // For subset testing and type checking we allow any capability type for
     // both arguments.
     if (checkArgCount(*this, TheCall, 2) || checkCapArg(*this, TheCall, 0) ||
@@ -2088,7 +2091,7 @@ Sema::CheckBuiltinFunctionCall(FunctionDecl *FDecl, unsigned BuiltinID,
       return ExprError();
     if (SrcTy->isPointerType()) {
       TheCall->setType(Context.getPointerType(SrcTy->getPointeeType(),
-                                              ASTContext::PIK_Integer));
+                                              PIK_Integer));
     } else {
       assert(SrcTy->isIntCapType());
       TheCall->setType(SrcTy->isSignedIntegerType() ? Context.getIntPtrType()
@@ -2123,7 +2126,7 @@ Sema::CheckBuiltinFunctionCall(FunctionDecl *FDecl, unsigned BuiltinID,
       }
     }
     TheCall->setType(
-        Context.getPointerType(ResultPointee, ASTContext::PIK_Capability));
+        Context.getPointerType(ResultPointee, PIK_Capability));
     break;
   }
   case Builtin::BI__builtin_cheri_perms_check:
@@ -2215,7 +2218,6 @@ Sema::CheckBuiltinFunctionCall(FunctionDecl *FDecl, unsigned BuiltinID,
                   ? "__builtin_return_address"
                   : "__builtin_frame_address")
           << TheCall->getSourceRange();
-    TheCall->setType(Context.VoidPtrTy);
     break;
   }
 
@@ -8062,6 +8064,13 @@ public:
                                            const char *flagsEnd,
                                            const char *conversionPosition)
                                              override;
+
+  void HandlePlusWithoutAltForP(const char *startSpecifier,
+                                unsigned specifierLen) override;
+
+  void HandlePositionalArgWithPlusForP(const char *startSpecifier,
+                                       unsigned specifierLen) override;
+
 };
 
 } // namespace
@@ -8217,6 +8226,23 @@ void CheckPrintfHandler::HandleObjCFlagsWithNonObjCConversion(
                          Range, FixItHint::CreateRemoval(Range));
 }
 
+void CheckPrintfHandler::HandlePlusWithoutAltForP(const char *startSpecifier,
+    unsigned specifierLen) {
+  EmitFormatDiagnostic(S.PDiag(diag::warn_plus_without_altform_for_p),
+                       getLocationOfByte(startSpecifier),
+                       /*IsStringLocation*/true,
+                       getSpecifierRange(startSpecifier, specifierLen));
+}
+
+void CheckPrintfHandler::HandlePositionalArgWithPlusForP(
+    const char *startSpecifier, unsigned specifierLen) {
+  EmitFormatDiagnostic(
+      S.PDiag(diag::warn_positional_arg_with_plus_for_p_is_undefined),
+      getLocationOfByte(startSpecifier),
+      /*IsStringLocation*/true,
+      getSpecifierRange(startSpecifier, specifierLen));
+}
+
 // Determines if the specified is a C++ class or struct containing
 // a member with the specified name and kind (e.g. a CXXMethodDecl named
 // "c_str()").
@@ -8336,6 +8362,31 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
     // We set the bit here because we may exit early from this
     // function if we encounter some other error.
     CoveredArgs.set(argIndex);
+  }
+
+  // CHERI %+#p takes a void * and an int
+  if (CS.getKind() == ConversionSpecifier::CHERIpArg && FS.hasPlusPrefix()) {
+    // We need at least two arguments.
+    if (!CheckNumArgs(FS, CS, startSpecifier, specifierLen, argIndex + 1))
+      return false;
+
+    // Claim the second argument.
+    CoveredArgs.set(argIndex + 1);
+
+    // XXX is first arg checked elsewhere?
+
+    // Type check the second argument (int)
+    const Expr *Ex = getDataArg(argIndex + 1);
+    const analyze_printf::ArgType &AT = ArgType(S.Context.IntTy);
+    if (AT.isValid() && !AT.matchesType(S.Context, Ex->getType()))
+      EmitFormatDiagnostic(
+          S.PDiag(diag::warn_format_conversion_argument_type_mismatch)
+              << AT.getRepresentativeTypeName(S.Context) << Ex->getType()
+              << false << Ex->getSourceRange(),
+          Ex->getBeginLoc(), /*IsStringLocation*/ false,
+          getSpecifierRange(startSpecifier, specifierLen));
+
+     return true;
   }
 
   // FreeBSD kernel extensions.

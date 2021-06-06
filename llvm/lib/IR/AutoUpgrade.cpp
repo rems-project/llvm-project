@@ -3877,8 +3877,9 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       MTI->setSourceAlignment(Align->getMaybeAlignValue());
     MemCI->setTailCallKind(CI->getTailCallKind());
     MemCI->setCallingConv(CI->getCallingConv());
-    if (CI->preservesTags())
-      MemCI->setPreservesTags();
+    if (CI->hasFnAttr("must-preserve-cheri-tags"))
+      MemCI->addAttribute(AttributeList::FunctionIndex,
+                          Attribute::MustPreserveCheriTags);
     break;
   }
   }
@@ -4419,6 +4420,9 @@ void llvm::UpgradeAttributes(AttrBuilder &B) {
   }
   if (!FramePointer.empty())
     B.addAttribute("frame-pointer", FramePointer);
+
+  if (B.contains("must-preserve-cheri-tags"))
+    B.addAttribute(Attribute::MustPreserveCheriTags);
 
   if (B.contains("null-pointer-is-valid")) {
     // The value can be "true" or "false".

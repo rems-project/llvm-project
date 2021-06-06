@@ -100,16 +100,16 @@ void test_struct_with_ctor(int& ptrref, int& __capability capref, int i) {
   // expected-note@-19 {{candidate constructor not viable: no known conversion from 'int' to 'int & __capability' for 1st argument}}
 }
 
-__intcap_t get_intcap();
+__intcap get_intcap();
 
 
-void test_intcap(__intcap_t& lval, __intcap_t&& rval) {
-  __intcap_t& ref1 = get_intcap(); // expected-error {{non-const lvalue reference to type '__intcap_t' cannot bind to a temporary of type '__intcap_t'}}
-  const __intcap_t& ref2 = get_intcap();
-  __intcap_t&& ref3 = get_intcap();
+void test_intcap(__intcap& lval, __intcap&& rval) {
+  __intcap& ref1 = get_intcap(); // expected-error {{non-const lvalue reference to type '__intcap' cannot bind to a temporary of type '__intcap'}}
+  const __intcap& ref2 = get_intcap();
+  __intcap&& ref3 = get_intcap();
 
-  __uintcap_t intcap1 = lval;
-  __uintcap_t intcap2 = rval;
+  unsigned __intcap intcap1 = lval;
+  unsigned __intcap intcap2 = rval;
 }
 
 struct Foo {
@@ -144,6 +144,6 @@ int capArgTest1(char *__capability c) {
 int capArgFun1(char * &__capability in);
 
 int capArgTest2(char *c) {
-  return capArgFun1(c);  // expected-error {{no matching function for call to 'capArgFun1'}}
-  // expected-note@-4 {{candidate function not viable: no known conversion from 'char *' to 'char *& __capability' for 1st argument}}
+  return capArgFun1(c);  // expected-error {{converting non-capability reference to type 'char *' to capability type 'char *& __capability' without an explicit cast; if this is intended use __cheri_tocap}}
+  // expected-note@-4 {{passing argument to parameter 'in' here}}
 }

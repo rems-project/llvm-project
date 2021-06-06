@@ -82,6 +82,15 @@ isSimpleEnoughValueToCommitHelper(Constant *C,
   // across targets.
   ConstantExpr *CE = cast<ConstantExpr>(C);
   switch (CE->getOpcode()) {
+  case Instruction::AddrSpaceCast:
+    // AddrSpaceCast should be fine if the casted value is fine.
+    // However, we restrict this to casts that include capability types to
+    // avoid breaking other backends that can't handle addrspacecast constant
+    // expressions for globals.
+    if (!DL.isFatPointer(CE->getType()) &&
+        !DL.isFatPointer(CE->getOperand(0)->getType()))
+      return false;
+    return isSimpleEnoughValueToCommit(CE->getOperand(0), SimpleConstants, DL);
   case Instruction::BitCast:
     // Bitcast is fine if the casted value is fine.
     return isSimpleEnoughValueToCommit(CE->getOperand(0), SimpleConstants, DL);
@@ -90,6 +99,15 @@ isSimpleEnoughValueToCommitHelper(Constant *C,
   case Instruction::PtrToInt:
     // int <=> ptr is fine if the int type is the same size as the
     // pointer type.
+    if (DL.isFatPointer(CE->getType()) ||
+        DL.isFatPointer(CE->getOperand(0)->getType())) {
+      LLVM_DEBUG({
+        CE->dump();
+        // Add an assertion here to see if this case is triggered.
+        report_fatal_error("inttoptr/ptrtoint in globals unsupported for CHERI");
+      });
+      return false;
+    }
     if (DL.getTypeSizeInBits(CE->getType()) !=
         DL.getTypeSizeInBits(CE->getOperand(0)->getType()))
       return false;
@@ -407,18 +425,9 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
       LLVM_DEBUG(dbgs() << "Found a CmpInst! Simplifying: " << *InstResult
                         << "\n");
     } else if (CastInst *CI = dyn_cast<CastInst>(CurInst)) {
-      // We aren't always able to use the cast kind of the instruction, as we
-      // may lose some address space qualifiers in getVal
-      auto CK = CI->getOpcode();
-      Constant *Src = getVal(CI->getOperand(0));
-      Type *DstTy = CI->getType();
-      if (CK == AddrSpaceCastInst::AddrSpaceCast || CK ==
-          AddrSpaceCastInst::BitCast) {
-        CK = (Src->getType()->getPointerAddressSpace() ==
-            DstTy->getPointerAddressSpace()) ? AddrSpaceCastInst::BitCast :
-          AddrSpaceCastInst::AddrSpaceCast;
-      }
-      InstResult = ConstantExpr::getCast(CK, Src, DstTy);
+      InstResult = ConstantExpr::getCast(CI->getOpcode(),
+                                         getVal(CI->getOperand(0)),
+                                         CI->getType());
       LLVM_DEBUG(dbgs() << "Found a Cast! Simplifying: " << *InstResult
                         << "\n");
     } else if (SelectInst *SI = dyn_cast<SelectInst>(CurInst)) {

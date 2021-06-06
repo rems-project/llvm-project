@@ -80,7 +80,6 @@
 #include <utility>
 #include <vector>
 
-
 using namespace llvm;
 
 #define DEBUG_TYPE "mips-lower"
@@ -340,6 +339,7 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MipsISD::CapTagGet:         return "MipsISD::CapTagGet";
   case MipsISD::CapSealedGet:      return "MipsISD::CapSealedGet";
   case MipsISD::CapSubsetTest:     return "MipsISD::CapSubsetTest";
+  case MipsISD::CapEqualExact:     return "MipsISD::CapEqualExact";
   }
   return nullptr;
 }
@@ -1372,6 +1372,14 @@ static SDValue performINTRINSIC_WO_CHAINCombine(
     return DAG.getSetCC(DL, MVT::i1, IntRes,
                         DAG.getConstant(0, DL, VT), ISD::SETNE);
   }
+  case Intrinsic::cheri_cap_equal_exact: {
+    SDValue IntRes = DAG.getNode(MipsISD::CapEqualExact, DL, VT,
+                                 N->getOperand(1), N->getOperand(2));
+    IntRes = DAG.getNode(ISD::AssertZext, DL, VT, IntRes,
+                         DAG.getValueType(MVT::i1));
+    return DAG.getSetCC(DL, MVT::i1, IntRes,
+                        DAG.getConstant(0, DL, VT), ISD::SETNE);
+  }
   case Intrinsic::cheri_cap_bounds_set:
   case Intrinsic::cheri_cap_bounds_set_exact:
   case Intrinsic::cheri_bounded_stack_cap: {
@@ -1486,13 +1494,6 @@ bool MipsTargetLowering::isCheapToSpeculateCttz() const {
 
 bool MipsTargetLowering::isCheapToSpeculateCtlz() const {
   return Subtarget.hasMips32();
-}
-
-bool MipsTargetLowering::canLowerPointerTypeCmpXchg(
-    const llvm::DataLayout &DL, llvm::AtomicCmpXchgInst *AI) const {
-  if (Subtarget.isCheri() && DL.isFatPointer(AI->getPointerAddressSpace()))
-    return true;
-  return TargetLowering::canLowerPointerTypeCmpXchg(DL, AI);
 }
 
 bool MipsTargetLowering::shouldFoldConstantShiftPairToMask(
@@ -1840,6 +1841,10 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   case Mips::ATOMIC_LOAD_MIN_I32:
     return emitAtomicBinary(MI, BB);
   case Mips::ATOMIC_LOAD_MIN_I64:
+  case Mips::CAP_ATOMIC_LOAD_MIN_I8:
+  case Mips::CAP_ATOMIC_LOAD_MIN_I16:
+  case Mips::CAP_ATOMIC_LOAD_MIN_I32:
+  case Mips::CAP_ATOMIC_LOAD_MIN_I64:
     return emitAtomicBinary(MI, BB);
 
   case Mips::ATOMIC_LOAD_MAX_I8:
@@ -1849,6 +1854,10 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   case Mips::ATOMIC_LOAD_MAX_I32:
     return emitAtomicBinary(MI, BB);
   case Mips::ATOMIC_LOAD_MAX_I64:
+  case Mips::CAP_ATOMIC_LOAD_MAX_I8:
+  case Mips::CAP_ATOMIC_LOAD_MAX_I16:
+  case Mips::CAP_ATOMIC_LOAD_MAX_I32:
+  case Mips::CAP_ATOMIC_LOAD_MAX_I64:
     return emitAtomicBinary(MI, BB);
 
   case Mips::ATOMIC_LOAD_UMIN_I8:
@@ -1858,6 +1867,10 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   case Mips::ATOMIC_LOAD_UMIN_I32:
     return emitAtomicBinary(MI, BB);
   case Mips::ATOMIC_LOAD_UMIN_I64:
+  case Mips::CAP_ATOMIC_LOAD_UMIN_I8:
+  case Mips::CAP_ATOMIC_LOAD_UMIN_I16:
+  case Mips::CAP_ATOMIC_LOAD_UMIN_I32:
+  case Mips::CAP_ATOMIC_LOAD_UMIN_I64:
     return emitAtomicBinary(MI, BB);
 
   case Mips::ATOMIC_LOAD_UMAX_I8:
@@ -1867,6 +1880,10 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   case Mips::ATOMIC_LOAD_UMAX_I32:
     return emitAtomicBinary(MI, BB);
   case Mips::ATOMIC_LOAD_UMAX_I64:
+  case Mips::CAP_ATOMIC_LOAD_UMAX_I8:
+  case Mips::CAP_ATOMIC_LOAD_UMAX_I16:
+  case Mips::CAP_ATOMIC_LOAD_UMAX_I32:
+  case Mips::CAP_ATOMIC_LOAD_UMAX_I64:
     return emitAtomicBinary(MI, BB);
 
   case Mips::PseudoSDIV:
@@ -1943,25 +1960,40 @@ MipsTargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   }
 }
 
-
 static unsigned getCheriPostRAAtomicOp(const MachineInstr &MI,
-                                       bool* IsCapabilityArg) {
-#define CAP_ATOMIC_POSTRA_CASES(op) \
-    case Mips::CAP_ATOMIC_##op##_I8: return Mips::CAP_ATOMIC_##op##_I8_POSTRA; \
-    case Mips::CAP_ATOMIC_##op##_I16: return Mips::CAP_ATOMIC_##op##_I16_POSTRA; \
-    case Mips::CAP_ATOMIC_##op##_I32: return Mips::CAP_ATOMIC_##op##_I32_POSTRA; \
-    case Mips::CAP_ATOMIC_##op##_I64: return Mips::CAP_ATOMIC_##op##_I64_POSTRA;
+                                       bool *IsCapabilityArg,
+                                       bool *NeedsAdditionalReg) {
+#define CAP_ATOMIC_POSTRA_CASES(op, extrareg)                                  \
+  case Mips::CAP_ATOMIC_##op##_I8:                                             \
+    *NeedsAdditionalReg = extrareg;                                            \
+    return Mips::CAP_ATOMIC_##op##_I8_POSTRA;                                  \
+  case Mips::CAP_ATOMIC_##op##_I16:                                            \
+    *NeedsAdditionalReg = extrareg;                                            \
+    return Mips::CAP_ATOMIC_##op##_I16_POSTRA;                                 \
+  case Mips::CAP_ATOMIC_##op##_I32:                                            \
+    *NeedsAdditionalReg = extrareg;                                            \
+    return Mips::CAP_ATOMIC_##op##_I32_POSTRA;                                 \
+  case Mips::CAP_ATOMIC_##op##_I64:                                            \
+    *NeedsAdditionalReg = extrareg;                                            \
+    return Mips::CAP_ATOMIC_##op##_I64_POSTRA;
 
-    // TODO: case Mips::CAP_ATOMIC_##op##_CAP: return Mips::CAP_ATOMIC_##op##_CAP_POSTRA;
+  // TODO: case Mips::CAP_ATOMIC_##op##_CAP: return
+  // Mips::CAP_ATOMIC_##op##_CAP_POSTRA;
 
+  // clang-format off
   switch (MI.getOpcode()) {
-  CAP_ATOMIC_POSTRA_CASES(LOAD_ADD)
-  CAP_ATOMIC_POSTRA_CASES(LOAD_SUB)
-  CAP_ATOMIC_POSTRA_CASES(LOAD_AND)
-  CAP_ATOMIC_POSTRA_CASES(LOAD_OR)
-  CAP_ATOMIC_POSTRA_CASES(LOAD_XOR)
-  CAP_ATOMIC_POSTRA_CASES(LOAD_NAND)
-  CAP_ATOMIC_POSTRA_CASES(SWAP)
+  CAP_ATOMIC_POSTRA_CASES(LOAD_ADD, false)
+  CAP_ATOMIC_POSTRA_CASES(LOAD_SUB, false)
+  CAP_ATOMIC_POSTRA_CASES(LOAD_AND, false)
+  CAP_ATOMIC_POSTRA_CASES(LOAD_OR, false)
+  CAP_ATOMIC_POSTRA_CASES(LOAD_XOR, false)
+  CAP_ATOMIC_POSTRA_CASES(LOAD_NAND, false)
+  CAP_ATOMIC_POSTRA_CASES(LOAD_MIN, true)
+  CAP_ATOMIC_POSTRA_CASES(LOAD_MAX, true)
+  CAP_ATOMIC_POSTRA_CASES(LOAD_UMIN, true)
+  CAP_ATOMIC_POSTRA_CASES(LOAD_UMAX, true)
+  CAP_ATOMIC_POSTRA_CASES(SWAP, false)
+  // clang-format on
   case Mips::CAP_ATOMIC_SWAP_CAP:
     *IsCapabilityArg = true;
     return Mips::CAP_ATOMIC_SWAP_CAP_POSTRA;
@@ -2060,7 +2092,8 @@ MipsTargetLowering::emitAtomicBinary(MachineInstr &MI,
     NeedsAdditionalReg = true;
     break;
   default:
-    AtomicOp = getCheriPostRAAtomicOp(MI, &IsCapabilityArg);
+    AtomicOp =
+        getCheriPostRAAtomicOp(MI, &IsCapabilityArg, &NeedsAdditionalReg);
     break;
   }
 
@@ -4261,19 +4294,23 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
     // ByVal Arg.
     if (Flags.isByVal()) {
-      unsigned FirstByValReg, LastByValReg;
-      unsigned ByValIdx = CCInfo.getInRegsParamsProcessed();
-      CCInfo.getInRegsParamInfo(ByValIdx, FirstByValReg, LastByValReg);
-
+      unsigned FirstByValReg = ~0u, LastByValReg = ~0u;
       assert(Flags.getByValSize() &&
              "ByVal args of size 0 should have been ignored by front-end.");
-      assert(ByValIdx < CCInfo.getInRegsParamsCount());
+      if (CCInfo.getInRegsParamsCount() > 0) {
+        unsigned ByValIdx = CCInfo.getInRegsParamsProcessed();
+        CCInfo.getInRegsParamInfo(ByValIdx, FirstByValReg, LastByValReg);
+        assert(ByValIdx < CCInfo.getInRegsParamsCount());
+      }
       assert(!IsTailCall &&
              "Do not tail-call optimize if there is a byval argument.");
       passByValArg(Chain, DL, RegsToPass, MemOpChains, StackPtr, MFI, DAG, Arg,
                    FirstByValReg, LastByValReg, Flags, Subtarget.isLittle(),
                    VA);
       CCInfo.nextInRegsParam();
+      if (FirstOffset == -1)
+        FirstOffset = VA.getLocMemOffset();
+      LastOffset = VA.getLocMemOffset() + Flags.getByValSize();
       continue;
     }
 
@@ -4407,18 +4444,17 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       // Also clear $c13 if it was marked as live-in due to having
       if (MF.getRegInfo().isLiveIn(Mips::C13))
         ShouldClearC13 = true;
+      // Also clear $c13 if the the callee is a variadic function but we're not
+      // passing any variadic arguments.
+      if (IsVarArg)
+        ShouldClearC13 = true;
       if (ShouldClearC13) {
         LLVM_DEBUG(dbgs() << "Clearing $c13 in " << MF.getName()
                           << "(is varargs: " << MF.getFunction().isVarArg()
                           << ") callee = ");
         LLVM_DEBUG(Callee.dump(&DAG););
-      }
-      // We always clear $c13 if we are compiling at -O0 or -O1 since this helps
-      // us catch errors with calling convention mismatches.
-      if (getTargetMachine().getOptLevel() < CodeGenOpt::Default)
-        ShouldClearC13 = true;
-      if (ShouldClearC13)
         RegsToPass.push_back(std::make_pair(Mips::C13, DAG.getNullCapability(DL)));
+      }
     }
   }
   // If we're doing a CCall then any unused arg registers should be zero.
@@ -5692,6 +5728,9 @@ void MipsTargetLowering::copyByValRegs(
   if (!NumRegs)
     return;
 
+  assert(!ABI.IsCheriPureCap() &&
+         "Byval args in integer registers does not work for purecap");
+
   // Copy arg registers.
   MVT RegTy = MVT::getIntegerVT(GPRSizeInBytes * 8);
   const TargetRegisterClass *RC = getRegClassFor(RegTy);
@@ -5717,16 +5756,20 @@ void MipsTargetLowering::passByValArg(
     const CCValAssign &VA) const {
   unsigned ByValSizeInBytes = Flags.getByValSize();
   unsigned OffsetInBytes = 0; // From beginning of struct
-  unsigned RegSizeInBytes = Subtarget.getGPRSizeInBytes();
+  unsigned RegSizeInBytes = ABI.IsCheriPureCap()
+                                ? Subtarget.getCapSizeInBytes()
+                                : Subtarget.getGPRSizeInBytes();
   Align Alignment =
       std::min(Flags.getNonZeroByValAlign(), Align(RegSizeInBytes));
   EVT PtrTy = getPointerTy(DAG.getDataLayout(), ABI.StackAddrSpace()),
       RegTy = MVT::getIntegerVT(RegSizeInBytes * 8);
   unsigned NumRegs = LastReg - FirstReg;
 
-  // Don't pass parts of the struct in integer registers (will break caps)
-  // TODO: should also not happen in hybrid abi for structs with caps
-  if (NumRegs && !ABI.IsCheriPureCap()) {
+  if (NumRegs) {
+    // Don't pass parts of the struct in integer registers (will break caps)
+    // TODO: should also not happen in hybrid abi for structs with caps
+    assert(!ABI.IsCheriPureCap() &&
+           "Byval args in integer registers does not work for purecap");
     ArrayRef<MCPhysReg> ArgRegs = ABI.GetByValArgRegs();
     bool LeftoverBytes = (NumRegs * RegSizeInBytes > ByValSizeInBytes);
     unsigned I = 0;
@@ -5796,12 +5839,12 @@ void MipsTargetLowering::passByValArg(
   unsigned MemCpySize = ByValSizeInBytes - OffsetInBytes;
   SDValue Src = DAG.getPointerAdd(DL, Arg, OffsetInBytes);
   SDValue Dst = DAG.getPointerAdd(DL, StackPtr, VA.getLocMemOffset());
-  Chain = DAG.getMemcpy(
-      Chain, DL, Dst, Src, DAG.getConstant(MemCpySize, DL, PtrTy),
-      Align(Alignment),
-      /*isVolatile=*/false, /*AlwaysInline=*/false,
-      /*isTailCall=*/false, /*MustPreserveCheriCapabilities=*/false,
-      MachinePointerInfo(), MachinePointerInfo());
+  Chain = DAG.getMemcpy(Chain, DL, Dst, Src,
+                        DAG.getIntPtrConstant(MemCpySize, DL), Alignment,
+                        /*isVolatile=*/false, /*AlwaysInline=*/false,
+                        /*isTailCall=*/false,
+                        /*MustPreserveCheriCapabilities=*/false,
+                        MachinePointerInfo(), MachinePointerInfo());
   MemOpChains.push_back(Chain);
 }
 
@@ -5822,7 +5865,7 @@ void MipsTargetLowering::writeVarArgRegs(std::vector<SDValue> &OutChains,
   int VaArgOffset;
 
   if (ABI.IsCheriPureCap()) {
-    int FI = MFI.CreateFixedObject(RegSizeInBytes, 0, true);
+    int FI = MFI.CreateFixedObject(Subtarget.getCapSizeInBytes(), 0, true);
     MipsFI->setVarArgsFrameIndex(FI);
     return;
   }

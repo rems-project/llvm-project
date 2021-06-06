@@ -1,5 +1,5 @@
-; RUN: %generic_cheri_purecap_llc %s -o - < %s | FileCheck %s --check-prefix=PURECAP
-; RUN: %generic_cheri_hybrid_llc -o - < %s | FileCheck %s --check-prefix=HYBRID
+; RUN: llc @PURECAP_HARDFLOAT_ARGS@ %s -o - < %s | FileCheck %s --check-prefix=PURECAP
+; RUN: llc @HYBRID_HARDFLOAT_ARGS@ -o - < %s | FileCheck %s --check-prefix=HYBRID
 ; Check that the target-independent CHERI intrinsics are support for all architectures
 ; The grouping/ordering in this test is based on the RISC-V instruction listing
 ; in the CHERI ISA specification (Appendix C.1 in ISAv7).
@@ -202,4 +202,12 @@ define iCAPRANGE @subset_test(i8 addrspace(200)* %cap1, i8 addrspace(200)* %cap2
   %subset = call i1 @llvm.cheri.cap.subset.test(i8 addrspace(200)* %cap1, i8 addrspace(200)* %cap2)
   %subset.zext = zext i1 %subset to iCAPRANGE
   ret iCAPRANGE %subset.zext
+}
+
+declare i1 @llvm.cheri.cap.equal.exact(i8 addrspace(200)* %cap1, i8 addrspace(200)* %cap2)
+
+define iCAPRANGE @equal_exact(i8 addrspace(200)* %cap1, i8 addrspace(200)* %cap2) nounwind {
+  %eqex = call i1 @llvm.cheri.cap.equal.exact(i8 addrspace(200)* %cap1, i8 addrspace(200)* %cap2)
+  %eqex.zext = zext i1 %eqex to iCAPRANGE
+  ret iCAPRANGE %eqex.zext
 }

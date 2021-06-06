@@ -1514,6 +1514,15 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
     else
       Result = Context.Int128Ty;
     break;
+  case DeclSpec::TST_intcap:
+    if (!S.Context.getTargetInfo().SupportsCapabilities())
+      S.Diag(DS.getTypeSpecTypeLoc(), diag::err_type_unsupported)
+        << "__intcap";
+    if (DS.getTypeSpecSign() == DeclSpec::TSS_unsigned)
+      Result = Context.UnsignedIntCapTy;
+    else
+      Result = Context.IntCapTy;
+    break;
   case DeclSpec::TST_float16:
     // CUDA host and device may have different _Float16 support, therefore
     // do not diagnose _Float16 usage to avoid false alarm.
@@ -2078,7 +2087,7 @@ static QualType deduceOpenCLPointeeAddrSpace(Sema &S, QualType PointeeType) {
 QualType Sema::BuildPointerType(QualType T,
                                 SourceLocation Loc, DeclarationName Entity,
                                 bool* ValidPointer,
-                                ASTContext::PointerInterpretationKind Kind) {
+                                PointerInterpretationKind Kind) {
   if (T->isReferenceType()) {
     // C++ 8.3.2p4: There shall be no ... pointers to references ...
     Diag(Loc, diag::err_illegal_decl_pointer_to_reference)
@@ -2105,9 +2114,8 @@ QualType Sema::BuildPointerType(QualType T,
 
   // If we are in purecap ABI turn pointers marked as using an integer
   // representation into a plain pointer-range-sized integer
-  if (Kind == ASTContext::PIK_Default &&
-      PointerInterpretation == ASTContext::PIK_Integer &&
-      Context.getTargetInfo().areAllPointersCapabilities()) {
+  if (PointerInterpretation == PIK_Integer
+      && Context.getTargetInfo().areAllPointersCapabilities()) {
     // This is not a real pointer type in the purecap ABI
     // ptrdiff_t will be the same size as a plain mips pointer
     // FIXME: this ValidPointer approach is a HACK to ensure that we return
@@ -2119,8 +2127,7 @@ QualType Sema::BuildPointerType(QualType T,
   // Build the pointer type.
   if (ValidPointer)
     *ValidPointer = true;
-  return Context.getPointerType(T, Kind == ASTContext::PIK_Default ?
-                                      PointerInterpretation : Kind);
+  return Context.getPointerType(T, Kind);
 }
 
 /// Build a reference type.
@@ -4771,7 +4778,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
       }
       bool ValidPointer = false;
       T = S.BuildPointerType(T, DeclType.Loc, Name, &ValidPointer,
-                             ASTContext::PIK_Default);
+                             S.PointerInterpretation);
       if (!ValidPointer) {
         IsIntegerPointerInPureCapABI = true;  // FIXME: is this correct?
       } else if (DeclType.Ptr.TypeQuals)
@@ -6146,6 +6153,20 @@ fillDependentAddressSpaceTypeLoc(DependentAddressSpaceTypeLoc DASTL,
       "no address_space attribute found at the expected location!");
 }
 
+static void
+fillDependentPointerTypeLoc(DependentPointerTypeLoc DPTL,
+                            const ParsedAttributesView &Attrs) {
+  for (const ParsedAttr &AL : Attrs) {
+    if (AL.getKind() == ParsedAttr::AT_CHERICapability) {
+      DPTL.setQualifierLoc(AL.getLoc());
+      return;
+    }
+  }
+
+  llvm_unreachable(
+      "no cheri_capability attribute found at the expected location!");
+}
+
 static void fillMatrixTypeLoc(MatrixTypeLoc MTL,
                               const ParsedAttributesView &Attrs) {
   for (const ParsedAttr &AL : Attrs) {
@@ -6207,6 +6228,12 @@ GetTypeSourceInfoForDeclarator(TypeProcessingState &State,
                CurrTL.getAs<DependentAddressSpaceTypeLoc>()) {
       fillDependentAddressSpaceTypeLoc(TL, D.getTypeObject(i).getAttrs());
       CurrTL = TL.getPointeeTypeLoc().getUnqualifiedLoc();
+    }
+
+    while (DependentPointerTypeLoc TL =
+               CurrTL.getAs<DependentPointerTypeLoc>()) {
+      fillDependentPointerTypeLoc(TL, D.getTypeObject(i).getAttrs());
+      CurrTL = TL.getPointerTypeLoc().getUnqualifiedLoc();
     }
 
     if (MatrixTypeLoc TL = CurrTL.getAs<MatrixTypeLoc>())
@@ -7868,6 +7895,34 @@ static void HandleOpenCLAccessAttr(QualType &CurType, const ParsedAttr &Attr,
   }
 }
 
+QualType Sema::BuildPointerInterpretationAttr(QualType T,
+                                              PointerInterpretationKind PIK,
+                                              SourceLocation QualifierLoc) {
+  if (T->isPointerType() || T->isReferenceType()) {
+    // preserve existing qualifiers on T
+    Qualifiers Qs = T.getQualifiers();
+
+    if (const PointerType *PT = T->getAs<PointerType>())
+      T = Context.getPointerType(PT->getPointeeType(), PIK);
+    else if (const LValueReferenceType *LRT = T->getAs<LValueReferenceType>())
+      T = Context.getLValueReferenceType(LRT->getPointeeType(), true, PIK);
+    else if (const RValueReferenceType *RRT = T->getAs<RValueReferenceType>())
+      T = Context.getRValueReferenceType(RRT->getPointeeType(), PIK);
+    else
+      llvm_unreachable("Don't know how to set the interpretation for T");
+
+    if (Qs.hasQualifiers())
+      T = Context.getQualifiedType(T, Qs);
+  } else if (T->isDependentType()) {
+    T = Context.getDependentPointerType(T, PIK, QualifierLoc);
+  } else {
+    Diag(QualifierLoc, diag::err_cheri_capability_attribute_pointers_only)
+        << T;
+  }
+
+  return T;
+}
+
 /// HandleCHERICapabilityAttr - Process the cheri_capability attribute. It is
 /// only applicable to pointer and reference types and specifies that this
 /// pointer/reference should be treated as a capability.
@@ -7967,26 +8022,8 @@ static void HandleCHERICapabilityAttr(QualType &CurType, TypeProcessingState &st
     }
   }
 
-  if (CurType->isPointerType() || CurType->isReferenceType()) {
-    // preserve existing qualifiers on CurType
-    Qualifiers Qs = CurType.getQualifiers();
-
-    if (const PointerType *PT = CurType->getAs<PointerType>())
-      CurType = S.Context.getPointerType(PT->getPointeeType(), ASTContext::PIK_Capability);
-    else if (const LValueReferenceType *LRT = CurType->getAs<LValueReferenceType>())
-      CurType = S.Context.getLValueReferenceType(LRT->getPointeeType(), true, ASTContext::PIK_Capability);
-    else if (const RValueReferenceType *RRT = CurType->getAs<RValueReferenceType>())
-      CurType = S.Context.getRValueReferenceType(RRT->getPointeeType(), ASTContext::PIK_Capability);
-    else
-      llvm_unreachable("Don't know how to turn CurType into a capability");
-
-    if (Qs.hasQualifiers())
-      CurType = S.Context.getQualifiedType(CurType, Qs);
-
-    return;
-  }
-
-  S.Diag(attr.getLoc(), diag::err_cheri_capability_attribute_pointers_only) << CurType;
+  CurType = S.BuildPointerInterpretationAttr(CurType, PIK_Capability,
+                                             attr.getLoc());
 }
 
 static void handleCheriNoProvenanceAttr(QualType &T, TypeProcessingState &State,

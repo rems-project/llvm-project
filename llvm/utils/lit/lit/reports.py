@@ -68,20 +68,31 @@ class JsonReport(object):
             file.write('\n')
 
 
+def escape_control_chars(s):
+    escape_dict = {chr(c): '\\x' + hex(c)[2:] for c in range(32) if chr(c) not in ('\t', '\n', '\r')}
+    try:
+        s = s.translate(str.maketrans(escape_dict))
+    except AttributeError:
+        # python 2.7 string.translate() does not support multi-character
+        # replacing, so fall back to multiple str.replace() calls.
+        for k, v in escape_dict.items():
+            s = s.replace(k, v)
+    return s
+
+
 class XunitReport(object):
     def __init__(self, output_file):
         self.output_file = output_file
         self.skipped_codes = {lit.Test.EXCLUDED,
                               lit.Test.SKIPPED, lit.Test.UNSUPPORTED}
 
-    # TODO(yln): elapsed unused, put it somewhere?
     def write_results(self, tests, elapsed):
         tests.sort(key=by_suite_and_test_path)
         tests_by_suite = itertools.groupby(tests, lambda t: t.suite)
 
         with open(self.output_file, 'w') as file:
             file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-            file.write('<testsuites>\n')
+            file.write('<testsuites time="{time:.2f}">\n'.format(time=elapsed))
             for suite, test_iter in tests_by_suite:
                 self._write_testsuite(file, suite, list(test_iter))
             file.write('</testsuites>\n')
@@ -114,17 +125,12 @@ class XunitReport(object):
             # terminator we wrap it by creating a new CDATA block.
             output = test.result.output.replace(']]>', ']]]]><![CDATA[>')
             if isinstance(output, bytes):
-                output.decode("utf-8", 'ignore')
+                output = output.decode("utf-8", 'ignore')
 
             # The Jenkins JUnit XML parser throws an exception if the output
             # contains control characters like \x1b (e.g. if there is some
             # -fcolor-diagnostics output).
-            # TODO: this is slow
-            for i in range(31):
-                if chr(i) in ('\t', '\n', '\r'):
-                    continue
-                output = output.replace(chr(i), '\\x' + hex(i)[2:])
-
+            output = escape_control_chars(output)
             file.write(output)
             file.write(']]></failure>\n</testcase>\n')
         elif test.result.code in self.skipped_codes:
@@ -138,7 +144,7 @@ class XunitReport(object):
     def _get_skip_reason(self, test):
         code = test.result.code
         if code == lit.Test.EXCLUDED:
-            return 'Test not selected (--filter, --max-tests, --run-shard)'
+            return 'Test not selected (--filter, --max-tests)'
         if code == lit.Test.SKIPPED:
             return 'User interrupt'
 

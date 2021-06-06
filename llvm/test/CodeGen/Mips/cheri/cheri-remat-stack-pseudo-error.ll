@@ -3,6 +3,7 @@
 ; This previously crashed because we were attempting to rematerialize a bounded stack cap where the size was not an immediate
 ; This caused use of a dead register -> fix this by only rematerializing ones with immediates
 ; RUN: %cheri_purecap_llc %s -o %t.mir -stop-before="simple-register-coalescing"
+; RUN: %cheri_purecap_llc %t.mir -o - -start-before="simple-register-coalescing" -stop-after="simple-register-coalescing" -verify-machineinstrs
 ; RUN: %cheri_purecap_llc %t.mir -o - -start-before="simple-register-coalescing" -stop-after="simple-register-coalescing" -verify-machineinstrs | FileCheck %s
 ; RUN: %cheri_purecap_llc %t.mir -o /dev/null -start-before="simple-register-coalescing" -verify-machineinstrs
 ; Try compiling the full thing
@@ -34,13 +35,11 @@ define void @fn1() addrspace(200) #0 {
 ; ASM-NEXT:    clcbi $c4, %captab20(a)($c19)
 ; ASM-NEXT:    clcbi $c12, %capcall20(memcpy)($c19)
 ; ASM-NEXT:    cmove $c3, $c18
+; ASM-NEXT:    cjalr $c12, $c17
 ; ASM-NEXT:    daddiu $4, $zero, 4096
-; ASM-NEXT:    cjalr $c12, $c17
-; ASM-NEXT:    cgetnull $c13
 ; ASM-NEXT:    clcbi $c12, %capcall20(fn2)($c19)
-; ASM-NEXT:    cmove $c3, $c18
 ; ASM-NEXT:    cjalr $c12, $c17
-; ASM-NEXT:    cgetnull $c13
+; ASM-NEXT:    cmove $c3, $c18
 ; ASM-NEXT:    clc $c17, $zero, [[#STACKFRAME_SIZE - (3 * CAP_SIZE)]]($c11)
 ; ASM-NEXT:    clc $c18, $zero, [[#STACKFRAME_SIZE - (2 * CAP_SIZE)]]($c11)
 ; ASM-NEXT:    clc $c19, $zero, [[#STACKFRAME_SIZE - (1 * CAP_SIZE)]]($c11)
@@ -51,11 +50,15 @@ entry:
   %byval-temp = alloca %struct.Dwarf_Error, align 8, addrspace(200)
   %0 = bitcast %struct.Dwarf_Error addrspace(200)* %byval-temp to i8 addrspace(200)*
   call void @llvm.memcpy.p200i8.p200i8.i64(i8 addrspace(200)* align 8 %0, i8 addrspace(200)* align 4 bitcast (%struct.Dwarf_Error addrspace(200)* @a to i8 addrspace(200)*), i64 4096, i1 false)
-  call addrspace(200) void bitcast (void (...) addrspace(200)* @fn2 to void (%struct.Dwarf_Error addrspace(200)*) addrspace(200)*)(%struct.Dwarf_Error addrspace(200)* byval align 8 %byval-temp)
+  call addrspace(200) void bitcast (void (...) addrspace(200)* @fn2 to void (%struct.Dwarf_Error addrspace(200)*) addrspace(200)*)(%struct.Dwarf_Error addrspace(200)* align 8 %byval-temp)
   ret void
 }
 
 ; CHECK-LABEL: name: fn1
+; CHECK: stack:
+; CHECK-NEXT: - { id: 0, name: byval-temp, type: default, offset: 0, size: 4096, alignment: 8,
+; CHECK-NEXT:     stack-id: default, callee-saved-register: '', callee-saved-restored: true,
+; CHECK-NEXT:     debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
 ; CHECK: [[OFFSET:%.+]]:gpr64 = DADDiu $zero_64, 4096
 ; CHECK: [[STACK_CAP:%.+]]:cherigpr = CheriBoundedStackPseudoReg %stack.0.byval-temp, 0, [[OFFSET]]
 ; CHECK: [[A_CAP:%.+]]:cherigpr = LOADCAP_BigImm target-flags(mips-captable20) @a
@@ -65,9 +68,8 @@ entry:
 ; This previously got turned into a duplicate of the CheriBoundedStackPseudoReg but that used the killed %1 register!
 ; CHECK: [[JUMP_TARGET:%.+]]:cherigpr = LOADCAP_BigImm target-flags(mips-captable20-call) @fn2
 ; CHECK-NEXT: $c3 = COPY [[STACK_CAP]]
-; CHECK-NEXT: $c13 = COPY $cnull
 ; CHECK-NEXT: $c12 = COPY [[JUMP_TARGET]]
-; CHECK-NEXT: CapJumpLinkPseudo killed $c12, csr_cheri_purecap, implicit-def dead $c17, implicit-def dead $c26, implicit killed $c3, implicit killed $c13, implicit-def $c11
+; CHECK-NEXT: CapJumpLinkPseudo killed $c12, csr_cheri_purecap, implicit-def dead $c17, implicit-def dead $c26, implicit killed $c3, implicit-def $c11
 
 
 
@@ -84,14 +86,12 @@ define void @small_stack_fn1() addrspace(200) #0 {
 ; ASM-NEXT:    clcbi $c12, %capcall20(memcpy)($c18)
 ; ASM-NEXT:    cincoffset $c3, $c11, [[#CAP_SIZE]]
 ; ASM-NEXT:    csetbounds $c3, $c3, 512
-; ASM-NEXT:    daddiu $4, $zero, 512
 ; ASM-NEXT:    cjalr $c12, $c17
-; ASM-NEXT:    cgetnull $c13
+; ASM-NEXT:    daddiu $4, $zero, 512
 ; ASM-NEXT:    clcbi $c12, %capcall20(fn2)($c18)
 ; ASM-NEXT:    cincoffset $c3, $c11, [[#CAP_SIZE]]
-; ASM-NEXT:    csetbounds $c3, $c3, 512
 ; ASM-NEXT:    cjalr $c12, $c17
-; ASM-NEXT:    cgetnull $c13
+; ASM-NEXT:    csetbounds $c3, $c3, 512
 ; ASM-NEXT:    clc $c17, $zero, [[#STACKFRAME_SIZE - (2 * CAP_SIZE)]]($c11)
 ; ASM-NEXT:    clc $c18, $zero, [[#STACKFRAME_SIZE - (1 * CAP_SIZE)]]($c11)
 ; ASM-NEXT:    cjr $c17
@@ -100,7 +100,7 @@ entry:
   %byval-temp = alloca %struct.Dwarf_Error_small, align 8, addrspace(200)
   %0 = bitcast %struct.Dwarf_Error_small addrspace(200)* %byval-temp to i8 addrspace(200)*
   call void @llvm.memcpy.p200i8.p200i8.i64(i8 addrspace(200)* align 8 %0, i8 addrspace(200)* align 4 bitcast (%struct.Dwarf_Error_small addrspace(200)* @a_small to i8 addrspace(200)*), i64 512, i1 false)
-  call addrspace(200) void bitcast (void (...) addrspace(200)* @fn2 to void (%struct.Dwarf_Error_small addrspace(200)*) addrspace(200)*)(%struct.Dwarf_Error_small addrspace(200)* byval align 8 %byval-temp)
+  call addrspace(200) void bitcast (void (...) addrspace(200)* @fn2 to void (%struct.Dwarf_Error_small addrspace(200)*) addrspace(200)*)(%struct.Dwarf_Error_small addrspace(200)* align 8 %byval-temp)
   ret void
 }
 ; Same thing with a smaller stack frame. In this case we can rematerialize it:
@@ -113,9 +113,8 @@ entry:
 ; Remat 2:
 ; CHECK: [[JUMP_TARGET:%.+]]:cherigpr = LOADCAP_BigImm target-flags(mips-captable20-call) @fn2
 ; CHECK-NEXT: $c3 = CheriBoundedStackPseudoImm %stack.0.byval-temp, 0, 512
-; CHECK-NEXT: $c13 = COPY $cnull
 ; CHECK-NEXT: $c12 = COPY [[JUMP_TARGET]]
-; CHECK-NEXT: CapJumpLinkPseudo killed $c12, csr_cheri_purecap, implicit-def dead $c17, implicit-def dead $c26, implicit killed $c3, implicit killed $c13, implicit-def $c11
+; CHECK-NEXT: CapJumpLinkPseudo killed $c12, csr_cheri_purecap, implicit-def dead $c17, implicit-def dead $c26, implicit killed $c3, implicit-def $c11
 ; CHECK-NOT: CheriBoundedStackPseudo
 
 attributes #0 = { noinline nounwind optnone }

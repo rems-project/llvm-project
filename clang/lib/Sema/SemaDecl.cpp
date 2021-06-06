@@ -131,6 +131,7 @@ bool Sema::isSimpleTypeSpecifier(tok::TokenKind Kind) const {
   case tok::kw_long:
   case tok::kw___int64:
   case tok::kw___int128:
+  case tok::kw___intcap:
   case tok::kw_signed:
   case tok::kw_unsigned:
   case tok::kw_void:
@@ -9373,14 +9374,14 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     for (QualType T : OldParams) {
       if (const PointerType *PT = T->getAs<PointerType>())
         NewParams.push_back(Context.getPointerType(PT->getPointeeType(),
-                                                   ASTContext::PIK_Capability));
+                                                   PIK_Capability));
       else
         NewParams.push_back(T);
     }
     QualType RetTy = FPT->getReturnType();
     if (const PointerType *PT = RetTy->getAs<PointerType>())
       RetTy = Context.getPointerType(PT->getPointeeType(),
-                                     ASTContext::PIK_Capability);
+                                     PIK_Capability);
     NewFD->setType(Context.getFunctionType(RetTy, NewParams,
           FPT->getExtProtoInfo()));
   }

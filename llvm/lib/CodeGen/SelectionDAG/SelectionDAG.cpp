@@ -1257,6 +1257,10 @@ SDValue SelectionDAG::getConstant(const ConstantInt &Val, const SDLoc &DL,
     assert(APInt::isSameValue(Int, Val.getValue()));
     assert(!isT && "Cannot create INTTOPTR targetconstant");
     MVT IntVT = MVT::getIntegerVT(AddrBitWidth);
+    // XXXAR: If this is actually needed somewhere we should add a
+    // DAG.getIntCapConstant() helper function.
+    assert(Int.isNullValue() && "Should not create non-zero capability "
+                                "constants with SelectionDAG::getConstant()");
     return getNode(ISD::INTTOPTR, DL, VT, getConstant(Int, DL, IntVT));
   }
   assert(VT.isInteger() && "Cannot create FP integer constant!");
@@ -5319,6 +5323,16 @@ SDValue SelectionDAG::getNode(unsigned Opcode, const SDLoc &DL, EVT VT,
       return V;
     break;
   }
+  case ISD::PTRADD:
+    assert(VT.isFatPointer() && "PTRADD result must be a capability type!");
+    assert(N1.getValueType().isFatPointer() &&
+           "First PTRADD argument must be a capability type!");
+    assert(N2.getValueType().isInteger() &&
+           "Second PTRADD argument must be an integer type!");
+    // ptradd(X, 0) -> X.
+    if (N2C && N2C->isNullValue())
+      return N1;
+    break;
   case ISD::AND:
     assert(VT.isInteger() && "This operator does not apply to FP types!");
     assert(N1.getValueType() == N2.getValueType() &&
@@ -5999,9 +6013,15 @@ SDValue SelectionDAG::getMemBasePlusOffset(SDValue Base, int64_t Offset,
   // For integer pointers the offset and pointer type must be identical
   // (otherwise we assert later). For CHERI capabilities we use the the pointer
   // range type as the offset type.
-  EVT OffsetVT = Base.getValueType();
-  if (Base.getValueType().isFatPointer()) {
+  EVT BaseVT = Base.getValueType();
+  EVT OffsetVT = BaseVT;
+  if (BaseVT.isFatPointer()) {
     OffsetVT = TLI->getPointerRangeTy(getDataLayout());
+    // For a vector of capabilities we need a vector of offsets.
+    if (BaseVT.isVector()) {
+      ElementCount EC = BaseVT.getVectorElementCount();
+      OffsetVT = EVT::getVectorVT(*Context, OffsetVT, EC);
+    }
   }
   return getMemBasePlusOffset(Base, getConstant(Offset, DL, OffsetVT), DL,
                               Flags);

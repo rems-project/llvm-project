@@ -252,6 +252,7 @@ bool TypePrinter::canPrefixQualifiers(const Type *T,
     case Type::RValueReference:
     case Type::MemberPointer:
     case Type::DependentAddressSpace:
+    case Type::DependentPointer:
     case Type::DependentVector:
     case Type::DependentSizedExtVector:
     case Type::Vector:
@@ -331,14 +332,14 @@ void TypePrinter::printBefore(const Type *T,Qualifiers Quals, raw_ostream &OS) {
   // Print __capability
   if (!Policy.SuppressCapabilityQualifier) {
     if (const PointerType *PTy = dyn_cast<PointerType>(T)) {
-      if (PTy->isCHERICapability()) {
+      if (PTy->getPointerInterpretation() == PIK_Capability) {
         OS << " __capability";
         if (hasAfterQuals || !PrevPHIsEmpty.get())
           OS << " ";
       }
     }
     else if (const ReferenceType *RTy = dyn_cast<ReferenceType>(T)) {
-      if (RTy->isCHERICapability()) {
+      if (RTy->getPointerInterpretation() == PIK_Capability) {
         OS << " __capability";
         if (hasAfterQuals || !PrevPHIsEmpty.get())
           OS << " ";
@@ -622,6 +623,21 @@ void TypePrinter::printDependentAddressSpaceAfter(
     T->getAddrSpaceExpr()->printPretty(OS, nullptr, Policy);
   OS << ")))";
   printAfter(T->getPointeeType(), OS);
+}
+
+void TypePrinter::printDependentPointerBefore(
+    const DependentPointerType *T, raw_ostream &OS) {
+  printBefore(T->getPointerType(), OS);
+}
+
+void TypePrinter::printDependentPointerAfter(
+    const DependentPointerType *T, raw_ostream &OS) {
+  if (!Policy.SuppressCapabilityQualifier) {
+    if (T->getPointerInterpretation() == PIK_Capability) {
+      OS << " __capability";
+    }
+  }
+  printAfter(T->getPointerType(), OS);
 }
 
 void TypePrinter::printDependentSizedExtVectorBefore(

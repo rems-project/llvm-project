@@ -2297,8 +2297,7 @@ BuildSimilarlyQualifiedPointerType(const Type *FromPtr,
     return ToType.getUnqualifiedType();
 
   const bool FromIsCap = FromPtr->isCHERICapabilityType(Context);
-  ASTContext::PointerInterpretationKind PIK =
-      FromIsCap ? ASTContext::PIK_Capability : ASTContext::PIK_Integer;
+  PointerInterpretationKind PIK = FromIsCap ? PIK_Capability : PIK_Integer;
   QualType CanonFromPointee
     = Context.getCanonicalType(FromPtr->getPointeeType());
   QualType CanonToPointee = Context.getCanonicalType(ToPointee);

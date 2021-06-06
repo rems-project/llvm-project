@@ -39,6 +39,7 @@ def SDT_CheriBoolBinary : SDTypeProfile<1, 2, [
 ]>;
 
 def CapSubsetTest : SDNode<"MipsISD::CapSubsetTest", SDT_CheriBoolBinary>;
+def CapEqualExact : SDNode<"MipsISD::CapEqualExact", SDT_CheriBoolBinary>;
 
 def SDT_CheriCapModify : SDTypeProfile<1, 2, [
   SDTCisVT<0, CapRegType>, SDTCisVT<1, CapRegType>, SDTCisInt<2>
@@ -168,7 +169,7 @@ def CLT : CheriFmtPtrCmp<0x16, GPR64Opnd, "clt", []>;
 def CLE : CheriFmtPtrCmp<0x17, GPR64Opnd, "cle", []>;
 def CLTU : CheriFmtPtrCmp<0x18, GPR64Opnd, "cltu", []>;
 def CLEU : CheriFmtPtrCmp<0x19, GPR64Opnd, "cleu", []>;
-def CEXEQ : CheriFmtPtrCmp<0x1a, GPR64Opnd, "cexeq", []>;
+def CEXEQ : CheriFmtPtrCmp<0x1a, GPR64Opnd, "cexeq", [(set GPR64Opnd: $rd, (CapEqualExact CheriOpnd: $cb, CheriOpnd: $ct))]>;
 def CNEXEQ : CheriFmtPtrCmp<0x21, GPR64Opnd, "cnexeq", []>;
 }
 def : InstAlias<"cgt $rd, $cb, $ct",
@@ -182,7 +183,7 @@ def : InstAlias<"cgeu $rd, $cb, $ct",
 let isCodeGenOnly=1, isCompare=1, isReMaterializable = 1, isAsCheapAsAMove = 1 in {
   def CEQ32 : CheriFmtPtrCmp<0x14, GPR32Opnd, "ceq", []>;
   def CEXEQ32 : CheriFmtPtrCmp<0x1a, GPR32Opnd, "cexeq", []>;
-  def CNEXEQ32 : CheriFmtPtrCmp<0x21, GPR32Opnd, "cnexeq", []>;
+  def CNEXEQ32 : CheriFmtPtrCmp<0x21, GPR32Opnd, "cnexeq", [(set GPR32Opnd: $rd, (i32 (seteq (assertzext (CapEqualExact CheriOpnd: $cb, CheriOpnd: $ct)), (i64 0))))]>;
   def CNE32 : CheriFmtPtrCmp<0x15, GPR32Opnd, "cne", []>;
   def CLT32 : CheriFmtPtrCmp<0x16, GPR32Opnd, "clt", [(set GPR32Opnd: $rd, (setlt CheriOpnd: $cb, CheriOpnd:$ct))]>;
   def CLE32 : CheriFmtPtrCmp<0x17, GPR32Opnd, "cle", [(set GPR32Opnd: $rd, (setle CheriOpnd: $cb, CheriOpnd:$ct))]>;
@@ -269,15 +270,61 @@ def CGetSealed : CheriFmt2Op<5, (outs GPR64Opnd:$r1), (ins CheriOpnd:$r2),
 def CGetOffset : CheriFmtCGet<6, "offset">;
 def CGetAddr   : CheriFmtCGet<0xf, "addr", "address">;
 def CGetFlags  : CheriFmtCGet<0x12, "flags">;
-// Versions of property setters that take immediate operands
-// We allow CIncOffset $c1, 10 as an alias for CIncOffset $c1, $c1, 10, and the same for CSetBounds
-let TwoOperandAliasConstraint = "$cd = $cb" in {
-  def CIncOffsetImm : CheriFmtCSetImm<0x13, simm11s0, "cincoffset",
-    [(set CheriOpnd:$cd, (ptradd CheriOpnd:$cb, (i64 simm11s0Pattern: $imm)))]>;
-  def CSetBoundsImm : CheriFmtCSetImm<0x14, uimm11s0, "csetbounds",
-    [(set CheriOpnd:$cd, (int_cheri_cap_bounds_set CheriOpnd:$cb, (i64 uimm11s0Pattern: $imm)))]>;
-}
+def CGetAndAddr : CheriFmt3Op<0x23, (outs GPR64Opnd:$r1), (ins CheriOpnd:$r2, GPR64Opnd:$r3),
+  "cgetandaddr\t$r1, $r2, $r3", [(set GPR64Opnd: $r1, (and (int_cheri_cap_address_get CheriOpnd: $r2), GPR64Opnd: $r3))]>;
 } // end of isReMaterializable = 1, isAsCheapAsAMove = 1 block
+
+// Property setters
+let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
+// Most of these trap if the input is NULL and even CIncOffset/CSetAddr/etc.
+// trap on sealed caps, so we also mark them with "@traps_if_sealed $r2".
+let Constraints = "@traps_if_sealed $r2" in {
+// CAndPerms can traps both if the input is NULL or sealed and always returns a valid capability
+let mayTrap = 1 in
+def CAndPerms  : CheriFmtCSet<0xd, "perm", "perms", "and">;
+def CSetFlags  : CheriFmtCSet<0xe, "flags">;
+def CSetOffset : CheriFmtCSet<0xf, "offset">;
+let mayTrap = 1 in {
+def CSetBounds : CheriFmtCSet<0x8, "bounds">;
+def CSetBoundsExact : CheriFmtCSet<0x9, "boundsexact", "bounds", "set", "set_exact">;
+// We allow CSetBounds $c1, 10 as an alias for CSetBounds $c1, $c1, 10
+let TwoOperandAliasConstraint = "$r1 = $r2" in
+def CSetBoundsImm : CheriFmtCSetImm<0x14, uimm11s0, "csetbounds",
+  [(set CheriOpnd:$r1, (int_cheri_cap_bounds_set CheriOpnd:$r2, (i64 uimm11s0Pattern: $imm)))]>;
+} // llet mayTrap = 1
+def CIncOffset : CheriFmt3Op<0x11, (outs CheriOpnd:$r1), (ins CheriOpnd:$r2, GPR64Opnd:$r3),
+                            "cincoffset\t$r1, $r2, $r3",
+                            [(set CheriOpnd:$r1, (ptradd CheriOpnd:$r2, GPR64Opnd:$r3))]>;
+// We allow CIncOffset $c1, 10 as an alias for CIncOffset $c1, $c1, 10
+let TwoOperandAliasConstraint = "$r1 = $r2" in
+def CIncOffsetImm : CheriFmtCSetImm<0x13, simm11s0, "cincoffset",
+  [(set CheriOpnd:$r1, (ptradd CheriOpnd:$r2, (i64 simm11s0Pattern: $imm)))]>;
+def CSetAddr : CheriFmtCSet<0x22, "addr", "address">;
+let mayTrap = 1, defsCanBeSealed = 1 in
+def CSealEntry : CheriFmt2Op<0x1d, (outs CheriOpnd:$r1), (ins CheriOpnd:$r2),
+    "csealentry\t$r1, $r2",
+    [(set CheriOpnd:$r1, (int_cheri_cap_seal_entry CheriOpnd:$r2))]>;
+// CAndAddr is the same as csetaddr(getaddr(x) & mask):
+def CAndAddr : CheriFmt3Op<0x24, (outs CheriOpnd:$r1), (ins CheriOpnd:$r2, GPR64Opnd:$r3),
+  "candaddr\t$r1, $r2, $r3",
+  [(set CheriOpnd: $r1,
+        (CapRegType (int_cheri_cap_address_set CheriOpnd:$r2,
+                     (and (int_cheri_cap_address_get CheriOpnd:$r2), GPR64Opnd:$r3))))]>;
+} // let Constraints = "@traps_if_sealed $r2"
+// CClearTag is the only mutator that doesn't trap for sealed capabilities
+def CClearTag  : CheriFmt2Op<0xb, (outs CheriOpnd:$r1), (ins CheriOpnd:$r2),
+                              "ccleartag\t$r1, $r2",
+                              [(set CheriOpnd:$r1, (int_cheri_cap_tag_clear CheriOpnd:$r2))]>;
+
+// CRoundRepresentableLength (a.k.a. CRoundArchitecturalPrecision)
+def CRRL : CheriFmt2Op<0x10, (outs GPR64Opnd:$r1), (ins GPR64Opnd:$r2),
+                       "croundrepresentablelength\t$r1, $r2",
+                       [(set GPR64Opnd:$r1, (int_cheri_round_representable_length GPR64Opnd:$r2))]>;
+// CRepresentableAlignmentMask
+def CRAM : CheriFmt2Op<0x11, (outs GPR64Opnd:$r1), (ins GPR64Opnd:$r2),
+                       "crepresentablealignmentmask\t$r1, $r2",
+                       [(set GPR64Opnd:$r1, (int_cheri_representable_alignment_mask GPR64Opnd:$r2))]>;
+}
 
 // Accept CIncOffsetImm as an assembler mnemonic because ancient binutils is too stupid to have an opcode
 // with differing encoding depending on the parameters
@@ -295,30 +342,6 @@ def : InstAlias<"cassertinbounds $dst, $imm",
 def : InstAlias<"cassertinbounds $dst",
                 (CSetBoundsImm CNULL, CheriOpnd:$dst, 1), 0>;
 
-// Property setters
-let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
-def CAndPerms  : CheriFmtCSet<0xd, "perm", "perms", "and">;
-def CSetFlags  : CheriFmtCSet<0xe, "flags">;
-def CSetOffset : CheriFmtCSet<0xf, "offset">;
-def CSetBounds : CheriFmtCSet<0x8, "bounds">;
-def CSetBoundsExact : CheriFmtCSet<0x9, "boundsexact", "bounds", "set", "set_exact">;
-def CIncOffset : CheriFmt3Op<0x11, (outs CheriOpnd:$r1), (ins CheriOpnd:$r2, GPR64Opnd:$r3),
-                            "cincoffset\t$r1, $r2, $r3",
-                            [(set CheriOpnd:$r1, (ptradd CheriOpnd:$r2, GPR64Opnd:$r3))]>;
-def CClearTag  : CheriFmt2Op<0xb, (outs CheriOpnd:$r1), (ins CheriOpnd:$r2),
-                              "ccleartag\t$r1, $r2",
-                              [(set CheriOpnd:$r1, (int_cheri_cap_tag_clear CheriOpnd:$r2))]>;
-def CSetAddr : CheriFmtCSet<0x22, "addr", "address">;
-
-// CRoundRepresentableLength (a.k.a. CRoundArchitecturalPrecision)
-def CRRL : CheriFmt2Op<0x10, (outs GPR64Opnd:$r1), (ins GPR64Opnd:$r2),
-                       "croundrepresentablelength\t$r1, $r2",
-                       [(set GPR64Opnd:$r1, (int_cheri_round_representable_length GPR64Opnd:$r2))]>;
-// CRepresentableAlignmentMask
-def CRAM : CheriFmt2Op<0x11, (outs GPR64Opnd:$r1), (ins GPR64Opnd:$r2),
-                       "crepresentablealignmentmask\t$r1, $r2",
-                       [(set GPR64Opnd:$r1, (int_cheri_representable_alignment_mask GPR64Opnd:$r2))]>;
-}
 // CRAM/CRRL (a.k.a. CRAP) aliases
 def : InstAlias<"crap $dst, $len", (CRRL GPR64Opnd:$dst, GPR64Opnd:$len), 0>;
 def : InstAlias<"crrl $dst, $len", (CRRL GPR64Opnd:$dst, GPR64Opnd:$len), 0>;
@@ -329,6 +352,7 @@ def : Pat<(CapRegType (ptradd CheriOpnd:$src, (sub GPR64Opnd:$addr, (int_cheri_c
           (CSetAddr $src, $addr)>;
 
 let isMoveReg = 1 in {
+let defsCanBeSealed = 1 in
 def CReadHwr : CheriFmt2Op<0xd, (outs CheriOpnd:$r1), (ins CheriHWRegsOpnd:$r2),
                               "creadhwr\t$r1, $r2",
                               []>;
@@ -340,12 +364,10 @@ def CWriteHwr : CheriFmt2Op<0xe, (outs CheriHWRegsOpnd:$r2), (ins CheriOpnd:$r1)
 }
 } // isMoveReg = 1
 
-def CSealEntry : CheriFmt2Op<0x1d, (outs CheriOpnd:$r1), (ins CheriOpnd:$r2),
-    "csealentry\t$r1, $r2",
-    [(set CheriOpnd:$r1, (int_cheri_cap_seal_entry CheriOpnd:$r2))]>;
-def CLoadTags : CheriFmt2Op<0x1e, (outs GPR64Opnd:$r1), (ins CheriOpnd:$r2),
+let mayLoad = 1 in
+def CLoadTags : CheriFmt2Op<0x1e, (outs GPR64Opnd:$r1), (ins CheriOpnd0IsDDC:$r2),
     "cloadtags\t$r1, $r2",
-    [(set GPR64Opnd:$r1, (int_cheri_cap_load_tags CheriOpnd:$r2))]>;
+    [(set GPR64Opnd:$r1, (int_cheri_cap_load_tags CheriOpnd0IsDDC:$r2))]>;
 
 // PCC access
 def CGetPCC : CheriFmt1Op<0x0, (outs CheriOpnd:$r1), (ins),
@@ -355,7 +377,7 @@ def CGetPCC : CheriFmt1Op<0x0, (outs CheriOpnd:$r1), (ins),
 def CSetPCCOffset : CheriFmt2Op<7, (outs CheriOpnd:$r1), (ins GPR64Opnd:$r2),
                                 "cgetpccsetoffset\t${r1}, $r2",
                                 [(set CheriOpnd:$r1, (int_cheri_cap_offset_set (CapRegType (int_cheri_pcc_get)), GPR64Opnd: $r2))]>;
-def CGetPccIncOffset : CheriFmt2Op<0x13, (outs CheriOpnd:$r1), (ins GPR64Opnd:$r2),
+def CGetPCCIncOffset : CheriFmt2Op<0x13, (outs CheriOpnd:$r1), (ins GPR64Opnd:$r2),
                                 "cgetpccincoffset\t${r1}, $r2",
                                 [(set CheriOpnd:$r1, (ptradd (CapRegType (int_cheri_pcc_get)), GPR64Opnd: $r2))]>;
 def CGetPCCSetAddr : CheriFmt2Op<0x14, (outs CheriOpnd:$r1), (ins GPR64Opnd:$r2),
@@ -363,30 +385,37 @@ def CGetPCCSetAddr : CheriFmt2Op<0x14, (outs CheriOpnd:$r1), (ins GPR64Opnd:$r2)
                                 [(set CheriOpnd:$r1, (int_cheri_cap_address_set (CapRegType (int_cheri_pcc_get)), GPR64Opnd: $r2))]>;
 
 // Sealing and unsealing
+// Prevent speculative hoisting of CSeal/CUnseal since this is not modelled by mayTrapOnSealedInput
+let mayTrap = 1 in {
+let defsCanBeSealed = 1 in
 def CSeal   : CheriFmt3Op<0xb, (outs CheriOpnd:$r1), (ins CheriOpnd:$r2, CheriOpnd:$r3),
                                "cseal\t$r1, $r2, $r3",
                                [(set CheriOpnd:$r1, (int_cheri_cap_seal CheriOpnd:$r2, CheriOpnd:$r3))]>;
 def CUnSeal : CheriFmt3Op<0xc, (outs CheriOpnd:$r1), (ins CheriOpnd:$r2, CheriOpnd:$r3),
                                "cunseal\t$r1, $r2, $r3",
                                [(set CheriOpnd:$r1, (int_cheri_cap_unseal CheriOpnd:$r2, CheriOpnd:$r3))]>;
+} // let mayTrap = 1
+
 
 // Pointer arithmetic
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
+let mayTrap = 1 in {
 def CFromPtr : CheriFmt3Op<0x13, (outs CheriOpnd:$r1), (ins CheriOpnd0IsDDC:$r2, GPR64Opnd:$r3),
   "cfromptr\t$r1, $r2, $r3", [(set CheriOpnd: $r1, (int_cheri_cap_from_pointer CheriOpnd0IsDDC: $r2, GPR64Opnd: $r3))]>;
 def CToPtr : CheriFmt3Op<0x12, (outs GPR64Opnd:$r1), (ins CheriOpnd0IsDDC:$r3, CheriOpnd:$r2),
   "ctoptr\t$r1, $r2, $r3", [(set GPR64Opnd: $r1, (int_cheri_cap_to_pointer CheriOpnd0IsDDC: $r3, CheriOpnd: $r2))]>;
-let isCodeGenOnly = 1 in {
+let isCodeGenOnly = 1 in
 def CFromPtr32 : CheriFmt3Op<0x13, (outs CheriOpnd:$r1), (ins CheriOpnd0IsDDC:$r2, GPR32Opnd:$r3),
   "cfromptr\t$r1, $r2, $r3", []>;
-}
+} // let mayTrap = 1
 def CSub : CheriFmt3Op<0xa, (outs GPR64Opnd:$r1), (ins CheriOpnd:$r2, CheriOpnd:$r3),
   "csub\t$r1, $r2, $r3", [(set GPR64Opnd:$r1, (int_cheri_cap_diff CheriOpnd:$r2, CheriOpnd:$r3))]>;
 
 def CMove : CheriFmt2Op<0xa, (outs CheriOpnd: $r1), (ins CheriOpnd:$r2), "cmove\t$r1, $r2", []> {
   let isMoveReg = 1;
+  let defsCanBeSealed = 1; // If the input is sealed the output is also sealed
 }
-}
+} // isReMaterializable = 1, isAsCheapAsAMove = 1
 
 
 
@@ -408,23 +437,18 @@ def CCheckType : CheriFmt2Op<0x9, (outs), (ins CheriOpnd:$r1, CheriOpnd:$r2),
                               [(int_cheri_cap_type_check CheriOpnd:$r1,  CheriOpnd:$r2)]>;
 }
 
+let mayTrap = 1 in {
+let defsCanBeSealed = 1 in
 def CBuildCap : CheriFmt3Op<0x1d, (outs CheriOpnd:$r1), (ins CheriOpnd0IsDDC:$r2, CheriOpnd:$r3),
   "cbuildcap\t$r1, $r2, $r3", [(set CheriOpnd: $r1, (int_cheri_cap_build CheriOpnd0IsDDC: $r2, CheriOpnd: $r3))]>;
 def CCopyType : CheriFmt3Op<0x1e, (outs CheriOpnd:$r1), (ins CheriOpnd:$r2, CheriOpnd:$r3),
   "ccopytype\t$r1, $r2, $r3", [(set CheriOpnd: $r1, (int_cheri_cap_type_copy CheriOpnd: $r2, CheriOpnd: $r3))]>;
+let defsCanBeSealed = 1 in
 def CCSeal : CheriFmt3Op<0x1f, (outs CheriOpnd:$r1), (ins CheriOpnd:$r2, CheriOpnd:$r3),
   "ccseal\t$r1, $r2, $r3", [(set CheriOpnd: $r1, (int_cheri_cap_conditional_seal CheriOpnd: $r2, CheriOpnd: $r3))]>;
+} // let mayTrap = 1
 def CTestSubset : CheriFmt3Op<0x20, (outs GPR64Opnd:$r1), (ins CheriOpnd0IsDDC:$r2, CheriOpnd:$r3),
   "ctestsubset\t$r1, $r2, $r3", [(set GPR64Opnd: $r1, (CapSubsetTest CheriOpnd0IsDDC: $r2, CheriOpnd: $r3))]>;
-def CGetAndAddr : CheriFmt3Op<0x23, (outs GPR64Opnd:$r1), (ins CheriOpnd:$r2, GPR64Opnd:$r3),
-  "cgetandaddr\t$r1, $r2, $r3", [(set GPR64Opnd: $r1, (and (int_cheri_cap_address_get CheriOpnd: $r2), GPR64Opnd: $r3))]>;
-// CAndAddr is the same as csetaddr(getaddr(x) & mask):
-def CAndAddr : CheriFmt3Op<0x24, (outs CheriOpnd:$r1), (ins CheriOpnd:$r2, GPR64Opnd:$r3),
-  "candaddr\t$r1, $r2, $r3",
-  [(set CheriOpnd: $r1,
-        (CapRegType (int_cheri_cap_address_set CheriOpnd:$r2,
-                     (and (int_cheri_cap_address_get CheriOpnd:$r2), GPR64Opnd:$r3))))]>;
-
 
 // Note: we need to duplicate these patterns for iFATPTR128,256, etc. for some reason
 multiclass UseCNullPatterns<PatFrag NullPat> {
@@ -481,7 +505,7 @@ def : Pat<(int_cheri_cap_to_pointer (CapRegType (int_cheri_ddc_get)), CheriOpnd:
 def : Pat<(int_cheri_cap_from_pointer (CapRegType (int_cheri_ddc_get)), GPR64Opnd:$rt),
           (CFromPtr DDC, $rt)>;
 
-let Predicates = [IsCHERI], DecoderNamespace="CHERI" in {
+let Predicates = [IsCHERI], DecoderNamespace="CHERI", mayStore = 1 in {
 def STORECAP : CheriFmtCLS<0x3e, (outs), (ins CheriOpnd:$cs, GPR64Opnd:$rt, simm11s4:$offset, CheriOpnd0IsDDC:$cb),
                          "csc\t$cs, ${rt}, ${offset}(${cb})",
                          [(store CheriOpnd:$cs, (add (add GPR64Opnd:$rt, (ptrtoint CheriOpnd0IsDDC:$cb)), (i64 simm11s4Pattern:$offset)))]>;
@@ -504,6 +528,8 @@ def LOADCAP : CheriFmtCLS<0x36, (outs CheriOpnd:$cs), (ins GPR64Opnd:$rt, simm11
                         "clc\t$cs, ${rt}, ${offset}(${cb})",
                         [(set CheriOpnd:$cs, (load (add (add GPR64Opnd:$rt, (ptrtoint CheriOpnd0IsDDC:$cb)), (i64 simm11s4Pattern:$offset))))]> {
   let DecoderNamespace="CHERI";
+  let defsCanBeSealed = 1;
+  let mayLoad = 1;
 }
 // Experimental new CLC instruction using a 16 bit immediate and for now the JALX toplevel opcode
 def LOADCAP_BigImm : CheriFmtCLS_BigImm<0x1D, (outs CheriOpnd:$cs), (ins simm16s4:$offset, CheriOpnd0IsDDC:$cb),
@@ -511,6 +537,8 @@ def LOADCAP_BigImm : CheriFmtCLS_BigImm<0x1D, (outs CheriOpnd:$cs), (ins simm16s
                         [(set CheriOpnd:$cs, (load (add (ptrtoint CheriOpnd0IsDDC:$cb), (i64 simm16s4Pattern:$offset))))]
                         > {
   let DecoderNamespace="CHERI";
+  let defsCanBeSealed = 1;
+  let mayLoad = 1;
 }
 
 // Load via a capability register
@@ -707,6 +735,19 @@ let usesCustomInserter = 1 in {
   def CAP_ATOMIC_LOAD_NAND_I16 : CapAtomic2Ops<atomic_load_nand_16, GPR32Opnd>;
   def CAP_ATOMIC_LOAD_NAND_I32 : CapAtomic2Ops<atomic_load_nand_32, GPR32Opnd>;
 
+  def CAP_ATOMIC_LOAD_MIN_I8  : CapAtomic2Ops<atomic_load_min_8, GPR32Opnd>;
+  def CAP_ATOMIC_LOAD_MIN_I16 : CapAtomic2Ops<atomic_load_min_16, GPR32Opnd>;
+  def CAP_ATOMIC_LOAD_MIN_I32 : CapAtomic2Ops<atomic_load_min_32, GPR32Opnd>;
+  def CAP_ATOMIC_LOAD_MAX_I8  : CapAtomic2Ops<atomic_load_max_8, GPR32Opnd>;
+  def CAP_ATOMIC_LOAD_MAX_I16 : CapAtomic2Ops<atomic_load_max_16, GPR32Opnd>;
+  def CAP_ATOMIC_LOAD_MAX_I32 : CapAtomic2Ops<atomic_load_max_32, GPR32Opnd>;
+  def CAP_ATOMIC_LOAD_UMIN_I8  : CapAtomic2Ops<atomic_load_umin_8, GPR32Opnd>;
+  def CAP_ATOMIC_LOAD_UMIN_I16 : CapAtomic2Ops<atomic_load_umin_16, GPR32Opnd>;
+  def CAP_ATOMIC_LOAD_UMIN_I32 : CapAtomic2Ops<atomic_load_umin_32, GPR32Opnd>;
+  def CAP_ATOMIC_LOAD_UMAX_I8  : CapAtomic2Ops<atomic_load_umax_8, GPR32Opnd>;
+  def CAP_ATOMIC_LOAD_UMAX_I16 : CapAtomic2Ops<atomic_load_umax_16, GPR32Opnd>;
+  def CAP_ATOMIC_LOAD_UMAX_I32 : CapAtomic2Ops<atomic_load_umax_32, GPR32Opnd>;
+
   def CAP_ATOMIC_SWAP_I8       : CapAtomic2Ops<atomic_swap_8, GPR32Opnd>;
   def CAP_ATOMIC_SWAP_I16      : CapAtomic2Ops<atomic_swap_16, GPR32Opnd>;
   def CAP_ATOMIC_SWAP_I32      : CapAtomic2Ops<atomic_swap_32, GPR32Opnd>;
@@ -722,6 +763,10 @@ let usesCustomInserter = 1 in {
   def CAP_ATOMIC_LOAD_NAND_I64 : CapAtomic2Ops<atomic_load_nand_64, GPR64Opnd>;
   def CAP_ATOMIC_SWAP_I64      : CapAtomic2Ops<atomic_swap_64, GPR64Opnd>;
   def CAP_ATOMIC_CMP_SWAP_I64  : CapAtomicCmpSwap<atomic_cmp_swap_64, GPR64Opnd>;
+  def CAP_ATOMIC_LOAD_MIN_I64  : CapAtomic2Ops<atomic_load_min_64, GPR64Opnd>;
+  def CAP_ATOMIC_LOAD_MAX_I64  : CapAtomic2Ops<atomic_load_max_64, GPR64Opnd>;
+  def CAP_ATOMIC_LOAD_UMIN_I64 : CapAtomic2Ops<atomic_load_umin_64, GPR64Opnd>;
+  def CAP_ATOMIC_LOAD_UMAX_I64 : CapAtomic2Ops<atomic_load_umax_64, GPR64Opnd>;
 
   // Capability atomics:
   // FIXME: this seems wrong it should be CheriGPROrCNULL
@@ -764,6 +809,10 @@ defm CAP_ATOMIC_LOAD_AND  : CapAtomicPostRA2Ops;
 defm CAP_ATOMIC_LOAD_OR   : CapAtomicPostRA2Ops;
 defm CAP_ATOMIC_LOAD_XOR  : CapAtomicPostRA2Ops;
 defm CAP_ATOMIC_LOAD_NAND : CapAtomicPostRA2Ops;
+defm CAP_ATOMIC_LOAD_MIN  : CapAtomicPostRA2Ops;
+defm CAP_ATOMIC_LOAD_MAX  : CapAtomicPostRA2Ops;
+defm CAP_ATOMIC_LOAD_UMIN : CapAtomicPostRA2Ops;
+defm CAP_ATOMIC_LOAD_UMAX : CapAtomicPostRA2Ops;
 defm CAP_ATOMIC_SWAP      : CapAtomicPostRA2Ops;
 
 def CAP_ATOMIC_CMP_SWAP_I8_POSTRA   : CapAtomicCmpSwapPostRA<GPR32Opnd>;
@@ -787,7 +836,6 @@ def : MipsPat<(atomic_load_16 CheriOpnd0IsDDC:$a), (CAPLOAD1632 ZERO_64, (i64 0)
 def : MipsPat<(atomic_load_32 CheriOpnd0IsDDC:$a), (CAPLOAD32 ZERO_64, (i64 0), CheriOpnd0IsDDC:$a)>;
 def : MipsPat<(atomic_load_64 CheriOpnd0IsDDC:$a), (CAPLOAD64 ZERO_64, (i64 0), CheriOpnd0IsDDC:$a)>;
 def : MipsPat<(atomic_load_cap CheriOpnd0IsDDC:$a), (LOADCAP ZERO_64, (i64 0), CheriOpnd0IsDDC:$a)>;
-
 // Atomic store patterns.
 def : MipsPat<(atomic_store_8 CheriOpnd0IsDDC:$a, GPR64:$v),
               (CAPSTORE8 $v, ZERO_64, (i64 0), $a)>;
@@ -803,10 +851,17 @@ def : MipsPat<(atomic_store_32 CheriOpnd0IsDDC:$a, GPR32:$v),
               (CAPSTORE32 $v, ZERO_64, (i64 0), $a)>;
 def : MipsPat<(atomic_store_64 CheriOpnd0IsDDC:$a, GPR64:$v),
               (CAPSTORE64 $v, ZERO_64, (i64 0), $a)>;
-def : MipsPat<(atomic_store_cap CheriOpnd0IsDDC:$a, CheriOpnd0IsDDC:$v),
+def : MipsPat<(atomic_store_cap CheriOpnd0IsDDC:$a, CheriOpnd:$v),
               (STORECAP $v, ZERO_64, (i64 0), $a)>;
-
-
+}
+let Predicates=[IsCHERI,NotCHERIABI] in {
+def : MipsPat<(atomic_load_cap GPR64Opnd:$a), (LOADCAP GPR64Opnd:$a, (i64 0), DDC)>;
+def : MipsPat<(atomic_store_cap GPR64Opnd:$a, CheriOpnd:$v),
+              (STORECAP $v, GPR64Opnd:$a, (i64 0), DDC)>;
+def : MipsPat<(atomic_swap_cap GPR64Opnd:$a, CheriOpnd:$swap),
+              (CAP_ATOMIC_SWAP_CAP (CFromPtr DDC, GPR64Opnd:$a), CheriOpnd:$swap)>;
+def : MipsPat<(atomic_cmp_swap_cap GPR64Opnd:$a, CheriOpnd:$cmp, CheriOpnd:$swap),
+              (CAP_ATOMIC_CMP_SWAP_CAP (CFromPtr DDC, GPR64Opnd:$a), CheriOpnd:$cmp, CheriOpnd:$swap)>;
 }
 ////////////////////////////////////////////////////////////////////////////////
 // Helpers for capability-using calls and returns
@@ -984,6 +1039,9 @@ class CheriBoundedStackPseudo<dag ins> : CheriPseudo<(outs CheriOpnd: $cd), ins,
   // stack spills and more saved registers.
   let isAsCheapAsAMove = 1;  // TODO: this should be false
   let usesCustomInserter = 0;
+  // Note: We don't set 'let mayTrap = 1;' since
+  // the input will always be a frame index and therefore the checks
+  // for whether it can trap are just wasted computation.
 }
 
 // Add a pseudo instruction to pretend this is only one instruction to avoid register spills

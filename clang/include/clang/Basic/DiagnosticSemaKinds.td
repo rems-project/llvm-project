@@ -6699,7 +6699,7 @@ def warn_capability_no_provenance : Warning<
 def err_capability_no_provenance : Error<warn_capability_no_provenance.Text>;
 def note_capability_no_provenance_fixit : Note<
   "use an explicit capability conversion or insert a cast to "
-  "%select{|__}0%select{u|}1select{intptr_t|__intcap_t}0 if this is intended">;
+  "%select{u|}1int%select{cap|ptr}0_t if this is intended">;
 def warn_capability_integer_cast : Warning<
   "cast from capability type %0 to non-capability, non-address type %1 is most likely an error">,
   // XXXAR: this is currently too noisy when building CHERIBSD, have if off for now
@@ -9076,6 +9076,12 @@ def warn_format_P_no_precision : Warning<
   InGroup<Format>;
 def warn_printf_ignored_flag: Warning<
   "flag '%0' is ignored when flag '%1' is present">,
+  InGroup<Format>;
+def warn_plus_without_altform_for_p: Warning<
+  "flag '+' is not allowed without '#' for '%%p'">,
+  InGroup<Format>;
+def warn_positional_arg_with_plus_for_p_is_undefined: Warning<
+  "use of positional arguments with '%%+#p' format specifier has undefined behavior">,
   InGroup<Format>;
 def warn_printf_empty_objc_flag: Warning<
   "missing object format flag">,

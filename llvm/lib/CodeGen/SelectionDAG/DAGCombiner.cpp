@@ -983,7 +983,8 @@ bool DAGCombiner::reassociationCanBreakAddressingModePattern(unsigned Opc,
   // (load/store (add, (add, x, offset1), offset2)) ->
   // (load/store (add, x, offset1+offset2)).
 
-  if (Opc != ISD::ADD || N0.getOpcode() != ISD::ADD)
+  if ((Opc != ISD::ADD && Opc != ISD::PTRADD) ||
+      (N0.getOpcode() != ISD::ADD && N0.getOpcode() != ISD::PTRADD))
     return false;
 
   if (N0.hasOneUse())
@@ -2030,49 +2031,6 @@ static ConstantSDNode *getAsNonOpaqueConstant(SDValue N) {
   return Const != nullptr && !Const->isOpaque() ? Const : nullptr;
 }
 
-SDValue DAGCombiner::visitPTRADD(SDNode *N) {
-  SDValue N0 = N->getOperand(0);
-  SDValue N1 = N->getOperand(1);
-
-  // Canocalize if need be
-  if (isa<ConstantSDNode>(N0) && !isa<ConstantSDNode>(N1))
-    std::swap(N0, N1);
-
-  if (!isa<ConstantSDNode>(N1))
-    return SDValue();
-
-  // Add/Ptradd Ptr, 0 -> Ptr
-  if (isNullConstant(N1) && !N1.getValueType().isFatPointer())
-    return N0;
-
-  if (N0.isUndef() || N1.isUndef())
-    return DAG.getUNDEF(N->getValueType(0));
-
-  if (N0.getOpcode() != ISD::PTRADD && N0.getOpcode() != ISD::ADD)
-    return SDValue();
-
-  // fold (ptradd ((ptr?)add ptr, C0), C1) -> (ptradd ptr, (C0+C1))
-
-  // Shortcut the trivial case where C1 == 0, no mattter the number of uses
-  if (isNullConstant(N1) && N0->getOpcode() == ISD::PTRADD)
-    return N0;
-
-  SDValue N0_0 = N0->getOperand(0);
-  SDValue N0_1 = N0->getOperand(1);
-
-  if (isa<ConstantSDNode>(N0_0) && !isa<ConstantSDNode>(N0_1))
-    std::swap(N0_0, N0_1);
-
-  if (!isa<ConstantSDNode>(N0_1))
-    return SDValue();
-
-  SDValue Cste =
-      DAG.getConstant(cast<ConstantSDNode>(N1)->getAPIntValue() +
-                          cast<ConstantSDNode>(N0_1)->getAPIntValue(),
-                      SDLoc(N), N1.getValueType());
-  return DAG.getNode(ISD::PTRADD, SDLoc(N), N0.getValueType(), N0_0, Cste);
-}
-
 SDValue DAGCombiner::foldBinOpIntoSelect(SDNode *BO) {
   assert(TLI.isBinOp(BO->getOpcode()) && BO->getNumValues() == 1 &&
          "Unexpected binary operator");
@@ -2188,6 +2146,65 @@ static SDValue foldAddSubBoolOfMaskedVal(SDNode *N, SelectionDAG &DAG) {
   SDValue C1 = IsAdd ? DAG.getConstant(CN->getAPIntValue() + 1, DL, VT) :
                        DAG.getConstant(CN->getAPIntValue() - 1, DL, VT);
   return DAG.getNode(IsAdd ? ISD::SUB : ISD::ADD, DL, VT, C1, LowBit);
+}
+
+/// Try to fold a pointer arithmetic node, preferring integer arithmetic.
+/// This needs to be done separately from normal addition, because pointer
+/// addition is not commutative.
+SDValue DAGCombiner::visitPTRADD(SDNode *N) {
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  EVT PtrVT = N0.getValueType();
+  EVT IntVT = N1.getValueType();
+  SDLoc DL(N);
+
+  // fold (ptradd undef, y) -> undef
+  if (N0.isUndef())
+    return N0;
+
+  // fold (ptradd x, undef) -> undef
+  if (N1.isUndef())
+    return DAG.getUNDEF(PtrVT);
+
+  // fold (ptradd x, 0) -> 0
+  if (isNullConstant(N1))
+    return N0;
+
+  // Reassociate: (ptradd (ptradd x, y), z) -> (ptradd x, (add y, z)) if:
+  //   * x is a null pointer; or
+  //   * the add can be constant-folded; or
+  //   * the add can be combined and z is not a constant; or
+  //   * y is a constant and z has one use; or
+  //   * y is a constant and (ptradd x, y) has one use; or
+  //   * (ptradd x, y) and z have one use and z is not a constant.
+  //
+  // Some of these overly-restrictive conditions are to not obfuscate CAndAddr
+  // patterns. Once we represent that with PTRMASK that will be less of a
+  // concern, though we might still want to detect code not using the builtins
+  // and canonicalise it to a PTRMASK.
+  if (N0.getOpcode() == ISD::PTRADD &&
+      !reassociationCanBreakAddressingModePattern(ISD::PTRADD, DL, N0, N1)) {
+    SDValue X = N0.getOperand(0);
+    SDValue Y = N0.getOperand(1);
+    SDValue Z = N1;
+
+    SDValue Add = DAG.getNode(ISD::ADD, DL, IntVT, {Y, Z});
+    SDValue VisitedAdd = visit(Add.getNode());
+    if (VisitedAdd)
+      Add = VisitedAdd;
+
+    if (isNullConstant(X) ||
+        DAG.isConstantIntBuildVectorOrConstantInt(Add) ||
+        (VisitedAdd && !DAG.isConstantIntBuildVectorOrConstantInt(Z)) ||
+        (DAG.isConstantIntBuildVectorOrConstantInt(Y) && Z.hasOneUse()) ||
+        (DAG.isConstantIntBuildVectorOrConstantInt(Y) && N0.hasOneUse()) ||
+        (N0.hasOneUse() && Z.hasOneUse() &&
+         !DAG.isConstantIntBuildVectorOrConstantInt(Z))) {
+      return DAG.getPointerAdd(DL, X, Add);
+    }
+  }
+
+  return SDValue();
 }
 
 /// Try to fold a 'not' shifted sign-bit with add/sub with constant operand into

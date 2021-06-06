@@ -31,6 +31,10 @@
 #define _LIBUNWIND_MAX_CONTEXT_SIZE 200
 #define _LIBUNWIND_MAX_CURSOR_SIZE 248
 
+#if !defined(_LIBUNWIND_ENABLE_CROSS_UNWINDING)
+#define _LIBUNWIND_IS_NATIVE_ONLY 1
+#endif
+
 #if defined(_LIBUNWIND_IS_NATIVE_ONLY)
 # if defined(__i386__)
 #  define _LIBUNWIND_TARGET_I386
@@ -64,20 +68,21 @@
 # elif defined(__aarch64__)
 #  define _LIBUNWIND_TARGET_AARCH64 1
 #  if defined(__CHERI_PURE_CAPABILITY__)
-#    define _LIBUNWIND_HIGHEST_DWARF_REGISTER _LIBUNWIND_HIGHEST_DWARF_REGISTER_MORELLO
-#    define _LIBUNWIND_CONTEXT_SIZE (34 * 2 + 32)
-#    define _LIBUNWIND_CURSOR_SIZE (_LIBUNWIND_CONTEXT_SIZE + 12 * (sizeof(void*)/8))
+#    define _LIBUNWIND_CONTEXT_SIZE 100
 #    if defined(__SEH__)
-#      error "not supported"
+#      error "Pure-capability aarch64 SEH not supported"
+#    else
+#      define _LIBUNWIND_CURSOR_SIZE 124
 #    endif
+#    define _LIBUNWIND_HIGHEST_DWARF_REGISTER _LIBUNWIND_HIGHEST_DWARF_REGISTER_MORELLO
 #  else
-#    define _LIBUNWIND_HIGHEST_DWARF_REGISTER _LIBUNWIND_HIGHEST_DWARF_REGISTER_ARM64
 #    define _LIBUNWIND_CONTEXT_SIZE 66
 #    if defined(__SEH__)
 #      define _LIBUNWIND_CURSOR_SIZE 164
 #    else
 #      define _LIBUNWIND_CURSOR_SIZE 78
 #    endif
+#    define _LIBUNWIND_HIGHEST_DWARF_REGISTER _LIBUNWIND_HIGHEST_DWARF_REGISTER_ARM64
 #  endif
 # elif defined(__arm__)
 #  define _LIBUNWIND_TARGET_ARM 1
@@ -164,8 +169,8 @@
 #  if __riscv_xlen == 64
 #    define _LIBUNWIND_TARGET_RISCV 1
 #    ifdef __CHERI_PURE_CAPABILITY__
-#      define _LIBUNWIND_CONTEXT_SIZE 98
-#      define _LIBUNWIND_CURSOR_SIZE 121
+#      define _LIBUNWIND_CONTEXT_SIZE 96
+#      define _LIBUNWIND_CURSOR_SIZE 120
 #    else
 #      define _LIBUNWIND_CONTEXT_SIZE 64
 #      define _LIBUNWIND_CURSOR_SIZE 76

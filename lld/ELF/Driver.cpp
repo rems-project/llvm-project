@@ -131,7 +131,7 @@ bool elf::link(ArrayRef<const char *> args, bool canExitEarly,
 static std::tuple<ELFKind, uint16_t, uint8_t, bool> parseEmulation(
     StringRef emul) {
   uint8_t osabi = 0;
-  bool forceCheriABI = false;
+  bool forceCheriAbi = false;
   StringRef s = emul;
   if (s.endswith("_fbsd")) {
     s = s.drop_back(5);
@@ -139,7 +139,7 @@ static std::tuple<ELFKind, uint16_t, uint8_t, bool> parseEmulation(
   }
   if (s.endswith("_cheri")) {
     s = s.drop_back(6);
-    forceCheriABI = true;
+    forceCheriAbi = true;
   }
 
   std::pair<ELFKind, uint16_t> ret =
@@ -165,7 +165,7 @@ static std::tuple<ELFKind, uint16_t, uint8_t, bool> parseEmulation(
 
   if (ret.first == ELFNoneKind)
     error("unknown emulation: " + emul);
-  return std::make_tuple(ret.first, ret.second, osabi, forceCheriABI);
+  return std::make_tuple(ret.first, ret.second, osabi, forceCheriAbi);
 }
 
 // Returns slices of MB by parsing MB as an archive file.
@@ -1232,11 +1232,8 @@ static void readConfigs(opt::InputArgList &args) {
   // Parse ELF{32,64}{LE,BE} and CPU type.
   if (auto *arg = args.getLastArg(OPT_m)) {
     StringRef s = arg->getValue();
-    bool forceCheriABI;
-    std::tie(config->ekind, config->emachine, config->osabi, forceCheriABI) =
+    std::tie(config->ekind, config->emachine, config->osabi, config->isCheriAbi) =
         parseEmulation(s);
-    if (forceCheriABI)
-      config->setIsCheriABI(true);
     config->mipsN32Abi =
         (s.startswith("elf32btsmipn32") || s.startswith("elf32ltsmipn32"));
     config->emulation = s;
@@ -1514,12 +1511,7 @@ void LinkerDriver::inferMachineType() {
     config->ekind = f->ekind;
     config->emachine = f->emachine;
     config->osabi = f->osabi;
-    if (f->emachine == EM_MIPS) {
-      config->mipsN32Abi = isMipsN32Abi(f);
-      config->setIsCheriABI((f->eflags & EF_MIPS_ABI) == EF_MIPS_ABI_CHERIABI);
-    }
-    if (f->emachine == EM_RISCV)
-      config->setIsCheriABI(f->eflags & EF_RISCV_CHERIABI);
+    config->mipsN32Abi = f->emachine == EM_MIPS && isMipsN32Abi(f);
     return;
   }
   error("target emulation unknown: -m or at least one .o file required");
@@ -2190,6 +2182,7 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &args) {
   target = getTarget();
 
   config->eflags = target->calcEFlags();
+  config->isCheriAbi = target->calcIsCheriAbi();
   // maxPageSize (sometimes called abi page size) is the maximum page size that
   // the output can be run on. For example if the OS can use 4k or 64k page
   // sizes then maxPageSize must be 64k for the output to be useable on both.
@@ -2206,7 +2199,7 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &args) {
   config->capabilitySize = target->getCapabilitySize();
 
   // CapabilitySize must be set if we are targeting the purecap ABI
-  if (config->isCheriABI()) {
+  if (config->isCheriAbi) {
     if (errorCount())
       return;
     assert(config->capabilitySize > 0);

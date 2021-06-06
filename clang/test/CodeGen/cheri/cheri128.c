@@ -1,5 +1,5 @@
-// RUN: %cheri256_cc1 -S -o - -O1 -emit-llvm %s | FileCheck -check-prefix=CHECK256  %s
-// RUN: %cheri128_cc1 -S -o - -O1 -emit-llvm %s | FileCheck -check-prefix=CHECK128 %s
+// RUN: %cheri_cc1 -o - -emit-llvm %s | FileCheck -check-prefix=CHECK128 %s
+// RUN: %cheri_cc1 -target-cpu cheri256 -cheri-size 256 -o - -emit-llvm %s | FileCheck -check-prefix=CHECK256 %s
 // RUN: %clang -target aarch64-none-elf -S -o - -O1 -emit-llvm -march=morello %s | FileCheck -check-prefix=CHECKA64 %s
 // RUN: %clang -target aarch64-none-elf -S -o - -O1 -emit-llvm -march=morello+c64 -mabi=purecap %s | FileCheck -check-prefix=CHECKA64-PURE %s
 

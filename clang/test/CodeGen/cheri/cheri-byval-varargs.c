@@ -1,7 +1,8 @@
-// RUN: %cheri128_purecap_cc1 "-emit-obj" "-O2" "-x" "c" %s -o /dev/null -emit-llvm -verify
-// RUN: %cheri256_purecap_cc1 "-emit-obj" "-O2" "-x" "c" %s -o /dev/null -emit-llvm -verify
-// RXUN: %cheri128_purecap_cc1 "-emit-obj" "-O2" "-x" "c" %s -o /dev/null -S -verify
-// RXUN: %cheri256_purecap_cc1 "-emit-obj" "-O2" "-x" "c" %s -o /dev/null -S -verify
+// REQUIRES: mips-registered-target
+/// This used to result in a crash when emitting byval arguments.
+/// FIXME: checking for non-crashing behaviour is not a good test
+// RUN: %cheri_purecap_cc1 -O2 %s -o /dev/null -emit-llvm -verify
+// RUN: %cheri_purecap_cc1 -O2 %s -o /dev/null -S -verify
 
 void other_func(void* x);
 

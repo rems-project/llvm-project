@@ -202,6 +202,8 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
   // Initialization of data sharing attributes stack for OpenMP
   InitDataSharingAttributesStack();
 
+  PointerInterpretation = Context.getDefaultPointerInterpretation();
+
   std::unique_ptr<sema::SemaPPCallbacks> Callbacks =
       std::make_unique<sema::SemaPPCallbacks>();
   SemaPPCallbackHandler = Callbacks.get();
@@ -258,7 +260,6 @@ void Sema::Initialize() {
     if (IdResolver.begin(UIntCap) == IdResolver.end())
       PushOnScopeChains(Context.getUIntCapDecl(), TUScope);
   }
-  
 
   // Initialize predefined Objective-C types:
   if (getLangOpts().ObjC) {

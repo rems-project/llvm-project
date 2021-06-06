@@ -1203,7 +1203,7 @@ inline Partition &SectionBase::getPartition() const {
 // Linker generated sections which can be used as inputs and are not specific to
 // a partition.
 struct InStruct {
-  InputSection *armAttributes;
+  InputSection *attributes;
   BssSection *bss;
   BssSection *bssRelRo;
   MorelloCapRelocsSection *capRelocs;

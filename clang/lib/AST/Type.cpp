@@ -283,6 +283,26 @@ void DependentAddressSpaceType::Profile(llvm::FoldingSetNodeID &ID,
   AddrSpaceExpr->Profile(ID, Context, true);
 }
 
+DependentPointerType::DependentPointerType(const ASTContext &Context,
+                                           QualType PointerType,
+                                           QualType Canonical,
+                                           PointerInterpretationKind PIK,
+                                           SourceLocation Loc)
+    : Type(DependentPointer, Canonical,
+           TypeDependence::DependentInstantiation |
+               PointerType->getDependence()),
+      Context(Context), PointerType(PointerType), Loc(Loc) {
+  DependentPointerTypeBits.PIK = PIK;
+}
+
+void DependentPointerType::Profile(llvm::FoldingSetNodeID &ID,
+                                   const ASTContext &Context,
+                                   QualType PointerType,
+                                   PointerInterpretationKind PIK) {
+  ID.AddPointer(PointerType.getAsOpaquePtr());
+  ID.AddInteger(PIK);
+}
+
 MatrixType::MatrixType(TypeClass tc, QualType matrixType, QualType canonType,
                        const Expr *RowExpr, const Expr *ColumnExpr)
     : Type(tc, canonType,
@@ -977,9 +997,7 @@ public:
     if (pointeeType.getAsOpaquePtr() == T->getPointeeType().getAsOpaquePtr())
       return QualType(T, 0);
 
-    return Ctx.getPointerType(pointeeType, T->isCHERICapability()
-                                               ? ASTContext::PIK_Capability
-                                               : ASTContext::PIK_Integer);
+    return Ctx.getPointerType(pointeeType, T->getPointerInterpretation());
   }
 
   QualType VisitBlockPointerType(const BlockPointerType *T) {
@@ -1003,9 +1021,7 @@ public:
       return QualType(T, 0);
 
     return Ctx.getLValueReferenceType(pointeeType, T->isSpelledAsLValue(),
-                                      T->isCHERICapability()
-                                          ? ASTContext::PIK_Capability
-                                          : ASTContext::PIK_Integer);
+                                      T->getPointerInterpretation());
   }
 
   QualType VisitRValueReferenceType(const RValueReferenceType *T) {
@@ -1017,9 +1033,8 @@ public:
           == T->getPointeeTypeAsWritten().getAsOpaquePtr())
       return QualType(T, 0);
 
-    return Ctx.getRValueReferenceType(
-        pointeeType, T->isCHERICapability() ? ASTContext::PIK_Capability
-                                            : ASTContext::PIK_Integer);
+    return Ctx.getRValueReferenceType(pointeeType,
+                                      T->getPointerInterpretation());
   }
 
   QualType VisitMemberPointerType(const MemberPointerType *T) {
@@ -2992,7 +3007,7 @@ StringRef BuiltinType::getName(const PrintingPolicy &Policy) const {
   case Int128:
     return "__int128";
   case IntCap:
-    return "__intcap_t";
+    return "__intcap";
   case UChar:
     return "unsigned char";
   case UShort:
@@ -3003,10 +3018,10 @@ StringRef BuiltinType::getName(const PrintingPolicy &Policy) const {
     return "unsigned long";
   case ULongLong:
     return "unsigned long long";
-  case UIntCap:
-    return "__uintcap_t";
   case UInt128:
     return "unsigned __int128";
+  case UIntCap:
+    return "unsigned __intcap";
   case Half:
     return Policy.Half ? "half" : "__fp16";
   case BFloat16:
@@ -4174,6 +4189,7 @@ bool Type::canHaveNullability(bool ResultIfUnknown) const {
   case Type::ConstantMatrix:
   case Type::DependentSizedMatrix:
   case Type::DependentAddressSpace:
+  case Type::DependentPointer:
   case Type::FunctionProto:
   case Type::FunctionNoProto:
   case Type::Record:

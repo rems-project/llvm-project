@@ -192,6 +192,7 @@ class ASTContext : public RefCountedBase<ASTContext> {
     DependentSizedExtVectorTypes;
   mutable llvm::FoldingSet<DependentAddressSpaceType>
       DependentAddressSpaceTypes;
+  mutable llvm::FoldingSet<DependentPointerType> DependentPointerTypes;
   mutable llvm::FoldingSet<VectorType> VectorTypes;
   mutable llvm::FoldingSet<DependentVectorType> DependentVectorTypes;
   mutable llvm::FoldingSet<ConstantMatrixType> MatrixTypes;
@@ -1185,24 +1186,22 @@ public:
     return CanQualType::CreateUnsafe(getComplexType((QualType) T));
   }
 
-  enum PointerInterpretationKind {
-    PIK_Capability,
-    PIK_Integer,
-    PIK_Default,
-    PIK_Invalid
-  };
+  /// Get the default pointer interpretation in use.
+  PointerInterpretationKind getDefaultPointerInterpretation() const;
 
   /// Return the uniqued reference to the type for a pointer to
   /// the specified type.
-  QualType getPointerType(QualType T,
-                          PointerInterpretationKind PIK = PIK_Default) const;
+  QualType getPointerType(QualType T) const {
+    return getPointerType(T, getDefaultPointerInterpretation());
+  }
+  QualType getPointerType(QualType T, PointerInterpretationKind PIK) const;
+  CanQualType getPointerType(CanQualType T) const {
+    return getPointerType(T, getDefaultPointerInterpretation());
+  }
   CanQualType getPointerType(CanQualType T,
-                             PointerInterpretationKind PIK = PIK_Default) const {
+                             PointerInterpretationKind PIK) const {
     return CanQualType::CreateUnsafe(getPointerType((QualType) T, PIK));
   }
-private:
-  bool shouldUseCHERICap(PointerInterpretationKind PIK) const;
-public:
 
   /// Return the uniqued reference to a type adjusted from the original
   /// type to a new type.
@@ -1276,14 +1275,21 @@ public:
 
   /// Return the uniqued reference to the type for an lvalue reference
   /// to the specified type.
-  QualType getLValueReferenceType(QualType T, bool SpelledAsLValue = true, 
-                                  PointerInterpretationKind PIK = PIK_Default)
-    const;
+  QualType getLValueReferenceType(QualType T,
+                                  bool SpelledAsLValue = true) const {
+    return getLValueReferenceType(T, SpelledAsLValue,
+                                  getDefaultPointerInterpretation());
+  }
+  QualType getLValueReferenceType(QualType T, bool SpelledAsLValue,
+                                  PointerInterpretationKind PIK) const;
 
   /// Return the uniqued reference to the type for an rvalue reference
   /// to the specified type.
+  QualType getRValueReferenceType(QualType T) const {
+    return getRValueReferenceType(T, getDefaultPointerInterpretation());
+  }
   QualType getRValueReferenceType(QualType T,
-                                  PointerInterpretationKind PIK = PIK_Default) const;
+                                  PointerInterpretationKind PIK) const;
 
   /// Return the uniqued reference to the type for a member pointer to
   /// the specified type in the specified class.
@@ -1378,6 +1384,10 @@ public:
   QualType getDependentAddressSpaceType(QualType PointeeType,
                                         Expr *AddrSpaceExpr,
                                         SourceLocation AttrLoc) const;
+
+  QualType getDependentPointerType(QualType PointerType,
+                                   PointerInterpretationKind PIK,
+                                   SourceLocation QualifierLoc) const;
 
   /// Return a K&R style C function type like 'int()'.
   QualType getFunctionNoProtoType(QualType ResultTy,

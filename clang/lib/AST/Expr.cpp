@@ -1712,6 +1712,12 @@ bool CastExpr::CastConsistency(const ASTContext &Ctx) const {
     assert(!getType()->isCHERICapabilityType(Ctx));
     break;
 
+  case CK_LValueBitCast:
+    // This creates a reference, but they are not included as part of the
+    // QualType. Since the type can change from e.g. class Foo -> char*& we
+    // cannot check whether the capability qualifier has changed.
+    break;
+
   default:
     // All other cast kinds should not change isCHERICapabilityType():
     assert((getType()->isCHERICapabilityType(Ctx) ==
@@ -1777,18 +1783,25 @@ bool CastExpr::CastConsistency(const ASTContext &Ctx) const {
     assert(getSubExpr()->getType()->isFunctionType());
     goto CheckNoBasePath;
 
-  case CK_CHERICapabilityToPointer:
+  case CK_CHERICapabilityToPointer: {
     assert(getType()->isPointerType());
     assert(!getType()->getAs<PointerType>()->isCHERICapability());
-    assert(getSubExpr()->getType()->isCapabilityPointerType() ||
-           getSubExpr()->getType()->isIntCapType());
+    QualType SubType = getSubExpr()->getType();
+    if (!SubType->isDependentType()) {
+      assert(SubType->isCapabilityPointerType() || SubType->isIntCapType());
+    }
     goto CheckNoBasePath;
+  }
 
-  case CK_PointerToCHERICapability:
+  case CK_PointerToCHERICapability: {
     assert(getType()->isCapabilityPointerType() || getType()->isIntCapType());
-    assert(getSubExpr()->getType()->isPointerType());
-    assert(!getSubExpr()->getType()->getAs<PointerType>()->isCHERICapability());
+    QualType SubType = getSubExpr()->getType();
+    if (!SubType->isDependentType()) {
+      assert(SubType->isPointerType());
+      assert(!SubType->getAs<PointerType>()->isCHERICapability());
+    }
     goto CheckNoBasePath;
+  }
 
   case CK_AddressSpaceConversion: {
     auto Ty = getType();
@@ -5115,7 +5128,7 @@ QualType Expr::getRealReferenceType(ASTContext &Ctx,
   }
 
   // For LValues infer whether they should be capability references or not:
-  if (LValuesAsReferences && E->isLValue()) {
+  if (LValuesAsReferences && E->isLValue() && !E->getType()->isPointerType()) {
 #if 0
       && (isa<MemberExpr>(E) || isa<AbstractConditionalOperator>(E) ||
        isa<UnaryOperator>(E) || isa<BinaryOperator>(E) || isa<DeclRefExpr>(E) ||
@@ -5124,8 +5137,7 @@ QualType Expr::getRealReferenceType(ASTContext &Ctx,
     bool HasCap = Ctx.getTargetInfo().areAllPointersCapabilities() ||
                   E->hasUnderlyingCapability();
     return Ctx.getLValueReferenceType(E->getType(), true,
-                                      HasCap ? ASTContext::PIK_Capability
-                                             : ASTContext::PIK_Integer);
+                                      HasCap ? PIK_Capability : PIK_Integer);
   }
   return E->getType();
 }

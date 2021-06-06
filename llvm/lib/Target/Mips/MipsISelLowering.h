@@ -225,6 +225,8 @@ extern bool LargeCapTable;
       CapSealedGet,
       /// Legalised int_cheri_cap_subset_test
       CapSubsetTest,
+      /// Legalised int_cheri_cap_equal_exact
+      CapEqualExact,
 
       // DSP shift nodes.
       SHLL_DSP,
@@ -854,9 +856,6 @@ extern bool LargeCapTable;
     bool shouldInsertFencesForAtomic(const Instruction *I) const override {
       return true;
     }
-
-    bool canLowerPointerTypeCmpXchg(const DataLayout &DL,
-                                    AtomicCmpXchgInst *AI) const override;
 
     /// Emit a sign-extension using sll/sra, seb, or seh appropriately.
     MachineBasicBlock *emitSignExtendToI32InReg(MachineInstr &MI,

@@ -1125,7 +1125,8 @@ Value *LibCallSimplifier::optimizeMemCpy(CallInst *CI, IRBuilderBase &B) {
   CallInst *NewCI = B.CreateMemCpy(CI->getArgOperand(0), Align(1),
                                    CI->getArgOperand(1), Align(1), Size);
   NewCI->setAttributes(CI->getAttributes());
-  NewCI->setPreservesTags();
+  NewCI->addAttribute(AttributeList::FunctionIndex,
+                      Attribute::MustPreserveCheriTags);
   return CI->getArgOperand(0);
 }
 
@@ -1188,7 +1189,8 @@ Value *LibCallSimplifier::optimizeMemMove(CallInst *CI, IRBuilderBase &B) {
   CallInst *NewCI = B.CreateMemMove(CI->getArgOperand(0), Align(1),
                                     CI->getArgOperand(1), Align(1), Size);
   NewCI->setAttributes(CI->getAttributes());
-  NewCI->setPreservesTags();
+  NewCI->addAttribute(AttributeList::FunctionIndex,
+                      Attribute::MustPreserveCheriTags);
   return CI->getArgOperand(0);
 }
 
@@ -3270,7 +3272,8 @@ Value *FortifiedLibCallSimplifier::optimizeMemCpyChk(CallInst *CI,
         B.CreateMemCpy(CI->getArgOperand(0), Align(1), CI->getArgOperand(1),
                        Align(1), CI->getArgOperand(2));
     NewCI->setAttributes(CI->getAttributes());
-    NewCI->setPreservesTags();
+    NewCI->addAttribute(AttributeList::FunctionIndex,
+                        Attribute::MustPreserveCheriTags);
     return CI->getArgOperand(0);
   }
   return nullptr;
@@ -3283,7 +3286,8 @@ Value *FortifiedLibCallSimplifier::optimizeMemMoveChk(CallInst *CI,
         B.CreateMemMove(CI->getArgOperand(0), Align(1), CI->getArgOperand(1),
                         Align(1), CI->getArgOperand(2));
     NewCI->setAttributes(CI->getAttributes());
-    NewCI->setPreservesTags();
+    NewCI->addAttribute(AttributeList::FunctionIndex,
+                        Attribute::MustPreserveCheriTags);
     return CI->getArgOperand(0);
   }
   return nullptr;

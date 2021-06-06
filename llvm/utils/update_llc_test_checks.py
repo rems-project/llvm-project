@@ -29,6 +29,8 @@ def main():
   parser.add_argument(
       '--extra_scrub', action='store_true',
       help='Always use additional regex to further reduce diffs between various subtargets')
+  parser.add_argument('--scrub-stack-indices', action='store_true',
+      help='Use additional regex to further reduce diffs between 32/64-bit targets')
   parser.add_argument(
       '--x86_scrub_rip', action='store_true', default=True,
       help='Use more regex for x86 matching to reduce diffs between various subtargets')
@@ -66,10 +68,8 @@ def main():
         if first_command.startswith("%"):
           first_command = first_command.replace("%cheri_purecap_opt", "opt -mtriple=mips64-unknown-freebsd -target-abi purecap -relocation-model pic -mcpu=cheri128 -mattr=+cheri128")
           first_command = first_command.replace("%cheri128_purecap_opt", "opt -mtriple=mips64-unknown-freebsd -target-abi purecap -relocation-model pic -mcpu=cheri128 -mattr=+cheri128")
-          first_command = first_command.replace("%cheri256_purecap_opt", "opt -mtriple=mips64-unknown-freebsd -target-abi purecap -relocation-model pic -mcpu=cheri256 -mattr=+cheri256")
           first_command = first_command.replace("%cheri_opt", "opt -mtriple=mips64-unknown-freebsd -mcpu=cheri128 -mattr=+cheri128")
           first_command = first_command.replace("%cheri128_opt", "opt -mtriple=mips64-unknown-freebsd -mcpu=cheri128 -mattr=+cheri128")
-          first_command = first_command.replace("%cheri256_opt", "opt -mtriple=mips64-unknown-freebsd -mcpu=cheri256 -mattr=+cheri256")
           first_command = first_command.replace("%riscv32_cheri_purecap_opt", "opt -mtriple=riscv32-unknown-freebsd -target-abi il32pc64 -mattr=+xcheri,+cap-mode")
           first_command = first_command.replace("%riscv64_cheri_purecap_opt", "opt -mtriple=riscv64-unknown-freebsd -target-abi l64pc128 -mattr=+xcheri,+cap-mode")
           first_command = first_command.replace("%riscv32_cheri_opt", "opt -mtriple=riscv32-unknown-freebsd -mattr=+xcheri")
@@ -80,7 +80,7 @@ def main():
           known_command = True
         elif first_command_list[0] == "opt":
           known_command = True
-          first_command_list[0] = args.opt_binary
+          first_command_list[0] = ti.args.opt_binary
           first_command = " ".join(first_command_list)
         if not known_command:
           common.warn('WARNING: Skipping RUN line with more than two commands and unknown first tool: ' + l)
@@ -93,10 +93,8 @@ def main():
       if llc_cmd.startswith("%"):
         llc_cmd = llc_cmd.replace("%cheri_purecap_llc", "llc -mtriple=mips64-unknown-freebsd -target-abi purecap -relocation-model pic -mcpu=cheri128 -mattr=+cheri128")
         llc_cmd = llc_cmd.replace("%cheri128_purecap_llc", "llc -mtriple=mips64-unknown-freebsd -target-abi purecap -relocation-model pic -mcpu=cheri128 -mattr=+cheri128")
-        llc_cmd = llc_cmd.replace("%cheri256_purecap_llc", "llc -mtriple=mips64-unknown-freebsd -target-abi purecap -relocation-model pic -mcpu=cheri256 -mattr=+cheri256")
         llc_cmd = llc_cmd.replace("%cheri_llc", "llc -mtriple=mips64-unknown-freebsd -mcpu=cheri128 -mattr=+cheri128")
         llc_cmd = llc_cmd.replace("%cheri128_llc", "llc -mtriple=mips64-unknown-freebsd -mcpu=cheri128 -mattr=+cheri128")
-        llc_cmd = llc_cmd.replace("%cheri256_llc", "llc -mtriple=mips64-unknown-freebsd -mcpu=cheri256 -mattr=+cheri256")
         llc_cmd = llc_cmd.replace("%riscv32_cheri_purecap_llc", "llc -mtriple=riscv32-unknown-freebsd -target-abi il32pc64 -mattr=+xcheri,+cap-mode")
         llc_cmd = llc_cmd.replace("%riscv64_cheri_purecap_llc", "llc -mtriple=riscv64-unknown-freebsd -target-abi l64pc128 -mattr=+xcheri,+cap-mode")
         llc_cmd = llc_cmd.replace("%riscv32_cheri_llc", "llc -mtriple=riscv32-unknown-freebsd -mattr=+xcheri")
@@ -116,7 +114,11 @@ def main():
       filecheck_cmd = ''
       if len(commands) > 1:
         filecheck_cmd = commands[1]
-      if filecheck_cmd.startswith("%cheri_FileCheck"):
+      if filecheck_cmd.startswith("%cheri64_FileCheck"):
+        filecheck_cmd = filecheck_cmd.replace("%cheri64_FileCheck", "FileCheck '-D#CAP_SIZE=8'")
+      elif filecheck_cmd.startswith("%cheri128_FileCheck"):
+        filecheck_cmd = filecheck_cmd.replace("%cheri128_FileCheck", "FileCheck '-D#CAP_SIZE=16'")
+      elif filecheck_cmd.startswith("%cheri_FileCheck"):
         filecheck_cmd = filecheck_cmd.replace("%cheri_FileCheck", "FileCheck '-D#CAP_SIZE=16'")
       common.verify_filecheck_prefixes(filecheck_cmd)
       if llc_tool not in LLC_LIKE_TOOLS:

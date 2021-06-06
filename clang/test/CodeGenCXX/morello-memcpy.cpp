@@ -37,5 +37,5 @@ void test1(void *v1, void *v2, void *v3, void *p, unsigned n) {
   __builtin___memmove_chk (p, v3, n, __builtin_object_size (p, 0));
 }
 
-// CHECK: attributes [[PRESERVE_TAGS_ATTRIB]] = { "must-preserve-cheri-tags" }
-// CHECK: attributes [[PRESERVE_TAGS_ATTRIB_NOUNWIND]] = { nounwind "must-preserve-cheri-tags" }
+// CHECK: attributes [[PRESERVE_TAGS_ATTRIB]] = { must_preserve_cheri_tags }
+// CHECK: attributes [[PRESERVE_TAGS_ATTRIB_NOUNWIND]] = { must_preserve_cheri_tags nounwind }

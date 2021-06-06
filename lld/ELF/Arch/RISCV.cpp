@@ -24,6 +24,7 @@ class RISCV final : public TargetInfo {
 public:
   RISCV();
   uint32_t calcEFlags() const override;
+  bool calcIsCheriAbi() const override;
   int getCapabilitySize() const override;
   void writeGotHeader(uint8_t *buf) const override;
   void writeGotPlt(uint8_t *buf, const Symbol &s) const override;
@@ -149,6 +150,16 @@ uint32_t RISCV::calcEFlags() const {
   }
 
   return target;
+}
+
+bool RISCV::calcIsCheriAbi() const {
+  bool isCheriAbi = config->eflags & EF_RISCV_CHERIABI;
+
+  if (config->isCheriAbi && !objectFiles.empty() && !isCheriAbi)
+    error(toString(objectFiles.front()) +
+          ": object file is non-CheriABI but emulation forces it");
+
+  return isCheriAbi;
 }
 
 void RISCV::writeGotHeader(uint8_t *buf) const {
@@ -461,13 +472,13 @@ void RISCV::relocate(uint8_t *loc, const Relocation &rel, uint64_t val) const {
     return;
 
   case R_RISCV_TLS_DTPREL32:
-    if (config->isCheriABI())
+    if (config->isCheriAbi)
       write32le(loc, val);
     else
       write32le(loc, val - dtpOffset);
     break;
   case R_RISCV_TLS_DTPREL64:
-    if (config->isCheriABI())
+    if (config->isCheriAbi)
       write64le(loc, val);
     else
       write64le(loc, val - dtpOffset);

@@ -339,8 +339,7 @@ void Sema::ActOnPragmaPack(SourceLocation PragmaLoc, PragmaMsStackAction Action,
   PackStack.Act(PragmaLoc, Action, SlotLabel, AlignmentVal);
 }
 
-void Sema::ActOnPragmaPointerInterpretation(ASTContext::PointerInterpretationKind K) {
-  assert(K != ASTContext::PIK_Invalid);
+void Sema::ActOnPragmaPointerInterpretation(PointerInterpretationKind K) {
   PointerInterpretation = K;
 }
 
