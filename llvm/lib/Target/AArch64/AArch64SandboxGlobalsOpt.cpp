@@ -45,7 +45,7 @@ public:
   AArch64SandboxGlobalsOpt(TargetMachine *TM) : ModulePass(ID), TM(TM) {}
 
   struct GlobalKey {
-    Comdat *Comdat;
+    Comdat *ObjComdat;
     GlobalValue::LinkageTypes Linkage;
     GlobalValue::VisibilityTypes Visibility;
   };
@@ -56,11 +56,11 @@ public:
         return LHS.Linkage < RHS.Linkage;
       if (LHS.Visibility != RHS.Visibility)
         return LHS.Visibility < RHS.Visibility;
-      if (!LHS.Comdat || !RHS.Comdat)
-        return (LHS.Comdat < RHS.Comdat);
-      if (LHS.Comdat->getSelectionKind() != RHS.Comdat->getSelectionKind())
-        return LHS.Comdat->getSelectionKind() < RHS.Comdat->getSelectionKind();
-      return LHS.Comdat->getName().compare(RHS.Comdat->getName()) < 0;
+      if (!LHS.ObjComdat || !RHS.ObjComdat)
+        return (LHS.ObjComdat < RHS.ObjComdat);
+      if (LHS.ObjComdat->getSelectionKind() != RHS.ObjComdat->getSelectionKind())
+        return LHS.ObjComdat->getSelectionKind() < RHS.ObjComdat->getSelectionKind();
+      return LHS.ObjComdat->getName().compare(RHS.ObjComdat->getName()) < 0;
     }
   };
 
@@ -95,7 +95,7 @@ public:
   void addGlobalValue(GlobalObject *GV) {
     GlobalKey Key;
     Key.Linkage = getCapLinkage(GV);
-    Key.Comdat = GV->hasComdat() ? getCapComdat(GV) : nullptr;
+    Key.ObjComdat = GV->hasComdat() ? getCapComdat(GV) : nullptr;
     Key.Visibility = getCapVisibility(GV);
     Globals[Key].push_back(GV);
   }
@@ -145,8 +145,8 @@ public:
         Const->getType(), true, Key.Linkage, Const,
         Twine("__cap_merged_table"), nullptr,
         GlobalValue::NotThreadLocal, 0);
-    if (Key.Comdat)
-      NGV->setComdat(Key.Comdat);
+    if (Key.ObjComdat)
+      NGV->setComdat(Key.ObjComdat);
     NGV->setVisibility(Key.Visibility);
     NGV->setAlignment(MaybeAlign(16));
 
