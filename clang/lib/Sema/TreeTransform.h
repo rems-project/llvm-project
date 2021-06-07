@@ -749,8 +749,9 @@ public:
   ///
   /// By default, performs semantic analysis when building the pointer type.
   /// Subclasses may override this routine to provide different behavior.
-  QualType RebuildPointerType(QualType PointeeType, SourceLocation Sigil,
-                              bool IsCapability);
+  QualType RebuildPointerType(QualType PointeeType,
+                              PointerInterpretationKind PIK,
+                              SourceLocation Sigil);
 
   /// Build a new block pointer type given its pointee type.
   ///
@@ -4927,6 +4928,8 @@ QualType TreeTransform<Derived>::TransformDecayedType(TypeLocBuilder &TLB,
 template<typename Derived>
 QualType TreeTransform<Derived>::TransformPointerType(TypeLocBuilder &TLB,
                                                       PointerTypeLoc TL) {
+  const PointerType *T = TL.getTypePtr();
+
   QualType PointeeType
     = getDerived().TransformType(TLB, TL.getPointeeLoc());
   if (PointeeType.isNull())
@@ -4952,8 +4955,8 @@ QualType TreeTransform<Derived>::TransformPointerType(TypeLocBuilder &TLB,
 
   if (getDerived().AlwaysRebuild() ||
       PointeeType != TL.getPointeeLoc().getType()) {
-    Result = getDerived().RebuildPointerType(PointeeType, TL.getSigilLoc(),
-                                             IsCapability);
+    Result = getDerived().RebuildPointerType(
+        PointeeType, T->getPointerInterpretation(), TL.getSigilLoc());
     if (Result.isNull())
       return QualType();
   }
@@ -14099,13 +14102,10 @@ TreeTransform<Derived>::TransformAtomicExpr(AtomicExpr *E) {
 //===----------------------------------------------------------------------===//
 
 template<typename Derived>
-QualType TreeTransform<Derived>::RebuildPointerType(QualType PointeeType,
-                                                    SourceLocation Star,
-                                                    bool UseCapability) {
-  return SemaRef.BuildPointerType(PointeeType, Star,
-                                  getDerived().getBaseEntity(), nullptr,
-                                  UseCapability ? PIK_Capability :
-                                                  PIK_Integer);
+QualType TreeTransform<Derived>::RebuildPointerType(
+    QualType PointeeType, PointerInterpretationKind PIK, SourceLocation Star) {
+  return SemaRef.BuildPointerType(PointeeType, PIK, Star,
+                                  getDerived().getBaseEntity(), nullptr);
 }
 
 template<typename Derived>

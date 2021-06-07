@@ -2092,10 +2092,9 @@ static QualType deduceOpenCLPointeeAddrSpace(Sema &S, QualType PointeeType) {
 ///
 /// \returns A suitable pointer type, if there are no
 /// errors. Otherwise, returns a NULL type.
-QualType Sema::BuildPointerType(QualType T,
+QualType Sema::BuildPointerType(QualType T, PointerInterpretationKind PIK,
                                 SourceLocation Loc, DeclarationName Entity,
-                                bool* ValidPointer,
-                                PointerInterpretationKind Kind) {
+                                bool* ValidPointer) {
   if (T->isReferenceType()) {
     // C++ 8.3.2p4: There shall be no ... pointers to references ...
     Diag(Loc, diag::err_illegal_decl_pointer_to_reference)
@@ -2124,7 +2123,7 @@ QualType Sema::BuildPointerType(QualType T,
 
   // If we are in purecap ABI turn pointers marked as using an integer
   // representation into a plain pointer-range-sized integer
-  if (PointerInterpretation == PIK_Integer
+  if (PIK == PIK_Integer
       && Context.getTargetInfo().areAllPointersCapabilities()) {
     // This is not a real pointer type in the purecap ABI
     // ptrdiff_t will be the same size as a plain mips pointer
@@ -2137,7 +2136,7 @@ QualType Sema::BuildPointerType(QualType T,
   // Build the pointer type.
   if (ValidPointer)
     *ValidPointer = true;
-  return Context.getPointerType(T, Kind);
+  return Context.getPointerType(T, PIK);
 }
 
 /// Build a reference type.
@@ -4855,8 +4854,8 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
         }
       }
       bool ValidPointer = false;
-      T = S.BuildPointerType(T, DeclType.Loc, Name, &ValidPointer,
-                             S.PointerInterpretation);
+      T = S.BuildPointerType(T, S.PointerInterpretation, DeclType.Loc, Name,
+                             &ValidPointer);
       if (!ValidPointer) {
         IsIntegerPointerInPureCapABI = true;  // FIXME: is this correct?
       } else if (DeclType.Ptr.TypeQuals)
