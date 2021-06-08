@@ -1302,6 +1302,8 @@ AArch64TTIImpl::getMaskedMemoryOpCost(unsigned Opcode, Type *Src,
     return BaseT::getMaskedMemoryOpCost(Opcode, Src, Alignment, AddressSpace,
                                         CostKind);
   auto LT = TLI->getTypeLegalizationCost(DL, Src);
+  if (!LT.first.isValid())
+    return InstructionCost::getInvalid();
   return LT.first * 2;
 }
 
@@ -1314,6 +1316,9 @@ InstructionCost AArch64TTIImpl::getGatherScatterOpCost(
                                          Alignment, CostKind, I);
   auto *VT = cast<VectorType>(DataTy);
   auto LT = TLI->getTypeLegalizationCost(DL, DataTy);
+  if (!LT.first.isValid())
+    return InstructionCost::getInvalid();
+
   ElementCount LegalVF = LT.second.getVectorElementCount();
   Optional<unsigned> MaxNumVScale = getMaxVScale();
   assert(MaxNumVScale && "Expected valid max vscale value");
@@ -1340,6 +1345,8 @@ InstructionCost AArch64TTIImpl::getMemoryOpCost(unsigned Opcode, Type *Ty,
                                   CostKind);
 
   auto LT = TLI->getTypeLegalizationCost(DL, Ty);
+  if (!LT.first.isValid())
+    return InstructionCost::getInvalid();
 
   // Cowardly refuse any kind of vectorization when capabilities are
   // vector element types.
