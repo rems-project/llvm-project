@@ -24,6 +24,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/BinaryFormat/ELF.h"
 #include "llvm/MC/MCAsmBackend.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
@@ -266,6 +267,17 @@ void AArch64ELFStreamer::emitCheriIntcap(const MCExpr *Expr, unsigned CapSize,
 } // end anonymous namespace
 
 namespace llvm {
+
+AArch64TargetELFStreamer::AArch64TargetELFStreamer(MCStreamer &S,
+                                                   const MCSubtargetInfo &STI)
+    : AArch64TargetStreamer(S) {
+  MCAssembler &MCA = getStreamer().getAssembler();
+  unsigned EFlags = MCA.getELFHeaderEFlags();
+  if (S.getContext().getAsmInfo()->isCheriPurecapABI()) {
+    EFlags |= ELF::EF_AARCH64_CHERI_PURECAP;
+  }
+  MCA.setELFHeaderEFlags(EFlags);
+}
 
 AArch64ELFStreamer &AArch64TargetELFStreamer::getStreamer() {
   return static_cast<AArch64ELFStreamer &>(Streamer);
