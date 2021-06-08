@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Core/Capability.h"
+#include "lldb/Utility/Capability.h"
 
 // C Includes
 // C++ Includes

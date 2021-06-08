@@ -25,7 +25,7 @@
 namespace lldb_private {
 
 //----------------------------------------------------------------------
-/// @class Capability Capability.h "lldb/Core/Capability.h"
+/// @class Capability Capability.h "lldb/Utility/Capability.h"
 /// @brief A capability class.
 ///
 /// Capability is a non-forgeable permission to perform some action.

@@ -12,7 +12,7 @@
 #include "lldb/lldb-forward.h"
 
 #include "lldb/Core/Address.h"
-#include "lldb/Core/Capability.h"
+#include "lldb/Utility/Capability.h"
 #include "lldb/Core/Disassembler.h"
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Target/ExecutionContext.h"

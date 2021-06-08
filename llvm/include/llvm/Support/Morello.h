@@ -14,6 +14,8 @@
 #ifndef LLVM_SUPPORT_MORELLO_H
 #define LLVM_SUPPORT_MORELLO_H
 
+#include <stdint.h>
+
 namespace llvm {
 
 uint64_t getMorelloRequiredAlignment(uint64_t length);

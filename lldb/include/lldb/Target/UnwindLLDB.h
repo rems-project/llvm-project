@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-#include "lldb/Core/Capability.h"
+#include "lldb/Utility/Capability.h"
 #include "lldb/Utility/RegisterValue.h"
 #include "lldb/Symbol/FuncUnwinders.h"
 #include "lldb/Symbol/SymbolContext.h"
