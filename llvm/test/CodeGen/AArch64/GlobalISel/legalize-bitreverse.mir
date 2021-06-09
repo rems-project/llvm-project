@@ -12,11 +12,11 @@ body: |
     ; CHECK: %copy:_(s32) = COPY $w0
     ; CHECK: %bitreverse:_(s32) = G_BITREVERSE %copy
     ; CHECK: $w0 = COPY %bitreverse(s32)
-    ; CHECK: RET_ReallyLR implicit $w0
+    ; CHECK: RET_ReallyLR 0, implicit $w0
     %copy:_(s32) = COPY $w0
     %bitreverse:_(s32) = G_BITREVERSE %copy
     $w0 = COPY %bitreverse
-    RET_ReallyLR implicit $w0
+    RET_ReallyLR 0, implicit $w0
 ...
 ---
 name:            s64_legal
@@ -28,11 +28,11 @@ body: |
     ; CHECK: %copy:_(s64) = COPY $x0
     ; CHECK: %bitreverse:_(s64) = G_BITREVERSE %copy
     ; CHECK: $x0 = COPY %bitreverse(s64)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %copy:_(s64) = COPY $x0
     %bitreverse:_(s64) = G_BITREVERSE %copy
     $x0 = COPY %bitreverse
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 ---
 name:            v8s8_legal
@@ -44,11 +44,11 @@ body: |
     ; CHECK: %vec:_(<8 x s8>) = G_IMPLICIT_DEF
     ; CHECK: %bitreverse:_(<8 x s8>) = G_BITREVERSE %vec
     ; CHECK: $x0 = COPY %bitreverse(<8 x s8>)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %vec:_(<8 x s8>) = G_IMPLICIT_DEF
     %bitreverse:_(<8 x s8>) = G_BITREVERSE %vec
     $x0 = COPY %bitreverse
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 ---
 name:            v16s8_legal
@@ -60,9 +60,9 @@ body: |
     ; CHECK: %vec:_(<16 x s8>) = G_IMPLICIT_DEF
     ; CHECK: %bitreverse:_(<16 x s8>) = G_BITREVERSE %vec
     ; CHECK: $q0 = COPY %bitreverse(<16 x s8>)
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %vec:_(<16 x s8>) = G_IMPLICIT_DEF
     %bitreverse:_(<16 x s8>) = G_BITREVERSE %vec
     $q0 = COPY %bitreverse
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 ...

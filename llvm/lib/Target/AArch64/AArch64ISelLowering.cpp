@@ -32,6 +32,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Analysis/ObjCARCUtil.h"
 #include "llvm/Analysis/VectorUtils.h"
+#include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -18652,10 +18653,8 @@ Value *AArch64TargetLowering::emitStoreConditional(IRBuilderBase &Builder,
 }
 
 bool AArch64TargetLowering::functionArgumentNeedsConsecutiveRegisters(
-    Type *Ty, CallingConv::ID CallConv, bool isVarArg) const {
-  if (Ty->isArrayTy())
-    return true;
-
+    Type *Ty, CallingConv::ID CallConv, bool isVarArg,
+    const DataLayout &DL) const {
   if (StructType *StrTy = dyn_cast<StructType>(Ty)) {
     if (StrTy->isOpaque())
       return false;
@@ -18667,9 +18666,7 @@ bool AArch64TargetLowering::functionArgumentNeedsConsecutiveRegisters(
         if (ITy->getBitWidth() == 64)
           continue;
       if (PointerType *PTy = dyn_cast<PointerType>(Ty)) {
-        // We should use the DataLayout here, but it's currently not
-        // available.
-        if (PTy->getAddressSpace() == 200) {
+        if (DL.isFatPointer(PTy)) {
           HasCapabilities = true;
           continue;
         }
@@ -18680,11 +18677,15 @@ bool AArch64TargetLowering::functionArgumentNeedsConsecutiveRegisters(
       return true;
   }
 
-  const TypeSize &TySize = Ty->getPrimitiveSizeInBits();
-  if (TySize.isScalable() && TySize.getKnownMinSize() > 128)
-    return true;
+  if (!Ty->isArrayTy()) {
+    const TypeSize &TySize = Ty->getPrimitiveSizeInBits();
+    return TySize.isScalable() && TySize.getKnownMinSize() > 128;
+  }
 
-  return false;
+  // All non aggregate members of the type must have the same type
+  SmallVector<EVT> ValueVTs;
+  ComputeValueVTs(*this, DL, Ty, ValueVTs);
+  return is_splat(ValueVTs);
 }
 
 bool AArch64TargetLowering::shouldNormalizeToSelectSequence(LLVMContext &,
