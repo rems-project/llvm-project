@@ -217,18 +217,18 @@ public:
 
 protected:
   ConstString m_name;
-  SymbolFile *m_symbol_file;
+  SymbolFile *m_symbol_file = nullptr;
   /// The symbol context in which this type is defined.
-  SymbolContextScope *m_context;
-  Type *m_encoding_type;
-  lldb::user_id_t m_encoding_uid;
-  EncodingDataType m_encoding_uid_type;
+  SymbolContextScope *m_context = nullptr;
+  Type *m_encoding_type = nullptr;
+  lldb::user_id_t m_encoding_uid = LLDB_INVALID_UID;
+  EncodingDataType m_encoding_uid_type = eEncodingInvalid;
   uint64_t m_byte_size : 63;
   uint64_t m_byte_size_has_value : 1;
   Declaration m_decl;
   CompilerType m_compiler_type;
-  ResolveState m_compiler_type_resolve_state;
-  lldb::AddressSpace m_address_space;
+  ResolveState m_compiler_type_resolve_state = ResolveState::Unresolved;
+  lldb::AddressSpace m_address_space = lldb::eAddressSpaceNormal;
   /// Language-specific flags.
   Payload m_payload;
 
@@ -347,8 +347,7 @@ private:
 class TypeMemberImpl {
 public:
   TypeMemberImpl()
-      : m_type_impl_sp(), m_bit_offset(0), m_name(), m_bitfield_bit_size(0),
-        m_is_bitfield(false)
+      : m_type_impl_sp(), m_name()
 
   {}
 
@@ -383,10 +382,10 @@ public:
 
 protected:
   lldb::TypeImplSP m_type_impl_sp;
-  uint64_t m_bit_offset;
+  uint64_t m_bit_offset = 0;
   ConstString m_name;
-  uint32_t m_bitfield_bit_size; // Bit size for bitfield members only
-  bool m_is_bitfield;
+  uint32_t m_bitfield_bit_size = 0; // Bit size for bitfield members only
+  bool m_is_bitfield = false;
 };
 
 ///
@@ -442,9 +441,7 @@ private:
 
 class TypeMemberFunctionImpl {
 public:
-  TypeMemberFunctionImpl()
-      : m_type(), m_decl(), m_name(), m_kind(lldb::eMemberFunctionKindUnknown) {
-  }
+  TypeMemberFunctionImpl() : m_type(), m_decl(), m_name() {}
 
   TypeMemberFunctionImpl(const CompilerType &type, const CompilerDecl &decl,
                          const std::string &name,
@@ -476,13 +473,12 @@ private:
   CompilerType m_type;
   CompilerDecl m_decl;
   ConstString m_name;
-  lldb::MemberFunctionKind m_kind;
+  lldb::MemberFunctionKind m_kind = lldb::eMemberFunctionKindUnknown;
 };
 
 class TypeEnumMemberImpl {
 public:
-  TypeEnumMemberImpl()
-      : m_integer_type_sp(), m_name("<invalid>"), m_value(), m_valid(false) {}
+  TypeEnumMemberImpl() : m_integer_type_sp(), m_name("<invalid>"), m_value() {}
 
   TypeEnumMemberImpl(const lldb::TypeImplSP &integer_type_sp,
                      ConstString name, const llvm::APSInt &value);
@@ -505,7 +501,7 @@ protected:
   lldb::TypeImplSP m_integer_type_sp;
   ConstString m_name;
   llvm::APSInt m_value;
-  bool m_valid;
+  bool m_valid = false;
 };
 
 class TypeEnumMemberListImpl {

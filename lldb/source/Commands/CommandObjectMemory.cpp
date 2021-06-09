@@ -56,8 +56,7 @@ static constexpr OptionEnumValues TaggedMemoryValues() {
 class OptionGroupReadMemory : public OptionGroup {
 public:
   OptionGroupReadMemory()
-      : m_num_per_line(1, 1), m_output_as_binary(false), m_tagged_read(false),
-        m_tagged_type(eMemoryContentNormal), m_view_as_type(), m_offset(0, 0),
+      : m_num_per_line(1, 1), m_view_as_type(), m_offset(0, 0),
         m_language_for_type(eLanguageTypeUnknown) {}
 
   ~OptionGroupReadMemory() override = default;
@@ -330,9 +329,9 @@ public:
   }
 
   OptionValueUInt64 m_num_per_line;
-  bool m_output_as_binary;
-  bool m_tagged_read;
-  MemoryContentType m_tagged_type;
+  bool m_output_as_binary = false;
+  bool m_tagged_read = false;
+  MemoryContentType m_tagged_type = eMemoryContentNormal;
   OptionValueString m_view_as_type;
   bool m_force;
   OptionValueUInt64 m_offset;
