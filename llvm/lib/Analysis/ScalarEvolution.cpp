@@ -11868,8 +11868,9 @@ ScalarEvolution::howManyLessThans(const SCEV *LHS, const SCEV *RHS,
   if (!IV || IV->getLoop() != L || !IV->isAffine())
     return getCouldNotCompute();
 
-  bool NoWrap = ControlsExit &&
-                IV->getNoWrapFlags(IsSigned ? SCEV::FlagNSW : SCEV::FlagNUW);
+  auto WrapType = IsSigned ? SCEV::FlagNSW : SCEV::FlagNUW;
+  bool NoWrap = ControlsExit && IV->getNoWrapFlags(WrapType);
+  ICmpInst::Predicate Cond = IsSigned ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT;
 
   const SCEV *Stride = IV->getStepRecurrence(*this);
 
@@ -11965,8 +11966,6 @@ ScalarEvolution::howManyLessThans(const SCEV *LHS, const SCEV *RHS,
       return getCouldNotCompute();
   }
 
-  ICmpInst::Predicate Cond = IsSigned ? ICmpInst::ICMP_SLT
-                                      : ICmpInst::ICMP_ULT;
   const SCEV *Start = IV->getStart();
   const SCEV *End = RHS;
   // When the RHS is not invariant, we do not know the end bound of the loop and
@@ -12049,8 +12048,9 @@ ScalarEvolution::howManyGreaterThans(const SCEV *LHS, const SCEV *RHS,
   if (!IV || IV->getLoop() != L || !IV->isAffine())
     return getCouldNotCompute();
 
-  bool NoWrap = ControlsExit &&
-                IV->getNoWrapFlags(IsSigned ? SCEV::FlagNSW : SCEV::FlagNUW);
+  auto WrapType = IsSigned ? SCEV::FlagNSW : SCEV::FlagNUW;
+  bool NoWrap = ControlsExit && IV->getNoWrapFlags(WrapType);
+  ICmpInst::Predicate Cond = IsSigned ? ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT;
 
   const SCEV *Stride = getNegativeSCEV(IV->getStepRecurrence(*this));
 
@@ -12065,9 +12065,6 @@ ScalarEvolution::howManyGreaterThans(const SCEV *LHS, const SCEV *RHS,
   if (!Stride->isOne() && !NoWrap)
     if (canIVOverflowOnGT(RHS, Stride, IsSigned))
       return getCouldNotCompute();
-
-  ICmpInst::Predicate Cond = IsSigned ? ICmpInst::ICMP_SGT
-                                      : ICmpInst::ICMP_UGT;
 
   const SCEV *Start = IV->getStart();
   const SCEV *End = RHS;
