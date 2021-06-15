@@ -2148,6 +2148,42 @@ static SDValue foldAddSubBoolOfMaskedVal(SDNode *N, SelectionDAG &DAG) {
   return DAG.getNode(IsAdd ? ISD::SUB : ISD::ADD, DL, VT, C1, LowBit);
 }
 
+// Determine if an address can be used for scaled addressing.
+static bool addUsedForScaledAddressing(SDValue N,
+                                       SelectionDAG &DAG,
+                                       const TargetLowering &TLI) {
+  // This logic could go into reassociationCanBreakAddressingModePattern
+  // however at the moment it's not clear that this isn't a problem
+  // specific to reassociating PTRADDs (the transformation is not
+  // reversible for PTRADD).
+  assert((N.getOpcode() == ISD::ADD || N.getOpcode() == ISD::PTRADD) &&
+      "Unexpectedd opcode");
+  SDValue N1 = N.getOperand(1);
+  if (N1.getOpcode() != ISD::SHL)
+    return false;
+
+  auto *C = dyn_cast<ConstantSDNode>(N1.getOperand(1));
+  if (!C || C->getZExtValue() >= 64)
+    return false;
+
+  TargetLoweringBase::AddrMode AM;
+  AM.HasBaseReg = true;
+  AM.Scale = (1ULL << C->getZExtValue());
+
+  for (SDNode *Node : N->uses()) {
+    auto LoadStore = dyn_cast<MemSDNode>(Node);
+    if (!LoadStore)
+      continue;
+    EVT VT = LoadStore->getMemoryVT();
+    unsigned AS = LoadStore->getAddressSpace();
+    Type *AccessTy = VT.getTypeForEVT(*DAG.getContext());
+    if (TLI.isLegalAddressingMode(DAG.getDataLayout(), AM, AccessTy, AS))
+      return true;
+  }
+
+  return false;
+}
+
 /// Try to fold a pointer arithmetic node, preferring integer arithmetic.
 /// This needs to be done separately from normal addition, because pointer
 /// addition is not commutative.
@@ -2182,7 +2218,11 @@ SDValue DAGCombiner::visitPTRADD(SDNode *N) {
   // patterns. Once we represent that with PTRMASK that will be less of a
   // concern, though we might still want to detect code not using the builtins
   // and canonicalise it to a PTRMASK.
+  //
+  // Don't reasociate if we're already doing scaled addressing, since doing
+  // so would not allow the SHL to be used for the addressing mode.
   if (N0.getOpcode() == ISD::PTRADD &&
+      !addUsedForScaledAddressing(SDValue(N, 0), DAG, TLI) &&
       !reassociationCanBreakAddressingModePattern(ISD::PTRADD, DL, N0, N1)) {
     SDValue X = N0.getOperand(0);
     SDValue Y = N0.getOperand(1);
