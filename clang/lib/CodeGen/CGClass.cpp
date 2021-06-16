@@ -983,10 +983,37 @@ namespace {
       LValue SrcLV = CGF.MakeNaturalAlignAddrLValue(SrcPtr, RecordTy);
       LValue Src = CGF.EmitLValueForFieldInitialization(SrcLV, FirstField);
 
+      CharUnits MoreAlignedOffset = CharUnits::Zero();
+      CharUnits NewAlign = CharUnits::Zero();
+
+      if (CGF.getTarget().SupportsCapabilities()) {
+        // If the memcpy should preserve tags but the first field is not
+        // capability aligned, emit a memcpy to copy the unaligned part
+        // first and a second memcpy for the rest.
+        // This works around not being able to attach information to the
+        // memcpy that the source/destination VA modulo CapAlign is
+        // equal to some constant (information needed to inline the
+        // memcpy).
+        ASTContext &Ctx = CGF.getContext();
+        CharUnits CapAlign = Ctx.toCharUnitsFromBits(
+            CGF.getTarget().getCHERICapabilityAlign());
+        if (ThisPtr.getAlignment() >= CapAlign) {
+          CharUnits Offset = Ctx.toCharUnitsFromBits(FirstByteOffset);
+          CharUnits CapOffset = Offset.alignTo(CapAlign) - Offset;
+          CharUnits CapSize = Ctx.toCharUnitsFromBits(
+              CGF.getTarget().getCHERICapabilityWidth());
+          if (CapOffset.isPositive() && CapOffset + CapSize <= MemcpySize) {
+            MemcpySize -= CapOffset;
+            NewAlign = CapAlign;
+            MoreAlignedOffset = CapOffset;
+          }
+        }
+      }
+
       emitMemcpyIR(
           Dest.isBitField() ? Dest.getBitFieldAddress() : Dest.getAddress(CGF),
           Src.isBitField() ? Src.getBitFieldAddress() : Src.getAddress(CGF),
-          MemcpySize);
+          MoreAlignedOffset, MemcpySize, NewAlign);
       reset();
     }
 
@@ -999,7 +1026,9 @@ namespace {
     const CXXRecordDecl *ClassDecl;
 
   private:
-    void emitMemcpyIR(Address DestPtr, Address SrcPtr, CharUnits Size) {
+    void emitMemcpyIR(Address DestPtr, Address SrcPtr,
+                      CharUnits MoreAlignedOffset, CharUnits Size,
+                      CharUnits NewAlign) {
       llvm::PointerType *DPT = DestPtr.getType();
       llvm::Type *DBP =
         llvm::Type::getInt8PtrTy(CGF.getLLVMContext(), DPT->getAddressSpace());
@@ -1009,6 +1038,17 @@ namespace {
       llvm::Type *SBP =
         llvm::Type::getInt8PtrTy(CGF.getLLVMContext(), SPT->getAddressSpace());
       SrcPtr = CGF.Builder.CreateBitCast(SrcPtr, SBP);
+
+      if (MoreAlignedOffset != CharUnits::Zero()) {
+        CGF.Builder.CreateMemCpy(DestPtr, SrcPtr,
+                                 MoreAlignedOffset.getQuantity());
+        DestPtr = CGF.Builder.CreateConstInBoundsByteGEP(DestPtr,
+                                                         MoreAlignedOffset);
+        SrcPtr = CGF.Builder.CreateConstInBoundsByteGEP(SrcPtr,
+                                                        MoreAlignedOffset);
+        DestPtr = Address(DestPtr.getPointer(), NewAlign);
+        SrcPtr = Address(SrcPtr.getPointer(), NewAlign);
+      }
 
       CGF.Builder.CreateMemCpy(DestPtr, SrcPtr, Size.getQuantity());
     }
