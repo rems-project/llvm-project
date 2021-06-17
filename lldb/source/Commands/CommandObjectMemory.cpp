@@ -470,7 +470,6 @@ protected:
                                    m_cmd_name.c_str());
       result.AppendWarning("Expressions should be quoted if they contain "
                            "spaces or other special characters.");
-      result.SetStatus(eReturnStatusFailed);
       return false;
     }
 
@@ -551,7 +550,6 @@ protected:
             } else {
               result.AppendErrorWithFormat("invalid type string: '%s'\n",
                                            view_as_type_cstr);
-              result.SetStatus(eReturnStatusFailed);
               return false;
             }
             break;
@@ -601,7 +599,6 @@ protected:
               "Mutiple types found matching raw type '%s', please disambiguate "
               "by specifying the language with -x",
               lookup_type_name.GetCString());
-          result.SetStatus(eReturnStatusFailed);
           return false;
         }
 
@@ -616,7 +613,6 @@ protected:
                                        "the raw type '%s' for full type '%s'\n",
                                        lookup_type_name.GetCString(),
                                        view_as_type_cstr);
-          result.SetStatus(eReturnStatusFailed);
           return false;
         } else {
           TypeSP type_sp(type_list.GetTypeAtIndex(0));
@@ -630,7 +626,6 @@ protected:
           compiler_type = pointer_type;
         else {
           result.AppendError("unable make a pointer type\n");
-          result.SetStatus(eReturnStatusFailed);
           return false;
         }
         --pointer_count;
@@ -641,7 +636,6 @@ protected:
         result.AppendErrorWithFormat(
             "unable to get the byte size of the type '%s'\n",
             view_as_type_cstr);
-        result.SetStatus(eReturnStatusFailed);
         return false;
       }
       m_format_options.GetByteSizeValue() = *size;
@@ -655,7 +649,6 @@ protected:
     // Look for invalid combinations of settings
     if (error.Fail()) {
       result.AppendError(error.AsCString());
-      result.SetStatus(eReturnStatusFailed);
       return false;
     }
 
@@ -726,7 +719,6 @@ protected:
     if (addr == LLDB_INVALID_ADDRESS) {
       result.AppendError("invalid start address expression.");
       result.AppendError(error.AsCString());
-      result.SetStatus(eReturnStatusFailed);
       return false;
     }
 
@@ -746,21 +738,18 @@ protected:
       if (end_addr == LLDB_INVALID_ADDRESS) {
         result.AppendError("invalid end address expression.");
         result.AppendError(error.AsCString());
-        result.SetStatus(eReturnStatusFailed);
         return false;
       } else if (end_addr <= addr) {
         result.AppendErrorWithFormat(
             "end address (0x%" PRIx64
             ") must be greater than the start address (0x%" PRIx64 ").\n",
             end_addr, addr);
-        result.SetStatus(eReturnStatusFailed);
         return false;
       } else if (m_format_options.GetCountValue().OptionWasSet()) {
         result.AppendErrorWithFormat(
             "specify either the end address (0x%" PRIx64
             ") or the count (--count %" PRIu64 "), not both.\n",
             end_addr, (uint64_t)item_count);
-        result.SetStatus(eReturnStatusFailed);
         return false;
       }
 
@@ -814,7 +803,6 @@ protected:
             "can't allocate 0x%" PRIx32
             " bytes for the memory read buffer, specify a smaller size to read",
             (uint32_t)total_byte_size);
-        result.SetStatus(eReturnStatusFailed);
         return false;
       }
 
@@ -835,7 +823,6 @@ protected:
           result.AppendErrorWithFormat(
               "failed to read memory from 0x%" PRIx64 ".\n", addr);
         }
-        result.SetStatus(eReturnStatusFailed);
         return false;
       }
 
@@ -862,7 +849,6 @@ protected:
             "can't allocate 0x%" PRIx64
             " bytes for the memory read buffer, specify a smaller size to read",
             (uint64_t)((item_byte_size + 1) * item_count));
-        result.SetStatus(eReturnStatusFailed);
         return false;
       }
       uint8_t *data_ptr = data_sp->GetBytes();
@@ -879,7 +865,6 @@ protected:
         if (error.Fail()) {
           result.AppendErrorWithFormat(
               "failed to read memory from 0x%" PRIx64 ".\n", addr);
-          result.SetStatus(eReturnStatusFailed);
           return false;
         }
 
@@ -950,7 +935,6 @@ protected:
             result.AppendErrorWithFormat("Failed to write %" PRIu64
                                          " bytes to '%s'.\n",
                                          (uint64_t)bytes_read, path.c_str());
-            result.SetStatus(eReturnStatusFailed);
             return false;
           }
         } else {
@@ -964,7 +948,6 @@ protected:
                                      path.c_str(), append ? "append" : "write");
 
         result.AppendError(llvm::toString(outfile.takeError()));
-        result.SetStatus(eReturnStatusFailed);
         return false;
       }
     } else {
@@ -993,7 +976,6 @@ protected:
           result.AppendErrorWithFormat(
               "failed to create a value object for: (%s) %s\n",
               view_as_type_cstr, name_strm.GetData());
-          result.SetStatus(eReturnStatusFailed);
           return false;
         }
       }
@@ -1018,7 +1000,6 @@ protected:
         result.AppendErrorWithFormat(
             "reading memory as characters of size %" PRIu64 " is not supported",
             (uint64_t)item_byte_size);
-        result.SetStatus(eReturnStatusFailed);
         return false;
       }
     }
@@ -1470,14 +1451,12 @@ protected:
         result.AppendErrorWithFormat(
             "%s takes a destination address when writing file contents.\n",
             m_cmd_name.c_str());
-        result.SetStatus(eReturnStatusFailed);
         return false;
       }
     } else if (argc < 2) {
       result.AppendErrorWithFormat(
           "%s takes a destination address and at least one value.\n",
           m_cmd_name.c_str());
-      result.SetStatus(eReturnStatusFailed);
       return false;
     }
 
@@ -1496,7 +1475,6 @@ protected:
     if (addr == LLDB_INVALID_ADDRESS) {
       result.AppendError("invalid address expression\n");
       result.AppendError(error.AsCString());
-      result.SetStatus(eReturnStatusFailed);
       return false;
     }
 
@@ -1531,12 +1509,10 @@ protected:
             result.AppendErrorWithFormat("Memory write to 0x%" PRIx64
                                          " failed: %s.\n",
                                          addr, error.AsCString());
-            result.SetStatus(eReturnStatusFailed);
           }
         }
       } else {
         result.AppendErrorWithFormat("Unable to read contents of file.\n");
-        result.SetStatus(eReturnStatusFailed);
       }
       return result.Succeeded();
     } else if (item_byte_size == 0) {
@@ -1582,7 +1558,6 @@ protected:
       case eFormatCapability:
       case eFormatVoid:
         result.AppendError("unsupported format for writing memory");
-        result.SetStatus(eReturnStatusFailed);
         return false;
 
       case eFormatDefault:
@@ -1601,14 +1576,12 @@ protected:
         if (!success) {
           result.AppendErrorWithFormat(
               "'%s' is not a valid hex string value.\n", entry.c_str());
-          result.SetStatus(eReturnStatusFailed);
           return false;
         } else if (!llvm::isUIntN(item_byte_size * 8, uval64)) {
           result.AppendErrorWithFormat("Value 0x%" PRIx64
                                        " is too large to fit in a %" PRIu64
                                        " byte unsigned integer value.\n",
                                        uval64, (uint64_t)item_byte_size);
-          result.SetStatus(eReturnStatusFailed);
           return false;
         }
         buffer.PutMaxHex64(uval64, item_byte_size);
@@ -1619,7 +1592,6 @@ protected:
         if (!success) {
           result.AppendErrorWithFormat(
               "'%s' is not a valid boolean string value.\n", entry.c_str());
-          result.SetStatus(eReturnStatusFailed);
           return false;
         }
         buffer.PutMaxHex64(uval64, item_byte_size);
@@ -1629,14 +1601,12 @@ protected:
         if (entry.ref().getAsInteger(2, uval64)) {
           result.AppendErrorWithFormat(
               "'%s' is not a valid binary string value.\n", entry.c_str());
-          result.SetStatus(eReturnStatusFailed);
           return false;
         } else if (!llvm::isUIntN(item_byte_size * 8, uval64)) {
           result.AppendErrorWithFormat("Value 0x%" PRIx64
                                        " is too large to fit in a %" PRIu64
                                        " byte unsigned integer value.\n",
                                        uval64, (uint64_t)item_byte_size);
-          result.SetStatus(eReturnStatusFailed);
           return false;
         }
         buffer.PutMaxHex64(uval64, item_byte_size);
@@ -1659,7 +1629,6 @@ protected:
           result.AppendErrorWithFormat("Memory write to 0x%" PRIx64
                                        " failed: %s.\n",
                                        addr, error.AsCString());
-          result.SetStatus(eReturnStatusFailed);
           return false;
         }
         break;
@@ -1668,14 +1637,12 @@ protected:
         if (entry.ref().getAsInteger(0, sval64)) {
           result.AppendErrorWithFormat(
               "'%s' is not a valid signed decimal value.\n", entry.c_str());
-          result.SetStatus(eReturnStatusFailed);
           return false;
         } else if (!llvm::isIntN(item_byte_size * 8, sval64)) {
           result.AppendErrorWithFormat(
               "Value %" PRIi64 " is too large or small to fit in a %" PRIu64
               " byte signed integer value.\n",
               sval64, (uint64_t)item_byte_size);
-          result.SetStatus(eReturnStatusFailed);
           return false;
         }
         buffer.PutMaxHex64(sval64, item_byte_size);
@@ -1687,14 +1654,12 @@ protected:
           result.AppendErrorWithFormat(
               "'%s' is not a valid unsigned decimal string value.\n",
               entry.c_str());
-          result.SetStatus(eReturnStatusFailed);
           return false;
         } else if (!llvm::isUIntN(item_byte_size * 8, uval64)) {
           result.AppendErrorWithFormat("Value %" PRIu64
                                        " is too large to fit in a %" PRIu64
                                        " byte unsigned integer value.\n",
                                        uval64, (uint64_t)item_byte_size);
-          result.SetStatus(eReturnStatusFailed);
           return false;
         }
         buffer.PutMaxHex64(uval64, item_byte_size);
@@ -1704,14 +1669,12 @@ protected:
         if (entry.ref().getAsInteger(8, uval64)) {
           result.AppendErrorWithFormat(
               "'%s' is not a valid octal string value.\n", entry.c_str());
-          result.SetStatus(eReturnStatusFailed);
           return false;
         } else if (!llvm::isUIntN(item_byte_size * 8, uval64)) {
           result.AppendErrorWithFormat("Value %" PRIo64
                                        " is too large to fit in a %" PRIu64
                                        " byte unsigned integer value.\n",
                                        uval64, (uint64_t)item_byte_size);
-          result.SetStatus(eReturnStatusFailed);
           return false;
         }
         buffer.PutMaxHex64(uval64, item_byte_size);
@@ -1729,7 +1692,6 @@ protected:
         result.AppendErrorWithFormat("Memory write to 0x%" PRIx64
                                      " failed: %s.\n",
                                      addr, error.AsCString());
-        result.SetStatus(eReturnStatusFailed);
         return false;
       }
     }
@@ -1782,7 +1744,6 @@ protected:
     if (argc == 0 || argc > 1) {
       result.AppendErrorWithFormat("%s takes an address expression",
                                    m_cmd_name.c_str());
-      result.SetStatus(eReturnStatusFailed);
       return false;
     }
 
@@ -1793,7 +1754,6 @@ protected:
     if (addr == LLDB_INVALID_ADDRESS) {
       result.AppendError("invalid address expression");
       result.AppendError(error.AsCString());
-      result.SetStatus(eReturnStatusFailed);
       return false;
     }
 
@@ -1805,7 +1765,6 @@ protected:
 
     if (!memory_history) {
       result.AppendError("no available memory history provider");
-      result.SetStatus(eReturnStatusFailed);
       return false;
     }
 
@@ -1844,7 +1803,6 @@ protected:
     if (!process_sp) {
       m_prev_end_addr = LLDB_INVALID_ADDRESS;
       result.AppendError("invalid process");
-      result.SetStatus(eReturnStatusFailed);
       return false;
     }
 
@@ -1856,7 +1814,6 @@ protected:
     if (argc > 1 || (argc == 0 && load_addr == LLDB_INVALID_ADDRESS)) {
       result.AppendErrorWithFormat("'%s' takes one argument:\nUsage: %s\n",
                                    m_cmd_name.c_str(), m_cmd_syntax.c_str());
-      result.SetStatus(eReturnStatusFailed);
       return false;
     }
 
@@ -1867,7 +1824,6 @@ protected:
       if (error.Fail() || load_addr == LLDB_INVALID_ADDRESS) {
         result.AppendErrorWithFormat("invalid address argument \"%s\": %s\n",
                                      command[0].c_str(), error.AsCString());
-        result.SetStatus(eReturnStatusFailed);
         return false;
       }
     }
@@ -1904,7 +1860,6 @@ protected:
       return true;
     }
 
-    result.SetStatus(eReturnStatusFailed);
     result.AppendErrorWithFormat("%s\n", error.AsCString());
     return false;
   }

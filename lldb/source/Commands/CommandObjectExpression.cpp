@@ -427,7 +427,6 @@ bool CommandObjectExpression::EvaluateExpression(llvm::StringRef expr,
   if (m_command_options.top_level && !m_command_options.allow_jit) {
     result.AppendErrorWithFormat(
         "Can't disable JIT compilation for top-level expressions.\n");
-    result.SetStatus(eReturnStatusFailed);
     return false;
   }
 
@@ -457,7 +456,6 @@ bool CommandObjectExpression::EvaluateExpression(llvm::StringRef expr,
             result.AppendErrorWithFormat(
                 "expression cannot be used with --element-count %s\n",
                 error.AsCString(""));
-            result.SetStatus(eReturnStatusFailed);
             return false;
           }
         }
