@@ -2192,6 +2192,13 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &args) {
   target = getTarget();
 
   config->eflags = target->calcEFlags();
+  if (config->emachine == EM_AARCH64) {
+    // XXX We should set the IsCheriABI flag instead, this is not yet
+    // fully working though.
+    // config->setIsCheriABI(config->eflags & EF_AARCH64_CHERI_PURECAP);
+    if (config->eflags & EF_AARCH64_CHERI_PURECAP)
+      config->morelloC64Plt = true;
+  }
   // maxPageSize (sometimes called abi page size) is the maximum page size that
   // the output can be run on. For example if the OS can use 4k or 64k page
   // sizes then maxPageSize must be 64k for the output to be useable on both.

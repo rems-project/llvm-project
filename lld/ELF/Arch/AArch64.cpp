@@ -31,6 +31,7 @@ namespace {
 class AArch64 : public TargetInfo {
 public:
   AArch64();
+  uint32_t calcEFlags() const override;
   RelExpr getRelExpr(RelType type, const Symbol &s,
                      const uint8_t *loc) const override;
   RelType getDynRel(RelType type) const override;
@@ -80,6 +81,32 @@ AArch64::AArch64() {
   defaultImageBase = 0x200000;
 
   needsThunks = true;
+}
+
+static uint32_t getEFlags(InputFile *f) {
+  return cast<ObjFile<llvm::object::ELF64LE>>(f)->getObj().getHeader()->e_flags;
+}
+
+uint32_t AArch64::calcEFlags() const {
+  if (objectFiles.empty())
+    return 0;
+
+  uint32_t target = getEFlags(objectFiles.front());
+
+  for (InputFile *f : objectFiles) {
+    uint32_t eflags = getEFlags(f);
+    if (eflags & EF_AARCH64_CHERI_PURECAP)
+      target |= EF_AARCH64_CHERI_PURECAP;
+
+    if ((eflags & EF_AARCH64_CHERI_PURECAP) !=
+        (target & EF_AARCH64_CHERI_PURECAP))
+      warn(toString(f) +
+            ": linking object files with different "
+            "EF_AARCH64_CHERI_PURECAP."
+            "This will be deprecated and produce an error.");
+  }
+
+  return target;
 }
 
 RelExpr AArch64::getRelExpr(RelType type, const Symbol &s,
