@@ -613,6 +613,7 @@ enum CommandArgumentType {
   eArgTypeCommand,
   eArgTypeColumnNum,
   eArgTypeModuleUUID,
+  eArgTypeSaveCoreStyle,
   eArgTypeLastArg // Always keep this entry as the last entry in this
                   // enumeration!!
 };
@@ -1157,6 +1158,14 @@ enum CommandInterpreterResult {
   /// Stopped because quit was requested.
   eCommandInterpreterResultQuitRequested,
 };
+
+// Style of core file to create when calling SaveCore.
+enum SaveCoreStyle {
+  eSaveCoreUnspecified = 0,
+  eSaveCoreFull = 1,
+  eSaveCoreDirtyOnly = 2,
+};
+
 } // namespace lldb
 
 #endif // LLDB_LLDB_ENUMERATIONS_H
