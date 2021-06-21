@@ -380,6 +380,7 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
   SrcMgr.setIncludeDirs(Opts.IncludePaths);
 
   MCTargetOptions MCOptions;
+  MCOptions.ABIName = Opts.TargetABI;
   std::unique_ptr<MCRegisterInfo> MRI(
       TheTarget->createMCRegInfo(Opts.Triple, MCOptions));
   assert(MRI && "Unable to create target register info!");
@@ -463,7 +464,6 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
 
   MCOptions.MCNoWarn = Opts.NoWarn;
   MCOptions.MCFatalWarnings = Opts.FatalWarnings;
-  MCOptions.ABIName = Opts.TargetABI;
 
   // FIXME: There is a bit of code duplication with addPassesToEmitFile.
   if (Opts.OutputType == AssemblerInvocation::FT_Asm) {

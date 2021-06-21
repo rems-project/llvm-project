@@ -7024,6 +7024,12 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   case llvm::Triple::riscv64:
     AddRISCVTargetArgs(Args, CmdArgs);
     break;
+
+  case llvm::Triple::aarch64:
+  case llvm::Triple::aarch64_32:
+  case llvm::Triple::aarch64_be:
+    RenderAArch64ABI(Triple, Args, CmdArgs);
+    break;
   }
 
   // Consume all the warning flags. Usually this would be handled more
