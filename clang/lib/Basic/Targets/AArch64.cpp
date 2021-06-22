@@ -647,6 +647,7 @@ AArch64TargetInfo::checkCallingConvention(CallingConv CC) const {
   switch (CC) {
   case CC_C:
   case CC_Swift:
+  case CC_SwiftAsync:
   case CC_PreserveMost:
   case CC_PreserveAll:
   case CC_OpenCLKernel:
@@ -953,6 +954,7 @@ WindowsARM64TargetInfo::checkCallingConvention(CallingConv CC) const {
   case CC_PreserveMost:
   case CC_PreserveAll:
   case CC_Swift:
+  case CC_SwiftAsync:
   case CC_Win64:
     return CCCR_OK;
   default:
