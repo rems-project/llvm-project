@@ -191,6 +191,9 @@ protected:
   bool HasSVE2SHA3 = false;
   bool HasSVE2BitPerm = false;
 
+  // Armv9-A Extensions
+  bool HasRME = false;
+
   // Future architecture extensions.
   bool HasETE = false;
   bool HasTRBE = false;

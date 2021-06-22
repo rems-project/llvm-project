@@ -460,6 +460,9 @@ def FeatureEnhancedCounterVirtualization :
       SubtargetFeature<"ecv", "HasEnhancedCounterVirtualization",
       "true", "Enable enhanced counter virtualization extension">;
 
+def FeatureRME : SubtargetFeature<"rme", "HasRME",
+    "true", "Enable Realm Management Extension">;
+
 //===----------------------------------------------------------------------===//
 // Architectures.
 //

@@ -3235,6 +3235,7 @@ static const struct Extension {
   { "xs", {AArch64::FeatureXS}, {AArch64::FeatureXS} },
   { "pauth", {AArch64::FeaturePAuth}, {AArch64::FeaturePAuth}},
   { "flagm", {AArch64::FeatureFlagM}, {AArch64::FeatureFlagM}},
+  { "rme", {AArch64::FeatureRME}, {AArch64::FeatureRME}},
   { "a64c", {AArch64::FeatureMorello},
             {AArch64::FeatureMorello, AArch64::FeatureC64} },
   { "c64", {AArch64::FeatureMorello, AArch64::FeatureC64},
