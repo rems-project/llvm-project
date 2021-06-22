@@ -435,3 +435,24 @@ class MorelloCapabilityOperationTestCase(CapabilityOperationTestBase):
         uintcap_value.SetFormat(lldb.eFormatHex)
         self.assertEqual(uintcap_value.GetValue(),
                          "0x01df50c000402000100000000000000010")
+
+        # Check arrays of capabilities.
+        address = lldb.SBAddress(0x400, target)
+        cap_arr_type = cap_ptr_type.GetArrayType(3)
+        cap_arr_value = target.CreateValueFromAddress("cap_arr", address,
+                                                      cap_arr_type)
+        self.assertEqual(cap_arr_value.GetTypeName(), "int * __capability [3]")
+        self.assertEqual(cap_arr_value.GetChildAtIndex(0).GetValue(),
+                         "{tag = 1, address = 0x0000000080000010, attributes = {[Global Executive MutableLoad BranchSealedPair Unseal Seal StoreLocalCap StoreCap LoadCap Store Load], range = [0x80000020-0x80004000)}}")
+
+        self.assertEqual(cap_arr_value.GetChildAtIndex(1).GetValue(),
+                     "{tag = 1, address = 0x0000000080000008, attributes = {[Global Executive MutableLoad BranchSealedPair Unseal Seal StoreLocalCap StoreCap LoadCap Store Load], range = [0x80000020-0x80004000)}}")
+
+        self.assertEqual(cap_arr_value.GetChildAtIndex(2).GetValue(),
+                     "{tag = 0, address = 0x0000000080000018, attributes = {[Global Executive MutableLoad BranchSealedPair Unseal Seal StoreLocalCap StoreCap LoadCap Store Load], range = [0x80000020-0x80004000)}}")
+
+        self.assertEqual(cap_arr_value.GetChildAtIndex(3).GetValue(), None)
+
+        self.assertEqual(cap_arr_value.GetChildAtIndex(3,
+                lldb.eDynamicCanRunTarget, True).GetValue(),
+            "{tag = 1, address = 0x0000000080000020, attributes = {[Global Executive MutableLoad BranchSealedPair Unseal Seal StoreLocalCap StoreCap LoadCap Store Load], range = [0x80000020-0x80004000)}}")

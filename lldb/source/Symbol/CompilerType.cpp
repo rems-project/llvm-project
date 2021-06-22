@@ -132,6 +132,12 @@ bool CompilerType::IsBlockPointerType(
   return false;
 }
 
+bool CompilerType::IsCHERICapabilityType() const {
+  if (IsValid())
+    return m_type_system->IsCHERICapabilityType(m_type);
+  return false;
+}
+
 bool CompilerType::IsIntegerType(bool &is_signed) const {
   if (IsValid())
     return m_type_system->IsIntegerType(m_type, is_signed);

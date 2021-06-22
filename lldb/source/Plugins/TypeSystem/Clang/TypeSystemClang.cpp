@@ -3116,6 +3116,14 @@ bool TypeSystemClang::IsBlockPointerType(
   return false;
 }
 
+bool TypeSystemClang::IsCHERICapabilityType(lldb::opaque_compiler_type_t type) {
+  if (!type)
+    return false;
+
+  clang::QualType qual_type(GetCanonicalQualType(type));
+  return qual_type->isCHERICapabilityType(getASTContext());
+}
+
 bool TypeSystemClang::IsIntegerType(lldb::opaque_compiler_type_t type,
                                     bool &is_signed) {
   if (!type)
@@ -6369,10 +6377,19 @@ CompilerType TypeSystemClang::GetChildCompilerTypeAtIndex(
         CompilerType element_type = GetType(array->getElementType());
         if (element_type.GetCompleteType()) {
           child_name = std::string(llvm::formatv("[{0}]", idx));
+
+          // For capabilities, the tag should be included in the size (which
+          // will be used to allocate buffers large enough to store both the tag
+          // and the data), but not in the offset (since the tag is physically
+          // stored separately from the data).
           if (Optional<uint64_t> size =
                   element_type.GetByteSize(get_exe_scope())) {
             child_byte_size = *size;
-            child_byte_offset = (int32_t)idx * (int32_t)child_byte_size;
+            int32_t actual_size = element_type.IsCHERICapabilityType()
+                                      ? child_byte_size - 1
+                                      : child_byte_size;
+            child_byte_offset = (int32_t)idx * actual_size;
+
             return element_type;
           }
         }
