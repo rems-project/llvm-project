@@ -3022,7 +3022,7 @@ AArch64AsmParser::tryParseImmWithOptionalShift(OperandVector &Operands) {
 
   // The optional operand must be "lsl #N" where N is non-negative.
   if (!Parser.getTok().is(AsmToken::Identifier) ||
-      !Parser.getTok().getIdentifier().equals_lower("lsl")) {
+      !Parser.getTok().getIdentifier().equals_insensitive("lsl")) {
     Error(Parser.getTok().getLoc(), "only 'lsl #+N' valid after immediate");
     return MatchOperand_ParseFail;
   }
@@ -4151,9 +4151,10 @@ bool AArch64AsmParser::parseOptionalMulOperand(OperandVector &Operands) {
   // Some SVE instructions have a decoration after the immediate, i.e.
   // "mul vl". We parse them here and add tokens, which must be present in the
   // asm string in the tablegen instruction.
-  bool NextIsVL = Parser.getLexer().peekTok().getString().equals_lower("vl");
+  bool NextIsVL =
+      Parser.getLexer().peekTok().getString().equals_insensitive("vl");
   bool NextIsHash = Parser.getLexer().peekTok().is(AsmToken::Hash);
-  if (!Parser.getTok().getString().equals_lower("mul") ||
+  if (!Parser.getTok().getString().equals_insensitive("mul") ||
       !(NextIsVL || NextIsHash))
     return true;
 
@@ -6161,7 +6162,7 @@ bool AArch64AsmParser::parseFeatures(StringRef ExtensionString,
     // Advance source location past '+'.
     CurLoc = incrementLoc(CurLoc, 1);
 
-    if (Name.startswith_lower("no")) {
+    if (Name.startswith_insensitive("no")) {
       EnableFeature = false;
       Name = Name.substr(2);
     }
@@ -6259,7 +6260,7 @@ bool AArch64AsmParser::parseDirectiveArchExtension(SMLoc L) {
     return true;
 
   bool EnableFeature = true;
-  if (Name.startswith_lower("no")) {
+  if (Name.startswith_insensitive("no")) {
     EnableFeature = false;
     Name = Name.substr(2);
   }
