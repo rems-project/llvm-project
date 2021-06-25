@@ -1127,6 +1127,8 @@ static void readConfigs(opt::InputArgList &args) {
       args.hasFlag(OPT_warn_ifunc_textrel, OPT_no_warn_ifunc_textrel, false);
   config->warnSymbolOrdering =
       args.hasFlag(OPT_warn_symbol_ordering, OPT_no_warn_symbol_ordering, true);
+  config->warnNoDymSym =
+      args.hasFlag(OPT_warn_nulldynsym_rel, OPT_no_warn_nulldynsym_rel, false);
   config->zCapTableDebug = getZFlag(args, "captabledebug", "nocaptabledebug", false);
   config->zCombreloc = getZFlag(args, "combreloc", "nocombreloc", true);
   config->zCopyreloc = getZFlag(args, "copyreloc", "nocopyreloc", true);

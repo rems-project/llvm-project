@@ -1613,7 +1613,8 @@ int64_t DynamicReloc::computeAddend() const {
 uint32_t DynamicReloc::getSymIndex(SymbolTableBaseSection *symTab) const {
   if (sym && !useSymVA) {
     // It is fine to have a dynsymindex of 0 for the TLS module relocations
-    if (sym->dynsymIndex == 0 && type != target->tlsModuleIndexRel) {
+    if (sym->dynsymIndex == 0 && config->warnNoDymSym &&
+        type != target->tlsModuleIndexRel) {
       warn("DynsymIndex == 0 for " + toString(type) + " relocation against " +
            verboseToString(sym) + "+" + Twine(addend));
     }
