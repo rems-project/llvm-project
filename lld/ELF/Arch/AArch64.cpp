@@ -102,7 +102,7 @@ uint32_t AArch64::calcEFlags() const {
         (target & EF_AARCH64_CHERI_PURECAP))
       warn(toString(f) +
             ": linking object files with different "
-            "EF_AARCH64_CHERI_PURECAP."
+            "EF_AARCH64_CHERI_PURECAP. "
             "This will be deprecated and produce an error.");
   }
 
