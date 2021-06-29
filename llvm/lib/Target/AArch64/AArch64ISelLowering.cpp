@@ -18386,6 +18386,10 @@ void AArch64TargetLowering::ReplaceNodeResults(
                     Result.getValue(1) /* Chain */ });
     return;
   }
+  case ISD::INSERT_SUBVECTOR:
+    // Custom lowering has been requested for INSERT_SUBVECTOR -- but delegate
+    // to common code for result type legalisation
+    return;
   case ISD::INTRINSIC_WO_CHAIN: {
     EVT VT = N->getValueType(0);
 
