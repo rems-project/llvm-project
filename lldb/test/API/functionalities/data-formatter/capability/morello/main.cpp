@@ -43,6 +43,7 @@ int main() {
 
   // Object type tests.
   CAP128(sealed_max_otype,          0xc0007fffc0000000, 0x0000000000000000);
+  CAP128(sealed_entry,              0xc0000000c0000000, 0x0000000000000000);
   CAP128(sealed_no_perms,           0x00003bee40000000, 0x0000000000000000);
   CAP128(sealed_all_perms,          0xffffc05040000000, 0x0000000000000000);
 

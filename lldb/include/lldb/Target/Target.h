@@ -144,6 +144,10 @@ public:
 
   bool GetEnableSyntheticValue() const;
 
+  lldb::CapabilityFormat GetCapabilityFormat() const;
+
+  void SetCapabilityFormat(lldb::CapabilityFormat format);
+
   uint32_t GetMaxZeroPaddingInFloatFormat() const;
 
   uint32_t GetMaximumNumberOfChildrenToDisplay() const;

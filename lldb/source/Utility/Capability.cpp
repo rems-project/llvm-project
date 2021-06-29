@@ -23,11 +23,6 @@ using namespace lldb;
 using namespace lldb_private;
 
 namespace AArch64_128 {
-struct PermNamePair {
-  uint64_t perm;
-  const char *name;
-};
-
 // Return whether the capability is valid, i.e. whether the tag bit is set.
 bool IsCapabilityValid(const llvm::APInt &value) {
   if (value.getBitWidth() == 128)
@@ -48,6 +43,12 @@ llvm::APInt Add(const llvm::APInt &value, int64_t offset) {
   // capability.
   return value + offset;
 }
+
+struct PermNamePair {
+  uint64_t mask; // For extracting this permission from the permissions field
+                 // (not from the whole capability).
+  const char *name;
+};
 
 // Morello-specific capability encoding details.
 struct MorelloCapabilityEncoding {
@@ -73,8 +74,7 @@ struct MorelloCapabilityEncoding {
   };
 
   // Get an array of permissions that may be set for this capability.
-  static llvm::ArrayRef<PermNamePair>
-  GetPermissionNames(const llvm::APInt &value) {
+  static llvm::ArrayRef<PermNamePair> GetPermissionNamesLLDBVerbose() {
     static const PermNamePair perm_names[] = {
         {eAddressPermGlobal, "Global"},
         {eAddressPermExecutive, "Executive"},
@@ -95,7 +95,16 @@ struct MorelloCapabilityEncoding {
         {eAddressPermStore, "Store"},
         {eAddressPermLoad, "Load"}};
 
-    return llvm::ArrayRef<PermNamePair>(perm_names);
+    return perm_names;
+  }
+
+  static llvm::ArrayRef<PermNamePair> GetPermissionNamesCHERISimplified() {
+    static const PermNamePair perm_names[] = {
+        {eAddressPermLoad, "r"},     {eAddressPermStore, "w"},
+        {eAddressPermExecute, "x"},  {eAddressPermLoadCap, "R"},
+        {eAddressPermStoreCap, "W"}, {eAddressPermExecutive, "E"}};
+
+    return perm_names;
   }
 
   // Get the value of the Permissions field in \p value.
@@ -107,6 +116,10 @@ struct MorelloCapabilityEncoding {
   // Return whether the capability is sealed.
   static bool IsCapabilitySealed(const llvm::APInt &value) {
     return DecodeCapabilityOType(value) != 0;
+  }
+
+  static bool IsCapabilitySentry(const llvm::APInt &value) {
+    return DecodeCapabilityOType(value) == CAP_OTYPE_SENTRY;
   }
 
   // Return the object type of the capability.
@@ -228,6 +241,7 @@ private:
   static constexpr int CAP_PERMS_LO_BIT = 110;
   static constexpr int CAP_PERMS_NUM_BITS =
       CAP_PERMS_HI_BIT - CAP_PERMS_LO_BIT + 1;
+  static constexpr int CAP_OTYPE_SENTRY = 1; // Sentry object type
 
   static int CapGetEffectiveExponent(const llvm::APInt &value) {
     // Early return - if we don't have an internal exponent there's nothing to
@@ -351,47 +365,110 @@ bool GetCFARegisterValue(const llvm::APInt &value, bool has_tag,
   return true;
 }
 
-template <typename CapabilityEncoding>
-void Dump(Stream &s, const llvm::APInt &value, bool has_tag) {
-  // Get a string representing the sealed flag and permissions.
-  std::string bits;
-  bool is_sealed = CapabilityEncoding::IsCapabilitySealed(value);
-  if (is_sealed)
-    bits += "Sealed";
-
-  llvm::ArrayRef<PermNamePair> perm_names =
-      CapabilityEncoding::GetPermissionNames(value);
-  uint64_t perms = CapabilityEncoding::DecodePermissions(value);
+std::string FormatPermissions(uint64_t perms,
+                              llvm::ArrayRef<PermNamePair> perm_names,
+                              llvm::StringRef separator) {
+  std::string perms_str;
 
   for (const PermNamePair &p : perm_names)
-    if (perms & p.perm) {
-      if (!bits.empty())
-        bits += " ";
-      bits += p.name;
+    if (perms & p.mask) {
+      if (!perms_str.empty())
+        perms_str += separator;
+      perms_str += p.name;
     }
+
+  return perms_str;
+}
+
+std::string FormatAsLowercaseHex(const llvm::APInt &bound) {
+  llvm::SmallString<32> formatted;
+  bound.toString(formatted, 16, /*Signed=*/false, /*formatAsCLiteral=*/true);
+  return llvm::StringRef(formatted).lower();
+}
+
+// Dump capability as:
+// {tag = <tag>, address = <address>, attributes = {[<attrs>], otype = <otype>,
+// range = [<base>-<top>)}
+template <typename CapabilityEncoding>
+void DumpLLDBVerbose(Stream &s, const llvm::APInt &value, bool has_tag) {
+  // Decode capability.
+  bool is_sealed = CapabilityEncoding::IsCapabilitySealed(value);
+  bool is_valid = IsCapabilityValid(value);
+  uint64_t perms = CapabilityEncoding::DecodePermissions(value);
+  uint64_t address = GetAddress(value);
+  uint64_t otype = CapabilityEncoding::DecodeCapabilityOType(value);
+
+  llvm::APInt base, top;
+  CapabilityEncoding::DecodeCapabilityAddressRange(value, base, top);
+
+  std::string perms_str = FormatPermissions(
+      perms,
+      CapabilityEncoding::GetPermissionNamesLLDBVerbose(),
+      " ");
+
+  // Get a string representing the sealed flag and permissions.
+  std::string attrs;
+  if (is_sealed)
+    attrs += "Sealed";
+
+  if (!attrs.empty() && !perms_str.empty())
+    attrs += " ";
+  attrs += perms_str;
 
   // Output the capability.
   s.PutCString("{");
   if (has_tag)
-    s.Printf("tag = %d, ", IsCapabilityValid(value));
-  s.Printf("address = 0x%016" PRIx64 ", ", GetAddress(value));
-  s.Printf("attributes = {[%s]", bits.c_str());
+    s.Printf("tag = %d, ", is_valid);
+  s.Printf("address = 0x%016" PRIx64 ", ", address);
+  s.Printf("attributes = {[%s]", attrs.c_str());
 
   if (is_sealed) {
-    uint64_t otype = CapabilityEncoding::DecodeCapabilityOType(value);
     s.Printf(", otype = 0x%" PRIx64, otype);
   }
 
-  llvm::APInt base, top;
-  CapabilityEncoding::DecodeCapabilityAddressRange(value, base, top);
-  llvm::SmallString<32> base_str;
-  llvm::SmallString<32> top_str;
-  base.toString(base_str, 16, /*Signed=*/false, /*formatAsCLiteral=*/true);
-  top.toString(top_str, 16, /*Signed=*/false, /*formatAsCLiteral=*/true);
-  s.Printf(", range = [%s-%s)}}", llvm::StringRef(base_str).lower().c_str(),
-           llvm::StringRef(top_str).lower().c_str());
+  s.Printf(", range = [%s-%s)}}", FormatAsLowercaseHex(base).c_str(),
+           FormatAsLowercaseHex(top).c_str());
 }
 
+// Dump capability as:
+// <address> [<permissions>,<base>-<top>] (<attr>)
+template <typename CapabilityEncoding>
+void DumpCHERISimplified(Stream &s, const llvm::APInt &value, bool has_tag) {
+  // Decode capability.
+  bool is_sealed = CapabilityEncoding::IsCapabilitySealed(value);
+  bool is_sentry = CapabilityEncoding::IsCapabilitySentry(value);
+  bool is_valid = IsCapabilityValid(value);
+  uint64_t perms = CapabilityEncoding::DecodePermissions(value);
+  uint64_t address = GetAddress(value);
+
+  llvm::APInt base, top;
+  CapabilityEncoding::DecodeCapabilityAddressRange(value, base, top);
+
+  std::string perms_str = FormatPermissions(
+      perms,
+      CapabilityEncoding::GetPermissionNamesCHERISimplified(),
+      "");
+
+  s.Printf("0x%016" PRIx64 " [%s,%s-%s]", address, perms_str.c_str(),
+           FormatAsLowercaseHex(base).c_str(),
+           FormatAsLowercaseHex(top).c_str());
+
+  std::string attrs;
+  if (has_tag && !is_valid)
+    attrs += "invalid";
+
+  if (is_sealed) {
+    std::string seal_kind{is_sentry ? "sentry" : "sealed"};
+
+    if (!attrs.empty())
+      attrs += ",";
+
+    attrs += seal_kind;
+  }
+
+  if (!attrs.empty())
+    s.Printf(" (%s)", attrs.c_str());
+}
 } // namespace AArch64_128
 
 uint32_t Capability::GetBaseByteSize(lldb::CapabilityType type) {
@@ -465,16 +542,23 @@ Capability Capability::operator+(int64_t offset) const {
   return result;
 }
 
-void Capability::Dump(Stream &s) const {
+void Capability::Dump(Stream &s, lldb::CapabilityFormat format) const {
   switch (m_type) {
   case eCapabilityInvalid:
     s.PutCString("invalid capability");
     break;
   case eCapabilityMorello_128:
   case eCapabilityMorello_128_untagged:
-    AArch64_128::Dump<AArch64_128::MorelloCapabilityEncoding>(
-        s, m_value, /*has_tag=*/m_type == eCapabilityMorello_128);
-    break;
+    switch (format) {
+    case eCapabilityFormatLLDBVerbose:
+      AArch64_128::DumpLLDBVerbose<AArch64_128::MorelloCapabilityEncoding>(
+          s, m_value, /*has_tag=*/m_type == eCapabilityMorello_128);
+      break;
+    case eCapabilityFormatCHERISimplified:
+      AArch64_128::DumpCHERISimplified<AArch64_128::MorelloCapabilityEncoding>(
+          s, m_value, /*has_tag=*/m_type == eCapabilityMorello_128);
+      break;
+    }
   }
 }
 

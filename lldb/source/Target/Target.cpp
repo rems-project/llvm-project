@@ -3333,6 +3333,21 @@ static constexpr OptionEnumValueElement g_memory_module_load_level_values[] = {
     },
 };
 
+static constexpr OptionEnumValueElement g_capability_formats[] = {
+    {
+        eCapabilityFormatCHERISimplified,
+        "cap-format-cheri-simplified",
+        "Use the simplified (compact) CHERI capability format",
+    },
+    {
+        eCapabilityFormatLLDBVerbose,
+        "cap-format-lldb-verbose",
+        "Use the verbose capability format specific to LLDB. "
+        "This provides more information about the permissions and "
+        "object type of the capability.",
+    },
+};
+
 #define LLDB_PROPERTIES_target
 #include "TargetProperties.inc"
 
@@ -3742,6 +3757,18 @@ bool TargetProperties::GetEnableSyntheticValue() const {
   const uint32_t idx = ePropertyEnableSynthetic;
   return m_collection_sp->GetPropertyAtIndexAsBoolean(
       nullptr, idx, g_target_properties[idx].default_uint_value != 0);
+}
+
+lldb::CapabilityFormat TargetProperties::GetCapabilityFormat() const {
+  const uint32_t idx = ePropertyCapabilityFormat;
+  return static_cast<lldb::CapabilityFormat>(
+      m_collection_sp->GetPropertyAtIndexAsEnumeration(
+          nullptr, idx, g_target_properties[idx].default_uint_value));
+}
+
+void TargetProperties::SetCapabilityFormat(lldb::CapabilityFormat format) {
+  const uint32_t idx = ePropertyCapabilityFormat;
+  m_collection_sp->SetPropertyAtIndexAsEnumeration(nullptr, idx, format);
 }
 
 uint32_t TargetProperties::GetMaxZeroPaddingInFloatFormat() const {

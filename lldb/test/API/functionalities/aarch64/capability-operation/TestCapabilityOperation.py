@@ -23,6 +23,11 @@ class CapabilityOperationTestBase(lldbtest.TestBase):
                                           trace=self.TraceOn())
         self.server.serve()
 
+        # This isn't a test for formatting per se, so just use the oldest format
+        # available (which also has the advantage that it's lldb-only, so it's
+        # unlikely to change due to external factors).
+        self.runCmd("settings set target.capability-format cap-format-lldb-verbose")
+
     def tearDown(self):
         super(CapabilityOperationTestBase, self).tearDown()
         self.server.close()

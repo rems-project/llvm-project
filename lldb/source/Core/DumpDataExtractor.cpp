@@ -141,8 +141,9 @@ static void GetCapabilityData(const DataExtractor &data, offset_t *offset_ptr,
 }
 
 static bool DumpCapability(const DataExtractor &data, Stream &s,
-                           offset_t *offset_ptr, size_t byte_size,
-                           uint32_t tag_byte_size, uint32_t tagged_byte_size) {
+                           offset_t *offset_ptr, lldb::CapabilityFormat format,
+                           size_t byte_size, uint32_t tag_byte_size,
+                           uint32_t tagged_byte_size) {
   // Dump a capability. It can be encoded in data as follows:
   // * True capability
   //   Capability is stored as the tag byte, attributes and address that are all
@@ -213,12 +214,11 @@ static bool DumpCapability(const DataExtractor &data, Stream &s,
   value = (value << 64) | attributes;
   value = (value << 64) | address;
   Capability cap(type, value);
-  cap.Dump(s);
+  cap.Dump(s, format);
 
   *offset_ptr = offset;
   return true;
 }
-
 
 /// Dumps decoded instructions to a stream.
 static lldb::offset_t DumpInstructions(const DataExtractor &DE, Stream *s,
@@ -866,8 +866,8 @@ lldb::offset_t lldb_private::DumpDataExtractor(
       if (exe_scope)
         target_sp = exe_scope->CalculateTarget();
       if (target_sp) {
-        if (!DumpCapability(DE, *s, &offset, item_byte_size, tag_byte_size,
-                            tagged_byte_size))
+        if (!DumpCapability(DE, *s, &offset, target_sp->GetCapabilityFormat(),
+                            item_byte_size, tag_byte_size, tagged_byte_size))
           return offset;
       } else
         s->Printf("invalid target");

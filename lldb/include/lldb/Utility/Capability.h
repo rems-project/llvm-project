@@ -134,8 +134,11 @@ public:
   ///
   /// @param[in] s
   ///     The stream to which to dump the capability description.
+  ///
+  /// @param[in] format
+  ///     The format that should be used for dumping the capability.
   //------------------------------------------------------------------
-  void Dump(Stream &s) const;
+  void Dump(Stream &s, lldb::CapabilityFormat format) const;
 
   //------------------------------------------------------------------
   /// Clear the object's state.
