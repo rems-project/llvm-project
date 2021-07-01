@@ -1146,6 +1146,8 @@ private:
 
   void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue> &Results,
                           SelectionDAG &DAG) const override;
+  void ReplaceBITCASTResults(SDNode *N, SmallVectorImpl<SDValue> &Results,
+                             SelectionDAG &DAG) const;
   void ReplaceExtractSubVectorResults(SDNode *N,
                                       SmallVectorImpl<SDValue> &Results,
                                       SelectionDAG &DAG) const;
