@@ -418,7 +418,7 @@ class MorelloCapabilityOperationTestCase(CapabilityOperationTestBase):
         intcap_type = module.GetBasicType(lldb.eBasicTypeSignedIntCap)
         intcap_value = target.CreateValueFromAddress("intcap", address,
                                                      intcap_type)
-        self.assertEqual(intcap_value.GetTypeName(), "__intcap_t")
+        self.assertEqual(intcap_value.GetTypeName(), "__intcap")
         self.assertEqual(intcap_value.GetValue(),
                          "{tag = 1, address = 0x0000000000000010, attributes = {[Global Executive MutableLoad BranchSealedPair Unseal Seal StoreLocalCap StoreCap LoadCap Store Load], range = [0x10-0x20)}}")
         intcap_value.SetFormat(lldb.eFormatHex)
@@ -429,7 +429,7 @@ class MorelloCapabilityOperationTestCase(CapabilityOperationTestBase):
         uintcap_type = module.GetBasicType(lldb.eBasicTypeUnsignedIntCap)
         uintcap_value = target.CreateValueFromAddress("uintcap", address,
                                                       uintcap_type)
-        self.assertEqual(uintcap_value.GetTypeName(), "__uintcap_t")
+        self.assertEqual(uintcap_value.GetTypeName(), "unsigned __intcap")
         self.assertEqual(uintcap_value.GetValue(),
                          "{tag = 1, address = 0x0000000000000010, attributes = {[Global Executive MutableLoad BranchSealedPair Unseal Seal StoreLocalCap StoreCap LoadCap Store Load], range = [0x10-0x20)}}")
         uintcap_value.SetFormat(lldb.eFormatHex)
