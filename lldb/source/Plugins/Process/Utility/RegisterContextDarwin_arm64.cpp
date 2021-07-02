@@ -113,7 +113,7 @@ RegisterContextDarwin_arm64::RegisterContextDarwin_arm64(
   SetupFP(/*is_desc_abi=*/false);
 }
 
-RegisterContextDarwin_arm64::~RegisterContextDarwin_arm64() {}
+RegisterContextDarwin_arm64::~RegisterContextDarwin_arm64() = default;
 
 void RegisterContextDarwin_arm64::InvalidateAllRegisters() {
   InvalidateAllRegisterStates();
