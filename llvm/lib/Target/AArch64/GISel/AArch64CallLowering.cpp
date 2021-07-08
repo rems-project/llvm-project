@@ -371,7 +371,7 @@ bool AArch64CallLowering::lowerReturn(MachineIRBuilder &MIRBuilder,
       }
 
       Register CurVReg = VRegs[i];
-      ArgInfo CurArgInfo = ArgInfo{CurVReg, SplitEVTs[i].getTypeForEVT(Ctx)};
+      ArgInfo CurArgInfo = ArgInfo{CurVReg, SplitEVTs[i].getTypeForEVT(Ctx), 0};
       setArgFlags(CurArgInfo, AttributeList::ReturnIndex, DL, F);
 
       // i1 is a special case because SDAG i1 true is naturally zero extended
@@ -534,7 +534,7 @@ bool AArch64CallLowering::lowerFormalArguments(
     if (DL.getTypeStoreSize(Arg.getType()).isZero())
       continue;
 
-    ArgInfo OrigArg{VRegs[i], Arg};
+    ArgInfo OrigArg{VRegs[i], Arg, i};
     setArgFlags(OrigArg, i + AttributeList::FirstArgIndex, DL, F);
 
     if (Arg.hasAttribute(Attribute::SwiftAsync))
