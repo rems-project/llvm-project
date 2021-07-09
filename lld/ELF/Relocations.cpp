@@ -239,11 +239,8 @@ handleTlsRelocation(RelType type, Symbol &sym, InputSectionBase &c,
       (config->shared || (sym.isPreemptible && config->morelloC64Plt))) {
     if (in.got->addDynTlsEntry(sym)) {
       uint64_t off = in.got->getGlobalDynOffset(sym);
-      mainPart->relaDyn->addReloc({target->tlsDescRel, in.got, off,
-                                   sym.isPreemptible
-                                       ? DynamicReloc::AgainstSymbol
-                                       : DynamicReloc::AddendOnlyWithTargetVA,
-                                   sym, 0, R_ABS});
+      mainPart->relaDyn->addAddendOnlyRelocIfNonPreemptible(
+          target->tlsDescRel, in.got, off, sym, target->tlsDescRel);
     }
     if (expr != R_TLSDESC_CALL)
       c.relocations.push_back({expr, type, offset, addend, &sym});
@@ -1209,11 +1206,9 @@ static void addGotEntry(Symbol &sym) {
     // the GOT generating TLS relocation is not a capability (offset from TP).
     addMorelloC64GotRelocation(target->gotRel, &sym, in.got, off);
   else
-    mainPart->relaDyn->addReloc(
-      sym.isPreemptible ? DynamicReloc::AgainstSymbol
-                          : DynamicReloc::AddendOnlyWithTargetVA,
-      sym.isTls() ? target->tlsGotRel : target->gotRel, in.got, off, sym, 0,
-      sym.isPreemptible ? R_ADDEND : R_ABS, target->symbolicRel);
+    mainPart->relaDyn->addAddendOnlyRelocIfNonPreemptible(
+        sym.isTls() ? target->tlsGotRel : target->gotRel, in.got, off, sym,
+        target->symbolicRel);
 }
 
 // Return true if we can define a symbol in the executable that
