@@ -69,6 +69,7 @@
 #include "lldb/Utility/ProcessInfo.h"
 #include "lldb/Utility/SelectHelper.h"
 #include "lldb/Utility/State.h"
+#include "lldb/Utility/Timer.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -2061,6 +2062,8 @@ size_t Process::ReadCStringFromMemory(addr_t addr, char *dst,
 size_t Process::ReadMemoryFromInferior(addr_t addr, void *buf, size_t size,
                                        Status &error,
                                        lldb::MemoryContentType type) {
+  LLDB_SCOPED_TIMER();
+
   if (buf == nullptr || size == 0)
     return 0;
 
