@@ -343,7 +343,10 @@ uint32_t AArch64MCCodeEmitter::getCondBranchTargetOpValue(
     return MO.getImm();
   assert(MO.isExpr() && "Unexpected target type!");
 
-  MCFixupKind Kind = MCFixupKind(AArch64::fixup_aarch64_pcrel_branch19);
+  bool HasC64 = STI.getFeatureBits()[AArch64::FeatureC64];
+  MCFixupKind Kind = MCFixupKind(
+      HasC64 ? AArch64::fixup_morello_pcrel_branch19
+             : AArch64::fixup_aarch64_pcrel_branch19);
   Fixups.push_back(MCFixup::create(0, MO.getExpr(), Kind, MI.getLoc()));
 
   ++MCNumFixups;
@@ -425,7 +428,10 @@ uint32_t AArch64MCCodeEmitter::getTestBranchTargetOpValue(
     return MO.getImm();
   assert(MO.isExpr() && "Unexpected ADR target type!");
 
-  MCFixupKind Kind = MCFixupKind(AArch64::fixup_aarch64_pcrel_branch14);
+  bool HasC64 = STI.getFeatureBits()[AArch64::FeatureC64];
+  MCFixupKind Kind = MCFixupKind(
+      HasC64 ? AArch64::fixup_morello_pcrel_branch14
+             : AArch64::fixup_aarch64_pcrel_branch14);
   Fixups.push_back(MCFixup::create(0, MO.getExpr(), Kind, MI.getLoc()));
 
   ++MCNumFixups;

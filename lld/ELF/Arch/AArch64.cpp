@@ -158,6 +158,8 @@ RelExpr AArch64::getRelExpr(RelType type, const Symbol &s,
     return R_TLS;
   case R_MORELLO_CALL26:
   case R_MORELLO_JUMP26:
+  case R_MORELLO_CONDBR19:
+  case R_MORELLO_TSTBR14:
   case R_AARCH64_CALL26:
   case R_AARCH64_CONDBR19:
   case R_AARCH64_JUMP26:
@@ -456,11 +458,10 @@ void AArch64::relocate(uint8_t *loc, const Relocation &rel,
     checkInt(loc, val, 28, rel);
     or32le(loc, (val & 0x0FFFFFFC) >> 2);
     break;
+  case R_MORELLO_CONDBR19:
   case R_AARCH64_CONDBR19:
-    // FIXME, the C64+purecap library contains a R_AARCH64_CONDBR19 relocation
-    // to a capability. This is technically not allowed, but R_MORELLO_CONDBR19
-    // is not implemented right now. Remove the next two lines when
-    // R_MORELLO_CONDBR19 is implemented.
+    // For now we can't reliably detect interworking on STT_NOTYPE, so just
+    // clear the LSB.
     val &= ~1;
     LLVM_FALLTHROUGH;
   case R_AARCH64_LD_PREL_LO19:
@@ -555,6 +556,7 @@ void AArch64::relocate(uint8_t *loc, const Relocation &rel,
   case R_AARCH64_MOVW_PREL_G3:
     writeSMovWImm(loc, val >> 48);
     break;
+  case R_MORELLO_TSTBR14:
   case R_AARCH64_TSTBR14:
     checkInt(loc, val, 16, rel);
     or32le(loc, (val & 0xFFFC) << 3);

@@ -569,6 +569,8 @@ static uint64_t getAArch64UndefinedRelativeWeakVA(uint64_t type, uint64_t a,
     // identifies the address as C64 and not AArch64. When relocateNoSym() can
     // examine the Symbol type we can remove this line.
     return p + 5 + a;
+  case R_MORELLO_CONDBR19:
+  case R_MORELLO_TSTBR14:
   case R_AARCH64_CALL26:
   case R_AARCH64_CONDBR19:
   case R_AARCH64_JUMP26:
