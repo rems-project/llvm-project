@@ -4429,9 +4429,13 @@ multiclass SVE_SETCC_Pat<CondCode cc, CondCode invcc, ValueType predvt,
 
 multiclass SVE_SETCC_Pat_With_Zero<CondCode cc, CondCode invcc, ValueType predvt,
                                    ValueType intvt, Instruction cmp> {
-  def : Pat<(predvt (AArch64setcc_z predvt:$Op1, intvt:$Op2, (SVEDup0), cc)),
+  def : Pat<(predvt (AArch64setcc_z predvt:$Op1, intvt:$Op2,
+                                    (!cast<ComplexPattern>("SVEDup0_" # intvt)),
+				    cc)),
             (cmp $Op1, $Op2)>;
-  def : Pat<(predvt (AArch64setcc_z predvt:$Op1, (SVEDup0), intvt:$Op2, invcc)),
+  def : Pat<(predvt (AArch64setcc_z predvt:$Op1,
+                                    (!cast<ComplexPattern>("SVEDup0_" # intvt)),
+				    intvt:$Op2, invcc)),
             (cmp $Op1, $Op2)>;
 }
 
