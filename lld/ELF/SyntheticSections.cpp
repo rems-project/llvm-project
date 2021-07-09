@@ -1690,6 +1690,7 @@ int64_t DynamicReloc::computeAddend() const {
   case AArch64ExecRel:
     return calcAddend(sym->getVA(addend), *sym);
   }
+  llvm_unreachable("Unknown DynamicReloc::Kind enum");
 }
 
 uint32_t DynamicReloc::getSymIndex(SymbolTableBaseSection *symTab) const {
