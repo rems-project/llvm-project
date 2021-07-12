@@ -2344,7 +2344,7 @@ SDValue DAGCombiner::visitPTRADD(SDNode *N) {
          !DAG.isConstantIntBuildVectorOrConstantInt(Z))) {
       return Reassociated;
     } else {
-      deleteAndRecombine(Reassociated.getNode());
+      recursivelyDeleteUnusedNodes(Reassociated.getNode());
     }
   }
 
