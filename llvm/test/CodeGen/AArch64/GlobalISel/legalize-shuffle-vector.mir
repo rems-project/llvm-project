@@ -294,6 +294,6 @@ body:             |
     %2:_(p0) = COPY $x0
     %19:_(<6 x s64>) = G_SHUFFLE_VECTOR %0(<6 x s64>), %1, shufflemask(3, 4, 7, 0, 1, 11)
     G_STORE %19(<6 x s64>), %2(p0) :: (store 48, align 64)
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...

@@ -117,9 +117,9 @@ body: |
     ; CHECK: %cst:_(s792) = G_MERGE_VALUES [[MV]](s24), [[MV1]](s24), [[MV2]](s24), [[MV3]](s24), [[MV4]](s24), [[MV5]](s24), [[MV6]](s24), [[MV7]](s24), [[MV8]](s24), [[MV9]](s24), [[MV10]](s24), [[MV11]](s24), [[MV12]](s24), [[MV13]](s24), [[MV14]](s24), [[MV15]](s24), [[MV16]](s24), [[MV17]](s24), [[MV18]](s24), [[MV19]](s24), [[MV20]](s24), [[MV21]](s24), [[MV22]](s24), [[MV23]](s24), [[MV24]](s24), [[MV25]](s24), [[MV26]](s24), [[MV27]](s24), [[MV28]](s24), [[MV29]](s24), [[MV30]](s24), [[MV31]](s24), [[MV32]](s24)
     ; CHECK: %trunc:_(s32) = G_TRUNC %cst(s792)
     ; CHECK: $w0 = COPY %trunc(s32)
-    ; CHECK: RET_ReallyLR implicit $w0
+    ; CHECK: RET_ReallyLR 0, implicit $w0
     %cst:_(s792) = G_CONSTANT i792 0
     %trunc:_(s32) = G_TRUNC %cst(s792)
     $w0 = COPY %trunc(s32)
-    RET_ReallyLR implicit $w0
+    RET_ReallyLR 0, implicit $w0
 ...
