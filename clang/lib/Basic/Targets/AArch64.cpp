@@ -350,9 +350,6 @@ void AArch64TargetInfo::getTargetDefines(const LangOptions &Opts,
             Twine(1 << 16));
     Builder.defineMacro("__CHERI_CAP_PERMISSION_PERMIT_LOAD__",
             Twine(1 << 17));
-
-    Builder.defineMacro("__capability",
-                        Twine("__attribute__((cheri_capability))"));
   }
 
   if (HasDotProd)
