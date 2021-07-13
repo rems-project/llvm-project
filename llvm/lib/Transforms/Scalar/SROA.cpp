@@ -1047,6 +1047,7 @@ private:
       // split those.
       LLVM_DEBUG(dbgs() << " offset transfer -> marking as unsplittable:\n";
                  AS.dump(&PrevP););
+      assert(!PrevP.isStrictAlignSlice());
       PrevP.makeUnsplittable();
       // We also have to mark the slices inserted for CHERI tag handling (in
       // insertStrictAlignmentSlicesForRange()) as unsplittable.
@@ -1065,6 +1066,7 @@ private:
 
     // Insert the use now that we've fixed up the splittable nature.
     bool IsSplittable = Inserted && Length;
+    insertUse(II, Offset, Size, false, false, IsSplittable);
     if (HandlesTags) {
       bool IsDest = (*U == II.getRawDest());
       assert(((*U == II.getRawDest()) || (*U == II.getRawSource())) &&
@@ -1073,7 +1075,6 @@ private:
                                           RawOffset + Size, IsDest,
                                           IsSplittable);
     }
-    insertUse(II, Offset, Size, false, false, IsSplittable);
 
     // Check that we ended up with a valid index in the map.
     assert(AS.Slices[PrevIdx].getUse()->getUser() == &II &&
