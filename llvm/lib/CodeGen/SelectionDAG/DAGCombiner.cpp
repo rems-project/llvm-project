@@ -2339,7 +2339,6 @@ SDValue DAGCombiner::visitPTRADD(SDNode *N) {
     LLVM_DEBUG(dbgs() << "visitPTRADD() reassociated:";
                Reassociated.dump(&DAG));
     assert(Add->getOpcode() != ISD::DELETED_NODE && "Deleted Node used");
-    assert(Reassociated.getOperand(1) == Add);
     if (isNullConstant(X) ||
         DAG.isConstantIntBuildVectorOrConstantInt(Add) ||
         (VisitedAdd && !DAG.isConstantIntBuildVectorOrConstantInt(Z)) ||
@@ -2349,6 +2348,8 @@ SDValue DAGCombiner::visitPTRADD(SDNode *N) {
          !DAG.isConstantIntBuildVectorOrConstantInt(Z))) {
       return Reassociated;
     } else {
+      assert(Reassociated->getOpcode() == ISD::PTRADD);
+      assert(Reassociated.getOperand(1) == Add);
       recursivelyDeleteUnusedNodes(Reassociated.getNode());
     }
   }
