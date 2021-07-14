@@ -1403,6 +1403,14 @@ AArch64TTIImpl::getMaskedMemoryOpCost(unsigned Opcode, Type *Src,
   auto LT = TLI->getTypeLegalizationCost(DL, Src);
   if (!LT.first.isValid())
     return InstructionCost::getInvalid();
+
+  // The code-generator is currently not able to handle scalable vectors
+  // of <vscale x 1 x eltty> yet, so return an invalid cost to avoid selecting
+  // it. This change will be removed when code-generation for these types is
+  // sufficiently reliable.
+  if (cast<VectorType>(Src)->getElementCount() == ElementCount::getScalable(1))
+    return InstructionCost::getInvalid();
+
   return LT.first * 2;
 }
 
@@ -1416,6 +1424,14 @@ InstructionCost AArch64TTIImpl::getGatherScatterOpCost(
   auto *VT = cast<VectorType>(DataTy);
   auto LT = TLI->getTypeLegalizationCost(DL, DataTy);
   if (!LT.first.isValid())
+    return InstructionCost::getInvalid();
+
+  // The code-generator is currently not able to handle scalable vectors
+  // of <vscale x 1 x eltty> yet, so return an invalid cost to avoid selecting
+  // it. This change will be removed when code-generation for these types is
+  // sufficiently reliable.
+  if (cast<VectorType>(DataTy)->getElementCount() ==
+      ElementCount::getScalable(1))
     return InstructionCost::getInvalid();
 
   ElementCount LegalVF = LT.second.getVectorElementCount();
@@ -1458,6 +1474,15 @@ InstructionCost AArch64TTIImpl::getMemoryOpCost(unsigned Opcode, Type *Ty,
     if (EltTy->isPointerTy() && EltTy->getPointerAddressSpace() == 200)
       return 10000;
   }
+
+  // The code-generator is currently not able to handle scalable vectors
+  // of <vscale x 1 x eltty> yet, so return an invalid cost to avoid selecting
+  // it. This change will be removed when code-generation for these types is
+  // sufficiently reliable.
+  if (auto *VTy = dyn_cast<ScalableVectorType>(Ty))
+    if (VTy->getElementCount() == ElementCount::getScalable(1))
+      return InstructionCost::getInvalid();
+
   // TODO: consider latency as well for TCK_SizeAndLatency.
   if (CostKind == TTI::TCK_CodeSize || CostKind == TTI::TCK_SizeAndLatency)
     return LT.first;
