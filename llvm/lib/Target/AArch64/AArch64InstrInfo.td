@@ -714,6 +714,7 @@ let RecomputePerFunction = 1 in {
 
 include "AArch64InstrFormats.td"
 include "SVEInstrFormats.td"
+include "SMEInstrFormats.td"
 
 //===----------------------------------------------------------------------===//
 
@@ -8427,5 +8428,5 @@ include "AArch64InstrCap.td"
 include "AArch64InstrMorello.td"
 include "AArch64InstrC64.td"
 include "AArch64InstrMorelloPure.td"
-
+include "AArch64SMEInstrInfo.td"
 include "AArch64InstrGISel.td"
