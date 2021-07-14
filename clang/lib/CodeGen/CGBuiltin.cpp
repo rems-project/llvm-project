@@ -18323,10 +18323,6 @@ Value *CodeGenFunction::EmitWebAssemblyBuiltinExpr(unsigned BuiltinID,
     Function *Callee = CGM.getIntrinsic(Intrinsic::wasm_load64_zero);
     return Builder.CreateCall(Callee, {Ptr});
   }
-  case WebAssembly::BI__builtin_wasm_load8_lane:
-  case WebAssembly::BI__builtin_wasm_load16_lane:
-  case WebAssembly::BI__builtin_wasm_load32_lane:
-  case WebAssembly::BI__builtin_wasm_load64_lane:
   case WebAssembly::BI__builtin_wasm_store8_lane:
   case WebAssembly::BI__builtin_wasm_store16_lane:
   case WebAssembly::BI__builtin_wasm_store32_lane:
@@ -18339,18 +18335,6 @@ Value *CodeGenFunction::EmitWebAssemblyBuiltinExpr(unsigned BuiltinID,
     Value *LaneIdx = llvm::ConstantInt::get(getLLVMContext(), *LaneIdxConst);
     unsigned IntNo;
     switch (BuiltinID) {
-    case WebAssembly::BI__builtin_wasm_load8_lane:
-      IntNo = Intrinsic::wasm_load8_lane;
-      break;
-    case WebAssembly::BI__builtin_wasm_load16_lane:
-      IntNo = Intrinsic::wasm_load16_lane;
-      break;
-    case WebAssembly::BI__builtin_wasm_load32_lane:
-      IntNo = Intrinsic::wasm_load32_lane;
-      break;
-    case WebAssembly::BI__builtin_wasm_load64_lane:
-      IntNo = Intrinsic::wasm_load64_lane;
-      break;
     case WebAssembly::BI__builtin_wasm_store8_lane:
       IntNo = Intrinsic::wasm_store8_lane;
       break;
