@@ -1246,7 +1246,7 @@ class GPR64ExtendRegisterOperand<string Name, int Scale, RegisterClass RegClass>
   let PrintMethod = "printRegWithShiftExtend<false, " # Scale # ", 'x', 0>";
 }
 
-foreach Scale = [8, 16, 32, 64] in {
+foreach Scale = [8, 16, 32, 64, 128] in {
   def GPR64shiftedAsmOpnd # Scale : GPR64ShiftExtendAsmOperand<"GPR64shifted", Scale, "GPR64">;
   def GPR64shifted # Scale : GPR64ExtendRegisterOperand<"GPR64shiftedAsmOpnd" # Scale, Scale, GPR64>;
 
@@ -1438,3 +1438,8 @@ class MatrixOperand<RegisterClass RC, int EltSize> : RegisterOperand<RC> {
 }
 
 def MatrixOp : MatrixOperand<MPR, 0>;
+
+def MatrixIndexGPR32_12_15 : RegisterClass<"AArch64", [i32], 32, (sequence "W%u", 12, 15)>;
+def MatrixIndexGPR32Op12_15 : RegisterOperand<MatrixIndexGPR32_12_15> {
+  let EncoderMethod = "encodeMatrixIndexGPR32";
+}
