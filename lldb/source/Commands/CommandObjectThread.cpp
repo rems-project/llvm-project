@@ -2030,6 +2030,10 @@ public:
         m_forwards = true;
         break;
       }
+      case 't': {
+        m_show_tsc = true;
+        break;
+      }
       default:
         llvm_unreachable("Unimplemented option");
       }
@@ -2041,6 +2045,7 @@ public:
       m_skip = 0;
       m_raw = false;
       m_forwards = false;
+      m_show_tsc = false;
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
@@ -2054,6 +2059,7 @@ public:
     size_t m_skip;
     bool m_raw;
     bool m_forwards;
+    bool m_show_tsc;
   };
 
   CommandObjectTraceDumpInstructions(CommandInterpreter &interpreter)
@@ -2115,7 +2121,8 @@ protected:
       int initial_index = setUpCursor();
 
       auto dumper = std::make_unique<TraceInstructionDumper>(
-          std::move(cursor_up), initial_index, m_options.m_raw);
+          std::move(cursor_up), initial_index, m_options.m_raw,
+          m_options.m_show_tsc);
 
       // This happens when the seek value was more than the number of available
       // instructions.
