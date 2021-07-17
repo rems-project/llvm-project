@@ -15289,7 +15289,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
 
     for (int i = 0; i < 6; ++i) {
       Value *Extract = Builder.CreateExtractValue(Call, i + 1);
-      Value *Ptr = Builder.CreateConstGEP1_32(Ops[2], i * 16);
+      Value *Ptr = Builder.CreateConstGEP1_32(Int8Ty, Ops[2], i * 16);
       Ptr = Builder.CreateBitCast(
           Ptr,
           llvm::PointerType::get(Extract->getType(),
@@ -15307,7 +15307,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
 
     for (int i = 0; i < 7; ++i) {
       Value *Extract = Builder.CreateExtractValue(Call, i + 1);
-      Value *Ptr = Builder.CreateConstGEP1_32(Ops[3], i * 16);
+      Value *Ptr = Builder.CreateConstGEP1_32(Int8Ty, Ops[3], i * 16);
       Ptr = Builder.CreateBitCast(
           Ptr,
           llvm::PointerType::get(Extract->getType(),
@@ -15397,7 +15397,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     Value *InOps[9];
     InOps[0] = Ops[2];
     for (int i = 0; i != 8; ++i) {
-      Value *Ptr = Builder.CreateConstGEP1_32(Ops[1], i);
+      Value *Ptr = Builder.CreateConstGEP1_32(Ty, Ops[1], i);
       InOps[i + 1] = Builder.CreateAlignedLoad(Ty, Ptr, Align(16));
     }
 
@@ -15415,7 +15415,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     Builder.SetInsertPoint(NoError);
     for (int i = 0; i != 8; ++i) {
       Value *Extract = Builder.CreateExtractValue(Call, i + 1);
-      Value *Ptr = Builder.CreateConstGEP1_32(Ops[0], i);
+      Value *Ptr = Builder.CreateConstGEP1_32(Extract->getType(), Ops[0], i);
       Builder.CreateAlignedStore(Extract, Ptr, Align(16));
     }
     Builder.CreateBr(End);
@@ -15424,7 +15424,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     for (int i = 0; i != 8; ++i) {
       Value *Out = Builder.CreateExtractValue(Call, i + 1);
       Constant *Zero = llvm::Constant::getNullValue(Out->getType());
-      Value *Ptr = Builder.CreateConstGEP1_32(Ops[0], i);
+      Value *Ptr = Builder.CreateConstGEP1_32(Out->getType(), Ops[0], i);
       Builder.CreateAlignedStore(Zero, Ptr, Align(16));
     }
     Builder.CreateBr(End);
