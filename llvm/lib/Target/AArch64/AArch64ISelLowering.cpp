@@ -1448,7 +1448,7 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
   }
 }
 
-void AArch64TargetLowering::addTypeForNEON(MVT VT, MVT PromotedBitwiseVT) {
+void AArch64TargetLowering::addTypeForNEON(MVT VT) {
   assert(VT.isVector() && "VT should be a vector type");
 
   if (VT.isFloatingPoint()) {
@@ -1649,12 +1649,12 @@ void AArch64TargetLowering::addTypeForFixedLengthSVE(MVT VT) {
 
 void AArch64TargetLowering::addDRTypeForNEON(MVT VT) {
   addRegisterClass(VT, &AArch64::FPR64RegClass);
-  addTypeForNEON(VT, MVT::v2i32);
+  addTypeForNEON(VT);
 }
 
 void AArch64TargetLowering::addQRTypeForNEON(MVT VT) {
   addRegisterClass(VT, &AArch64::FPR128RegClass);
-  addTypeForNEON(VT, MVT::v4i32);
+  addTypeForNEON(VT);
 }
 
 bool AArch64TargetLowering::isSafeMemOpType(MVT VT) const {
