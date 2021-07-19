@@ -471,6 +471,10 @@ def warn_unresolved_symbols: F<"warn-unresolved-symbols">,
 
 defm warn_file_linked: Eq<"warn-if-file-linked", "Warn when the given file is linked">;
 
+defm warn_nulldynsym_rel: BB<"warn-nulldynsym-rel",
+    "Warn about relocations against the null dynamic symbol",
+    "Do not warn about relocations against the null dynamic symbol (default)">;
+
 defm whole_archive: B<"whole-archive",
     "Force load of all members in a static library",
     "Do not force load of all members in a static library (default)">;

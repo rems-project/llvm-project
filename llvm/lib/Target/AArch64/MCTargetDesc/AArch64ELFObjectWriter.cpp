@@ -224,8 +224,12 @@ unsigned AArch64ELFObjectWriter::getRelocType(MCContext &Ctx,
       return R_CLS(LD_PREL_LO19);
     case AArch64::fixup_aarch64_pcrel_branch14:
       return R_CLS(TSTBR14);
+    case AArch64::fixup_morello_pcrel_branch14:
+      return ELF::R_MORELLO_TSTBR14;
     case AArch64::fixup_aarch64_pcrel_branch19:
       return R_CLS(CONDBR19);
+    case AArch64::fixup_morello_pcrel_branch19:
+      return ELF::R_MORELLO_CONDBR19;
     default:
       Ctx.reportError(Fixup.getLoc(), "Unsupported pc-relative fixup kind");
       return ELF::R_AARCH64_NONE;

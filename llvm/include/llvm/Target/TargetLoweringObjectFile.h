@@ -16,7 +16,6 @@
 
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCTargetOptions.h"
-#include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include <cstdint>
 
 namespace llvm {

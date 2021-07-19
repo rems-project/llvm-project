@@ -613,7 +613,10 @@ ValueObject *ValueObject::CreateChildAtIndex(size_t idx,
       child_is_deref_of_parent, this, language_flags);
   if (child_compiler_type) {
     if (synthetic_index)
-      child_byte_offset += child_byte_size * synthetic_index;
+      child_byte_offset +=
+          (child_compiler_type.IsCHERICapabilityType() ? child_byte_size - 1
+                                                       : child_byte_size) *
+          synthetic_index;
 
     ConstString child_name;
     if (!child_name_str.empty())

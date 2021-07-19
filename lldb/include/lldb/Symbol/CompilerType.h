@@ -110,6 +110,8 @@ public:
 
   bool IsBlockPointerType(CompilerType *function_pointer_type_ptr) const;
 
+  bool IsCHERICapabilityType() const;
+
   bool IsIntegerType(bool &is_signed) const;
 
   bool IsEnumerationType(bool &is_signed) const;

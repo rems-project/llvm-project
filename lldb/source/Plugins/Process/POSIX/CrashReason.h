@@ -22,7 +22,17 @@ enum class CrashReason {
   eInvalidAddress,
   ePrivilegedAddress,
   eBoundViolation,
-  eCapabilityError,
+
+// Android uses SIGSEGV for capability faults,
+// CheriBSD uses SIGPROT. Define only for
+// Linux for now.
+#if defined(__linux__)
+  eCapabilityTagError,
+  eCapabilitySealedError,
+  eCapabilityBoundsError,
+  eCapabilityPermError,
+  eCapabilityAccessError,
+#endif
 
   // SIGILL crash reasons.
   eIllegalOpcode,

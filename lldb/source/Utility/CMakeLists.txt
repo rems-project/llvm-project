@@ -28,6 +28,7 @@ add_lldb_library(lldbUtility
   Args.cpp
   Baton.cpp
   Broadcaster.cpp
+  Capability.cpp
   CompletionRequest.cpp
   Connection.cpp
   ConstString.cpp

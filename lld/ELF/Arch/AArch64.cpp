@@ -32,6 +32,7 @@ class AArch64 : public TargetInfo {
 public:
   AArch64();
   bool calcIsCheriAbi() const override;
+  uint32_t calcEFlags() const override;
   RelExpr getRelExpr(RelType type, const Symbol &s,
                      const uint8_t *loc) const override;
   RelType getDynRel(RelType type) const override;
@@ -97,6 +98,32 @@ bool AArch64::calcIsCheriAbi() const {
   return isCheriAbi;
 }
 
+static uint32_t getEFlags(InputFile *f) {
+  return cast<ObjFile<llvm::object::ELF64LE>>(f)->getObj().getHeader()->e_flags;
+}
+
+uint32_t AArch64::calcEFlags() const {
+  if (objectFiles.empty())
+    return 0;
+
+  uint32_t target = getEFlags(objectFiles.front());
+
+  for (InputFile *f : objectFiles) {
+    uint32_t eflags = getEFlags(f);
+    if (eflags & EF_AARCH64_CHERI_PURECAP)
+      target |= EF_AARCH64_CHERI_PURECAP;
+
+    if ((eflags & EF_AARCH64_CHERI_PURECAP) !=
+        (target & EF_AARCH64_CHERI_PURECAP))
+      warn(toString(f) +
+            ": linking object files with different "
+            "EF_AARCH64_CHERI_PURECAP. "
+            "This will be deprecated and produce an error.");
+  }
+
+  return target;
+}
+
 RelExpr AArch64::getRelExpr(RelType type, const Symbol &s,
                             const uint8_t *loc) const {
   switch (type) {
@@ -146,6 +173,8 @@ RelExpr AArch64::getRelExpr(RelType type, const Symbol &s,
     return R_TLS;
   case R_MORELLO_CALL26:
   case R_MORELLO_JUMP26:
+  case R_MORELLO_CONDBR19:
+  case R_MORELLO_TSTBR14:
   case R_AARCH64_CALL26:
   case R_AARCH64_CONDBR19:
   case R_AARCH64_JUMP26:
@@ -444,11 +473,10 @@ void AArch64::relocate(uint8_t *loc, const Relocation &rel,
     checkInt(loc, val, 28, rel);
     or32le(loc, (val & 0x0FFFFFFC) >> 2);
     break;
+  case R_MORELLO_CONDBR19:
   case R_AARCH64_CONDBR19:
-    // FIXME, the C64+purecap library contains a R_AARCH64_CONDBR19 relocation
-    // to a capability. This is technically not allowed, but R_MORELLO_CONDBR19
-    // is not implemented right now. Remove the next two lines when
-    // R_MORELLO_CONDBR19 is implemented.
+    // For now we can't reliably detect interworking on STT_NOTYPE, so just
+    // clear the LSB.
     val &= ~1;
     LLVM_FALLTHROUGH;
   case R_AARCH64_LD_PREL_LO19:
@@ -543,6 +571,7 @@ void AArch64::relocate(uint8_t *loc, const Relocation &rel,
   case R_AARCH64_MOVW_PREL_G3:
     writeSMovWImm(loc, val >> 48);
     break;
+  case R_MORELLO_TSTBR14:
   case R_AARCH64_TSTBR14:
     checkInt(loc, val, 16, rel);
     or32le(loc, (val & 0xFFFC) << 3);

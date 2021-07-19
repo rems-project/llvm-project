@@ -677,6 +677,7 @@ class SettingsCommandTestCase(TestBase):
                              "thread-format",
                              "use-external-editor",
                              "target.breakpoints-use-platform-avoid-list",
+                             "target.capability-format",
                              "target.default-arch",
                              "target.disable-aslr",
                              "target.disable-stdio",

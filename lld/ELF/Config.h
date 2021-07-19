@@ -224,6 +224,7 @@ struct Configuration {
   bool warnIfuncTextrel;
   bool warnMissingEntry;
   bool warnSymbolOrdering;
+  bool warnNoDymSym;
   bool writeAddends;
   // -z captabledebug: add additional symbols $captable_load_<symbols> before
   // each captable clc instruction that indicates which symbol should be loaded

@@ -9,7 +9,7 @@
 #ifndef LLDB_UTILITY_REGISTERVALUE_H
 #define LLDB_UTILITY_REGISTERVALUE_H
 
-#include "lldb/Core/Capability.h"
+#include "lldb/Utility/Capability.h"
 #include "lldb/Utility/Endian.h"
 #include "lldb/Utility/Scalar.h"
 #include "lldb/Utility/Status.h"

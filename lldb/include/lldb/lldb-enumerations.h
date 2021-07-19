@@ -492,6 +492,15 @@ enum DynamicValueType {
   eDynamicDontRunTarget = 2
 };
 
+/// Format to use for displaying capabilities.
+enum CapabilityFormat {
+  /// Simplified format common to many CHERI projects.
+  eCapabilityFormatCHERISimplified,
+
+  /// Custom verbose format used by LLDB.
+  eCapabilityFormatLLDBVerbose,
+};
+
 enum StopShowColumn {
   eStopShowColumnAnsiOrCaret = 0,
   eStopShowColumnAnsi = 1,

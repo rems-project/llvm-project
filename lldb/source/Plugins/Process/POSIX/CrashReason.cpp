@@ -58,11 +58,38 @@ CrashReason GetCrashReasonForSIGSEGV(const siginfo_t &info) {
 #endif
   case SEGV_BNDERR:
     return CrashReason::eBoundViolation;
-#ifndef SEGV_CAPERR
-#define SEGV_CAPERR 5
+
+#if defined(__linux__)
+#ifndef SEGV_CAPTAGERR
+#define SEGV_CAPTAGERR 10
 #endif
-  case SEGV_CAPERR:
-    return CrashReason::eCapabilityError;
+  case SEGV_CAPTAGERR:
+    return CrashReason::eCapabilityTagError;
+
+#ifndef SEGV_CAPSEALEDERR
+#define SEGV_CAPSEALEDERR 11
+#endif
+  case SEGV_CAPSEALEDERR:
+    return CrashReason::eCapabilitySealedError;
+
+#ifndef SEGV_CAPBOUNDSERR
+#define SEGV_CAPBOUNDSERR 12
+#endif
+  case SEGV_CAPBOUNDSERR:
+    return CrashReason::eCapabilityBoundsError;
+
+#ifndef SEGV_CAPPERMERR
+#define SEGV_CAPPERMERR 13
+#endif
+  case SEGV_CAPPERMERR:
+    return CrashReason::eCapabilityPermError;
+
+#ifndef SEGV_CAPACCESSERR
+#define SEGV_CAPACCESSERR 14
+#endif
+  case SEGV_CAPACCESSERR:
+    return CrashReason::eCapabilityAccessError;
+#endif // __linux__
   }
 
   return CrashReason::eInvalidCrashReason;
@@ -171,9 +198,23 @@ std::string GetCrashReasonString(CrashReason reason, lldb::addr_t fault_addr) {
   case CrashReason::eBoundViolation:
     str = "signal SIGSEGV: bound violation";
     break;
-  case CrashReason::eCapabilityError:
-    str = "signal SIGSEGV: capability error";
+#if defined(__linux__)
+  case CrashReason::eCapabilityTagError:
+    str = "signal SIGSEGV: capability tag fault";
     break;
+  case CrashReason::eCapabilitySealedError:
+    str = "signal SIGSEGV: capability sealed fault";
+    break;
+  case CrashReason::eCapabilityBoundsError:
+    str = "signal SIGSEGV: capability bounds fault";
+    break;
+  case CrashReason::eCapabilityPermError:
+    str = "signal SIGSEGV: capability permission fault";
+    break;
+  case CrashReason::eCapabilityAccessError:
+    str = "signal SIGSEGV: capability access fault";
+    break;
+#endif // __linux__
   case CrashReason::eIllegalOpcode:
     str = "signal SIGILL: illegal instruction";
     break;
@@ -254,9 +295,23 @@ const char *CrashReasonAsString(CrashReason reason) {
   case CrashReason::eBoundViolation:
     str = "eBoundViolation";
     break;
-  case CrashReason::eCapabilityError:
-    str = "eCapabilityError";
+#if defined(__linux__)
+  case CrashReason::eCapabilityTagError:
+    str = "eCapabilityTagError";
     break;
+  case CrashReason::eCapabilitySealedError:
+    str = "eCapabilitySealedError";
+    break;
+  case CrashReason::eCapabilityBoundsError:
+    str = "eCapabilityBoundsError";
+    break;
+  case CrashReason::eCapabilityPermError:
+    str = "eCapabilityPermError";
+    break;
+  case CrashReason::eCapabilityAccessError:
+    str = "eCapabilityAccessError";
+    break;
+#endif // __linux__
 
   // SIGILL crash reasons.
   case CrashReason::eIllegalOpcode:
