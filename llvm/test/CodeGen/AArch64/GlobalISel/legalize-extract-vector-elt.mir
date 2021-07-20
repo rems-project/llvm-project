@@ -261,7 +261,7 @@ body: |
     %idx:_(s64) = G_CONSTANT i64 1
     %eve:_(p0) = G_EXTRACT_VECTOR_ELT %vec:_(<4 x p0>), %idx:_(s64)
     $x0 = COPY %eve(p0)
-    RET_ReallyLR
+    RET_ReallyLR 0
 ...
 ---
 name:            cant_legalize_different_address_spaces
@@ -281,4 +281,4 @@ body: |
     %idx:_(s64) = G_CONSTANT i64 1
     %eve:_(p0) = G_EXTRACT_VECTOR_ELT %vec:_(<4 x p1>), %idx:_(s64)
     $x0 = COPY %eve(p0)
-    RET_ReallyLR
+    RET_ReallyLR 0

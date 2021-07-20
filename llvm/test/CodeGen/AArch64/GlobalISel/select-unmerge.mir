@@ -130,8 +130,8 @@ body:             |
     ; CHECK: $s0 = COPY [[COPY2]]
     $s0 = COPY %1(<2 x s16>)
 
-    ; CHECK: RET_ReallyLR implicit $s0
-    RET_ReallyLR implicit $s0
+    ; CHECK: RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR 0, implicit $s0
 ...
 ---
 name:            test_v4s16_unmerge

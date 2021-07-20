@@ -562,7 +562,7 @@ body:             |
     %0:_(p0) = COPY $x0
     %1:_(<2 x s16>) = COPY $s0
     G_STORE %1(<2 x s16>), %0(p0) :: (store (<2 x s16>))
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -585,6 +585,6 @@ body:             |
     %0:_(p0) = COPY $x0
     %1(<2 x s16>) = G_LOAD %0(p0) :: (load (<2 x s16>))
     $s0 = COPY %1:_(<2 x s16>)
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...

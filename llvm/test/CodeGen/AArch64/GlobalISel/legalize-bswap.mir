@@ -78,6 +78,6 @@ body:             |
     %0:_(<2 x s16>) = COPY $s0
     %1:_(<2 x s16>) = G_BSWAP %0
     $s0 = COPY %1(<2 x s16>)
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...

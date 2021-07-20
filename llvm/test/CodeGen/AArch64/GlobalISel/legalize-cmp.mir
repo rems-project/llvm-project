@@ -108,7 +108,7 @@ body:             |
   bb.2:
     successors:
   bb.3:
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -155,7 +155,7 @@ body:             |
   bb.2:
     successors:
   bb.3:
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -202,7 +202,7 @@ body:             |
   bb.2:
     successors:
   bb.3:
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -244,4 +244,4 @@ body:             |
   bb.2:
     successors:
   bb.3:
-    RET_ReallyLR
+    RET_ReallyLR 0
