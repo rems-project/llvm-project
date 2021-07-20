@@ -18258,6 +18258,7 @@ static void ReplaceCMP_SWAP_128Results(SDNode *N,
   if (Subtarget->hasMorello() && FatPtrBase != Subtarget->hasC64())
     return;
 
+  MachineMemOperand *MemOp = cast<MemSDNode>(N)->getMemOperand();
   if (Subtarget->hasLSE() || Subtarget->outlineAtomics()) {
     // LSE has a 128-bit compare and swap (CASP), but i128 is not a legal type,
     // so lower it here, wrapped in REG_SEQUENCE and EXTRACT_SUBREG.
@@ -18268,8 +18269,6 @@ static void ReplaceCMP_SWAP_128Results(SDNode *N,
         N->getOperand(0), // Chain in
     };
     bool HasC64 = Subtarget->hasC64();
-
-    MachineMemOperand *MemOp = cast<MemSDNode>(N)->getMemOperand();
 
     unsigned Opcode;
     switch (MemOp->getMergedOrdering()) {
@@ -18307,15 +18306,36 @@ static void ReplaceCMP_SWAP_128Results(SDNode *N,
     return;
   }
 
+  unsigned Opcode;
+  switch (MemOp->getMergedOrdering()) {
+  case AtomicOrdering::Monotonic:
+    Opcode = FatPtrBase ? AArch64::CMP_SWAP_CAP_128_MONOTONIC
+                        : AArch64::CMP_SWAP_128_MONOTONIC;
+    break;
+  case AtomicOrdering::Acquire:
+    Opcode = FatPtrBase ? AArch64::CMP_SWAP_CAP_128_ACQUIRE
+                        : AArch64::CMP_SWAP_128_ACQUIRE;
+    break;
+  case AtomicOrdering::Release:
+    Opcode = FatPtrBase ? AArch64::CMP_SWAP_CAP_128_RELEASE
+                        : AArch64::CMP_SWAP_128_RELEASE;
+    break;
+  case AtomicOrdering::AcquireRelease:
+  case AtomicOrdering::SequentiallyConsistent:
+    Opcode = FatPtrBase ? AArch64::CMP_SWAP_CAP_128
+                        : AArch64::CMP_SWAP_128;
+    break;
+  default:
+    llvm_unreachable("Unexpected ordering!");
+  }
+
   auto Desired = splitInt128(N->getOperand(2), DAG);
   auto New = splitInt128(N->getOperand(3), DAG);
   SDValue Ops[] = {N->getOperand(1), Desired.first, Desired.second,
                    New.first,        New.second,    N->getOperand(0)};
   SDNode *CmpSwap = DAG.getMachineNode(
-      FatPtrBase ? AArch64::CMP_SWAP_CAP_128 : AArch64::CMP_SWAP_128, SDLoc(N),
-      DAG.getVTList(MVT::i64, MVT::i64, MVT::i32, MVT::Other), Ops);
-
-  MachineMemOperand *MemOp = cast<MemSDNode>(N)->getMemOperand();
+      Opcode, SDLoc(N), DAG.getVTList(MVT::i64, MVT::i64, MVT::i32, MVT::Other),
+      Ops);
   DAG.setNodeMemRefs(cast<MachineSDNode>(CmpSwap), {MemOp});
 
   Results.push_back(DAG.getNode(ISD::BUILD_PAIR, SDLoc(N), MVT::i128,
@@ -18672,6 +18692,13 @@ AArch64TargetLowering::shouldExpandAtomicCmpXchgInIR(
   // can never succeed. So at -O0 we need a late-expanded pseudo-inst instead.
   if (getTargetMachine().getOptLevel() == CodeGenOpt::None)
     return AtomicExpansionKind::None;
+
+  // 128-bit atomic cmpxchg is weird; AtomicExpand doesn't know how to expand
+  // it.
+  unsigned Size = AI->getCompareOperand()->getType()->getPrimitiveSizeInBits();
+  if (Size > 64)
+    return AtomicExpansionKind::None;
+
   return AtomicExpansionKind::LLSC;
 }
 
