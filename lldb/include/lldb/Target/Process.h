@@ -2656,7 +2656,6 @@ protected:
   virtual size_t DoReadTaggedMemory(lldb::addr_t vm_addr, void *buf,
                                     size_t size, lldb::MemoryContentType type,
                                     Status &error);
-  void SetState(lldb::EventSP &event_sp);
 
   lldb::StateType GetPrivateState();
 
