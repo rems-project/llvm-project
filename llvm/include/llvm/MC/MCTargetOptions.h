@@ -40,6 +40,13 @@ enum class CheriCapabilityTableABI {
                           /// approaches possible here)
 };
 
+enum class CheriLandingPadEncoding {
+  Absolute = 1, /// Landing pads are inserted directly into gcc_except_table,
+                /// preceeded by a 0xc marker. gcc_except_table is RW.
+  Indirect = 2, /// Landing pads are encoded in gcc_except_table as an offset.
+                /// The offset is preceeded by a 0xd marker. Morello-specific.
+};
+
 enum class TailPaddingAmount : uint64_t { None = 0u };
 
 class StringRef;
@@ -88,6 +95,7 @@ public:
   StringRef getABIName() const;
 
   static CheriCapabilityTableABI cheriCapabilityTableABI();
+  static CheriLandingPadEncoding cheriLandingPadEncoding();
 
   /// getAssemblyLanguage - If this returns a non-empty string this represents
   /// the textual name of the assembly language that we will use for this

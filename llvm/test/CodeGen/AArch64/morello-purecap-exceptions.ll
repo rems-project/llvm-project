@@ -1,4 +1,5 @@
-; RUN: llc < %s -march=arm64 -mattr=+c64,+morello -target-abi purecap -o - | FileCheck %s
+; RUN: llc < %s -march=arm64 -mattr=+c64,+morello -target-abi purecap -cheri-landing-pad-encoding=absolute -o - | FileCheck %s --check-prefix=ABS
+; RUN: llc < %s -march=arm64 -mattr=+c64,+morello -target-abi purecap -cheri-landing-pad-encoding=indirect -o - | FileCheck %s --check-prefix=IND
 
 ; When optimizing the load in instruction in the lpad27 basic block  we used to insert
 ; instructions before the landingpad instruction, which caused us to crash later on.
@@ -64,27 +65,61 @@ attributes #2 = { nounwind }
 !2 = !{!"omnipotent char", !3, i64 0}
 !3 = !{!"Simple C++ TBAA"}
 
-; CHECK:	.section	.gcc_except_table,"aw",@progbits
-; CHECK:	.p2align	2
-; CHECK-LABEL: GCC_except_table0:
-; CHECK-NEXT: .Lexception0:
-; CHECK-NEXT:	.byte	255                     // @LPStart Encoding = omit
-; CHECK-NEXT:	.byte	255                     // @TType Encoding = omit
-; CHECK-NEXT:	.byte	1                       // Call site Encoding = uleb128
-; CHECK-NEXT:	.uleb128 .Lcst_end0-.Lcst_begin0
-; CHECK-NEXT: .Lcst_begin0:
-; CHECK-NEXT:	.uleb128 .Ltmp0-.Lfunc_begin0   // >> Call Site 1 <<
-; CHECK-NEXT:	.uleb128 .Ltmp1-.Ltmp0          //   Call between .Ltmp0 and .Ltmp1
-; CHECK-NEXT:	.byte	12                      // (landing pad is a capability)
-; CHECK-NEXT:	.chericap _ZNKSt3__17num_getIwNS_19istreambuf_iteratorIwNS_11char_traitsIwEEEEE6do_getES4_S4_QRNS_8ios_baseEQRjQRb+(.Ltmp2-.Lfunc_begin0)
-; CHECK-NEXT:	.byte	0                       //   On action: cleanup
-; CHECK-NEXT:	.uleb128 .Ltmp3-.Lfunc_begin0   // >> Call Site 2 <<
-; CHECK-NEXT:	.uleb128 .Ltmp4-.Ltmp3          //   Call between .Ltmp3 and .Ltmp4
-; CHECK-NEXT:	.byte	12                      // (landing pad is a capability)
-; CHECK-NEXT:	.chericap _ZNKSt3__17num_getIwNS_19istreambuf_iteratorIwNS_11char_traitsIwEEEEE6do_getES4_S4_QRNS_8ios_baseEQRjQRb+(.Ltmp5-.Lfunc_begin0)
-; CHECK-NEXT:	.byte	0                       //   On action: cleanup
-; CHECK-NEXT:	.uleb128 .Ltmp4-.Lfunc_begin0   // >> Call Site 3 <<
-; CHECK-NEXT:	.uleb128 .Lfunc_end0-.Ltmp4     //   Call between .Ltmp4 and .Lfunc_end0
-; CHECK-NEXT:	.byte	0                       //     has no landing pad
-; CHECK-NEXT:	.byte	0                       //   On action: cleanup
-; CHECK-NEXT: .Lcst_end0:
+; ABS:	.section	.gcc_except_table,"aw",@progbits
+; ABS:	.p2align	2
+; ABS-LABEL: GCC_except_table0:
+; ABS-NEXT: .Lexception0:
+; ABS-NEXT:	.byte	255                     // @LPStart Encoding = omit
+; ABS-NEXT:	.byte	255                     // @TType Encoding = omit
+; ABS-NEXT:	.byte	1                       // Call site Encoding = uleb128
+; ABS-NEXT:	.uleb128 .Lcst_end0-.Lcst_begin0
+; ABS-NEXT: .Lcst_begin0:
+; ABS-NEXT:	.uleb128 .Ltmp0-.Lfunc_begin0   // >> Call Site 1 <<
+; ABS-NEXT:	.uleb128 .Ltmp1-.Ltmp0          //   Call between .Ltmp0 and .Ltmp1
+; ABS-NEXT:	.byte	12                      // (landing pad is a capability)
+; ABS-NEXT:	.chericap _ZNKSt3__17num_getIwNS_19istreambuf_iteratorIwNS_11char_traitsIwEEEEE6do_getES4_S4_QRNS_8ios_baseEQRjQRb+(.Ltmp2-.Lfunc_begin0)
+; ABS-NEXT:	.byte	0                       //   On action: cleanup
+; ABS-NEXT:	.uleb128 .Ltmp3-.Lfunc_begin0   // >> Call Site 2 <<
+; ABS-NEXT:	.uleb128 .Ltmp4-.Ltmp3          //   Call between .Ltmp3 and .Ltmp4
+; ABS-NEXT:	.byte	12                      // (landing pad is a capability)
+; ABS-NEXT:	.chericap _ZNKSt3__17num_getIwNS_19istreambuf_iteratorIwNS_11char_traitsIwEEEEE6do_getES4_S4_QRNS_8ios_baseEQRjQRb+(.Ltmp5-.Lfunc_begin0)
+; ABS-NEXT:	.byte	0                       //   On action: cleanup
+; ABS-NEXT:	.uleb128 .Ltmp4-.Lfunc_begin0   // >> Call Site 3 <<
+; ABS-NEXT:	.uleb128 .Lfunc_end0-.Ltmp4     //   Call between .Ltmp4 and .Lfunc_end0
+; ABS-NEXT:	.byte	0                       //     has no landing pad
+; ABS-NEXT:	.byte	0                       //   On action: cleanup
+; ABS-NEXT: .Lcst_end0:
+
+; IND:	.section	.gcc_except_table,"a",@progbits
+; IND:	.p2align	2
+; IND-LABEL: GCC_except_table0:
+; IND-NEXT: .Lexception0:
+; IND-NEXT:	.byte	255                             // @LPStart Encoding = omit
+; IND-NEXT:	.byte	255                             // @TType Encoding = omit
+; IND-NEXT:	.byte	1                               // Call site Encoding = uleb128
+; IND-NEXT:	.uleb128 .Lcst_end0-.Lcst_begin0
+; IND-NEXT: .Lcst_begin0:
+; IND-NEXT:	.uleb128 .Ltmp0-.Lfunc_begin0           // >> Call Site 1 <<
+; IND-NEXT:	.uleb128 .Ltmp1-.Ltmp0                  //   Call between .Ltmp0 and .Ltmp1
+; IND-NEXT:	.byte	13                              // (landing pad is a capability)
+; IND-NEXT: .Llpoff0:                               //     jumps to .Ltmp2
+; IND-NEXT:	.xword	.Ltmp6-.Llpoff0
+; IND-NEXT:	.byte	0                               //   On action: cleanup
+; IND-NEXT:	.uleb128 .Ltmp3-.Lfunc_begin0           // >> Call Site 2 <<
+; IND-NEXT:	.uleb128 .Ltmp4-.Ltmp3                  //   Call between .Ltmp3 and .Ltmp4
+; IND-NEXT:	.byte	13                              // (landing pad is a capability)
+; IND-NEXT: .Llpoff1:                               //     jumps to .Ltmp5
+; IND-NEXT:	.xword	.Ltmp7-.Llpoff1
+; IND-NEXT:	.byte	0                               //   On action: cleanup
+; IND-NEXT:	.uleb128 .Ltmp4-.Lfunc_begin0           // >> Call Site 3 <<
+; IND-NEXT:	.uleb128 .Lfunc_end0-.Ltmp4             //   Call between .Ltmp4 and .Lfunc_end0
+; IND-NEXT:	.byte	0                               //     has no landing pad
+; IND-NEXT:	.byte	0                               //   On action: cleanup
+; IND-NEXT: .Lcst_end0:
+
+; IND:	.section	.data.rel.ro,"aw",@progbits
+; IND-NEXT:	.p2align	4
+; IND-NEXT: .Ltmp6:
+; IND-NEXT:	.chericap	_ZNKSt3__17num_getIwNS_19istreambuf_iteratorIwNS_11char_traitsIwEEEEE6do_getES4_S4_QRNS_8ios_baseEQRjQRb+(.Ltmp2-.Lfunc_begin0)
+; IND-NEXT: .Ltmp7:
+; IND-NEXT:	.chericap	_ZNKSt3__17num_getIwNS_19istreambuf_iteratorIwNS_11char_traitsIwEEEEE6do_getES4_S4_QRNS_8ios_baseEQRjQRb+(.Ltmp5-.Lfunc_begin0)

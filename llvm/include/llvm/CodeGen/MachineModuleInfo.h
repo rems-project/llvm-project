@@ -32,6 +32,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/MC/MCContext.h"
@@ -61,6 +62,8 @@ class MachineModuleInfoImpl {
 public:
   using StubValueTy = PointerIntPair<MCSymbol *, 1, bool>;
   using SymbolListTy = std::vector<std::pair<MCSymbol *, StubValueTy>>;
+  using StubExprValueTy = std::pair<MCSymbol *, MCExpr *>;
+  using ExprListTy = std::vector<std::pair<MCSymbol *, StubExprValueTy>>;
 
   virtual ~MachineModuleInfoImpl();
 
@@ -68,6 +71,7 @@ protected:
   /// Return the entries from a DenseMap in a deterministic sorted orer.
   /// Clears the map.
   static SymbolListTy getSortedStubs(DenseMap<MCSymbol*, StubValueTy>&);
+  static ExprListTy getSortedLPStubs(MapVector<MCSymbol*, StubExprValueTy>&);
 };
 
 //===----------------------------------------------------------------------===//

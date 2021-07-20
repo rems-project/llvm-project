@@ -674,7 +674,14 @@ static void scan_eh_tab(scan_results &results, _Unwind_Action actions,
         uintptr_t landingPad = readEncodedPointer(&callSitePtr, callSiteEncoding);
 #ifdef __CHERI_PURE_CAPABILITY__
         if (landingPad != 0) {
-           assert(landingPad == 0xc && "Unexpect capability marker");
+          assert((landingPad == 0xc || landingPad == 0xd) &&
+              "Unexpected capability marker");
+        }
+        if (landingPad == 13) {
+           uint64_t offset = *((uint64_t*)callSitePtr);
+           landingPad = *((uintptr_t*)(callSitePtr + offset));
+           callSitePtr += sizeof(uint64_t);
+        } else if (landingPad == 12) {
            callSitePtr = __builtin_align_up(callSitePtr, alignof(uintptr_t*));
            landingPad = *((uintptr_t*)callSitePtr);
            callSitePtr += sizeof(uintptr_t);
