@@ -675,6 +675,8 @@ def : Pat<(ptradd Capsp:$Cn, (i64 (shl GPR64:$Rm, (i64 4)))),
           (CapAddRegX Capsp:$Cn, GPR64:$Rm, (i32 28))>;
 
 def : Pat<(ptrtoint Capsp:$Cn), (CapGetValue Capsp:$Cn)>;
+def : Pat<(i32 (ptrtoint Capsp:$Cn)),
+           (EXTRACT_SUBREG (CapGetValue Capsp:$Cn), sub_32)>;
 def : Pat<(cbrind Cap:$Cn), (CapBranch Cap:$Cn)>;
 
 def : Pat<(AArch64chkequals Capsp:$Cn, Capsp:$Cm),
