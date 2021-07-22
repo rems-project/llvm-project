@@ -5964,7 +5964,7 @@ bool MasmParser::parseDirectiveMacro(StringRef Name, SMLoc NameLoc) {
                    IsMacroFunction);
   DEBUG_WITH_TYPE("asm-macros", dbgs() << "Defining new macro:\n";
                   Macro.dump());
-  getContext().defineMacro(Name, std::move(Macro));
+  getContext().defineMacro(Name.lower(), std::move(Macro));
   return false;
 }
 
