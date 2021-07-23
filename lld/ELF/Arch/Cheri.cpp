@@ -125,8 +125,8 @@ SymbolAndOffset::fromSectionWithOffset(InputSectionBase *isec, int64_t offset,
         // However all caprelocs there are performed on executable symbols so
         // we don't need size information.
         !(config->emachine == EM_AARCH64 &&
-         (isec->name.equals(".data.rel.ro") ||
-          isec->name.equals(".gcc_except_table"))))
+          (isec->name.startswith(".data.rel.ro") ||
+           isec->name.equals(".gcc_except_table"))))
       nonFatalWarning("Could not find a real symbol for " + isec->name +
            "+0x" + utohexstr(offset) + " in " + toString(isec->file));
     // Could not find a symbol -> return section+offset
