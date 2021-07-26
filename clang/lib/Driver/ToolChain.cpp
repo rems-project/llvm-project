@@ -7,7 +7,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Driver/ToolChain.h"
-#include "InputInfo.h"
 #include "ToolChains/Arch/ARM.h"
 #include "ToolChains/Arch/AArch64.h"
 #include "ToolChains/Arch/Mips.h"
@@ -21,6 +20,7 @@
 #include "clang/Driver/Action.h"
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/DriverDiagnostic.h"
+#include "clang/Driver/InputInfo.h"
 #include "clang/Driver/Job.h"
 #include "clang/Driver/Options.h"
 #include "clang/Driver/SanitizerArgs.h"
