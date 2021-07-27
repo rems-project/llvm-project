@@ -6336,9 +6336,10 @@ static SDValue getMemcpyLoadsAndStores(
                        /*IsZeroMemset*/ true, isVol)
           : MemOp::Copy(Size, DstAlignCanChange, Alignment, *SrcAlign, isVol,
                         MustPreserveCheriCapabilities, CopyFromConstant);
+  bool ReachedLimit;
   const bool FoundLowering = TLI.findOptimalMemOpLowering(
       MemOps, Limit, Op, DstPtrInfo.getAddrSpace(), SrcPtrInfo.getAddrSpace(),
-      MF.getFunction().getAttributes());
+      MF.getFunction().getAttributes(), &ReachedLimit);
   // Don't warn about inefficient memcpy if we reached the inline memcpy limit
   // Also don't warn about copies of less than CapSize
   // TODO: the frontend probably shouldn't emit must-preserve-tags for such
@@ -6346,7 +6347,6 @@ static SDValue getMemcpyLoadsAndStores(
   auto CapTy = TLI.cheriCapabilityType();
   if (CapTy.isValid()) {
     const uint64_t CapSize = CapTy.getStoreSize();
-    bool ReachedLimit = (CapSize * Limit) < Size;
     if (MustPreserveCheriCapabilities && !ReachedLimit && Size >= CapSize &&
         (!FoundLowering || !MemOps[0].isFatPointer())) {
       LLVM_DEBUG(
@@ -6554,12 +6554,13 @@ static SDValue getMemmoveLoadsAndStores(
     SrcAlign = Alignment;
   assert(SrcAlign && "SrcAlign must be set");
   unsigned Limit = AlwaysInline ? ~0U : TLI.getMaxStoresPerMemmove(OptSize);
+  bool ReachedLimit;
   const bool FoundLowering = TLI.findOptimalMemOpLowering(
       MemOps, Limit,
       MemOp::Copy(Size, DstAlignCanChange, Alignment, *SrcAlign,
                   /*IsVolatile*/ true, MustPreserveCheriCapabilities),
       DstPtrInfo.getAddrSpace(), SrcPtrInfo.getAddrSpace(),
-      MF.getFunction().getAttributes());
+      MF.getFunction().getAttributes(), &ReachedLimit);
 
   // Don't warn about inefficient memcpy if we reached the inline memmove limit
   // Also don't warn about copies of less than CapSize
@@ -6568,7 +6569,6 @@ static SDValue getMemmoveLoadsAndStores(
   auto CapTy = TLI.cheriCapabilityType();
   if (CapTy.isValid()) {
     const uint64_t CapSize = CapTy.getStoreSize();
-    bool ReachedLimit = (CapSize * Limit) < Size;
     if (MustPreserveCheriCapabilities && !ReachedLimit && Size >= CapSize &&
         (!FoundLowering || !MemOps[0].isFatPointer())) {
       LLVM_DEBUG(
