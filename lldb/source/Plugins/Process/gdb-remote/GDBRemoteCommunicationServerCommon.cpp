@@ -582,7 +582,7 @@ GDBRemoteCommunicationServerCommon::Handle_vFile_pRead(
       }
 
       std::string buffer(count, 0);
-      NativeFile file(fd, File::eOpenOptionRead, false);
+      NativeFile file(fd, File::eOpenOptionReadOnly, false);
       Status error = file.Read(static_cast<void *>(&buffer[0]), count, offset);
       const ssize_t bytes_read = error.Success() ? count : -1;
       const int save_errno = error.GetError();
@@ -614,7 +614,7 @@ GDBRemoteCommunicationServerCommon::Handle_vFile_pWrite(
     if (packet.GetChar() == ',') {
       std::string buffer;
       if (packet.GetEscapedBinaryData(buffer)) {
-        NativeFile file(fd, File::eOpenOptionWrite, false);
+        NativeFile file(fd, File::eOpenOptionWriteOnly, false);
         size_t count = buffer.size();
         Status error =
             file.Write(static_cast<const void *>(&buffer[0]), count, offset);

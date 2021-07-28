@@ -1024,7 +1024,7 @@ Status Target::SerializeBreakpointsToFile(const FileSpec &file,
   }
 
   StreamFile out_file(path.c_str(),
-                      File::eOpenOptionTruncate | File::eOpenOptionWrite |
+                      File::eOpenOptionTruncate | File::eOpenOptionWriteOnly |
                           File::eOpenOptionCanCreate |
                           File::eOpenOptionCloseOnExec,
                       lldb::eFilePermissionsFileDefault);
