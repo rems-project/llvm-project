@@ -657,14 +657,6 @@ static uint32_t g_rddc_el0_invalidates[] = {cap_ddc, LLDB_INVALID_REGNUM};
         g_##reg##_invalidates, nullptr, 0                                      \
   }
 
-#define DEFINE_CAP_PCC(reg, generic_kind)                                      \
-  {                                                                            \
-    #reg, nullptr, 17, CAP_OFFSET(cap_##reg - cap_c0),                         \
-        lldb::eEncodingCapability,                                             \
-        lldb::eFormatHex, LLDB_KIND(cap_##reg), nullptr,                       \
-        g_##reg##_invalidates, nullptr, 0                                      \
-  }
-
 #define DEFINE_CAP_ALT(reg, alt, generic_kind)                                 \
   {                                                                            \
     #reg, #alt, 17, CAP_OFFSET(cap_##reg - cap_c0),                            \
@@ -971,7 +963,7 @@ static lldb_private::RegisterInfo g_register_infos_arm64_le[] = {
     DEFINE_CAP(c29, LLDB_INVALID_REGNUM),
     DEFINE_CAP_ALT(clr, c30, LLDB_REGNUM_GENERIC_RAC),
     DEFINE_CAP_ALT(csp, c31, LLDB_REGNUM_GENERIC_CSP),
-    DEFINE_CAP_PCC(pcc, LLDB_REGNUM_GENERIC_PCC),
+    DEFINE_CAP(pcc, LLDB_REGNUM_GENERIC_PCC),
     DEFINE_CAP(ddc, LLDB_INVALID_REGNUM),
 
     DEFINE_STATE_GPR(sp_el0, LLDB_INVALID_REGNUM),

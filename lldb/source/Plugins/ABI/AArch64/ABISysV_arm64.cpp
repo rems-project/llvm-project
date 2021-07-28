@@ -743,11 +743,14 @@ bool ABISysV_arm64::GetFrameState(RegisterContext &reg_ctx,
     return true;
   }
 
-  // Read the PCC register.
+  // Read the PCC register. If not, then we assume we don't have capabilities,
+  // e.g. we have loaded a plain AArch64 core file.
   const RegisterInfo *pcc_info = reg_ctx.GetRegisterInfoAtIndex(pcc_regnum);
   RegisterValue pcc_value;
-  if (!reg_ctx.ReadRegister(pcc_info, pcc_value))
-    return false;
+  if (!reg_ctx.ReadRegister(pcc_info, pcc_value)) {
+    state = eFrameStateSimple;
+    return true;
+  }
 
   // Determine the frame capability state.
   bool is_executive;
