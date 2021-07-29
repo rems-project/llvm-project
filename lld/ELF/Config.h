@@ -38,6 +38,10 @@ enum ELFKind {
   ELF64BEKind
 };
 
+// For -Bno-symbolic, -Bsymbolic-non-weak-functions, -Bsymbolic-functions,
+// -Bsymbolic.
+enum class BsymbolicKind { None, NonWeakFunctions, Functions, All };
+
 // For --build-id.
 enum class BuildIdKind { None, Fast, Md5, Sha1, Hexstring, Uuid };
 
@@ -152,8 +156,7 @@ struct Configuration {
   bool morelloC64Plt = false;
   bool forceMorelloC64Plt = false;
   bool asNeeded = false;
-  bool bsymbolic = false;
-  bool bsymbolicFunctions = false;
+  BsymbolicKind bsymbolic = BsymbolicKind::None;
   // make dynamic relocations that are not supported by
   // FreeBSD _rtld_relocate_nonplt_self an error.
   bool buildingFreeBSDRtld;
