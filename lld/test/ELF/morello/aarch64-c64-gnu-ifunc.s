@@ -1,6 +1,6 @@
 // REQUIRES: aarch64
-// RUN: llvm-mc -filetype=obj -triple=aarch64-none-elf -mattr=+c64,+morello %s -o %t.o
-// RUN: ld.lld --morello-c64-plt -static %t.o -o %tout
+// RUN: llvm-mc -filetype=obj -triple=aarch64-none-elf -target-abi purecap -mattr=+c64,+morello %s -o %t.o
+// RUN: ld.lld  -static %t.o -o %tout
 // RUN: llvm-objdump -s -d --print-imm-hex --no-show-raw-insn --triple=aarch64-none-elf --mattr=+morello %tout | FileCheck %s
 // RUN: llvm-readobj -r --symbols %tout | FileCheck %s --check-prefix=RELANDSYM
 .text
@@ -67,7 +67,7 @@ _start:
 // RELANDSYM-NEXT:   Symbol {
 // RELANDSYM-NEXT:     Name: __rela_iplt_start
 // RELANDSYM-NEXT:     Value: 0x200180
-// RELANDSYM-NEXT:     Size: 0
+// RELANDSYM-NEXT:     Size: 48
 // RELANDSYM-NEXT:     Binding: Local (0x0)
 // RELANDSYM-NEXT:     Type: None (0x0)
 // RELANDSYM-NEXT:     Other [ (0x2)

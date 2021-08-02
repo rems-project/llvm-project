@@ -1,9 +1,9 @@
 # REQUIRES: aarch64
 # RUN: llvm-mc -filetype=obj -triple=aarch64-unknown-freebsd -mattr=+morello,+c64 -target-abi purecap %p/Inputs/aarch64-tstbr14-reloc.s -o %t1
 # RUN: llvm-mc -filetype=obj -triple=aarch64-unknown-freebsd -mattr=+morello,+c64 -target-abi purecap %s -o %t2
-# RUN: ld.lld %t1 %t2 --morello-c64-plt -o %t
+# RUN: ld.lld %t1 %t2 -o %t
 # RUN: llvm-objdump --mattr=+morello -d --no-show-raw-insn %t | FileCheck %s
-# RUN: ld.lld -shared %t1 %t2 --morello-c64-plt -o %t3
+# RUN: ld.lld -shared %t1 %t2 -o %t3
 # RUN: llvm-objdump --mattr=+morello -d --no-show-raw-insn %t3 | FileCheck --check-prefix=DSO %s
 # RUN: llvm-readobj -S -r %t3 | FileCheck -check-prefix=DSOREL %s
 

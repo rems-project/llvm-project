@@ -1,7 +1,7 @@
 // REQUIRES: aarch64
-// RUN: llvm-mc --triple=aarch64-none-elf -mattr=+c64,+morello -filetype=obj %S/Inputs/aarch64-abs.s -o %t.o
-// RUN: llvm-mc --triple=aarch64-none-elf -mattr=+c64,+morello -filetype=obj %s -o %t2.o
-// RUN: ld.lld %t.o %t2.o -o %t --morello-c64-plt
+// RUN: llvm-mc --triple=aarch64-none-elf -mattr=+c64,+morello -target-abi purecap -filetype=obj %S/Inputs/aarch64-abs.s -o %t.o
+// RUN: llvm-mc --triple=aarch64-none-elf -mattr=+c64,+morello -target-abi purecap -filetype=obj %s -o %t2.o
+// RUN: ld.lld %t.o %t2.o -o %t
 // RUN: llvm-readobj --cap-relocs --sections --expand-relocs %t | FileCheck %s
 
 /// Check that we can handle capability generating relocations to absolute

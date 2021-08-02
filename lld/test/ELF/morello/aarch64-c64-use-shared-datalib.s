@@ -12,7 +12,6 @@
 
 /// Application using a shared data only library. Expect to see dynamic
 /// relocations and not a __cap_relocs section. The link is repeated for -fpie
-/// Because no function calls are done, no need to use  --morello-c64-plt
 
  .text
  .global _start

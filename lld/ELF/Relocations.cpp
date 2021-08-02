@@ -1504,10 +1504,9 @@ static void scanReloc(InputSectionBase &sec, OffsetGetter &getOffset, RelTy *&i,
       (needsGot(expr) || needsPlt(expr)) &&
       (type == R_MORELLO_CALL26 || type == R_MORELLO_JUMP26 ||
        type == R_MORELLO_LD128_GOT_LO12_NC)) {
-    // We require 16-byte GOT entries and a different PLT sequence, we
-    // need --morello-c64-plt to choose these prior to this point.
+    // We require 16-byte GOT entries and a different PLT sequence.
     error("Morello PLT/GOT generating relocation " + toString(type) +
-          " requires --morello-c64-plt" + getLocation(sec, sym, offset));
+          " requires the purecap ABI" + getLocation(sec, sym, offset));
     return;
   }
 

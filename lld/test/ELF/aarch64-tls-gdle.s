@@ -5,7 +5,9 @@
 # RUN: llvm-objdump -d --no-show-raw-insn %tout | FileCheck %s
 # RUN: llvm-readobj -r %tout | FileCheck -check-prefix=RELOC %s
 
-# RUN: ld.lld --morello-c64-plt %tmain.o %ttlsie.o -o %tout2 2>&1 | FileCheck --check-prefix=WARN %s
+# RUN: llvm-mc -filetype=obj -triple=aarch64-unknown-linux -target-abi purecap %p/Inputs/aarch64-tls-ie.s -o %ttlsie.o
+# RUN: llvm-mc -filetype=obj -triple=aarch64-unknown-linux -target-abi purecap %s -o %tmain.o
+# RUN: ld.lld %tmain.o %ttlsie.o -o %tout2 2>&1 | FileCheck --check-prefix=WARN %s
 # RUN: llvm-objdump -d --no-show-raw-insn %tout2 | FileCheck %s --check-prefix=C64
 # RUN: llvm-readobj -r %tout2 | FileCheck -check-prefix=RELOC %s
 
@@ -27,7 +29,7 @@
 # C64-NEXT:    2101d0: nop
 # C64-NEXT:    2101d4: nop
 
-# WARN: warning: AArch64 TLS GD to LE relaxation detected but --morello-c64-plt set
+# WARN: warning: AArch64 TLS GD to LE relaxation detected for the purecap ABI
 
 .globl _start
 _start:

@@ -1,6 +1,6 @@
 // REQUIRES: aarch64
-// RUN: llvm-mc --triple=aarch64-none-elf -mattr=+c64,+morello -filetype=obj %s -o %t.o
-// RUN: ld.lld %t.o -o %t --morello-c64-plt
+// RUN: llvm-mc --triple=aarch64-none-elf -target-abi purecap -mattr=+c64,+morello -filetype=obj %s -o %t.o
+// RUN: ld.lld %t.o -o %t
 // RUN: llvm-objdump -d --no-show-raw-insn --triple=aarch64-none-elf --mattr=+morello %t | FileCheck %s --check-prefix=DIS
 // RUN: llvm-readobj --sections --cap-relocs --expand-relocs %t | FileCheck %s
 

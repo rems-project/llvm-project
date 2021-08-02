@@ -1,6 +1,6 @@
 // REQUIRES: aarch64
-// RUN: llvm-mc --triple=aarch64-none-elf -mattr=+c64 -filetype=obj %s -o %t.o
-// RUN: ld.lld -v %t.o -o %t 2>&1 --morello-c64-plt --eh-frame-hdr | FileCheck --check-prefix=WARN %s
+// RUN: llvm-mc --triple=aarch64-none-elf -target-abi purecap -mattr=+c64 -filetype=obj %s -o %t.o
+// RUN: ld.lld -v %t.o -o %t 2>&1 --eh-frame-hdr | FileCheck --check-prefix=WARN %s
 // RUN: llvm-readobj --cap-relocs --expand-relocs %t | FileCheck %s
 
 // WARN-NOT: warning: could not determine size of cap reloc against __eh_frame_start
@@ -57,17 +57,20 @@ _start: ret
  .xword 0
  .xword 0
 
+// FIXME: capabilities to sections should be made representable through
+// padding.
+
 // CHECK: CHERI __cap_relocs [
 // CHECK-NEXT: Relocation {
 // CHECK-NEXT:   Location: 0x25AC80 ($d.2)
-// CHECK-NEXT:   Base: __eh_frame_start (0x213AC0)
-// CHECK-NEXT:   Offset: 0
+// CHECK-NEXT:   Base: <unknown symbol> (0x213A80)
+// CHECK-NEXT:   Offset: 12
 // CHECK-NEXT:   Length: 160064
 // CHECK-NEXT:   Permissions: (RODATA) (0x1BFBE)
 // CHECK-NEXT: }
 // CHECK-NEXT: Relocation {
 // CHECK-NEXT:   Location: 0x25AC90
-// CHECK-NEXT:   Base: __eh_frame_end (0x23ABD4)
+// CHECK-NEXT:   Base: __eh_frame_end (0x23ABA0)
 // CHECK-NEXT:   Offset: 0
 // CHECK-NEXT:   Length: 0
 // CHECK-NEXT:   Permissions: (RODATA) (0x1BFBE)

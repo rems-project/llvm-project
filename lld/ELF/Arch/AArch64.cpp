@@ -923,7 +923,7 @@ void AArch64C64::relaxTlsGdToLe(uint8_t *loc, const Relocation &rel,
     if (config->morelloC64Plt) {
       // Overwrite the C64 instruction written for R_AARCH64_TLSDESC_ADD_LO12
       // with the appropriate instruction for the AArch64 sequence
-      warn("AArch64 TLS GD to LE relaxation detected but --morello-c64-plt set");
+      warn("AArch64 TLS GD to LE relaxation detected for the purecap ABI");
       write32le(loc-4, 0xd503201f); // nop
     }
     write32le(loc, 0xd503201f); // nop

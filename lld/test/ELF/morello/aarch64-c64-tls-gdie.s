@@ -2,10 +2,10 @@
 /// relaxations are implemented. For now no relaxation is done.
 
 // REQUIRES: aarch64
-// RUN: llvm-mc -filetype=obj -triple=aarch64-unknown-linux %s -o %tmain.o -mattr=+c64,+morello
-// RUN: llvm-mc -filetype=obj -triple=aarch64-unknown-linux %p/Inputs/aarch64-c64-tls-gdie.s -o %t2.o -mattr=+c64,+morello
-// RUN: ld.lld --morello-c64-plt %t2.o -o %t2.so -shared -soname=t2.so
-// RUN: ld.lld --morello-c64-plt --hash-style=sysv %tmain.o %t2.so -o %tout
+// RUN: llvm-mc -filetype=obj -triple=aarch64-unknown-linux %s -o %tmain.o -target-abi purecap -mattr=+c64,+morello
+// RUN: llvm-mc -filetype=obj -triple=aarch64-unknown-linux %p/Inputs/aarch64-c64-tls-gdie.s -o %t2.o -target-abi purecap -mattr=+c64,+morello
+// RUN: ld.lld %t2.o -o %t2.so -shared -soname=t2.so
+// RUN: ld.lld --hash-style=sysv %tmain.o %t2.so -o %tout
 // RUN: llvm-objdump -d --mattr=+morello --no-show-raw-insn %tout | FileCheck %s
 // RUN: llvm-readobj -rS %tout | FileCheck --check-prefix=SEC --check-prefix=REL %s
 

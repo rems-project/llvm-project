@@ -1,7 +1,7 @@
 // REQUIRES: aarch64
 
-// RUN: llvm-mc -filetype=obj --triple=arm64 -mattr=+c64,+morello %s -o %t.o
-// RUN: not ld.lld %t.o -o /dev/null --morello-c64-plt 2>&1 | FileCheck %s
+// RUN: llvm-mc -filetype=obj --triple=arm64 -target-abi purecap -mattr=+c64,+morello %s -o %t.o
+// RUN: not ld.lld %t.o -o /dev/null  2>&1 | FileCheck %s
 
 // CHECK: improper alignment for relocation R_MORELLO_LD128_GOT_LO12_NC: 0x220251 is not aligned to 16 bytes
 // CHECK: improper alignment for relocation R_MORELLO_LD128_GOT_LO12_NC: 0x220252 is not aligned to 16 bytes

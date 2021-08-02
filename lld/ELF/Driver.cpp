@@ -374,8 +374,6 @@ static void checkOptions() {
     error("-z force-ibt may not be used with -z retpolineplt");
 
   if (config->emachine != EM_AARCH64) {
-    if (config->morelloC64Plt)
-      error("--morello-c64-plt only supported on AArch64");
     if (config->zPacPlt)
       error("-z pac-plt only supported on AArch64");
     if (config->zForceBti)
@@ -979,7 +977,7 @@ static void readConfigs(opt::InputArgList &args) {
       args.hasFlag(OPT_allow_shlib_undefined, OPT_no_allow_shlib_undefined,
                    args.hasArg(OPT_shared));
   config->allowUndefinedCapRelocs = args.hasArg(OPT_allow_undefined_cap_relocs);
-  config->morelloC64Plt = args.hasArg(OPT_morello_c64_plt);
+  config->forceMorelloC64Plt = args.hasArg(OPT_morello_c64_plt);
   config->auxiliaryList = args::getStrings(args, OPT_auxiliary);
   config->bsymbolic = args.hasArg(OPT_Bsymbolic);
   config->bsymbolicFunctions = args.hasArg(OPT_Bsymbolic_functions);
@@ -1238,6 +1236,7 @@ static void readConfigs(opt::InputArgList &args) {
         parseEmulation(s);
     config->mipsN32Abi =
         (s.startswith("elf32btsmipn32") || s.startswith("elf32ltsmipn32"));
+    config->morelloC64Plt = config->isCheriAbi && (config->emachine == EM_AARCH64);
     config->emulation = s;
   }
 
@@ -1504,8 +1503,32 @@ void LinkerDriver::createFiles(opt::InputArgList &args) {
 
 // If -m <machine_type> was not given, infer it from object files.
 void LinkerDriver::inferMachineType() {
-  if (config->ekind != ELFNoneKind)
+  auto inferMorelloC64Plt = [&]() {
+    if (config->emachine != EM_AARCH64)
+      return;
+    if (config->forceMorelloC64Plt)
+      config->morelloC64Plt = true;
+    for (InputFile *file : files) {
+      if (file->ekind == ELFNoneKind)
+        continue;
+      bool IsPurecap = file->eflags & EF_AARCH64_CHERI_PURECAP;
+      if (config->forceMorelloC64Plt && !IsPurecap)
+        warn(toString(file) + ": Forcing purecap ABI because "
+             "--morello-c64-plt was passed. This option is deprecated and "
+             "should be removed. The purecap ABI should be infered through "
+             "e_flags. Use a recent toolchain to rebuild this object and build "
+             "it with the purecap ABI.");
+      if (IsPurecap)
+        config->morelloC64Plt = true;
+    }
+  };
+
+  if (config->ekind != ELFNoneKind) {
+    // Even if -m <machine_type> was passed, still try to infer the ABI
+    // from object files.
+    inferMorelloC64Plt();
     return;
+  }
 
   for (InputFile *f : files) {
     if (f->ekind == ELFNoneKind)
@@ -1514,6 +1537,7 @@ void LinkerDriver::inferMachineType() {
     config->emachine = f->emachine;
     config->osabi = f->osabi;
     config->mipsN32Abi = f->emachine == EM_MIPS && isMipsN32Abi(f);
+    inferMorelloC64Plt();
     return;
   }
   error("target emulation unknown: -m or at least one .o file required");

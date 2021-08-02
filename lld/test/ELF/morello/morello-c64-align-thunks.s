@@ -1,13 +1,14 @@
 // REQUIRES: aarch64
-// RUN: llvm-mc --triple=aarch64-none-elf %s -mattr=+c64,+morello --filetype=obj -o %t.o
+// RUN: llvm-mc --triple=aarch64-none-elf %s -target-abi purecap -mattr=+c64,+morello --filetype=obj -o %t.o
 // RUN: echo "SECTIONS { \
 // RUN:       .text 0xfff000 : { *(.text.1) } \
 // RUN:       .text_space : { *(.text.2) } \
 // RUN:       .text_targets : { *(.text.3) *(.text.4) } \
 // RUN:       } " > %t.script
-// RUN: ld.lld %t.o -o %t --script=%t.script --morello-c64-plt -zmax-page-size=4096 2>&1 | FileCheck --check-prefix=WARN %s
+// RUN: ld.lld %t.o -o %t --script=%t.script -zmax-page-size=4096 2>&1 | FileCheck --check-prefix=WARN %s
 // RUN: llvm-objdump --no-show-raw-insn -d --triple=aarch64-none-elf --mattr=+morello --start-address=0xfff000 --stop-address=0xfff008 %t | FileCheck %s
-// RUN: ld.lld %t.o -o %t2 --script=%t.script -zmax-page-size=4096
+// RUN: llvm-mc --triple=aarch64-none-elf %s -mattr=+c64,+morello --filetype=obj -o %t1.o
+// RUN: ld.lld %t1.o -o %t2 --script=%t.script -zmax-page-size=4096
 // RUN: llvm-objdump --no-show-raw-insn -d --triple=aarch64-none-elf --mattr=+morello --start-address=0xfff000 --stop-address=0xfff008 %t2 | FileCheck %s
 
 /// Check that the alignment of the PCC is not done when explicit addresses are specified
@@ -58,7 +59,7 @@ target2:
 // RUN:       .text_space : { *(.text.2) } \
 // RUN:       .text_targets : { *(.text.3) *(.text.4) } \
 // RUN:       } " > %t.script3
-// RUN: ld.lld %t.o -o %t3 --script=%t.script3 --morello-c64-plt -zmax-page-size=4096
+// RUN: ld.lld %t.o -o %t3 --script=%t.script3 -zmax-page-size=4096
 // RUN: llvm-objdump --no-show-raw-insn -d --triple=aarch64-none-elf --mattr=+morello --start-address=0x1000000 --stop-address=0x1000020 %t3 | FileCheck %s --check-prefix=ALIGN
 
 /// When we align the PCC we incur additional alignment for .text.2 which

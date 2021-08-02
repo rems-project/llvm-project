@@ -1,7 +1,7 @@
 // REQUIRES: aarch64
-// RUN: llvm-mc --triple=aarch64-none-elf -mattr=+c64,+morello -filetype=obj %s -o %t.o
-// RUN: llvm-mc --triple=aarch64-none-elf -filetype=obj %S/Inputs/aarch64-funcs.s -o %t2.o
-// RUN: ld.lld %t.o %t2.o --morello-c64-plt -o %t
+// RUN: llvm-mc --triple=aarch64-none-elf -mattr=+c64,+morello -filetype=obj -target-abi purecap %s -o %t.o
+// RUN: llvm-mc --triple=aarch64-none-elf -filetype=obj %S/Inputs/aarch64-funcs.s -target-abi purecap -o %t2.o
+// RUN: ld.lld %t.o %t2.o -o %t
 // RUN: llvm-objdump --no-show-raw-insn --triple=aarch64-none-elf --mattr=+morello -d %t | FileCheck %s
 // RUN: llvm-readobj --symbols %t | FileCheck --check-prefix=CHECK-SYM %s
 

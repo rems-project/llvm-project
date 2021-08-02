@@ -1,10 +1,10 @@
 // REQUIRES: aarch64
 // This needs additional relocations.
 // XFAIL: *
-// RUN: llvm-mc -filetype=obj -triple=aarch64-none-elf -mattr=+c64,+morello %s -o %t.o
-// RUN: ld.lld --morello-c64-plt %t.o -o %t
+// RUN: llvm-mc -filetype=obj -triple=aarch64-none-elf -target-abi purecap -mattr=+c64,+morello %s -o %t.o
+// RUN: ld.lld %t.o -o %t
 // RUN: llvm-objdump -triple=aarch64-none-elf -mattr=+morello -d --no-show-raw-insn %t | FileCheck %s --check-prefix=RELAX
-// RUN: ld.lld --morello-c64-plt --shared %t.o -o %t
+// RUN: ld.lld --shared %t.o -o %t
 // RUN: llvm-objdump -triple=aarch64-none-elf -mattr=+morello -d --no-show-raw-insn %t | FileCheck %s --check-prefix=NORELAX
 // RUN: llvm-readobj --relocs %t | FileCheck %s
 

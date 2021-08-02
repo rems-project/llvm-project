@@ -1,6 +1,6 @@
 // REQUIRES: aarch64
-// RUN: llvm-mc --triple=aarch64-none-elf -mattr=+c64 -filetype=obj %s -o %t.o
-// RUN: ld.lld -v --morello-c64-plt %t.o -o %t 2>&1 | FileCheck %s --check-prefix=WARN
+// RUN: llvm-mc --triple=aarch64-none-elf -target-abi purecap -mattr=+c64 -filetype=obj %s -o %t.o
+// RUN: ld.lld -v %t.o -o %t 2>&1 | FileCheck %s --check-prefix=WARN
 // RUN: llvm-readobj --cap-relocs --expand-relocs --section-headers %t | FileCheck %s
 
 /// An example showing .capinit to one of each of the permission types. We check
@@ -226,7 +226,7 @@ bss:
 // RUN:       __cap_relocs : { *(__cap_relocs) } \
 // RUN:       .data : { *(data) } \
 // RUN:       .bss : { *(.bss) } } " > %t.script
-// RUN: ld.lld --morello-c64-plt %t.o -o %t2 --script=%t.script
+// RUN: ld.lld %t.o -o %t2 --script=%t.script
 // RUN: llvm-readobj --cap-relocs --expand-relocs %t2 | FileCheck %s --check-prefix=CHECK-SCRIPT
 
 // CHECK-SCRIPT: CHERI __cap_relocs [

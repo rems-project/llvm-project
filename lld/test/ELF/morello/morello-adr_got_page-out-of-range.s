@@ -1,6 +1,6 @@
 // REQUIRES: aarch64
-// RUN: llvm-mc -filetype=obj -triple=arm64 -mattr=+c64,+morello %s -o %t.o
-// RUN: not ld.lld %t.o --morello-c64-plt -o /dev/null 2>&1 | FileCheck %s
+// RUN: llvm-mc -filetype=obj -triple=arm64 -target-abi purecap -mattr=+c64,+morello %s -o %t.o
+// RUN: not ld.lld %t.o -o /dev/null 2>&1 | FileCheck %s
 // RUN: llvm-readobj -r %t.o  | FileCheck %s --check-prefix=RELOCS
 
 // CHECK: relocation R_MORELLO_ADR_GOT_PAGE out of range: 2147483648 is not in [-2147483648, 2147483647]

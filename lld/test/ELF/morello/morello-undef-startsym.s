@@ -1,9 +1,9 @@
 # REQUIRES: aarch64
-# RUN: llvm-mc -filetype=obj -triple=aarch64-none-elf %s -o %t.o
+# RUN: llvm-mc -filetype=obj -triple=aarch64-none-elf -target-abi purecap %s -o %t.o
 
 ## Check that undefined start symbols are created for static output,
 ## and has hidden visibility.
-# RUN: ld.lld --morello-c64-plt -static %t.o -o %t
+# RUN: ld.lld -static %t.o -o %t
 # RUN: llvm-readobj --sections --symbols %t | FileCheck %s
 
 # CHECK:      Symbols [

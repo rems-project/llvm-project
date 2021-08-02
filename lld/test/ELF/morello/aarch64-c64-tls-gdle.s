@@ -1,9 +1,9 @@
 /// Check relaxation from Global Dynamic to Local Executable
 
 // REQUIRES: aarch64
-// RUN: llvm-mc -filetype=obj -triple=aarch64-unknown-linux %s -o %tmain.o -mattr=+c64,+morello
-// RUN: llvm-mc -filetype=obj -triple=aarch64-unknown-linux %p/Inputs/aarch64-c64-tls-gdle.s -o %ttlsle.o -mattr=+c64,+morello
-// RUN: ld.lld --morello-c64-plt %tmain.o %ttlsle.o -o %tout
+// RUN: llvm-mc -filetype=obj -triple=aarch64-unknown-linux %s -o %tmain.o -target-abi purecap -mattr=+c64,+morello
+// RUN: llvm-mc -filetype=obj -triple=aarch64-unknown-linux %p/Inputs/aarch64-c64-tls-gdle.s -o %ttlsle.o -target-abi purecap -mattr=+c64,+morello
+// RUN: ld.lld %tmain.o %ttlsle.o -o %tout
 // RUN: llvm-objdump -d --mattr=+morello --print-imm-hex --no-show-raw-insn %tout | FileCheck %s
 // RUN: llvm-readobj -rS %tout | FileCheck --check-prefix=REL --check-prefix=SEC %s
 

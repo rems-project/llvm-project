@@ -144,7 +144,8 @@ struct Configuration {
   bool armHasBlx = false;
   bool armHasMovtMovw = false;
   bool armJ1J2BranchEncoding = false;
-  bool morelloC64Plt;
+  bool morelloC64Plt = false;
+  bool forceMorelloC64Plt = false;
   bool asNeeded = false;
   bool bsymbolic;
   bool bsymbolicFunctions;

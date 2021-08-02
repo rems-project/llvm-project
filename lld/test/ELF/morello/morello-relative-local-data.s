@@ -1,6 +1,6 @@
 // REQUIRES: aarch64
-// RUN: llvm-mc --triple=aarch64-none-elf -mattr=+c64,+morello -filetype=obj %s -o %t.o
-// RUN: ld.lld --shared --morello-c64-plt %t.o -o %t.so --fatal-warnings
+// RUN: llvm-mc --triple=aarch64-none-elf -mattr=+c64,+morello -target-abi purecap -filetype=obj %s -o %t.o
+// RUN: ld.lld --shared %t.o -o %t.so --fatal-warnings
 // RUN: llvm-readobj --relocations %t.so | FileCheck %s --check-prefix=RELS
 // RUN: llvm-objdump --no-show-raw-insn -d --triple=aarch64-none-elf --mattr=+morello -s %t.so | FileCheck %s
 

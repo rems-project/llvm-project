@@ -1197,6 +1197,7 @@ template <class ELFT> void Writer<ELFT>::setReservedSymbolSections() {
     ElfSym::relaIpltStart->section = in.relaIplt;
     ElfSym::relaIpltEnd->section = in.relaIplt;
     ElfSym::relaIpltEnd->value = in.relaIplt->getSize();
+    ElfSym::relaIpltEnd->isSectionStartSymbol = false;
   }
 
   PhdrEntry *last = nullptr;

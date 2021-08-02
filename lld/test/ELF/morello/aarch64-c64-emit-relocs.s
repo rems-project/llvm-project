@@ -1,8 +1,8 @@
 // REQUIRES: aarch64
-// RUN: llvm-mc --triple=aarch64-none-elf -mattr=+c64,+morello -filetype=obj %s -o %t.o
-// RUN: ld.lld %t.o --emit-relocs -o %t --morello-c64-plt
+// RUN: llvm-mc --triple=aarch64-none-elf -mattr=+c64,+morello -filetype=obj -target-abi purecap %s -o %t.o
+// RUN: ld.lld %t.o --emit-relocs -o %t
 // RUN: llvm-readobj --relocs --sections %t | FileCheck %s
-// RUN: ld.lld %t.o --shared --emit-relocs -o %t.so --morello-c64-plt
+// RUN: ld.lld %t.o --shared --emit-relocs -o %t.so
 // RUN: llvm-readobj --relocs --sections %t.so | FileCheck %s --check-prefix=SHARED
 
 // Check that the --emit-relocs output is reasonably sane.
