@@ -41,14 +41,6 @@
 // RUN: %clang -### -target aarch64-none-elf -march=morello -mabi=purecap %s 2>&1 | FileCheck -check-prefix=C64-PLT %s
 // RUN: %clang -### -target aarch64-unknown-freebsd12.0  -mabi=purecap %s 2>&1 | FileCheck -check-prefix=C64-PLT %s
 // C64-PLT: "-target-abi" "purecap"
-// C64-PLT: --morello-c64-plt
-
-//
-// RUN: %clang -### -target aarch64-none-elf -march=morello %s 2>&1 | FileCheck -check-prefix=NOC64-PLT %s
-// RUN: %clang -### -target aarch64-linux-elf -march=armv8-a+a64c %s 2>&1 | FileCheck -check-prefix=NOC64-PLT %s
-// RUN: %clang -### -target aarch64-none-elf -march=morello+c64 -mabi=aapcs %s 2>&1 | FileCheck -check-prefix=NOC64-PLT %s
-
-// NOC64-PLT-NOT: --morello-c64-plt
 
 // RUN: %clang -### -target aarch64-unknown-freebsd12.0  -march=morello+c64 -mabi=purecap %s --sysroot=%S/cheri/Inputs/basic_cheribsd_libcheri_tree 2>&1| FileCheck --check-prefix=LIBCHERI %s
 // LIBCHERI: --sysroot=[[SYSROOT:[^"]+]]

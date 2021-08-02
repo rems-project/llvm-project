@@ -32,9 +32,6 @@ void getMorelloMode(const Driver &D, const llvm::Triple &Triple,
                     bool &C64, bool &PureCap,
                     bool &ReducedCapRegs);
 
-void addMorelloLinkerFlags(const llvm::opt::ArgList &Args,
-                           llvm::opt::ArgStringList &CmdArgs);
-
 bool isPurecap(const llvm::opt::ArgList &Args);
 
 } // end namespace aarch64

@@ -250,14 +250,6 @@ void aarch64::getMorelloMode(const Driver &D, const llvm::Triple &Triple,
   A64C = ItEnableMorello < ItDisableMorello;
 }
 
-void aarch64::addMorelloLinkerFlags(const ArgList &Args, ArgStringList &CmdArgs) {
-  bool PureCap = false;
-  if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ))
-    PureCap = strcmp(A->getValue(), "purecap") == 0;
-  if (PureCap)
-    CmdArgs.push_back("--morello-c64-plt");
-}
-
 void aarch64::getAArch64TargetFeatures(const Driver &D,
                                        const llvm::Triple &Triple,
                                        const ArgList &Args,
