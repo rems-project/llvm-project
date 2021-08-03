@@ -25,18 +25,17 @@ target datalayout = "e-m:e-pf200:128:128:128:64-i8:8:32-i16:16:32-i64:64-i128:12
 define i32 @first_i32_store_to_load_fwd(i8 addrspace(200)* %arg) local_unnamed_addr addrspace(200) nounwind {
 ; ASM-LABEL: first_i32_store_to_load_fwd:
 ; ASM:       .Lfunc_begin0:
-; ASM-NEXT:  // %bb.0: // %bb
-; ASM-NEXT:    sub csp, csp, #80 // =80
+; ASM-NEXT:  // %bb.0:
+; ASM-NEXT:    sub csp, csp, #80
 ; ASM-NEXT:    mov c1, c0
 ; ASM-NEXT:    mov c0, csp
 ; ASM-NEXT:    scbnds c0, c0, #5, lsl #4 // =80
 ; ASM-NEXT:    str c1, [c0, #0]
 ; ASM-NEXT:    ldr w0, [c0]
-; ASM-NEXT:    add csp, csp, #80 // =80
+; ASM-NEXT:    add csp, csp, #80
 ; ASM-NEXT:    ret c30
 ; CHECK-LABEL: define {{[^@]+}}@first_i32_store_to_load_fwd
 ; CHECK-SAME: (i8 addrspace(200)* [[ARG:%.*]]) local_unnamed_addr addrspace(200) #[[ATTR0:[0-9]+]] {
-; CHECK-NEXT:  bb:
 ; CHECK-NEXT:    [[STACKVAL:%.*]] = alloca [[STRUCT_ADDRINFO:%.*]], align 16, addrspace(200)
 ; CHECK-NEXT:    [[FIELD:%.*]] = getelementptr inbounds [[STRUCT_ADDRINFO]], [[STRUCT_ADDRINFO]] addrspace(200)* [[STACKVAL]], i64 0, i32 0
 ; CHECK-NEXT:    [[AS_CAP:%.*]] = bitcast [[STRUCT_ADDRINFO]] addrspace(200)* [[STACKVAL]] to i8 addrspace(200)* addrspace(200)*
@@ -44,7 +43,6 @@ define i32 @first_i32_store_to_load_fwd(i8 addrspace(200)* %arg) local_unnamed_a
 ; CHECK-NEXT:    [[RESULT:%.*]] = load i32, i32 addrspace(200)* [[FIELD]], align 4
 ; CHECK-NEXT:    ret i32 [[RESULT]]
 ;
-bb:
   %stackval = alloca %struct.addrinfo, align 16, addrspace(200)
   %field = getelementptr inbounds %struct.addrinfo, %struct.addrinfo addrspace(200)* %stackval, i64 0, i32 0
   %as_cap = bitcast %struct.addrinfo addrspace(200)* %stackval to i8 addrspace(200)* addrspace(200)*
@@ -56,18 +54,17 @@ bb:
 define i32 @second_i32_store_to_load_fwd(i8 addrspace(200)* %arg) local_unnamed_addr addrspace(200) nounwind {
 ; ASM-LABEL: second_i32_store_to_load_fwd:
 ; ASM:       .Lfunc_begin1:
-; ASM-NEXT:  // %bb.0: // %bb
-; ASM-NEXT:    sub csp, csp, #80 // =80
+; ASM-NEXT:  // %bb.0:
+; ASM-NEXT:    sub csp, csp, #80
 ; ASM-NEXT:    mov c1, c0
 ; ASM-NEXT:    mov c0, csp
 ; ASM-NEXT:    scbnds c0, c0, #5, lsl #4 // =80
 ; ASM-NEXT:    str c1, [c0, #0]
 ; ASM-NEXT:    ldr w0, [c0, #4]
-; ASM-NEXT:    add csp, csp, #80 // =80
+; ASM-NEXT:    add csp, csp, #80
 ; ASM-NEXT:    ret c30
 ; CHECK-LABEL: define {{[^@]+}}@second_i32_store_to_load_fwd
 ; CHECK-SAME: (i8 addrspace(200)* [[ARG:%.*]]) local_unnamed_addr addrspace(200) #[[ATTR0]] {
-; CHECK-NEXT:  bb:
 ; CHECK-NEXT:    [[STACKVAL:%.*]] = alloca [[STRUCT_ADDRINFO:%.*]], align 16, addrspace(200)
 ; CHECK-NEXT:    [[FIELD:%.*]] = getelementptr inbounds [[STRUCT_ADDRINFO]], [[STRUCT_ADDRINFO]] addrspace(200)* [[STACKVAL]], i64 0, i32 1
 ; CHECK-NEXT:    [[AS_CAP:%.*]] = bitcast [[STRUCT_ADDRINFO]] addrspace(200)* [[STACKVAL]] to i8 addrspace(200)* addrspace(200)*
@@ -75,7 +72,6 @@ define i32 @second_i32_store_to_load_fwd(i8 addrspace(200)* %arg) local_unnamed_
 ; CHECK-NEXT:    [[RESULT:%.*]] = load i32, i32 addrspace(200)* [[FIELD]], align 4
 ; CHECK-NEXT:    ret i32 [[RESULT]]
 ;
-bb:
   %stackval = alloca %struct.addrinfo, align 16, addrspace(200)
   %field = getelementptr inbounds %struct.addrinfo, %struct.addrinfo addrspace(200)* %stackval, i64 0, i32 1
   %as_cap = bitcast %struct.addrinfo addrspace(200)* %stackval to i8 addrspace(200)* addrspace(200)*
@@ -87,18 +83,17 @@ bb:
 define i32 @third_i32_store_to_load_fwd(i8 addrspace(200)* %arg) local_unnamed_addr addrspace(200) nounwind {
 ; ASM-LABEL: third_i32_store_to_load_fwd:
 ; ASM:       .Lfunc_begin2:
-; ASM-NEXT:  // %bb.0: // %bb
-; ASM-NEXT:    sub csp, csp, #80 // =80
+; ASM-NEXT:  // %bb.0:
+; ASM-NEXT:    sub csp, csp, #80
 ; ASM-NEXT:    mov c1, c0
 ; ASM-NEXT:    mov c0, csp
 ; ASM-NEXT:    scbnds c0, c0, #5, lsl #4 // =80
 ; ASM-NEXT:    str c1, [c0, #0]
 ; ASM-NEXT:    ldr w0, [c0, #8]
-; ASM-NEXT:    add csp, csp, #80 // =80
+; ASM-NEXT:    add csp, csp, #80
 ; ASM-NEXT:    ret c30
 ; CHECK-LABEL: define {{[^@]+}}@third_i32_store_to_load_fwd
 ; CHECK-SAME: (i8 addrspace(200)* [[ARG:%.*]]) local_unnamed_addr addrspace(200) #[[ATTR0]] {
-; CHECK-NEXT:  bb:
 ; CHECK-NEXT:    [[STACKVAL:%.*]] = alloca [[STRUCT_ADDRINFO:%.*]], align 16, addrspace(200)
 ; CHECK-NEXT:    [[FIELD:%.*]] = getelementptr inbounds [[STRUCT_ADDRINFO]], [[STRUCT_ADDRINFO]] addrspace(200)* [[STACKVAL]], i64 0, i32 2
 ; CHECK-NEXT:    [[AS_CAP:%.*]] = bitcast [[STRUCT_ADDRINFO]] addrspace(200)* [[STACKVAL]] to i8 addrspace(200)* addrspace(200)*
@@ -106,7 +101,6 @@ define i32 @third_i32_store_to_load_fwd(i8 addrspace(200)* %arg) local_unnamed_a
 ; CHECK-NEXT:    [[RESULT:%.*]] = load i32, i32 addrspace(200)* [[FIELD]], align 4
 ; CHECK-NEXT:    ret i32 [[RESULT]]
 ;
-bb:
   %stackval = alloca %struct.addrinfo, align 16, addrspace(200)
   %field = getelementptr inbounds %struct.addrinfo, %struct.addrinfo addrspace(200)* %stackval, i64 0, i32 2
   %as_cap = bitcast %struct.addrinfo addrspace(200)* %stackval to i8 addrspace(200)* addrspace(200)*
@@ -118,18 +112,17 @@ bb:
 define i32 @fourth_i32_store_to_load_fwd(i8 addrspace(200)* %arg) local_unnamed_addr addrspace(200) nounwind {
 ; ASM-LABEL: fourth_i32_store_to_load_fwd:
 ; ASM:       .Lfunc_begin3:
-; ASM-NEXT:  // %bb.0: // %bb
-; ASM-NEXT:    sub csp, csp, #80 // =80
+; ASM-NEXT:  // %bb.0:
+; ASM-NEXT:    sub csp, csp, #80
 ; ASM-NEXT:    mov c1, c0
 ; ASM-NEXT:    mov c0, csp
 ; ASM-NEXT:    scbnds c0, c0, #5, lsl #4 // =80
 ; ASM-NEXT:    str c1, [c0, #0]
 ; ASM-NEXT:    ldr w0, [c0, #12]
-; ASM-NEXT:    add csp, csp, #80 // =80
+; ASM-NEXT:    add csp, csp, #80
 ; ASM-NEXT:    ret c30
 ; CHECK-LABEL: define {{[^@]+}}@fourth_i32_store_to_load_fwd
 ; CHECK-SAME: (i8 addrspace(200)* [[ARG:%.*]]) local_unnamed_addr addrspace(200) #[[ATTR0]] {
-; CHECK-NEXT:  bb:
 ; CHECK-NEXT:    [[STACKVAL:%.*]] = alloca [[STRUCT_ADDRINFO:%.*]], align 16, addrspace(200)
 ; CHECK-NEXT:    [[FIELD:%.*]] = getelementptr inbounds [[STRUCT_ADDRINFO]], [[STRUCT_ADDRINFO]] addrspace(200)* [[STACKVAL]], i64 0, i32 3
 ; CHECK-NEXT:    [[AS_CAP:%.*]] = bitcast [[STRUCT_ADDRINFO]] addrspace(200)* [[STACKVAL]] to i8 addrspace(200)* addrspace(200)*
@@ -137,7 +130,6 @@ define i32 @fourth_i32_store_to_load_fwd(i8 addrspace(200)* %arg) local_unnamed_
 ; CHECK-NEXT:    [[RESULT:%.*]] = load i32, i32 addrspace(200)* [[FIELD]], align 4
 ; CHECK-NEXT:    ret i32 [[RESULT]]
 ;
-bb:
   %stackval = alloca %struct.addrinfo, align 16, addrspace(200)
   %field = getelementptr inbounds %struct.addrinfo, %struct.addrinfo addrspace(200)* %stackval, i64 0, i32 3
   %as_cap = bitcast %struct.addrinfo addrspace(200)* %stackval to i8 addrspace(200)* addrspace(200)*

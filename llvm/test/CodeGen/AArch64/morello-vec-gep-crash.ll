@@ -19,8 +19,8 @@ define <4 x i8 addrspace(200)*> @vec_gep_with_poison_offsets_first_pair(i8 addrs
 ; PURECAP-LABEL: vec_gep_with_poison_offsets_first_pair:
 ; PURECAP:       .Lfunc_begin0:
 ; PURECAP-NEXT:  // %bb.0: // %bb
-; PURECAP-NEXT:    add c2, c0, #1 // =1
-; PURECAP-NEXT:    add c3, c0, #2 // =2
+; PURECAP-NEXT:    add c2, c0, #1
+; PURECAP-NEXT:    add c3, c0, #2
 ; PURECAP-NEXT:    ret c30
 bb:
   %gep = getelementptr i8, i8 addrspace(200)* %ptr, <4 x i64> <i64 poison, i64 poison, i64 1, i64 2>
@@ -39,8 +39,8 @@ define <4 x i8 addrspace(200)*> @vec_gep_with_poison_offsets_second_pair(i8 addr
 ; PURECAP-LABEL: vec_gep_with_poison_offsets_second_pair:
 ; PURECAP:       .Lfunc_begin1:
 ; PURECAP-NEXT:  // %bb.0: // %bb
-; PURECAP-NEXT:    add c2, c0, #1 // =1
-; PURECAP-NEXT:    add c1, c0, #2 // =2
+; PURECAP-NEXT:    add c2, c0, #1
+; PURECAP-NEXT:    add c1, c0, #2
 ; PURECAP-NEXT:    mov c0, c2
 ; PURECAP-NEXT:    ret c30
 bb:
@@ -59,7 +59,7 @@ define <4 x i8 addrspace(200)*> @vec_gep_with_poison_bases_first_pair(i8 addrspa
 ; PURECAP:       .Lfunc_begin2:
 ; PURECAP-NEXT:  // %bb.0: // %bb
 ; PURECAP-NEXT:    mov x0, xzr
-; PURECAP-NEXT:    add c2, c0, #123 // =123
+; PURECAP-NEXT:    add c2, c0, #123
 ; PURECAP-NEXT:    mov c3, c2
 ; PURECAP-NEXT:    ret c30
 bb:
@@ -79,7 +79,7 @@ define <4 x i8 addrspace(200)*> @vec_gep_with_null_base(i8 addrspace(200)* %ptr)
 ; PURECAP:       .Lfunc_begin3:
 ; PURECAP-NEXT:  // %bb.0: // %bb
 ; PURECAP-NEXT:    mov x0, xzr
-; PURECAP-NEXT:    add c0, c0, #123 // =123
+; PURECAP-NEXT:    add c0, c0, #123
 ; PURECAP-NEXT:    mov c1, c0
 ; PURECAP-NEXT:    mov c2, c0
 ; PURECAP-NEXT:    mov c3, c0
@@ -104,10 +104,10 @@ define <4 x i8 addrspace(200)*> @vec_gep_with_vec_offsets(i8 addrspace(200)* %pt
 ; PURECAP:       .Lfunc_begin4:
 ; PURECAP-NEXT:  // %bb.0: // %bb
 ; PURECAP-NEXT:    mov x1, xzr
-; PURECAP-NEXT:    add c4, c1, #1 // =1
-; PURECAP-NEXT:    add c1, c1, #2 // =2
-; PURECAP-NEXT:    add c2, c0, #3 // =3
-; PURECAP-NEXT:    add c3, c0, #4 // =4
+; PURECAP-NEXT:    add c4, c1, #1
+; PURECAP-NEXT:    add c1, c1, #2
+; PURECAP-NEXT:    add c2, c0, #3
+; PURECAP-NEXT:    add c3, c0, #4
 ; PURECAP-NEXT:    mov c0, c4
 ; PURECAP-NEXT:    ret c30
 bb:

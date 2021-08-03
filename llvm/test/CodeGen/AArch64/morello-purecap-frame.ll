@@ -1,5 +1,5 @@
-; RUN: llc -march=arm64 -mattr=+c64,+morello,adrdp,+use-16-cap-regs -target-abi purecap -o - %s | FileCheck %s --check-prefix=PCS16
-; RUN: llc -march=arm64 -mattr=+c64,+morello,adrdp, -target-abi purecap -o - %s | FileCheck %s --check-prefix=PCS32
+; RUN: llc -march=arm64 -mattr=+c64,+morello,+use-16-cap-regs -target-abi purecap -o - %s | FileCheck %s --check-prefix=PCS16
+; RUN: llc -march=arm64 -mattr=+c64,+morello -target-abi purecap -o - %s | FileCheck %s --check-prefix=PCS32
 
 target datalayout = "e-m:e-pf200:128:128:128:64-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"
 target triple = "aarch64-none-unknown-elf"
@@ -78,7 +78,7 @@ entry:
 ; PCS32-NEXT:   ldp	d11, d10, [csp, #32]    // 16-byte Folded Reload
 ; PCS32-NEXT:   ldp	d13, d12, [csp, #16]    // 16-byte Folded Reload
 ; PCS32-NEXT:   ldr	d14, [csp]              // 8-byte Folded Reload
-; PCS32-NEXT:   add	csp, csp, #256          // =256
+; PCS32-NEXT:   add	csp, csp, #256
 define dso_local void @bar(i8 addrspace(200)* nocapture readnone %bb, i8 addrspace(200)* %cc) local_unnamed_addr addrspace(200) #0 {
 entry:
   %a = alloca [300 x i32], align 4, addrspace(200)

@@ -10,7 +10,7 @@ define i32 @caller_test_scalars(i32 %x, i128 %y, i64 %z, float %f, double %d) lo
 ; CHECK-LABEL: caller_test_scalars:
 ; CHECK:       .Lfunc_begin0:
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    sub csp, csp, #96 // =96
+; CHECK-NEXT:    sub csp, csp, #96
 ; CHECK-NEXT:    mov w8, w0
 ; CHECK-NEXT:    scbnds c0, csp, #5, lsl #4 // =80
 ; CHECK-NEXT:    fcvt d0, s0
@@ -24,7 +24,7 @@ define i32 @caller_test_scalars(i32 %x, i128 %y, i64 %z, float %f, double %d) lo
 ; CHECK-NEXT:    str x8, [csp]
 ; CHECK-NEXT:    bl callee
 ; CHECK-NEXT:    ldr c30, [csp, #80] // 16-byte Folded Reload
-; CHECK-NEXT:    add csp, csp, #96 // =96
+; CHECK-NEXT:    add csp, csp, #96
 ; CHECK-NEXT:    ret c30
 entry:
   %conv = fpext float %f to double
@@ -39,7 +39,7 @@ define i32 @caller_test_struct(i32 %x, [2 x float] %y.coerce, i32 %z, { i8 addrs
 ; CHECK-LABEL: caller_test_struct:
 ; CHECK:       .Lfunc_begin1:
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    sub csp, csp, #96 // =96
+; CHECK-NEXT:    sub csp, csp, #96
 ; CHECK-NEXT:    mov w8, w0
 ; CHECK-NEXT:    scbnds c0, csp, #5, lsl #4 // =80
 ; CHECK-NEXT:    clrperm c9, c0, wx
@@ -53,7 +53,7 @@ define i32 @caller_test_struct(i32 %x, [2 x float] %y.coerce, i32 %z, { i8 addrs
 ; CHECK-NEXT:    str x8, [csp]
 ; CHECK-NEXT:    bl callee
 ; CHECK-NEXT:    ldr c30, [csp, #80] // 16-byte Folded Reload
-; CHECK-NEXT:    add csp, csp, #96 // =96
+; CHECK-NEXT:    add csp, csp, #96
 ; CHECK-NEXT:    ret c30
 entry:
   %call = tail call i32 (i32, ...) @callee(i32 3, i32 %x, [2 x float] %y.coerce, i32 %z, { i8 addrspace(200)*, i64 } %u.coerce) #0
@@ -64,9 +64,9 @@ define i32 @caller_test_inmem_struct(%struct.inmem addrspace(200)* nocapture rea
 ; CHECK-LABEL: caller_test_inmem_struct:
 ; CHECK:       .Lfunc_begin2:
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    sub csp, csp, #64 // =64
+; CHECK-NEXT:    sub csp, csp, #64
 ; CHECK-NEXT:    ldp q1, q0, [c0]
-; CHECK-NEXT:    add c0, csp, #16 // =16
+; CHECK-NEXT:    add c0, csp, #16
 ; CHECK-NEXT:    scbnds c1, c0, #32 // =32
 ; CHECK-NEXT:    scbnds c0, csp, #16 // =16
 ; CHECK-NEXT:    clrperm c9, c0, wx
@@ -76,7 +76,7 @@ define i32 @caller_test_inmem_struct(%struct.inmem addrspace(200)* nocapture rea
 ; CHECK-NEXT:    str c1, [csp, #0]
 ; CHECK-NEXT:    bl callee
 ; CHECK-NEXT:    ldr c30, [csp, #48] // 16-byte Folded Reload
-; CHECK-NEXT:    add csp, csp, #64 // =64
+; CHECK-NEXT:    add csp, csp, #64
 ; CHECK-NEXT:    ret c30
 entry:
   %byval-temp = alloca %struct.inmem, align 4, addrspace(200)
@@ -115,7 +115,7 @@ define void @callee_test_scalars(i32 %count, ...) local_unnamed_addr addrspace(2
 ; CHECK:       .Lfunc_begin4:
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    str c9, [csp, #-48]!
-; CHECK-NEXT:    add c0, csp, #16 // =16
+; CHECK-NEXT:    add c0, csp, #16
 ; CHECK-NEXT:    scbnds c0, c0, #16 // =16
 ; CHECK-NEXT:    str c9, [c0, #0]
 ; CHECK-NEXT:    ldr c0, [csp, #16]
@@ -126,7 +126,7 @@ define void @callee_test_scalars(i32 %count, ...) local_unnamed_addr addrspace(2
 ; CHECK-NEXT:    str c0, [csp, #16]
 ; CHECK-NEXT:    bl call1
 ; CHECK-NEXT:    ldr c30, [csp, #32] // 16-byte Folded Reload
-; CHECK-NEXT:    add csp, csp, #48 // =48
+; CHECK-NEXT:    add csp, csp, #48
 ; CHECK-NEXT:    ret c30
 entry:
   %args = alloca i8 addrspace(200)*, align 16, addrspace(200)
@@ -153,14 +153,14 @@ define i8 addrspace(200)* @test_vacopy(i32 %count, ...) local_unnamed_addr addrs
 ; CHECK:       .Lfunc_begin5:
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    str c9, [csp, #-48]!
-; CHECK-NEXT:    add c0, csp, #32 // =32
-; CHECK-NEXT:    add c1, csp, #16 // =16
+; CHECK-NEXT:    add c0, csp, #32
+; CHECK-NEXT:    add c1, csp, #16
 ; CHECK-NEXT:    scbnds c0, c0, #16 // =16
 ; CHECK-NEXT:    scbnds c1, c1, #16 // =16
 ; CHECK-NEXT:    str c9, [c1, #0]
 ; CHECK-NEXT:    str c9, [c0, #0]
 ; CHECK-NEXT:    ldr c0, [csp, #32]
-; CHECK-NEXT:    add csp, csp, #48 // =48
+; CHECK-NEXT:    add csp, csp, #48
 ; CHECK-NEXT:    ret c30
 entry:
   %retval = alloca i8 addrspace(200)*, align 16, addrspace(200)

@@ -12,14 +12,14 @@ target triple = "aarch64-none-unknown-elf"
 define dso_local void @test_varargs(%struct.__va_list* noalias sret(%struct.__va_list) align 8 %agg.result, i32 %count, ...) local_unnamed_addr #0 {
 ; CHECK-LABEL: test_varargs:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    sub sp, sp, #224 // =224
-; CHECK-NEXT:    add x9, sp, #136 // =136
+; CHECK-NEXT:    sub sp, sp, #224
+; CHECK-NEXT:    add x9, sp, #136
 ; CHECK-NEXT:    mov x11, #-56
 ; CHECK-NEXT:    mov x12, sp
-; CHECK-NEXT:    add x10, sp, #224 // =224
+; CHECK-NEXT:    add x10, sp, #224
 ; CHECK-NEXT:    movk x11, #65408, lsl #32
-; CHECK-NEXT:    add x9, x9, #56 // =56
-; CHECK-NEXT:    add x12, x12, #128 // =128
+; CHECK-NEXT:    add x9, x9, #56
+; CHECK-NEXT:    add x12, x12, #128
 ; CHECK-NEXT:    stp x9, x12, [sp, #200]
 ; CHECK-NEXT:    stp x7, x10, [sp, #184]
 ; CHECK-NEXT:    str x11, [sp, #216]
@@ -32,7 +32,7 @@ define dso_local void @test_varargs(%struct.__va_list* noalias sret(%struct.__va
 ; CHECK-NEXT:    stp q4, q5, [sp, #64]
 ; CHECK-NEXT:    stp q6, q7, [sp, #96]
 ; CHECK-NEXT:    stp q0, q1, [x8]
-; CHECK-NEXT:    add sp, sp, #224 // =224
+; CHECK-NEXT:    add sp, sp, #224
 ; CHECK-NEXT:    ret
 entry:
   %args = alloca %struct.__va_list, align 8

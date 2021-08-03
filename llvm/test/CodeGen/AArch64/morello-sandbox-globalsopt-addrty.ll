@@ -11,7 +11,8 @@ $_Z3fooIiET_S0_ = comdat any
 
 define internal void @__cxx_global_var_init() addrspace(200) {
 ; CHECK-LABEL: __cxx_global_var_init:
-; CHECK:         .cfi_startproc purecap
+; CHECK:       .Lfunc_begin0:
+; CHECK-NEXT:    .cfi_startproc purecap
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    str c30, [csp, #-16]! // 16-byte Folded Spill
 ; CHECK-NEXT:    .cfi_def_cfa_offset 16
@@ -35,12 +36,13 @@ declare i32 @_Z3barQPFiiE(i32 (i32) addrspace(200)*) addrspace(200)
 
 define internal i32 @_Z3fooIiET_S0_(i32 %val) addrspace(200) comdat {
 ; CHECK-LABEL: _Z3fooIiET_S0_:
-; CHECK:         .cfi_startproc purecap
+; CHECK:       .Lfunc_begin1:
+; CHECK-NEXT:    .cfi_startproc purecap
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    sub csp, csp, #16 // =16
+; CHECK-NEXT:    sub csp, csp, #16
 ; CHECK-NEXT:    .cfi_def_cfa_offset 16
 ; CHECK-NEXT:    str w0, [csp, #12]
-; CHECK-NEXT:    add csp, csp, #16 // =16
+; CHECK-NEXT:    add csp, csp, #16
 ; CHECK-NEXT:    ret c30
 entry:
   %val.addr = alloca i32, align 4, addrspace(200)
@@ -51,7 +53,8 @@ entry:
 
 define internal void @_GLOBAL__sub_I_unnamed.cpp() addrspace(200) {
 ; CHECK-LABEL: _GLOBAL__sub_I_unnamed.cpp:
-; CHECK:         .cfi_startproc purecap
+; CHECK:       .Lfunc_begin2:
+; CHECK-NEXT:    .cfi_startproc purecap
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    str c30, [csp, #-16]! // 16-byte Folded Spill
 ; CHECK-NEXT:    .cfi_def_cfa_offset 16

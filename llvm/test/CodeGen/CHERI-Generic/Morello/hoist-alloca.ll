@@ -30,8 +30,8 @@
 ; }
 
 ; RUN: llc -mtriple=aarch64 --relocation-model=pic -target-abi purecap -mattr=+morello,+c64 -o %t.mir -stop-before=early-machinelicm < %s
-; RUN: echo "DONOTAUTOGEN" | llc -mtriple=aarch64 --relocation-model=pic -target-abi purecap -mattr=+morello,+c64 -run-pass=early-machinelicm \
-; RUN:    -debug-only=machinelicm %t.mir -o /dev/null 2>&1 | FileCheck --check-prefix=MACHINELICM-DBG %s
+; RUN: llc -mtriple=aarch64 --relocation-model=pic -target-abi purecap -mattr=+morello,+c64 -run-pass=early-machinelicm -debug-only=machinelicm %t.mir -o /dev/null 2>%t.dbg
+; RUN: FileCheck --input-file=%t.dbg --check-prefix=MACHINELICM-DBG %s
 ; Check that MachineLICM hoists the CheriBoundedStackPseudoImm (MIPS) / IncOffset+SetBoundsImm (RISCV) instructions
 ; For Morello there is no setbounds inside the loop due to the different alloca bunding pass, so there is nothing to hoist here.
 ; MACHINELICM-DBG-LABEL: ******** Pre-regalloc Machine LICM: hoist_alloca_uncond
@@ -48,11 +48,11 @@ define void @hoist_alloca_uncond(i32 signext %cond) local_unnamed_addr addrspace
 ; CHECK-NEXT:    str c29, [csp, #-80]! // 16-byte Folded Spill
 ; CHECK-NEXT:    stp c30, c21, [csp, #16] // 32-byte Folded Spill
 ; CHECK-NEXT:    stp c20, c19, [csp, #48] // 32-byte Folded Spill
-; CHECK-NEXT:    sub csp, csp, #592 // =592
+; CHECK-NEXT:    sub csp, csp, #592
 ; CHECK-NEXT:    mov w8, #492
-; CHECK-NEXT:    add c0, csp, #100 // =100
+; CHECK-NEXT:    add c0, csp, #100
 ; CHECK-NEXT:    mov w9, #88
-; CHECK-NEXT:    add c1, csp, #12 // =12
+; CHECK-NEXT:    add c1, csp, #12
 ; CHECK-NEXT:    scbndse c19, c0, x8
 ; CHECK-NEXT:    scbndse c20, c1, x9
 ; CHECK-NEXT:    mov w21, #100
@@ -61,10 +61,10 @@ define void @hoist_alloca_uncond(i32 signext %cond) local_unnamed_addr addrspace
 ; CHECK-NEXT:    mov c0, c19
 ; CHECK-NEXT:    mov c1, c20
 ; CHECK-NEXT:    bl call
-; CHECK-NEXT:    subs w21, w21, #1 // =1
+; CHECK-NEXT:    subs w21, w21, #1
 ; CHECK-NEXT:    b.ne .LBB0_1
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
-; CHECK-NEXT:    add csp, csp, #592 // =592
+; CHECK-NEXT:    add csp, csp, #592
 ; CHECK-NEXT:    ldp c20, c19, [csp, #48] // 32-byte Folded Reload
 ; CHECK-NEXT:    ldp c30, c21, [csp, #16] // 32-byte Folded Reload
 ; CHECK-NEXT:    ldr c29, [csp], #80 // 16-byte Folded Reload
@@ -74,10 +74,10 @@ entry:
   %buf2 = alloca [22 x i32], align 4, addrspace(200)
   br label %for.body
 
-for.cond.cleanup:                                 ; preds = %for.body
+for.cond.cleanup:
   ret void
 
-for.body:                                         ; preds = %for.body, %entry
+for.body:
   %i.04 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
   %arraydecay = getelementptr inbounds [123 x i32], [123 x i32] addrspace(200)* %buf1, i64 0, i64 0
   %arraydecay1 = getelementptr inbounds [22 x i32], [22 x i32] addrspace(200)* %buf2, i64 0, i64 0
@@ -96,19 +96,19 @@ define void @hoist_alloca_cond(i32 signext %cond) local_unnamed_addr addrspace(2
 ; CHECK-NEXT:    stp c29, c30, [csp, #-96]! // 32-byte Folded Spill
 ; CHECK-NEXT:    stp c22, c21, [csp, #32] // 32-byte Folded Spill
 ; CHECK-NEXT:    stp c20, c19, [csp, #64] // 32-byte Folded Spill
-; CHECK-NEXT:    sub csp, csp, #592 // =592
+; CHECK-NEXT:    sub csp, csp, #592
 ; CHECK-NEXT:    mov w19, w0
 ; CHECK-NEXT:    mov w8, #492
-; CHECK-NEXT:    add c0, csp, #100 // =100
+; CHECK-NEXT:    add c0, csp, #100
 ; CHECK-NEXT:    mov w9, #88
-; CHECK-NEXT:    add c1, csp, #12 // =12
+; CHECK-NEXT:    add c1, csp, #12
 ; CHECK-NEXT:    scbndse c20, c0, x8
 ; CHECK-NEXT:    scbndse c21, c1, x9
 ; CHECK-NEXT:    mov w22, #100
 ; CHECK-NEXT:    b .LBB1_2
 ; CHECK-NEXT:  .LBB1_1: // %for.inc
 ; CHECK-NEXT:    // in Loop: Header=BB1_2 Depth=1
-; CHECK-NEXT:    subs w22, w22, #1 // =1
+; CHECK-NEXT:    subs w22, w22, #1
 ; CHECK-NEXT:    b.eq .LBB1_4
 ; CHECK-NEXT:  .LBB1_2: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
@@ -120,7 +120,7 @@ define void @hoist_alloca_cond(i32 signext %cond) local_unnamed_addr addrspace(2
 ; CHECK-NEXT:    bl call
 ; CHECK-NEXT:    b .LBB1_1
 ; CHECK-NEXT:  .LBB1_4: // %for.cond.cleanup
-; CHECK-NEXT:    add csp, csp, #592 // =592
+; CHECK-NEXT:    add csp, csp, #592
 ; CHECK-NEXT:    ldp c20, c19, [csp, #64] // 32-byte Folded Reload
 ; CHECK-NEXT:    ldp c22, c21, [csp, #32] // 32-byte Folded Reload
 ; CHECK-NEXT:    ldp c29, c30, [csp], #96 // 32-byte Folded Reload
@@ -131,20 +131,20 @@ entry:
   %tobool.not = icmp eq i32 %cond, 0
   br label %for.body
 
-for.cond.cleanup:                                 ; preds = %for.inc
+for.cond.cleanup:
   ret void
 
-for.body:                                         ; preds = %for.inc, %entry
+for.body:
   %i.04 = phi i32 [ 0, %entry ], [ %inc, %for.inc ]
   br i1 %tobool.not, label %for.inc, label %if.then
 
-if.then:                                          ; preds = %for.body
+if.then:
   %arraydecay = getelementptr inbounds [123 x i32], [123 x i32] addrspace(200)* %buf1, i64 0, i64 0
   %arraydecay1 = getelementptr inbounds [22 x i32], [22 x i32] addrspace(200)* %buf2, i64 0, i64 0
   call void @call(i32 addrspace(200)* nonnull %arraydecay, i32 addrspace(200)* nonnull %arraydecay1)
   br label %for.inc
 
-for.inc:                                          ; preds = %for.body, %if.then
+for.inc:
   %inc = add nuw nsw i32 %i.04, 1
   %exitcond.not = icmp eq i32 %inc, 100
   br i1 %exitcond.not, label %for.cond.cleanup, label %for.body

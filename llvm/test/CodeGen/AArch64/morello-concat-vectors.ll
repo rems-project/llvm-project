@@ -11,7 +11,7 @@ define void @foo() local_unnamed_addr addrspace(200) align 2 {
 ; CHECK:       .Lfunc_begin0:
 ; CHECK-NEXT:    .cfi_startproc purecap
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    sub csp, csp, #16 // =16
+; CHECK-NEXT:    sub csp, csp, #16
 ; CHECK-NEXT:    .cfi_def_cfa_offset 16
 ; CHECK-NEXT:    cmp xzr, x8
 ; CHECK-NEXT:    cset w8, hi
@@ -33,7 +33,7 @@ define void @foo() local_unnamed_addr addrspace(200) align 2 {
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    b .LBB0_3
 ; CHECK-NEXT:  .LBB0_4: // %for.body21.preheader180
-; CHECK-NEXT:    add csp, csp, #16 // =16
+; CHECK-NEXT:    add csp, csp, #16
 ; CHECK-NEXT:    ret c30
 entry:
   %0 = icmp ugt <4 x i8 addrspace(200)*> zeroinitializer, undef

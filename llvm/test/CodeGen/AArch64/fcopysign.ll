@@ -151,7 +151,7 @@ define half @copysign16(half %a, half %b) {
 ;
 ; CHECK-NONEON-LABEL: copysign16:
 ; CHECK-NONEON:       // %bb.0: // %entry
-; CHECK-NONEON-NEXT:    sub sp, sp, #16 // =16
+; CHECK-NONEON-NEXT:    sub sp, sp, #16
 ; CHECK-NONEON-NEXT:    .cfi_def_cfa_offset 16
 ; CHECK-NONEON-NEXT:    str h1, [sp, #12]
 ; CHECK-NONEON-NEXT:    ldrb w8, [sp, #13]
@@ -161,7 +161,7 @@ define half @copysign16(half %a, half %b) {
 ; CHECK-NONEON-NEXT:    tst w8, #0x80
 ; CHECK-NONEON-NEXT:    fcsel s0, s1, s0, ne
 ; CHECK-NONEON-NEXT:    fcvt h0, s0
-; CHECK-NONEON-NEXT:    add sp, sp, #16 // =16
+; CHECK-NONEON-NEXT:    add sp, sp, #16
 ; CHECK-NONEON-NEXT:    ret
 entry:
   %c = call half @llvm.copysign.f16(half %a, half %b)

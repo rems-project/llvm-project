@@ -45,7 +45,7 @@ define void @foo(i32 %a) local_unnamed_addr addrspace(200) {
 ; CHECK-NEXT:    .cfi_offset c21, -48
 ; CHECK-NEXT:    .cfi_offset c30, -64
 ; CHECK-NEXT:    bl g
-; CHECK-NEXT:    cmp w0, #1 // =1
+; CHECK-NEXT:    cmp w0, #1
 ; CHECK-NEXT:    b.lt .LBB1_3
 ; CHECK-NEXT:  // %bb.1: // %for.body.preheader
 ; CHECK-NEXT:    adrp c20, .L__cap_merged_table+32
@@ -57,8 +57,8 @@ define void @foo(i32 %a) local_unnamed_addr addrspace(200) {
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    lsl x8, x19, #2
 ; CHECK-NEXT:    ldr w9, [c20, x8]
-; CHECK-NEXT:    add x19, x19, #1 // =1
-; CHECK-NEXT:    add w10, w9, #1 // =1
+; CHECK-NEXT:    add x19, x19, #1
+; CHECK-NEXT:    add w10, w9, #1
 ; CHECK-NEXT:    str w9, [c21, x8]
 ; CHECK-NEXT:    str w10, [c20, x8]
 ; CHECK-NEXT:    bl g
@@ -102,7 +102,7 @@ define void @bar(i32 addrspace(200)* %end) local_unnamed_addr addrspace(200) {
 ; CHECK-NEXT:    .cfi_offset c30, -32
 ; CHECK-NEXT:    mov c19, c0
 ; CHECK-NEXT:    bl g
-; CHECK-NEXT:    cmp w0, #1 // =1
+; CHECK-NEXT:    cmp w0, #1
 ; CHECK-NEXT:    b.lt .LBB2_3
 ; CHECK-NEXT:  // %bb.1: // %for.body.preheader
 ; CHECK-NEXT:    adrp c0, .L__cap_merged_table+48
