@@ -322,6 +322,15 @@ public:
                       ComputeAvailableFeatures(NotC64Set));
   }
 
+  bool isCheri() const override {
+    return getSTI().getFeatureBits()[AArch64::FeatureMorello];
+  }
+  unsigned getCheriCapabilitySize() const override {
+    assert(isCheri() &&
+        "Should not have been called without checking isCheri()!");
+    return 16;
+  }
+
   bool regsEqual(const MCParsedAsmOperand &Op1,
                  const MCParsedAsmOperand &Op2) const override;
   bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
