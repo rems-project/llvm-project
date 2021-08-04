@@ -42,13 +42,9 @@ eh.resume:
 }
 
 ; CHECK: .L_ZTIi.DW.stub:
-; CHECK-NEXT: .capinit _ZTIi
-; CHECK-NEXT: .xword  0
-; CHECK-NEXT: .xword  0
+; CHECK-NEXT: .chericap _ZTIi
 ; CHECK: DW.ref.__gxx_personality_v0:
-; CHECK-NEXT: .capinit __gxx_personality_v0
-; CHECK-NEXT: .xword 0
-; CHECK-NEXT: .xword 0
+; CHECK-NEXT: .chericap __gxx_personality_v0
 
 declare void @llvm.lifetime.start.p200i8(i64 immarg, i8 addrspace(200)* nocapture) addrspace(200)
 declare void @_ZN1aC1Ev(%class.a addrspace(200)*) unnamed_addr addrspace(200)

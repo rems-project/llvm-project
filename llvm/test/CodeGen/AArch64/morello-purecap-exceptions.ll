@@ -76,16 +76,12 @@ attributes #2 = { nounwind }
 ; CHECK-NEXT:	.uleb128 .Ltmp0-.Lfunc_begin0   // >> Call Site 1 <<
 ; CHECK-NEXT:	.uleb128 .Ltmp1-.Ltmp0          //   Call between .Ltmp0 and .Ltmp1
 ; CHECK-NEXT:	.byte	12                      // (landing pad is a capability)
-; CHECK-NEXT:	.capinit _ZNKSt3__17num_getIwNS_19istreambuf_iteratorIwNS_11char_traitsIwEEEEE6do_getES4_S4_QRNS_8ios_baseEQRjQRb+(.Ltmp2-.Lfunc_begin0)
-; CHECK-NEXT:	.xword	0
-; CHECK-NEXT:	.xword	0
+; CHECK-NEXT:	.chericap _ZNKSt3__17num_getIwNS_19istreambuf_iteratorIwNS_11char_traitsIwEEEEE6do_getES4_S4_QRNS_8ios_baseEQRjQRb + .Ltmp2-.Lfunc_begin0
 ; CHECK-NEXT:	.byte	0                       //   On action: cleanup
 ; CHECK-NEXT:	.uleb128 .Ltmp3-.Lfunc_begin0   // >> Call Site 2 <<
 ; CHECK-NEXT:	.uleb128 .Ltmp4-.Ltmp3          //   Call between .Ltmp3 and .Ltmp4
 ; CHECK-NEXT:	.byte	12                      // (landing pad is a capability)
-; CHECK-NEXT:	.capinit _ZNKSt3__17num_getIwNS_19istreambuf_iteratorIwNS_11char_traitsIwEEEEE6do_getES4_S4_QRNS_8ios_baseEQRjQRb+(.Ltmp5-.Lfunc_begin0)
-; CHECK-NEXT:	.xword	0
-; CHECK-NEXT:	.xword	0
+; CHECK-NEXT:	.chericap _ZNKSt3__17num_getIwNS_19istreambuf_iteratorIwNS_11char_traitsIwEEEEE6do_getES4_S4_QRNS_8ios_baseEQRjQRb + .Ltmp5-.Lfunc_begin0
 ; CHECK-NEXT:	.byte	0                       //   On action: cleanup
 ; CHECK-NEXT:	.uleb128 .Ltmp4-.Lfunc_begin0   // >> Call Site 3 <<
 ; CHECK-NEXT:	.uleb128 .Lfunc_end0-.Ltmp4     //   Call between .Ltmp4 and .Lfunc_end0

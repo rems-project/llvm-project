@@ -26,6 +26,4 @@ block:
 }
 
 ; CHECK-LABEL: addr:
-; CHECK-NEXT:	.capinit test_blockaddress+((.Ltmp0+1)-test_blockaddress)
-; CHECK-NEXT:	.xword	0
-; CHECK-NEXT:	.xword	0
+; CHECK-NEXT:	.chericap test_blockaddress + (.Ltmp0+1)-test_blockaddress

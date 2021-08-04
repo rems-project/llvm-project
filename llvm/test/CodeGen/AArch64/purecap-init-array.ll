@@ -10,12 +10,8 @@ define linkonce_odr void @_ZN3Foo3fooEv() addrspace(200) {
 
 ; a64:    .section	.init_array,"aw",@init_array
 ; a64:    .p2align 4
-; a64:    .capinit _ZN3Foo3fooEv
-; a64:    .xword 0
-; a64:    .xword 0
+; a64:    .chericap _ZN3Foo3fooEv
 
 ; c64:    .section	.init_array,"aw",@init_array
 ; c64:    .p2align 4
-; c64:    .capinit _ZN3Foo3fooEv
-; c64:    .xword 0
-; c64:    .xword 0
+; c64:    .chericap _ZN3Foo3fooEv

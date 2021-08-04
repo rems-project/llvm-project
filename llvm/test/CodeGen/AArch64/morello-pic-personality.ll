@@ -65,6 +65,4 @@ attributes #5 = { builtin nounwind }
 !0 = !{i32 1, !"wchar_size", i32 4}
 
 ; CHECK: DW.ref.__gxx_personality_v0:
-; CHECK-NEXT: .capinit __gxx_personality_v0
-; CHECK-NEXT: .xword 0
-; CHECK-NEXT: .xword 0
+; CHECK-NEXT: .chericap __gxx_personality_v0

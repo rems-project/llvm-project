@@ -114,9 +114,7 @@ entry:
 ; CHECK-NEXT:	.section	.data.rel.ro,"aw",@progbits
 ; CHECK-NEXT:	.p2align	4
 ; CHECK-LABEL: .L__cap_merged_table:
-; CHECK-NEXT:	.capinit used_constoff
-; CHECK-NEXT:	.xword	0
-; CHECK-NEXT:	.xword	0
+; CHECK-NEXT:	.chericap used_constoff
 ; CHECK-NEXT:	.size	.L__cap_merged_table, 16
 
 

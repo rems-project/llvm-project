@@ -16,21 +16,15 @@ define void @foo() addrspace(200) {
 }
 
 ; CHECK:      j:
-; CHECK-NEXT: 	.capinit i
-; CHECK-NEXT: 	.xword	0
-; CHECK-NEXT: 	.xword	0
+; CHECK-NEXT: 	.chericap i
 ; CHECK-NEXT: 	.size	j, 16
 
 ; CHECK: f:
-; CHECK-NEXT: 	.capinit foo
-; CHECK-NEXT: 	.xword	0
-; CHECK-NEXT: 	.xword	0
+; CHECK-NEXT: 	.chericap foo
 ; CHECK-NEXT: 	.size	f, 16
 
 ; CHECK: g:
-; CHECK-NEXT: 	.capinit foo
-; CHECK-NEXT: 	.xword	0
-; CHECK-NEXT: 	.xword	0
+; CHECK-NEXT: 	.chericap foo
 ; CHECK-NEXT: 	.size	g, 16
 
 ; CHECK-NOT: __cap_relocs

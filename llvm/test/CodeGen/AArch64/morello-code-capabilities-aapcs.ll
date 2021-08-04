@@ -8,7 +8,7 @@ target triple = "aarch64-none--elf"
 declare dso_local void @foo(i8* %str) #1
 
 ; CHECK-LABEL: .LCPI0_0
-; CHECK: .capinit foo
+; CHECK: .chericap foo
 
 ; CHECK-LABEL: bar
 define dso_local i32 @bar(i32 %argc, i8** %argv) #0 {

@@ -5,9 +5,7 @@
 
 ; ALL: .p2align 4
 ; ALL-LABEL: .LCPI0_0
-; ALL: .capinit v
-; ALL: .xword 0
-; ALL: .xword 0
+; ALL: .chericap v
 
 
 ; CHECK-PURE-LABEL: testGlobalAddress

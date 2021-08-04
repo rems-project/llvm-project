@@ -46,6 +46,4 @@ declare i8 addrspace(200)* @llvm.cheri.cap.offset.set(i8 addrspace(200)*, i64)
 
 ; CHECK: .p2align	4
 ; CHECK: .L__cap_merged_table:
-; CHECK: .capinit v
-; CHECK: .xword 0
-; CHECK: .xword 0
+; CHECK: .chericap v

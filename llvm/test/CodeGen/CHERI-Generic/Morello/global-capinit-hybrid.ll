@@ -21,25 +21,19 @@ declare void @extern_fn() #0
 ; ASM-LABEL: .globl global_cap_inttoptr
 ; ASM-NEXT:  .p2align	4
 ; ASM-NEXT: global_cap_inttoptr:
-; ASM-NEXT:  .p2align 4
-; ASM-NEXT:  .xword 1234
-; ASM-NEXT:  .xword 0
+; ASM-NEXT:  .chericap 1234
 ; ASM-NEXT:  .size global_cap_inttoptr, 16
 @global_cap_addrspacecast = global i8 addrspace(200)* addrspacecast (i8* inttoptr (i64 1234 to i8*) to i8 addrspace(200)*), align 16
 ; ASM-LABEL: .globl global_cap_addrspacecast
 ; ASM-NEXT:  .p2align	4
 ; ASM-NEXT: global_cap_addrspacecast:
-; ASM-NEXT:  .p2align 4
-; ASM-NEXT:  .xword 1234
-; ASM-NEXT:  .xword 0
+; ASM-NEXT:  .chericap 1234
 ; ASM-NEXT:  .size global_cap_addrspacecast, 16
 @global_cap_nullgep = global i8 addrspace(200)* getelementptr (i8, i8 addrspace(200)* null, i64 1234), align 16
 ; ASM-LABEL: .globl global_cap_nullgep
 ; ASM-NEXT:  .p2align	4
 ; ASM-NEXT: global_cap_nullgep:
-; ASM-NEXT:  .p2align 4
-; ASM-NEXT:  .xword 1234
-; ASM-NEXT:  .xword 0
+; ASM-NEXT:  .chericap 1234
 ; ASM-NEXT:  .size global_cap_nullgep, 16
 
 @global_ptr_data = global i8* @extern_data, align 8
@@ -65,25 +59,19 @@ declare void @extern_fn() #0
 ; ASM-LABEL: .globl global_cap_data_addrspacecast
 ; ASM-NEXT:  .p2align	4
 ; ASM-NEXT: global_cap_data_addrspacecast:
-; ASM-NEXT:  .capinit extern_data
-; ASM-NEXT:  .xword 0
-; ASM-NEXT:  .xword 0
+; ASM-NEXT:  .chericap extern_data
 ; ASM-NEXT:  .size global_cap_data_addrspacecast, 16
 @global_cap_data_addrspacecast_past_end = global i8 addrspace(200)* addrspacecast (i8* getelementptr inbounds (i8, i8* @extern_data, i64 1) to i8 addrspace(200)*), align 16
 ; ASM-LABEL: .globl global_cap_data_addrspacecast_past_end
 ; ASM-NEXT:  .p2align	4
 ; ASM-NEXT: global_cap_data_addrspacecast_past_end:
-; ASM-NEXT:  .capinit extern_data+1
-; ASM-NEXT:  .xword 0
-; ASM-NEXT:  .xword 0
+; ASM-NEXT:  .chericap extern_data+1
 ; ASM-NEXT:  .size global_cap_data_addrspacecast_past_end, 16
 @global_cap_data_addrspacecast_two_past_end = global i8 addrspace(200)* addrspacecast (i8* getelementptr (i8, i8* @extern_data, i64 2) to i8 addrspace(200)*), align 16
 ; ASM-LABEL: .globl global_cap_data_addrspacecast_two_past_end
 ; ASM-NEXT:  .p2align	4
 ; ASM-NEXT: global_cap_data_addrspacecast_two_past_end:
-; ASM-NEXT:  .capinit extern_data+2
-; ASM-NEXT:  .xword 0
-; ASM-NEXT:  .xword 0
+; ASM-NEXT:  .chericap extern_data+2
 ; ASM-NEXT:  .size global_cap_data_addrspacecast_two_past_end, 16
 
 @global_cap_data_nullgep = global i8 addrspace(200)* getelementptr (i8, i8 addrspace(200)* null, i64 ptrtoint (i8* @extern_data to i64)), align 16
@@ -121,17 +109,13 @@ declare void @extern_fn() #0
 ; ASM-LABEL: .globl global_fncap_addrspacecast
 ; ASM-NEXT:  .p2align	4
 ; ASM-NEXT: global_fncap_addrspacecast:
-; ASM-NEXT:  .capinit extern_fn
-; ASM-NEXT:  .xword 0
-; ASM-NEXT:  .xword 0
+; ASM-NEXT:  .chericap extern_fn
 ; ASM-NEXT:  .size global_fncap_addrspacecast, 16
 @global_fncap_intcap_addrspacecast = global i8 addrspace(200)* addrspacecast (i8* bitcast (void ()* @extern_fn to i8*) to i8 addrspace(200)*), align 16
 ; ASM-LABEL: .globl global_fncap_intcap_addrspacecast
 ; ASM-NEXT:  .p2align	4
 ; ASM-NEXT: global_fncap_intcap_addrspacecast:
-; ASM-NEXT:  .capinit extern_fn
-; ASM-NEXT:  .xword 0
-; ASM-NEXT:  .xword 0
+; ASM-NEXT:  .chericap extern_fn
 ; ASM-NEXT:  .size global_fncap_intcap_addrspacecast, 16
 @global_fncap_intcap_nullgep = global i8 addrspace(200)* getelementptr (i8, i8 addrspace(200)* null, i64 ptrtoint (void ()* @extern_fn to i64)), align 16
 ; ASM-LABEL: .globl global_fncap_intcap_nullgep
@@ -145,9 +129,7 @@ declare void @extern_fn() #0
 ; ASM-LABEL: .globl global_fncap_addrspacecast_plus_two
 ; ASM-NEXT:  .p2align	4
 ; ASM-NEXT: global_fncap_addrspacecast_plus_two:
-; ASM-NEXT:  .capinit extern_fn+2
-; ASM-NEXT:  .xword 0
-; ASM-NEXT:  .xword 0
+; ASM-NEXT:  .chericap extern_fn+2
 ; ASM-NEXT:  .size global_fncap_addrspacecast_plus_two, 16
 @global_fncap_nullgep_plus_two = global i8 addrspace(200)* getelementptr (i8, i8 addrspace(200)* null, i64 ptrtoint (i8* getelementptr (i8, i8* bitcast (void ()* @extern_fn to i8*), i64 2) to i64)), align 16
 ; ASM-LABEL: .globl global_fncap_nullgep_plus_two

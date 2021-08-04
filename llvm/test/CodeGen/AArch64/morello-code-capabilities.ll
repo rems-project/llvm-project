@@ -65,15 +65,11 @@ indirectgoto:                                     ; preds = %entry
 ; UTC_ARGS: --disable
 @addrof_label_in_global = addrspace(200) global i8 addrspace(200)* blockaddress(@blockaddress_in_global, %label1), align 16
 ; CHECK-LABEL: addrof_label_in_global:
-; CHECK-NEXT:  .capinit blockaddress_in_global+((.Ltmp1+1)-blockaddress_in_global)
-; CHECK-NEXT:  .xword 0
-; CHECK-NEXT:  .xword 0
+; CHECK-NEXT:  .chericap blockaddress_in_global + (.Ltmp1+1)-blockaddress_in_global
 ; CHECK-NEXT:  .size addrof_label_in_global, 16
 @addrof_label_in_global_2 = addrspace(200) global i8 addrspace(200)* blockaddress(@blockaddress_in_global, %label2), align 16
 ; CHECK-LABEL: addrof_label_in_global_2:
-; CHECK-NEXT:  .capinit blockaddress_in_global+((.Ltmp2+1)-blockaddress_in_global)
-; CHECK-NEXT:  .xword 0
-; CHECK-NEXT:  .xword 0
+; CHECK-NEXT:  .chericap blockaddress_in_global + (.Ltmp2+1)-blockaddress_in_global
 ; CHECK-NEXT:  .size addrof_label_in_global_2, 16
 
 
