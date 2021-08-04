@@ -82,12 +82,12 @@ body:             |
     ; CHECK: [[DEF:%[0-9]+]]:fpr128 = IMPLICIT_DEF
     ; CHECK: %concat:fpr128 = INSERT_SUBREG [[DEF]], %a, %subreg.dsub
     ; CHECK: $q0 = COPY %concat
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %a:fpr(<8 x s8>) = G_IMPLICIT_DEF
     %b:fpr(<8 x s8>) = G_IMPLICIT_DEF
     %concat:fpr(<16 x s8>) = G_CONCAT_VECTORS %a(<8 x s8>), %b(<8 x s8>)
     $q0 = COPY %concat(<16 x s8>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 
 ...
 ---
@@ -108,11 +108,11 @@ body:             |
     ; CHECK: [[INSERT_SUBREG1:%[0-9]+]]:fpr128 = INSERT_SUBREG [[DEF1]], %a, %subreg.dsub
     ; CHECK: %concat:fpr128 = INSvi64lane [[INSERT_SUBREG1]], 1, [[INSERT_SUBREG]], 0
     ; CHECK: $q0 = COPY %concat
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %a:fpr(<8 x s8>) = COPY $d0
     %b:fpr(<8 x s8>) = COPY $d1
     %concat:fpr(<16 x s8>) = G_CONCAT_VECTORS %a(<8 x s8>), %b(<8 x s8>)
     $q0 = COPY %concat(<16 x s8>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 
 ...

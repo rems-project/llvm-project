@@ -51,10 +51,10 @@ body: |
     ; CHECK: %b:_(<8 x s8>) = G_IMPLICIT_DEF
     ; CHECK: %concat:_(<16 x s8>) = G_CONCAT_VECTORS %a(<8 x s8>), %b(<8 x s8>)
     ; CHECK: $q0 = COPY %concat(<16 x s8>)
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %a:_(<8 x s8>) = G_IMPLICIT_DEF
     %b:_(<8 x s8>) = G_IMPLICIT_DEF
     %concat:_(<16 x s8>) = G_CONCAT_VECTORS %a:_(<8 x s8>), %b:_(<8 x s8>)
     $q0 = COPY %concat(<16 x s8>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 ...

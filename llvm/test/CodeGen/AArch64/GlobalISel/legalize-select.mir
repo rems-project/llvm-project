@@ -174,7 +174,7 @@ body:             |
     ; CHECK: [[DEF:%[0-9]+]]:_(s64) = G_IMPLICIT_DEF
     ; CHECK: [[SELECT:%[0-9]+]]:_(s64) = G_SELECT %cmp(s1), [[DEF]], [[DEF]]
     ; CHECK: $x0 = COPY [[SELECT]](s64)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %a:_(s32) = COPY $w0
     %b:_(s32) = COPY $w1
     %cmp:_(s1) = G_ICMP intpred(sgt), %a(s32), %b
@@ -183,4 +183,4 @@ body:             |
     %select:_(s88) = G_SELECT %cmp(s1), %sel_a, %sel_b
     %trunc:_(s64) = G_TRUNC %select
     $x0 = COPY %trunc
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0

@@ -96,11 +96,11 @@ body:             |
     ; CHECK: [[C1:%[0-9]+]]:_(s64) = G_CONSTANT i64 0
     ; CHECK: %ctpop:_(s128) = G_MERGE_VALUES [[MV]](s64), [[C1]](s64)
     ; CHECK: $q0 = COPY %ctpop(s128)
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %copy:_(s128) = COPY $q0
     %ctpop:_(s128) = G_CTPOP %copy(s128)
     $q0 = COPY %ctpop(s128)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 
 ...
 ---
