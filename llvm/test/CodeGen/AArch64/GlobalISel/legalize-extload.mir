@@ -126,12 +126,12 @@ body:             |
     ; CHECK: [[ZEXTLOAD:%[0-9]+]]:_(s64) = G_ZEXTLOAD %ptr(p0) :: (load (s8))
     ; CHECK: [[C:%[0-9]+]]:_(s64) = G_CONSTANT i64 0
     ; CHECK: $x0 = COPY [[ZEXTLOAD]](s64)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %ptr:_(p0) = COPY $x0
     %load:_(s88) = G_ZEXTLOAD %ptr(p0) :: (load (s8))
     %trunc:_(s64) = G_TRUNC %load
     $x0 = COPY %trunc(s64)
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
 ...
 ---
@@ -145,10 +145,10 @@ body:             |
     ; CHECK: [[C:%[0-9]+]]:_(s64) = G_CONSTANT i64 63
     ; CHECK: [[ASHR:%[0-9]+]]:_(s64) = G_ASHR [[SEXTLOAD]], [[C]](s64)
     ; CHECK: $x0 = COPY [[SEXTLOAD]](s64)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %ptr:_(p0) = COPY $x0
     %load:_(s88) = G_SEXTLOAD %ptr(p0) :: (load (s8))
     %trunc:_(s64) = G_TRUNC %load
     $x0 = COPY %trunc(s64)
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 ...
