@@ -252,13 +252,12 @@ static DecodeStatus DecodeXSeqPairsClassRegisterClass(MCInst &Inst,
                                                       unsigned RegNo,
                                                       uint64_t Addr,
                                                       const void *Decoder);
-static DecodeStatus DecodeSVELogicalImmInstruction(llvm::MCInst &Inst,
-                                                   uint32_t insn,
+static DecodeStatus DecodeSVELogicalImmInstruction(MCInst &Inst, uint32_t insn,
                                                    uint64_t Address,
                                                    const void *Decoder);
-template<int Bits>
-static DecodeStatus DecodeSImm(llvm::MCInst &Inst, uint64_t Imm,
-                               uint64_t Address, const void *Decoder);
+template <int Bits>
+static DecodeStatus DecodeSImm(MCInst &Inst, uint64_t Imm, uint64_t Address,
+                               const void *Decoder);
 template <int ElementWidth>
 static DecodeStatus DecodeImm8OptLsl(MCInst &Inst, unsigned Imm,
                                      uint64_t Addr, const void *Decoder);
@@ -2597,8 +2596,7 @@ static DecodeStatus DecodeXSeqPairsClassRegisterClass(MCInst &Inst,
                                              RegNo, Addr, Decoder);
 }
 
-static DecodeStatus DecodeSVELogicalImmInstruction(llvm::MCInst &Inst,
-                                                   uint32_t insn,
+static DecodeStatus DecodeSVELogicalImmInstruction(MCInst &Inst, uint32_t insn,
                                                    uint64_t Addr,
                                                    const void *Decoder) {
   unsigned Zdn = fieldFromInstruction(insn, 0, 5);
@@ -2614,9 +2612,9 @@ static DecodeStatus DecodeSVELogicalImmInstruction(llvm::MCInst &Inst,
   return Success;
 }
 
-template<int Bits>
-static DecodeStatus DecodeSImm(llvm::MCInst &Inst, uint64_t Imm,
-                               uint64_t Address, const void *Decoder) {
+template <int Bits>
+static DecodeStatus DecodeSImm(MCInst &Inst, uint64_t Imm, uint64_t Address,
+                               const void *Decoder) {
   if (Imm & ~((1LL << Bits) - 1))
       return Fail;
 
