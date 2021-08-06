@@ -454,7 +454,7 @@ public:
   }
 
   /// Create the default sections and set the initial one.
-  virtual void InitSections(bool NoExecStack);
+  virtual void initSections(bool NoExecStack, const MCSubtargetInfo &STI);
 
   MCSymbol *endSection(MCSection *Section);
 
@@ -869,10 +869,12 @@ public:
   ///
   /// \param ByteAlignment - The alignment to reach. This must be a power of
   /// two on some targets.
+  /// \param STI - The MCSubtargetInfo in operation when padding is emitted.
   /// \param MaxBytesToEmit - The maximum numbers of bytes to emit, or 0. If
   /// the alignment cannot be reached in this many bytes, no bytes are
   /// emitted.
   virtual void emitCodeAlignment(unsigned ByteAlignment,
+                                 const MCSubtargetInfo *STI,
                                  unsigned MaxBytesToEmit = 0);
 
   /// Emit some number of copies of \p Value until the byte offset \p
