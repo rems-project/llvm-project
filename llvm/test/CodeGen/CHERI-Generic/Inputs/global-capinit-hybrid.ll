@@ -1,8 +1,9 @@
 ; !DO NOT AUTOGEN!
-; RUN: llc @HYBRID_HARDFLOAT_ARGS@ %s -o - | \
-@IF-MIPS@; RUN: FileCheck %s --check-prefix=ASM -DPTR_DIRECTIVE=.8byte
-@IF-RISCV64@; RUN: FileCheck %s --check-prefix=ASM -DPTR_DIRECTIVE=.quad
-@IF-RISCV32@; RUN: FileCheck %s --check-prefix=ASM -DPTR_DIRECTIVE=.word
+; RUN: llc @HYBRID_HARDFLOAT_ARGS@ %s -o - | FileCheck %s --check-prefix=ASM \
+@IF-MIPS@; RUN: -DPTR_DIRECTIVE=.8byte
+@IF-RISCV64@; RUN: -DPTR_DIRECTIVE=.quad
+@IF-RISCV32@; RUN: -DPTR_DIRECTIVE=.word
+@IF-MORELLO@; RUN: -DPTR_DIRECTIVE=.xword
 ; RUN: llc @HYBRID_HARDFLOAT_ARGS@ %s -filetype=obj -o - | llvm-objdump -r -t -
 
 target datalayout = "@HYBRID_DATALAYOUT@"

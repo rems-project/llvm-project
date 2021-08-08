@@ -1,21 +1,17 @@
-@IF-MORELLO@; !DO NOT AUTOGEN! Fails with Morello right now:
-@IF-MORELLO@; Reported as https://git.morello-project.org/morello/llvm-project/-/issues/35
-@IF-MORELLO@; UNSUPPORTED: true
-@IF-MORELLO@; LLVM ERROR: Cannot select: t5: iFATPTR128,ch = AtomicSwap<(load store monotonic 16 on %ir.ptr, addrspace 200)> t0, t2, t4
-@IF-MORELLO@;   t2: iFATPTR128,ch = CopyFromReg t0, Register:iFATPTR128 %0
-@IF-MORELLO@;     t1: iFATPTR128 = Register %0
-@IF-MORELLO@;   t4: iFATPTR128,ch = CopyFromReg t0, Register:iFATPTR128 %1
-@IF-MORELLO@;     t3: iFATPTR128 = Register %1
-@IF-MORELLO@; In function: atomic_cap_ptr_xchg_relaxed
+; DO NOT EDIT -- This file was generated from test/CodeGen/CHERI-Generic/Inputs/atomic-rmw-cap-ptr-arg.ll
+; Reported as https://git.morello-project.org/morello/llvm-project/-/issues/35
+; UNSUPPORTED: true
+; LLVM ERROR: Cannot select: t5: iFATPTR128,ch = AtomicSwap<(load store monotonic 16 on %ir.ptr, addrspace 200)> t0, t2, t4
+;   t2: iFATPTR128,ch = CopyFromReg t0, Register:iFATPTR128 %0
+;     t1: iFATPTR128 = Register %0
+;   t4: iFATPTR128,ch = CopyFromReg t0, Register:iFATPTR128 %1
+;     t3: iFATPTR128 = Register %1
+; In function: atomic_cap_ptr_xchg_relaxed
 
 ; Check that we can generate sensible code for atomic operations using capability pointers on capabilities
 ; See https://github.com/CTSRD-CHERI/llvm-project/issues/470
-@IF-RISCV@; RUN: llc @PURECAP_HARDFLOAT_ARGS@ -mattr=+a < %s | FileCheck %s --check-prefixes=PURECAP,PURECAP-ATOMICS
-@IF-RISCV@; RUN: llc @PURECAP_HARDFLOAT_ARGS@ -mattr=-a < %s | FileCheck %s --check-prefixes=PURECAP,PURECAP-LIBCALLS
-@IFNOT-RISCV@; RUN: llc @PURECAP_HARDFLOAT_ARGS@ %s -o - | FileCheck %s --check-prefix=PURECAP
-@IF-RISCV@; RUN: llc @HYBRID_HARDFLOAT_ARGS@ -mattr=+a < %s | FileCheck %s --check-prefixes=HYBRID,HYBRID-ATOMICS
-@IF-RISCV@; RUN: llc @HYBRID_HARDFLOAT_ARGS@ -mattr=-a < %s | FileCheck %s --check-prefixes=HYBRID,HYBRID-LIBCALLS
-@IFNOT-RISCV@; RUN: llc @HYBRID_HARDFLOAT_ARGS@ %s -o - | FileCheck %s --check-prefix=HYBRID
+; RUN: llc -mtriple=aarch64 --relocation-model=pic -target-abi purecap -mattr=+morello,+c64 %s -o - | FileCheck %s --check-prefix=PURECAP
+; RUN: llc -mtriple=aarch64 --relocation-model=pic -target-abi aapcs -mattr=+morello,-c64 %s -o - | FileCheck %s --check-prefix=HYBRID
 
 define i32 addrspace(200)* @atomic_cap_ptr_xchg_sc(i32 addrspace(200)* addrspace(200)* %ptr, i32 addrspace(200)* %val) nounwind {
 bb:

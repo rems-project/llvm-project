@@ -1,9 +1,9 @@
-@IF-MORELLO@; !DO NOT AUTOGEN! Fails with Morello right now:
-@IF-MORELLO@; UNSUPPORTED: true
-@IF-MORELLO@; Assertion failed: (Align < CapSize), function diagnoseInefficientCheriMemOp, file /Volumes/CHERI/git/morello-llvm-project/llvm/lib/CodeGen/SelectionDAG/SelectionDAG.cpp, line 6103.
-@IF-MORELLO@; Will be fixed when we cherry-pick https://github.com/CTSRD-CHERI/llvm-project/pull/559
+; DO NOT EDIT -- This file was generated from test/CodeGen/CHERI-Generic/Inputs/memcpy-preserve-tags-size-not-multiple.ll
+; UNSUPPORTED: true
+; Assertion failed: (Align < CapSize), function diagnoseInefficientCheriMemOp, file /Volumes/CHERI/git/morello-llvm-project/llvm/lib/CodeGen/SelectionDAG/SelectionDAG.cpp, line 6103.
+; Will be fixed when we cherry-pick https://github.com/CTSRD-CHERI/llvm-project/pull/559
 
-; RUN: llc @PURECAP_HARDFLOAT_ARGS@ -o - -O0 -verify-machineinstrs %s | FileCheck %s -check-prefixes CHECK
+; RUN: llc -mtriple=aarch64 --relocation-model=pic -target-abi purecap -mattr=+morello,+c64 -o - -O0 -verify-machineinstrs %s | FileCheck %s -check-prefixes CHECK
 ; Check that we can inline memmove/memcpy despite having the must_preserve_cheri_tags property and the size not
 ; being a multiple of CAP_SIZE. Since the pointers are aligned we can start with capability copies and use
 ; word/byte copies for the trailing bytes.

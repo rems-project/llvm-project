@@ -1,3 +1,13 @@
+@IF-MORELLO@; !DO NOT AUTOGEN! Fails with Morello right now:
+@IF-MORELLO@; Reported as https://git.morello-project.org/morello/llvm-project/-/issues/34
+@IF-MORELLO@; UNSUPPORTED: true
+@IF-MORELLO@; LLVM ERROR: Cannot select: t5: f32,ch = AtomicLoadFAdd<(load store seq_cst 4 on %ir.ptr, addrspace 200)> t0, t2, t4
+@IF-MORELLO@;   t2: iFATPTR128,ch = CopyFromReg t0, Register:iFATPTR128 %0
+@IF-MORELLO@;     t1: iFATPTR128 = Register %0
+@IF-MORELLO@;   t4: f32,ch = CopyFromReg t0, Register:f32 %1
+@IF-MORELLO@;     t3: f32 = Register %1
+@IF-MORELLO@; In function: atomic_cap_ptr_fadd
+
 ; Check that we can generate sensible code for atomic operations using capability pointers
 ; https://github.com/CTSRD-CHERI/llvm-project/issues/470
 @IF-RISCV@; RUN: llc @PURECAP_HARDFLOAT_ARGS@ -mattr=+a < %s | FileCheck %s --check-prefixes=PURECAP,PURECAP-ATOMICS
