@@ -456,12 +456,12 @@ public:
         if (TotalSize != 0 && TotalSize % ElementSize == 0) {
           uint64_t NewElements = TotalSize / ElementSize;
           ASz = ConstantInt::get(Type::getInt64Ty(C), NewElements);
-          Alloca = B.CreateAlloca(AllocationTy, ASz);
+          Alloca = B.CreateAlloca(AllocationTy, ASz, AI->getName());
           Alloca->setAlignment(Alignment);
         } else {
           ElementSize = 1;
           ASz = ConstantInt::get(Type::getInt64Ty(C), TotalSize);
-          Alloca = B.CreateAlloca(Type::getInt8Ty(C), ASz);
+          Alloca = B.CreateAlloca(Type::getInt8Ty(C), ASz, AI->getName());
           Alloca->setAlignment(Alignment);
         }
 
