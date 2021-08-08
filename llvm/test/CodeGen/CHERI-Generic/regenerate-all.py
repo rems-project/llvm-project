@@ -54,12 +54,22 @@ RISCV64Config = ArchSpecificValues(
     purecap_sf_args=["-target-abi", "l64pc128", "-mattr=+xcheri,+cap-mode,-f,-d"],
     purecap_hf_args=["-target-abi", "l64pc128d", "-mattr=+xcheri,+cap-mode,+f,+d"],
     datalayout=b"e-m:e-pf200:128:128:128:64-p:64:64-i64:64-i128:128-n64-S128")
+MorelloConfig = ArchSpecificValues(
+    "Morello", base_architecture="AArch64", cap_range=64, cap_width=128,
+    common_args=["-mtriple=aarch64", "--relocation-model=pic"],
+    hybrid_sf_args=["-target-abi", "aapcs", "-mattr=+morello,-c64", "--float-abi=soft"],
+    hybrid_hf_args=["-target-abi", "aapcs", "-mattr=+morello,-c64"],
+    purecap_sf_args=["-target-abi", "purecap", "-mattr=+morello,+c64", "--float-abi=soft"],
+    purecap_hf_args=["-target-abi", "purecap", "-mattr=+morello,+c64"],
+    datalayout=b"e-m:e-pf200:128:128:128:64-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128")
 
-ALL_ARCHITECTURES = [MIPSConfig, RISCV32Config, RISCV64Config]
-ALL_ARCHITECTURE_IF_STRS = set([b"@IF-" + arch_def.name.encode() + b"@" for arch_def in ALL_ARCHITECTURES] + [
-                            b"@IF-" + arch_def.base_name.encode() + b"@" for arch_def in ALL_ARCHITECTURES])
-ALL_ARCHITECTURE_IFNOT_STRS = set([b"@IFNOT-" + arch_def.name.encode() + b"@" for arch_def in ALL_ARCHITECTURES] + [
-                               b"@IFNOT-" + arch_def.base_name.encode() + b"@" for arch_def in ALL_ARCHITECTURES])
+ALL_ARCHITECTURES = [MIPSConfig, RISCV32Config, RISCV64Config, MorelloConfig]
+ALL_ARCHITECTURE_IF_STRS = set(
+    [b"@IF-" + arch_def.name.encode().upper() + b"@" for arch_def in ALL_ARCHITECTURES] +
+    [b"@IF-" + arch_def.base_name.encode().upper() + b"@" for arch_def in ALL_ARCHITECTURES])
+ALL_ARCHITECTURE_IFNOT_STRS = set(
+    [b"@IFNOT-" + arch_def.name.encode().upper() + b"@" for arch_def in ALL_ARCHITECTURES] +
+    [b"@IFNOT-" + arch_def.base_name.encode().upper() + b"@" for arch_def in ALL_ARCHITECTURES])
 
 
 class CmdArgs(object):
@@ -73,12 +83,17 @@ class CmdArgs(object):
         self.llvm_bindir = self.args.llvm_bindir  # type: Path
         if not self.llvm_bindir.exists():
             sys.exit("FATAL: --llvm-bindir does not exist")
-        self.llc_cmd = (self.llvm_bindir / "llc")
+        self.llc_cmd = self.llvm_bindir / "llc"
         if not self.llc_cmd.exists():
             sys.exit("FATAL: Could not find llc in --llvm-bindir: " + str(self.llc_cmd))
-        self.opt_cmd = (self.llvm_bindir / "opt")
+        self.opt_cmd = self.llvm_bindir / "opt"
         if not self.opt_cmd.exists():
             sys.exit("FATAL: Could not find opt in --llvm-bindir: " + str(self.opt_cmd))
+        self.llvm_config_cmd = self.llvm_bindir / "llvm-config"
+        if not self.llvm_config_cmd.exists():
+            sys.exit("FATAL: Could not find llvm-config in --llvm-bindir: " + str(self.llvm_config_cmd))
+        self.targets_str = subprocess.check_output([str(self.llvm_config_cmd), "--targets-built"]).decode("utf-8")
+        self.targets = [x.lower() for x in self.targets_str.split()]
         self.verbose = self.args.verbose  # type: bool
 
 
@@ -87,17 +102,14 @@ def update_one_test(test_name: str, input_file: typing.BinaryIO,
     print("Updating", test_name, "for", arch_def.name)
     output_path = Path(arch_def.tests_path, test_name)
     manual_checks_only = False
-    current_arch_if = b"@IF-" + arch_def.name.encode() + b"@"
-    current_arch_base_if = b"@IF-" + arch_def.base_name.encode() + b"@"
-    current_arch_ifnot = b"@IFNOT-" + arch_def.name.encode() + b"@"
-    current_arch_base_ifnot = b"@IFNOT-" + arch_def.base_name.encode() + b"@"
+    current_arch_if = b"@IF-" + arch_def.name.encode().upper() + b"@"
+    current_arch_base_if = b"@IF-" + arch_def.base_name.encode().upper() + b"@"
+    current_arch_ifnot = b"@IFNOT-" + arch_def.name.encode().upper() + b"@"
+    current_arch_base_ifnot = b"@IFNOT-" + arch_def.base_name.encode().upper() + b"@"
     with output_path.open("wb") as output_file:
         output_file.write(b"; DO NOT EDIT -- This file was generated from " + str(
             Path(input_file.name).relative_to(LLVM_SRC_PATH)).encode("utf-8") + b"\n")
         for line in input_file.readlines():
-            if b"!DO NOT AUTOGEN!" in line:
-                manual_checks_only = True
-                continue
             # Handle @IF-<arch>@ and @IFNOT-<arch>@ prefixes:
             if line.startswith(b"@IF-"):
                 if line.startswith(current_arch_if):
@@ -127,7 +139,10 @@ def update_one_test(test_name: str, input_file: typing.BinaryIO,
                         break
                 if not valid_directive:
                     sys.exit("Invalid @IF- directive: " + line.decode("utf-8"))
-
+            if b"!DO NOT AUTOGEN!" in line:
+                manual_checks_only = True
+                print("Only using manual checks for", test_name)
+                continue
             converted_line = line.replace(b"iCAPRANGE", b"i" + str(
                 arch_def.cap_range).encode("utf-8"))
             converted_line = converted_line.replace(b"iCAPWIDTH", b"i" + str(
@@ -185,7 +200,10 @@ def update_one_test(test_name: str, input_file: typing.BinaryIO,
 
 def main():
     options = CmdArgs()
-    architectures = ALL_ARCHITECTURES
+    architectures = [x for x in ALL_ARCHITECTURES if x.base_name.lower() in options.targets]
+    if not architectures:
+        sys.exit("No CHERI architecture found in the supported LLVM targets: " + options.targets_str)
+
     # TODO: add command line flag to select subsets
     # TODO: add option to delete all files that don't exist in Inputs/ to handle renaming
     if options.args.tests:
