@@ -1145,3 +1145,51 @@ define void @test_atomic_store_release_fatptr(i8 addrspace(200)* %val) nounwind 
 ; CHECK-NEXT: stlr c0, [c[[ADDR1]]]
   ret void
 }
+
+define i8 addrspace(200)* @test_atomic_monotoic_cap_load(i8 addrspace(200) *addrspace(200)* %val) nounwind {
+; CHECK-LABEL: test_atomic_monotoic_cap_load:
+; CHECK: ldur c0, [c0, #-16]
+ %adr = getelementptr i8 addrspace(200)*, i8 addrspace(200)* addrspace(200)* %val, i32 -1
+ %ret = load atomic i8 addrspace(200)*, i8 addrspace(200)* addrspace(200)* %adr monotonic, align 16
+ ret i8 addrspace(200)* %ret
+}
+
+define i8 addrspace(200)* @test_atomic_monotoic_32idx_cap_load(i8 addrspace(200) *addrspace(200)* %val, i32 %idx) nounwind {
+; CHECK-LABEL: test_atomic_monotoic_32idx_cap_load:
+; CHECK: ldr c0, [c0, w1, sxtw #4]
+ %adr = getelementptr i8 addrspace(200)*, i8 addrspace(200)* addrspace(200)* %val, i32 %idx
+ %ret = load atomic i8 addrspace(200)*, i8 addrspace(200)* addrspace(200)* %adr monotonic, align 16
+ ret i8 addrspace(200)* %ret
+}
+
+define i8 addrspace(200)* @test_atomic_monotoic_64idx_cap_load(i8 addrspace(200) *addrspace(200)* %val, i64 %idx) nounwind {
+; CHECK-LABEL: test_atomic_monotoic_64idx_cap_load:
+; CHECK: ldr c0, [c0, x1, lsl #4]
+ %adr = getelementptr i8 addrspace(200)*, i8 addrspace(200)* addrspace(200)* %val, i64 %idx
+ %ret = load atomic i8 addrspace(200)*, i8 addrspace(200)* addrspace(200)* %adr monotonic, align 16
+ ret i8 addrspace(200)* %ret
+}
+
+define void @test_atomic_monotoic_cap_store(i8 addrspace(200) *addrspace(200)* %val, i8 addrspace(200)* %st) nounwind {
+; CHECK-LABEL: test_atomic_monotoic_cap_store:
+; CHECK: stur c1, [c0, #-16]
+ %adr = getelementptr i8 addrspace(200)*, i8 addrspace(200)* addrspace(200)* %val, i32 -1
+ store atomic i8 addrspace(200)* %st, i8 addrspace(200)* addrspace(200)* %adr monotonic, align 16
+ ret void
+}
+
+define void @test_atomic_monotoic_32idx_cap_store(i8 addrspace(200) *addrspace(200)* %val, i32 %idx, i8 addrspace(200)* %st) nounwind {
+; CHECK-LABEL: test_atomic_monotoic_32idx_cap_store:
+; CHECK: str c2, [c0, w1, sxtw #4]
+ %adr = getelementptr i8 addrspace(200)*, i8 addrspace(200)* addrspace(200)* %val, i32 %idx
+ store atomic i8 addrspace(200)* %st, i8 addrspace(200)* addrspace(200)* %adr monotonic, align 16
+ ret void
+}
+
+define void @test_atomic_monotoic_64idx_cap_store(i8 addrspace(200) *addrspace(200)* %val, i64 %idx, i8 addrspace(200)* %st) nounwind {
+; CHECK-LABEL: test_atomic_monotoic_64idx_cap_store:
+; CHECK: str c2, [c0, x1, lsl #4]
+ %adr = getelementptr i8 addrspace(200)*, i8 addrspace(200)* addrspace(200)* %val, i64 %idx
+ store atomic i8 addrspace(200)* %st, i8 addrspace(200)* addrspace(200)* %adr monotonic, align 16
+ ret void
+}

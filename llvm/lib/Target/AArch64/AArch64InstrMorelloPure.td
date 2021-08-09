@@ -750,6 +750,15 @@ def : Pat<(ldaxr_fatptr Capsp:$addr), (PCapLoadExAcq Capsp:$addr)>;
 def : Pat<(relaxed_load<atomic_cload_cap>
                (am_cindexed128 Capsp:$Cn, uimm12s16:$offset)),
           (PCapLoadImmPre Capsp:$Cn, uimm12s16:$offset)>;
+def : Pat<(relaxed_load<atomic_cload_cap> (cro_Windexed128 Capsp:$Rn, GPR32:$Rm,
+                                                       ro_Wextend128:$extend)),
+          (PCapLoadRegExtW Capsp:$Rn, GPR32:$Rm, ro_Wextend128:$extend)>;
+def : Pat<(relaxed_load<atomic_cload_cap> (cro_Xindexed128 Capsp:$Rn, GPR64:$Rm,
+                                                       ro_Xextend128:$extend)),
+          (PCapLoadRegExtX Capsp:$Rn, GPR64:$Rm, ro_Xextend128:$extend)>;
+def : Pat<(relaxed_load<atomic_cload_cap>
+               (am_pcunscaled128 Capsp:$Rn, simm9:$offset)),
+          (PCapLoadUnscaledImm Capsp:$Rn, simm9:$offset)>;
 def : Pat<(acquiring_load<atomic_cload_cap>  Capsp:$ptr),
           (PCapLoadAcq Capsp:$ptr)>;
 }
@@ -765,7 +774,16 @@ def : Pat<(stlxr_fatptr Cap:$val, Capsp:$addr),
           (PCapStoreExRel Cap:$val, Capsp:$addr)>;
 def : Pat<(relaxed_store<atomic_cstore_cap>
                (am_cindexed128 Capsp:$Cn, uimm12s16:$offset), Cap:$val),
-          (PCapStoreImmPre Capsp:$val, Cap:$Cn, uimm12s16:$offset)>;
+          (PCapStoreImmPre Cap:$val, Capsp:$Cn, uimm12s16:$offset)>;
+def : Pat<(relaxed_store<atomic_cstore_cap> (cro_Windexed128 Capsp:$Rn, GPR32:$Rm,
+                                                ro_Wextend128:$extend), Cap:$val),
+          (PCapStoreRegExtW Cap:$val, Capsp:$Rn, GPR32:$Rm, ro_Wextend128:$extend)>;
+def : Pat<(relaxed_store<atomic_cstore_cap> (cro_Xindexed128 Capsp:$Rn, GPR64:$Rm,
+                                                ro_Xextend128:$extend), Cap:$val),
+          (PCapStoreRegExtX Cap:$val, Capsp:$Rn, GPR64:$Rm, ro_Xextend128:$extend)>;
+def : Pat<(relaxed_store<atomic_cstore_cap>
+               (am_pcunscaled128 Capsp:$Rn, simm9:$offset), Cap:$val),
+          (PCapStoreUnscaledImm Cap:$val, Capsp:$Rn, simm9:$offset)>;
 def : Pat<(releasing_store<atomic_cstore_cap> Capsp:$ptr, Cap:$val),
           (PCapStoreRel Cap:$val, Capsp:$ptr)>;
 
