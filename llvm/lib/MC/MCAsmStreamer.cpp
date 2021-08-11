@@ -2143,18 +2143,19 @@ void MCAsmStreamer::EmitCheriCapabilityImpl(const MCSymbol *Symbol,
                                             const MCExpr *Addend,
                                             unsigned CapSize, SMLoc Loc) {
   OS << "\t.chericap\t";
-  Symbol->print(OS, MAI);
   // Avoid parens,unary minus, and zero for constants:
   assert(Addend);
   if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Addend)) {
+    Symbol->print(OS, MAI);
     int64_t Offset = CE->getValue();
     if (Offset > 0)
       OS << "+" << Offset;
     else if (Offset < 0)
       OS << Offset;
   } else {
-    OS << " + ";
-    Addend->print(OS, MAI, /*InParens=*/true);
+    const MCSymbolRefExpr *SRE = MCSymbolRefExpr::create(
+        Symbol, MCSymbolRefExpr::VK_None, getContext(), Loc);
+    MCBinaryExpr::createAdd(SRE, Addend, getContext())->print(OS, MAI);
   }
   EmitEOL();
 }
