@@ -821,7 +821,7 @@ private:
 
   // Vector Result Splitting: <128 x ty> -> 2 x <64 x ty>.
   void SplitVectorResult(SDNode *N, unsigned ResNo);
-  void SplitVecRes_BinOp(SDNode *N, SDValue &Lo, SDValue &Hi);
+  void SplitVecRes_BinOp(SDNode *N, SDValue &Lo, SDValue &Hi, bool IsVP);
   void SplitVecRes_PTRADD(SDNode *N, SDValue &Lo, SDValue &Hi);
   void SplitVecRes_TernaryOp(SDNode *N, SDValue &Lo, SDValue &Hi);
   void SplitVecRes_UnaryOp(SDNode *N, SDValue &Lo, SDValue &Hi);
