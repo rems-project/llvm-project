@@ -370,6 +370,8 @@ StringExtractorGDBRemote::GetServerPacketType() const {
         return eServerPacketType_vCont;
       if (PACKET_MATCHES("vCont?"))
         return eServerPacketType_vCont_actions;
+      if (PACKET_STARTS_WITH("vRun;"))
+        return eServerPacketType_vRun;
     }
     break;
   case '_':

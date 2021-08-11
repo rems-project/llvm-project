@@ -207,6 +207,8 @@ protected:
 
   PacketResult Handle_vAttachOrWait(StringExtractorGDBRemote &packet);
 
+  PacketResult Handle_vRun(StringExtractorGDBRemote &packet);
+
   PacketResult Handle_D(StringExtractorGDBRemote &packet);
 
   PacketResult Handle_qThreadStopInfo(StringExtractorGDBRemote &packet);
