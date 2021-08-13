@@ -530,30 +530,6 @@ public:
   const SCEV *getSignExtendExpr(const SCEV *Op, Type *Ty, unsigned Depth = 0);
   const SCEV *getAnyExtendExpr(const SCEV *Op, Type *Ty);
 
-  // Fat Pointer Support
-  const SCEV *getFatAddExpr(SmallVectorImpl<const SCEV *> &Ops,
-                         SCEV::NoWrapFlags Flags = SCEV::FlagAnyWrap,
-                         unsigned Depth = 0);
-  const SCEV *getFatAddExpr(const SCEV *LHS, const SCEV *RHS,
-                         SCEV::NoWrapFlags Flags = SCEV::FlagAnyWrap) {
-    SmallVector<const SCEV *, 2> Ops = {LHS, RHS};
-    return getFatAddExpr(Ops, Flags);
-  }
-  const SCEV *getFatAddExpr(const SCEV *Op0, const SCEV *Op1, const SCEV *Op2,
-                         SCEV::NoWrapFlags Flags = SCEV::FlagAnyWrap) {
-    SmallVector<const SCEV *, 3> Ops = {Op0, Op1, Op2};
-    return getFatAddExpr(Ops, Flags);
-  }
-  const SCEV *getFatAddRecExpr(const SCEV *Start, const SCEV *Step, const Loop *L,
-                             SCEV::NoWrapFlags Flags);
-  const SCEV *getFatAddRecExpr(SmallVectorImpl<const SCEV *> &Operands,
-                             const Loop *L, SCEV::NoWrapFlags Flags);
-  const SCEV *getFatAddRecExpr(const SmallVectorImpl<const SCEV *> &Operands,
-                             const Loop *L, SCEV::NoWrapFlags Flags) {
-    SmallVector<const SCEV *, 4> NewOp(Operands.begin(), Operands.end());
-    return getFatAddRecExpr(NewOp, L, Flags);
-  }
-
   const SCEV *getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
                          SCEV::NoWrapFlags Flags = SCEV::FlagAnyWrap,
                          unsigned Depth = 0);
