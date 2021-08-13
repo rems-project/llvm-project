@@ -1947,7 +1947,7 @@ void Verifier::verifyFunctionAttrs(FunctionType *FT, AttributeList Attrs,
     }
   }
 
-  if (!Attrs.hasAttributes(AttributeList::FunctionIndex))
+  if (!Attrs.hasFnAttrs())
     return;
 
   verifyAttributeTypes(Attrs.getFnAttrs(), V);
