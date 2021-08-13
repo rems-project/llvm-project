@@ -6804,9 +6804,7 @@ void SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I,
   case Intrinsic::debugtrap:
   case Intrinsic::trap: {
     StringRef TrapFuncName =
-        I.getAttributes()
-            .getAttribute(AttributeList::FunctionIndex, "trap-func-name")
-            .getValueAsString();
+        I.getAttributes().getFnAttr("trap-func-name").getValueAsString();
     if (TrapFuncName.empty()) {
       switch (Intrinsic) {
       case Intrinsic::trap:
