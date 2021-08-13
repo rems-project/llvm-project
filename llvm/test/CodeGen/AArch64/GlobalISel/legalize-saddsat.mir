@@ -19,12 +19,12 @@ body:             |
     ; CHECK: [[ADD:%[0-9]+]]:_(s32) = G_ADD [[ASHR]], [[C1]]
     ; CHECK: %saddsat:_(s32) = G_SELECT [[SADDO1]](s1), [[ADD]], [[SADDO]]
     ; CHECK: $w0 = COPY %saddsat(s32)
-    ; CHECK: RET_ReallyLR implicit $w0
+    ; CHECK: RET_ReallyLR 0, implicit $w0
     %x:_(s32) = COPY $w0
     %y:_(s32) = COPY $w1
     %saddsat:_(s32) = G_SADDSAT %x, %y
     $w0 = COPY %saddsat(s32)
-    RET_ReallyLR implicit $w0
+    RET_ReallyLR 0, implicit $w0
 
 ...
 ---
@@ -44,12 +44,12 @@ body:             |
     ; CHECK: [[ADD:%[0-9]+]]:_(s64) = G_ADD [[ASHR]], [[C1]]
     ; CHECK: %saddsat:_(s64) = G_SELECT [[SADDO1]](s1), [[ADD]], [[SADDO]]
     ; CHECK: $x0 = COPY %saddsat(s64)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %x:_(s64) = COPY $x0
     %y:_(s64) = COPY $x1
     %saddsat:_(s64) = G_SADDSAT %x, %y
     $x0 = COPY %saddsat(s64)
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 
 ...
 ---
@@ -85,7 +85,7 @@ body:             |
     ; CHECK: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[TRUNC]](s1), [[COPY5]], [[COPY6]]
     ; CHECK: %ext:_(s32) = COPY [[SELECT]](s32)
     ; CHECK: $w0 = COPY %ext(s32)
-    ; CHECK: RET_ReallyLR implicit $w0
+    ; CHECK: RET_ReallyLR 0, implicit $w0
     %copy_1:_(s32) = COPY $w0
     %x:_(s16) = G_TRUNC %copy_1(s32)
     %copy_2:_(s32) = COPY $w1
@@ -93,7 +93,7 @@ body:             |
     %saddsat:_(s16) = G_SADDSAT %x, %y
     %ext:_(s32) = G_ANYEXT %saddsat(s16)
     $w0 = COPY %ext(s32)
-    RET_ReallyLR implicit $w0
+    RET_ReallyLR 0, implicit $w0
 
 ...
 ---
@@ -129,7 +129,7 @@ body:             |
     ; CHECK: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[TRUNC]](s1), [[COPY5]], [[COPY6]]
     ; CHECK: %ext:_(s32) = COPY [[SELECT]](s32)
     ; CHECK: $w0 = COPY %ext(s32)
-    ; CHECK: RET_ReallyLR implicit $w0
+    ; CHECK: RET_ReallyLR 0, implicit $w0
     %copy_1:_(s32) = COPY $w0
     %x:_(s1) = G_TRUNC %copy_1(s32)
     %copy_2:_(s32) = COPY $w1
@@ -137,7 +137,7 @@ body:             |
     %saddsat:_(s1) = G_SADDSAT %x, %y
     %ext:_(s32) = G_ANYEXT %saddsat(s1)
     $w0 = COPY %ext(s32)
-    RET_ReallyLR implicit $w0
+    RET_ReallyLR 0, implicit $w0
 
 ...
 ---
@@ -173,7 +173,7 @@ body:             |
     ; CHECK: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[TRUNC]](s1), [[COPY5]], [[COPY6]]
     ; CHECK: %ext:_(s32) = COPY [[SELECT]](s32)
     ; CHECK: $w0 = COPY %ext(s32)
-    ; CHECK: RET_ReallyLR implicit $w0
+    ; CHECK: RET_ReallyLR 0, implicit $w0
     %copy_1:_(s32) = COPY $w0
     %x:_(s3) = G_TRUNC %copy_1(s32)
     %copy_2:_(s32) = COPY $w1
@@ -181,7 +181,7 @@ body:             |
     %saddsat:_(s3) = G_SADDSAT %x, %y
     %ext:_(s32) = G_ANYEXT %saddsat(s3)
     $w0 = COPY %ext(s32)
-    RET_ReallyLR implicit $w0
+    RET_ReallyLR 0, implicit $w0
 
 ...
 ---
@@ -220,7 +220,7 @@ body:             |
     ; CHECK: [[SELECT:%[0-9]+]]:_(s64) = G_SELECT [[TRUNC]](s1), [[COPY7]], [[COPY8]]
     ; CHECK: %ext:_(s64) = COPY [[SELECT]](s64)
     ; CHECK: $x0 = COPY %ext(s64)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %copy_1:_(s64) = COPY $x0
     %x:_(s36) = G_TRUNC %copy_1(s64)
     %copy_2:_(s64) = COPY $x1
@@ -228,7 +228,7 @@ body:             |
     %saddsat:_(s36) = G_SADDSAT %x, %y
     %ext:_(s64) = G_ANYEXT %saddsat(s36)
     $x0 = COPY %ext(s64)
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 
 ...
 ---
@@ -290,7 +290,7 @@ body:             |
     ; CHECK: [[MV6:%[0-9]+]]:_(s64) = G_MERGE_VALUES [[MV]](s32), [[MV1]](s32)
     ; CHECK: [[SELECT:%[0-9]+]]:_(s64) = G_SELECT [[TRUNC2]](s1), [[UADDO2]], [[MV6]]
     ; CHECK: $x0 = COPY [[SELECT]](s64)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %copy_1:_(s128) = COPY $q0
     %x:_(s88) = G_TRUNC %copy_1(s128)
     %copy_2:_(s128) = COPY $q1
@@ -298,4 +298,4 @@ body:             |
     %saddsat:_(s88) = G_SADDSAT %x, %y
     %trunc:_(s64) = G_TRUNC %saddsat(s88)
     $x0 = COPY %trunc(s64)
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
