@@ -477,6 +477,9 @@ namespace llvm {
   /// Create CHERI pass to bound alloca.s
   ModulePass *createCheriBoundAllocasPass();
 
+  /// Create CHERI pass to remove capability address reading instructions.
+  FunctionPass *createCheriGetAddressElimPass();
+
   /// Create IR Type Promotion pass. \see TypePromotion.cpp
   FunctionPass *createTypePromotionPass();
 
