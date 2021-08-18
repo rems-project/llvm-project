@@ -1,10 +1,10 @@
-int function_using_address() {
-  int data = 133;
-  int *an_address = &data;
-  return *an_address; // Break here
+int function_using_address(int **address) {
+  return *address[1];
 }
 
 int main() {
-  function_using_address();
-  return 0;
+  int data = 133;
+  int *addresses[4] = { &data, &data, &data, &data };
+  int **an_address = addresses + 2;
+  return function_using_address(an_address); // Break here.
 }

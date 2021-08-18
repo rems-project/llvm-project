@@ -4,8 +4,29 @@ process launch --
 frame variable an_address
 memory read -C -c 1 -f capability &an_address
 # CHECK-LABEL: (lldb) frame variable an_address
-# CHECK: {[[ADDRESS:.*]]}
+# CHECK: an_address = [[ADDRESS:.*]]
 # CHECK: (lldb) memory read -C -c 1 -f capability &an_address
-# CHECK: 0x{{[0-9a-fA-F]*}}: {[[ADDRESS]]}
+# CHECK: 0x{{[0-9a-fA-F]*}}: [[ADDRESS]]
+
+frame variable addresses
+memory read -C -c 4 -f capability &addresses
+# CHECK-LABEL: (lldb) frame variable addresses
+# CHECK: addresses = {
+# CHECK: [0] = [[ADDRESS0:.*]]
+# CHECK: [1] = [[ADDRESS1:.*]]
+# CHECK: [2] = [[ADDRESS2:.*]]
+# CHECK: [3] = [[ADDRESS3:.*]]
+# CHECK: (lldb) memory read -C -c 4 -f capability &addresses
+# CHECK: 0x{{[0-9a-fA-F]*}}: [[ADDRESS0]]
+# CHECK: 0x{{[0-9a-fA-F]*}}: [[ADDRESS1]]
+# CHECK: 0x{{[0-9a-fA-F]*}}: [[ADDRESS2]]
+# CHECK: 0x{{[0-9a-fA-F]*}}: [[ADDRESS3]]
+
+frame variable an_address[0]
+# FIXME: memory read -C -c 1 -f capability &an_address[0]
+# CHECK-LABEL: (lldb) frame variable an_address[0]
+# CHECK: an_address[0] = [[ADDRESS:.*]]
+# FIXME: (lldb) memory read -C -c 1 -f capability &an_address[0]
+# FIXME: 0x{{[0-9a-fA-F]*}}: [[ADDRESS]]
 
 process kill
