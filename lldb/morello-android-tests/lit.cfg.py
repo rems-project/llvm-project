@@ -48,7 +48,7 @@ require_param('LLVM_TOOLS_DIR')
 llvm_tools_dir = lit_config.params['LLVM_TOOLS_DIR']
 
 config.environment['LLDB_EXECUTABLE'] = shutil.which(
-        'lldb', path=llvm_tools_dir)
+        'lldb.sh', path=llvm_tools_dir)
 if not config.environment['LLDB_EXECUTABLE']:
     sys.exit("Couldn't find lldb in {}".format(llvm_tools_dir))
 
