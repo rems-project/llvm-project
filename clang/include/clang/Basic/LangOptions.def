@@ -327,6 +327,8 @@ LANGOPT(CheriDataDependentProvenance, 1, 0, "Derive pointer provenance for bitwi
 ENUM_LANGOPT(CheriMemopsInlineBehaviour, CheriMemopsInlineBehaviourMode, 1, CheriMemopsInlineBehaviour_Legacy,
              "Specify when the compiler is allowed to inline memcpy/memmove calls")
 
+LANGOPT(MorelloNewVarArg, 1, 0, "Bound variadic arguments in purecap calls")
+
 BENIGN_LANGOPT(ArrowDepth, 32, 256,
                "maximum number of operator->s to follow")
 BENIGN_LANGOPT(InstantiationDepth, 32, 1024,

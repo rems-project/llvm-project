@@ -4081,10 +4081,14 @@ CCAssignFn *AArch64TargetLowering::CCAssignFnForCall(CallingConv::ID CC,
   case CallingConv::Swift:
     if (Subtarget->isTargetWindows() && IsVarArg)
       return CC_AArch64_Win64_VarArg;
-    if (!Subtarget->isTargetDarwin())
+    if (!Subtarget->isTargetDarwin()) {
+      if (IsVarArg && Subtarget->hasPureCap() &&
+          Subtarget->hasMorelloNewVarArg())
+        return CC_AArch64_AAPCS_Pure_VarArg;
       return Subtarget->hasPureCap() ? (Use32CapRegs ? CC_AArch64_AAPCS_Pure_32Cap_Regs
                                                      : CC_AArch64_AAPCS_Pure_16Cap_Regs)
                                      : CC_AArch64_AAPCS;
+    }
     if (!IsVarArg)
       return CC_AArch64_DarwinPCS;
     return Subtarget->isTargetILP32() ? CC_AArch64_DarwinPCS_ILP32_VarArg
@@ -4315,7 +4319,20 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
   // varargs
   AArch64FunctionInfo *FuncInfo = MF.getInfo<AArch64FunctionInfo>();
   if (isVarArg) {
-    if (!Subtarget->isTargetDarwin() || IsWin64) {
+    bool UseBoundedVarArgs =
+        Subtarget->hasPureCap() && Subtarget->hasMorelloNewVarArg();
+    if (UseBoundedVarArgs) {
+      unsigned VReg = MF.addLiveIn(AArch64::C9, &AArch64::CapRegClass);
+      SDValue Vars = DAG.getCopyFromReg(Chain, DL, VReg, MVT::iFATPTR128);
+      // Create a new FI and store it there. VASTART will load it from that
+      // location.
+      int FI = MFI.CreateStackObject(16, Align(16), false);
+      SDValue FIN = DAG.getFrameIndex(FI, MVT::iFATPTR128);
+      Chain = DAG.getStore(Vars.getValue(1), DL, Vars, FIN,
+               MachinePointerInfo::getStack(DAG.getMachineFunction(), 0));
+      FuncInfo->setPureCapVarArgsIndex(FI);
+    }
+    if ((!Subtarget->isTargetDarwin() || IsWin64) && !UseBoundedVarArgs) {
       // The AAPCS variadic function ABI is identical to the non-variadic
       // one. As a result there may be more arguments in registers and we should
       // save them for future reference.
@@ -4405,7 +4422,8 @@ void AArch64TargetLowering::saveVarArgRegisters(CCState &CCInfo,
   MachineFrameInfo &MFI = MF.getFrameInfo();
   AArch64FunctionInfo *FuncInfo = MF.getInfo<AArch64FunctionInfo>();
   const bool HasPureCap = Subtarget->hasPureCap();
-  const bool HasCap = Subtarget->hasMorello();
+  const bool HasCap = Subtarget->hasMorello() &&
+      !Subtarget->hasMorelloNewVarArg();
   const bool Use32CapRegs = !Subtarget->use16CapRegs();
   auto PtrVT = HasPureCap ? MVT::iFATPTR128 : getPointerTy(DAG.getDataLayout());
   bool IsWin64 = Subtarget->isCallingConvWin64(MF.getFunction().getCallingConv());
@@ -4823,6 +4841,7 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
   AArch64FunctionInfo *FuncInfo = MF.getInfo<AArch64FunctionInfo>();
   bool TailCallOpt = MF.getTarget().Options.GuaranteedTailCallOpt;
   bool IsSibCall = false;
+  bool HasVarArgs = false;
 
   if (IsTailCall) {
     // Check if it's really possible to do a tail call.
@@ -4858,6 +4877,7 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
                                                /*IsVarArg=*/ !Outs[i].IsFixed);
       bool Res = AssignFn(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, CCInfo);
       assert(!Res && "Call operand has unhandled type");
+      HasVarArgs = HasVarArgs || !Outs[i].IsFixed;
       (void)Res;
     }
   } else {
@@ -4891,6 +4911,12 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
 
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = CCInfo.getNextStackOffset();
+
+  if (HasVarArgs && Subtarget->hasPureCap() &&
+      Subtarget->hasMorelloNewVarArg()) {
+    // We need to round up in case the size last argument is less than 16.
+    NumBytes = alignTo(NumBytes, 16);
+  }
 
   if (IsSibCall) {
     // Since we're not changing the ABI to make this a tail call, the memory
@@ -4948,6 +4974,12 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
        RegsToPass.emplace_back(F.PReg, Val);
     }
   }
+
+  int VAArgStartOffset;
+  int VAArgEndOffset;
+  SDValue FirstAddr;
+  bool UseBoundedVarArgs =
+      Subtarget->hasPureCap() && Subtarget->hasMorelloNewVarArg();
 
   // Walk the register/memloc assignments, inserting copies/loads.
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
@@ -5087,6 +5119,15 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
                                                LocMemOffset);
       }
 
+      if (UseBoundedVarArgs && !Outs[i].IsFixed) {
+        // Get the bounds of the memory area used to pass varadic arguments.
+        if (FirstAddr == SDValue()) {
+          FirstAddr = DstAddr;
+          VAArgStartOffset = Offset;
+        }
+        VAArgEndOffset = alignTo(Offset + OpSize, 16);
+      }
+
       if (Outs[i].Flags.isByVal()) {
         SDValue SizeNode =
             DAG.getConstant(Outs[i].Flags.getByValSize(), DL, MVT::i64);
@@ -5109,6 +5150,30 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
         SDValue Store = DAG.getStore(Chain, DL, Arg, DstAddr, DstInfo);
         MemOpChains.push_back(Store);
       }
+    }
+  }
+
+  if (IsVarArg && UseBoundedVarArgs) {
+    if (FirstAddr != SDValue()) {
+      std::string BoundsDetails = "varargs call bounds setting";
+      SDValue VarArgs = DAG.getCSetBounds(
+          FirstAddr, DL, VAArgEndOffset - VAArgStartOffset, Align(),
+          "AArch64 variadic call lowering",
+          cheri::SetBoundsPointerSource::Stack, BoundsDetails);
+      // Clear the store and execute permissions on varargs. Clearing other
+      // permissions shouldn't be necessary since the capability is derived
+      // from CSP and that shouldn't have these in the first place. Clearing
+      // only the store and execute permissions should result in the immediate
+      // form of clrperm.
+      uint64_t PermMask = -1UL & ~((1UL << 16) | (1UL << 15));
+      VarArgs = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, MVT::iFATPTR128,
+          DAG.getConstant(Intrinsic::cheri_cap_perms_and, DL, MVT::i64),
+          VarArgs, DAG.getIntPtrConstant(PermMask, DL));
+      RegsToPass.push_back(std::make_pair(AArch64::C9, VarArgs));
+    } else {
+      // If no arguments are passed, set C9 to null.
+      RegsToPass.push_back(
+          std::make_pair(AArch64::C9, DAG.getNullCapability(DL)));
     }
   }
 
@@ -6827,6 +6892,20 @@ SDValue AArch64TargetLowering::LowerWin64_VASTART(SDValue Op,
                       MachinePointerInfo(SV));
 }
 
+SDValue AArch64TargetLowering::LowerAAPCScap_VASTART(SDValue Op,
+                                                     SelectionDAG &DAG) const {
+  AArch64FunctionInfo *FuncInfo =
+      DAG.getMachineFunction().getInfo<AArch64FunctionInfo>();
+  SDLoc DL(Op);
+  int Index = FuncInfo->getPureCapVarArgsIndex();
+  SDValue FR = DAG.getFrameIndex(Index, getPointerTy(DAG.getDataLayout(), 200));
+  SDValue VarPtr = DAG.getLoad(MVT::iFATPTR128, DL, Op.getOperand(0), FR,
+      MachinePointerInfo::getStack(DAG.getMachineFunction(), 0), 16);
+  const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
+  return DAG.getStore(VarPtr.getOperand(0), DL, VarPtr, Op.getOperand(1),
+                      MachinePointerInfo(SV));
+}
+
 SDValue AArch64TargetLowering::LowerAAPCS_VASTART(SDValue Op,
                                                 SelectionDAG &DAG) const {
   // The layout of the va_list struct is specified in the AArch64 Procedure Call
@@ -6894,7 +6973,8 @@ SDValue AArch64TargetLowering::LowerAAPCS_VASTART(SDValue Op,
 SDValue AArch64TargetLowering::LowerVASTART(SDValue Op,
                                             SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
-
+  if (Subtarget->hasPureCap() && Subtarget->hasMorelloNewVarArg())
+    return LowerAAPCScap_VASTART(Op, DAG);
   if (Subtarget->isCallingConvWin64(MF.getFunction().getCallingConv()))
     return LowerWin64_VASTART(Op, DAG);
   else if (Subtarget->isTargetDarwin())
@@ -6905,13 +6985,16 @@ SDValue AArch64TargetLowering::LowerVASTART(SDValue Op,
 
 SDValue AArch64TargetLowering::LowerVACOPY(SDValue Op,
                                            SelectionDAG &DAG) const {
+  bool UseBoundedVarArgs =
+      Subtarget->hasPureCap() && Subtarget->hasMorelloNewVarArg();
   // AAPCS has three pointers and two ints (= 32 bytes), Darwin has single
   // pointer.
   SDLoc DL(Op);
   unsigned PtrSize = Subtarget->isTargetILP32() ? 4 :
                      (Subtarget->hasPureCap() ? 16 : 8);
   unsigned VaListSize = (Subtarget->isTargetDarwin() ||
-                         Subtarget->isTargetWindows()) ? PtrSize :
+                         Subtarget->isTargetWindows() ||
+                         UseBoundedVarArgs) ? PtrSize :
                          (Subtarget->hasPureCap() ? 56 : 32);
   const Value *DestSV = cast<SrcValueSDNode>(Op.getOperand(3))->getValue();
   const Value *SrcSV = cast<SrcValueSDNode>(Op.getOperand(4))->getValue();

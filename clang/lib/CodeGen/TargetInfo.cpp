@@ -5796,7 +5796,7 @@ private:
   bool isDarwinPCS() const { return Kind == DarwinPCS; }
 
   ABIArgInfo classifyReturnType(QualType RetTy, bool IsVariadic) const;
-  ABIArgInfo classifyArgumentType(QualType RetTy) const;
+  ABIArgInfo classifyArgumentType(QualType RetTy, bool IsVariadic) const;
   bool isHomogeneousAggregateBaseType(QualType Ty) const override;
   bool isHomogeneousAggregateSmallEnough(const Type *Ty,
                                          uint64_t Members) const override;
@@ -5809,7 +5809,8 @@ private:
           classifyReturnType(FI.getReturnType(), FI.isVariadic());
 
     for (auto &it : FI.arguments())
-      it.info = classifyArgumentType(it.type);
+      it.info = classifyArgumentType(it.type,
+          &it >= FI.arg_begin() + FI.getNumRequiredArgs());
   }
 
   Address EmitDarwinVAArg(Address VAListAddr, QualType Ty,
@@ -5818,8 +5819,13 @@ private:
   Address EmitAAPCSVAArg(Address VAListAddr, QualType Ty,
                          CodeGenFunction &CGF) const;
 
+  Address EmitAAPCScapVAArg(Address VAListAddr, QualType Ty,
+                         CodeGenFunction &CGF) const;
+
   Address EmitVAArg(CodeGenFunction &CGF, Address VAListAddr,
                     QualType Ty) const override {
+    if (hasPureCap && CGF.getContext().getLangOpts().MorelloNewVarArg)
+      return EmitAAPCScapVAArg(VAListAddr, Ty, CGF);
     return Kind == Win64 ? EmitMSVAArg(CGF, VAListAddr, Ty)
                          : isDarwinPCS() ? EmitDarwinVAArg(VAListAddr, Ty, CGF)
                                          : EmitAAPCSVAArg(VAListAddr, Ty, CGF);
@@ -6070,7 +6076,8 @@ void WindowsAArch64TargetCodeGenInfo::setTargetAttributes(
 }
 }
 
-ABIArgInfo AArch64ABIInfo::classifyArgumentType(QualType Ty) const {
+ABIArgInfo AArch64ABIInfo::classifyArgumentType(QualType Ty,
+                                                bool IsVariadic) const {
   Ty = useFirstFieldIfTransparentUnion(Ty);
 
   // Handle illegal vector types here.
@@ -6107,6 +6114,12 @@ ABIArgInfo AArch64ABIInfo::classifyArgumentType(QualType Ty) const {
       if (EIT->getNumBits() > 128)
         return getNaturalAlignIndirect(Ty);
 
+    if (IsVariadic && getContext().getLangOpts().MorelloNewVarArg &&
+        Ty->isCHERICapabilityType(getContext()) &&
+        !getContext().getTargetInfo().areAllPointersCapabilities())
+      // Varargs containing capabilities are passed indirectly.
+      return getNaturalAlignIndirect(Ty, /*ByVal=*/false);
+
     return (isPromotableIntegerTypeForABI(Ty) && isDarwinPCS()
                 ? ABIArgInfo::getExtend(Ty)
                 : ABIArgInfo::getDirect());
@@ -6134,6 +6147,11 @@ ABIArgInfo AArch64ABIInfo::classifyArgumentType(QualType Ty) const {
     return ABIArgInfo::getDirect(llvm::Type::getInt8Ty(getVMContext()));
   }
 
+  if (IsVariadic && getContext().getLangOpts().MorelloNewVarArg &&
+      getContext().getTargetInfo().areAllPointersCapabilities() &&
+      std::max(Size, (uint64_t)getContext().getTypeAlign(Ty)) > 128)
+    return getNaturalAlignIndirect(Ty, /*ByVal=*/false);
+
   // Homogeneous Floating-point Aggregates (HFAs) need to be expanded.
   const Type *Base = nullptr;
   uint64_t Members = 0;
@@ -6143,6 +6161,11 @@ ABIArgInfo AArch64ABIInfo::classifyArgumentType(QualType Ty) const {
   }
 
   if (containsCapabilities(Ty)) {
+    if (IsVariadic && getContext().getLangOpts().MorelloNewVarArg &&
+        !getContext().getTargetInfo().areAllPointersCapabilities())
+      // Varargs containing capabilities are passed indirectly.
+      return getNaturalAlignIndirect(Ty, /*ByVal=*/false);
+
     if (llvm::Type *CoercedType = shouldPassInCapabilityRegisters(Ty)) {
       // Pass this in registers as an array of two capabilities.
       ABIArgInfo ArgInfo = ABIArgInfo::getDirect(CoercedType);
@@ -6304,10 +6327,36 @@ bool AArch64ABIInfo::isHomogeneousAggregateSmallEnough(const Type *Base,
   return Members <= 4;
 }
 
+Address AArch64ABIInfo::EmitAAPCScapVAArg(Address VAListAddr,
+                                          QualType Ty,
+                                          CodeGenFunction &CGF) const {
+  llvm::Type *BaseTy = CGF.ConvertType(Ty);
+  BaseTy = CGF.CGM.getPointerInDefaultAS(BaseTy);
+
+  llvm::Value *OnStackPtr = CGF.Builder.CreateLoad(VAListAddr, "stack");
+
+  llvm::Value *ArgPtr = CGF.Builder.CreateBitCast(OnStackPtr, BaseTy);
+
+
+  CharUnits StackSlotSize = CharUnits::fromQuantity(16);
+  Address OnStackAddr(ArgPtr, StackSlotSize);
+
+  if (isEmptyRecord(getContext(), Ty, true)) {
+    return CGF.Builder.CreateElementBitCast(OnStackAddr,
+                                            CGF.ConvertTypeForMem(Ty));
+  }
+
+  llvm::Value *StackSizeC = CGF.Builder.getSize(StackSlotSize);
+  llvm::Value *NewStack =
+      CGF.Builder.CreateInBoundsGEP(OnStackPtr, StackSizeC, "new_stack");
+  CGF.Builder.CreateStore(NewStack, VAListAddr);
+  return OnStackAddr;
+}
+
 Address AArch64ABIInfo::EmitAAPCSVAArg(Address VAListAddr,
                                             QualType Ty,
                                             CodeGenFunction &CGF) const {
-  ABIArgInfo AI = classifyArgumentType(Ty);
+  ABIArgInfo AI = classifyArgumentType(Ty, /*IsVaradic=*/true);
   bool IsIndirect = AI.isIndirect();
 
   llvm::Type *BaseTy = CGF.ConvertType(Ty);
@@ -6355,7 +6404,9 @@ Address AArch64ABIInfo::EmitAAPCSVAArg(Address VAListAddr,
   Address reg_offs_p = Address::invalid();
   llvm::Value *reg_offs = nullptr;
   int reg_top_index;
-  bool HasCaps = containsCapabilities(Ty);
+  bool HasCaps =
+      getContext().getLangOpts().MorelloNewVarArg ? false
+                                                  : containsCapabilities(Ty);
   // Indirect arguments should be capabilities in
   // sandbox mode and therefore 16 bytes.
   int RegSize = IsIndirect ? (hasPureCap ? 16 : 8) : TySize.getQuantity();

@@ -2832,6 +2832,10 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
       Opts.setCheriMemopsInlineBehaviour(MemCpyMode);
   }
 
+  Opts.MorelloNewVarArg =
+      Args.hasFlag(OPT_morello_vararg_new, OPT_morello_vararg_legacy,
+                   Opts.MorelloNewVarArg);
+
   // Parse the -cheri-bounds= option to determine whether we should set more
   // bounds on capabilities (e.g. when passing subobject references to
   // functions)
@@ -3778,6 +3782,12 @@ static void ParseTargetArgs(TargetOptions &Opts, ArgList &Args,
   if (Args.hasFlag(options::OPT_cheri_comparison_exact,
                    options::OPT_cheri_comparison_address, false)) {
     Opts.FeaturesAsWritten.push_back("+cheri-exact-equals");
+  }
+
+  if (T.isAArch64()) {
+    if (Args.hasFlag(options::OPT_morello_vararg_new,
+                     options::OPT_morello_vararg_legacy, false))
+      Opts.FeaturesAsWritten.push_back("+new-morello-vararg");
   }
 
   Opts.ForceEnableInt128 = Args.hasArg(OPT_fforce_enable_int128);

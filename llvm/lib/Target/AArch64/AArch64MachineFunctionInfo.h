@@ -97,6 +97,10 @@ class AArch64FunctionInfo final : public MachineFunctionInfo {
   /// registers.
   unsigned VarArgsFPRSize = 0;
 
+  // Frame index where we store the argument that holds the pointer to
+  // the variadic arguments for the pure capability ABI.
+  unsigned PureCapVarArgsIndex = 0;
+
   /// True if this function has a subset of CSRs that is handled explicitly via
   /// copies.
   bool IsSplitCSR = false;
@@ -286,6 +290,9 @@ public:
 
   unsigned getVarArgsFPRSize() const { return VarArgsFPRSize; }
   void setVarArgsFPRSize(unsigned Size) { VarArgsFPRSize = Size; }
+
+  int getPureCapVarArgsIndex() const { return PureCapVarArgsIndex; }
+  void setPureCapVarArgsIndex(int Index) { PureCapVarArgsIndex = Index; }
 
   unsigned getFrameRecordSize() const { return FrameRecordSize; }
   void setFrameRecordSize(unsigned Size) { FrameRecordSize = Size; }
