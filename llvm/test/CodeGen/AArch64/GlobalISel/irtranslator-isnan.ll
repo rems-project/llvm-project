@@ -12,7 +12,7 @@ define i1 @s16(half %x) {
   ; CHECK:   [[ZEXT:%[0-9]+]]:_(s8) = G_ZEXT %1(s1)
   ; CHECK:   [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[ZEXT]](s8)
   ; CHECK:   $w0 = COPY [[ANYEXT]](s32)
-  ; CHECK:   RET_ReallyLR implicit $w0
+  ; CHECK:   RET_ReallyLR 0, implicit $w0
   %isnan = tail call i1 @llvm.isnan.f16(half %x)
   ret i1 %isnan
 }
@@ -25,7 +25,7 @@ define <4 x i1> @v4s16(<4 x half> %x) {
   ; CHECK:   %1:_(<4 x s1>) = nofpexcept G_ISNAN [[COPY]](<4 x s16>)
   ; CHECK:   [[ANYEXT:%[0-9]+]]:_(<4 x s16>) = G_ANYEXT %1(<4 x s1>)
   ; CHECK:   $d0 = COPY [[ANYEXT]](<4 x s16>)
-  ; CHECK:   RET_ReallyLR implicit $d0
+  ; CHECK:   RET_ReallyLR 0, implicit $d0
   %isnan = tail call <4 x i1> @llvm.isnan.v4f16(<4 x half> %x)
   ret <4 x i1> %isnan
 }
@@ -39,7 +39,7 @@ define i1 @strictfp(half %x) strictfp {
   ; CHECK:   [[ZEXT:%[0-9]+]]:_(s8) = G_ZEXT [[ISNAN]](s1)
   ; CHECK:   [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[ZEXT]](s8)
   ; CHECK:   $w0 = COPY [[ANYEXT]](s32)
-  ; CHECK:   RET_ReallyLR implicit $w0
+  ; CHECK:   RET_ReallyLR 0, implicit $w0
   %isnan = tail call i1 @llvm.isnan.f16(half %x)
   ret i1 %isnan
 }
