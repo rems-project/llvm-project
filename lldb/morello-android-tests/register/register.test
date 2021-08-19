@@ -7,7 +7,7 @@ register read c11
 
 register read -f capability c11
 # CHECK-LABEL: (lldb) register read -f capability c11
-# CHECK: c11 = {tag = {{.*}}, address = 0xdeaddeaddeadbeef, {{.*}}range = [0xdeaddeaddeadbeef-0xdeaddeaddeadbef3)
+# CHECK: c11 = 0xdeaddeaddeadbeef [,0xdeaddeaddeadbeef-0xdeaddeaddeadbef3]
 
 register read x11
 # CHECK-LABEL: (lldb) register read x11
