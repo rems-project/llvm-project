@@ -54,7 +54,7 @@ static pthread_key_t emutls_pthread_key;
 static bool emutls_key_created = false;
 
 typedef unsigned int gcc_word __attribute__((mode(word)));
-typedef unsigned int gcc_pointer __attribute__((mode(pointer)));
+typedef uintptr_t gcc_pointer __attribute__((mode(pointer)));
 
 // Default is not to use posix_memalign, so systems like Android
 // can use thread local data without heavier POSIX memory allocators.
