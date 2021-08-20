@@ -14,12 +14,6 @@
 
 // UNSUPPORTED: c++03, c++11, c++14, c++17
 
-// UNSUPPORTED: apple-clang-9, apple-clang-10
-// UNSUPPORTED: clang-6, clang-7
-
-// TBAA info seems to be  broken for std::destroying_delete_t.
-// UNSUPPORTED: clang-9, clang-10, clang-11
-
 #include <new>
 
 #include <cassert>

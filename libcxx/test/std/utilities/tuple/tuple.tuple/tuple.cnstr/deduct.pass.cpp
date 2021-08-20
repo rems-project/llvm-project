@@ -7,7 +7,6 @@
 //===----------------------------------------------------------------------===//
 
 // UNSUPPORTED: c++03, c++11, c++14
-// UNSUPPORTED: apple-clang-9
 
 // Temporarily disable this test as it fails weirdly. It has nothing to do with
 // newlib, but this is a convenient way to exclude it from the run on our
