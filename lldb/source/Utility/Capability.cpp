@@ -432,14 +432,20 @@ void DumpLLDBVerbose(Stream &s, const llvm::APInt &value, bool has_tag) {
 
 // Dump capability as:
 // <address> [<permissions>,<base>-<top>] (<attr>)
+// or, if it is null-derived, just as:
+// <address>
 template <typename CapabilityEncoding>
 void DumpCHERISimplified(Stream &s, const llvm::APInt &value, bool has_tag) {
-  // Decode capability.
-  bool is_sealed = CapabilityEncoding::IsCapabilitySealed(value);
-  bool is_sentry = CapabilityEncoding::IsCapabilitySentry(value);
-  bool is_valid = IsCapabilityValid(value);
-  uint64_t perms = CapabilityEncoding::DecodePermissions(value);
   uint64_t address = GetAddress(value);
+
+  // Check if the capability is null-derived (i.e. contains only the address).
+  if (value.isIntN(64)) {
+    s.Printf("0x%016" PRIx64, address);
+    return;
+  }
+
+  // Print address, permissions and range.
+  uint64_t perms = CapabilityEncoding::DecodePermissions(value);
 
   llvm::APInt base, top;
   CapabilityEncoding::DecodeCapabilityAddressRange(value, base, top);
@@ -452,6 +458,11 @@ void DumpCHERISimplified(Stream &s, const llvm::APInt &value, bool has_tag) {
   s.Printf("0x%016" PRIx64 " [%s,%s-%s]", address, perms_str.c_str(),
            FormatAsLowercaseHex(base).c_str(),
            FormatAsLowercaseHex(top).c_str());
+
+  // Print attributes.
+  bool is_sealed = CapabilityEncoding::IsCapabilitySealed(value);
+  bool is_sentry = CapabilityEncoding::IsCapabilitySentry(value);
+  bool is_valid = IsCapabilityValid(value);
 
   std::string attrs;
   if (has_tag && !is_valid)

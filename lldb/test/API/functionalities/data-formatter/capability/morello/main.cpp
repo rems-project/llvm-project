@@ -149,5 +149,7 @@ int main() {
   CAP128(no_bottom,                  0xffffffffffff0000, 0xffffffffffffffff);
   CAP128(no_top,                     0xffffffffc000ffff, 0xffffffffffffffff);
 
+  CAP128(null_derived,               0x0000000000000000, 0xaaaabbbbccccdddd);
+
   return 0; // break here
 }

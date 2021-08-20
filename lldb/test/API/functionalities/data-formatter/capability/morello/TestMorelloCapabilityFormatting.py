@@ -239,7 +239,7 @@ class CapabilityFormattingTestCase(lldbtest.TestBase):
             "{address = 0x0000000000000000, attributes = {[], range = [0x0-0x200000000)}}")
         self.check_capability_formats(
             frame, 'bounds_ie_ge50',
-            "0x0000000000000000 [,0x0-0x10000000000000000]",
+            "0x0000000000000000",
             "{address = 0x0000000000000000, attributes = {[], range = [0x0-0x10000000000000000)}}")
 
         self.check_capability_formats(
@@ -363,3 +363,8 @@ class CapabilityFormattingTestCase(lldbtest.TestBase):
             frame, 'no_top',
             "0xffffffffffffffff [rwxRWE,0xffffffffffffffff-0x10000000000000000] (sealed)",
             "{address = 0xffffffffffffffff, attributes = {[Sealed Global Executive User0 User1 User2 User3 MutableLoad CompartmentID BranchSealedPair System Unseal Seal StoreLocalCap StoreCap LoadCap Execute Store Load], otype = 0x7fff, range = [0xffffffffffffffff-0x10000000000000000)}}")
+
+        self.check_capability_formats(
+            frame, 'null_derived',
+            "0xaaaabbbbccccdddd",
+            "{address = 0xaaaabbbbccccdddd, attributes = {[], range = [0x0-0x10000000000000000)}}")
