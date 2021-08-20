@@ -1,0 +1,4 @@
+process launch --
+
+# CHECK: stop reason = signal SIGSEGV: capability tag fault
+# CHECK: cap-fault-tag`main at main.c:15

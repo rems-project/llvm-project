@@ -1,0 +1,4 @@
+process launch --
+
+# CHECK: stop reason = signal SIGSEGV: capability permission fault
+# CHECK: cap-fault-perms`main at main.c:13

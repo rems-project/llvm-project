@@ -1,0 +1,4 @@
+process launch --
+
+# CHECK: stop reason = signal SIGSEGV: capability sealed fault
+# CHECK: cap-fault-sealed`main at main.c:12

@@ -1,0 +1,11 @@
+cc_test {
+    name: "cap-fault-access",
+    srcs: [
+        "main.c"
+    ],
+    cflags: [
+        "-g", "-O0"
+    ],
+    compile_multilib: "both",
+    gtest: false,
+}

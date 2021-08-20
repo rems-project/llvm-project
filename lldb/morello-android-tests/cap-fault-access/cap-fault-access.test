@@ -1,0 +1,4 @@
+process launch --
+
+# CHECK: stop reason = signal SIGSEGV: capability access fault
+# CHECK: cap-fault-access`main at main.c:30
