@@ -978,6 +978,8 @@ static void readConfigs(opt::InputArgList &args) {
                    args.hasArg(OPT_shared));
   config->allowUndefinedCapRelocs = args.hasArg(OPT_allow_undefined_cap_relocs);
   config->forceMorelloC64Plt = args.hasArg(OPT_morello_c64_plt);
+  config->disableWarnOnMorelloABIMismatch =
+      args.hasArg(OPT_disable_warn_morello_abi);
   config->auxiliaryList = args::getStrings(args, OPT_auxiliary);
   config->bsymbolic = args.hasArg(OPT_Bsymbolic);
   config->bsymbolicFunctions = args.hasArg(OPT_Bsymbolic_functions);
@@ -1512,7 +1514,8 @@ void LinkerDriver::inferMachineType() {
       if (file->ekind == ELFNoneKind)
         continue;
       bool IsPurecap = file->eflags & EF_AARCH64_CHERI_PURECAP;
-      if (config->forceMorelloC64Plt && !IsPurecap)
+      if (config->forceMorelloC64Plt && !IsPurecap &&
+          !config->disableWarnOnMorelloABIMismatch)
         warn(toString(file) + ": Forcing purecap ABI because "
              "--morello-c64-plt was passed. This option is deprecated and "
              "should be removed. The purecap ABI should be infered through "
