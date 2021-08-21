@@ -81,14 +81,14 @@ body:             |
     ; CHECK: $w0 = COPY %mul(s32)
     ; CHECK: %ext_overflow:_(s32) = COPY [[ICMP]](s32)
     ; CHECK: $w0 = COPY %ext_overflow(s32)
-    ; CHECK: RET_ReallyLR implicit $w0
+    ; CHECK: RET_ReallyLR 0, implicit $w0
     %lhs:_(s32) = COPY $w0
     %rhs:_(s32) = COPY $w1
     %mul:_(s32), %overflow:_(s1) = G_SMULO %lhs, %rhs
     $w0 = COPY %mul(s32)
     %ext_overflow:_(s32) = G_ANYEXT %overflow(s1)
     $w0 = COPY %ext_overflow(s32)
-    RET_ReallyLR implicit $w0
+    RET_ReallyLR 0, implicit $w0
 
 ...
 ---
@@ -105,14 +105,14 @@ body:             |
     ; CHECK: $w0 = COPY %mul(s32)
     ; CHECK: %ext_overflow:_(s32) = COPY [[ICMP]](s32)
     ; CHECK: $w0 = COPY %ext_overflow(s32)
-    ; CHECK: RET_ReallyLR implicit $w0
+    ; CHECK: RET_ReallyLR 0, implicit $w0
     %lhs:_(s32) = COPY $w0
     %rhs:_(s32) = COPY $w1
     %mul:_(s32), %overflow:_(s1) = G_UMULO %lhs, %rhs
     $w0 = COPY %mul(s32)
     %ext_overflow:_(s32) = G_ANYEXT %overflow(s1)
     $w0 = COPY %ext_overflow(s32)
-    RET_ReallyLR implicit $w0
+    RET_ReallyLR 0, implicit $w0
 
 ...
 ---
@@ -140,7 +140,7 @@ body:             |
     ; CHECK: $w0 = COPY %ext_mul(s32)
     ; CHECK: %ext_overflow:_(s32) = COPY [[OR]](s32)
     ; CHECK: $w0 = COPY %ext_overflow(s32)
-    ; CHECK: RET_ReallyLR implicit $w0
+    ; CHECK: RET_ReallyLR 0, implicit $w0
     %lhs_wide:_(s32) = COPY $w0
     %rhs_wide:_(s32) = COPY $w1
     %lhs:_(s24) = G_TRUNC %lhs_wide
@@ -150,7 +150,7 @@ body:             |
     $w0 = COPY %ext_mul(s32)
     %ext_overflow:_(s32) = G_ANYEXT %overflow(s1)
     $w0 = COPY %ext_overflow(s32)
-    RET_ReallyLR implicit $w0
+    RET_ReallyLR 0, implicit $w0
 
 ...
 ---

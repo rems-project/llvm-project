@@ -2466,7 +2466,7 @@ define i64 @lround(float %x) {
   ; CHECK:   [[COPY:%[0-9]+]]:_(s32) = COPY $s0
   ; CHECK:   [[LROUND:%[0-9]+]]:_(s64) = G_LROUND [[COPY]](s32)
   ; CHECK:   $x0 = COPY [[LROUND]](s64)
-  ; CHECK:   RET_ReallyLR implicit $x0
+  ; CHECK:   RET_ReallyLR 0, implicit $x0
   %lround = tail call i64 @llvm.lround.i64.f32(float %x)
   ret i64 %lround
 }
