@@ -639,6 +639,7 @@ void DynamicRegisterInfo::Finalize(const ArchSpec &arch) {
                  (strcmp(reg.name, "fp") == 0))
           reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_FP;
         else if ((strcmp(reg.name, "rflags") == 0) ||
+                 (strcmp(reg.name, "eflags") == 0) ||
                  (strcmp(reg.name, "flags") == 0))
           reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_FLAGS;
       }
