@@ -72,6 +72,7 @@ int main(int, char**)
         assert(!is.eof());
         assert(!is.fail());
     }
+#ifndef TEST_HAS_NO_WIDE_CHARACTERS
     {
         testbuf<wchar_t> sb(L" -123.5 ");
         std::wistream is(&sb);
@@ -81,6 +82,7 @@ int main(int, char**)
         assert(!is.eof());
         assert(!is.fail());
     }
+#endif
 #ifndef TEST_HAS_NO_EXCEPTIONS
     {
         testbuf<char> sb;
