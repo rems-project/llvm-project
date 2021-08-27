@@ -89,3 +89,19 @@
   clrperm c1, c1, #
 // CHECK:  error: Expected integer value
 // CHECK-NEXT: clrperm c1, c1, #
+
+  ldr c16, [c16, #10000]
+// CHECK:  error: index must be a multiple of 16 in range [0, 8176]
+// CHECK-NEXT: ldr c16, [c16, #10000]
+
+  ldr x16, [c16, #6088]
+// CHECK: error: index must be a multiple of 8 in range [0, 4088]
+// CHECK-NEXT: ldr x16, [c16, #6088]
+
+  ldr w16, [c16, #6088]
+// CHECK: error: index must be a multiple of 4 in range [0, 2044]
+// CHECK-NEXT: ldr w16, [c16, #6088]
+
+  ldrb w16, [c16, #6088]
+// CHECK: error: index must be in range [0, 511]
+// CHECK-NEXT: ldrb w16, [c16, #6088]

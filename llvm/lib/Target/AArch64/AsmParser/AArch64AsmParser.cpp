@@ -4852,6 +4852,16 @@ bool AArch64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode,
     return Error(Loc, "index must be a multiple of 2 in range [0, 126].");
   case Match_InvalidMemoryIndexed1UImm6:
     return Error(Loc, "index must be in range [0, 63].");
+  case Match_InvalidMemoryIndexed16UImm9:
+    return Error(Loc, "index must be a multiple of 16 in range [0, 8176].");
+  case Match_InvalidMemoryIndexed8UImm9:
+    return Error(Loc, "index must be a multiple of 8 in range [0, 4088].");
+  case Match_InvalidMemoryIndexed4UImm9:
+    return Error(Loc, "index must be a multiple of 4 in range [0, 2044].");
+  case Match_InvalidMemoryIndexed2UImm9:
+    return Error(Loc, "index must be a multiple of 2 in range [0, 1022].");
+  case Match_InvalidMemoryIndexed1UImm9:
+    return Error(Loc, "index must be in range [0, 511].");
   case Match_InvalidMemoryWExtend8:
     return Error(Loc,
                  "expected 'uxtw' or 'sxtw' with optional shift of #0");
@@ -5607,6 +5617,11 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidCArithXExtend16:
   case Match_InvalidCArithWExtend0:
   case Match_InvalidCArithXExtend0:
+  case Match_InvalidMemoryIndexed16UImm9:
+  case Match_InvalidMemoryIndexed8UImm9:
+  case Match_InvalidMemoryIndexed4UImm9:
+  case Match_InvalidMemoryIndexed2UImm9:
+  case Match_InvalidMemoryIndexed1UImm9:
   case Match_InvalidMemoryIndexed8UImm5:
   case Match_InvalidMemoryIndexed4UImm5:
   case Match_InvalidMemoryIndexed2UImm5:
