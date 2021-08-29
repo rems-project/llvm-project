@@ -172,9 +172,9 @@ body:             |
     ; CHECK: liveins: $q0
     ; CHECK: %ptr:fpr128 = COPY $q0
     ; CHECK: $q0 = COPY %ptr
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %ptr:fpr(<2 x p0>) = COPY $q0
     %int:fpr(<2 x s64>) = G_PTRTOINT %ptr(<2 x p0>)
     $q0 = COPY %int(<2 x s64>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 ...

@@ -244,12 +244,12 @@ body:             |
     ; CHECK: %val:fpr32 = COPY $s0
     ; CHECK: %bv:fpr128 = SUBREG_TO_REG 0, %val, %subreg.ssub
     ; CHECK: $q0 = COPY %bv
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %val:fpr(s32) = COPY $s0
     %undef:fpr(s32) = G_IMPLICIT_DEF
     %bv:fpr(<4 x s32>) = G_BUILD_VECTOR %val(s32), %undef(s32), %undef(s32), %undef(s32)
     $q0 = COPY %bv(<4 x s32>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 ...
 ...
 ---
@@ -273,10 +273,10 @@ body:             |
     ; CHECK: [[INSvi32gpr1:%[0-9]+]]:fpr128 = INSvi32gpr [[INSvi32gpr]], 2, %undef
     ; CHECK: %bv:fpr128 = INSvi32gpr [[INSvi32gpr1]], 3, %undef
     ; CHECK: $q0 = COPY %bv
-    ; CHECK: RET_ReallyLR implicit $q0
+    ; CHECK: RET_ReallyLR 0, implicit $q0
     %val:gpr(s32) = COPY $w0
     %undef:gpr(s32) = G_IMPLICIT_DEF
     %bv:fpr(<4 x s32>) = G_BUILD_VECTOR %val(s32), %undef(s32), %undef(s32), %undef(s32)
     $q0 = COPY %bv(<4 x s32>)
-    RET_ReallyLR implicit $q0
+    RET_ReallyLR 0, implicit $q0
 ...
