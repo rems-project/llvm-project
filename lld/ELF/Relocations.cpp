@@ -963,7 +963,6 @@ static void addPltEntry(PltSection *plt, GotPltSection *gotPlt,
 static void addGotEntry(Symbol &sym) {
   in.got->addEntry(sym);
 
-  RelExpr expr = sym.isTls() ? R_TPREL : R_ABS;
   uint64_t off = sym.getGotOffset();
 
   // If a GOT slot value can be calculated at link-time, which is now,
@@ -983,35 +982,41 @@ static void addGotEntry(Symbol &sym) {
       // __cap_relocs table.
       addMorelloC64GotRelocation(target->relativeRel, &sym, in.got, off, 0);
     else
-      in.got->relocations.push_back({expr, target->symbolicRel, off, 0, &sym});
+      in.got->relocations.push_back({R_ABS, target->symbolicRel, off, 0, &sym});
     return;
   }
 
   // Otherwise, we emit a dynamic relocation to .rel[a].dyn so that
   // the GOT slot will be fixed at load-time.
-  if (!sym.isTls() && !sym.isPreemptible && config->isPic) {
-    if (config->morelloC64Plt)
-      // As well as writing the Relative relocation there are additional
-      // static relocations needed to initialize the GOT entry. Delegate this
-      // to addMorelloC64GotRelocation.
-      addMorelloC64GotRelocation(target->relativeRel, &sym, in.got, off, 0);
-    else
-      addRelativeReloc(in.got, off, sym, 0, R_ABS, target->symbolicRel);
+  if (config->morelloC64Plt) {
+    // There are additional static relocations needed to initialize the GOT
+    // entry. Delegate this to addMorelloC64GotRelocation.
+    addMorelloC64GotRelocation(
+        sym.isPreemptible ? target->gotRel : target->relativeRel, &sym, in.got,
+        off, 0);
     return;
   }
-  if (config->morelloC64Plt && !sym.isTls())
-    // As with the Relative relocation there are additional static relocations
-    // needed to initialize the GOT entry. We do not do this for TLS symbols as
-    // the GOT generating TLS relocation is not a capability (offset from TP).
-    addMorelloC64GotRelocation(target->gotRel, &sym, in.got, off, 0);
-  else
-    mainPart->relaDyn->addAddendOnlyRelocIfNonPreemptible(
-        sym.isTls() ? target->tlsGotRel : target->gotRel, in.got, off, sym,
-        target->symbolicRel);
 
-  if (config->morelloC64Plt && sym.isTls() && !sym.isPreemptible) {
+  if (sym.isPreemptible)
+    mainPart->relaDyn->addReloc({target->gotRel, in.got, off,
+                                 DynamicReloc::AgainstSymbol, sym, 0, R_ABS});
+  else
+    addRelativeReloc(in.got, off, sym, 0, R_ABS, target->symbolicRel);
+}
+
+static void addTpOffsetGotEntry(Symbol &sym) {
+  in.got->addEntry(sym);
+  uint64_t off = sym.getGotOffset();
+
+  if (config->morelloC64Plt && !sym.isPreemptible)
     in.got->relocations.push_back({R_SIZE, R_AARCH64_ABS64, off + 8, 0, &sym});
+
+  if (!sym.isPreemptible && !config->isPic) {
+    in.got->relocations.push_back({R_TPREL, target->symbolicRel, off, 0, &sym});
+    return;
   }
+  mainPart->relaDyn->addAddendOnlyRelocIfNonPreemptible(
+      target->tlsGotRel, in.got, off, sym, target->symbolicRel);
 }
 
 // Return true if we can define a symbol in the executable that
@@ -1415,22 +1420,26 @@ handleTlsRelocation(RelType type, Symbol &sym, InputSectionBase &c,
     return target->getTlsGdRelaxSkip(type);
   }
 
-  // Initial-Exec relocs can be relaxed to Local-Exec if the symbol is locally
-  // defined.
   if (oneof<R_GOT, R_GOTPLT, R_GOT_PC, R_AARCH64_GOT_PAGE_PC, R_GOT_OFF,
-            R_TLSIE_HINT>(expr) &&
-      toExecRelax && isLocalInExecutable) {
-    if (config->emachine == EM_AARCH64 && config->morelloC64Plt) {
-      in.tlsLEData->addTLSLEData(&sym);
+            R_TLSIE_HINT>(expr)) {
+    // Initial-Exec relocs can be relaxed to Local-Exec if the symbol is locally
+    // defined.
+    if (toExecRelax && isLocalInExecutable) {
+      if (config->emachine == EM_AARCH64 && config->morelloC64Plt) {
+        in.tlsLEData->addTLSLEData(&sym);
+      }
+      c.relocations.push_back(
+          {target->adjustTlsExpr(type, R_RELAX_TLS_IE_TO_LE), type, offset,
+           addend, &sym});
+    } else if (expr != R_TLSIE_HINT) {
+      if (!sym.isInGot())
+        addTpOffsetGotEntry(sym);
+      // R_GOT may not be a link-time constant.
+      processRelocAux<ELFT>(c, expr, type, offset, sym, addend);
     }
-    c.relocations.push_back(
-        {target->adjustTlsExpr(type, R_RELAX_TLS_IE_TO_LE), type,
-         offset, addend, &sym});
     return 1;
   }
 
-  if (expr == R_TLSIE_HINT)
-    return 1;
   return 0;
 }
 
