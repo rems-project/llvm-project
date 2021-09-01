@@ -1,8 +1,10 @@
 #!/bin/bash
 
 # This script assumes we already have an FVP model running and the test binary
-# compiled at a path derived from the ANDROID_ROOT (see below). It also assumes
-# that lldb-server has already been copied to the model.
+# compiled. The script needs ANDROID_OUT to be set to build output directory containing
+# data/ and symbols/ directory. It also assumes adb connection has been established with
+# the device, adb is available in PATH and the test lldb-server has already been copied to
+# the model.
 
 # We can't use -u here because build/envsetup.sh has unbound variables.
 set -ef -o pipefail
@@ -27,10 +29,15 @@ fi
 
 test_file=$1
 
-# This is an environment variable which should be pointing to the root of the
-# android development tree.
-if ! test -d "${ANDROID_ROOT}"; then
-  echo "Error: Invalid ANDROID_ROOT: ${ANDROID_ROOT}" >&2
+# This is an environment variable which should be pointing to the out directory of the
+# android development tree containing built data and symbols directory.
+if ! test -d "${ANDROID_OUT}"; then
+  echo "Error: Invalid ANDROID_OUT: ${ANDROID_OUT}" >&2
+  exit 2
+fi
+
+if ! which adb; then
+  echo "Error: adb is not found in $PATH" >&2
   exit 2
 fi
 
@@ -54,17 +61,12 @@ if ! test -f "${FILECHECK_EXECUTABLE}"; then
   exit 5
 fi
 
-# Setup the environment so that we can use adb.
-cd ${ANDROID_ROOT}
-source build/envsetup.sh
-lunch morello_fvp_nano-eng
-
 # The test_file is a path to an "APP.test" file, where APP is used as the
 # name of the binary and associated directories everywhere else.
 app=$(basename -s .test ${test_file})
 
 push_path="/data/nativetestc64/${app}"
-build_path="${OUT}${push_path}" # $OUT is set by `lunch`
+build_path="${ANDROID_OUT}${push_path}"
 
 if ! test -f "${build_path}/${app}"; then
   echo "Error: Couldn't find binary at ${build_path}/${app}" >&2
@@ -79,7 +81,7 @@ remote_exe="${push_path}/${app}"
 
 # The path where the binary with debug symbols is put by the android build
 # system.
-symbols_dir="${OUT}/symbols"
+symbols_dir="${ANDROID_OUT}/symbols"
 local_exe="${symbols_dir}${remote_exe}"
 if ! test -f "${local_exe}"; then
   echo "Error: Couldn't find binary with debug symbols ${local_exe}" >&2

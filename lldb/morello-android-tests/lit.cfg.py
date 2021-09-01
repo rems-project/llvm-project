@@ -32,8 +32,8 @@ def require_param(name):
     if not name in lit_config.params:
         sys.exit("No value for {}, use --param to specify".format(name))
 
-require_param('ANDROID_ROOT')
-config.environment['ANDROID_ROOT'] = lit_config.params['ANDROID_ROOT']
+require_param('ANDROID_OUT')
+config.environment['ANDROID_OUT'] = lit_config.params['ANDROID_OUT']
 
 require_param('LLDB_SERVER_PORT')
 config.environment['LLDB_SERVER_PORT'] = lit_config.params['LLDB_SERVER_PORT']
