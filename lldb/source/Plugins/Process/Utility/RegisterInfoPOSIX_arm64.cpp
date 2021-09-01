@@ -225,8 +225,7 @@ RegisterInfoPOSIX_arm64::RegisterInfoPOSIX_arm64(
     : lldb_private::RegisterInfoAndSetInterface(target_arch),
       m_register_info_p(GetRegisterInfoPtr(target_arch)),
       m_register_info_count(GetRegisterInfoCount(target_arch)) {
-  MarkAsFP(g_register_infos_arm64_le[gpr_x29], /*isCapability=*/false);
-  MarkAsFP(g_register_infos_arm64_le[cap_c29], /*isCapability=*/true);
+  SetupFP(target_arch.IsAArch64MorelloDescriptorABI());
   switch (target_arch.GetMachine()) {
   case llvm::Triple::aarch64:
   case llvm::Triple::aarch64_32:

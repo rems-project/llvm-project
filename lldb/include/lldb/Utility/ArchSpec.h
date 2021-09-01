@@ -92,6 +92,14 @@ public:
     eARM_abi_hard_float = 0x00000400
   };
 
+  // AArch64 specific e_flags
+  enum AArch64eflags {
+    eAArch64_abi_default = 0x00000000, // default ABI (we don't distinguish between the
+                                       // standard AArch64 ABI and Morello
+                                       // Hybrid or Pure Capability ABIs)
+    eAArch64_abi_descabi = 0x00000001  // Morello Descriptor ABI
+  };
+
   enum Core {
     eCore_arm_generic,
     eCore_arm_armv4,
@@ -283,6 +291,13 @@ public:
   ///
   ///  \return a boolean value.
   bool IsMIPS() const;
+
+  /// Returns true for the AArch64 Morello Descriptor ABI.
+  bool IsAArch64MorelloDescriptorABI() const;
+
+  // Convenience function for setting or resetting the AArch64 Morello
+  // descriptor ABI. Does nothing for non-AArch64 architectures.
+  void SetAArch64MorelloDescriptorABI(bool is_desc_abi);
 
   /// Returns a string representing current architecture as a target CPU for
   /// tools like compiler, disassembler etc.

@@ -110,8 +110,7 @@ RegisterContextDarwin_arm64::RegisterContextDarwin_arm64(
     fpu_errs[i] = -1;
     exc_errs[i] = -1;
   }
-  MarkAsFP(g_register_infos_arm64_le[gpr_x29], /*isCapability=*/false);
-  MarkAsFP(g_register_infos_arm64_le[cap_c29], /*isCapability=*/true);
+  SetupFP(/*is_desc_abi=*/false);
 }
 
 RegisterContextDarwin_arm64::~RegisterContextDarwin_arm64() {}

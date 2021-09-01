@@ -67,6 +67,9 @@ let Definition = "target" in {
     DefaultEnumValue<"eCapabilityFormatCHERISimplified">,
     EnumValues<"OptionEnumValues(g_capability_formats)">,
     Desc<"Format to use when dumping capabilities">;
+  def AArch64MorelloDescriptorABI: Property<"aarch64-morello-desc-abi", "Boolean">,
+    DefaultFalse,
+    Desc<"Force the use of the AArch64 Morello descriptor ABI (only valid for Morello targets)">;
   def MaxZeroPaddingInFloatFormat: Property<"max-zero-padding-in-float-format", "UInt64">,
     DefaultUnsignedValue<6>,
     Desc<"The maximum number of zeroes to insert when displaying a very small float before falling back to scientific notation.">;

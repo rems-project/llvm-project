@@ -435,6 +435,38 @@ void DynamicRegisterInfo::AddRegister(RegisterInfo &reg_info,
     m_reg_data_byte_size = end_reg_offset;
 }
 
+// Mark register as frame pointer.
+static void MarkAsFP(lldb_private::RegisterInfo &fp_reg_info,
+                     bool is_capability) {
+  auto current_register_kind = fp_reg_info.kinds[lldb::eRegisterKindGeneric];
+  if (current_register_kind == LLDB_REGNUM_GENERIC_FP ||
+      current_register_kind == LLDB_REGNUM_GENERIC_CFP) {
+    // Register has already been marked as FP.
+    return;
+  }
+
+  assert(fp_reg_info.alt_name == nullptr && "FP already has an alternate name");
+  fp_reg_info.alt_name = fp_reg_info.name;
+  fp_reg_info.name = is_capability ? "cfp" : "fp";
+
+  assert(fp_reg_info.kinds[lldb::eRegisterKindGeneric] == LLDB_INVALID_REGNUM &&
+         "FP already has a register kind");
+  fp_reg_info.kinds[lldb::eRegisterKindGeneric] =
+      is_capability ? LLDB_REGNUM_GENERIC_CFP : LLDB_REGNUM_GENERIC_FP;
+}
+
+// Make sure \p reg_info is not marked as a frame pointer.
+static void MaybeEraseFP(lldb_private::RegisterInfo &reg_info,
+                         bool is_capability) {
+  if (reg_info.kinds[lldb::eRegisterKindGeneric] !=
+      (is_capability ? LLDB_REGNUM_GENERIC_CFP : LLDB_REGNUM_GENERIC_FP))
+    return;
+
+  reg_info.kinds[lldb::eRegisterKindGeneric] = LLDB_INVALID_REGNUM;
+  reg_info.name = reg_info.alt_name;
+  reg_info.alt_name = nullptr;
+}
+
 void DynamicRegisterInfo::Finalize(const ArchSpec &arch) {
   if (m_finalized)
     return;
@@ -533,6 +565,7 @@ void DynamicRegisterInfo::Finalize(const ArchSpec &arch) {
     }
   }
 
+  bool is_desc_abi = arch.IsAArch64MorelloDescriptorABI();
   if (!generic_regs_specified) {
     switch (arch.GetMachine()) {
     case llvm::Triple::aarch64:
@@ -541,9 +574,6 @@ void DynamicRegisterInfo::Finalize(const ArchSpec &arch) {
       for (auto &reg : m_regs) {
         if (strcmp(reg.name, "pc") == 0)
           reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_PC;
-        else if ((strcmp(reg.name, "fp") == 0) ||
-                 (strcmp(reg.name, "x29") == 0))
-          reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_FP;
         else if ((strcmp(reg.name, "lr") == 0) ||
                  (strcmp(reg.name, "x30") == 0))
           reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_RA;
@@ -554,8 +584,6 @@ void DynamicRegisterInfo::Finalize(const ArchSpec &arch) {
           reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_FLAGS;
         else if (strcmp(reg.name, "pcc") == 0)
           reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_PCC;
-        else if (strcmp(reg.name, "cfp") == 0 || strcmp(reg.name, "c29") == 0)
-          reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_CFP;
         else if (strcmp(reg.name, "clr") == 0 || strcmp(reg.name, "c30") == 0)
           reg.kinds[eRegisterKindGeneric] = LLDB_REGNUM_GENERIC_RAC;
         else if (strcmp(reg.name, "csp") == 0 || strcmp(reg.name, "c31") == 0)
@@ -623,6 +651,21 @@ void DynamicRegisterInfo::Finalize(const ArchSpec &arch) {
 
     default:
       break;
+    }
+  }
+
+  if (arch.GetTriple().isAArch64()) {
+    const char *fp = is_desc_abi ? "x17" : "x29";
+    const char *cfp = is_desc_abi ? "c17" : "c29";
+    for (auto &reg : m_regs) {
+      if (reg.kinds[eRegisterKindGeneric] == LLDB_REGNUM_GENERIC_FP)
+        MaybeEraseFP(reg, /*is_capability*/ false);
+      if (reg.kinds[eRegisterKindGeneric] == LLDB_REGNUM_GENERIC_CFP)
+        MaybeEraseFP(reg, /*is_capability*/ true);
+      if (strcmp(reg.name, fp) == 0)
+        MarkAsFP(reg, /*is_capability*/ false);
+      if (strcmp(reg.name, cfp) == 0)
+        MarkAsFP(reg, /*is_capability*/ true);
     }
   }
 }

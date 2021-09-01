@@ -753,7 +753,7 @@ static uint32_t g_rddc_el0_invalidates[] = {cap_ddc, LLDB_INVALID_REGNUM};
   }
 
 // This is incomplete! The FP/CFP are not marked as such and need to be
-// specified dynamically before the first use. Call MarkAsFP to do so.
+// specified dynamically before the first use. Call SetupFP to do so.
 static lldb_private::RegisterInfo g_register_infos_arm64_le[] = {
     // DEFINE_GPR64(name, GENERIC KIND)
     DEFINE_GPR64(x0, LLDB_REGNUM_GENERIC_ARG1),
@@ -1051,6 +1051,7 @@ static lldb_private::RegisterInfo g_register_infos_arm64_le[] = {
     // clang-format on
 };
 
+// Mark register as frame pointer.
 static void MarkAsFP(lldb_private::RegisterInfo &fp_reg_info, bool is_capability) {
   auto current_register_kind = fp_reg_info.kinds[lldb::eRegisterKindGeneric];
   if (current_register_kind == LLDB_REGNUM_GENERIC_FP ||
@@ -1066,6 +1067,90 @@ static void MarkAsFP(lldb_private::RegisterInfo &fp_reg_info, bool is_capability
   assert(fp_reg_info.kinds[lldb::eRegisterKindGeneric] == LLDB_INVALID_REGNUM &&
          "FP already has a register kind");
   fp_reg_info.kinds[lldb::eRegisterKindGeneric] = is_capability ? LLDB_REGNUM_GENERIC_CFP : LLDB_REGNUM_GENERIC_FP;
+}
+
+// Make sure \p reg_info is not marked as a frame pointer.
+static void MaybeEraseFP(lldb_private::RegisterInfo &reg_info,
+                         bool is_capability) {
+  if (reg_info.kinds[lldb::eRegisterKindGeneric] !=
+      (is_capability ? LLDB_REGNUM_GENERIC_CFP : LLDB_REGNUM_GENERIC_FP))
+    return;
+
+  reg_info.kinds[lldb::eRegisterKindGeneric] = LLDB_INVALID_REGNUM;
+  reg_info.name = reg_info.alt_name;
+  reg_info.alt_name = nullptr;
+}
+
+static void SetupFP(bool is_desc_abi) {
+  if (is_desc_abi) {
+    // Make sure x29/c29 are not marked as FP.
+    MaybeEraseFP(g_register_infos_arm64_le[gpr_x29], /*isCapability=*/false);
+    MaybeEraseFP(g_register_infos_arm64_le[cap_c29], /*isCapability=*/true);
+
+    assert(strcmp(g_register_infos_arm64_le[gpr_x29].name, "x29") == 0 &&
+           "Unexpected name for x29");
+    assert(strcmp(g_register_infos_arm64_le[cap_c29].name, "c29") == 0 &&
+           "Unexpected name for c29");
+    assert(
+        g_register_infos_arm64_le[gpr_x29].kinds[lldb::eRegisterKindGeneric] ==
+            LLDB_INVALID_REGNUM &&
+        "Unexpected reg kind for x29");
+    assert(
+        g_register_infos_arm64_le[cap_c29].kinds[lldb::eRegisterKindGeneric] ==
+            LLDB_INVALID_REGNUM &&
+        "Unexpected reg kind for c29");
+
+    // Mark x17/c17 as FP.
+    MarkAsFP(g_register_infos_arm64_le[gpr_x17], /*isCapability=*/false);
+    MarkAsFP(g_register_infos_arm64_le[cap_c17], /*isCapability=*/true);
+
+    assert(strcmp(g_register_infos_arm64_le[gpr_x17].name, "fp") == 0 &&
+           "Unexpected name for x17");
+    assert(strcmp(g_register_infos_arm64_le[cap_c17].name, "cfp") == 0 &&
+           "Unexpected name for c17");
+    assert(
+        g_register_infos_arm64_le[gpr_x17].kinds[lldb::eRegisterKindGeneric] ==
+            LLDB_REGNUM_GENERIC_FP &&
+        "Unexpected reg kind for x17");
+    assert(
+        g_register_infos_arm64_le[cap_c17].kinds[lldb::eRegisterKindGeneric] ==
+            LLDB_REGNUM_GENERIC_CFP &&
+        "Unexpected reg kind for c17");
+  } else {
+    // Make sure x17/c17 are not marked as FP.
+    MaybeEraseFP(g_register_infos_arm64_le[gpr_x17], /*isCapability=*/false);
+    MaybeEraseFP(g_register_infos_arm64_le[cap_c17], /*isCapability=*/true);
+
+    assert(strcmp(g_register_infos_arm64_le[gpr_x17].name, "x17") == 0 &&
+           "Unexpected name for x17");
+    assert(strcmp(g_register_infos_arm64_le[cap_c17].name, "c17") == 0 &&
+           "Unexpected name for c17");
+    assert(
+        g_register_infos_arm64_le[gpr_x17].kinds[lldb::eRegisterKindGeneric] ==
+            LLDB_INVALID_REGNUM &&
+        "Unexpected reg kind for x17");
+    assert(
+        g_register_infos_arm64_le[cap_c17].kinds[lldb::eRegisterKindGeneric] ==
+            LLDB_INVALID_REGNUM &&
+        "Unexpected reg kind for c17");
+
+    // Mark x29/c29 as FP.
+    MarkAsFP(g_register_infos_arm64_le[gpr_x29], /*isCapability=*/false);
+    MarkAsFP(g_register_infos_arm64_le[cap_c29], /*isCapability=*/true);
+
+    assert(strcmp(g_register_infos_arm64_le[gpr_x29].name, "fp") == 0 &&
+           "Unexpected name for x29");
+    assert(strcmp(g_register_infos_arm64_le[cap_c29].name, "cfp") == 0 &&
+           "Unexpected name for c29");
+    assert(
+        g_register_infos_arm64_le[gpr_x29].kinds[lldb::eRegisterKindGeneric] ==
+            LLDB_REGNUM_GENERIC_FP &&
+        "Unexpected reg kind for x29");
+    assert(
+        g_register_infos_arm64_le[cap_c29].kinds[lldb::eRegisterKindGeneric] ==
+            LLDB_REGNUM_GENERIC_CFP &&
+        "Unexpected reg kind for c29");
+  }
 }
 
 #endif // DECLARE_REGISTER_INFOS_ARM64_STRUCT

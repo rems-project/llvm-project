@@ -453,6 +453,10 @@ void ProcessGDBRemote::BuildDynamicRegisterInfo(bool force) {
   if (!arch_to_use.IsValid())
     arch_to_use = target_arch;
 
+  if (arch_to_use.IsValid() && arch_to_use.GetTriple().isAArch64())
+    arch_to_use.SetAArch64MorelloDescriptorABI(
+        GetTarget().GetAArch64MorelloDescriptorABI());
+
   // Hardcode the AArch64-Morello register set to speed up the process of
   // getting register info on Android/Linux running under FastModel.
   // TODO Morello: Remove this hack.
@@ -468,7 +472,8 @@ void ProcessGDBRemote::BuildDynamicRegisterInfo(bool force) {
         g_processgdbremote_properties
             [ePropertyTargetDefinitionAArch64MorelloBuiltIn]
                 .name);
-    m_register_info.HardcodeAArch64MorelloRegisters();
+    m_register_info.HardcodeAArch64MorelloRegisters(
+        arch_to_use.IsAArch64MorelloDescriptorABI());
     m_register_info.Finalize(arch_to_use);
     return;
   }
