@@ -34,11 +34,6 @@ if ! test -d "${ANDROID_ROOT}"; then
   exit 2
 fi
 
-if test -z "${ADB_PORT}"; then
-  echo "Error: Please set the ADB_PORT environment variable" >&2
-  exit 2
-fi
-
 if test -z "${LLDB_SERVER}"; then
   echo "Error: Please set the LLDB_SERVER environment variable" >&2
   exit 2
@@ -63,8 +58,6 @@ fi
 cd ${ANDROID_ROOT}
 source build/envsetup.sh
 lunch morello_fvp_nano-eng
-
-adb connect 127.0.0.1:${ADB_PORT}
 
 # The test_file is a path to an "APP.test" file, where APP is used as the
 # name of the binary and associated directories everywhere else.

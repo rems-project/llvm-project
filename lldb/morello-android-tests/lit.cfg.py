@@ -35,9 +35,6 @@ def require_param(name):
 require_param('ANDROID_ROOT')
 config.environment['ANDROID_ROOT'] = lit_config.params['ANDROID_ROOT']
 
-require_param('ADB_PORT')
-config.environment['ADB_PORT'] = lit_config.params['ADB_PORT']
-
 require_param('LLDB_SERVER_PORT')
 config.environment['LLDB_SERVER_PORT'] = lit_config.params['LLDB_SERVER_PORT']
 
