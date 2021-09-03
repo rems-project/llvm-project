@@ -670,7 +670,7 @@ body:             |
     %16:fpr(s32) = G_LOAD %0(p0) :: (load (s16))
     %24:gpr(s32) = COPY %16(s32)
     $w0 = COPY %24(s32)
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -703,6 +703,6 @@ body:             |
     %16:fpr(s32) = G_LOAD %0(p0) :: (load (s8))
     %24:gpr(s32) = COPY %16(s32)
     $w0 = COPY %24(s32)
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...

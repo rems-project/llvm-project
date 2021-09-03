@@ -1323,8 +1323,7 @@ Value *llvm::emitMemCpyChk(Value *Dst, Value *Src, Value *Len, Value *ObjSize,
       DL.getIntPtrType(Context, I8Ptr->getPointerAddressSpace()));
   CallInst *CI = B.CreateCall(MemCpy, {Dst, Src, Len, ObjSize});
   if (HasCap)
-    CI->addAttribute(AttributeList::FunctionIndex,
-                     Attribute::MustPreserveCheriTags);
+    CI->addFnAttr(Attribute::MustPreserveCheriTags);
   if (const Function *F =
           dyn_cast<Function>(MemCpy.getCallee()->stripPointerCasts()))
     CI->setCallingConv(F->getCallingConv());

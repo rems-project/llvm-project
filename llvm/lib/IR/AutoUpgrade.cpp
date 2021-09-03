@@ -4046,8 +4046,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     MemCI->setTailCallKind(CI->getTailCallKind());
     MemCI->setCallingConv(CI->getCallingConv());
     if (CI->hasFnAttr("must-preserve-cheri-tags"))
-      MemCI->addAttribute(AttributeList::FunctionIndex,
-                          Attribute::MustPreserveCheriTags);
+      MemCI->addFnAttr(Attribute::MustPreserveCheriTags);
     break;
   }
   }
