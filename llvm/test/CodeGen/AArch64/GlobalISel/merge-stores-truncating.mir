@@ -29,7 +29,7 @@ body:             |
     %7:_(s64) = G_CONSTANT i64 1
     %8:_(p0) = G_PTR_ADD %1, %7(s64)
     G_STORE %6(s8), %8(p0) :: (store (s8))
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -71,7 +71,7 @@ body:             |
     %16:_(s64) = G_CONSTANT i64 3
     %17:_(p0) = G_PTR_ADD %1, %16(s64)
     G_STORE %11(s8), %17(p0) :: (store (s8))
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -101,7 +101,7 @@ body:             |
     %6:_(s64) = G_CONSTANT i64 2
     %7:_(p0) = G_PTR_ADD %1, %6(s64)
     G_STORE %5(s16), %7(p0) :: (store (s16))
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -133,7 +133,7 @@ body:             |
     %7:_(p0) = G_PTR_ADD %1, %6(s64)
     G_STORE %4(s16), %7(p0) :: (store (s16))
     G_STORE %5(s16), %1(p0) :: (store (s16))
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -165,7 +165,7 @@ body:             |
     %7:_(p0) = G_PTR_ADD %1, %6(s64)
     G_STORE %5(s16), %1(p0) :: (store (s16))
     G_STORE %4(s16), %7(p0) :: (store (s16))
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -231,7 +231,7 @@ body:             |
     %36:_(s64) = G_CONSTANT i64 7
     %37:_(p0) = G_PTR_ADD %1, %36(s64)
     G_STORE %23(s8), %37(p0) :: (store (s8))
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -273,7 +273,7 @@ body:             |
     %16:_(s64) = G_CONSTANT i64 6
     %17:_(p0) = G_PTR_ADD %1, %16(s64)
     G_STORE %11(s16), %17(p0) :: (store (s16))
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -303,7 +303,7 @@ body:             |
     %6:_(s64) = G_CONSTANT i64 4
     %7:_(p0) = G_PTR_ADD %1, %6(s64)
     G_STORE %5(s32), %7(p0) :: (store (s32))
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -335,7 +335,7 @@ body:             |
     %7:_(p0) = G_PTR_ADD %1, %6(s64)
     G_STORE %4(s32), %7(p0) :: (store (s32))
     G_STORE %5(s32), %1(p0) :: (store (s32))
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -367,7 +367,7 @@ body:             |
     %7:_(p0) = G_PTR_ADD %1, %6(s64)
     G_STORE %5(s32), %1(p0) :: (store (s32))
     G_STORE %4(s32), %7(p0) :: (store (s32))
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -404,7 +404,7 @@ body:             |
     %6:_(s32) = G_LSHR %0, %5(s32)
     %7:_(s16) = G_TRUNC %6(s32)
     G_STORE %7(s16), %3(p0) :: (store (s16), align 1)
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -441,7 +441,7 @@ body:             |
     G_STORE %6(s16), %3(p0) :: (store (s16), align 1)
     %7:_(s8) = G_TRUNC %0(s32)
     G_STORE %7(s8), %1(p0) :: (store (s8))
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -482,7 +482,7 @@ body:             |
     %8:_(s32) = G_LSHR %0, %7(s32)
     %9:_(s16) = G_TRUNC %8(s32)
     G_STORE %9(s16), %5(p0) :: (store (s16), align 1)
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -519,7 +519,7 @@ body:             |
     %6:_(s32) = G_LSHR %0, %5(s32)
     %7:_(s16) = G_TRUNC %6(s32)
     G_STORE %7(s16), %1(p0) :: (store (s16), align 1)
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -549,7 +549,7 @@ body:             |
     ; CHECK: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY1]], [[C1]](s64)
     ; CHECK: G_STORE [[TRUNC1]](s16), [[PTR_ADD]](p0) :: (store (s16))
     ; CHECK: $w0 = COPY [[LOAD]](s32)
-    ; CHECK: RET_ReallyLR implicit $w0
+    ; CHECK: RET_ReallyLR 0, implicit $w0
     %0:_(s32) = COPY $w0
     %1:_(p0) = COPY $x1
     %2:_(p0) = COPY $x2
@@ -563,7 +563,7 @@ body:             |
     %9:_(p0) = G_PTR_ADD %1, %8(s64)
     G_STORE %6(s16), %9(p0) :: (store (s16))
     $w0 = COPY %7(s32)
-    RET_ReallyLR implicit $w0
+    RET_ReallyLR 0, implicit $w0
 
 ...
 ---
@@ -602,7 +602,7 @@ body:             |
     %7:_(s64) = G_CONSTANT i64 1
     %8:_(p0) = G_PTR_ADD %1, %7(s64)
     G_STORE %6(s8), %8(p0) :: (store (s8))
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -651,7 +651,7 @@ body:             |
     %11:_(s64) = G_CONSTANT i64 3
     %12:_(p0) = G_PTR_ADD %1, %11(s64)
     G_STORE %8(s8), %12(p0) :: (store (s8))
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -693,7 +693,7 @@ body:             |
     %8:_(s64) = G_CONSTANT i64 1
     %9:_(p0) = G_PTR_ADD %2, %8(s64)
     G_STORE %7(s8), %9(p0) :: (store (s8))
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
 ---
@@ -732,6 +732,6 @@ body:             |
     %7:_(s64) = G_CONSTANT i64 1
     %8:_(p0) = G_PTR_ADD %1, %7(s64)
     G_STORE %6(s8), %8(p0) :: (store (s8))
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...

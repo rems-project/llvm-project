@@ -237,8 +237,8 @@ defm atomic_cload_umax : binary_atomic_op<atomic_cload_umax>;
 defm atomic_cload_umin : binary_atomic_op<atomic_cload_umin>;
 defm atomic_cswap      : binary_atomic_op<atomic_cswap>;
 defm atomic_cmp_cswap  : ternary_atomic_op<atomic_cmp_cswap>;
-defm atomic_cmp_cswap_cap  : ternary_atomic_op_ord<atomic_cmp_cswap_cap>;
-defm atomic_cswap_cap  : binary_atomic_op_ord<atomic_cswap_cap>;
+defm atomic_cmp_cswap_cap  : ternary_atomic_op_ord;
+defm atomic_cswap_cap  : binary_atomic_op_ord;
 
 //===----------------------------------
 // Atomic cmpxchg for -O0
