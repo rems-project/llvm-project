@@ -282,6 +282,7 @@ def err_ambiguous_a64c_arch : Error<"Ambiguous use of +a64c in arch string">;
 def err_ambiguous_c64_arch : Error<"Ambiguous use +c64 in arch string">;
 def err_invalid_c64_abi_combination : Error<"Cannot use '%0' encoding mode with '%1' ABI">;
 def err_drv_invalid_omp_target : Error<"OpenMP target is invalid: '%0'">;
+def err_drv_debug_no_new_runtime : Error<"OpenMP target device debugging enabled with incompatible runtime">;
 def err_drv_incompatible_omp_arch : Error<"OpenMP target architecture '%0' pointer size is incompatible with host '%1'">;
 def err_drv_omp_host_ir_file_not_found : Error<
   "provided host compiler IR file '%0' is required to generate code for OpenMP "
