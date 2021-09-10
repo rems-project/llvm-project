@@ -2155,5 +2155,3 @@ lldb_private::ConstString ABISysV_arm::GetPluginNameStatic() {
 lldb_private::ConstString ABISysV_arm::GetPluginName() {
   return GetPluginNameStatic();
 }
-
-uint32_t ABISysV_arm::GetPluginVersion() { return 1; }

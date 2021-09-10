@@ -91,8 +91,6 @@ public:
 
   lldb_private::ConstString GetPluginName() override;
 
-  uint32_t GetPluginVersion() override { return 1; }
-
 protected:
   lldb::ValueObjectSP
   GetReturnValueObjectSimple(lldb_private::Thread &thread,

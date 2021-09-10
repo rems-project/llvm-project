@@ -2039,5 +2039,3 @@ lldb_private::ConstString ABIMacOSX_arm::GetPluginNameStatic() {
 lldb_private::ConstString ABIMacOSX_arm::GetPluginName() {
   return GetPluginNameStatic();
 }
-
-uint32_t ABIMacOSX_arm::GetPluginVersion() { return 1; }
