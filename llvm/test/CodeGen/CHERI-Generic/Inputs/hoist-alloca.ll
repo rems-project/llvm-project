@@ -28,8 +28,8 @@
 ; }
 
 ; RUN: llc @PURECAP_HARDFLOAT_ARGS@ -o %t.mir -stop-before=early-machinelicm < %s
-; RUN: echo "DONOTAUTOGEN" | llc @PURECAP_HARDFLOAT_ARGS@ -run-pass=early-machinelicm \
-; RUN:    -debug-only=machinelicm %t.mir -o /dev/null 2>&1 | FileCheck --check-prefix=MACHINELICM-DBG %s
+; RUN: llc @PURECAP_HARDFLOAT_ARGS@ -run-pass=early-machinelicm -debug-only=machinelicm %t.mir -o /dev/null 2>%t.dbg
+; RUN: FileCheck --input-file=%t.dbg --check-prefix=MACHINELICM-DBG %s
 ; Check that MachineLICM hoists the CheriBoundedStackPseudoImm (MIPS) / IncOffset+SetBoundsImm (RISCV) instructions
 ; For Morello there is no setbounds inside the loop due to the different alloca bunding pass, so there is nothing to hoist here.
 ; MACHINELICM-DBG-LABEL: ******** Pre-regalloc Machine LICM: hoist_alloca_uncond
