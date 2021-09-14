@@ -23,6 +23,7 @@ void initStatisticOptions();
 void initTimerOptions();
 void initTypeSizeOptions();
 void initSetBoundsOptions();
+void initCheriLibFuncOptions();
 void initWithColorOptions();
 void initDebugOptions();
 void initRandomSeedOptions();

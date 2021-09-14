@@ -2540,6 +2540,7 @@ static void initCommonOptions() {
   initTimerOptions();
   initTypeSizeOptions();
   initSetBoundsOptions();
+  initCheriLibFuncOptions();
   initWithColorOptions();
   initDebugOptions();
   initRandomSeedOptions();
