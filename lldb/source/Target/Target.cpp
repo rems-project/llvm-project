@@ -3001,7 +3001,7 @@ Status Target::Launch(ProcessLaunchInfo &launch_info, Stream *stream) {
     DeleteCurrentProcess();
 
     m_process_sp =
-        GetPlatform()->DebugProcess(launch_info, debugger, this, error);
+        GetPlatform()->DebugProcess(launch_info, debugger, *this, error);
 
   } else {
     LLDB_LOGF(log,
