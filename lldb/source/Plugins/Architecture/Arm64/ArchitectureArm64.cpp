@@ -17,7 +17,7 @@
 using namespace lldb_private;
 using namespace lldb;
 
-LLDB_PLUGIN_DEFINE(ArchitectureArm64);
+LLDB_PLUGIN_DEFINE(ArchitectureArm64)
 
 ConstString ArchitectureArm64::GetPluginNameStatic() {
   return ConstString("arm64");
@@ -40,7 +40,6 @@ std::unique_ptr<Architecture> ArchitectureArm64::Create(const ArchSpec &arch) {
 }
 
 ConstString ArchitectureArm64::GetPluginName() { return GetPluginNameStatic(); }
-uint32_t ArchitectureArm64::GetPluginVersion() { return 1; }
 
 addr_t
 ArchitectureArm64::GetCallableLoadAddress(addr_t code_addr,

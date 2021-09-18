@@ -222,8 +222,14 @@ typedef s32 ptrdiff;
 #else
 #error "SANITIZER_WORDSIZE not supported"
 #endif
+
+#if (SANITIZER_WORDSIZE == 64)
 typedef unsigned long usize;
 typedef signed long ssize;
+#else
+typedef unsigned int usize;
+typedef signed int ssize;
+#endif
 
 #ifdef __CHERI_PURE_CAPABILITY__
 static_assert(sizeof(ptrdiff) == sizeof(__PTRDIFF_TYPE__), "");

@@ -1121,7 +1121,7 @@ void GDBRemoteDynamicRegisterInfo::HardcodeAArch64MorelloRegisters(
       ConstString name(reg_info.name);
       ConstString alt_name(reg_info.alt_name);
       ConstString set_name(reg_set.name);
-      AddRegister(reg_info, name, alt_name, set_name);
+      AddRegister(reg_info, set_name);
     }
   }
 }
