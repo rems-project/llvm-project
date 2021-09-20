@@ -749,6 +749,7 @@ namespace AArch64MorelloCSysReg {
 namespace AArch64SysReg {
   struct SysReg {
     const char *Name;
+    const char *AltName;
     unsigned Encoding;
     bool Readable;
     bool Writeable;
