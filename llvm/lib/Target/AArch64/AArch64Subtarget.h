@@ -291,6 +291,7 @@ protected:
 
   unsigned MinSVEVectorSizeInBits;
   unsigned MaxSVEVectorSizeInBits;
+  unsigned VScaleForTuning = 2;
 
   /// TargetTriple - What processor and OS we're targeting.
   Triple TargetTriple;
@@ -674,6 +675,8 @@ public:
   }
 
   bool useSVEForFixedLengthVectors() const;
+
+  unsigned getVScaleForTuning() const { return VScaleForTuning; }
 };
 } // End llvm namespace
 
