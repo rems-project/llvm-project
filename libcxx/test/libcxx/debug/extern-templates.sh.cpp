@@ -14,6 +14,7 @@
 
 // UNSUPPORTED: libcxx-no-debug-mode
 // UNSUPPORTED: libcpp-has-no-localization
+// UNSUPPORTED: cant-build-shared-library
 
 // This requires dynamic linking so won't work with newlib.
 // UNSUPPORTED: libcpp-has-newlib
@@ -26,7 +27,7 @@
 // UNSUPPORTED: windows
 
 // RUN: %{cxx} %{flags} %{compile_flags} %s %{link_flags} -fPIC -DTU1 -D_LIBCPP_DEBUG=1 -fvisibility=hidden -shared -o %t.lib
-// RUN: cd %T && %{cxx} %{flags} %{compile_flags} %s ./%basename_t.tmp.lib %{link_flags} -fPIC -DTU2 -D_LIBCPP_DEBUG=1 -fvisibility=hidden -o %t.exe
+// RUN: cd %T && %{cxx} %{flags} %{compile_flags} %s ./%basename_t.tmp.lib %{link_flags} -DTU2 -D_LIBCPP_DEBUG=1 -fvisibility=hidden -o %t.exe
 // RUN: %{exec} %t.exe
 
 #include <cassert>
