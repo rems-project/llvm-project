@@ -70,9 +70,10 @@ enum ArchExtKind : uint64_t {
   AEK_SMEF64 =      1ULL << 38,
   AEK_SMEI64 =      1ULL << 39,
   AEK_HBC =         1ULL << 40,
+  AEK_MOPS =        1ULL << 41,
   // Morello extensions
-  AEK_A64C =        1ULL << 41,
-  AEK_C64 =         1ULL << 42
+  AEK_A64C =        1ULL << 42,
+  AEK_C64 =         1ULL << 43
 };
 
 enum class ArchKind {
