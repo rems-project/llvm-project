@@ -61,6 +61,11 @@ if ! test -f "${FILECHECK_EXECUTABLE}"; then
   exit 5
 fi
 
+if test -z "${ORIGINAL_SOURCE_PREFIX}"; then
+  echo "Error: Please set the ORIGINAL_SOURCE_PREFIX environment variable" >&2
+  exit 5
+fi
+
 # The test_file is a path to an "APP.test" file, where APP is used as the
 # name of the binary and associated directories everywhere else.
 app=$(basename -s .test ${test_file})
@@ -88,6 +93,12 @@ if ! test -f "${local_exe}"; then
   exit 5
 fi
 
+# We need to tell lldb where the sources are, because they may be in a different
+# place than when the executable was built. We therefore need to replace the
+# prefix used in the debug info with the current location of the sources.
+original_source_dir=${ORIGINAL_SOURCE_PREFIX}
+current_source_dir=$(dirname $0)
+
 # Forward port for lldb-server.
 adb forward tcp:"${LLDB_SERVER_PORT}" tcp:"${LLDB_SERVER_PORT}"
 
@@ -112,6 +123,7 @@ startup_commands=lldb-startup.cmds
   echo "settings set target.auto-install-main-executable false"
   echo "settings set plugin.process.gdb-remote.packet-timeout 300"
   echo "settings set interpreter.echo-comment-commands false"
+  echo "settings set target.source-map ${original_source_dir} ${current_source_dir}"
   echo "platform select remote-android"
   echo "platform connect connect://localhost:${LLDB_SERVER_PORT}"
   echo "target create -r ${remote_exe} ${local_exe}"

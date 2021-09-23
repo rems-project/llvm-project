@@ -35,6 +35,9 @@ def require_param(name):
 require_param('ANDROID_OUT')
 config.environment['ANDROID_OUT'] = lit_config.params['ANDROID_OUT']
 
+require_param('ORIGINAL_SOURCE_PREFIX')
+config.environment['ORIGINAL_SOURCE_PREFIX'] = lit_config.params['ORIGINAL_SOURCE_PREFIX']
+
 require_param('LLDB_SERVER_PORT')
 config.environment['LLDB_SERVER_PORT'] = lit_config.params['LLDB_SERVER_PORT']
 
