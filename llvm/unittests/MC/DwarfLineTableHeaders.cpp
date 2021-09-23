@@ -100,7 +100,7 @@ public:
     MCSection *Section = C.MOFI->getTextSection();
     Section->setHasInstructions(true);
     TheStreamer->SwitchSection(Section);
-    TheStreamer->emitCFIStartProc(true);
+    TheStreamer->emitCFIStartProc(MCCFIProcType::Normal);
 
     // Create a mock dwarfloc
     Ctx.setCurrentDwarfLoc(/*FileNo=*/0, /*Line=*/1, /*Column=*/1, /*Flags=*/0,

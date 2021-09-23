@@ -117,5 +117,5 @@ body: |
     %2:_(<16 x s1>) = G_BUILD_VECTOR %0(s1), %1(s1), %0(s1), %1(s1), %0(s1), %1(s1), %0(s1), %1(s1), %0(s1), %1(s1), %0(s1), %1(s1), %0(s1), %1(s1), %0(s1), %1(s1)
     %w:_(<16 x s8>) = G_ANYEXT %2
     $q0 = COPY %w(<16 x s8>)
-    RET_ReallyLR
+    RET_ReallyLR 0
 ...
