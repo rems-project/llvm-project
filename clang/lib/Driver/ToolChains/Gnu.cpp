@@ -2727,6 +2727,7 @@ bool Generic_GCC::IsUnwindTablesDefault(const ArgList &Args) const {
   case llvm::Triple::ppcle:
   case llvm::Triple::ppc64:
   case llvm::Triple::ppc64le:
+  case llvm::Triple::x86:
   case llvm::Triple::x86_64:
     return true;
   default:
