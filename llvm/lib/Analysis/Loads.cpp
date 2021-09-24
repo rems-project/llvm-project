@@ -370,8 +370,8 @@ Value *llvm::FindAvailableLoadedValue(LoadInst *Load,
 static bool AreNonOverlapSameBaseLoadAndStore(
     Value *LoadPtr, Type *LoadTy, Value *StorePtr, Type *StoreTy,
     const DataLayout &DL) {
-  APInt LoadOffset(DL.getTypeSizeInBits(LoadPtr->getType()), 0);
-  APInt StoreOffset(DL.getTypeSizeInBits(StorePtr->getType()), 0);
+  APInt LoadOffset(DL.getIndexTypeSizeInBits(LoadPtr->getType()), 0);
+  APInt StoreOffset(DL.getIndexTypeSizeInBits(StorePtr->getType()), 0);
   Value *LoadBase = LoadPtr->stripAndAccumulateConstantOffsets(
       DL, LoadOffset, /* AllowNonInbounds */ false);
   Value *StoreBase = StorePtr->stripAndAccumulateConstantOffsets(
