@@ -214,10 +214,6 @@ public:
 
   void SetUserSpecifiedTrapHandlerNames(const Args &args);
 
-  bool GetNonStopModeEnabled() const;
-
-  void SetNonStopModeEnabled(bool b);
-
   bool GetEnableAutoInstallMainExecutable() const;
 
   bool GetDisplayRuntimeSupportValues() const;
