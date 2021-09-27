@@ -174,6 +174,8 @@ add_llvm_component_library(LLVMSupport
   MemoryBufferRef.cpp
   MD5.cpp
   Morello.cpp
+  MSP430Attributes.cpp
+  MSP430AttributeParser.cpp
   NativeFormatting.cpp
   OptimizedStructLayout.cpp
   Optional.cpp
