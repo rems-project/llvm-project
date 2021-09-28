@@ -2,7 +2,7 @@
 // RUN: llvm-mc --triple=aarch64-none-elf -target-abi purecap -mattr=+c64,+morello -filetype=obj %s -o %t.o
 // RUN: ld.lld --shared  %t.o -o %t.so
 // RUN: llvm-objdump --print-imm-hex --no-show-raw-insn -d --triple=aarch64-none-elf --mattr=+morello -s %t.so | FileCheck %s
-// RUN: llvm-readobj --relocations %t.so | FileCheck %s --check-prefix=RELS
+// RUN: llvm-readobj --symbols --relocations %t.so | FileCheck %s --check-prefix=RELS --check-prefix=SYMS
 /// code for a shared library, using global, hidden, local, imported, .got,
 /// .got.plt and .capinit
  .text
@@ -78,11 +78,11 @@ caller:
  .capinit hiddenfunc
  .xword 0
  .xword 0
-// CHECK-NEXT:  20650 89050100 00000000 10000000 00000004
+// CHECK-NEXT:  20650 00020000 00000000 40070300 00000004
  .capinit localfunc
  .xword 0
  .xword 0
-// CHECK-NEXT:  20660 99050100 00000000 10000000 00000004
+// CHECK-NEXT:  20660 00020000 00000000 40070300 00000004
  .capinit importfunc
  .xword 0
  .xword 0
@@ -110,11 +110,11 @@ caller:
  .capinit hiddenfunc + 8
  .xword 0
  .xword 0
-// CHECK-NEXT:  206d0 89050100 00000000 10000000 00000004
+// CHECK-NEXT:  206d0 00020000 00000000 40070300 00000004
  .capinit localfunc + 12
  .xword 0
  .xword 0
-// CHECK-NEXT:  206e0 99050100 00000000 10000000 00000004
+// CHECK-NEXT:  206e0 00020000 00000000 40070300 00000004
  .capinit importfunc + 16
  .xword 0
  .xword 0
@@ -140,9 +140,9 @@ caller:
 /// globalfunc 0x10001 executable 10
 // CHECK:       20830 79050100 00000000 10000000 00000004
 /// hiddenfunc 0x10011 executable 10
-// CHECK-NEXT:  20840 89050100 00000000 10000000 00000004
+// CHECK-NEXT:  20840 00020000 00000000 40070300 00000004
 /// localfunc  0x10021 executable 10
-// CHECK-NEXT:  20850 99050100 00000000 10000000 00000004
+// CHECK-NEXT:  20850 00020000 00000000 40070300 00000004
 /// importfunc 0x00000 readwrite
 // CHECK-NEXT:  20860 00000000 00000000 00000000 00000002
 /// global     0x30000 global readwrite 8
@@ -225,25 +225,25 @@ caller:
 // RELS: Relocations [
 // RELS-NEXT:   Section (5) .rela.dyn {
 /// .capinit hiddenfunc
-// RELS-NEXT:     0x20650 R_MORELLO_RELATIVE - 0x0
+// RELS-NEXT:     0x20650 R_MORELLO_RELATIVE - 0x10389
 /// .capinit localfunc
-// RELS-NEXT:     0x20660 R_MORELLO_RELATIVE - 0x0
+// RELS-NEXT:     0x20660 R_MORELLO_RELATIVE - 0x10399
 /// .capinit hidden
 // RELS-NEXT:     0x20690 R_MORELLO_RELATIVE - 0x0
 /// .capinit local
 // RELS-NEXT:     0x206A0 R_MORELLO_RELATIVE - 0x0
 /// .capinit hiddenfunc + 8
-// RELS-NEXT:     0x206D0 R_MORELLO_RELATIVE - 0x8
+// RELS-NEXT:     0x206D0 R_MORELLO_RELATIVE - 0x10391
 /// .capinit localfunc + 12
-// RELS-NEXT:     0x206E0 R_MORELLO_RELATIVE - 0xC
+// RELS-NEXT:     0x206E0 R_MORELLO_RELATIVE - 0x103A5
 /// .capinit hidden + 2
 // RELS-NEXT:     0x20710 R_MORELLO_RELATIVE - 0x2
 /// .capinit import + 4
 // RELS-NEXT:     0x20720 R_MORELLO_RELATIVE - 0x3
 /// .got hiddenfunc
-// RELS-NEXT:     0x20840 R_MORELLO_RELATIVE - 0x0
+// RELS-NEXT:     0x20840 R_MORELLO_RELATIVE - 0x10389
 /// .got localfunc
-// RELS-NEXT:     0x20850 R_MORELLO_RELATIVE - 0x0
+// RELS-NEXT:     0x20850 R_MORELLO_RELATIVE - 0x10399
 /// .got hidden
 // RELS-NEXT:     0x20880 R_MORELLO_RELATIVE - 0x0
 // RELS-NEXT:     0x206B0 R_MORELLO_CAPINIT import 0x0
@@ -255,13 +255,32 @@ caller:
 // RELS-NEXT:     0x20680 R_MORELLO_CAPINIT global 0x0
 // RELS-NEXT:     0x20700 R_MORELLO_CAPINIT global 0x1
 // RELS-NEXT:     0x20870 R_MORELLO_GLOB_DAT global 0x0
+/// .data.rel.ro globalfunc
 // RELS-NEXT:     0x20640 R_MORELLO_CAPINIT globalfunc 0x0
+/// .data.rel.ro globalfunc+4
 // RELS-NEXT:     0x206C0 R_MORELLO_CAPINIT globalfunc 0x4
+/// .got globalfunc
 // RELS-NEXT:     0x20830 R_MORELLO_GLOB_DAT globalfunc 0x0
 // RELS-NEXT:   }
 // RELS-NEXT:   Section (6) .rela.plt {
 // RELS-NEXT:     0x308F0 R_MORELLO_JUMP_SLOT globalfunc 0x0
 // RELS-NEXT:     0x30900 R_MORELLO_JUMP_SLOT importfunc 0x0
+
+// SYMS: Symbols [
+// SYMS:        Name: local
+// SYMS-NEXT:   Value: 0x308B0
+// SYMS:        Name: localfunc
+// SYMS-NEXT:   Value: 0x10599
+// SYMS:        Name: hidden
+// SYMS-NEXT:   Value: 0x308A8
+// SYMS:        Name: hiddenfunc
+// SYMS-NEXT:   Value: 0x10589
+// SYMS:        Name: globalfunc
+// SYMS-NEXT:   Value: 0x10579
+// SYMS:        Name: import
+// SYMS-NEXT:   Value: 0x0
+// SYMS:        Name: importfunc
+// SYMS-NEXT:   Value: 0x0
 
  .data
  .global global

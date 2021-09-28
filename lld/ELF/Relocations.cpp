@@ -1120,7 +1120,7 @@ static void addPltEntry(PltSection *plt, GotPltSection *gotPlt,
   // As with the Relative relocation there are additional static relocations
   // needed to initialize the PLTGOT entry.
   if (config->morelloC64Plt && type == R_MORELLO_IRELATIVE)
-    addMorelloCapabilityFragment(gotPlt, &sym, sym.getGotPltOffset());
+    addMorelloCapabilityFragment(gotPlt, &sym, sym.getGotPltOffset(), true);
 }
 
 static void addGotEntry(Symbol &sym) {

@@ -1,10 +1,10 @@
-// RUN: llvm-mc --triple=aarch64-none-elf -target-abi purecap -mattr=+c64,+morello -filetype=obj %S/Inputs/shlib.s -o %t.o
-// RUN: ld.lld --shared --soname=t.so  %t.o -o %t.so
-// RUN: llvm-mc --triple=aarch64-none-elf -target-abi purecap -mattr=+c64,+morello -filetype=obj %s -o %t.o
-// RUN: ld.lld %t.so %t.o -o %t
+// RUN: llvm-mc --triple=aarch64-none-elf -target-abi purecap -mattr=+c64,+morello -filetype=obj %S/Inputs/shlib.s -o %t1.o
+// RUN: llvm-mc --triple=aarch64-none-elf -target-abi purecap -mattr=+c64,+morello -filetype=obj %s -o %t2.o
+// RUN: ld.lld --shared --soname=t.so  %t1.o -o %t.so
+// RUN: ld.lld %t.so %t2.o -o %t
 // RUN: llvm-objdump --print-imm-hex --no-show-raw-insn -s -d --triple=aarch64-none-elf --mattr=+morello %t | FileCheck %s
 // RUN: llvm-readobj --relocations %t | FileCheck %s --check-prefix=RELS
-// RUN: ld.lld --pie  %t.so %t.o -o %tpie
+// RUN: ld.lld --pie  %t.so %t2.o -o %tpie
 // RUN: llvm-objdump --print-imm-hex --no-show-raw-insn -s -d --triple=aarch64-none-elf --mattr=+morello %tpie | FileCheck %s --check-prefix=CHECK-PIE
 // RUN: llvm-readobj --relocations %tpie | FileCheck %s --check-prefix=RELS-PIE
 
@@ -63,7 +63,7 @@ from_app:
 /// appdata 0x230660 rw size 8
 // CHECK-NEXT:  2204c0 60062300 00000000 08000000 00000002
 /// from_app 210469 exec size 4
-// CHECK-NEXT:  2204d0 69042100 00000000 04000000 00000004
+// CHECK-NEXT:  2204d0 00022000 00000000 c0040300 00000004
 /// func2 (shlib.so) exec size 4
 // CHECK-NEXT:  2204e0 00000000 00000000 04000000 00000004
 
@@ -75,7 +75,7 @@ from_app:
 /// appdata 0x30670 rw size 8
 // CHECK-PIE-NEXT:  204c0 70060300 00000000 08000000 00000002
 /// from_app 14069 exec size 4
-// CHECK-PIE-NEXT:  204d0 69040100 00000000 04000000 00000004
+// CHECK-PIE-NEXT:  204d0 00020000 00000000 c0040300 00000004
 /// func2 (shlib.so) exec size 4
 // CHECK-PIE-NEXT:  204e0 00000000 00000000 04000000 00000004
 
@@ -93,11 +93,11 @@ appdata: .xword 8
 /// appdata 0x23000 rw size 8
 // CHECK-NEXT:  220620 60062300 00000000 08000000 00000002
 /// from_app 230622 exec size 4
-// CHECK-NEXT:  220630 69042100 00000000 04000000 00000004
+// CHECK-NEXT:  220630 00022000 00000000 c0040300 00000004
 /// func2 (shlib.so) exec size 4
 // CHECK-NEXT:  220640 00000000 00000000 04000000 00000004
 /// _start 210431 exec size 4
-// CHECK-NEXT:  220650 31042100 00000000 08000000 00000004
+// CHECK-NEXT:  220650 00022000 00000000 c0040300 00000004
 
 // CHECK-PIE: Contents of section .got:
 /// rodata (shlib.so) RW (default) size 8
@@ -107,11 +107,11 @@ appdata: .xword 8
 /// appdata 0x30670 rw size 8
 // CHECK-PIE-NEXT:  20630 70060300 00000000 08000000 00000002
 /// from_app 14069 exec size 4
-// CHECK-PIE-NEXT:  20640 69040100 00000000 04000000 00000004
+// CHECK-PIE-NEXT:  20640 00020000 00000000 c0040300 00000004
 /// func2 (shlib.so) exec size 4
 // CHECK-PIE-NEXT:  20650 00000000 00000000 04000000 00000004
 /// _start 10431 exec size 4
-// CHECK-PIE-NEXT:  20660 31040100 00000000 08000000 00000004
+// CHECK-PIE-NEXT:  20660 00020000 00000000 c0040300 00000004
 
 // CHECK: Contents of section .data:
 // CHECK-NEXT:  230660 08000000 00000000
@@ -214,11 +214,11 @@ appdata: .xword 8
 /// .got appdata
 // RELS-NEXT:     0x220620 R_MORELLO_RELATIVE - 0x0
 /// _start
-// RELS-NEXT:     0x220650 R_MORELLO_RELATIVE - 0x0
+// RELS-NEXT:     0x220650 R_MORELLO_RELATIVE - 0x10231
 /// .capinit from_app (strictly speaking don't need symbol here)
-// RELS-NEXT:     0x2204D0 R_MORELLO_RELATIVE from_app 0x0
+// RELS-NEXT:     0x2204D0 R_MORELLO_RELATIVE from_app 0x10269
 /// .got from_app (strictly speaking don't need symbol here)
-// RELS-NEXT:     0x220630 R_MORELLO_RELATIVE from_app 0x0
+// RELS-NEXT:     0x220630 R_MORELLO_RELATIVE from_app 0x10269
 /// .capinit data
 // RELS-NEXT:     0x2204B0 R_MORELLO_CAPINIT data 0x0
 /// .got data
@@ -242,11 +242,11 @@ appdata: .xword 8
 /// .got appdata
 // RELS-PIE-NEXT:     0x20630 R_MORELLO_RELATIVE - 0x0
 /// _start
-// RELS-PIE-NEXT:     0x20660 R_MORELLO_RELATIVE - 0x0
+// RELS-PIE-NEXT:     0x20660 R_MORELLO_RELATIVE - 0x10231
 /// .capinit from_app (strictly speaking don't need symbol here)
-// RELS-PIE-NEXT:     0x204D0 R_MORELLO_RELATIVE from_app 0x0
+// RELS-PIE-NEXT:     0x204D0 R_MORELLO_RELATIVE from_app 0x10269
 /// .got from_app (strictly speaking don't need symbol here)
-// RELS-PIE-NEXT:     0x20640 R_MORELLO_RELATIVE from_app 0x0
+// RELS-PIE-NEXT:     0x20640 R_MORELLO_RELATIVE from_app 0x10269
 /// .capinit data
 // RELS-PIE-NEXT:     0x204B0 R_MORELLO_CAPINIT data 0x0
 /// .got data

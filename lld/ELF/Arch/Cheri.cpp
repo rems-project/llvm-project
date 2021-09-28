@@ -757,9 +757,9 @@ void MorelloCapRelocsSection::writeTo(uint8_t *buf) {
 
     // Increase bounds of executable capabilities.
     if (permissions == Permissions::func(Permissions::Type::STATIC)) {
-      targetOffset += targetVA - morelloPCCBase;
-      targetVA = morelloPCCBase;
-      targetSize = morelloPCCLimit - morelloPCCBase;
+      targetOffset += targetVA - config->morelloPCCBase;
+      targetVA = config->morelloPCCBase;
+      targetSize = config->morelloPCCLimit - config->morelloPCCBase;
     }
     // Ensure that the base and limit of the capabilities are representable
     // in the CHERI Concentrate Encoding.
@@ -796,7 +796,8 @@ void MorelloCapRelocsSection::writeTo(uint8_t *buf) {
 // an internal to LLD relocation that we use to calculate the
 // | 56-bits size | 8-bits permission | of the inplace data layout.
 uint64_t getMorelloSizeAndPermissions(int64_t a, const Symbol &sym,
-                                    InputSectionBase *isec, uint64_t offset) {
+                                      InputSectionBase *isec, uint64_t offset,
+                                      bool isExecRel) {
   uint64_t sizeAndPerm = Permissions::rwdata(Permissions::Type::DYNAMIC);
   if (const SharedSymbol *shared = dyn_cast<SharedSymbol>(&sym)) {
     // If the symbol is defined in a shared library then we can take the size
@@ -809,9 +810,23 @@ uint64_t getMorelloSizeAndPermissions(int64_t a, const Symbol &sym,
     uint64_t size = getTargetSize<ELF64LE>(
         {isec, offset, false}, SymbolAndOffset(const_cast<Symbol *>(&sym), 0),
         /*strict=*/true);
+    // Increase bounds of executable capabilities.
+    if (isExecRel)
+      size = config->morelloPCCLimit - config->morelloPCCBase;
+
     return sizeAndPerm | (size << 8);
   }
   return 2;
+}
+
+uint64_t getMorelloBaseAddress(int64_t a, const Symbol &sym,
+                               InputSectionBase *isec, uint64_t offset,
+                               bool isExecRel) {
+  uint64_t targetVA = sym.getVA(a);
+  // Increase bounds of executable capabilities.
+  if (isExecRel)
+    targetVA = config->morelloPCCBase;
+  return targetVA;
 }
 
 // Helper function that if required, increases the alignment of First and
@@ -877,6 +892,11 @@ bool morelloLinkerDefinedCapabilityAlign() {
       }
     }
   }
+  // Store the PCC capability calculation result so that it is available when
+  // we write out the __cap_relocs section.
+  config->morelloPCCBase = morelloPCCBase;
+  config->morelloPCCLimit = morelloPCCLimit;
+
   bool changed = false;
   if (first && last)
     changed = alignToRequired(
@@ -898,10 +918,6 @@ bool morelloLinkerDefinedCapabilityAlign() {
     }
   } else if (in.capRelocs->isNeeded()) {
     changed |= in.capRelocs->linkerDefinedCapabilityAlign();
-    // Store the PCC capability calculation result so that it is available when
-    // we write out the __cap_relocs section.
-    in.capRelocs->morelloPCCBase = morelloPCCBase;
-    in.capRelocs->morelloPCCLimit = morelloPCCLimit;
   }
   return changed;
 }
@@ -931,27 +947,30 @@ bool MorelloCapRelocsSection::linkerDefinedCapabilityAlign() {
 // We use 2 64-bit static relocations to accomplish this. The first for the
 // Address and the second for size and permissions.
 void addMorelloCapabilityFragment(InputSectionBase *sec, Symbol *sym,
-                                  uint64_t offset) {
-  sec->relocations.push_back({R_ABS, target->symbolicRel, offset, 0, sym});
+                                  uint64_t offset, bool isExecRel) {
+  RelExpr fragBaseType = isExecRel ? R_MORELLO_CAPFRAG_ALIGNED_BASE
+                                   : R_MORELLO_CAPFRAG_UNALIGNED_BASE;
+  RelExpr fragSizePermType = isExecRel
+                                 ? R_MORELLO_CAPFRAG_ALIGNED_SIZE_AND_PERM
+                                 : R_MORELLO_CAPFRAG_UNALIGNED_SIZE_AND_PERM;
   sec->relocations.push_back(
-    {R_MORELLO_CAPFRAG_SIZE_AND_PERM, target->symbolicRel, offset + 8, 0, sym}
-  );
+      {fragBaseType, target->symbolicRel, offset, 0, sym});
+  sec->relocations.push_back(
+      {fragSizePermType, target->symbolicRel, offset + 8, 0, sym});
 }
 static void addCapDynamicRelocation(RelType dynType, Symbol *sym,
                                     InputSectionBase *sec, uint64_t offset,
                                     int64_t addend) {
-  // The symbol VA is not used, so if the symbol is not in the dynamic symbol
-  // table, and the relocation is relative, add nullptr as the symbol of the
-  // dynamic relocation.
-  Symbol *dynsym = (!sym->includeInDynsym() && (dynType == R_MORELLO_RELATIVE ||
-                                                dynType == R_MORELLO_IRELATIVE))
-                       ? nullptr
-                       : sym;
-  // Add the relocation directly rather than calling one of the helper methods
-  // this guarantees that we have control over what static relocation is
-  // created.
-  mainPart->relaDyn->addReloc({dynType, sec, offset, false, dynsym, addend});
-  addMorelloCapabilityFragment(sec, sym, offset);
+  // The symbol VA is used in case of a relative relocation against an
+  // executable symbol. However the VA undergoes another transformation
+  // so that the fragment pointed by the relocation is representable by the
+  // CHERI Concentrate compression scheme. See calcAddend().
+  bool isExecRel =
+      (sym->isFunc() || sym->isGnuIFunc()) &&
+      (dynType == R_MORELLO_RELATIVE || dynType == R_MORELLO_IRELATIVE);
+  mainPart->relaDyn->addReloc(
+      {dynType, sec, offset, isExecRel /*useSymVA*/, sym, addend});
+  addMorelloCapabilityFragment(sec, sym, offset, isExecRel);
 }
 
 // Relocation arising from addGotEntry() or addPltEntry().
