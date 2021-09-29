@@ -36,6 +36,11 @@
 #include <cctype>
 using namespace llvm;
 
+static cl::opt<bool> WarnCheriInefficient(
+    "warn-cheri-inefficient", cl::Hidden,
+    cl::desc("Warn on inefficient CHERI memops"),
+    cl::init(true));
+
 /// NOTE: The TargetMachine owns TLOF.
 TargetLowering::TargetLowering(const TargetMachine &tm)
     : TargetLoweringBase(tm) {}
@@ -6924,13 +6929,15 @@ TargetLowering::expandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG) const {
 
   if (VT.isFatPointer() && !supportsUnalignedCapabilityMemOps()) {
     auto CapAlign = VT.getStoreSize();
-    DiagnosticInfoCheriInefficient Warning(
-        MF.getFunction(), dl.getDebugLoc(),
-        "found underaligned load of capability type (aligned to " +
-            Twine(LD->getAlignment()) + " bytes instead of " + Twine(CapAlign) +
-            "). Will use memcpy() instead of capability load to preserve tags "
-            "if it is aligned correctly at runtime");
-    DAG.getContext()->diagnose(Warning);
+    if (WarnCheriInefficient) {
+      DiagnosticInfoCheriInefficient Warning(
+          MF.getFunction(), dl.getDebugLoc(),
+          "found underaligned load of capability type (aligned to " +
+              Twine(LD->getAlignment()) + " bytes instead of " + Twine(CapAlign) +
+              "). Will use memcpy() instead of capability load to preserve tags "
+              "if it is aligned correctly at runtime");
+      DAG.getContext()->diagnose(Warning);
+    }
 
     SDValue TmpPtr = DAG.CreateStackTemporary(VT);
     int SPFI = cast<FrameIndexSDNode>(TmpPtr.getNode())->getIndex();
@@ -7105,13 +7112,15 @@ SDValue TargetLowering::expandUnalignedStore(StoreSDNode *ST,
   if (VT.isFatPointer() && !supportsUnalignedCapabilityMemOps()) {
     auto CapAlign = VT.getStoreSize();
     SDLoc dl(ST);
-    DiagnosticInfoCheriInefficient Warning(
-        MF.getFunction(), dl.getDebugLoc(),
-        "found underaligned store of capability type (aligned to " +
-            Twine(ST->getAlignment()) + " bytes instead of " + Twine(CapAlign) +
-            "). Will use memcpy() instead of capability load to preserve tags "
-            "if it is aligned correctly at runtime");
-    DAG.getContext()->diagnose(Warning);
+    if (WarnCheriInefficient) {
+      DiagnosticInfoCheriInefficient Warning(
+          MF.getFunction(), dl.getDebugLoc(),
+          "found underaligned store of capability type (aligned to " +
+              Twine(ST->getAlignment()) + " bytes instead of " + Twine(CapAlign) +
+              "). Will use memcpy() instead of capability load to preserve tags "
+              "if it is aligned correctly at runtime");
+      DAG.getContext()->diagnose(Warning);
+    }
 
     SDValue TmpPtr = DAG.CreateStackTemporary(VT);
     int SPFI = cast<FrameIndexSDNode>(TmpPtr.getNode())->getIndex();
