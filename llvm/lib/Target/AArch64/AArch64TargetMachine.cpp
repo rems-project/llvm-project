@@ -505,6 +505,7 @@ public:
 
   void addIRPasses()  override;
   bool addPreISel() override;
+  void addCodeGenPrepare() override;
   bool addInstSelector() override;
   bool addIRTranslator() override;
   void addPreLegalizeMachineIR() override;
@@ -645,6 +646,12 @@ bool AArch64PassConfig::addPreISel() {
   if (EnableSandboxGlobalsOpt && getAArch64TargetMachine().IsPureCap())
     addPass(createAArch64SandboxGlobalsOpt(TM));
   return false;
+}
+
+void AArch64PassConfig::addCodeGenPrepare() {
+  if (getOptLevel() != CodeGenOpt::None)
+    addPass(createTypePromotionPass());
+  TargetPassConfig::addCodeGenPrepare();
 }
 
 bool AArch64PassConfig::addInstSelector() {
