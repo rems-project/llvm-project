@@ -431,6 +431,7 @@ class TestVSCode_launch(lldbvscode_testcase.VSCodeTestCaseBase):
     @skipIfWindows
     @skipIfNetBSD # Hangs on NetBSD as well
     @skipIfDarwin
+    @skipIfLinux
     @skipIf(archs="aarch64") # Example of a flaky run http://lab.llvm.org:8011/builders/lldb-aarch64-ubuntu/builds/5540/steps/test/logs/stdio
     def test_terminate_commands(self):
         '''
@@ -439,7 +440,7 @@ class TestVSCode_launch(lldbvscode_testcase.VSCodeTestCaseBase):
         '''
         self.build_and_create_debug_adaptor()
         program = self.getBuildArtifact("a.out")
-        
+
         terminateCommands = ['expr 4+2']
         self.launch(program=program,
                     terminateCommands=terminateCommands)
