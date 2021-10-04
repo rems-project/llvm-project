@@ -3508,7 +3508,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
                         E->getArg(0)->getExprLoc(), FD, 0);
     EmitNonNullArgCheck(RValue::get(Src.getPointer()), E->getArg(1)->getType(),
                         E->getArg(1)->getExprLoc(), FD, 1);
-    auto CI = Builder.CreateMemCpy(Dest, Src, SizeVal, false);
+    auto CI = Builder.CreateMemCpy(Dest, Src, SizeVal,
+                                   llvm::PreserveCheriTags::TODO, false);
     diagnoseMisalignedCapabiliyCopyDest(*this, "memcpy", E->getArg(1), CI);
     if (BuiltinID == Builtin::BImempcpy ||
         BuiltinID == Builtin::BI__builtin_mempcpy)
@@ -3557,7 +3558,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     Address Dest = EmitPointerWithAlignment(E->getArg(0));
     Address Src = EmitPointerWithAlignment(E->getArg(1));
     Value *SizeVal = llvm::ConstantInt::get(Builder.getContext(), Size);
-    auto CI = Builder.CreateMemCpy(Dest, Src, SizeVal, false);
+    auto CI = Builder.CreateMemCpy(Dest, Src, SizeVal,
+                                   llvm::PreserveCheriTags::TODO, false);
     diagnoseMisalignedCapabiliyCopyDest(*this, "memcpy", E->getArg(1), CI);
     return RValue::get(Dest.getPointer(), Dest.getAlignment().getQuantity());
   }
@@ -3593,7 +3595,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     Address Dest = EmitPointerWithAlignment(E->getArg(0));
     Address Src = EmitPointerWithAlignment(E->getArg(1));
     Value *SizeVal = llvm::ConstantInt::get(Builder.getContext(), Size);
-    auto CI = Builder.CreateMemMove(Dest, Src, SizeVal, false);
+    auto CI = Builder.CreateMemMove(Dest, Src, SizeVal,
+                                    llvm::PreserveCheriTags::TODO, false);
     diagnoseMisalignedCapabiliyCopyDest(*this, "memmove", E->getArg(1), CI);
     return RValue::get(Dest.getPointer(), Dest.getAlignment().getQuantity());
   }
@@ -3607,7 +3610,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
                         E->getArg(0)->getExprLoc(), FD, 0);
     EmitNonNullArgCheck(RValue::get(Src.getPointer()), E->getArg(1)->getType(),
                         E->getArg(1)->getExprLoc(), FD, 1);
-    auto CI = Builder.CreateMemMove(Dest, Src, SizeVal, false);
+    auto CI = Builder.CreateMemMove(Dest, Src, SizeVal,
+                                    llvm::PreserveCheriTags::TODO, false);
     diagnoseMisalignedCapabiliyCopyDest(*this, "memmove", E->getArg(1), CI);
     return RValue::get(Dest.getPointer(), Dest.getAlignment().getQuantity());
   }

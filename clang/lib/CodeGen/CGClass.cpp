@@ -1010,7 +1010,8 @@ namespace {
       emitMemcpyIR(
           Dest.isBitField() ? Dest.getBitFieldAddress() : Dest.getAddress(CGF),
           Src.isBitField() ? Src.getBitFieldAddress() : Src.getAddress(CGF),
-          MoreAlignedOffset, MemcpySize, NewAlign);
+          MoreAlignedOffset, MemcpySize, NewAlign,
+          llvm::PreserveCheriTags::TODO);
       reset();
     }
 
@@ -1025,7 +1026,8 @@ namespace {
   private:
     void emitMemcpyIR(Address DestPtr, Address SrcPtr,
                       CharUnits MoreAlignedOffset, CharUnits Size,
-                      CharUnits NewAlign) {
+                      CharUnits NewAlign,
+                      llvm::PreserveCheriTags PreserveTags) {
       llvm::PointerType *DPT = DestPtr.getType();
       llvm::Type *DBP =
         llvm::Type::getInt8PtrTy(CGF.getLLVMContext(), DPT->getAddressSpace());
@@ -1036,9 +1038,11 @@ namespace {
         llvm::Type::getInt8PtrTy(CGF.getLLVMContext(), SPT->getAddressSpace());
       SrcPtr = CGF.Builder.CreateBitCast(SrcPtr, SBP);
 
-      if (MoreAlignedOffset != CharUnits::Zero()) {
+      if (MoreAlignedOffset != CharUnits::Zero() &&
+          PreserveTags != llvm::PreserveCheriTags::Unnecessary) {
         CGF.Builder.CreateMemCpy(DestPtr, SrcPtr,
-                                 MoreAlignedOffset.getQuantity());
+                                 MoreAlignedOffset.getQuantity(),
+                                 llvm::PreserveCheriTags::Unnecessary);
         DestPtr = CGF.Builder.CreateConstInBoundsByteGEP(DestPtr,
                                                          MoreAlignedOffset);
         SrcPtr = CGF.Builder.CreateConstInBoundsByteGEP(SrcPtr,
@@ -1047,7 +1051,8 @@ namespace {
         SrcPtr = Address(SrcPtr.getPointer(), NewAlign);
       }
 
-      CGF.Builder.CreateMemCpy(DestPtr, SrcPtr, Size.getQuantity());
+      CGF.Builder.CreateMemCpy(DestPtr, SrcPtr, Size.getQuantity(),
+                               PreserveTags);
     }
 
     void addInitialField(FieldDecl *F) {
