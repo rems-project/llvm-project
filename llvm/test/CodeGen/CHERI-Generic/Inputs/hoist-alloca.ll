@@ -37,7 +37,8 @@
 @IF-MIPS@; MACHINELICM-DBG: Hoisting %{{[0-9]+}}:cherigpr = CheriBoundedStackPseudoImm %stack.0.buf1, 0, 492
 @IF-RISCV@; MACHINELICM-DBG: Hoisting [[INC:%[0-9]+]]:gpcr = CIncOffsetImm %stack.0.buf1, 0
 @IFNOT-MORELLO@; MACHINELICM-DBG-NEXT:  from %bb.2 to %bb.0
-@IF-RISCV@; MACHINELICM-DBG: Hoisting [[BOUNDS:%[0-9]+]]:gpcr = CSetBoundsImm [[INC]]:gpcr, 492
+@IF-RISCV32@; MACHINELICM-DBG: Hoisting [[BOUNDS:%[0-9]+]]:gpcr = CSetBoundsImm [[INC]]:gpcr, 512
+@IF-RISCV64@; MACHINELICM-DBG: Hoisting [[BOUNDS:%[0-9]+]]:gpcr = CSetBoundsImm [[INC]]:gpcr, 492
 @IF-RISCV@; MACHINELICM-DBG-NEXT:  from %bb.2 to %bb.0
 @IF-MIPS@; MACHINELICM-DBG: Hoisting %{{[0-9]+}}:cherigpr = CheriBoundedStackPseudoImm %stack.1.buf2, 0, 88
 @IF-RISCV@; MACHINELICM-DBG: Hoisting [[INC:%[0-9]+]]:gpcr = CIncOffsetImm %stack.1.buf2, 0
@@ -49,7 +50,8 @@
 @IF-MIPS@; MACHINELICM-DBG: Hoisting %{{[0-9]+}}:cherigpr = CheriBoundedStackPseudoImm %stack.0.buf1, 0, 492
 @IF-RISCV@; MACHINELICM-DBG: Hoisting [[INC:%[0-9]+]]:gpcr = CIncOffsetImm %stack.0.buf1, 0
 @IFNOT-MORELLO@; MACHINELICM-DBG-NEXT:  from %bb.3 to %bb.0
-@IF-RISCV@; MACHINELICM-DBG: Hoisting [[BOUNDS:%[0-9]+]]:gpcr = CSetBoundsImm [[INC]]:gpcr, 492
+@IF-RISCV32@; MACHINELICM-DBG: Hoisting [[BOUNDS:%[0-9]+]]:gpcr = CSetBoundsImm [[INC]]:gpcr, 512
+@IF-RISCV64@; MACHINELICM-DBG: Hoisting [[BOUNDS:%[0-9]+]]:gpcr = CSetBoundsImm [[INC]]:gpcr, 492
 @IF-RISCV@; MACHINELICM-DBG-NEXT:  from %bb.3 to %bb.0
 @IF-MIPS@; MACHINELICM-DBG: Hoisting %{{[0-9]+}}:cherigpr = CheriBoundedStackPseudoImm %stack.1.buf2, 0, 88
 @IF-RISCV@; MACHINELICM-DBG: Hoisting [[INC:%[0-9]+]]:gpcr = CIncOffsetImm %stack.1.buf2, 0
