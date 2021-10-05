@@ -2640,7 +2640,7 @@ const MCExpr *AsmPrinter::lowerConstant(const Constant *CV) {
     OS << "Unsupported expression in static initializer: ";
     CE->printAsOperand(OS, /*PrintType=*/false,
                    !MF ? nullptr : MF->getFunction().getParent());
-    report_fatal_error(OS.str());
+    report_fatal_error(Twine(OS.str()));
   }
 
   case Instruction::GetElementPtr: {
