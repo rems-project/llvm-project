@@ -455,7 +455,7 @@ void ProcessGDBRemote::BuildDynamicRegisterInfo(bool force) {
   if (arch_to_use.IsValid() &&
       target_arch.GetMachine() == llvm::Triple::aarch64 &&
       m_gdb_comm.HasHostAddressCapabilityFeature() &&
-      GetGlobalPluginProperties()->GetTargetDefinitionAArch64MorelloBuiltIn()) {
+      GetGlobalPluginProperties().GetTargetDefinitionAArch64MorelloBuiltIn()) {
     StreamSP stream_sp = GetTarget().GetDebugger().GetAsyncOutputStream();
     stream_sp->Printf(
         "WARNING: Using client-hardcoded information about AArch64-Morello "
