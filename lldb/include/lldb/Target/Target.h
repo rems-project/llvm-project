@@ -572,7 +572,7 @@ public:
 
   // Settings accessors
 
-  static const lldb::TargetPropertiesSP &GetGlobalProperties();
+  static TargetProperties &GetGlobalProperties();
 
   std::recursive_mutex &GetAPIMutex();
 
