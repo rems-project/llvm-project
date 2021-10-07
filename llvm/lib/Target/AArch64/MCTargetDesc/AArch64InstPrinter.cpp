@@ -1911,6 +1911,12 @@ void AArch64InstPrinter::printCapLitLabel(const MCInst *MI,
   }
 }
 
+void AArch64InstPrinter::printMatrixIndex(const MCInst *MI, unsigned OpNum,
+                                          const MCSubtargetInfo &STI,
+                                          raw_ostream &O) {
+  O << MI->getOperand(OpNum).getImm();
+}
+
 void AArch64InstPrinter::printAlignedLabel(const MCInst *MI, uint64_t Address,
                                            unsigned OpNum,
                                            const MCSubtargetInfo &STI,
