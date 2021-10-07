@@ -918,10 +918,8 @@ uint64_t InputSectionBase::getRelocTargetVA(const InputFile *file, RelType type,
   case R_MIPS_CHERI_CAPTAB_TPREL:
     assert(a == 0 && "capability table index relocs should not have addends");
     return in.cheriCapTable->getTlsOffset(sym);
-  case R_MORELLO_CAPFRAG_BASE:
-    return getMorelloCapabilityAlignedBaseAddress(a, sym, isec, offset);
   case R_MORELLO_CAPFRAG_SIZE_AND_PERM:
-    return getMorelloCapabilityAlignedSizeAndPermissions(a, sym, isec, offset);
+    return getMorelloSizeAndPermissions(a, sym, isec, offset);
   case R_MORELLO_VADREF:
     if (sym.isUndefWeak())
       return a;
@@ -1160,9 +1158,6 @@ void InputSectionBase::relocateAlloc(uint8_t *buf, uint8_t *bufEnd) {
         write32(bufLoc + 4, 0xe8410018); // ld %r2, 24(%r1)
       }
       target->relocate(bufLoc, rel, targetVA);
-      break;
-    case R_MORELLO_CAPFRAG_BASE:
-      target->writeFragmentAddress(bufLoc, targetVA);
       break;
     case R_MORELLO_CAPFRAG_SIZE_AND_PERM:
       target->writeFragmentSizeAndPermissions(bufLoc, targetVA);

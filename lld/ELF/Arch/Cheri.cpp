@@ -757,9 +757,9 @@ void MorelloCapRelocsSection::writeTo(uint8_t *buf) {
 
     // Increase bounds of executable capabilities.
     if (permissions == Permissions::func(Permissions::Type::STATIC)) {
-      targetOffset += targetVA - config->morelloPCCBase;
-      targetVA = config->morelloPCCBase;
-      targetSize = config->morelloPCCLimit - config->morelloPCCBase;
+      targetOffset += targetVA - morelloPCCBase;
+      targetVA = morelloPCCBase;
+      targetSize = morelloPCCLimit - morelloPCCBase;
     }
     // Ensure that the base and limit of the capabilities are representable
     // in the CHERI Concentrate Encoding.
@@ -795,10 +795,8 @@ void MorelloCapRelocsSection::writeTo(uint8_t *buf) {
 // Implementation of R_MORELLO_CAPFRAG_SIZE_AND_PERM static relocation. This is
 // an internal to LLD relocation that we use to calculate the
 // | 56-bits size | 8-bits permission | of the inplace data layout.
-uint64_t getMorelloCapabilityAlignedSizeAndPermissions(int64_t a,
-                                                       const Symbol &sym,
-                                                       InputSectionBase *isec,
-                                                       uint64_t offset) {
+uint64_t getMorelloSizeAndPermissions(int64_t a, const Symbol &sym,
+                                    InputSectionBase *isec, uint64_t offset) {
   uint64_t sizeAndPerm = Permissions::rwdata(Permissions::Type::DYNAMIC);
   if (const SharedSymbol *shared = dyn_cast<SharedSymbol>(&sym)) {
     // If the symbol is defined in a shared library then we can take the size
@@ -811,28 +809,9 @@ uint64_t getMorelloCapabilityAlignedSizeAndPermissions(int64_t a,
     uint64_t size = getTargetSize<ELF64LE>(
         {isec, offset, false}, SymbolAndOffset(const_cast<Symbol *>(&sym), 0),
         /*strict=*/true);
-    // Increase bounds of executable capabilities.
-    if (sizeAndPerm == Permissions::func(Permissions::Type::DYNAMIC)) {
-      size = config->morelloPCCLimit - config->morelloPCCBase;
-    }
     return sizeAndPerm | (size << 8);
   }
   return 2;
-}
-
-uint64_t getMorelloCapabilityAlignedBaseAddress(int64_t a, const Symbol &sym,
-                                                InputSectionBase *isec,
-                                                uint64_t offset) {
-  uint64_t targetVA = sym.getVA(a);
-  if (const Defined *definedSym = dyn_cast<Defined>(&sym)) {
-    // Increase bounds of executable capabilities.
-    if (getPermissions(*definedSym, Permissions::Type::DYNAMIC) ==
-        Permissions::func(Permissions::Type::DYNAMIC)) {
-      targetVA = config->morelloPCCBase;
-    }
-  }
-
-  return targetVA;
 }
 
 // Helper function that if required, increases the alignment of First and
@@ -898,11 +877,6 @@ bool morelloLinkerDefinedCapabilityAlign() {
       }
     }
   }
-  // Store the PCC capability calculation result so that it is available when
-  // we write out the __cap_relocs section.
-  config->morelloPCCBase = morelloPCCBase;
-  config->morelloPCCLimit = morelloPCCLimit;
-
   bool changed = false;
   if (first && last)
     changed = alignToRequired(
@@ -924,6 +898,10 @@ bool morelloLinkerDefinedCapabilityAlign() {
     }
   } else if (in.capRelocs->isNeeded()) {
     changed |= in.capRelocs->linkerDefinedCapabilityAlign();
+    // Store the PCC capability calculation result so that it is available when
+    // we write out the __cap_relocs section.
+    in.capRelocs->morelloPCCBase = morelloPCCBase;
+    in.capRelocs->morelloPCCLimit = morelloPCCLimit;
   }
   return changed;
 }
@@ -954,8 +932,7 @@ bool MorelloCapRelocsSection::linkerDefinedCapabilityAlign() {
 // Address and the second for size and permissions.
 void addMorelloCapabilityFragment(InputSectionBase *sec, Symbol *sym,
                                   uint64_t offset) {
-  sec->relocations.push_back(
-      {R_MORELLO_CAPFRAG_BASE, target->symbolicRel, offset, 0, sym});
+  sec->relocations.push_back({R_ABS, target->symbolicRel, offset, 0, sym});
   sec->relocations.push_back(
     {R_MORELLO_CAPFRAG_SIZE_AND_PERM, target->symbolicRel, offset + 8, 0, sym}
   );
