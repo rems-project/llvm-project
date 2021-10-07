@@ -4060,8 +4060,7 @@ bool GDBRemoteCommunicationClient::ReadExtFeature(
 
     // more chunks
     case ('m'):
-      if (str.length() > 1)
-        output << &str[1];
+      output << str.substr(1);
       offset += str.length() - 1;
       break;
 

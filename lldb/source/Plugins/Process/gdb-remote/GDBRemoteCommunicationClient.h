@@ -65,6 +65,7 @@ public:
   // we are communicating with it.
   bool HandshakeWithServer(Status *error_ptr);
 
+  // FIXME: only used for Morello, this needs to migrate to ReadExtFeature
   //------------------------------------------------------------------
   /// Obtain a complete response for a packet type that specifies a
   /// range of data to be returned. The result is gathered via a
@@ -104,6 +105,7 @@ public:
       llvm::StringRef payload_prefix, std::string &response_string,
       llvm::StringRef payload_suffix = llvm::StringRef());
 
+  // FIXME: only used for Morello, this needs to migrate to ReadExtFeature
   //------------------------------------------------------------------
   /// Obtain a complete response for a packet type that specifies a
   /// range of data to be returned, without acquiring a packet
@@ -117,6 +119,7 @@ public:
       llvm::StringRef payload_prefix, std::string &response_string,
       llvm::StringRef payload_suffix = llvm::StringRef());
 
+  // FIXME: only used for Morello, this needs to migrate to ReadExtFeature
   //------------------------------------------------------------------
   /// Obtain a complete response for a packet type that specifies a
   /// range of data to be returned and is thread-specific.
