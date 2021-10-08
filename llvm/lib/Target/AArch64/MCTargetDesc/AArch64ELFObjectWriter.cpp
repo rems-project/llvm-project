@@ -186,6 +186,8 @@ unsigned AArch64ELFObjectWriter::getRelocType(MCContext &Ctx,
             : ELF::R_MORELLO_ADR_GOT_PAGE;
       if (SymLoc == AArch64MCExpr::VK_TLSDESC && !IsNC)
         return ELF::R_MORELLO_TLSDESC_ADR_PAGE20;
+      if (SymLoc == AArch64MCExpr::VK_GOTTPREL && !IsNC)
+        return ELF::R_MORELLO_TLSIE_ADR_GOTTPREL_PAGE20;
       Ctx.reportError(Fixup.getLoc(),
                       "invalid symbol kind for ADRP relocation");
       return ELF::R_AARCH64_NONE;
@@ -295,7 +297,8 @@ unsigned AArch64ELFObjectWriter::getRelocType(MCContext &Ctx,
         return R_CLS(TLSDESC_ADD_LO12);
       if (SymLoc == AArch64MCExpr::VK_ABS && IsNC)
         return R_CLS(ADD_ABS_LO12_NC);
-
+      if (SymLoc == AArch64MCExpr::VK_GOTTPREL)
+        return ELF::R_MORELLO_TLSIE_ADD_LO12;
       Ctx.reportError(Fixup.getLoc(),
                       "invalid fixup for add (uimm12) instruction");
       return ELF::R_AARCH64_NONE;
@@ -460,6 +463,20 @@ unsigned AArch64ELFObjectWriter::getRelocType(MCContext &Ctx,
       return ELF::R_AARCH64_NONE;
     // ILP32 case not reached here, tested with isNonILP32reloc
     case AArch64::fixup_aarch64_movw:
+      if (RefKind == AArch64MCExpr::VK_SIZE_G3)
+        return ELF::R_MORELLO_MOVW_SIZE_G3;
+      if (RefKind == AArch64MCExpr::VK_SIZE_G2)
+        return ELF::R_MORELLO_MOVW_SIZE_G2;
+      if (RefKind == AArch64MCExpr::VK_SIZE_G2_NC)
+        return ELF::R_MORELLO_MOVW_SIZE_G2_NC;
+      if (RefKind == AArch64MCExpr::VK_SIZE_G1)
+        return ELF::R_MORELLO_MOVW_SIZE_G1;
+      if (RefKind == AArch64MCExpr::VK_SIZE_G1_NC)
+        return ELF::R_MORELLO_MOVW_SIZE_G1_NC;
+      if (RefKind == AArch64MCExpr::VK_SIZE_G0)
+        return ELF::R_MORELLO_MOVW_SIZE_G0;
+      if (RefKind == AArch64MCExpr::VK_SIZE_G0_NC)
+        return ELF::R_MORELLO_MOVW_SIZE_G0_NC;
       if (RefKind == AArch64MCExpr::VK_ABS_G3)
         return ELF::R_AARCH64_MOVW_UABS_G3;
       if (RefKind == AArch64MCExpr::VK_ABS_G2)

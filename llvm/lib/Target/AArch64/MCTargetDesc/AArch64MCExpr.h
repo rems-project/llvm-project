@@ -35,6 +35,7 @@ public:
     VK_TLSDESC  = 0x008,
     VK_SECREL   = 0x009,
     VK_CAPINIT  = 0x00a,
+    VK_SIZE     = 0x00b,
     VK_SymLocBits = 0x00f,
 
     // Variants specifying which part of the final address calculation is
@@ -74,6 +75,13 @@ public:
     VK_ABS_G0            = VK_ABS      | VK_G0,
     VK_ABS_G0_S          = VK_SABS     | VK_G0,
     VK_ABS_G0_NC         = VK_ABS      | VK_G0      | VK_NC,
+    VK_SIZE_G3           = VK_SIZE     | VK_G3,
+    VK_SIZE_G2           = VK_SIZE     | VK_G2,
+    VK_SIZE_G2_NC        = VK_SIZE     | VK_G2      | VK_NC,
+    VK_SIZE_G1           = VK_SIZE     | VK_G1,
+    VK_SIZE_G1_NC        = VK_SIZE     | VK_G1      | VK_NC,
+    VK_SIZE_G0           = VK_SIZE     | VK_G0,
+    VK_SIZE_G0_NC        = VK_SIZE     | VK_G0      | VK_NC,
     VK_LO12              = VK_ABS      | VK_PAGEOFF | VK_NC,
     VK_PREL_G3           = VK_PREL     | VK_G3,
     VK_PREL_G2           = VK_PREL     | VK_G2,

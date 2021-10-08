@@ -1005,7 +1005,8 @@ public:
           || ELFRefKind == AArch64MCExpr::VK_TPREL_LO12_NC
           || ELFRefKind == AArch64MCExpr::VK_TLSDESC_LO12
           || ELFRefKind == AArch64MCExpr::VK_SECREL_HI12
-          || ELFRefKind == AArch64MCExpr::VK_SECREL_LO12;
+          || ELFRefKind == AArch64MCExpr::VK_SECREL_LO12
+          || ELFRefKind == AArch64MCExpr::VK_GOTTPREL_LO12_NC;
     }
 
     // If it's a constant, it should be a real immediate in range.
@@ -1127,13 +1128,15 @@ public:
   }
 
   bool isMovWSymbolG3() const {
-    return isMovWSymbol({AArch64MCExpr::VK_ABS_G3, AArch64MCExpr::VK_PREL_G3});
+    return isMovWSymbol({AArch64MCExpr::VK_ABS_G3, AArch64MCExpr::VK_PREL_G3,
+                         AArch64MCExpr::VK_SIZE_G3});
   }
 
   bool isMovWSymbolG2() const {
     return isMovWSymbol(
         {AArch64MCExpr::VK_ABS_G2, AArch64MCExpr::VK_ABS_G2_S,
          AArch64MCExpr::VK_ABS_G2_NC, AArch64MCExpr::VK_PREL_G2,
+         AArch64MCExpr::VK_SIZE_G2, AArch64MCExpr::VK_SIZE_G2_NC,
          AArch64MCExpr::VK_PREL_G2_NC, AArch64MCExpr::VK_TPREL_G2,
          AArch64MCExpr::VK_DTPREL_G2});
   }
@@ -1142,6 +1145,7 @@ public:
     return isMovWSymbol(
         {AArch64MCExpr::VK_ABS_G1, AArch64MCExpr::VK_ABS_G1_S,
          AArch64MCExpr::VK_ABS_G1_NC, AArch64MCExpr::VK_PREL_G1,
+         AArch64MCExpr::VK_SIZE_G1, AArch64MCExpr::VK_SIZE_G1_NC,
          AArch64MCExpr::VK_PREL_G1_NC, AArch64MCExpr::VK_GOTTPREL_G1,
          AArch64MCExpr::VK_TPREL_G1, AArch64MCExpr::VK_TPREL_G1_NC,
          AArch64MCExpr::VK_DTPREL_G1, AArch64MCExpr::VK_DTPREL_G1_NC});
@@ -1151,6 +1155,7 @@ public:
     return isMovWSymbol(
         {AArch64MCExpr::VK_ABS_G0, AArch64MCExpr::VK_ABS_G0_S,
          AArch64MCExpr::VK_ABS_G0_NC, AArch64MCExpr::VK_PREL_G0,
+         AArch64MCExpr::VK_SIZE_G0, AArch64MCExpr::VK_SIZE_G0_NC,
          AArch64MCExpr::VK_PREL_G0_NC, AArch64MCExpr::VK_GOTTPREL_G0_NC,
          AArch64MCExpr::VK_TPREL_G0, AArch64MCExpr::VK_TPREL_G0_NC,
          AArch64MCExpr::VK_DTPREL_G0, AArch64MCExpr::VK_DTPREL_G0_NC});
@@ -3843,6 +3848,13 @@ bool AArch64AsmParser::parseSymbolicImmVal(const MCExpr *&ImmVal) {
                   .Case("abs_g0", AArch64MCExpr::VK_ABS_G0)
                   .Case("abs_g0_s", AArch64MCExpr::VK_ABS_G0_S)
                   .Case("abs_g0_nc", AArch64MCExpr::VK_ABS_G0_NC)
+                  .Case("size_g3", AArch64MCExpr::VK_SIZE_G3)
+                  .Case("size_g2", AArch64MCExpr::VK_SIZE_G2)
+                  .Case("size_g2_nc", AArch64MCExpr::VK_SIZE_G2_NC)
+                  .Case("size_g1", AArch64MCExpr::VK_SIZE_G1)
+                  .Case("size_g1_nc", AArch64MCExpr::VK_SIZE_G1_NC)
+                  .Case("size_g0", AArch64MCExpr::VK_SIZE_G0)
+                  .Case("size_g0_nc", AArch64MCExpr::VK_SIZE_G0_NC)
                   .Case("prel_g3", AArch64MCExpr::VK_PREL_G3)
                   .Case("prel_g2", AArch64MCExpr::VK_PREL_G2)
                   .Case("prel_g2_nc", AArch64MCExpr::VK_PREL_G2_NC)

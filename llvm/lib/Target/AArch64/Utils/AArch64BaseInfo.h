@@ -786,6 +786,10 @@ namespace AArch64II {
     /// SP-relative load or store instruction (which do not check tags), or to
     /// an LDG instruction to obtain the tag value.
     MO_TAGGED = 0x400,
+
+    /// MO_SIZE - Indicactes that MO_G0-MO_G3 are used to materialize the
+    /// symbol size.
+    MO_SIZE = 0x800
   };
 } // end namespace AArch64II
 
