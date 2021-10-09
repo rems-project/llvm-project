@@ -94,9 +94,9 @@ define i32 @test_localdynamic() {
 ; CHECK-NEXT: .tlsdesccall _TLS_MODULE_BASE_
 ; CHECK-NEXT: blr [[CALLEE]]
 ; CHECK-NEXT: add x[[TPOFF:[0-9]+]], x0, :dtprel_hi12:local_dynamic_var
-; CHECK-NEXT: add x[[TPOFF]], x[[TPOFF]], :dtprel_lo12_nc:local_dynamic_var
-; CHECK: mrs x[[TPIDR:[0-9]+]], TPIDR_EL0
-; CHECK: ldr w0, [x[[TPOFF]], x[[TPIDR]]]
+; CHECK-DAG: mrs x[[TPIDR:[0-9]+]], TPIDR_EL0
+; CHECK-DAG: add x[[TPOFF]], x[[TPOFF]], :dtprel_lo12_nc:local_dynamic_var
+; CHECK: ldr w0, [x[[TPIDR]], x[[TPOFF]]]
 
 ; CHECK-NOLD: mrs x[[TPIDR:[0-9]+]], TPIDR_EL0
 ; CHECK-NOLD: adrp x[[TLSDESC_HI:[0-9]+]], :tlsdesc:local_dynamic_var
@@ -130,9 +130,9 @@ define i32* @test_localdynamic_addr() {
 ; CHECK-NEXT: .tlsdesccall _TLS_MODULE_BASE_
 ; CHECK-NEXT: blr [[CALLEE]]
 ; CHECK-NEXT: add x[[TPOFF:[0-9]+]], x0, :dtprel_hi12:local_dynamic_var
-; CHECK-NEXT: add x[[TPOFF]], x[[TPOFF]], :dtprel_lo12_nc:local_dynamic_var
-; CHECK: mrs x[[TPIDR:[0-9]+]], TPIDR_EL0
-; CHECK: add x0, x[[TPOFF]], x[[TPIDR]]
+; CHECK-DAG: add x[[TPOFF]], x[[TPOFF]], :dtprel_lo12_nc:local_dynamic_var
+; CHECK-DAG: mrs x[[TPIDR:[0-9]+]], TPIDR_EL0
+; CHECK: add x0, x[[TPIDR]], x[[TPOFF]]
 
 ; CHECK-NOLD: mrs x[[TPIDR:[0-9]+]], TPIDR_EL0
 ; CHECK-NOLD: adrp x[[TLSDESC_HI:[0-9]+]], :tlsdesc:local_dynamic_var

@@ -3,7 +3,6 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -disable-post-ra -verify-machineinstrs -mattr=+outline-atomics < %s | FileCheck %s --check-prefix=OUTLINE-ATOMICS
 ; RUN: llc -mtriple=aarch64_be-none-linux-gnu -disable-post-ra -verify-machineinstrs -mattr=+lse < %s | FileCheck %s
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -disable-post-ra -verify-machineinstrs -mattr=+lse < %s | FileCheck %s --check-prefix=CHECK-REG
-; RUN: llc -mtriple=aarch64-none-linux-gnu -disable-post-ra -verify-machineinstrs -mcpu=saphira -mattr=-lse2 < %s | FileCheck %s
 
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -disable-post-ra -verify-machineinstrs -mattr=+lse,+morello < %s | FileCheck %s
 
@@ -1545,9 +1544,9 @@ define dso_local i8 @test_atomic_load_sub_i8_neg_imm() nounwind {
   %old = atomicrmw sub i8* @var8, i8 -1 seq_cst
 
 ; CHECK-NOT: dmb
+; CHECK: mov w[[IMM:[0-9]+]], #1
 ; CHECK: adrp [[TMPADDR:x[0-9]+]], var8
 ; CHECK: add x[[ADDR:[0-9]+]], [[TMPADDR]], {{#?}}:lo12:var8
-; CHECK: mov w[[IMM:[0-9]+]], #1
 ; CHECK: ldaddalb w[[IMM]], w[[NEW:[0-9]+]], [x[[ADDR]]]
 ; CHECK-NOT: dmb
 
@@ -1568,9 +1567,9 @@ define dso_local i16 @test_atomic_load_sub_i16_neg_imm() nounwind {
   %old = atomicrmw sub i16* @var16, i16 -1 seq_cst
 
 ; CHECK-NOT: dmb
+; CHECK: mov w[[IMM:[0-9]+]], #1
 ; CHECK: adrp [[TMPADDR:x[0-9]+]], var16
 ; CHECK: add x[[ADDR:[0-9]+]], [[TMPADDR]], {{#?}}:lo12:var16
-; CHECK: mov w[[IMM:[0-9]+]], #1
 ; CHECK: ldaddalh w[[IMM]], w[[NEW:[0-9]+]], [x[[ADDR]]]
 ; CHECK-NOT: dmb
 
@@ -1591,9 +1590,9 @@ define dso_local i32 @test_atomic_load_sub_i32_neg_imm() nounwind {
   %old = atomicrmw sub i32* @var32, i32 -1 seq_cst
 
 ; CHECK-NOT: dmb
+; CHECK: mov w[[IMM:[0-9]+]], #1
 ; CHECK: adrp [[TMPADDR:x[0-9]+]], var32
 ; CHECK: add x[[ADDR:[0-9]+]], [[TMPADDR]], {{#?}}:lo12:var32
-; CHECK: mov w[[IMM:[0-9]+]], #1
 ; CHECK: ldaddal w[[IMM]], w[[NEW:[0-9]+]], [x[[ADDR]]]
 ; CHECK-NOT: dmb
 
@@ -1614,9 +1613,9 @@ define dso_local i64 @test_atomic_load_sub_i64_neg_imm() nounwind {
   %old = atomicrmw sub i64* @var64, i64 -1 seq_cst
 
 ; CHECK-NOT: dmb
+; CHECK: mov w[[IMM:[0-9]+]], #1
 ; CHECK: adrp [[TMPADDR:x[0-9]+]], var64
 ; CHECK: add x[[ADDR:[0-9]+]], [[TMPADDR]], {{#?}}:lo12:var64
-; CHECK: mov w[[IMM:[0-9]+]], #1
 ; CHECK: ldaddal x[[IMM]], x[[NEW:[0-9]+]], [x[[ADDR]]]
 ; CHECK-NOT: dmb
 
@@ -1812,9 +1811,9 @@ define dso_local i8 @test_atomic_load_and_i8_inv_imm() nounwind {
 ; OUTLINE-ATOMICS-NEXT:    ret
   %old = atomicrmw and i8* @var8, i8 -2 seq_cst
 ; CHECK-NOT: dmb
+; CHECK: mov w[[CONST:[0-9]+]], #1
 ; CHECK: adrp [[TMPADDR:x[0-9]+]], var8
 ; CHECK: add x[[ADDR:[0-9]+]], [[TMPADDR]], {{#?}}:lo12:var8
-; CHECK: mov w[[CONST:[0-9]+]], #1
 ; CHECK: ldclralb w[[CONST]], w[[NEW:[0-9]+]], [x[[ADDR]]]
 ; CHECK-NOT: dmb
   ret i8 %old
@@ -1833,9 +1832,9 @@ define dso_local i16 @test_atomic_load_and_i16_inv_imm() nounwind {
 ; OUTLINE-ATOMICS-NEXT:    ret
   %old = atomicrmw and i16* @var16, i16 -2 seq_cst
 ; CHECK-NOT: dmb
+; CHECK: mov w[[CONST:[0-9]+]], #1
 ; CHECK: adrp [[TMPADDR:x[0-9]+]], var16
 ; CHECK: add x[[ADDR:[0-9]+]], [[TMPADDR]], {{#?}}:lo12:var16
-; CHECK: mov w[[CONST:[0-9]+]], #1
 ; CHECK: ldclralh w[[CONST]], w[[NEW:[0-9]+]], [x[[ADDR]]]
 ; CHECK-NOT: dmb
   ret i16 %old
@@ -1854,9 +1853,9 @@ define dso_local i32 @test_atomic_load_and_i32_inv_imm() nounwind {
 ; OUTLINE-ATOMICS-NEXT:    ret
   %old = atomicrmw and i32* @var32, i32 -2 seq_cst
 ; CHECK-NOT: dmb
+; CHECK: mov w[[CONST:[0-9]+]], #1
 ; CHECK: adrp [[TMPADDR:x[0-9]+]], var32
 ; CHECK: add x[[ADDR:[0-9]+]], [[TMPADDR]], {{#?}}:lo12:var32
-; CHECK: mov w[[CONST:[0-9]+]], #1
 ; CHECK: ldclral w[[CONST]], w[[NEW:[0-9]+]], [x[[ADDR]]]
 ; CHECK-NOT: dmb
   ret i32 %old
@@ -1875,9 +1874,9 @@ define dso_local i64 @test_atomic_load_and_i64_inv_imm() nounwind {
 ; OUTLINE-ATOMICS-NEXT:    ret
   %old = atomicrmw and i64* @var64, i64 -2 seq_cst
 ; CHECK-NOT: dmb
+; CHECK: mov w[[CONST:[0-9]+]], #1
 ; CHECK: adrp [[TMPADDR:x[0-9]+]], var64
 ; CHECK: add x[[ADDR:[0-9]+]], [[TMPADDR]], {{#?}}:lo12:var64
-; CHECK: mov w[[CONST:[0-9]+]], #1
 ; CHECK: ldclral x[[CONST]], x[[NEW:[0-9]+]], [x[[ADDR]]]
 ; CHECK-NOT: dmb
   ret i64 %old
