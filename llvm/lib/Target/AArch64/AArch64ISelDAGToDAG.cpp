@@ -4927,46 +4927,6 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
     case Intrinsic::aarch64_ld64b:
       SelectLoad(Node, 8/*, AArch64::LD64B, AArch64::x8sub_0*/);
       return;
-    }
-  } break;
-  case ISD::INTRINSIC_WO_CHAIN: {
-    unsigned IntNo = cast<ConstantSDNode>(Node->getOperand(0))->getZExtValue();
-    switch (IntNo) {
-    default:
-      break;
-    case Intrinsic::cheri_ddc_get: {
-      SDLoc DL(Node);
-      MVT CapTy = Node->getSimpleValueType(0);
-      unsigned Reg = AArch64MorelloCSysReg::DDC;
-      SDNode *Ret = CurDAG->getMachineNode(
-          AArch64::CapGetSys,
-          DL, CapTy, MVT::Other,
-          CurDAG->getTargetConstant(Reg, DL, MVT::i32));
-      ReplaceNode(Node, Ret);
-      return;
-    }
-    case Intrinsic::cheri_pcc_get: {
-      SDLoc DL(Node);
-      MVT CapTy = Node->getSimpleValueType(0);
-      SDValue Zero = CurDAG->getTargetConstant(0, DL, MVT::i32);
-      if (!Subtarget->hasC64()) {
-        SDValue Adr = SDValue(
-            CurDAG->getMachineNode(AArch64::ADR, DL, MVT::i64, Zero), 0);
-        SDNode *CVTP = CurDAG->getMachineNode(AArch64::CapConvert64ToCapPCC,
-                                              DL, CapTy, Adr);
-        ReplaceNode(Node, CVTP);
-        return;
-      }
-      SDNode *CAdr = CurDAG->getMachineNode(AArch64::CAdr, DL, CapTy, Zero);
-      ReplaceNode(Node, CAdr);
-      return;
-    }
-    case Intrinsic::cheri_stack_cap_get: {
-      SDLoc DL(Node);
-      SDValue CSP = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), SDLoc(Node),
-          AArch64::CSP, MVT::iFATPTR128);
-      ReplaceNode(Node, CSP.getNode());
-      return;
     case Intrinsic::aarch64_sve_ld2_sret: {
       if (VT == MVT::nxv16i8) {
         SelectPredicatedLoad(Node, 2, 0, AArch64::LD2B_IMM, AArch64::LD2B,
@@ -5030,6 +4990,46 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
       }
       break;
     }
+    }
+  } break;
+  case ISD::INTRINSIC_WO_CHAIN: {
+    unsigned IntNo = cast<ConstantSDNode>(Node->getOperand(0))->getZExtValue();
+    switch (IntNo) {
+    default:
+      break;
+    case Intrinsic::cheri_ddc_get: {
+      SDLoc DL(Node);
+      MVT CapTy = Node->getSimpleValueType(0);
+      unsigned Reg = AArch64MorelloCSysReg::DDC;
+      SDNode *Ret = CurDAG->getMachineNode(
+          AArch64::CapGetSys,
+          DL, CapTy, MVT::Other,
+          CurDAG->getTargetConstant(Reg, DL, MVT::i32));
+      ReplaceNode(Node, Ret);
+      return;
+    }
+    case Intrinsic::cheri_pcc_get: {
+      SDLoc DL(Node);
+      MVT CapTy = Node->getSimpleValueType(0);
+      SDValue Zero = CurDAG->getTargetConstant(0, DL, MVT::i32);
+      if (!Subtarget->hasC64()) {
+        SDValue Adr = SDValue(
+            CurDAG->getMachineNode(AArch64::ADR, DL, MVT::i64, Zero), 0);
+        SDNode *CVTP = CurDAG->getMachineNode(AArch64::CapConvert64ToCapPCC,
+                                              DL, CapTy, Adr);
+        ReplaceNode(Node, CVTP);
+        return;
+      }
+      SDNode *CAdr = CurDAG->getMachineNode(AArch64::CAdr, DL, CapTy, Zero);
+      ReplaceNode(Node, CAdr);
+      return;
+    }
+    case Intrinsic::cheri_stack_cap_get: {
+      SDLoc DL(Node);
+      SDValue CSP = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), SDLoc(Node),
+          AArch64::CSP, MVT::iFATPTR128);
+      ReplaceNode(Node, CSP.getNode());
+      return;
     }
     case Intrinsic::aarch64_tagp:
       SelectTagP(Node);

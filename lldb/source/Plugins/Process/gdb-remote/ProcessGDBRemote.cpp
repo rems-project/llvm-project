@@ -446,27 +446,6 @@ void ProcessGDBRemote::BuildDynamicRegisterInfo(bool force) {
     arch_to_use.SetAArch64MorelloDescriptorABI(
         GetTarget().GetAArch64MorelloDescriptorABI());
 
-  // Hardcode the AArch64-Morello register set to speed up the process of
-  // getting register info on Android/Linux running under FastModel.
-  // TODO Morello: Remove this hack.
-  if (arch_to_use.IsValid() &&
-      target_arch.GetMachine() == llvm::Triple::aarch64 &&
-      m_gdb_comm.HasHostAddressCapabilityFeature() &&
-      GetGlobalPluginProperties().GetTargetDefinitionAArch64MorelloBuiltIn()) {
-    StreamSP stream_sp = GetTarget().GetDebugger().GetAsyncOutputStream();
-    stream_sp->Printf(
-        "WARNING: Using client-hardcoded information about AArch64-Morello "
-        "register set. Set gdb-remote setting '%s' to false to "
-        "disable the optimization.\n",
-        g_processgdbremote_properties
-            [ePropertyTargetDefinitionAArch64MorelloBuiltIn]
-                .name);
-    m_register_info_sp->HardcodeAArch64MorelloRegisters(
-        arch_to_use.IsAArch64MorelloDescriptorABI());
-    m_register_info_sp->Finalize(arch_to_use);
-    return;
-  }
-
   if (GetGDBServerRegisterInfo(arch_to_use))
     return;
 
@@ -547,31 +526,7 @@ void ProcessGDBRemote::BuildDynamicRegisterInfo(bool force) {
     }
   }
 
-  if (!registers.empty()) {
-    AddRemoteRegisters(registers, arch_to_use);
-    return;
-  }
-
-  // We didn't get anything if the accumulated reg_num is zero.  See if we are
-  // debugging ARM and fill with a hard coded register set until we can get an
-  // updated debugserver down on the devices. On the other hand, if the
-  // accumulated reg_num is positive, see if we can add composite registers to
-  // the existing primordial ones.
-  bool from_scratch = (m_register_info_sp->GetNumRegisters() == 0);
-
-  if (!target_arch.IsValid()) {
-    if (arch_to_use.IsValid() &&
-        (arch_to_use.GetMachine() == llvm::Triple::arm ||
-         arch_to_use.GetMachine() == llvm::Triple::thumb) &&
-        arch_to_use.GetTriple().getVendor() == llvm::Triple::Apple)
-      m_register_info_sp->HardcodeARMRegisters(from_scratch);
-  } else if (target_arch.GetMachine() == llvm::Triple::arm ||
-             target_arch.GetMachine() == llvm::Triple::thumb) {
-    m_register_info_sp->HardcodeARMRegisters(from_scratch);
-  }
-
-  // At this point, we can finalize our register info.
-  m_register_info_sp->Finalize(GetTarget().GetArchitecture());
+  AddRemoteRegisters(registers, arch_to_use);
 }
 
 Status ProcessGDBRemote::WillLaunch(lldb_private::Module *module) {

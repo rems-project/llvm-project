@@ -662,7 +662,7 @@ bool CommandObjectExpression::DoExecute(llvm::StringRef command,
       !target.GetForceExpressionEvaluation()) {
     // Disable expression evaluation for AArch64 since we do not yet have ptrace
     // support for restoring the capability registers.
-    target.IncrementStats(StatisticKind::ExpressionFailure);
+    target.GetStatistics().GetExpressionStats().NotifyFailure();
     result.AppendError("Expression evaluation is disabled for AArch64");
     result.SetStatus(eReturnStatusFailed);
     return false;

@@ -15,7 +15,7 @@ namespace lldb_private {
 
 class ArchitectureArm64 : public Architecture {
 public:
-  static ConstString GetPluginNameStatic();
+  static llvm::StringRef GetPluginNameStatic() { return "arm64"; }
   static void Initialize();
   static void Terminate();
 

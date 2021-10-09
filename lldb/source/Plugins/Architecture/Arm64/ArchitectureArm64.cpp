@@ -19,10 +19,6 @@ using namespace lldb;
 
 LLDB_PLUGIN_DEFINE(ArchitectureArm64)
 
-ConstString ArchitectureArm64::GetPluginNameStatic() {
-  return ConstString("arm64");
-}
-
 void ArchitectureArm64::Initialize() {
   PluginManager::RegisterPlugin(GetPluginNameStatic(),
                                 "Arm64-specific algorithms",
@@ -40,7 +36,7 @@ std::unique_ptr<Architecture> ArchitectureArm64::Create(const ArchSpec &arch) {
 }
 
 llvm::StringRef ArchitectureArm64::GetPluginName() {
-  return GetPluginNameStatic().GetStringRef();
+  return GetPluginNameStatic();
 }
 
 addr_t

@@ -38,8 +38,6 @@ public:
 
   ~GDBRemoteDynamicRegisterInfo() override = default;
 
-  void HardcodeARMRegisters(bool from_scratch);
-  void HardcodeAArch64MorelloRegisters(bool is_desc_abi);
   bool UpdateARM64SVERegistersInfos(uint64_t vg);
 };
 
