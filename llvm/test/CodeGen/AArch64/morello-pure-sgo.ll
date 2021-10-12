@@ -16,9 +16,9 @@ define dso_local i8 addrspace(200)* @bar0(i32 %x, i32 %y) local_unnamed_addr add
 ; CHECK:       .Lfunc_begin0:
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    adrp c1, :got:a
-; CHECK-NEXT:    ldr c1, [c1, :got_lo12:a]
 ; CHECK-NEXT:    // kill: def $w0 killed $w0 def $x0
 ; CHECK-NEXT:    sbfiz x8, x0, #2, #32
+; CHECK-NEXT:    ldr c1, [c1, :got_lo12:a]
 ; CHECK-NEXT:    ldr w9, [c1, x8]
 ; CHECK-NEXT:    adrp c0, baz
 ; CHECK-NEXT:    add c0, c0, :lo12:baz
@@ -40,9 +40,9 @@ define internal i8 addrspace(200)* @baz(i32 %x, i32 %y) addrspace(200) #0 {
 ; CHECK:       .Lfunc_begin1:
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    adrp c1, :got:a
-; CHECK-NEXT:    ldr c1, [c1, :got_lo12:a]
 ; CHECK-NEXT:    // kill: def $w0 killed $w0 def $x0
 ; CHECK-NEXT:    sbfiz x8, x0, #2, #32
+; CHECK-NEXT:    ldr c1, [c1, :got_lo12:a]
 ; CHECK-NEXT:    ldr w9, [c1, x8]
 ; CHECK-NEXT:    adrp c0, baz
 ; CHECK-NEXT:    add c0, c0, :lo12:baz

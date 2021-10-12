@@ -1,5 +1,5 @@
-; RUN: llc -mtriple=aarch64-linux-gnu -mattr=+c64,+morello -aarch64-enable-atomic-cfg-tidy=0 -target-abi=purecap -disable-lsr -verify-machineinstrs -o - %s | FileCheck --check-prefix=CHECK --check-prefix=NOSTRICTALIGN %s
-; RUN: llc -mtriple=aarch64-linux-gnu -mattr=+strict-align,+c64,+morello -aarch64-enable-atomic-cfg-tidy=0 -target-abi=purecap -disable-lsr -verify-machineinstrs -o - %s | FileCheck --check-prefix=CHECK --check-prefix=STRICTALIGN %s
+; RUN: llc -mtriple=aarch64-linux-gnu -mattr=+c64,+morello -aarch64-enable-atomic-cfg-tidy=0 -target-abi=purecap -disable-lsr -verify-machineinstrs -mcpu=rainier -o - %s | FileCheck --check-prefix=CHECK --check-prefix=NOSTRICTALIGN %s
+; RUN: llc -mtriple=aarch64-linux-gnu -mattr=+strict-align,+c64,+morello -aarch64-enable-atomic-cfg-tidy=0 -target-abi=purecap -disable-lsr -verify-machineinstrs -mcpu=rainier -o - %s | FileCheck --check-prefix=CHECK --check-prefix=STRICTALIGN %s
 
 ; This file contains tests for the AArch64 load/store optimizer, based on ldst-opt.ll.
 target datalayout = "e-m:e-pf200:128:128-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"

@@ -39,9 +39,9 @@ define void @fetch_and_nand(i128 addrspace(200) * %p, i128 %bits) {
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    ldxp x9, x8, [c0]
 ; CHECK-NEXT:    and x10, x9, x2
+; CHECK-NEXT:    mvn x10, x10
 ; CHECK-NEXT:    and x11, x8, x3
 ; CHECK-NEXT:    mvn x11, x11
-; CHECK-NEXT:    mvn x10, x10
 ; CHECK-NEXT:    stlxp w12, x10, x11, [c0]
 ; CHECK-NEXT:    cbnz w12, .LBB1_1
 ; CHECK-NEXT:  // %bb.2: // %atomicrmw.end
@@ -63,9 +63,9 @@ define void @fetch_and_or(i128 addrspace(200) * %p, i128 %bits) {
 ; CHECK-NEXT:  .LBB2_1: // %atomicrmw.start
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    ldaxp x9, x8, [c0]
-; CHECK-NEXT:    orr x10, x8, x3
-; CHECK-NEXT:    orr x11, x9, x2
-; CHECK-NEXT:    stlxp w12, x11, x10, [c0]
+; CHECK-NEXT:    orr x10, x9, x2
+; CHECK-NEXT:    orr x11, x8, x3
+; CHECK-NEXT:    stlxp w12, x10, x11, [c0]
 ; CHECK-NEXT:    cbnz w12, .LBB2_1
 ; CHECK-NEXT:  // %bb.2: // %atomicrmw.end
 ; CHECK-NEXT:    adrp c0, :got:var

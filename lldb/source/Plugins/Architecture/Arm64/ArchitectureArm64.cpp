@@ -39,7 +39,9 @@ std::unique_ptr<Architecture> ArchitectureArm64::Create(const ArchSpec &arch) {
   return std::unique_ptr<Architecture>(new ArchitectureArm64());
 }
 
-ConstString ArchitectureArm64::GetPluginName() { return GetPluginNameStatic(); }
+llvm::StringRef ArchitectureArm64::GetPluginName() {
+  return GetPluginNameStatic().GetStringRef();
+}
 
 addr_t
 ArchitectureArm64::GetCallableLoadAddress(addr_t code_addr,

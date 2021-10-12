@@ -264,6 +264,7 @@ def sve_incdec_imm : Operand<i32>, TImmLeaf<i32, [{
 // This allows i32 immediate extraction from i64 based arithmetic.
 def sve_cnt_mul_imm : ComplexPattern<i64, 1, "SelectCntImm<1, 16, 1, false>">;
 def sve_cnt_shl_imm : ComplexPattern<i64, 1, "SelectCntImm<1, 16, 1, true>">;
+def sve_cnt_mul_imm32 : ComplexPattern<i32, 1, "SelectCntImm<1, 16, 1, false>">;
 
 
 def sve_ext_imm_0_31  : ComplexPattern<i32, 1, "SelectEXTImm<31, 8>">;
@@ -532,7 +533,7 @@ class SVE_2_Op_Fp_Imm_Pat_Zero<ValueType vt, SDPatternOperator op,
                               ValueType pt, ValueType it,
                               FPImmLeaf immL, int imm,
                               Instruction inst>
-: Pat<(vt (op pt:$Pg, (vselect pt:$Pg, vt:$Zs1, (SVEDup0)),
+: Pat<(vt (op pt:$Pg, (vselect pt:$Pg, vt:$Zs1, (!cast<ComplexPattern>("SVEDup0_" # vt))),
                       (vt (AArch64dup (it immL))))),
       (inst $Pg, $Zs1, imm)>;
 
@@ -993,7 +994,7 @@ multiclass sve_int_pred_pattern_a<bits<3> opc, string asm,
                                                GPR32:$Rdn, sub_32), sve_pred_enum:$pattern, 1),
                                     sub_32))>;
 
-    def : Pat<(i32 (op GPR32:$Rdn, (mul (i32 (trunc (opcnt (sve_pred_enum:$pattern)))), (sve_cnt_mul_imm i32:$imm)))),
+    def : Pat<(i32 (op GPR32:$Rdn, (mul (i32 (trunc (opcnt (sve_pred_enum:$pattern)))), (sve_cnt_mul_imm32 i32:$imm)))),
               (i32 (EXTRACT_SUBREG (!cast<Instruction>(NAME) (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
                                                GPR32:$Rdn, sub_32), sve_pred_enum:$pattern, $imm),
                                     sub_32))>;

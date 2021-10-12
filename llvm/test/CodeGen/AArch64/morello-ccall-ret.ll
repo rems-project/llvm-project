@@ -33,8 +33,8 @@ entry:
 ; CHECK-LABEL: bar
 define void @bar(i32 %a, i32 %b) addrspace(200) {
 entry:
-; CHECK: adrp c[[ADDR:[0-9]+]], :got:__cheri_method.cls.foo
-; CHECK: ldr c[[ADDR]], [c[[ADDR]], :got_lo12:__cheri_method.cls.foo]
+; CHECK-DAG: adrp c[[ADDR:[0-9]+]], :got:__cheri_method.cls.foo
+; CHECK-DAG: ldr c[[ADDR]], [c[[ADDR]], :got_lo12:__cheri_method.cls.foo]
 ; CHECK-DAG: ldr x11, [c[[ADDR]]]
 ; CHECK-DAG: ldp c9, c10
 ; CHECK-DAG: mov x2, xzr

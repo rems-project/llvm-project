@@ -69,9 +69,9 @@ for.cond.cleanup:
 define i32 @fun2() addrspace(200) {
 entry:
 ; CHECK: mov w[[SIZE:[0-9]+]], #6784
-; CHECK: movk w[[SIZE]], #6, lsl #16
-; CHECK: mov c[[TMPADDR:[0-9]+]], csp
-; CHECK: scbndse c[[ADDR:[0-9]+]], c[[TMPADDR]], x[[SIZE]]
+; CHECK-DAG: movk w[[SIZE]], #6, lsl #16
+; CHECK-DAG: mov c[[TMPADDR:[0-9]+]], csp
+; CHECK-DAG: scbndse c[[ADDR:[0-9]+]], c[[TMPADDR]], x[[SIZE]]
 ; CHECK: ldr w0, [c[[ADDR]], #8]
   %a = alloca [100000 x i32], align 4, addrspace(200)
   %0 = bitcast [100000 x i32] addrspace(200)* %a to i8 addrspace(200)*

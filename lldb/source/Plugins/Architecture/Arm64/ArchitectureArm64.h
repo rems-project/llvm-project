@@ -19,7 +19,7 @@ public:
   static void Initialize();
   static void Terminate();
 
-  ConstString GetPluginName() override;
+  llvm::StringRef GetPluginName() override;
 
   void OverrideStopInfo(Thread &thread) const override {}
 

@@ -431,6 +431,6 @@ body:             |
     %4:_(s128) = G_CONSTANT i128 9223372036854775808
     %5:_(s128) = G_OR %2, %4
     G_STORE %5(s128), %0(p0) :: (store (s128), align 4)
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...

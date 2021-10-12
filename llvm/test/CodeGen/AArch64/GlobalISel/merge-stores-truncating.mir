@@ -783,6 +783,6 @@ body:             |
     %5:_(s48) = G_LSHR %0, %4(s64)
     %trunc:_(s32) = G_TRUNC %5(s48)
     G_STORE %trunc(s32), %1(p0) :: (store (s32))
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...

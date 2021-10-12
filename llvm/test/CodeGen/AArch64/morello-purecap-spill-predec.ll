@@ -43,8 +43,8 @@ complex_mul_libcall:                              ; preds = %if.then
 
 if.end:                                           ; preds = %entry, %if.then, %complex_mul_libcall
   ret i32 undef
-; CHECK:  ldr     x{{.*}}, [csp, #64]
 ; CHECK:  ldp     c29, c30, [csp, #32]
+; CHECK:  ldr     x{{.*}}, [csp, #64]
 ; CHECK:  ldr     d{{.*}}, [csp, #16]
 ; CHECK:  add     csp, csp, #80
 }

@@ -15,7 +15,7 @@ entry:
 ; PCS16-NEXT: sub csp, csp, #4032
 
 ; PCS16: mov w[[REG:[0-9]+]], #2048
-; PCS16-NEXT: movk w8, #64, lsl #16
+; PCS16: movk w[[REG]], #64, lsl #16
 ; PCS16: scbndse c{{.*}}, c{{.*}}, x[[REG]]
 
   %ss1 = alloca [1048577 x i32], align 4, addrspace(200)

@@ -11,8 +11,8 @@ define <4 x i8 addrspace(200)*> @vec_gep_with_poison_offsets_first_pair(i8 addrs
 ; AARCH64-LABEL: vec_gep_with_poison_offsets_first_pair:
 ; AARCH64:       // %bb.0: // %bb
 ; AARCH64-NEXT:    adrp x8, .LCPI0_0
-; AARCH64-NEXT:    ldr q0, [x8, :lo12:.LCPI0_0]
 ; AARCH64-NEXT:    dup v1.2d, x0
+; AARCH64-NEXT:    ldr q0, [x8, :lo12:.LCPI0_0]
 ; AARCH64-NEXT:    add v1.2d, v1.2d, v0.2d
 ; AARCH64-NEXT:    ret
 ;
@@ -31,8 +31,8 @@ define <4 x i8 addrspace(200)*> @vec_gep_with_poison_offsets_second_pair(i8 addr
 ; AARCH64-LABEL: vec_gep_with_poison_offsets_second_pair:
 ; AARCH64:       // %bb.0: // %bb
 ; AARCH64-NEXT:    adrp x8, .LCPI1_0
-; AARCH64-NEXT:    ldr q0, [x8, :lo12:.LCPI1_0]
 ; AARCH64-NEXT:    dup v1.2d, x0
+; AARCH64-NEXT:    ldr q0, [x8, :lo12:.LCPI1_0]
 ; AARCH64-NEXT:    add v0.2d, v1.2d, v0.2d
 ; AARCH64-NEXT:    ret
 ;
@@ -93,21 +93,21 @@ define <4 x i8 addrspace(200)*> @vec_gep_with_vec_offsets(i8 addrspace(200)* %pt
 ; AARCH64-LABEL: vec_gep_with_vec_offsets:
 ; AARCH64:       // %bb.0: // %bb
 ; AARCH64-NEXT:    adrp x8, .LCPI4_0
-; AARCH64-NEXT:    ldr q1, [x8, :lo12:.LCPI4_0]
+; AARCH64-NEXT:    dup v1.2d, x0
+; AARCH64-NEXT:    ldr q0, [x8, :lo12:.LCPI4_0]
 ; AARCH64-NEXT:    adrp x8, .LCPI4_1
+; AARCH64-NEXT:    add v1.2d, v1.2d, v0.2d
 ; AARCH64-NEXT:    ldr q0, [x8, :lo12:.LCPI4_1]
-; AARCH64-NEXT:    dup v2.2d, x0
-; AARCH64-NEXT:    add v1.2d, v2.2d, v1.2d
 ; AARCH64-NEXT:    ret
 ;
 ; PURECAP-LABEL: vec_gep_with_vec_offsets:
 ; PURECAP:       .Lfunc_begin4:
 ; PURECAP-NEXT:  // %bb.0: // %bb
 ; PURECAP-NEXT:    mov x1, xzr
-; PURECAP-NEXT:    add c4, c1, #1
-; PURECAP-NEXT:    add c1, c1, #2
 ; PURECAP-NEXT:    add c2, c0, #3
 ; PURECAP-NEXT:    add c3, c0, #4
+; PURECAP-NEXT:    add c4, c1, #1
+; PURECAP-NEXT:    add c1, c1, #2
 ; PURECAP-NEXT:    mov c0, c4
 ; PURECAP-NEXT:    ret c30
 bb:

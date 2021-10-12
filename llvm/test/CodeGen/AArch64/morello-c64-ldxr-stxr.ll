@@ -34,10 +34,10 @@ declare i32 @llvm.aarch64.stxp.p200i8(i64, i64, i8 addrspace(200)*) nounwind
 
 define void @test_load_i8(i8 addrspace(200)* %addr) {
 ; CHECK-LABEL: test_load_i8:
+; CHECK: ldr c[[ADDR:[0-9]+]], [c[[ADDR]], :got_lo12:var]
 ; CHECK: ldxrb w[[LOADVAL:[0-9]+]], [c0]
 ; CHECK-NOT: uxtb
 ; CHECK-NOT: and
-; CHECK: ldr c[[ADDR:[0-9]+]], [c[[ADDR]], :got_lo12:var]
 ; CHECK: str x[[LOADVAL]], [c[[ADDR]]]
 
   %val = call i64 @llvm.aarch64.ldxr.p200i8(i8 addrspace(200)* %addr)
@@ -49,10 +49,10 @@ define void @test_load_i8(i8 addrspace(200)* %addr) {
 
 define void @test_load_i16(i16 addrspace(200)* %addr) {
 ; CHECK-LABEL: test_load_i16:
+; CHECK: ldr c[[ADDR:[0-9]+]], [c[[ADDR]], :got_lo12:var]
 ; CHECK: ldxrh w[[LOADVAL:[0-9]+]], [c0]
 ; CHECK-NOT: uxth
 ; CHECK-NOT: and
-; CHECK: ldr c[[ADDR:[0-9]+]], [c[[ADDR]], :got_lo12:var]
 ; CHECK: str x[[LOADVAL]], [c[[ADDR]]]
 
   %val = call i64 @llvm.aarch64.ldxr.p200i16(i16 addrspace(200)* %addr)
@@ -64,10 +64,10 @@ define void @test_load_i16(i16 addrspace(200)* %addr) {
 
 define void @test_load_i32(i32 addrspace(200)* %addr) {
 ; CHECK-LABEL: test_load_i32:
+; CHECK: ldr c[[ADDR:[0-9]+]], [c[[ADDR]], :got_lo12:var]
 ; CHECK: ldxr w[[LOADVAL:[0-9]+]], [c0]
 ; CHECK-NOT: uxtw
 ; CHECK-NOT: and
-; CHECK: ldr c[[ADDR:[0-9]+]], [c[[ADDR]], :got_lo12:var]
 ; CHECK: str x[[LOADVAL]], [c[[ADDR]]]
 
   %val = call i64 @llvm.aarch64.ldxr.p200i32(i32 addrspace(200)* %addr)
@@ -79,8 +79,8 @@ define void @test_load_i32(i32 addrspace(200)* %addr) {
 
 define void @test_load_i64(i64 addrspace(200)* %addr) {
 ; CHECK-LABEL: test_load_i64:
-; CHECK: ldxr x[[LOADVAL:[0-9]+]], [c0]
 ; CHECK: ldr c[[ADDR:[0-9]+]], [c[[ADDR]], :got_lo12:var]
+; CHECK: ldxr x[[LOADVAL:[0-9]+]], [c0]
 ; CHECK: str x[[LOADVAL]], [c[[ADDR]]]
 
   %val = call i64 @llvm.aarch64.ldxr.p200i64(i64 addrspace(200)* %addr)
@@ -175,10 +175,10 @@ declare i32 @llvm.aarch64.stlxp.p200i8(i64, i64, i8 addrspace(200)*) nounwind
 
 define void @test_load_acquire_i8(i8 addrspace(200)* %addr) {
 ; CHECK-LABEL: test_load_acquire_i8:
+; CHECK: ldr c[[ADDR:[0-9]+]], [c[[ADDR]], :got_lo12:var]
 ; CHECK: ldaxrb w[[LOADVAL:[0-9]+]], [c0]
 ; CHECK-NOT: uxtb
 ; CHECK-NOT: and
-; CHECK: ldr c[[ADDR:[0-9]+]], [c[[ADDR]], :got_lo12:var]
 ; CHECK: str x[[LOADVAL]], [c[[ADDR]]]
 
   %val = call i64 @llvm.aarch64.ldaxr.p200i8(i8 addrspace(200)* %addr)
@@ -190,10 +190,10 @@ define void @test_load_acquire_i8(i8 addrspace(200)* %addr) {
 
 define void @test_load_acquire_i16(i16 addrspace(200)* %addr) {
 ; CHECK-LABEL: test_load_acquire_i16:
+; CHECK: ldr c[[ADDR:[0-9]+]], [c[[ADDR]], :got_lo12:var]
 ; CHECK: ldaxrh w[[LOADVAL:[0-9]+]], [c0]
 ; CHECK-NOT: uxth
 ; CHECK-NOT: and
-; CHECK: ldr c[[ADDR:[0-9]+]], [c[[ADDR]], :got_lo12:var]
 ; CHECK: str x[[LOADVAL]], [c[[ADDR]]]
 
   %val = call i64 @llvm.aarch64.ldaxr.p200i16(i16 addrspace(200)* %addr)
@@ -205,10 +205,10 @@ define void @test_load_acquire_i16(i16 addrspace(200)* %addr) {
 
 define void @test_load_acquire_i32(i32 addrspace(200)* %addr) {
 ; CHECK-LABEL: test_load_acquire_i32:
+; CHECK: ldr c[[ADDR:[0-9]+]], [c[[ADDR]], :got_lo12:var]
 ; CHECK: ldaxr w[[LOADVAL:[0-9]+]], [c0]
 ; CHECK-NOT: uxtw
 ; CHECK-NOT: and
-; CHECK: ldr c[[ADDR:[0-9]+]], [c[[ADDR]], :got_lo12:var]
 ; CHECK: str x[[LOADVAL]], [c[[ADDR]]]
 
   %val = call i64 @llvm.aarch64.ldaxr.p200i32(i32 addrspace(200)* %addr)
@@ -220,8 +220,8 @@ define void @test_load_acquire_i32(i32 addrspace(200)* %addr) {
 
 define void @test_load_acquire_i64(i64 addrspace(200)* %addr) {
 ; CHECK-LABEL: test_load_acquire_i64:
-; CHECK: ldaxr x[[LOADVAL:[0-9]+]], [c0]
 ; CHECK: ldr c[[ADDR:[0-9]+]], [c[[ADDR]], :got_lo12:var]
+; CHECK: ldaxr x[[LOADVAL:[0-9]+]], [c0]
 ; CHECK: str x[[LOADVAL]], [c[[ADDR]]]
 
   %val = call i64 @llvm.aarch64.ldaxr.p200i64(i64 addrspace(200)* %addr)

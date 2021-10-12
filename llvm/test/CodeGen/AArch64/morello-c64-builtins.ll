@@ -43,8 +43,8 @@ entry:
 ; CHECK-LABEL: testRepresentableLength
 define i64 @testRepresentableLength(i64 %foo) {
 ; CHECK:      sub    [[foo_sub_1:x[0-9]+]], x0, #1
-; CHECK-NEXT: rrlen  [[rrlen_foo_sub_1:x[0-9]+]], [[foo_sub_1]]
 ; CHECK-NEXT: rrlen  [[rrlen_foo:x[0-9]+]], x0
+; CHECK-NEXT: rrlen  [[rrlen_foo_sub_1:x[0-9]+]], [[foo_sub_1]]
 ; CHECK-NEXT: cmp    [[rrlen_foo_sub_1]], x0
 ; CHECK-NEXT: csel   x0, x0, [[rrlen_foo]]
   %1 = call i64 @llvm.cheri.round.representable.length.i64(i64 %foo)
@@ -54,8 +54,8 @@ define i64 @testRepresentableLength(i64 %foo) {
 ; CHECK-LABEL: testRepresentableMask
 define i64 @testRepresentableMask(i64 %foo) {
 ; CHECK:      sub    [[foo_sub_1:x[0-9]+]], x0, #1
-; CHECK-NEXT: rrlen  [[rrlen_foo_sub_1:x[0-9]+]], [[foo_sub_1]]
 ; CHECK-NEXT: cmp    x0, #0
+; CHECK-NEXT: rrlen  [[rrlen_foo_sub_1:x[0-9]+]], [[foo_sub_1]]
 ; CHECK-NEXT: ccmp   [[rrlen_foo_sub_1]], x0, #0, ne
 ; CHECK-NEXT: csel   [[selected:x[0-9]+]], [[foo_sub_1]], x0, eq
 ; CHECK-NEXT: rrmask x0, [[selected]]

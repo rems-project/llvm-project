@@ -101,14 +101,14 @@ define void @foo(i8 addrspace(200) * %ddc, i8 addrspace(200) * %pcc, i32 %num, i
 
 ; C64:      ldp     c20, c19, [csp, #{{[0-9]+}}]
 ; C64-NEXT: ldp     c22, c21, [csp, #{{[0-9]+}}]
-; C64-NEXT: ldp     c24, c23, [csp, #{{[0-9]+}}]
 ; C64-NEXT: ldr     c30, [csp, #{{[0-9]+}}]
+; C64:      ldp     c24, c23, [csp, #{{[0-9]+}}]
 ; C64-NEXT: ldp     d9, d8, [csp], #{{[0-9]+}}
 
-; A64:      ldp     x20, x19, [sp, #{{[0-9]+}}]
+; A64:      ldr     x30, [sp, #{{[0-9]+}}]
+; A64-NEXT: ldp     x20, x19, [sp, #{{[0-9]+}}]
 ; A64-NEXT: ldp     x22, x21, [sp, #{{[0-9]+}}]
-; A64-NEXT: ldp     x24, x23, [sp, #{{[0-9]+}}]
-; A64-NEXT: ldr     x30, [sp, #{{[0-9]+}}]
+; A64:      ldp     x24, x23, [sp, #{{[0-9]+}}]
 ; A64-NEXT: ldp     d9, d8, [sp], #{{[0-9]+}}
 
 entry:

@@ -13,9 +13,9 @@ define dso_local i32 @foo(i64 %a, i64 %b) local_unnamed_addr {
 ; CHECK-NEXT:    .cfi_def_cfa_offset 32
 ; CHECK-NEXT:    .cfi_offset c30, -16
 ; CHECK-NEXT:    mov x2, x1
-; CHECK-NEXT:    add c4, csp, #8
 ; CHECK-NEXT:    mov x1, xzr
 ; CHECK-NEXT:    mov x3, xzr
+; CHECK-NEXT:    add c4, csp, #8
 ; CHECK-NEXT:    str xzr, [csp, #8]
 ; CHECK-NEXT:    bl __muloti4
 ; CHECK-NEXT:    ldr c30, [csp, #16] // 16-byte Folded Reload

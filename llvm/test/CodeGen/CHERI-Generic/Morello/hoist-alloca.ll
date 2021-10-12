@@ -50,12 +50,12 @@ define void @hoist_alloca_uncond(i32 signext %cond) local_unnamed_addr addrspace
 ; CHECK-NEXT:    stp c20, c19, [csp, #48] // 32-byte Folded Spill
 ; CHECK-NEXT:    sub csp, csp, #592
 ; CHECK-NEXT:    mov w8, #492
-; CHECK-NEXT:    add c0, csp, #100
 ; CHECK-NEXT:    mov w9, #88
+; CHECK-NEXT:    mov w21, #100
+; CHECK-NEXT:    add c0, csp, #100
 ; CHECK-NEXT:    add c1, csp, #12
 ; CHECK-NEXT:    scbndse c19, c0, x8
 ; CHECK-NEXT:    scbndse c20, c1, x9
-; CHECK-NEXT:    mov w21, #100
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    mov c0, c19
@@ -97,14 +97,14 @@ define void @hoist_alloca_cond(i32 signext %cond) local_unnamed_addr addrspace(2
 ; CHECK-NEXT:    stp c22, c21, [csp, #32] // 32-byte Folded Spill
 ; CHECK-NEXT:    stp c20, c19, [csp, #64] // 32-byte Folded Spill
 ; CHECK-NEXT:    sub csp, csp, #592
-; CHECK-NEXT:    mov w19, w0
 ; CHECK-NEXT:    mov w8, #492
-; CHECK-NEXT:    add c0, csp, #100
 ; CHECK-NEXT:    mov w9, #88
+; CHECK-NEXT:    mov w19, w0
+; CHECK-NEXT:    mov w22, #100
+; CHECK-NEXT:    add c0, csp, #100
 ; CHECK-NEXT:    add c1, csp, #12
 ; CHECK-NEXT:    scbndse c20, c0, x8
 ; CHECK-NEXT:    scbndse c21, c1, x9
-; CHECK-NEXT:    mov w22, #100
 ; CHECK-NEXT:    b .LBB1_2
 ; CHECK-NEXT:  .LBB1_1: // %for.inc
 ; CHECK-NEXT:    // in Loop: Header=BB1_2 Depth=1

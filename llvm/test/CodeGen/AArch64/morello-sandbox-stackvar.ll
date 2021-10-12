@@ -43,46 +43,46 @@ entry:
 
 ; CHECK: 	add	c0, csp, #152
 ; CHECK-NEXT:	add	c1, csp, #28
-; CHECK-NEXT:	add	c2, csp, #24
-; CHECK-NEXT:	add	c3, csp, #20
-; CHECK-NEXT:	add	c4, csp, #8
-; CHECK-NEXT:	add	c5, csp, #4
-; CHECK-NEXT:	scbnds	c24, c0, #8
+; CHECK-NEXT:	scbnds	c26, c0, #8
 ; CHECK-NEXT:	scbnds	c25, c1, #4
-; CHECK-NEXT:	scbnds	c26, c2, #2
-; CHECK-NEXT:	scbnds	c27, c3, #1
-; CHECK-NEXT:	scbnds	c28, c4, #8
-; CHECK-NEXT:	scbnds	c29, c5, #4
+; CHECK-NEXT:	add	c0, csp, #24
+; CHECK-NEXT:	add	c1, csp, #20
+; CHECK-NEXT:	scbnds	c24, c0, #2
+; CHECK-NEXT:	scbnds	c27, c1, #1
+; CHECK-NEXT:	add	c0, csp, #8
+; CHECK-NEXT:	add	c1, csp, #4
+; CHECK-NEXT:	scbnds	c28, c0, #8
+; CHECK-NEXT:	scbnds	c29, c1, #4
 
 ; CHECK-NEXT:	bl	foo
-; CHECK-DAG:	mov	c0, c24
+; CHECK-DAG:	mov	c0, c26
 ; CHECK-DAG:	mov	c1, c25
-; CHECK-DAG:	mov	c2, c26
+; CHECK-DAG:	mov	c2, c24
 ; CHECK-DAG:	mov	c3, c27
 ; CHECK-DAG:	mov	c4, c28
 ; CHECK-DAG:	mov	c5, c29
-; CHECK:  	str	xzr, [c24]
+; CHECK:  	str	xzr, [c26]
 ; CHECK-DAG:	str	wzr, [c25]
-; CHECK-DAG:	strh	wzr, [c26]
+; CHECK-DAG:	strh	wzr, [c24]
 ; CHECK-DAG:	strb	wzr, [c27]
 ; CHECK-DAG:	str	xzr, [c28]
 ; CHECK-DAG:	str	wzr, [c29]
 
 ; CHECK:   	bl	bar
-; CHECK-DAG:	ldr	x8, [c24]
+; CHECK-DAG:	ldr	x0, [c26]
 ; CHECK-DAG:	ldr	w1, [c25]
 ; CHECK-DAG:	ldr	d0, [c28]
 ; CHECK-DAG:	ldr	s1, [c29]
 ; CHECK-DAG:	ldrb	w3, [c27]
-; CHECK-DAG:	ldrh	w2, [c26]
+; CHECK-DAG:	ldrh	w2, [c24]
 
 ; CHECK:	bl	baz
-; CHECK-NEXT:	add	w0,
 
-; CHECK:      ldr x19, [csp, #144]
-; CHECK-NEXT: ldp c25, c24, [csp, #112]
+; CHECK:      ldp c25, c24, [csp, #112]
 ; CHECK-NEXT: ldp c27, c26, [csp, #80]
 ; CHECK-NEXT: ldp c30, c28, [csp, #48]
 ; CHECK-NEXT: ldr c29, [csp, #32]
+; CHECK-NEXT: add w0,
+; CHECK-NEXT: ldr x19, [csp, #144]
 ; CHECK-NEXT: add csp, csp, #160
 }

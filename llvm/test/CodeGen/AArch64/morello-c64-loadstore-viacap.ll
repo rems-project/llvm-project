@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=arm64 -mattr=+morello,+c64 -target-abi purecap -o - %s | FileCheck %s
+; RUN: llc -mtriple=arm64 -mattr=+morello,+c64 -target-abi purecap -mcpu=rainier -o - %s | FileCheck %s
 
 ; CHECK-LABEL: LoadI64WithConstantOffsetUnscaled
 define i64 @LoadI64WithConstantOffsetUnscaled(i64 * %foo) {

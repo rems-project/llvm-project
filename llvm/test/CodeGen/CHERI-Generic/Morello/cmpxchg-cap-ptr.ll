@@ -26,8 +26,8 @@ define { i8, i1 } @test_cmpxchg_strong_i8(i8 addrspace(200)* %ptr, i8 %exp, i8 %
 ; PURECAP-NEXT:    // kill: def $w0 killed $w0 killed $x0
 ; PURECAP-NEXT:    ret c30
 ; PURECAP-NEXT:  .LBB0_4: // %cmpxchg.nostore
-; PURECAP-NEXT:    clrex
 ; PURECAP-NEXT:    mov w1, wzr
+; PURECAP-NEXT:    clrex
 ; PURECAP-NEXT:    // kill: def $w0 killed $w0 killed $x0
 ; PURECAP-NEXT:    ret c30
 ;
@@ -64,8 +64,8 @@ define { i16, i1 } @test_cmpxchg_strong_i16(i16 addrspace(200)* %ptr, i16 %exp, 
 ; PURECAP-NEXT:    // kill: def $w0 killed $w0 killed $x0
 ; PURECAP-NEXT:    ret c30
 ; PURECAP-NEXT:  .LBB1_4: // %cmpxchg.nostore
-; PURECAP-NEXT:    clrex
 ; PURECAP-NEXT:    mov w1, wzr
+; PURECAP-NEXT:    clrex
 ; PURECAP-NEXT:    // kill: def $w0 killed $w0 killed $x0
 ; PURECAP-NEXT:    ret c30
 ;
@@ -101,8 +101,8 @@ define { i32, i1 } @test_cmpxchg_strong_i32(i32 addrspace(200)* %ptr, i32 %exp, 
 ; PURECAP-NEXT:    // kill: def $w0 killed $w0 killed $x0
 ; PURECAP-NEXT:    ret c30
 ; PURECAP-NEXT:  .LBB2_4: // %cmpxchg.nostore
-; PURECAP-NEXT:    clrex
 ; PURECAP-NEXT:    mov w1, wzr
+; PURECAP-NEXT:    clrex
 ; PURECAP-NEXT:    // kill: def $w0 killed $w0 killed $x0
 ; PURECAP-NEXT:    ret c30
 ;
@@ -137,8 +137,8 @@ define { i64, i1 } @test_cmpxchg_strong_i64(i64 addrspace(200)* %ptr, i64 %exp, 
 ; PURECAP-NEXT:    mov w1, #1
 ; PURECAP-NEXT:    ret c30
 ; PURECAP-NEXT:  .LBB3_4: // %cmpxchg.nostore
-; PURECAP-NEXT:    clrex
 ; PURECAP-NEXT:    mov w1, wzr
+; PURECAP-NEXT:    clrex
 ; PURECAP-NEXT:    ret c30
 ;
 ; HYBRID-LABEL: test_cmpxchg_strong_i64:
@@ -161,8 +161,8 @@ define { i8 addrspace(200)*, i1 } @test_cmpxchg_strong_cap(i8 addrspace(200)* ad
 ; PURECAP-NEXT:    mov c3, c1
 ; PURECAP-NEXT:    casal c3, c2, [c0]
 ; PURECAP-NEXT:    cmp x3, x1
-; PURECAP-NEXT:    cset w1, eq
 ; PURECAP-NEXT:    mov c0, c3
+; PURECAP-NEXT:    cset w1, eq
 ; PURECAP-NEXT:    ret c30
 ;
 ; HYBRID-LABEL: test_cmpxchg_strong_cap:
@@ -188,8 +188,8 @@ define { i32 addrspace(200)*, i1 } @test_cmpxchg_strong_cap_i32(i32 addrspace(20
 ; PURECAP-NEXT:    mov c3, c1
 ; PURECAP-NEXT:    casal c3, c2, [c0]
 ; PURECAP-NEXT:    cmp x3, x1
-; PURECAP-NEXT:    cset w1, eq
 ; PURECAP-NEXT:    mov c0, c3
+; PURECAP-NEXT:    cset w1, eq
 ; PURECAP-NEXT:    ret c30
 ;
 ; HYBRID-LABEL: test_cmpxchg_strong_cap_i32:
@@ -367,8 +367,8 @@ define { i8 addrspace(200)*, i1 } @test_cmpxchg_weak_cap(i8 addrspace(200)* addr
 ; PURECAP-NEXT:    mov c3, c1
 ; PURECAP-NEXT:    casal c3, c2, [c0]
 ; PURECAP-NEXT:    cmp x3, x1
-; PURECAP-NEXT:    cset w1, eq
 ; PURECAP-NEXT:    mov c0, c3
+; PURECAP-NEXT:    cset w1, eq
 ; PURECAP-NEXT:    ret c30
 ;
 ; HYBRID-LABEL: test_cmpxchg_weak_cap:
@@ -394,8 +394,8 @@ define { i32 addrspace(200)*, i1 } @test_cmpxchg_weak_cap_i32(i32 addrspace(200)
 ; PURECAP-NEXT:    mov c3, c1
 ; PURECAP-NEXT:    casal c3, c2, [c0]
 ; PURECAP-NEXT:    cmp x3, x1
-; PURECAP-NEXT:    cset w1, eq
 ; PURECAP-NEXT:    mov c0, c3
+; PURECAP-NEXT:    cset w1, eq
 ; PURECAP-NEXT:    ret c30
 ;
 ; HYBRID-LABEL: test_cmpxchg_weak_cap_i32:
