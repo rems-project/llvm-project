@@ -640,9 +640,8 @@ public:
 
   virtual Status DoLoadCore() {
     Status error;
-    error.SetErrorStringWithFormat(
-        "error: %s does not support loading core files.",
-        GetPluginName().GetCString());
+    error.SetErrorStringWithFormatv(
+        "error: {0} does not support loading core files.", GetPluginName());
     return error;
   }
 
@@ -971,9 +970,9 @@ public:
   virtual Status DoAttachToProcessWithID(lldb::pid_t pid,
                                          const ProcessAttachInfo &attach_info) {
     Status error;
-    error.SetErrorStringWithFormat(
-        "error: %s does not support attaching to a process by pid",
-        GetPluginName().GetCString());
+    error.SetErrorStringWithFormatv(
+        "error: {0} does not support attaching to a process by pid",
+        GetPluginName());
     return error;
   }
 
@@ -1056,9 +1055,8 @@ public:
   ///     operation.
   virtual Status DoLaunch(Module *exe_module, ProcessLaunchInfo &launch_info) {
     Status error;
-    error.SetErrorStringWithFormat(
-        "error: %s does not support launching processes",
-        GetPluginName().GetCString());
+    error.SetErrorStringWithFormatv(
+        "error: {0} does not support launching processes", GetPluginName());
     return error;
   }
 
@@ -1092,9 +1090,8 @@ public:
   /// \see Thread:Suspend()
   virtual Status DoResume() {
     Status error;
-    error.SetErrorStringWithFormat(
-        "error: %s does not support resuming processes",
-        GetPluginName().GetCString());
+    error.SetErrorStringWithFormatv(
+        "error: {0} does not support resuming processes", GetPluginName());
     return error;
   }
 
@@ -1128,9 +1125,8 @@ public:
   ///     otherwise.
   virtual Status DoHalt(bool &caused_stop) {
     Status error;
-    error.SetErrorStringWithFormat(
-        "error: %s does not support halting processes",
-        GetPluginName().GetCString());
+    error.SetErrorStringWithFormatv(
+        "error: {0} does not support halting processes", GetPluginName());
     return error;
   }
 
@@ -1155,9 +1151,9 @@ public:
   ///     false otherwise.
   virtual Status DoDetach(bool keep_stopped) {
     Status error;
-    error.SetErrorStringWithFormat(
-        "error: %s does not support detaching from processes",
-        GetPluginName().GetCString());
+    error.SetErrorStringWithFormatv(
+        "error: {0} does not support detaching from processes",
+        GetPluginName());
     return error;
   }
 
@@ -1186,9 +1182,9 @@ public:
   ///     Returns an error object.
   virtual Status DoSignal(int signal) {
     Status error;
-    error.SetErrorStringWithFormat(
-        "error: %s does not support sending signals to processes",
-        GetPluginName().GetCString());
+    error.SetErrorStringWithFormatv(
+        "error: {0} does not support sending signals to processes",
+        GetPluginName());
     return error;
   }
 
@@ -1620,9 +1616,8 @@ public:
   ///     The number of bytes that were actually written.
   virtual size_t DoWriteMemory(lldb::addr_t vm_addr, const void *buf,
                                size_t size, Status &error) {
-    error.SetErrorStringWithFormat(
-        "error: %s does not support writing to processes",
-        GetPluginName().GetCString());
+    error.SetErrorStringWithFormatv(
+        "error: {0} does not support writing to processes", GetPluginName());
     return 0;
   }
 
@@ -1704,9 +1699,9 @@ public:
 
   virtual lldb::addr_t DoAllocateMemory(size_t size, uint32_t permissions,
                                         Status &error) {
-    error.SetErrorStringWithFormat(
-        "error: %s does not support allocating in the debug process",
-        GetPluginName().GetCString());
+    error.SetErrorStringWithFormatv(
+        "error: {0} does not support allocating in the debug process",
+        GetPluginName());
     return LLDB_INVALID_ADDRESS;
   }
 
@@ -1959,9 +1954,9 @@ public:
   ///     \btrue if the memory was deallocated, \bfalse otherwise.
   virtual Status DoDeallocateMemory(lldb::addr_t ptr) {
     Status error;
-    error.SetErrorStringWithFormat(
-        "error: %s does not support deallocating in the debug process",
-        GetPluginName().GetCString());
+    error.SetErrorStringWithFormatv(
+        "error: {0} does not support deallocating in the debug process",
+        GetPluginName());
     return error;
   }
 
@@ -2079,17 +2074,15 @@ public:
 
   virtual Status EnableBreakpointSite(BreakpointSite *bp_site) {
     Status error;
-    error.SetErrorStringWithFormat(
-        "error: %s does not support enabling breakpoints",
-        GetPluginName().GetCString());
+    error.SetErrorStringWithFormatv(
+        "error: {0} does not support enabling breakpoints", GetPluginName());
     return error;
   }
 
   virtual Status DisableBreakpointSite(BreakpointSite *bp_site) {
     Status error;
-    error.SetErrorStringWithFormat(
-        "error: %s does not support disabling breakpoints",
-        GetPluginName().GetCString());
+    error.SetErrorStringWithFormatv(
+        "error: {0} does not support disabling breakpoints", GetPluginName());
     return error;
   }
 
@@ -2875,9 +2868,10 @@ protected:
   ///     if the read failed.
   virtual llvm::Expected<std::vector<uint8_t>>
   DoReadMemoryTags(lldb::addr_t addr, size_t len, int32_t type) {
-    return llvm::createStringError(llvm::inconvertibleErrorCode(),
-                                   "%s does not support reading memory tags",
-                                   GetPluginName().GetCString());
+    return llvm::createStringError(
+        llvm::inconvertibleErrorCode(),
+        llvm::formatv("{0} does not support reading memory tags",
+                      GetPluginName()));
   }
 
   /// Does the final operation to write memory tags. E.g. sending a GDB packet.
@@ -2900,8 +2894,10 @@ protected:
   ///     Status telling you whether the write succeeded.
   virtual Status DoWriteMemoryTags(lldb::addr_t addr, size_t len, int32_t type,
                                    const std::vector<uint8_t> &tags) {
-    return Status("%s does not support writing memory tags",
-                  GetPluginName().GetCString());
+    Status status;
+    status.SetErrorStringWithFormatv("{0} does not support writing memory tags",
+                                     GetPluginName());
+    return status;
   }
 
   // Type definitions

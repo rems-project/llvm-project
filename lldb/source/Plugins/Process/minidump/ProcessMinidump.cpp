@@ -65,7 +65,9 @@ public:
   static ConstString GetStaticPluginName() {
     return ConstString("placeholder");
   }
-  ConstString GetPluginName() override { return GetStaticPluginName(); }
+  llvm::StringRef GetPluginName() override {
+    return GetStaticPluginName().GetStringRef();
+  }
   bool ParseHeader() override { return true; }
   Type CalculateType() override { return eTypeUnknown; }
   Strata CalculateStrata() override { return eStrataUnknown; }
@@ -305,8 +307,6 @@ Status ProcessMinidump::DoLoadCore() {
 
   return error;
 }
-
-ConstString ProcessMinidump::GetPluginName() { return GetPluginNameStatic(); }
 
 Status ProcessMinidump::DoDestroy() { return Status(); }
 
@@ -589,8 +589,9 @@ void ProcessMinidump::ReadModuleList() {
       // we don't then we will end up setting the load address of a different
       // PlaceholderObjectFile and an assertion will fire.
       auto *objfile = module_sp->GetObjectFile();
-      if (objfile && objfile->GetPluginName() ==
-          PlaceholderObjectFile::GetStaticPluginName()) {
+      if (objfile &&
+          objfile->GetPluginName() ==
+              PlaceholderObjectFile::GetStaticPluginName().GetStringRef()) {
         if (((PlaceholderObjectFile *)objfile)->GetBaseImageAddress() !=
             load_addr)
           module_sp.reset();
