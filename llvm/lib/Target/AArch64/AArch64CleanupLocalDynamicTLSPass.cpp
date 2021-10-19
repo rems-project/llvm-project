@@ -24,6 +24,7 @@
 #include "AArch64.h"
 #include "AArch64InstrInfo.h"
 #include "AArch64MachineFunctionInfo.h"
+#include "AArch64Subtarget.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -39,11 +40,12 @@ struct LDTLSCleanup : public MachineFunctionPass {
   LDTLSCleanup() : MachineFunctionPass(ID) {
     initializeLDTLSCleanupPass(*PassRegistry::getPassRegistry());
   }
-
+  bool HasC64;
   bool runOnMachineFunction(MachineFunction &MF) override {
     if (skipFunction(MF.getFunction()))
       return false;
 
+    HasC64 = static_cast<const AArch64Subtarget &>(MF.getSubtarget()).hasC64();
     AArch64FunctionInfo *AFI = MF.getInfo<AArch64FunctionInfo>();
     if (AFI->getNumLocalDynamicTLSAccesses() < 2) {
       // No point folding accesses if there isn't at least two.
@@ -68,6 +70,7 @@ struct LDTLSCleanup : public MachineFunctionPass {
          ++I) {
       switch (I->getOpcode()) {
       case AArch64::TLSDESC_CALLSEQ:
+      case AArch64::TLSDESC_C64_CALLSEQ:
         // Make sure it's a local dynamic access.
         if (!I->getOperand(0).isSymbol() ||
             strcmp(I->getOperand(0).getSymbolName(), "_TLS_MODULE_BASE_"))
@@ -102,7 +105,8 @@ struct LDTLSCleanup : public MachineFunctionPass {
     // Insert a Copy from TLSBaseAddrReg to x0, which is where the rest of the
     // code sequence assumes the address will be.
     MachineInstr *Copy = BuildMI(*I.getParent(), I, I.getDebugLoc(),
-                                 TII->get(TargetOpcode::COPY), AArch64::X0)
+                                 TII->get(TargetOpcode::COPY),
+                                 HasC64 ? AArch64::C0 : AArch64::X0)
                              .addReg(TLSBaseAddrReg);
 
     // Update the call site info.
@@ -123,13 +127,14 @@ struct LDTLSCleanup : public MachineFunctionPass {
 
     // Create a virtual register for the TLS base address.
     MachineRegisterInfo &RegInfo = MF->getRegInfo();
-    *TLSBaseAddrReg = RegInfo.createVirtualRegister(&AArch64::GPR64RegClass);
+    *TLSBaseAddrReg = RegInfo.createVirtualRegister(
+        HasC64 ? &AArch64::CapRegClass : &AArch64::GPR64RegClass);
 
     // Insert a copy from X0 to TLSBaseAddrReg for later.
     MachineInstr *Copy =
         BuildMI(*I.getParent(), ++I.getIterator(), I.getDebugLoc(),
                 TII->get(TargetOpcode::COPY), *TLSBaseAddrReg)
-            .addReg(AArch64::X0);
+            .addReg(HasC64 ? AArch64::C0 : AArch64::X0);
 
     return Copy;
   }

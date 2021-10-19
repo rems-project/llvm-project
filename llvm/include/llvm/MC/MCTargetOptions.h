@@ -98,6 +98,8 @@ public:
   static CheriCapabilityTableABI cheriCapabilityTableABI();
   static CheriLandingPadEncoding cheriLandingPadEncoding();
 
+  static bool useTLSGDForPurecap();
+
   /// getAssemblyLanguage - If this returns a non-empty string this represents
   /// the textual name of the assembly language that we will use for this
   /// target, e.g. masm.

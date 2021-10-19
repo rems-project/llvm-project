@@ -19,7 +19,7 @@
 
     adrp c11, :gottprel:var
     add c10, c0, #:gottprel_lo12:var
-// CHECK: adrp c11, #0
+// CHECK: adrp c11, 0x0
 // CHECK-NEXT: R_MORELLO_TLSIE_ADR_GOTTPREL_PAGE20 var
 // CHECK: add c10, c0, #0
 // CHECK-NEXT: R_MORELLO_TLSIE_ADD_LO12 var

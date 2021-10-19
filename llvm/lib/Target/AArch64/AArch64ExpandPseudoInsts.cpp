@@ -935,6 +935,32 @@ bool AArch64ExpandPseudo::expandMI(MachineBasicBlock &MBB,
     return true;
   }
 
+  case AArch64::CLoadTLSInfo: {
+    unsigned SuperReg = MI.getOperand(0).getReg();
+    unsigned DstReg = TRI->getSubReg(SuperReg, AArch64::sub_64);
+    const MachineOperand &MO = MI.getOperand(2);
+    unsigned Flags = MO.getTargetFlags();
+    BuildMI(MBB, MBBI, MI.getDebugLoc(),
+            TII->get(AArch64::PADRP), SuperReg)
+        .addGlobalAddress(MO.getGlobal(), 0,
+                          Flags | AArch64II::MO_PAGE);
+    BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(AArch64::CapAddImm))
+        .add(MI.getOperand(0))
+        .addReg(SuperReg)
+        .addGlobalAddress(MO.getGlobal(), 0,
+                          Flags | AArch64II::MO_PAGEOFF | AArch64II::MO_NC)
+        .addImm(0);
+    MachineInstrBuilder MIB =
+        BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(AArch64::ALDPXi))
+            .addReg(DstReg, RegState::Define)
+            .add(MI.getOperand(1))
+            .addReg(SuperReg)
+            .addImm(0);
+
+    transferImpOps(MI, MIB, MIB);
+    MI.eraseFromParent();
+    return true;
+  }
   case AArch64::LOADCgot: {
     // Expand into ADRP + ALDR.
     // The register should already be constrained such that it will have the

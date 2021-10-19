@@ -179,9 +179,10 @@ TLSModel::Model TargetMachine::getTLSModel(const GlobalValue *GV) const {
 
   const Triple &TT = getTargetTriple();
   Triple::ArchType Arch = TT.getArch();
-  // Only GeneralDynamic is currently supported for capabilities.
+
   if ((Arch == Triple::aarch64 || TT.isAArch64()) &&
-      GV->getAddressSpace() == 200)
+      GV->getAddressSpace() == 200 && MCTargetOptions::useTLSGDForPurecap())
+    // Allow forcing GD for purecap.
     return TLSModel::GeneralDynamic;
 
   TLSModel::Model Model;
