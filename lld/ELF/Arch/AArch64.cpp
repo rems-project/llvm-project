@@ -13,6 +13,7 @@
 #include "lld/Common/ErrorHandler.h"
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/Endian.h"
+#include "Cheri.h"
 
 using namespace llvm;
 using namespace llvm::support::endian;
@@ -149,6 +150,14 @@ RelExpr AArch64::getRelExpr(RelType type, const Symbol &s,
   case R_AARCH64_MOVW_UABS_G2_NC:
   case R_AARCH64_MOVW_UABS_G3:
     return R_ABS;
+  case R_MORELLO_MOVW_SIZE_G0:
+  case R_MORELLO_MOVW_SIZE_G0_NC:
+  case R_MORELLO_MOVW_SIZE_G1:
+  case R_MORELLO_MOVW_SIZE_G1_NC:
+  case R_MORELLO_MOVW_SIZE_G2:
+  case R_MORELLO_MOVW_SIZE_G2_NC:
+  case R_MORELLO_MOVW_SIZE_G3:
+    return R_MORELLO_SIZE;
   case R_AARCH64_TLSDESC_ADR_PAGE21:
     return R_AARCH64_TLSDESC_PAGE;
   case R_MORELLO_TLSDESC_ADR_PAGE20:
@@ -204,12 +213,14 @@ RelExpr AArch64::getRelExpr(RelType type, const Symbol &s,
   case R_AARCH64_LD64_GOT_LO12_NC:
   case R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
   case R_MORELLO_LD128_GOT_LO12_NC:
+  case R_MORELLO_TLSIE_ADD_LO12:
     return R_GOT;
   case R_AARCH64_LD64_GOTPAGE_LO15:
     return R_AARCH64_GOT_PAGE;
   case R_AARCH64_ADR_GOT_PAGE:
   case R_MORELLO_ADR_GOT_PAGE:
   case R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
+  case R_MORELLO_TLSIE_ADR_GOTTPREL_PAGE20:
     return R_AARCH64_GOT_PAGE_PC;
   case R_AARCH64_NONE:
     return R_NONE;
@@ -226,9 +237,26 @@ RelExpr AArch64::getRelExpr(RelType type, const Symbol &s,
 
 RelExpr AArch64::adjustTlsExpr(RelType type, RelExpr expr) const {
   if (expr == R_RELAX_TLS_GD_TO_IE) {
-    if (type == R_AARCH64_TLSDESC_ADR_PAGE21)
+    if (type == R_AARCH64_TLSDESC_ADR_PAGE21 ||
+        type == R_MORELLO_TLSDESC_ADR_PAGE20)
       return R_AARCH64_RELAX_TLS_GD_TO_IE_PAGE_PC;
     return R_RELAX_TLS_GD_TO_IE_ABS;
+  }
+  if (expr == R_RELAX_TLS_GD_TO_LE) {
+    if (type == R_MORELLO_TLSDESC_ADR_PAGE20) {
+      return R_MORELLO_RELAX_TLS_GD_TO_LE_PAGE_PC;
+    }
+    if (type == R_MORELLO_TLSDESC_LD128_LO12) {
+      return R_MORELLO_RELAX_TLS_GD_TO_LE_ADD_LO12;
+    }
+  }
+  if (expr == R_RELAX_TLS_IE_TO_LE) {
+    if (type == R_MORELLO_TLSIE_ADD_LO12) {
+      return R_MORELLO_RELAX_TLS_IE_TO_LE_ADD_LO12;
+    }
+    if (type == R_MORELLO_TLSIE_ADR_GOTTPREL_PAGE20) {
+      return R_MORELLO_RELAX_TLS_IE_TO_LE_PAGE_PC;
+    }
   }
   return expr;
 }
@@ -247,6 +275,7 @@ bool AArch64::usesOnlyLowPageBits(RelType type) const {
   case R_AARCH64_TLSDESC_ADD_LO12:
   case R_AARCH64_TLSDESC_LD64_LO12:
   case R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
+  case R_MORELLO_TLSIE_ADD_LO12:
   case R_MORELLO_LD128_GOT_LO12_NC:
   case R_MORELLO_TLSDESC_LD128_LO12:
     return true;
@@ -437,6 +466,7 @@ void AArch64::relocate(uint8_t *loc, const Relocation &rel,
     break;
   case R_MORELLO_ADR_GOT_PAGE:
   case R_MORELLO_ADR_PREL_PG_HI20:
+  case R_MORELLO_TLSIE_ADR_GOTTPREL_PAGE20:
   case R_MORELLO_TLSDESC_ADR_PAGE20:
     // FIXME: Although the diagnostic maximum range is 0x7FFFFFFF (2147483647),
     // because the equation, Page (S + A) - Page (P), is 12-bit aligned the
@@ -517,6 +547,10 @@ void AArch64::relocate(uint8_t *loc, const Relocation &rel,
     checkAlignment(loc, val, 8, rel);
     or32AArch64Imm(loc, getBits(val, 3, 11));
     break;
+  case R_MORELLO_TLSIE_ADD_LO12:
+    checkAlignment(loc, val, 16, rel);
+    or32AArch64Imm(loc, val);
+    break;
   case R_AARCH64_LDST128_ABS_LO12_NC:
   case R_AARCH64_TLSLE_LDST128_TPREL_LO12_NC:
   case R_MORELLO_LD128_GOT_LO12_NC:
@@ -528,24 +562,31 @@ void AArch64::relocate(uint8_t *loc, const Relocation &rel,
     checkAlignment(loc, val, 8, rel);
     or32AArch64Imm(loc, getBits(val, 3, 14));
     break;
+  case R_MORELLO_MOVW_SIZE_G0:
   case R_AARCH64_MOVW_UABS_G0:
     checkUInt(loc, val, 16, rel);
     LLVM_FALLTHROUGH;
+  case R_MORELLO_MOVW_SIZE_G0_NC:
   case R_AARCH64_MOVW_UABS_G0_NC:
     or32le(loc, (val & 0xFFFF) << 5);
     break;
+  case R_MORELLO_MOVW_SIZE_G1:
   case R_AARCH64_MOVW_UABS_G1:
     checkUInt(loc, val, 32, rel);
     LLVM_FALLTHROUGH;
+  case R_MORELLO_MOVW_SIZE_G1_NC:
   case R_AARCH64_MOVW_UABS_G1_NC:
     or32le(loc, (val & 0xFFFF0000) >> 11);
     break;
+  case R_MORELLO_MOVW_SIZE_G2:
   case R_AARCH64_MOVW_UABS_G2:
     checkUInt(loc, val, 48, rel);
     LLVM_FALLTHROUGH;
+  case R_MORELLO_MOVW_SIZE_G2_NC:
   case R_AARCH64_MOVW_UABS_G2_NC:
     or32le(loc, (val & 0xFFFF00000000) >> 27);
     break;
+  case R_MORELLO_MOVW_SIZE_G3:
   case R_AARCH64_MOVW_UABS_G3:
     or32le(loc, (val & 0xFFFF000000000000) >> 43);
     break;
@@ -851,7 +892,10 @@ public:
   void writeGotPlt(uint8_t *buf, const Symbol &s) const override;
   void relaxTlsGdToLe(uint8_t *loc, const Relocation &rel,
                       uint64_t val) const override;
-
+  void relaxTlsGdToIe(uint8_t *loc, const Relocation &rel,
+                      uint64_t val) const override;
+  void relaxTlsIeToLe(uint8_t *loc, const Relocation &rel,
+                      uint64_t val) const override;
 private:
 };
 } // namespace
@@ -862,6 +906,7 @@ AArch64C64::AArch64C64() {
   gotRel = R_MORELLO_GLOB_DAT;
   pltRel = R_MORELLO_JUMP_SLOT;
   tlsDescRel = R_MORELLO_TLSDESC;
+  tlsGotRel = R_MORELLO_TLS_TPREL128;
 }
 
 void AArch64C64::writePltHeader(uint8_t *buf) const {
@@ -912,58 +957,91 @@ void AArch64C64::relaxTlsGdToLe(uint8_t *loc, const Relocation &rel,
   // Morello TLSDESC Global-Dynamic relocation are in the form:
   //
   //  The instruction sequence is:
-  //  nop
   //  adrp     c0, :tlsdesc:v             [R_MORELLO_TLSDESC_ADR_PAGE20]
   //  ldr      c1, [c0, #:tlsdesc_lo12:v] [R_MORELLO_TLSDESC_LD128_LO12]
   //  add      c0, c0, #:tlsdesc_lo12:v   [R_AARCH64_TLSDESC_ADD_LO12]
+  //  nop
   //    .tlsdesccall v                    [R_MORELLO_TLSDESC_CALL]
   //  blr      c1
-  //  scbnds  c0, c0, x1
   //
   // And it can optimized to:
-  //  mov x0, offset_imm0
-  //  movk x0, offset_imm1
-  //  mov x1, size_imm_0
-  //  movk x1, size_imm_1
-  //  add c0, c2, x0
-  //  scbnds  c0, c0, x1
-  checkUInt(loc, val, 32, rel);
-
+  //  adrp     c0, :gottprel:v
+  //  add      c0, c0, :gottprel_lo12:v
+  //  ldp      x0, x1, [c0]
+  //  add      c0, c2, x0
+  //  scbnds   c0, c0, x1
   switch (rel.type) {
-  case R_AARCH64_TLSDESC_CALL:
-    if (config->morelloC64Plt) {
-      // Overwrite the C64 instruction written for R_AARCH64_TLSDESC_ADD_LO12
-      // with the appropriate instruction for the AArch64 sequence
-      warn("AArch64 TLS GD to LE relaxation detected for the purecap ABI");
-      write32le(loc-4, 0xd503201f); // nop
-    }
-    write32le(loc, 0xd503201f); // nop
-    return;
   case R_MORELLO_TLSDESC_ADR_PAGE20:
-    checkUInt(loc, rel.sym->getSize(), 32, rel);
-    // mov x0, offset_imm0, lsl #16
-    write32le(loc-4, 0xd2a00000 | (((val >> 16) & 0xffff) << 5));
-    // movk x0, offset_imm1
-    write32le(loc, 0xf2800000 | ((val & 0xffff) << 5));
+    write32le(loc, 0x90800000); // adrp c0, <dataloc>
+    relocateNoSym(loc, R_MORELLO_ADR_PREL_PG_HI20, val);
     return;
   case R_MORELLO_TLSDESC_LD128_LO12:
-    checkUInt(loc, rel.sym->getSize(), 32, rel);
-    // mov x1, size_imm_0, lsl #16
-    write32le(loc, 0xd2a00001 | (((rel.sym->getSize() >> 16) & 0xffff) << 5));
+    write32le(loc, 0x02000000); // add c0, c0, <dataloc_lo12>
+    relocateNoSym(loc, R_AARCH64_ADD_ABS_LO12_NC, val);
     return;
   case R_AARCH64_TLSDESC_ADD_LO12:
-    // The instructions written here can be overwritten
-    // depending on what comes next:
-    // R_AARCH64_TLSDESC_CALL or R_MORELLO_TLSDESC_CALL
-    checkUInt(loc, rel.sym->getSize(), 32, rel);
-    // movk x1, size_imm_1
-    write32le(loc, 0xf2800001 | ((rel.sym->getSize() & 0xffff) << 5));
+    write32le(loc, 0xa9400400); // ldp x0, x1, [c0]
     return;
   case R_MORELLO_TLSDESC_CALL:
-    write32le(loc, 0xc2a06040); // add c0, c2, x0
+    write32le(loc-4, 0xc2a06040); // add c0, c2, x0
+    write32le(loc, 0xc2c10000); // scbnds c0, c0, x1
     return;
   default:
-    AArch64::relaxTlsGdToLe(loc, rel, val);
+    llvm_unreachable("unknown relocation");
+  }
+}
+
+void AArch64C64::relaxTlsGdToIe(uint8_t *loc, const Relocation &rel,
+                                uint64_t val) const {
+  // Morello TLSDESC Global-Dynamic relocation are in the form:
+  //
+  //  The instruction sequence is:
+  //  adrp     c0, :tlsdesc:v             [R_MORELLO_TLSDESC_ADR_PAGE20]
+  //  ldr      c1, [c0, #:tlsdesc_lo12:v] [R_MORELLO_TLSDESC_LD128_LO12]
+  //  add      c0, c0, #:tlsdesc_lo12:v   [R_AARCH64_TLSDESC_ADD_LO12]
+  //  nop
+  //    .tlsdesccall v                    [R_MORELLO_TLSDESC_CALL]
+  //  blr      c1
+  //
+  // And it can optimized to:
+  //  adrp     c0, :gottprel:v
+  //  add      c0, c0, :gottprel_lo12:v
+  //  ldp      x0, x1, [c0]
+  //  add      c0, c2, x0
+  //  scbnds   c0, c0, x1
+  switch (rel.type) {
+  case R_MORELLO_TLSDESC_ADR_PAGE20:
+    write32le(loc, 0x90800000); // adrp c0, :gottprel:v
+    relocateNoSym(loc, R_MORELLO_TLSIE_ADR_GOTTPREL_PAGE20, val);
+    return;
+  case R_MORELLO_TLSDESC_LD128_LO12:
+    write32le(loc, 0x02000000); // add c0, c0, :gottprel_lo12:v
+    relocateNoSym(loc, R_MORELLO_TLSIE_ADD_LO12, val);
+    return;
+  case R_AARCH64_TLSDESC_ADD_LO12:
+    write32le(loc, 0xa9400400); // ldp x0, x1, [c0]
+    return;
+  case R_MORELLO_TLSDESC_CALL:
+    write32le(loc-4, 0xc2a06040); // add c0, c2, x0
+    write32le(loc, 0xc2c10000); // scbnds c0, c0, x1
+    return;
+  default:
+    llvm_unreachable("unsupported relocation for TLS GD to IE relaxation");
+  }
+}
+
+void AArch64C64::relaxTlsIeToLe(uint8_t *loc, const Relocation &rel,
+                                uint64_t val) const {
+  switch (rel.type) {
+  case R_MORELLO_TLSIE_ADR_GOTTPREL_PAGE20:
+    relocateNoSym(loc, R_MORELLO_ADR_PREL_PG_HI20,
+                  getAArch64Page(val));
+    return;
+  case R_MORELLO_TLSIE_ADD_LO12:
+    relocateNoSym(loc, R_AARCH64_ADD_ABS_LO12_NC, val);
+    return;
+  default:
+    llvm_unreachable("unknown relocation");
   }
 }
 

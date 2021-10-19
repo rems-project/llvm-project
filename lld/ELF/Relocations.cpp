@@ -233,10 +233,10 @@ handleTlsRelocation(RelType type, Symbol &sym, InputSectionBase &c,
     return handleMipsTlsRelocation(type, sym, c, offset, addend, expr);
 
   // AArch64 supports relaxation from General-Dynamic to Initial-Exec if the
-  // symbol is preemptible. This is not implemented for Morello at the moment.
+  // symbol is preemptible.
   if (oneof<R_AARCH64_TLSDESC_PAGE, R_TLSDESC, R_TLSDESC_CALL, R_TLSDESC_PC,
-      R_MORELLO_TLSDESC_PAGE>(expr) &&
-      (config->shared || (sym.isPreemptible && config->morelloC64Plt))) {
+            R_MORELLO_TLSDESC_PAGE>(expr) &&
+      config->shared) {
     if (in.got->addDynTlsEntry(sym)) {
       uint64_t off = in.got->getGlobalDynOffset(sym);
       mainPart->relaDyn->addReloc(
@@ -364,6 +364,8 @@ handleTlsRelocation(RelType type, Symbol &sym, InputSectionBase &c,
                                 &sym);
       }
     } else {
+      if (config->emachine == EM_AARCH64 && config->morelloC64Plt)
+        in.tlsLEData->addTLSLEData(&sym);
       c.relocations.push_back(
           {target->adjustTlsExpr(type, R_RELAX_TLS_GD_TO_LE), type, offset,
            addend, &sym});
@@ -376,7 +378,12 @@ handleTlsRelocation(RelType type, Symbol &sym, InputSectionBase &c,
   if (oneof<R_GOT, R_GOTPLT, R_GOT_PC, R_AARCH64_GOT_PAGE_PC, R_GOT_OFF,
             R_TLSIE_HINT>(expr) &&
       toExecRelax && isLocalInExecutable) {
-    c.relocations.push_back({R_RELAX_TLS_IE_TO_LE, type, offset, addend, &sym});
+    if (config->emachine == EM_AARCH64 && config->morelloC64Plt) {
+      in.tlsLEData->addTLSLEData(&sym);
+    }
+    c.relocations.push_back(
+        {target->adjustTlsExpr(type, R_RELAX_TLS_IE_TO_LE), type,
+         offset, addend, &sym});
     return 1;
   }
 

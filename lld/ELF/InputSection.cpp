@@ -933,6 +933,21 @@ uint64_t InputSectionBase::getRelocTargetVA(const InputFile *file, RelType type,
     if (sym.isUndefWeak())
       return a;
     return sym.getVA(a) - (p & ~0xF);
+  case R_MORELLO_SIZE:
+    return sym.getSize();
+  case R_MORELLO_RELAX_TLS_IE_TO_LE_PAGE_PC:
+  case R_MORELLO_RELAX_TLS_GD_TO_LE_PAGE_PC: {
+    assert(a == 0 && "should not have an addend");
+    uint64_t vaddr = in.tlsLEData->getVA() +
+        in.tlsLEData->getSymbolIndex(&sym) * 16;
+    return getAArch64Page(vaddr) - getAArch64Page(p);
+  }
+  case R_MORELLO_RELAX_TLS_IE_TO_LE_ADD_LO12:
+  case R_MORELLO_RELAX_TLS_GD_TO_LE_ADD_LO12: {
+    uint64_t vaddr = in.tlsLEData->getVA() +
+        in.tlsLEData->getSymbolIndex(&sym) * 16;
+    return vaddr;
+  }
   default:
     llvm_unreachable("invalid expression");
   }
@@ -1148,6 +1163,8 @@ void InputSectionBase::relocateAlloc(uint8_t *buf, uint8_t *bufEnd) {
         target->relocate(bufLoc, rel, targetVA);
       break;
     case R_RELAX_TLS_IE_TO_LE:
+    case R_MORELLO_RELAX_TLS_IE_TO_LE_PAGE_PC:
+    case R_MORELLO_RELAX_TLS_IE_TO_LE_ADD_LO12:
       target->relaxTlsIeToLe(bufLoc, rel, targetVA);
       break;
     case R_RELAX_TLS_LD_TO_LE:
@@ -1156,6 +1173,8 @@ void InputSectionBase::relocateAlloc(uint8_t *buf, uint8_t *bufEnd) {
       break;
     case R_RELAX_TLS_GD_TO_LE:
     case R_RELAX_TLS_GD_TO_LE_NEG:
+    case R_MORELLO_RELAX_TLS_GD_TO_LE_PAGE_PC:
+    case R_MORELLO_RELAX_TLS_GD_TO_LE_ADD_LO12:
       target->relaxTlsGdToLe(bufLoc, rel, targetVA);
       break;
     case R_AARCH64_RELAX_TLS_GD_TO_IE_PAGE_PC:
@@ -1197,6 +1216,8 @@ void InputSectionBase::relocateAlloc(uint8_t *buf, uint8_t *bufEnd) {
     case R_MORELLO_CAPFRAG_ALIGNED_SIZE_AND_PERM:
     case R_MORELLO_CAPFRAG_UNALIGNED_SIZE_AND_PERM:
       target->writeFragmentSizeAndPermissions(bufLoc, targetVA);
+      break;
+    case R_MORELLO_TLSIE_OFFSET_AND_SIZE:
       break;
     default:
       target->relocate(bufLoc, rel, targetVA);
