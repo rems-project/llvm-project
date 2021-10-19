@@ -11,6 +11,7 @@
 // XFAIL: darwin
 // XFAIL: netbsd
 // XFAIL: libcpp-has-newlib
+// XFAIL: LIBCXX-AIX-FIXME
 
 // <uchar.h>
 
