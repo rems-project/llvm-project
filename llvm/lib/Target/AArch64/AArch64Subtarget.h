@@ -69,6 +69,7 @@ public:
     NeoverseN1,
     Rainier,
     NeoverseN2,
+    Neoverse512TVB,
     NeoverseV1,
     Saphira,
     ThunderX2T99,
