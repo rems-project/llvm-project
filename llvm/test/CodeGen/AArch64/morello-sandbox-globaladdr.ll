@@ -1,11 +1,11 @@
-; RUN: llc -mtriple=arm64 -mattr=+c64,+morello -target-abi purecap -o - %s -aarch64-enable-sandbox-globals-opt=false | FileCheck %s --check-prefix=PURE --check-prefix=ALL --check-prefix=PURE-STATIC
-; RUN: llc -mtriple=arm64 -mattr=+c64,+morello -target-abi purecap -relocation-model=pic -aarch64-enable-sandbox-globals-opt=false -o - %s | FileCheck %s --check-prefix=PURE --check-prefix=ALL --check-prefix=PURE-PIC --check-prefix=PURE-PIC-C64
+; RUN: llc -mtriple=arm64 -mattr=+c64,+morello -target-abi purecap -relocation-model=pic -aarch64-enable-sandbox-globals-opt=false -o - %s | FileCheck %s --check-prefix=PURE
+; RUN: llc -mtriple=arm64 -mattr=+c64,+morello -target-abi purecap -relocation-model=static -aarch64-enable-sandbox-globals-opt=false -o - %s | FileCheck %s --check-prefix=PURE
 
 @v = internal addrspace(200) global i32 5, align 4
 
-; ALL: .p2align 4
-; ALL-LABEL: .LCPI0_0
-; ALL: .chericap v
+; PURE: .p2align 4
+; PURE-LABEL: .LCPI0_0
+; PURE: .chericap v
 
 
 ; CHECK-PURE-LABEL: testGlobalAddress
@@ -41,12 +41,9 @@ entry:
 ; PURE-NEXT: ld{{u?}}r	c[[CB:[0-9]+]], [c[[H]], :got_lo12:w]
 }
 
-; PURE-STATIC-LABEL: testFuncAddress
-; PURE-STATIC: adrp c[[ADDR:[0-9]+]], myfunc
-; PURE-STATIC: add      c[[ADDR]], c[[ADDR]], :lo12:myfunc
-; PURE-PIC-LABEL: testFuncAddress
-; PURE-PIC: adrp c[[ADDR:[0-9]+]], :got:myfunc
-; PURE-PIC-C64: ldr c[[ADDR]], [c[[ADDR]], :got_lo12:myfunc]
+; PURE-LABEL: testFuncAddress
+; PURE: adrp c[[ADDR:[0-9]+]], :got:myfunc
+; PURE: ldr c[[ADDR]], [c[[ADDR]], :got_lo12:myfunc]
 define i8 addrspace(200)* @testFuncAddress() {
 entry:
   %0 = tail call i8 addrspace(200)* @llvm.cheri.pcc.get()

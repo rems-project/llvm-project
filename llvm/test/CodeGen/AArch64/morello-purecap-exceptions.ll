@@ -64,7 +64,7 @@ attributes #2 = { nounwind }
 !2 = !{!"omnipotent char", !3, i64 0}
 !3 = !{!"Simple C++ TBAA"}
 
-; CHECK:	.section	.gcc_except_table,"aw",@progbits
+; CHECK:	.section	.gcc_except_table.{{.*}},"aGw",@progbits
 ; CHECK:	.p2align	2
 ; CHECK-LABEL: GCC_except_table0:
 ; CHECK-NEXT: .Lexception0:

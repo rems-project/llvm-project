@@ -154,7 +154,7 @@ define void @test_input_register_imm() {
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK:   [[C:%[0-9]+]]:_(s64) = G_CONSTANT i64 42
   ; CHECK:   [[COPY:%[0-9]+]]:gpr64common = COPY [[C]](s64)
-  ; CHECK:   INLINEASM &"mov x0, $0", 1 /* sideeffect attdialect */, 1441801 /* reguse:GPR64common */, [[COPY]]
+  ; CHECK:   INLINEASM &"mov x0, $0", 1 /* sideeffect attdialect */, {{[0-9]+}} /* reguse:GPR64common */, [[COPY]]
   ; CHECK:   RET_ReallyLR 0
   call void asm sideeffect "mov x0, $0", "r"(i64 42)
   ret void
@@ -188,7 +188,7 @@ define zeroext i8 @test_input_register(i8* %src) nounwind {
   ; CHECK:   liveins: $x0
   ; CHECK:   [[COPY:%[0-9]+]]:_(p0) = COPY $x0
   ; CHECK:   [[COPY1:%[0-9]+]]:gpr64common = COPY [[COPY]](p0)
-  ; CHECK:   INLINEASM &"ldtrb ${0:w}, [$1]", 0 /* attdialect */, 655370 /* regdef:GPR32common */, def %1, 1441801 /* reguse:GPR64common */, [[COPY1]]
+  ; CHECK:   INLINEASM &"ldtrb ${0:w}, [$1]", 0 /* attdialect */, {{[0-9]+}} /* regdef:GPR32common */, def %1, {{[0-9]+}} /* reguse:GPR64common */, [[COPY1]]
   ; CHECK:   [[COPY2:%[0-9]+]]:_(s32) = COPY %1
   ; CHECK:   [[TRUNC:%[0-9]+]]:_(s8) = G_TRUNC [[COPY2]](s32)
   ; CHECK:   [[ZEXT:%[0-9]+]]:_(s32) = G_ZEXT [[TRUNC]](s8)

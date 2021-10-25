@@ -5,7 +5,7 @@
 
 target triple = "aarch64-none--elf"
 
-define i8 addrspace(200)* @fun1() addrspace(200) nounwind {
+define dso_local i8 addrspace(200)* @fun1() addrspace(200) nounwind {
 ; CHECK-LABEL: fun1:
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    adrp c0, fun1
