@@ -12,6 +12,7 @@
 #include "lldb/Host/common/NativeBreakpointList.h"
 #include "lldb/Host/common/NativeRegisterContext.h"
 #include "lldb/Host/common/NativeThreadProtocol.h"
+#include "lldb/Utility/Capability.h"
 #include "lldb/Utility/LLDBAssert.h"
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/State.h"
@@ -609,6 +610,19 @@ Status NativeProcessProtocol::RemoveBreakpoint(lldb::addr_t addr,
     return RemoveHardwareBreakpoint(addr);
   else
     return RemoveSoftwareBreakpoint(addr);
+}
+
+uint32_t NativeProcessProtocol::GetPointerByteSize() const {
+  // We're assuming that the pointers are all capabilities if the target
+  // architecture supports them.
+  // FIXME: Check that we're actually in purecap mode, and not hybrid.
+  std::uint32_t capability_size = Capability::GetBaseByteSize(
+    GetArchitecture().GetCapabilityType());
+
+  if (capability_size)
+    return capability_size;
+
+  return GetAddressByteSize();
 }
 
 Status NativeProcessProtocol::ReadMemoryWithoutTrap(lldb::addr_t addr, void *buf,

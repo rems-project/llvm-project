@@ -1,0 +1,23 @@
+cc_library_shared {
+    name: "shared",
+    srcs: [
+      "shared.c"
+    ],
+    cflags: [
+      "-g", "-O0",
+    ],
+    compile_multilib: "c64",
+}
+
+cc_test {
+    name: "shared-libs",
+    srcs: [
+        "main.c"
+    ],
+    cflags: [
+        "-g", "-O0"
+    ],
+    compile_multilib: "c64",
+    shared_libs: ["shared"],
+    gtest: false,
+}

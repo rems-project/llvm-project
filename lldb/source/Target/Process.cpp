@@ -2175,9 +2175,27 @@ int64_t Process::ReadSignedIntegerFromMemory(lldb::addr_t vm_addr,
 
 addr_t Process::ReadPointerFromMemory(lldb::addr_t vm_addr, Status &error) {
   Scalar scalar;
-  if (ReadScalarIntegerFromMemory(vm_addr, GetAddressByteSize(), false, scalar,
-                                  error))
-    return scalar.ULongLong(LLDB_INVALID_ADDRESS);
+  ArchSpec arch = GetTarget().GetArchitecture();
+
+  // If the target supports capabilities, we'll assume the pointer is
+  // a capability.
+  // FIXME: Check if we're really in purecap mode, and not hybrid.
+  if (arch.GetCapabilityType() != lldb::eCapabilityInvalid) {
+    assert(arch.GetCapabilityType() == eCapabilityMorello_128 &&
+           "Unsupported capability type");
+
+    // Read the address directly.
+    bool is_big_endian = arch.GetCapabilityByteOrder() == lldb::eByteOrderBig;
+    lldb::addr_t offset = is_big_endian ? GetAddressByteSize() : 0;
+
+    if (ReadScalarIntegerFromMemory(vm_addr + offset, GetAddressByteSize(),
+                                    false, scalar, error))
+      return scalar.ULongLong(LLDB_INVALID_ADDRESS);
+  } else {
+    if (ReadScalarIntegerFromMemory(vm_addr, GetAddressByteSize(), false,
+                                    scalar, error))
+      return scalar.ULongLong(LLDB_INVALID_ADDRESS);
+  }
   return LLDB_INVALID_ADDRESS;
 }
 
@@ -3389,6 +3407,19 @@ lldb::ByteOrder Process::GetByteOrder() const {
 
 uint32_t Process::GetAddressByteSize() const {
   return GetTarget().GetArchitecture().GetAddressByteSize();
+}
+
+uint32_t Process::GetPointerByteSize() const {
+  // We're assuming that the pointers are all capabilities if the target
+  // architecture supports them.
+  // FIXME: Check that we're actually in purecap mode, and not hybrid.
+  std::uint32_t capability_size = Capability::GetBaseByteSize(
+    GetTarget().GetArchitecture().GetCapabilityType());
+
+  if (capability_size)
+    return capability_size;
+
+  return GetAddressByteSize();
 }
 
 bool Process::GetRegisterSaveInformation(const RegisterInfo &reg_info,

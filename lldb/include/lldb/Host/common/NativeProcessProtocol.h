@@ -191,6 +191,13 @@ public:
     return GetArchitecture().GetAddressByteSize();
   }
 
+  // For targets that support capabilities, return the size of a capability.
+  // For targets that don't, return GetAddressByteSize.
+  // This is just a temporary method until we audit all uses of
+  // GetAddressByteSize. Ideally, the latter would take capabilities into
+  // account.
+  uint32_t GetPointerByteSize() const;
+
   virtual llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>>
   GetAuxvData() const = 0;
 

@@ -125,7 +125,7 @@ bool DYLDRendezvous::Resolve() {
   addr_t info_addr;
   addr_t cursor;
 
-  address_size = m_process->GetAddressByteSize();
+  address_size = m_process->GetPointerByteSize();
   padding = address_size - word_size;
   LLDB_LOGF(log,
             "DYLDRendezvous::%s address size: %" PRIu64 ", padding %" PRIu64,
@@ -470,7 +470,7 @@ addr_t DYLDRendezvous::ReadPointer(addr_t addr, addr_t *dst) {
   if (error.Fail())
     return 0;
 
-  return addr + m_process->GetAddressByteSize();
+  return addr + m_process->GetPointerByteSize();
 }
 
 std::string DYLDRendezvous::ReadStringFromMemory(addr_t addr) {

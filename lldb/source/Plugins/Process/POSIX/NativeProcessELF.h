@@ -45,6 +45,9 @@ protected:
   llvm::Expected<SVR4LibraryInfo>
   ReadSVR4LibraryInfo(lldb::addr_t link_map_addr);
 
+  // FIXME: This should probably be somewhere more central.
+  lldb::addr_t GetAddressFromCapability(uint64_t capability[2]);
+
   std::unique_ptr<AuxVector> m_aux_vector;
   llvm::Optional<lldb::addr_t> m_shared_library_info_addr;
 };

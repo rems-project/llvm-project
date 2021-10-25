@@ -1,0 +1,13 @@
+breakpoint set -p "Break here"
+process launch -E LD_LIBRARY_PATH=/data/nativetestc64/libc64 --
+
+image list
+# CHECK-LABEL: (lldb) image list
+# CHECK: shared.so
+
+thread backtrace
+# CHECK-LABEL: (lldb) thread backtrace
+# CHECK: frame #0{{.*}}call_into_shared_lib(x=3) at main.c:4
+# CHECK: frame #1{{.*}}main at main.c:8
+
+process kill

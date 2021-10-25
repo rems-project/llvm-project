@@ -138,6 +138,41 @@ NativeProcessELF::ReadSVR4LibraryInfo(lldb::addr_t link_map_addr) {
   return info;
 }
 
+template <>
+llvm::Expected<SVR4LibraryInfo>
+NativeProcessELF::ReadSVR4LibraryInfo<uint64_t[2]>(lldb::addr_t link_map_addr) {
+  Log *log(lldb_private::GetLogIfAnyCategoriesSet(LIBLLDB_LOG_TARGET | LIBLLDB_LOG_PROCESS | LIBLLDB_LOG_PLATFORM));
+  LLDB_LOGF(log, "Trying to read from link map at %" PRIx64, link_map_addr);
+
+  ELFLinkMap<uint64_t[2]> link_map;
+  size_t bytes_read;
+  auto error =
+      ReadMemory(link_map_addr, &link_map, sizeof(link_map), bytes_read);
+  if (!error.Success())
+    return error.ToError();
+
+  LLDB_LOGF(log, "Reading name from %" PRIx64, GetAddressFromCapability(link_map.l_name));
+  char name_buffer[PATH_MAX];
+  llvm::Expected<llvm::StringRef> string_or_error = ReadCStringFromMemory(
+      GetAddressFromCapability(link_map.l_name), &name_buffer[0], sizeof(name_buffer), bytes_read);
+  if (!string_or_error)
+    return string_or_error.takeError();
+
+  SVR4LibraryInfo info;
+  info.name = string_or_error->str();
+  info.link_map = link_map_addr;
+  info.base_addr = GetAddressFromCapability(link_map.l_addr);
+  info.ld_addr = GetAddressFromCapability(link_map.l_ld);
+  info.next = GetAddressFromCapability(link_map.l_next);
+
+  return info;
+}
+
+lldb::addr_t NativeProcessELF::GetAddressFromCapability(uint64_t capability[2]) {
+  bool is_big_endian = GetArchitecture().GetCapabilityByteOrder() == lldb::eByteOrderBig;
+  return is_big_endian ? capability[1] : capability[0];
+}
+
 llvm::Expected<std::vector<SVR4LibraryInfo>>
 NativeProcessELF::GetLoadedSVR4Libraries() {
   // Address of DT_DEBUG.d_ptr which points to r_debug
@@ -157,17 +192,22 @@ NativeProcessELF::GetLoadedSVR4Libraries() {
                                    "Invalid r_debug address");
   // Read r_debug.r_map
   lldb::addr_t link_map = 0;
-  status = ReadMemory(address + GetAddressByteSize(), &link_map,
-                      GetAddressByteSize(), bytes_read);
+  uint64_t link_map_pointer[2];
+  size_t pointer_size = GetPointerByteSize();
+  status = ReadMemory(address + pointer_size, &link_map_pointer,
+                      pointer_size, bytes_read);
   if (!status.Success())
     return status.ToError();
+  link_map = GetAddressFromCapability(link_map_pointer);
   if (address == 0)
     return llvm::createStringError(llvm::inconvertibleErrorCode(),
                                    "Invalid link_map address");
 
   std::vector<SVR4LibraryInfo> library_list;
+  size_t address_size = GetAddressByteSize();
   while (link_map) {
     llvm::Expected<SVR4LibraryInfo> info =
+      pointer_size != address_size ? ReadSVR4LibraryInfo<uint64_t[2]>(link_map) :
         GetAddressByteSize() == 8 ? ReadSVR4LibraryInfo<uint64_t>(link_map)
                                   : ReadSVR4LibraryInfo<uint32_t>(link_map);
     if (!info)

@@ -81,8 +81,10 @@ fi
 # Copy the binary to the model.
 adb push "${build_path}" "${push_path}"
 run_on_exit 'adb shell rm -rf ${push_path}'
-
 remote_exe="${push_path}/${app}"
+
+# Copy any libraries, in case they're needed (most tests won't need them).
+adb push "${ANDROID_OUT}/symbols/system/libc64" "/data/nativetestc64/libc64"
 
 # The path where the binary with debug symbols is put by the android build
 # system.
