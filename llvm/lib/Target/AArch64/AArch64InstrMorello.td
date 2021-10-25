@@ -721,6 +721,10 @@ def : Pat<(int_cheri_bounded_stack_cap Capsp:$Cn, scbnds_imm:$imm),
           (CapSetBoundsImm Capsp:$Cn, scbnds_imm:$imm)>;
 def : Pat<(int_cheri_bounded_stack_cap Capsp:$Cn, GPR64:$Rm),
           (CapSetBounds Capsp:$Cn, GPR64:$Rm)>;
+def : Pat<(int_cheri_bounded_stack_cap_dynamic Capsp:$Cn, scbnds_imm:$imm),
+          (CapSetBoundsImm Capsp:$Cn, scbnds_imm:$imm)>;
+def : Pat<(int_cheri_bounded_stack_cap_dynamic Capsp:$Cn, GPR64:$Rm),
+          (CapSetBounds Capsp:$Cn, GPR64:$Rm)>;
 def : Pat<(int_cheri_cap_build Capsp:$Cn, Capsp:$Cm),
           (CapBuildCap Capsp:$Cm, Capsp:$Cn)>;
 def : Pat<(int_cheri_cap_bounds_set_exact Capsp:$Cn, GPR64:$Rm),

@@ -33,11 +33,40 @@
 ; RUN: llc -mtriple=aarch64 --relocation-model=pic -target-abi purecap -mattr=+morello,+c64 -run-pass=early-machinelicm -debug-only=machinelicm %t.mir -o /dev/null 2>%t.dbg
 ; RUN: FileCheck --input-file=%t.dbg --check-prefix=MACHINELICM-DBG %s
 ; Check that MachineLICM hoists the CheriBoundedStackPseudoImm (MIPS) / IncOffset+SetBoundsImm (RISCV) instructions
-; For Morello there is no setbounds inside the loop due to the different alloca bunding pass, so there is nothing to hoist here.
 ; MACHINELICM-DBG-LABEL: ******** Pre-regalloc Machine LICM: hoist_alloca_uncond
-; MACHINELICM-DBG-NOT: Hoisting
+; MACHINELICM-DBG: Hoisting [[LEN32:%[0-9]+]]:gpr32 = MOVi32imm 492
+; MACHINELICM-DBG-NEXT:  from %bb.2 to %bb.0
+; MACHINELICM-DBG: Hoisting [[LEN:%[0-9]+]]:gpr64 = SUBREG_TO_REG 0, [[LEN32]]:gpr32, %subreg.sub_32
+; MACHINELICM-DBG-NEXT:  from %bb.2 to %bb.0
+; MACHINELICM-DBG: Hoisting [[INC:%[0-9]+]]:capsp = CapAddImm %stack.0.buf1, 0, 0
+; MACHINELICM-DBG-NEXT:  from %bb.2 to %bb.0
+; MACHINELICM-DBG: Hoisting [[BOUNDS:%[0-9]+]]:capsp = CapSetBounds [[INC]]:capsp, [[LEN]]:gpr64
+; MACHINELICM-DBG-NEXT:  from %bb.2 to %bb.0
+; MACHINELICM-DBG: Hoisting [[LEN32:%[0-9]+]]:gpr32 = MOVi32imm 88
+; MACHINELICM-DBG-NEXT:  from %bb.2 to %bb.0
+; MACHINELICM-DBG: Hoisting [[LEN:%[0-9]+]]:gpr64 = SUBREG_TO_REG 0, [[LEN32]]:gpr32, %subreg.sub_32
+; MACHINELICM-DBG-NEXT:  from %bb.2 to %bb.0
+; MACHINELICM-DBG: Hoisting [[INC:%[0-9]+]]:capsp = CapAddImm %stack.1.buf2, 0, 0
+; MACHINELICM-DBG-NEXT:  from %bb.2 to %bb.0
+; MACHINELICM-DBG: Hoisting [[BOUNDS:%[0-9]+]]:capsp = CapSetBounds [[INC]]:capsp, [[LEN]]:gpr64
+; MACHINELICM-DBG-NEXT:  from %bb.2 to %bb.0
 ; MACHINELICM-DBG-LABEL: ******** Pre-regalloc Machine LICM: hoist_alloca_cond
-; MACHINELICM-DBG-NOT: Hoisting
+; MACHINELICM-DBG: Hoisting [[LEN32:%[0-9]+]]:gpr32 = MOVi32imm 492
+; MACHINELICM-DBG-NEXT:  from %bb.3 to %bb.0
+; MACHINELICM-DBG: Hoisting [[LEN:%[0-9]+]]:gpr64 = SUBREG_TO_REG 0, [[LEN32]]:gpr32, %subreg.sub_32
+; MACHINELICM-DBG-NEXT:  from %bb.3 to %bb.0
+; MACHINELICM-DBG: Hoisting [[INC:%[0-9]+]]:capsp = CapAddImm %stack.0.buf1, 0, 0
+; MACHINELICM-DBG-NEXT:  from %bb.3 to %bb.0
+; MACHINELICM-DBG: Hoisting [[BOUNDS:%[0-9]+]]:capsp = CapSetBounds [[INC]]:capsp, [[LEN]]:gpr64
+; MACHINELICM-DBG-NEXT:  from %bb.3 to %bb.0
+; MACHINELICM-DBG: Hoisting [[LEN32:%[0-9]+]]:gpr32 = MOVi32imm 88
+; MACHINELICM-DBG-NEXT:  from %bb.3 to %bb.0
+; MACHINELICM-DBG: Hoisting [[LEN:%[0-9]+]]:gpr64 = SUBREG_TO_REG 0, [[LEN32]]:gpr32, %subreg.sub_32
+; MACHINELICM-DBG-NEXT:  from %bb.3 to %bb.0
+; MACHINELICM-DBG: Hoisting [[INC:%[0-9]+]]:capsp = CapAddImm %stack.1.buf2, 0, 0
+; MACHINELICM-DBG-NEXT:  from %bb.3 to %bb.0
+; MACHINELICM-DBG: Hoisting [[BOUNDS:%[0-9]+]]:capsp = CapSetBounds [[INC]]:capsp, [[LEN]]:gpr64
+; MACHINELICM-DBG-NEXT:  from %bb.3 to %bb.0
 
 ; RUN: llc -mtriple=aarch64 --relocation-model=pic -target-abi purecap -mattr=+morello,+c64 -O1 -o - < %s | FileCheck %s
 
@@ -53,9 +82,9 @@ define void @hoist_alloca_uncond(i32 signext %cond) local_unnamed_addr addrspace
 ; CHECK-NEXT:    add c0, csp, #100 // =100
 ; CHECK-NEXT:    mov w9, #88
 ; CHECK-NEXT:    add c1, csp, #12 // =12
-; CHECK-NEXT:    scbndse c19, c0, x8
-; CHECK-NEXT:    scbndse c20, c1, x9
 ; CHECK-NEXT:    mov w21, #100
+; CHECK-NEXT:    scbnds c19, c0, x8
+; CHECK-NEXT:    scbnds c20, c1, x9
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    mov c0, c19
@@ -102,9 +131,9 @@ define void @hoist_alloca_cond(i32 signext %cond) local_unnamed_addr addrspace(2
 ; CHECK-NEXT:    add c0, csp, #100 // =100
 ; CHECK-NEXT:    mov w9, #88
 ; CHECK-NEXT:    add c1, csp, #12 // =12
-; CHECK-NEXT:    scbndse c20, c0, x8
-; CHECK-NEXT:    scbndse c21, c1, x9
 ; CHECK-NEXT:    mov w22, #100
+; CHECK-NEXT:    scbnds c20, c0, x8
+; CHECK-NEXT:    scbnds c21, c1, x9
 ; CHECK-NEXT:    b .LBB1_2
 ; CHECK-NEXT:  .LBB1_1: // %for.inc
 ; CHECK-NEXT:    // in Loop: Header=BB1_2 Depth=1

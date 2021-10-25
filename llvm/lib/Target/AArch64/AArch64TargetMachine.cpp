@@ -182,6 +182,12 @@ static cl::opt<unsigned> SVEVectorBitsMinOpt(
              "with zero meaning no minimum size is assumed."),
     cl::init(0), cl::Hidden);
 
+static cl::opt<bool> LegacyAllocaBoundsPass(
+    "morello-legacy-alloca-bounds-pass",
+    cl::desc("Use the legacy Morello alloca bounds pass instead of the "
+             "generic CHERI one"),
+    cl::init(false));
+
 extern cl::opt<bool> EnableHomogeneousPrologEpilog;
 
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAArch64Target() {
@@ -594,9 +600,12 @@ void AArch64PassConfig::addIRPasses() {
   }
   if (EnableRangeChecking)
     addPass(createMorelloRangeChecker());
-  // Add the sandbox pass. Only optimize for C64, since A64 will have a lower
-  addPass(createAArch64Sandbox(TM->getOptLevel() != CodeGenOpt::None,
-                               getAArch64TargetMachine().IsC64()));
+  if (LegacyAllocaBoundsPass) {
+    // Add the sandbox pass. Only optimize for C64, since A64 will have a lower
+    addPass(createAArch64Sandbox(TM->getOptLevel() != CodeGenOpt::None,
+                                 getAArch64TargetMachine().IsC64()));
+  } else
+    addPass(createCheriBoundAllocasPass());
 
   // Add Control Flow Guard checks.
   if (TM->getTargetTriple().isOSWindows())

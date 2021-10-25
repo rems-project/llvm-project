@@ -65,14 +65,14 @@ define i32 @caller_test_inmem_struct(%struct.inmem addrspace(200)* nocapture rea
 ; CHECK:       .Lfunc_begin2:
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    sub csp, csp, #64 // =64
-; CHECK-NEXT:    ldp q1, q0, [c0]
+; CHECK-NEXT:    ldp q0, q1, [c0]
 ; CHECK-NEXT:    add c0, csp, #16 // =16
 ; CHECK-NEXT:    scbnds c1, c0, #32 // =32
 ; CHECK-NEXT:    scbnds c0, csp, #16 // =16
 ; CHECK-NEXT:    clrperm c9, c0, wx
 ; CHECK-NEXT:    mov w0, #1
 ; CHECK-NEXT:    str c30, [csp, #48] // 16-byte Folded Spill
-; CHECK-NEXT:    stp q1, q0, [c1]
+; CHECK-NEXT:    stp q0, q1, [c1]
 ; CHECK-NEXT:    str c1, [csp, #0]
 ; CHECK-NEXT:    bl callee
 ; CHECK-NEXT:    ldr c30, [csp, #48] // 16-byte Folded Reload
@@ -114,11 +114,12 @@ define void @callee_test_scalars(i32 %count, ...) local_unnamed_addr addrspace(2
 ; CHECK-LABEL: callee_test_scalars:
 ; CHECK:       .Lfunc_begin4:
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    str c9, [csp, #-48]!
+; CHECK-NEXT:    sub csp, csp, #48 // =48
 ; CHECK-NEXT:    add c0, csp, #16 // =16
 ; CHECK-NEXT:    scbnds c0, c0, #16 // =16
 ; CHECK-NEXT:    str c9, [c0, #0]
 ; CHECK-NEXT:    ldr c0, [csp, #16]
+; CHECK-NEXT:    str c9, [csp, #0]
 ; CHECK-NEXT:    mov c1, c0
 ; CHECK-NEXT:    ldr s1, [c1, #16]!
 ; CHECK-NEXT:    stp c1, c30, [csp, #16] // 16-byte Folded Spill
@@ -152,14 +153,15 @@ define i8 addrspace(200)* @test_vacopy(i32 %count, ...) local_unnamed_addr addrs
 ; CHECK-LABEL: test_vacopy:
 ; CHECK:       .Lfunc_begin5:
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    str c9, [csp, #-48]!
+; CHECK-NEXT:    sub csp, csp, #48 // =48
 ; CHECK-NEXT:    add c0, csp, #32 // =32
-; CHECK-NEXT:    add c1, csp, #16 // =16
 ; CHECK-NEXT:    scbnds c0, c0, #16 // =16
-; CHECK-NEXT:    scbnds c1, c1, #16 // =16
-; CHECK-NEXT:    str c9, [c1, #0]
 ; CHECK-NEXT:    str c9, [c0, #0]
 ; CHECK-NEXT:    ldr c0, [csp, #32]
+; CHECK-NEXT:    add c1, csp, #16 // =16
+; CHECK-NEXT:    scbnds c1, c1, #16 // =16
+; CHECK-NEXT:    str c9, [csp, #0]
+; CHECK-NEXT:    str c9, [c1, #0]
 ; CHECK-NEXT:    add csp, csp, #48 // =48
 ; CHECK-NEXT:    ret c30
 entry:
