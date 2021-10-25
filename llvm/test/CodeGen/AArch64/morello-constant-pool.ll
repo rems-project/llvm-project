@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=arm64 -verify-machineinstrs -mattr=+c64,+morello -target-abi purecap -aarch64-enable-sandbox-globals-opt=false < %s | FileCheck %s --check-prefix=C64 --check-prefix=ALL
+; RUN: llc -mtriple=arm64 -verify-machineinstrs -mattr=+c64,+morello -target-abi purecap -aarch64-enable-sandbox-globals-opt=false < %s | FileCheck %s --check-prefix=C64
 ; RUN: llc -mtriple=arm64 -verify-machineinstrs -mattr=+c64,+morello -filetype=obj -aarch64-enable-sandbox-globals-opt=false -target-abi purecap < %s | llvm-objdump --mattr=+morello --disassemble - -r | FileCheck %s --check-prefix=C64D
 ; RUN: llc -mtriple=arm64 -verify-machineinstrs -mattr=+c64,+morello -filetype=obj -aarch64-enable-sandbox-globals-opt=false -target-abi purecap < %s | llvm-objdump --disassemble - -r | FileCheck %s --check-prefix=C64D
 

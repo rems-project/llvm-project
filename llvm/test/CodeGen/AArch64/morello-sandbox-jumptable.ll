@@ -83,11 +83,11 @@ sw.bb:
 
 
 sw.bb.6:
-  call void asm sideeffect ".space 2048", ""()
+  %foo = call i64 @llvm.aarch64.space(i32 2048, i64 undef)
   br label %return
 
 sw.bb.7:
-  call void asm sideeffect ".space 2048", ""()
+  %bat = call i64 @llvm.aarch64.space(i32 2048, i64 undef)
   br label %return
 
 sw.bb.1:
@@ -111,12 +111,12 @@ return:
 }
 
 ; CHECK-LABEL: .LJTI1_0:
-; CHECK-NEXT: .hword (.LBB1_2-.LBB1_2)>>2
-; CHECK-NEXT: .hword (.LBB1_4-.LBB1_2)>>2
 ; CHECK-NEXT: .hword (.LBB1_5-.LBB1_2)>>2
 ; CHECK-NEXT: .hword (.LBB1_6-.LBB1_2)>>2
-; CHECK-NEXT: .hword (.LBB1_8-.LBB1_2)>>2
 ; CHECK-NEXT: .hword (.LBB1_7-.LBB1_2)>>2
+; CHECK-NEXT: .hword (.LBB1_2-.LBB1_2)>>2
+; CHECK-NEXT: .hword (.LBB1_2-.LBB1_2)>>2
+; CHECK-NEXT: .hword (.LBB1_3-.LBB1_2)>>2
 
 ; CHECK-LABEL: word_jt
 ; CHECK: adrp c[[JT:[0-9]+]], .LJT
@@ -145,11 +145,11 @@ sw.bb:
 
 
 sw.bb.6:
-  call void asm sideeffect ".space 262144", ""()
+  %bar = call i64 @llvm.aarch64.space(i32 262144, i64 undef)
   br label %return
 
 sw.bb.7:
-  call void asm sideeffect ".space 262144", ""()
+  %baz = call i64 @llvm.aarch64.space(i32 262144, i64 undef)
   br label %return
 
 sw.bb.1:
@@ -173,14 +173,15 @@ return:
 }
 
 declare i8 addrspace(200)* @llvm.cheri.cap.offset.set(i8 addrspace(200)*, i64)
+declare i64 @llvm.aarch64.space(i32, i64)
 
 ; CHECK-LABEL: .LJTI2_0:
-; CHECK-NEXT: .word	.LBB2_2-.Ltmp0
-; CHECK-NEXT: .word	.LBB2_4-.Ltmp0
-; CHECK-NEXT: .word	.LBB2_5-.Ltmp0
-; CHECK-NEXT: .word	.LBB2_6-.Ltmp0
-; CHECK-NEXT: .word	.LBB2_8-.Ltmp0
-; CHECK-NEXT: .word	.LBB2_7-.Ltmp0
+; CHECK-NEXT: .word .LBB2_5-.Ltmp0
+; CHECK-NEXT: .word .LBB2_6-.Ltmp0
+; CHECK-NEXT: .word .LBB2_7-.Ltmp0
+; CHECK-NEXT: .word .LBB2_2-.Ltmp0
+; CHECK-NEXT: .word .LBB2_2-.Ltmp0
+; CHECK-NEXT: .word .LBB2_3-.Ltmp0
 
 ; c64-relocs: Relocations [
 ; c64-relocs-NEXT:  Section (3) .rela.text {
@@ -188,12 +189,12 @@ declare i8 addrspace(200)* @llvm.cheri.cap.offset.set(i8 addrspace(200)*, i64)
 ; c64-relocs-NEXT:    0x10 R_AARCH64_ADD_ABS_LO12_NC .rodata 0x0
 ; c64-relocs-NEXT:    0x88 R_MORELLO_ADR_PREL_PG_HI20 .rodata 0x6
 ; c64-relocs-NEXT:    0x8C R_AARCH64_ADD_ABS_LO12_NC .rodata 0x6
-; c64-relocs-NEXT:    0x10FC R_MORELLO_ADR_PREL_PG_HI20 .rodata 0x14
-; c64-relocs-NEXT:    0x1100 R_AARCH64_ADD_ABS_LO12_NC .rodata 0x14
+; c64-relocs-NEXT:    0xF4 R_MORELLO_ADR_PREL_PG_HI20 .rodata 0x14
+; c64-relocs-NEXT:    0xF8 R_AARCH64_ADD_ABS_LO12_NC .rodata 0x14
 ; c64-relocs-NEXT:  }
 ; c64-relocs-NEXT:  Section (7) .rela.eh_frame {
 ; c64-relocs-NEXT:    0x20 R_AARCH64_PREL32 .text 0x0
 ; c64-relocs-NEXT:    0x34 R_AARCH64_PREL32 .text 0x7C
-; c64-relocs-NEXT:    0x48 R_AARCH64_PREL32 .text 0x10F0
+; c64-relocs-NEXT:    0x48 R_AARCH64_PREL32 .text 0xE8
 ; c64-relocs-NEXT:  }
 ; c64-relocs-NEXT: ]
