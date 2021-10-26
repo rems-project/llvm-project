@@ -318,7 +318,7 @@ public:
 
   llvm::Optional<std::string> GetOSBuildString();
 
-  bool GetOSKernelDescription(std::string &s);
+  llvm::Optional<std::string> GetOSKernelDescription();
 
   ArchSpec GetSystemArchitecture();
 
