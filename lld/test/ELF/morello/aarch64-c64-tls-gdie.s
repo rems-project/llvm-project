@@ -37,7 +37,7 @@ _start:
 
 // CHECK:      <_start>:
 // CHECK-NEXT: 210270: nop
-// CHECK-NEXT: 210274: adrp    c0, #65536
+// CHECK-NEXT: 210274: adrp    c0, 0x220000 <_start+0x44>
 // CHECK-NEXT: 210278: ldr     c1, [c0, #832]
 // CHECK-NEXT: 21027c: add     c0, c0, #832
 // CHECK-NEXT: 210280: blr     c1

@@ -40,11 +40,11 @@ _start:
 // CHECK-NEXT:   2101c4:        add     x2, x2, #0x1b0
 
 // CHECK: 00000000002101d0 <.iplt>:
-// CHECK-NEXT:   2101d0:        adrp    c16, #0x10000
+// CHECK-NEXT:   2101d0:        adrp    c16, 0x220000 <.iplt+0x40>
 // CHECK-NEXT:   2101d4:        add     c16, c16, #0x1f0
 // CHECK-NEXT:   2101d8:        ldr     c17, [c16, #0x0]
 // CHECK-NEXT:   2101dc:        br      c17
-// CHECK-NEXT:   2101e0:        adrp    c16, #0x10000
+// CHECK-NEXT:   2101e0:        adrp    c16, 0x220000 <.iplt+0x50>
 // CHECK-NEXT:   2101e4:        add     c16, c16, #0x200
 // CHECK-NEXT:   2101e8:        ldr     c17, [c16, #0x0]
 // CHECK-NEXT:   2101ec:        br      c17

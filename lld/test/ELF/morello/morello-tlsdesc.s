@@ -15,7 +15,7 @@
 // create target specific dynamic TLSDESC relocation where addend is
 // the symbol VMA in tls block.
 
-// CHECK:      10298: adrp    c0, #65536
+// CHECK:      10298: adrp    c0, 0x20000 <$d.1+0x10>
 // CHECK-NEXT: 1029c: ldr     c1, [c0, #864]
 // CHECK-NEXT: 102a0: add     c0, c0, #864
 // CHECK-NEXT: 102a4: blr     c1
@@ -26,7 +26,7 @@
   .tlsdesccall local1
   blr     c1
 
-// CHECK:      102a8: adrp    c0, #65536
+// CHECK:      102a8: adrp    c0, 0x20000 <$d.1+0x20>
 // CHECK-NEXT: 102ac: ldr     c1, [c0, #896]
 // CHECK-NEXT: 102b0: add     c0, c0, #896
 // CHECK-NEXT: 102b4: blr     c1
@@ -37,7 +37,7 @@
   .tlsdesccall local2
   blr     c1
 
-// CHECK:      102b8: adrp    c0, #65536
+// CHECK:      102b8: adrp    c0, 0x20000 <$d.1+0x30>
 // CHECK-NEXT: 102bc: ldr     c1, [c0, #928]
 // CHECK-NEXT: 102c0: add     c0, c0, #928
 // CHECK-NEXT: 102c4: blr     c1

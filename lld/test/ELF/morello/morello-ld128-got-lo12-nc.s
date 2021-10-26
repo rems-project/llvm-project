@@ -39,13 +39,13 @@ foo:
  .xword 10
 
 // DIS: 0000000000210208 <_start>:
-// DIS-NEXT:   210208:        adrp    c0, #65536
+// DIS-NEXT:   210208:        adrp    c0, 0x220000 <_start+0x40>
 // DIS-NEXT:   21020c:        ldr     c0, [c0, #672]
-// DIS-NEXT:   210210:        adrp    c1, #65536
+// DIS-NEXT:   210210:        adrp    c1, 0x220000 <_start+0x48>
 // DIS-NEXT:   210214:        ldr     c1, [c1, #688]
-// DIS-NEXT:   210218:        adrp    c1, #65536
+// DIS-NEXT:   210218:        adrp    c1, 0x220000 <_start+0x50>
 // DIS-NEXT:   21021c:        ldr     c1, [c1, #688]
-// DIS-NEXT:   210220:        adrp    c2, #65536
+// DIS-NEXT:   210220:        adrp    c2, 0x220000 <_start+0x58>
 // DIS-NEXT:   210224:        ldr     c2, [c1, #704]
 
 /// .rodata is the start of the executable capability range

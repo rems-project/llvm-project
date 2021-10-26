@@ -44,26 +44,26 @@ preemptible: .xword 2
 hidden:  .xword 3
 
 // DIS: 0000000000010390 <_start>:
-// DIS-NEXT:    10390:          adrp    c1, #65536
+// DIS-NEXT:    10390:          adrp    c1, 0x20000 <imported+0x103d0>
 // DIS-NEXT:    10394:          ldr     c1, [c1, #1248]
-// DIS-NEXT:    10398:          adrp    c2, #65536
+// DIS-NEXT:    10398:          adrp    c2, 0x20000 <imported+0x103d8>
 // DIS-NEXT:    1039c:          ldr     c2, [c2, #1264]
-// DIS-NEXT:    103a0:          adrp    c3, #65536
+// DIS-NEXT:    103a0:          adrp    c3, 0x20000 <imported+0x103e0>
 // DIS-NEXT:    103a4:          ldr     c3, [c3, #1280]
-// DIS-NEXT:    103a8:          adrp    c4, #65536
+// DIS-NEXT:    103a8:          adrp    c4, 0x20000 <imported+0x103e8>
 // DIS-NEXT:    103ac:          ldr     c4, [c4, #1296]
 // DIS-NEXT:    103b0:          bl      0x103e0 <imported+0x103e0>
 
 // DIS: 00000000000103c0 <.plt>:
 // DIS-NEXT:    103c0:          stp     c16, c30, [csp, #-32]!
-// DIS-NEXT:    103c4:          adrp    c16, #131072
+// DIS-NEXT:    103c4:          adrp    c16, 0x30000 <.plt+0x84>
 // DIS-NEXT:    103c8:          ldr     c17, [c16, #1376]
 // DIS-NEXT:    103cc:          add     c16, c16, #1376
 // DIS-NEXT:    103d0:          br      c17
 // DIS-NEXT:    103d4:          nop
 // DIS-NEXT:    103d8:          nop
 // DIS-NEXT:    103dc:          nop
-// DIS-NEXT:    103e0:          adrp    c16, #131072
+// DIS-NEXT:    103e0:          adrp    c16, 0x30000 <.plt+0xa0>
 // DIS-NEXT:    103e4:          add     c16, c16, #1392
 // DIS-NEXT:    103e8:          ldr     c17, [c16, #0]
 // DIS-NEXT:    103ec:          br      c17

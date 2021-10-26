@@ -189,35 +189,35 @@ caller:
 // CHECK-NEXT:    105b0:        bl      0x10598 <localfunc>
 // CHECK-NEXT:    105b4:        bl      0x10630 <importfunc+0x10630>
 // CHECK-NEXT:    105b8:        ret
-// CHECK-NEXT:    105bc:        adrp    c0, #0x10000
+// CHECK-NEXT:    105bc:        adrp    c0, 0x20000 <caller+0x54>
 // CHECK-NEXT:    105c0:        ldr     c0, [c0, #0x830]
-// CHECK-NEXT:    105c4:        adrp    c1, #0x10000
+// CHECK-NEXT:    105c4:        adrp    c1, 0x20000 <importfunc+0x10604>
 // CHECK-NEXT:    105c8:        ldr     c1, [c1, #0x840]
-// CHECK-NEXT:    105cc:        adrp    c2, #0x10000
+// CHECK-NEXT:    105cc:        adrp    c2, 0x20000 <importfunc+0x1060c>
 // CHECK-NEXT:    105d0:        ldr     c2, [c2, #0x850]
-// CHECK-NEXT:    105d4:        adrp    c3, #0x10000
+// CHECK-NEXT:    105d4:        adrp    c3, 0x20000 <importfunc+0x10614>
 // CHECK-NEXT:    105d8:        ldr     c3, [c3, #0x860]
-// CHECK-NEXT:    105dc:        adrp    c4, #0x10000
+// CHECK-NEXT:    105dc:        adrp    c4, 0x20000 <importfunc+0x1061c>
 // CHECK-NEXT:    105e0:        ldr     c4, [c4, #0x870]
-// CHECK-NEXT:    105e4:        adrp    c5, #0x10000
+// CHECK-NEXT:    105e4:        adrp    c5, 0x20000 <importfunc+0x10624>
 // CHECK-NEXT:    105e8:        ldr     c5, [c5, #0x880]
-// CHECK-NEXT:    105ec:        adrp    c17, #0x10000
+// CHECK-NEXT:    105ec:        adrp    c17, 0x20000 <importfunc+0x1062c>
 // CHECK-NEXT:    105f0:        ldr     c17, [c17, #0x890]
 
 // CHECK: 0000000000010600 <.plt>:
 // CHECK-NEXT:    10600:        stp     c16, c30, [csp, #-0x20]!
-// CHECK-NEXT:    10604:        adrp    c16, #0x20000
+// CHECK-NEXT:    10604:        adrp    c16, 0x30000 <.plt+0x84>
 // CHECK-NEXT:    10608:        ldr     c17, [c16, #0x8e0]
 // CHECK-NEXT:    1060c:        add     c16, c16, #0x8e0
 // CHECK-NEXT:    10610:        br      c17
 // CHECK-NEXT:    10614:        nop
 // CHECK-NEXT:    10618:        nop
 // CHECK-NEXT:    1061c:        nop
-// CHECK-NEXT:    10620:        adrp    c16, #0x20000
+// CHECK-NEXT:    10620:        adrp    c16, 0x30000 <.plt+0xa0>
 // CHECK-NEXT:    10624:        add     c16, c16, #0x8f0
 // CHECK-NEXT:    10628:        ldr     c17, [c16, #0x0]
 // CHECK-NEXT:    1062c:        br      c17
-// CHECK-NEXT:    10630:        adrp    c16, #0x20000
+// CHECK-NEXT:    10630:        adrp    c16, 0x30000 <.plt+0xb0>
 // CHECK-NEXT:    10634:        add     c16, c16, #0x900
 // CHECK-NEXT:    10638:        ldr     c17, [c16, #0x0]
 // CHECK-NEXT:    1063c:        br      c17

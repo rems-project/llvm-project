@@ -3,8 +3,8 @@
 // RUN: ld.lld %t.o -o %t
 // RUN: llvm-objdump --mattr=+morello -d %t | FileCheck %s
 
-// CHECK: adrp c25, #2147479552
-// CHECK: adrp c26, #-2147483648
+// CHECK: adrp c25, 0x8020f000 <foo+0x1ffffc>
+// CHECK: adrp c26, 0xffffffff80210000
 
   .text
   .global _start

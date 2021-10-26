@@ -137,17 +137,17 @@ appdata: .xword 8
 
 // CHECK: 0000000000210430 <_start>:
 // CHECK-NEXT:   210430:        bl      0x210490 <rodata+0x210490>
-// CHECK-NEXT:   210434:        adrp    c0, #0x10000
+// CHECK-NEXT:   210434:        adrp    c0, 0x220000 <rodata+0x210474>
 // CHECK-NEXT:   210438:        ldr     c0, [c0, #0x600]
-// CHECK-NEXT:   21043c:        adrp    c1, #0x10000
+// CHECK-NEXT:   21043c:        adrp    c1, 0x220000 <rodata+0x21047c>
 // CHECK-NEXT:   210440:        ldr     c1, [c1, #0x610]
-// CHECK-NEXT:   210444:        adrp    c2, #0x10000
+// CHECK-NEXT:   210444:        adrp    c2, 0x220000 <rodata+0x210484>
 // CHECK-NEXT:   210448:        ldr     c2, [c2, #0x620]
-// CHECK-NEXT:   21044c:        adrp    c3, #0x10000
+// CHECK-NEXT:   21044c:        adrp    c3, 0x220000 <rodata+0x21048c>
 // CHECK-NEXT:   210450:        ldr     c3, [c3, #0x630]
-// CHECK-NEXT:   210454:        adrp    c4, #0x10000
+// CHECK-NEXT:   210454:        adrp    c4, 0x220000 <rodata+0x210494>
 // CHECK-NEXT:   210458:        ldr     c4, [c4, #0x640]
-// CHECK-NEXT:   21045c:        adrp    c5, #0x10000
+// CHECK-NEXT:   21045c:        adrp    c5, 0x220000 <rodata+0x21049c>
 // CHECK-NEXT:   210460:        ldr     c5, [c5, #0x650]
 // CHECK-NEXT:   210464:        ret
 
@@ -157,7 +157,7 @@ appdata: .xword 8
 /// Check that the PLT header points to .got.plt[2] (230690)
 // CHECK: 0000000000210470 <.plt>:
 // CHECK-NEXT:   210470:        stp     c16, c30, [csp, #-0x20]!
-// CHECK-NEXT:   210474:        adrp    c16, #0x20000
+// CHECK-NEXT:   210474:        adrp    c16, 0x230000 <.plt+0x84>
 // CHECK-NEXT:   210478:        ldr     c17, [c16, #0x690]
 // CHECK-NEXT:   21047c:        add     c16, c16, #0x690
 // CHECK-NEXT:   210480:        br      c17
@@ -166,24 +166,24 @@ appdata: .xword 8
 // CHECK-NEXT:   21048c:        nop
 
 /// Check that the next PLT entry (.plt[3]) points to .got.plt[3] (2306a0)
-// CHECK-NEXT:   210490:        adrp    c16, #0x20000
+// CHECK-NEXT:   210490:        adrp    c16, 0x230000 <.plt+0xa0>
 // CHECK-NEXT:   210494:        add     c16, c16, #0x6a0
 // CHECK-NEXT:   210498:        ldr     c17, [c16, #0x0]
 // CHECK-NEXT:   21049c:        br      c17
 
 // CHECK-PIE: 0000000000010430 <_start>:
 // CHECK-PIE-NEXT:    10430:            bl      0x10490 <rodata+0x10490>
-// CHECK-PIE-NEXT:    10434:            adrp    c0, #0x10000
+// CHECK-PIE-NEXT:    10434:            adrp    c0, 0x20000 <rodata+0x10474>
 // CHECK-PIE-NEXT:    10438:            ldr     c0, [c0, #0x610]
-// CHECK-PIE-NEXT:    1043c:            adrp    c1, #0x10000
+// CHECK-PIE-NEXT:    1043c:            adrp    c1, 0x20000 <rodata+0x1047c>
 // CHECK-PIE-NEXT:    10440:            ldr     c1, [c1, #0x620]
-// CHECK-PIE-NEXT:    10444:            adrp    c2, #0x10000
+// CHECK-PIE-NEXT:    10444:            adrp    c2, 0x20000 <rodata+0x10484>
 // CHECK-PIE-NEXT:    10448:            ldr     c2, [c2, #0x630]
-// CHECK-PIE-NEXT:    1044c:            adrp    c3, #0x10000
+// CHECK-PIE-NEXT:    1044c:            adrp    c3, 0x20000 <rodata+0x1048c>
 // CHECK-PIE-NEXT:    10450:            ldr     c3, [c3, #0x640]
-// CHECK-PIE-NEXT:    10454:            adrp    c4, #0x10000
+// CHECK-PIE-NEXT:    10454:            adrp    c4, 0x20000 <rodata+0x10494>
 // CHECK-PIE-NEXT:    10458:            ldr     c4, [c4, #0x650]
-// CHECK-PIE-NEXT:    1045c:            adrp    c5, #0x10000
+// CHECK-PIE-NEXT:    1045c:            adrp    c5, 0x20000 <rodata+0x1049c>
 // CHECK-PIE-NEXT:    10460:            ldr     c5, [c5, #0x660]
 // CHECK-PIE-NEXT:    10464:            ret
 
@@ -193,7 +193,7 @@ appdata: .xword 8
 /// Check that the PLT header points to .got.plt[2] (30690)
 // CHECK-PIE: 0000000000010470 <.plt>:
 // CHECK-PIE-NEXT:    10470:            stp     c16, c30, [csp, #-0x20]!
-// CHECK-PIE-NEXT:    10474:            adrp    c16, #0x20000
+// CHECK-PIE-NEXT:    10474:            adrp    c16, 0x30000 <.plt+0x84>
 // CHECK-PIE-NEXT:    10478:            ldr     c17, [c16, #0x6a0]
 // CHECK-PIE-NEXT:    1047c:            add     c16, c16, #0x6a0
 // CHECK-PIE-NEXT:    10480:            br      c17
@@ -202,7 +202,7 @@ appdata: .xword 8
 // CHECK-PIE-NEXT:    1048c:            nop
 
 /// Check that the next PLT entry (.plt[3]) points to .got.plt[3] (306a0)
-// CHECK-PIE-NEXT:    10490:            adrp    c16, #0x20000
+// CHECK-PIE-NEXT:    10490:            adrp    c16, 0x30000 <.plt+0xa0>
 // CHECK-PIE-NEXT:    10494:            add     c16, c16, #0x6b0
 // CHECK-PIE-NEXT:    10498:            ldr     c17, [c16, #0x0]
 // CHECK-PIE-NEXT:    1049c:            br      c17

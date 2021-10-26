@@ -66,18 +66,18 @@
 #DSO-EMPTY:
 #DSO-NEXT: <.plt>:
 #DSO-NEXT:  10330: stp c16, c30, [csp, #-32]!
-#DSO-NEXT:  10334: adrp c16, #131072
+#DSO-NEXT:  10334: adrp c16, 0x30000 <.plt+0x84>
 #DSO-NEXT:  10338: ldr c17, [c16, #1088]
 #DSO-NEXT:  1033c: add c16, c16, #1088
 #DSO-NEXT:  10340: br c17
 #DSO-NEXT:  10344: nop
 #DSO-NEXT:  10348: nop
 #DSO-NEXT:  1034c: nop
-#DSO-NEXT:  10350: adrp c16, #131072
+#DSO-NEXT:  10350: adrp c16, 0x30000 <.plt+0xa0>
 #DSO-NEXT:  10354: add c16, c16, #1104
 #DSO-NEXT:  10358: ldr c17, [c16, #0]
 #DSO-NEXT:  1035c: br c17
-#DSO-NEXT:  10360: adrp c16, #131072
+#DSO-NEXT:  10360: adrp c16, 0x30000 <.plt+0xb0>
 #DSO-NEXT:  10364: add c16, c16, #1120
 #DSO-NEXT:  10368: ldr c17, [c16, #0]
 #DSO-NEXT:  1036c: br c17
