@@ -2734,7 +2734,6 @@ void DWARFASTParserClang::ParseSingleMember(
     return;
   }
 
-  clang::FieldDecl *field_decl = nullptr;
   const uint64_t character_width = 8;
   const uint64_t word_width = 32;
   CompilerType member_clang_type = member_type->GetLayoutCompilerType();
@@ -2904,7 +2903,7 @@ void DWARFASTParserClang::ParseSingleMember(
 
   RequireCompleteType(member_clang_type);
 
-  field_decl = TypeSystemClang::AddFieldToRecordType(
+  clang::FieldDecl *field_decl = TypeSystemClang::AddFieldToRecordType(
       class_clang_type, attrs.name, member_clang_type, attrs.accessibility,
       attrs.bit_size);
 
