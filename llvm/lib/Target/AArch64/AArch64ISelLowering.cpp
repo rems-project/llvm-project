@@ -433,6 +433,7 @@ AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::SELECT_CC, MVT::iFATPTR128, Custom);
   setOperationAction(ISD::BR_JT, MVT::Other, Custom);
   setOperationAction(ISD::JumpTable, MVT::i64, Custom);
+  setOperationAction(ISD::JumpTable, MVT::iFATPTR128, Custom);
 
   setOperationAction(ISD::SHL_PARTS, MVT::i64, Custom);
   setOperationAction(ISD::SRA_PARTS, MVT::i64, Custom);
@@ -7811,8 +7812,11 @@ SDValue AArch64TargetLowering::LowerBR_JT(SDValue Op,
   if (Subtarget->hasPureCap())
     Dest =
         DAG.getMachineNode(AArch64::MCJumpTableDest32, DL, MVT::iFATPTR128,
-                           MVT::i64, JT, Entry,
-                           DAG.getTargetJumpTable(JTI, MVT::i32));
+            MVT::i64,
+            DAG.getJumpTable(JTI, MVT::iFATPTR128,
+                JT->getOpcode() != ISD::JumpTable,
+                cast<JumpTableSDNode>(JT.getNode())->getTargetFlags()),
+            Entry, DAG.getTargetJumpTable(JTI, MVT::i32));
   else
     Dest =
         DAG.getMachineNode(AArch64::JumpTableDest32, DL, MVT::i64, MVT::i64, JT,
