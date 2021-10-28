@@ -84,7 +84,7 @@ _start: ret
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Relocation {
 // CHECK-NEXT:    Location: 0x25ACB0
-// CHECK-NEXT:    Base: __eh_frame_hdr_end (0x213A8C)
+// CHECK-NEXT:    Base: __eh_frame_start (0x213A8C)
 // CHECK-NEXT:    Offset: 0
 // CHECK-NEXT:    Length: 0
 // CHECK-NEXT:    Permissions: (RODATA) (0x1BFBE)

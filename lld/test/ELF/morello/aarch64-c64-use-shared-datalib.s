@@ -92,10 +92,10 @@ appdata: .xword 8
 // RELS-NEXT:   Section (5) .rela.dyn {
 /// .capinit appdata
 // RELS-NEXT:     0x220350 R_MORELLO_RELATIVE - 0x0
-/// .capinit data
-// RELS-NEXT:     0x220340 R_MORELLO_CAPINIT data 0x0
 /// .capinit rodata
 // RELS-NEXT:     0x220330 R_MORELLO_CAPINIT rodata 0x0
+/// .capinit data
+// RELS-NEXT:     0x220340 R_MORELLO_CAPINIT data 0x0
 /// .capinit from_app (strictly speaking don't need symbol here)
 // RELS-NEXT:     0x220360 R_MORELLO_RELATIVE from_app 0x0
 // RELS-NEXT:   }
@@ -108,10 +108,10 @@ appdata: .xword 8
 // RELS-PIE-NEXT:   Section (5) .rela.dyn {
 /// .capinit appdata
 // RELS-PIE-NEXT:     0x20350 R_MORELLO_RELATIVE - 0x0
-/// .capinit data
-// RELS-PIE-NEXT:     0x20340 R_MORELLO_CAPINIT data 0x0
 /// .capinit rodata
 // RELS-PIE-NEXT:     0x20330 R_MORELLO_CAPINIT rodata 0x0
+/// .capinit data
+// RELS-PIE-NEXT:     0x20340 R_MORELLO_CAPINIT data 0x0
 /// .capinit from_app (strictly speaking don't need symbol here)
 // RELS-PIE-NEXT:     0x20360 R_MORELLO_RELATIVE from_app 0x0
 // RELS-PIE-NEXT:   }

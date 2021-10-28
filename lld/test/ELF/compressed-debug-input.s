@@ -1,4 +1,4 @@
-# REQUIRES: zlib, x86
+# REQUIRES: zlib, x86, ppc
 
 # RUN: llvm-mc -compress-debug-sections=zlib -filetype=obj -triple=x86_64-unknown-linux %s -o %t
 # RUN: llvm-mc -compress-debug-sections=zlib -filetype=obj -triple=powerpc64-unknown-unknown %s -o %t-be

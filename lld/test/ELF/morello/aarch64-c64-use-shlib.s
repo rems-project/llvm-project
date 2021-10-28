@@ -219,10 +219,6 @@ appdata: .xword 8
 // RELS-NEXT:     0x2204D0 R_MORELLO_RELATIVE from_app 0x0
 /// .got from_app (strictly speaking don't need symbol here)
 // RELS-NEXT:     0x220630 R_MORELLO_RELATIVE from_app 0x0
-/// .capinit data
-// RELS-NEXT:     0x2204B0 R_MORELLO_CAPINIT data 0x0
-/// .got data
-// RELS-NEXT:     0x220610 R_MORELLO_GLOB_DAT data 0x0
 /// .capinit func2
 // RELS-NEXT:     0x2204E0 R_MORELLO_CAPINIT func2 0x0
 /// .got func2
@@ -231,6 +227,10 @@ appdata: .xword 8
 // RELS-NEXT:     0x2204A0 R_MORELLO_CAPINIT rodata 0x0
 /// .got rodata
 // RELS-NEXT:     0x220600 R_MORELLO_GLOB_DAT rodata 0x0
+/// .capinit data
+// RELS-NEXT:     0x2204B0 R_MORELLO_CAPINIT data 0x0
+/// .got data
+// RELS-NEXT:     0x220610 R_MORELLO_GLOB_DAT data 0x0
 // RELS-NEXT:   }
 // RELS-NEXT:   Section (6) .rela.plt {
 // RELS-NEXT:     0x2306A0 R_MORELLO_JUMP_SLOT func 0x0
@@ -247,10 +247,6 @@ appdata: .xword 8
 // RELS-PIE-NEXT:     0x204D0 R_MORELLO_RELATIVE from_app 0x0
 /// .got from_app (strictly speaking don't need symbol here)
 // RELS-PIE-NEXT:     0x20640 R_MORELLO_RELATIVE from_app 0x0
-/// .capinit data
-// RELS-PIE-NEXT:     0x204B0 R_MORELLO_CAPINIT data 0x0
-/// .got data
-// RELS-PIE-NEXT:     0x20620 R_MORELLO_GLOB_DAT data 0x0
 /// .capinit func2
 // RELS-PIE-NEXT:     0x204E0 R_MORELLO_CAPINIT func2 0x0
 /// .got func2
@@ -259,6 +255,10 @@ appdata: .xword 8
 // RELS-PIE-NEXT:     0x204A0 R_MORELLO_CAPINIT rodata 0x0
 /// .got rodata
 // RELS-PIE-NEXT:     0x20610 R_MORELLO_GLOB_DAT rodata 0x0
+/// .capinit data
+// RELS-PIE-NEXT:     0x204B0 R_MORELLO_CAPINIT data 0x0
+/// .got data
+// RELS-PIE-NEXT:     0x20620 R_MORELLO_GLOB_DAT data 0x0
 // RELS-PIE-NEXT:   }
 // RELS-PIE-NEXT:   Section (6) .rela.plt {
 // RELS-PIE-NEXT:     0x306B0 R_MORELLO_JUMP_SLOT func 0x0

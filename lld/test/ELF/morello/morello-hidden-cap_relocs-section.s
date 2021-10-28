@@ -36,8 +36,8 @@ bye:
  .xword __cap_relocs_start
  .xword __cap_relocs_end
 
-// CHECK:          Name: __cap_relocs_end
-// CHECK-NEXT:     Value: 0x98
+// CHECK:          Name: __cap_relocs_start
+// CHECK-NEXT:     Value: 0x48
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Local (0x0)
 // CHECK-NEXT:     Type: None (0x0)
@@ -47,8 +47,8 @@ bye:
 // CHECK-NEXT:     Section: other
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: __cap_relocs_start
-// CHECK-NEXT:     Value: 0x48
+// CHECK-NEXT:     Name: __cap_relocs_end
+// CHECK-NEXT:     Value: 0x98
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Local (0x0)
 // CHECK-NEXT:     Type: None (0x0)

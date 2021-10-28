@@ -34,8 +34,8 @@ str:
  .xword __cap_relocs_start
  .xword __cap_relocs_end
 
-// CHECK:          Name: __cap_relocs_end
-// CHECK-NEXT:     Value: 0x220218
+// CHECK:          Name: __cap_relocs_start
+// CHECK-NEXT:     Value: 0x2201C8
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Local (0x0)
 // CHECK-NEXT:     Type: None (0x0)
@@ -45,8 +45,8 @@ str:
 // CHECK-NEXT:     Section: __cap_relocs
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: __cap_relocs_start
-// CHECK-NEXT:     Value: 0x2201C8
+// CHECK-NEXT:     Name: __cap_relocs_end
+// CHECK-NEXT:     Value: 0x220218
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Local (0x0)
 // CHECK-NEXT:     Type: None (0x0)
@@ -54,6 +54,7 @@ str:
 // CHECK-NEXT:       STV_HIDDEN (0x2)
 // CHECK-NEXT:     ]
 // CHECK-NEXT:     Section: __cap_relocs
+// CHECK-NEXT:   }
 
 // CHECK: CHERI __cap_relocs [
 // CHECK-NEXT:    0x230220 (ptr1)          Base: 0x230240 (str+8) Length: 12 Perms: (RWDATA)

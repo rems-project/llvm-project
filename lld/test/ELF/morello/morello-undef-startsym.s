@@ -8,7 +8,7 @@
 
 # CHECK:      Symbols [
 # CHECK:        Symbol {
-# CHECK:          Name: _DYNAMIC
+# CHECK:          Name: __start_section
 # CHECK-NEXT:     Value: 0x0
 # CHECK-NEXT:     Size: 0
 # CHECK-NEXT:     Binding: Local
@@ -19,7 +19,7 @@
 # CHECK-NEXT:     Section: Undefined
 # CHECK-NEXT:   }
 # CHECK:        Symbol {
-# CHECK:          Name: __start_section
+# CHECK:          Name: _DYNAMIC
 # CHECK-NEXT:     Value: 0x0
 # CHECK-NEXT:     Size: 0
 # CHECK-NEXT:     Binding: Local

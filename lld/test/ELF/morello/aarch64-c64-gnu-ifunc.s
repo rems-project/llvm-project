@@ -54,9 +54,9 @@ _start:
 // RELANDSYM-NEXT:     0x2201F0 R_MORELLO_IRELATIVE - 0x2101B1
 // RELANDSYM-NEXT:     0x220200 R_MORELLO_IRELATIVE - 0x2101B5
 
-// RELANDSYM:          Name: __rela_iplt_end
-// RELANDSYM-NEXT:     Value: 0x2001B0
-// RELANDSYM-NEXT:     Size: 0
+// RELANDSYM:          Name: __rela_iplt_start
+// RELANDSYM-NEXT:     Value: 0x200180
+// RELANDSYM-NEXT:     Size: 48
 // RELANDSYM-NEXT:     Binding: Local (0x0)
 // RELANDSYM-NEXT:     Type: None (0x0)
 // RELANDSYM-NEXT:     Other [ (0x2)
@@ -65,9 +65,9 @@ _start:
 // RELANDSYM-NEXT:     Section: .rela.dyn (0x1)
 // RELANDSYM-NEXT:   }
 // RELANDSYM-NEXT:   Symbol {
-// RELANDSYM-NEXT:     Name: __rela_iplt_start
-// RELANDSYM-NEXT:     Value: 0x200180
-// RELANDSYM-NEXT:     Size: 48
+// RELANDSYM-NEXT:     Name: __rela_iplt_end
+// RELANDSYM-NEXT:     Value: 0x2001B0
+// RELANDSYM-NEXT:     Size: 0
 // RELANDSYM-NEXT:     Binding: Local (0x0)
 // RELANDSYM-NEXT:     Type: None (0x0)
 // RELANDSYM-NEXT:     Other [ (0x2)
