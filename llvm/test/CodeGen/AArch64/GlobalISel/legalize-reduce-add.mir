@@ -128,7 +128,7 @@ body:             |
     ; CHECK: [[ADD2:%[0-9]+]]:_(<2 x s64>) = G_ADD [[ADD]], [[ADD1]]
     ; CHECK: [[VECREDUCE_ADD:%[0-9]+]]:_(s64) = G_VECREDUCE_ADD [[ADD2]](<2 x s64>)
     ; CHECK: $x0 = COPY [[VECREDUCE_ADD]](s64)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %0:_(<2 x s64>) = COPY $q0
     %1:_(<2 x s64>) = COPY $q1
     %2:_(<2 x s64>) = COPY $q2
@@ -138,7 +138,7 @@ body:             |
     %6:_(<8 x s64>) = G_CONCAT_VECTORS %4(<4 x s64>), %5(<4 x s64>)
     %7:_(s64) = G_VECREDUCE_ADD %6(<8 x s64>)
     $x0 = COPY %7(s64)
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 
 ...
 ---
@@ -161,13 +161,13 @@ body:             |
     ; CHECK: [[ADD:%[0-9]+]]:_(s64) = G_ADD [[VECREDUCE_ADD]], [[VECREDUCE_ADD1]]
     ; CHECK: [[ADD1:%[0-9]+]]:_(s64) = G_ADD [[ADD]], [[VECREDUCE_ADD2]]
     ; CHECK: $x0 = COPY [[ADD1]](s64)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %0:_(<2 x s64>) = COPY $q0
     %1:_(<2 x s64>) = COPY $q1
     %2:_(<2 x s64>) = COPY $q2
     %3:_(<6 x s64>) = G_CONCAT_VECTORS %0(<2 x s64>), %1(<2 x s64>), %2(<2 x s64>)
     %4:_(s64) = G_VECREDUCE_ADD %3(<6 x s64>)
     $x0 = COPY %4(s64)
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 
 ...

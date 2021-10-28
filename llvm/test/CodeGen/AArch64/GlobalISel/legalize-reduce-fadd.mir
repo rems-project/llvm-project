@@ -58,7 +58,7 @@ body:             |
     ; CHECK: [[FADD2:%[0-9]+]]:_(<2 x s64>) = G_FADD [[FADD]], [[FADD1]]
     ; CHECK: [[VECREDUCE_FADD:%[0-9]+]]:_(s64) = G_VECREDUCE_FADD [[FADD2]](<2 x s64>)
     ; CHECK: $x0 = COPY [[VECREDUCE_FADD]](s64)
-    ; CHECK: RET_ReallyLR implicit $x0
+    ; CHECK: RET_ReallyLR 0, implicit $x0
     %0:_(<2 x s64>) = COPY $q0
     %1:_(<2 x s64>) = COPY $q1
     %2:_(<2 x s64>) = COPY $q2
@@ -68,6 +68,6 @@ body:             |
     %6:_(<8 x s64>) = G_CONCAT_VECTORS %4(<4 x s64>), %5(<4 x s64>)
     %7:_(s64) = G_VECREDUCE_FADD %6(<8 x s64>)
     $x0 = COPY %7(s64)
-    RET_ReallyLR implicit $x0
+    RET_ReallyLR 0, implicit $x0
 
 ...
