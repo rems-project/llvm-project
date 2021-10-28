@@ -401,7 +401,8 @@ bool morelloLinkerDefinedCapabilityAlign();
 // Resolve the R_MORELLO_CAPFRAG_AND_BASE internal relocation to write
 // | 56-bits length | 8-bits permission |
 uint64_t getMorelloSizeAndPermissions(int64_t a, const Symbol &sym,
-                                    InputSectionBase *isec, uint64_t offset);
+                                      const InputSectionBase *isec,
+                                      uint64_t offset);
 
 } // namespace elf
 } // namespace lld

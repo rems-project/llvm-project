@@ -760,7 +760,8 @@ void MorelloCapRelocsSection::writeTo(uint8_t *buf) {
 // an internal to LLD relocation that we use to calculate the
 // | 56-bits size | 8-bits permission | of the inplace data layout.
 uint64_t getMorelloSizeAndPermissions(int64_t a, const Symbol &sym,
-                                    InputSectionBase *isec, uint64_t offset) {
+                                      const InputSectionBase *isec,
+                                      uint64_t offset) {
   uint64_t sizeAndPerm = Permissions::rwdata(Permissions::Type::DYNAMIC);
   if (const SharedSymbol *shared = dyn_cast<SharedSymbol>(&sym)) {
     // If the symbol is defined in a shared library then we can take the size
@@ -771,7 +772,8 @@ uint64_t getMorelloSizeAndPermissions(int64_t a, const Symbol &sym,
   } else if (const Defined *definedSym = dyn_cast<Defined>(&sym)) {
     sizeAndPerm = getPermissions(*definedSym, Permissions::Type::DYNAMIC);
     uint64_t size = getTargetSize<ELF64LE>(
-        {isec, offset, false}, SymbolAndOffset(const_cast<Symbol *>(&sym), 0),
+        {const_cast<InputSectionBase *>(isec), offset},
+        SymbolAndOffset(const_cast<Symbol *>(&sym), 0),
         /*strict=*/true);
     return sizeAndPerm | (size << 8);
   }
@@ -928,7 +930,7 @@ void addMorelloC64GotRelocation(RelType dynType, Symbol *sym, InputSectionBase *
   if (config->hasDynSymTab || dynType == R_MORELLO_IRELATIVE)
     addCapDynamicRelocation(dynType, sym, sec, offset, 0);
   else
-    in.capRelocs->addCapReloc({sec, offset, false}, {sym, 0u},
+    in.capRelocs->addCapReloc({sec, offset}, {sym, 0u},
                               sym->isPreemptible, 0);
 }
 
@@ -945,7 +947,7 @@ static void addMorelloCapabilityRelocation(Symbol *sym, RelType type,
                           : R_MORELLO_RELATIVE;
     addCapDynamicRelocation(dynType, sym, sec, offset, addend);
   } else {
-    in.capRelocs->addCapReloc({sec, offset, false}, {sym, 0u},
+    in.capRelocs->addCapReloc({sec, offset}, {sym, 0u},
                               sym->isPreemptible, addend);
   }
 }
