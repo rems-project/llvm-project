@@ -1,5 +1,5 @@
 // RUN: %cheri_cc1 -o - %s -emit-llvm | %cheri_FileCheck %s --check-prefix=CHECK --check-prefix=CHERI
-// RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +morello -o - %s -S -emit-llvm | FileCheck %s --check-prefix=CHECK --check-prefix=AARCH6 -D\#CAP_SIZE=16
+// RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +morello -o - %s -S -emit-llvm | FileCheck %s --check-prefix=CHECK --check-prefix=AARCH64 -D\#CAP_SIZE=16
 #define CHERI_CCALL(suffix, cls) \
 	__attribute__((cheri_ccall))\
 	__attribute__((cheri_method_suffix(suffix)))\
@@ -35,10 +35,11 @@ void bar(int a, int b)
 {
   // CHECK-LABEL: define dso_local void @bar(i32
   // CHECK: load i64, i64* @__cheri_method.cls.foo, align 8, [[$INVARIANT_LOAD:!invariant.load ![0-9]+]]
-	// CHECK: call chericcallcc void @cheri_invoke(i8 addrspace(200)* inreg %{{.*}}, i8 addrspace(200)* inreg %{{.*}}, i64 zeroext %{{.*}}, i32 signext %{{.*}}, i32 signext %{{.*}})
+	// CHERI: call chericcallcc void @cheri_invoke(i8 addrspace(200)* inreg %{{.*}}, i8 addrspace(200)* inreg %{{.*}}, i64 zeroext %{{.*}}, i32 signext %{{.*}}, i32 signext %{{.*}})
 	foo_cap(other, a, b);
 	// CHERI: call chericcallcc void @cheri_invoke(i8 addrspace(200)* %{{.*}}, i8 addrspace(200)* %{{.*}}, i64 zeroext %{{.*}}, i32 signext %{{.*}}, i32 signext %{{.*}})
-    // AARCH64: call chericcallcc void bitcast (void ({ i8 addrspace(200)*, i8 addrspace(200)* }, i64, i32, i32)* @cheri_invoke to void (i8 addrspace(200)*, i8 addrspace(200)*, i64, i32, i32)*)(i8 addrspace(200)* %{{.*}}, i8 addrspace(200)* %{{.*}}, i64 %{{.*}}
+        // AARCH64: call chericcallcc void @cheri_invoke({ i8 addrspace(200)*, i8 addrspace(200)* } %{{.*}}, i64 %{{.*}}, i32 %{{.*}}, i32 %{{.*}})
+        // AARCH64: call chericcallcc void bitcast (void ({ i8 addrspace(200)*, i8 addrspace(200)* }, i64, i32, i32)* @cheri_invoke to void (i8 addrspace(200)*, i8 addrspace(200)*, i64, i32, i32)*)(i8 addrspace(200)* %{{.*}}, i8 addrspace(200)* %{{.*}}, i64 %{{.*}}
 	foo(a,b);
 }
 

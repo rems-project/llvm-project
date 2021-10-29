@@ -1,7 +1,5 @@
-// RUN: %cheri_cc1 -o - -O0 -emit-llvm %s | FileCheck %s -check-prefix=CHECK-CHERI -check-prefix=CHECK-ALL
-// RUN: %clang %s -target aarch64-none-linux-gnu -march=morello -S -o - -O0 -emit-llvm | FileCheck -check-prefix=CHECK-AARCH64 -check-prefix=CHECK-ALL %s
-
-// RUN: %cheri128_cc1 -o - -O0 -emit-llvm %s | FileCheck %s --check-prefixes=CHECK,CHECK-MIPS
+// RUN: %clang %s -target aarch64-none-linux-gnu -march=morello -S -o - -O0 -emit-llvm | FileCheck -check-prefix=CHECK %s
+// RUN: %cheri128_cc1 -o - -O0 -emit-llvm %s | FileCheck %s --check-prefixes=CHECK,CHECK-CHERI
 // FIXME: we shouldn't really be testing ASM output in clang
 // RXUN: %cheri128_cc1 -o - -O0 -S %s | FileCheck %s -check-prefixes=ASM,ASM128
 void * __capability results[12];
@@ -9,10 +7,10 @@ void * __capability results[12];
 #ifdef __mips__
 long long testDeprecated(void * __capability foo)
 {
-	// CHECK-LABEL: @testDeprecated(
+	// CHECK-CHERI-LABEL: @testDeprecated(
 	long long x;
-	// CHECK: call void @llvm.mips.cap.cause.set(i64 42)
-	// CHECK: call i64 @llvm.mips.cap.cause.get()
+	// CHECK-CHERI: call void @llvm.mips.cap.cause.set(i64 42)
+	// CHECK-CHERI: call i64 @llvm.mips.cap.cause.get()
 	__builtin_mips_cheri_set_cause(42);
 	return x & __builtin_mips_cheri_get_cause();
 }
@@ -24,50 +22,50 @@ long long test(void* __capability foo)
   // ASM-LABEL: test:
   long long x;
   x &= __builtin_cheri_length_get(foo);
-  // CHECK-ALL: call i64 @llvm.cheri.cap.length.get.i64
+  // CHECK: call i64 @llvm.cheri.cap.length.get.i64
   // ASM: cgetlen ${{[0-9]+}}, $c{{[0-9]+}}
   x &= __builtin_cheri_perms_get(foo);
-  // CHECK-ALL: call i64 @llvm.cheri.cap.perms.get.i64
+  // CHECK: call i64 @llvm.cheri.cap.perms.get.i64
   // ASM: cgetperm ${{[0-9]+}}, $c{{[0-9]+}}
   x &= __builtin_cheri_type_get(foo);
-  // CHECK-ALL: call i64 @llvm.cheri.cap.type.get.i64
+  // CHECK: call i64 @llvm.cheri.cap.type.get.i64
   // ASM: cgettype ${{[0-9]+}}, $c{{[0-9]+}}
   x &= __builtin_cheri_tag_get(foo);
-  // CHECK-ALL: call i1 @llvm.cheri.cap.tag.get
+  // CHECK: call i1 @llvm.cheri.cap.tag.get
   // ASM: cgettag ${{[0-9]+}}, $c{{[0-9]+}}
   x &= __builtin_cheri_offset_get(foo);
-  // CHECK-ALL: call i64 @llvm.cheri.cap.offset.get.i64
+  // CHECK: call i64 @llvm.cheri.cap.offset.get.i64
   // ASM: cgetoffset ${{[0-9]+}}, $c{{[0-9]+}}
   x &= __builtin_cheri_base_get(foo);
-  // CHECK-ALL: call i64 @llvm.cheri.cap.base.get.i64
+  // CHECK: call i64 @llvm.cheri.cap.base.get.i64
   // ASM: cgetbase ${{[0-9]+}}, $c{{[0-9]+}}
   x &= __builtin_cheri_sealed_get(foo);
-  // CHECK-ALL: call i1 @llvm.cheri.cap.sealed.get
+  // CHECK: call i1 @llvm.cheri.cap.sealed.get
   // ASM: cgetsealed ${{[0-9]+}}, $c{{[0-9]+}}
   void * bar = __builtin_cheri_cap_to_pointer(foo, foo);
-  // CHECK-ALL: call i64 @llvm.cheri.cap.to.pointer.i64
+  // CHECK: call i64 @llvm.cheri.cap.to.pointer.i64
   // ASM: ctoptr ${{[0-9]+}}, $c{{[0-9]+}}, $c{{[0-9]+}}
   results[0] = __builtin_cheri_cap_from_pointer(foo, bar);
-  // CHECK-ALL: call i8 addrspace(200)* @llvm.cheri.cap.from.pointer.i64
+  // CHECK: call i8 addrspace(200)* @llvm.cheri.cap.from.pointer.i64
   // ASM: cfromptr $c{{[0-9]+}}, $c{{[0-9]+}}, ${{[0-9]+}}
   results[1] = __builtin_cheri_perms_and(foo, 12);
-  // CHECK-ALL: call i8 addrspace(200)* @llvm.cheri.cap.perms.and.i64
+  // CHECK: call i8 addrspace(200)* @llvm.cheri.cap.perms.and.i64
   // ASM: candperm $c{{[0-9]+}}, $c{{[0-9]+}}, ${{[0-9]+}}
   results[4] = __builtin_cheri_seal(foo, foo);
-  // CHECK-ALL: call i8 addrspace(200)* @llvm.cheri.cap.seal
+  // CHECK: call i8 addrspace(200)* @llvm.cheri.cap.seal
   // ASM: cseal $c{{[0-9]+}}, $c{{[0-9]+}}, $c{{[0-9]+}}
   results[5] = __builtin_cheri_unseal(foo, foo);
-  // CHECK-ALL: call i8 addrspace(200)* @llvm.cheri.cap.unseal
+  // CHECK: call i8 addrspace(200)* @llvm.cheri.cap.unseal
   // ASM: cunseal $c{{[0-9]+}}, $c{{[0-9]+}}, $c{{[0-9]+}}
   results[6] = __builtin_cheri_bounds_set(foo, 42);
-  // CHECK-ALL: call i8 addrspace(200)* @llvm.cheri.cap.bounds.set.i64(i8 addrspace(200)* {{.+}}, i64 42)
+  // CHECK: call i8 addrspace(200)* @llvm.cheri.cap.bounds.set.i64(i8 addrspace(200)* {{.+}}, i64 42)
   // ASM: csetbounds $c{{[0-9]+}}, $c{{[0-9]+}}, 42
   results[6] = __builtin_cheri_bounds_set(foo, 16384); // too big for immediate csetbounds
-  // CHECK-ALL: call i8 addrspace(200)* @llvm.cheri.cap.bounds.set.i64(i8 addrspace(200)* {{.+}}, i64 16384)
+  // CHECK: call i8 addrspace(200)* @llvm.cheri.cap.bounds.set.i64(i8 addrspace(200)* {{.+}}, i64 16384)
   // ASM: daddiu [[INEXACT_SIZE:\$[0-9]+]], $zero, 16384
   // ASM: csetbounds $c{{[0-9]+}}, $c{{[0-9]+}}, [[INEXACT_SIZE]]
   results[7] = __builtin_cheri_bounds_set_exact(foo, 43);
-  // CHECK-ALL: call i8 addrspace(200)* @llvm.cheri.cap.bounds.set.exact.i64(i8 addrspace(200)* {{.+}}, i64 43)
+  // CHECK: call i8 addrspace(200)* @llvm.cheri.cap.bounds.set.exact.i64(i8 addrspace(200)* {{.+}}, i64 43)
   // ASM: daddiu [[EXACT_SIZE:\$[0-9]+]], $zero, 43
   // ASM: csetboundsexact $c{{[0-9]+}}, $c{{[0-9]+}}, [[EXACT_SIZE]]
   results[8] = __builtin_cheri_seal_entry(foo);
@@ -97,9 +95,9 @@ long long test(void* __capability foo)
 
 // FIXME: convert this to an IR test.
 void buildcap(void * __capability auth, __intcap_t bits) {
-  // CHECK-AARCH64: call i8 addrspace(200)* @llvm.cheri.cap.build
-  // CHECK-AARCH64: call i8 addrspace(200)* @llvm.cheri.cap.type.copy
-  // CHECK-AARCH64: call i8 addrspace(200)* @llvm.cheri.cap.conditional.seal
+  // CHECK: call i8 addrspace(200)* @llvm.cheri.cap.build
+  // CHECK: call i8 addrspace(200)* @llvm.cheri.cap.type.copy
+  // CHECK: call i8 addrspace(200)* @llvm.cheri.cap.conditional.seal
   // ASM-LABEL: buildcap:
   void * __capability tagged = __builtin_cheri_cap_build(auth, bits);
   // ASM: cbuildcap $c{{[0-9]+}}, $c{{[0-9]+}}, $c{{[0-9]+}}
