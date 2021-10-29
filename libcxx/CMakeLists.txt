@@ -453,10 +453,6 @@ set(LIBCXX_LIBRARIES "")
 # Include macros for adding and removing libc++ flags.
 include(HandleLibcxxFlags)
 
-if (triple)
-  set(LIBCXX_TARGET_TRIPLE "${triple}")
-endif()
-
 # Target flags ================================================================
 # These flags get added to CMAKE_CXX_FLAGS and CMAKE_C_FLAGS so that
 # 'config-ix' use them during feature checks. It also adds them to both

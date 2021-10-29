@@ -401,7 +401,7 @@ class Configuration(object):
             use_default_libs = self.get_lit_bool('use_default_libs', False)
             if self.target_info.is_mingw():
                 self.cxx.link_flags += ['-nostdlib++']
-            else if not use_default_libs:
+            elif not use_default_libs:
                 self.cxx.link_flags += ['-nodefaultlibs']
             # FIXME: Handle MSVCRT as part of the ABI library handling.
             if self.target_info.is_windows() and not self.target_info.is_mingw():
