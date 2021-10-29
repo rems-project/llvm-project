@@ -1955,7 +1955,7 @@ Status NativeProcessLinux::PtraceWrapper(int req, lldb::pid_t pid, void *addr,
 Status NativeProcessLinux::DoReadTaggedMemory(addr_t addr, void *buf,
                                               size_t size, size_t &bytes_read,
                                               MemoryContentType type) {
-  Log *log(ProcessPOSIXLog::GetLogIfAllCategoriesSet(POSIX_LOG_MEMORY));
+  Log *log = GetLog(POSIXLog::Memory);
   LLDB_LOG(log, "addr = {0:x}, buf = {1:x}, size = {2}, type = {3}", addr, buf,
            size, type);
 

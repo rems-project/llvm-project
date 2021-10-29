@@ -236,7 +236,7 @@ StructuredData::ObjectSP ThreadGDBRemote::FetchThreadExtendedInfo() {
 DataBufferSP ThreadGDBRemote::FetchSigInfoData() const {
   DataBufferSP object_sp;
   const lldb::user_id_t tid = GetProtocolID();
-  Log *log(GetLogIfAnyCategoriesSet(GDBR_LOG_THREAD));
+  Log *log = GetLog(GDBRLog::Thread);
   if (log)
     log->Printf("Fetching signal information for thread %4.4" PRIx64, tid);
   ProcessSP process_sp(GetProcess());
