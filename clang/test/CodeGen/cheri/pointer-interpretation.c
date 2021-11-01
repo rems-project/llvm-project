@@ -1,5 +1,5 @@
 // RUN: %cheri_cc1 %s -O2 -msoft-float -emit-llvm -o - | FileCheck %s --check-prefix=CHECK --check-prefix=cheri
-// RUN: %clang -target aarch64-none-linux-gnu -march=morello %s -O2 -S -emit-llvm -o - -fPIC | FileCheck %s --check-prefix=CHECK --check-prefix=morello
+// RUN: %clang -target aarch64-none-linux-gnu -march=morello %s -O2 -S -emit-llvm -o - | FileCheck %s --check-prefix=CHECK --check-prefix=morello
 
 #pragma pointer_interpretation capability
 struct test

@@ -70,8 +70,8 @@ __uintcap_t uintcap;
 // CHECK-DAG: [[INTCAP_BASETYPE:![0-9]+]] = !DIBasicType(name: "__intcap", size: 128, encoding: DW_ATE_CHERI_signed_intcap)
 // CHECK-DAG: [[UINTCAP_BASETYPE:![0-9]+]] = !DIBasicType(name: "unsigned __intcap", size: 128, encoding: DW_ATE_CHERI_unsigned_intcap)
 //
-// CHECK-DAG: [[INTCAP_TYPEDEF:![0-9]+]] = !DIDerivedType(tag: DW_TAG_typedef, name: "__intcap_t", file: !{{[0-9]+}}, line: {{[0-9]+}}, baseType: [[INTCAP_BASETYPE]])
-// CHECK-DAG: [[UINTCAP_TYPEDEF:![0-9]+]] = !DIDerivedType(tag: DW_TAG_typedef, name: "__uintcap_t", file: !{{[0-9]+}}, line: {{[0-9]+}}, baseType: [[UINTCAP_BASETYPE]])
+// CHECK-DAG: [[INTCAP_TYPEDEF:![0-9]+]] = !DIDerivedType(tag: DW_TAG_typedef, name: "__intcap_t", file: !{{[0-9]+}}, baseType: [[INTCAP_BASETYPE]])
+// CHECK-DAG: [[UINTCAP_TYPEDEF:![0-9]+]] = !DIDerivedType(tag: DW_TAG_typedef, name: "__uintcap_t", file: !{{[0-9]+}}, baseType: [[UINTCAP_BASETYPE]])
 //
 // CHECK-DAG: [[INTCAP_VAR:![0-9]+]] = distinct !DIGlobalVariable(name: "intcap", scope: !{{[0-9]+}}, file: !{{[0-9]+}}, line: {{[0-9]+}}, type: [[INTCAP_TYPEDEF]], isLocal: false, isDefinition: true)
 // CHECK-DAG: [[UINTCAP_VAR:![0-9]+]] = distinct !DIGlobalVariable(name: "uintcap", scope: !{{[0-9]+}}, file: !{{[0-9]+}}, line: {{[0-9]+}}, type: [[UINTCAP_TYPEDEF]], isLocal: false, isDefinition: true)

@@ -149,15 +149,13 @@ int capdiff(__capability int *a, __capability int *b)
 // CHECK: negativeint
 void negativeint()
 {
-  // offset: @llvm.cheri.cap.offset.set.i64(i8 addrspace(200)* null, i64 -5)
-  // addr: @llvm.cheri.cap.address.set.i64(i8 addrspace(200)* null, i64 -5)
+  // CHECK: getelementptr (i8, i8 addrspace(200)* null, i64 -5)
   __intcap_t minus = -5;
 }
 
 // CHECK: largeint
 void largeint()
 {
-  // offset: @llvm.cheri.cap.offset.set.i64(i8 addrspace(200)* null, i64 4294967295)
-  // addr: @llvm.cheri.cap.address.set.i64(i8 addrspace(200)* null, i64 4294967295)
+  // CHECK: getelementptr (i8, i8 addrspace(200)* null, i64 4294967295)
   __uintcap_t large = 4294967295; // 2^32 - 1
 }
