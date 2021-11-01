@@ -166,36 +166,19 @@ static Value *MakeBinaryAtomicValue(
   assert(CGF.getContext().hasSameUnqualifiedType(T, E->getArg(1)->getType()));
 
   llvm::Value *DestPtr = CGF.EmitScalarExpr(E->getArg(0));
-  unsigned AddrSpace = DestPtr->getType()->getPointerAddressSpace();
-  auto &M = CGF.CGM.getModule();
-  const DataLayout &DL = M.getDataLayout();
-
-  llvm::IntegerType *IntType =
-    llvm::IntegerType::get(CGF.getLLVMContext(),
-                           CGF.getContext().getTypeSize(T));
-  llvm::Type *IntPtrType = IntType->getPointerTo(AddrSpace);
 
   llvm::Value *Args[2];
   Args[0] = DestPtr;
-  bool CapabilityPtr = false;
-  if (llvm::PointerType *PT = dyn_cast<llvm::PointerType>(Args[0]->getType())) {
-    PT = dyn_cast<llvm::PointerType>(PT->getElementType());
-    if (PT) {
-      unsigned AS = PT->getAddressSpace();
-      CapabilityPtr = DL.isFatPointer(AS);
-    }
-  }
-
-  if (!CapabilityPtr)
-    Args[0] = CGF.Builder.CreateBitCast(Args[0], IntPtrType);
-
   Args[1] = CGF.EmitScalarExpr(E->getArg(1));
-  llvm::Type *ValueType = Args[1]->getType();
-  Args[1] = EmitToIntOrFatPtr(CGF, Args[1], T, IntType);
+  QualType ArgTy = E->getArg(1)->getType();
+  if (ArgTy->isBooleanType())
+    Args[1] = CGF.EmitToMemory(Args[1], E->getArg(1)->getType());
 
   llvm::Value *Result = CGF.Builder.CreateAtomicRMW(
       Kind, Args[0], Args[1], Ordering);
-  return EmitFromIntOrFatPtr(CGF, Result, T, ValueType);
+  if (ArgTy->isBooleanType())
+    Result = CGF.EmitFromMemory(Result, ArgTy);
+  return Result;
 }
 
 static Value *EmitNontemporalStore(CodeGenFunction &CGF, const CallExpr *E,
@@ -321,33 +304,15 @@ static Value *MakeAtomicCmpXchgValue(CodeGenFunction &CGF, const CallExpr *E,
                                      bool ReturnBool) {
   QualType T = ReturnBool ? E->getArg(1)->getType() : E->getType();
   llvm::Value *DestPtr = CGF.EmitScalarExpr(E->getArg(0));
-  unsigned AddrSpace = DestPtr->getType()->getPointerAddressSpace();
-  auto &M = CGF.CGM.getModule();
-  const DataLayout &DL = M.getDataLayout();
-
-  llvm::IntegerType *IntType = llvm::IntegerType::get(
-      CGF.getLLVMContext(), CGF.getContext().getTypeSize(T));
-  llvm::Type *IntPtrType = IntType->getPointerTo(AddrSpace);
 
   Value *Args[3];
   Args[0] = DestPtr;
   Args[1] = CGF.EmitScalarExpr(E->getArg(1));
-  Args[2] = EmitToIntOrFatPtr(CGF, CGF.EmitScalarExpr(E->getArg(2)), T, IntType);
-
-  bool CapabilityPtr = false;
-  if (llvm::PointerType *PT = dyn_cast<llvm::PointerType>(Args[0]->getType())) {
-    PT = dyn_cast<llvm::PointerType>(PT->getElementType());
-    if (PT) {
-      unsigned AS = PT->getAddressSpace();
-      CapabilityPtr = DL.isFatPointer(AS);
-    }
-  }
-
-  if (!CapabilityPtr)
-    Args[0] = CGF.Builder.CreateBitCast(DestPtr, IntPtrType);
-
-  llvm::Type *ValueType = Args[1]->getType();
-  Args[1] = EmitToIntOrFatPtr(CGF, CGF.EmitScalarExpr(E->getArg(1)), T, IntType);
+  Args[2] = CGF.EmitScalarExpr(E->getArg(2));
+  if (E->getArg(1)->getType()->isBooleanType())
+     Args[1] = CGF.EmitToMemory(Args[1], E->getArg(1)->getType());
+  if (E->getArg(2)->getType()->isBooleanType())
+     Args[2] = CGF.EmitToMemory(Args[2], E->getArg(2)->getType());
 
   Value *Pair = CGF.Builder.CreateAtomicCmpXchg(
       Args[0], Args[1], Args[2], llvm::AtomicOrdering::SequentiallyConsistent,
@@ -358,8 +323,7 @@ static Value *MakeAtomicCmpXchgValue(CodeGenFunction &CGF, const CallExpr *E,
                                   CGF.ConvertType(E->getType()));
   else
     // Extract old value and emit it using the same type as compare value.
-    return EmitFromIntOrFatPtr(CGF, CGF.Builder.CreateExtractValue(Pair, 0), T,
-                       ValueType);
+    return CGF.EmitFromMemory(CGF.Builder.CreateExtractValue(Pair, 0), T);
 }
 
 /// This function should be invoked to emit atomic cmpxchg for Microsoft's
