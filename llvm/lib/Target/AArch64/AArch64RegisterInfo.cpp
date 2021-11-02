@@ -633,7 +633,9 @@ AArch64RegisterInfo::materializeFrameBaseRegister(MachineBasicBlock *MBB,
   const MCInstrDesc &MCID =
       TII->get(Opc);
   MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
-  Register BaseReg = MRI.createVirtualRegister(&AArch64::GPR64spRegClass);
+  Register BaseReg =
+      MRI.createVirtualRegister(HasPureCap ? &AArch64::CapspRegClass
+                                           : &AArch64::GPR64spRegClass);
   MRI.constrainRegClass(BaseReg, TII->getRegClass(MCID, 0, this, MF));
   unsigned Shifter = AArch64_AM::getShifterImm(AArch64_AM::LSL, 0);
 
