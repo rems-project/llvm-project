@@ -3465,6 +3465,16 @@ void AArch64InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     return;
   }
 
+  if (AArch64::CapspRegClass.contains(DestReg) && SrcReg == AArch64::CZR) {
+    const TargetRegisterInfo *TRI = &getRegisterInfo();
+    unsigned DestRegX = TRI->getSubReg(DestReg, AArch64::sub_64);
+    BuildMI(MBB, I, DL, get(AArch64::ORRXrr), DestRegX)
+        .addReg(AArch64::XZR)
+        .addReg(AArch64::XZR)
+        .addReg(DestReg, RegState::Implicit | RegState::Define);
+    return;
+  }
+
   if (DestReg == AArch64::NZCV) {
     assert(AArch64::GPR64RegClass.contains(SrcReg) && "Invalid NZCV copy");
     BuildMI(MBB, I, DL, get(AArch64::MSR))

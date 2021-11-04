@@ -3762,25 +3762,23 @@ SDNode *AArch64DAGToDAGISel::SelectPointerToCapabilityOp(SDNode *N) {
     return nullptr;
 
   SDLoc DL(N);
-  MVT CapTy = N->getSimpleValueType(0);
-
-  SDValue Zero = SDValue(
-      CurDAG->getMachineNode(AArch64::MOVi64imm, DL, MVT::i64,
-                             CurDAG->getTargetConstant(0, DL, MVT::i64)),
-      0);
-  SDValue SubReg = CurDAG->getTargetConstant(AArch64::sub_64, DL, MVT::i32);
-  Zero = SDValue(CurDAG->getMachineNode(
-                      AArch64::SUBREG_TO_REG, DL, MVT::iFATPTR128,
-                      CurDAG->getTargetConstant(0, DL, MVT::i64),
-                      Zero,
-                      SubReg),
-                 0);
-
 
   // If this is a convert from null, then materialize a null capability.
-  if (ConstantSDNode *ConstNode = dyn_cast<ConstantSDNode>(N->getOperand(0)))
+  if (ConstantSDNode *ConstNode = dyn_cast<ConstantSDNode>(N->getOperand(0))) {
     if (ConstNode->isNullValue())
-      return Zero.getNode();
+      return CurDAG->getCopyFromReg(CurDAG->getEntryNode(), DL,
+                                    AArch64::CZR, MVT::iFATPTR128).getNode();
+    // Otherwise materialize the immediate and get the super-register.
+    uint64_t Value = ConstNode->getZExtValue();
+    SDValue Val = SDValue(CurDAG->getMachineNode(AArch64::MOVi64imm, DL,
+                              MVT::i64,
+                              CurDAG->getTargetConstant(Value, DL, MVT::i64)),
+                  0);
+    SDValue SubReg = CurDAG->getTargetConstant(AArch64::sub_64, DL, MVT::i32);
+    return CurDAG->getMachineNode(AArch64::SUBREG_TO_REG, DL, MVT::iFATPTR128,
+                                  CurDAG->getTargetConstant(0, DL, MVT::i64),
+                                  Val, SubReg);
+  }
 
   // Check if we need to extend the operand.
   SDValue Op = N->getOperand(0);
@@ -3793,9 +3791,17 @@ SDNode *AArch64DAGToDAGISel::SelectPointerToCapabilityOp(SDNode *N) {
                  0);
   }
 
-  // And generate a capability.
-  return CurDAG->getMachineNode(AArch64::CapSetValue, DL, CapTy,
-                                Zero, Op);
+  Op = SDValue(CurDAG->getMachineNode(AArch64::SUBREG_TO_REG, DL,
+                   MVT::iFATPTR128,
+                   CurDAG->getTargetConstant(0, DL, MVT::i64), Op,
+                   CurDAG->getTargetConstant(AArch64::sub_64, DL, MVT::i32)),
+               0);
+
+  // Generate a null-derived capabiility.
+  return CurDAG->getMachineNode(AArch64::SUBREG_TO_REG, DL, MVT::iFATPTR128,
+      CurDAG->getTargetConstant(0, DL, MVT::i64),
+      SDValue(CurDAG->getMachineNode(AArch64::CapGetValue, DL, MVT::i64, Op), 0),
+      CurDAG->getTargetConstant(AArch64::sub_64, DL, MVT::i32));
 }
 
 /// tryShiftAmountMod - Take advantage of built-in mod of shift amount in

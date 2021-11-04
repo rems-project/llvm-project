@@ -42,8 +42,7 @@ entry:
   %2 = inttoptr i64 %1 to i32*
   ret i32* %2
 ; CHECK:        add     c0, c0, #8
-; CHECK:        mov     x1, #0
-; CHECK-NEXT:   cvt     x0, c0, c1
+; CHECK-NEXT:   cvt     x0, c0, czr
 ; CHECK-NEXT:   ret
 }
 
@@ -54,8 +53,7 @@ entry:
   %1 = tail call i64 @llvm.cheri.cap.to.pointer(i8 addrspace(200)* null, i8 addrspace(200)* %0)
   %2 = inttoptr i64 %1 to i32*
   ret i32* %2
-; CHECK:        mov	x1, #0
-; CHECK:        cvt     x0, c0, c1
+; CHECK:        cvt     x0, c0, czr
 ; CHECK-NEXT:   ret
 }
 
@@ -64,6 +62,6 @@ define i32 addrspace(200)* @testNullToCap() {
 entry:
   %0 = addrspacecast i32* null to i32 addrspace(200)*
   ret i32 addrspace(200)* %0
-; CHECK:	mov     x0, #0
+; CHECK:	mov     x0, xzr
 ; CHECK-NEXT:	ret
 }
