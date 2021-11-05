@@ -1012,16 +1012,11 @@ public:
     if (!isShiftedImm() && !isImm())
       return false;
 
-    const MCExpr *Expr;
-
     // An scbnds shifter is either 'lsl #0' or 'lsl #4'.
     if (isShiftedImm()) {
       unsigned Shift = ShiftedImm.ShiftAmount;
-      Expr = ShiftedImm.Val;
       if (Shift != 0 && Shift != 4)
         return false;
-    } else {
-      Expr = getImm();
     }
 
     // An unsigned 6-bit immediate optionally shifted by 4.
