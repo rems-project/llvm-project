@@ -2673,9 +2673,7 @@ bool AArch64FrameLowering::spillCalleeSavedRegisters(
   }
 
   const bool HasC64 = MF.getSubtarget<AArch64Subtarget>().hasC64();
-  for (auto RPII = RegPairs.rbegin(), RPIE = RegPairs.rend(); RPII != RPIE;
-       ++RPII) {
-    RegPairInfo RPI = *RPII;
+  for (const RegPairInfo &RPI : llvm::reverse(RegPairs)) {
     unsigned Reg1 = RPI.Reg1;
     unsigned Reg2 = RPI.Reg2;
     unsigned StrOpc;
