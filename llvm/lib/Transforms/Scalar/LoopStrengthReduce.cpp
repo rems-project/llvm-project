@@ -6072,6 +6072,7 @@ void LoopStrengthReduce::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<MemorySSAWrapperPass>();
 }
 
+namespace {
 struct SCEVDbgValueBuilder {
   SCEVDbgValueBuilder() = default;
   SCEVDbgValueBuilder(const SCEVDbgValueBuilder &Base) {
@@ -6319,6 +6320,7 @@ struct DVIRecoveryRec {
   Metadata *LocationOp;
   const llvm::SCEV *SCEV;
 };
+} // namespace
 
 static void RewriteDVIUsingIterCount(DVIRecoveryRec CachedDVI,
                                      const SCEVDbgValueBuilder &IterationCount,
