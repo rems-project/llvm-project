@@ -1,0 +1,20 @@
+# RUN: llc -o - %s -mtriple=aarch64-- -mattr=+morello -run-pass=postrapseudos -verify-machineinstrs | FileCheck %s
+---
+# CHECK-LABEL: name: copy_cap
+name: copy_cap
+body: |
+  bb.0:
+    ; CHECK: $x0 = ORRXrr $xzr, $x1
+    ; CHECK: $sp = SUBXrx64 undef $x0, undef $x0, 24, implicit-def $csp
+    ; CHECK: $x1 = ORRXrr $xzr, $x0
+    ; CHECK: $csp = CapCopy $c0
+    ; CHECK: $c0 = CapCopy $csp
+    ; CHECK: $x1 = ORRXrr $xzr, $xzr, implicit-def $c1
+
+    $x0 = COPY $x1
+    $csp = COPY $czr
+    $x1 = COPY $x0
+    $csp = COPY $c0
+    $c0 = COPY $csp
+    $c1 = COPY $czr
+...

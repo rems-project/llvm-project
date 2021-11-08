@@ -3465,13 +3465,22 @@ void AArch64InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     return;
   }
 
-  if (AArch64::CapspRegClass.contains(DestReg) && SrcReg == AArch64::CZR) {
+  if (AArch64::CapRegClass.contains(DestReg) && SrcReg == AArch64::CZR) {
     const TargetRegisterInfo *TRI = &getRegisterInfo();
     unsigned DestRegX = TRI->getSubReg(DestReg, AArch64::sub_64);
     BuildMI(MBB, I, DL, get(AArch64::ORRXrr), DestRegX)
         .addReg(AArch64::XZR)
         .addReg(AArch64::XZR)
         .addReg(DestReg, RegState::Implicit | RegState::Define);
+    return;
+  }
+
+  if (DestReg == AArch64::CSP && SrcReg == AArch64::CZR) {
+    BuildMI(MBB, I, DL, get(AArch64::SUBXrx64), AArch64::SP)
+        .addReg(AArch64::X0, RegState::Undef)
+        .addReg(AArch64::X0, RegState::Undef)
+        .addImm(AArch64_AM::getArithExtendImm(AArch64_AM::UXTX, 0))
+        .addReg(AArch64::CSP, RegState::Implicit | RegState::Define);
     return;
   }
 
