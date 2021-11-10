@@ -19756,6 +19756,9 @@ static SDValue combineConcatVectorOfScalars(SDNode *N, SelectionDAG &DAG) {
   if (TLI.isTypeLegal(OpVT))
     return SDValue();
 
+  if (OpVT.isFatPointer())
+    return SDValue();
+
   SDLoc DL(N);
   EVT VT = N->getValueType(0);
   SmallVector<SDValue, 8> Ops;
@@ -20030,7 +20033,7 @@ SDValue DAGCombiner::visitCONCAT_VECTORS(SDNode *N) {
     EVT SVT = VT.getScalarType();
 
     EVT MinVT = SVT;
-    if (!SVT.isFloatingPoint()) {
+    if (!SVT.isFloatingPoint() && !SVT.isFatPointer()) {
       // If BUILD_VECTOR are from built from integer, they may have different
       // operand types. Get the smallest type and truncate all operands to it.
       bool FoundMinVT = false;
@@ -20051,7 +20054,7 @@ SDValue DAGCombiner::visitCONCAT_VECTORS(SDNode *N) {
         Opnds.append(NumElts, DAG.getUNDEF(MinVT));
 
       if (ISD::BUILD_VECTOR == Op.getOpcode()) {
-        if (SVT.isFloatingPoint()) {
+        if (SVT.isFloatingPoint() || SVT.isFatPointer()) {
           assert(SVT == OpVT.getScalarType() && "Concat vector type mismatch");
           Opnds.append(Op->op_begin(), Op->op_begin() + NumElts);
         } else {
