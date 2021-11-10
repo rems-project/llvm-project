@@ -1588,10 +1588,6 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
     EnsureInsertPoint();
 
     if (!DidCallStackSave) {
-      unsigned AS = 0;
-      if (getTarget().areAllPointersCapabilities())
-        AS = CGM.getTargetCodeGenInfo().getCHERICapabilityAS();
-
       // Save the stack.
       Address Stack = CreateTempAlloca(Int8PtrTy,
           getPointerAlign(), "saved_stack");

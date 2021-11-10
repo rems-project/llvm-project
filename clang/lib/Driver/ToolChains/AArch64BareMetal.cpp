@@ -24,7 +24,12 @@ using namespace clang;
 using namespace llvm::opt;
 
 bool AArch64BareMetalToolChain::isPICDefault() const { return false; }
-bool AArch64BareMetalToolChain::isPIEDefault() const { return false; }
+
+bool AArch64BareMetalToolChain::isPIEDefault(
+    const llvm::opt::ArgList &Args) const {
+  return false;
+}
+
 bool AArch64BareMetalToolChain::isPICDefaultForced() const { return false; }
 bool AArch64BareMetalToolChain::IsIntegratedAssemblerDefault() const {
   return true;
