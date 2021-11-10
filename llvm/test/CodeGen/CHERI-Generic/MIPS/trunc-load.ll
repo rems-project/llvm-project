@@ -6,15 +6,15 @@
 define zeroext i16 @trunc_load_zext(i32 addrspace(200)* %p) {
 ; PURECAP-LABEL: trunc_load_zext:
 ; PURECAP:       # %bb.0:
-; PURECAP-NEXT:    clhu $2, $zero, 2($c3)
+; PURECAP-NEXT:    clw $1, $zero, 0($c3)
 ; PURECAP-NEXT:    cjr $c17
-; PURECAP-NEXT:    nop
+; PURECAP-NEXT:    andi $2, $1, 65535
 ;
 ; HYBRID-LABEL: trunc_load_zext:
 ; HYBRID:       # %bb.0:
-; HYBRID-NEXT:    clhu $2, $zero, 2($c3)
+; HYBRID-NEXT:    clw $1, $zero, 0($c3)
 ; HYBRID-NEXT:    jr $ra
-; HYBRID-NEXT:    nop
+; HYBRID-NEXT:    andi $2, $1, 65535
   %1 = load i32, i32 addrspace(200)* %p
   %2 = trunc i32 %1 to i16
   ret i16 %2
@@ -23,15 +23,17 @@ define zeroext i16 @trunc_load_zext(i32 addrspace(200)* %p) {
 define signext i16 @trunc_load_sext(i32 addrspace(200)* %p) {
 ; PURECAP-LABEL: trunc_load_sext:
 ; PURECAP:       # %bb.0:
-; PURECAP-NEXT:    clh $2, $zero, 2($c3)
+; PURECAP-NEXT:    clw $1, $zero, 0($c3)
+; PURECAP-NEXT:    sll $1, $1, 16
 ; PURECAP-NEXT:    cjr $c17
-; PURECAP-NEXT:    nop
+; PURECAP-NEXT:    sra $2, $1, 16
 ;
 ; HYBRID-LABEL: trunc_load_sext:
 ; HYBRID:       # %bb.0:
-; HYBRID-NEXT:    clh $2, $zero, 2($c3)
+; HYBRID-NEXT:    clw $1, $zero, 0($c3)
+; HYBRID-NEXT:    sll $1, $1, 16
 ; HYBRID-NEXT:    jr $ra
-; HYBRID-NEXT:    nop
+; HYBRID-NEXT:    sra $2, $1, 16
   %1 = load i32, i32 addrspace(200)* %p
   %2 = trunc i32 %1 to i16
   ret i16 %2
@@ -40,15 +42,15 @@ define signext i16 @trunc_load_sext(i32 addrspace(200)* %p) {
 define zeroext i16 @trunc_load_gep_zext(i32 addrspace(200)* %p) {
 ; PURECAP-LABEL: trunc_load_gep_zext:
 ; PURECAP:       # %bb.0:
-; PURECAP-NEXT:    clhu $2, $zero, 6($c3)
+; PURECAP-NEXT:    clw $1, $zero, 4($c3)
 ; PURECAP-NEXT:    cjr $c17
-; PURECAP-NEXT:    nop
+; PURECAP-NEXT:    andi $2, $1, 65535
 ;
 ; HYBRID-LABEL: trunc_load_gep_zext:
 ; HYBRID:       # %bb.0:
-; HYBRID-NEXT:    clhu $2, $zero, 6($c3)
+; HYBRID-NEXT:    clw $1, $zero, 4($c3)
 ; HYBRID-NEXT:    jr $ra
-; HYBRID-NEXT:    nop
+; HYBRID-NEXT:    andi $2, $1, 65535
   %1 = getelementptr i32, i32 addrspace(200)* %p, i64 1
   %2 = load i32, i32 addrspace(200)* %1
   %3 = trunc i32 %2 to i16
@@ -58,15 +60,17 @@ define zeroext i16 @trunc_load_gep_zext(i32 addrspace(200)* %p) {
 define signext i16 @trunc_load_gep_sext(i32 addrspace(200)* %p) {
 ; PURECAP-LABEL: trunc_load_gep_sext:
 ; PURECAP:       # %bb.0:
-; PURECAP-NEXT:    clh $2, $zero, 6($c3)
+; PURECAP-NEXT:    clw $1, $zero, 4($c3)
+; PURECAP-NEXT:    sll $1, $1, 16
 ; PURECAP-NEXT:    cjr $c17
-; PURECAP-NEXT:    nop
+; PURECAP-NEXT:    sra $2, $1, 16
 ;
 ; HYBRID-LABEL: trunc_load_gep_sext:
 ; HYBRID:       # %bb.0:
-; HYBRID-NEXT:    clh $2, $zero, 6($c3)
+; HYBRID-NEXT:    clw $1, $zero, 4($c3)
+; HYBRID-NEXT:    sll $1, $1, 16
 ; HYBRID-NEXT:    jr $ra
-; HYBRID-NEXT:    nop
+; HYBRID-NEXT:    sra $2, $1, 16
   %1 = getelementptr i32, i32 addrspace(200)* %p, i64 1
   %2 = load i32, i32 addrspace(200)* %1
   %3 = trunc i32 %2 to i16
@@ -76,15 +80,15 @@ define signext i16 @trunc_load_gep_sext(i32 addrspace(200)* %p) {
 define zeroext i16 @trunc_lshr_load_zext(i32 addrspace(200)* %p) {
 ; PURECAP-LABEL: trunc_lshr_load_zext:
 ; PURECAP:       # %bb.0:
-; PURECAP-NEXT:    clhu $2, $zero, 0($c3)
+; PURECAP-NEXT:    clw $1, $zero, 0($c3)
 ; PURECAP-NEXT:    cjr $c17
-; PURECAP-NEXT:    nop
+; PURECAP-NEXT:    srl $2, $1, 16
 ;
 ; HYBRID-LABEL: trunc_lshr_load_zext:
 ; HYBRID:       # %bb.0:
-; HYBRID-NEXT:    clhu $2, $zero, 0($c3)
+; HYBRID-NEXT:    clw $1, $zero, 0($c3)
 ; HYBRID-NEXT:    jr $ra
-; HYBRID-NEXT:    nop
+; HYBRID-NEXT:    srl $2, $1, 16
   %1 = load i32, i32 addrspace(200)* %p
   %2 = lshr i32 %1, 16
   %3 = trunc i32 %2 to i16
@@ -94,15 +98,15 @@ define zeroext i16 @trunc_lshr_load_zext(i32 addrspace(200)* %p) {
 define signext i16 @trunc_lshr_load_sext(i32 addrspace(200)* %p) {
 ; PURECAP-LABEL: trunc_lshr_load_sext:
 ; PURECAP:       # %bb.0:
-; PURECAP-NEXT:    clh $2, $zero, 0($c3)
+; PURECAP-NEXT:    clw $1, $zero, 0($c3)
 ; PURECAP-NEXT:    cjr $c17
-; PURECAP-NEXT:    nop
+; PURECAP-NEXT:    sra $2, $1, 16
 ;
 ; HYBRID-LABEL: trunc_lshr_load_sext:
 ; HYBRID:       # %bb.0:
-; HYBRID-NEXT:    clh $2, $zero, 0($c3)
+; HYBRID-NEXT:    clw $1, $zero, 0($c3)
 ; HYBRID-NEXT:    jr $ra
-; HYBRID-NEXT:    nop
+; HYBRID-NEXT:    sra $2, $1, 16
   %1 = load i32, i32 addrspace(200)* %p
   %2 = lshr i32 %1, 16
   %3 = trunc i32 %2 to i16
