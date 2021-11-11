@@ -1284,18 +1284,6 @@ void AllocaSlices::processTaggedSlices() {
               << "[SROA]        Could not find pair\n";
       }
 
-      if (strict_align_slices_dbgs()) {
-        if (I != Slices.end() && (*I == ToFindS || *I == ToFindU))
-          *strict_align_slices_dbgs()
-              << "[SROA]        ["
-              << I->beginOffset() << ", " << I->endOffset() << "] "
-              << (I->writesTags() ? "(writes tags)" : "")
-              << (I->readsTags() ? "(reads tags)" : "") << "\n";
-        else
-          *strict_align_slices_dbgs()
-              << "[SROA]        Could not find pair\n";
-      }
-
       if (I != Slices.end() && (*I == ToFindS || *I == ToFindU)) {
         Unsplittable.push_back(Idx);
         LLVM_DEBUG(dbgs() << "Found ["
