@@ -162,11 +162,14 @@ bb:
 ; CHECK-SLICES-NEXT: [SROA]        Could not find pair
 ; CHECK-SLICES-NEXT: [SROA] Finding pair of strict align slice [16, 32] (reads tags)
 ; CHECK-SLICES-NEXT: [SROA]        Could not find pair
+; CHECK-SLICES-NEXT: [SROA] Strict align slice [0, 16] (writes tags)
 ; CHECK-SLICES-NEXT: [SROA] Strict align slice [0, 16] (reads tags)
 ; CHECK-SLICES-NEXT: [SROA] Strict align slice [16, 32] (writes tags)
 ; CHECK-SLICES-NEXT: [SROA] Strict align slice [16, 32] (reads tags)
+; CHECK-SLICES-NEXT: [SROA] Finding pair of strict align slice [0, 16] (writes tags)
+; CHECK-SLICES-NEXT: [SROA]        [0, 16] (reads tags)
 ; CHECK-SLICES-NEXT: [SROA] Finding pair of strict align slice [0, 16] (reads tags)
-; CHECK-SLICES-NEXT: [SROA]        Could not find pair
+; CHECK-SLICES-NEXT: [SROA]        [0, 16] (writes tags)
 ; CHECK-SLICES-NEXT: [SROA] Finding pair of strict align slice [16, 32] (writes tags)
 ; CHECK-SLICES-NEXT: [SROA]        [16, 32] (reads tags)
 ; CHECK-SLICES-NEXT: [SROA] Finding pair of strict align slice [16, 32] (reads tags)
@@ -177,6 +180,15 @@ bb:
 ; CHECK-SLICES-NEXT: [SROA]        [0, 16] (reads tags)
 ; CHECK-SLICES-NEXT: [SROA] Finding pair of strict align slice [0, 16] (reads tags)
 ; CHECK-SLICES-NEXT: [SROA]        [0, 16] (writes tags)
+; CHECK-SLICES-NEXT: [SROA] Strict align slice [16, 32] (reads tags)
+; CHECK-SLICES-NEXT: [SROA] Finding pair of strict align slice [16, 32] (reads tags)
+; CHECK-SLICES-NEXT: [SROA]        Could not find pair
 ; CHECK-SLICES-NEXT: [SROA] Strict align slice [0, 16] (reads tags)
 ; CHECK-SLICES-NEXT: [SROA] Finding pair of strict align slice [0, 16] (reads tags)
 ; CHECK-SLICES-NEXT: [SROA]        Could not find pair
+; CHECK-SLICES-NEXT: [SROA] Strict align slice [0, 16] (writes tags)
+; CHECK-SLICES-NEXT: [SROA] Strict align slice [0, 16] (reads tags)
+; CHECK-SLICES-NEXT: [SROA] Finding pair of strict align slice [0, 16] (writes tags)
+; CHECK-SLICES-NEXT: [SROA]        [0, 16] (reads tags)
+; CHECK-SLICES-NEXT: [SROA] Finding pair of strict align slice [0, 16] (reads tags)
+; CHECK-SLICES-NEXt; [SROA]        [0, 16] (writes tags)
