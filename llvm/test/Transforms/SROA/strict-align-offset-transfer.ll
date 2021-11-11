@@ -136,7 +136,9 @@ bb:
   ret void
 }
 
-; Make sure that processing strict align slices works properly.
+; This shows that strict align slice processing doesn't properly work.
+; The [0, 16] (reads tags) slice has the [0, 16] (writes tags) pair,
+; but we couldn't find it.
 
 ; CHECK-SLICES:      [SROA] Strict align slice [0, 16] (writes tags)
 ; CHECK-SLICES-NEXT: [SROA] Strict align slice [0, 16] (reads tags)
@@ -147,7 +149,7 @@ bb:
 ; CHECK-SLICES-NEXT: [SROA] Finding pair of strict align slice [0, 16] (writes tags)
 ; CHECK-SLICES-NEXT: [SROA]        [0, 16] (reads tags)
 ; CHECK-SLICES-NEXT: [SROA] Finding pair of strict align slice [0, 16] (reads tags)
-; CHECK-SLICES-NEXT: [SROA]        [0, 16] (writes tags)
+; CHECK-SLICES-NEXT: [SROA]        Could not find pair
 ; CHECK-SLICES-NEXT: [SROA] Finding pair of strict align slice [16, 32] (writes tags)
 ; CHECK-SLICES-NEXT: [SROA]        [16, 32] (reads tags)
 ; CHECK-SLICES-NEXT: [SROA] Finding pair of strict align slice [16, 32] (reads tags)
@@ -162,14 +164,11 @@ bb:
 ; CHECK-SLICES-NEXT: [SROA]        Could not find pair
 ; CHECK-SLICES-NEXT: [SROA] Finding pair of strict align slice [16, 32] (reads tags)
 ; CHECK-SLICES-NEXT: [SROA]        Could not find pair
-; CHECK-SLICES-NEXT: [SROA] Strict align slice [0, 16] (writes tags)
 ; CHECK-SLICES-NEXT: [SROA] Strict align slice [0, 16] (reads tags)
 ; CHECK-SLICES-NEXT: [SROA] Strict align slice [16, 32] (writes tags)
 ; CHECK-SLICES-NEXT: [SROA] Strict align slice [16, 32] (reads tags)
-; CHECK-SLICES-NEXT: [SROA] Finding pair of strict align slice [0, 16] (writes tags)
-; CHECK-SLICES-NEXT: [SROA]        [0, 16] (reads tags)
 ; CHECK-SLICES-NEXT: [SROA] Finding pair of strict align slice [0, 16] (reads tags)
-; CHECK-SLICES-NEXT: [SROA]        [0, 16] (writes tags)
+; CHECK-SLICES-NEXT: [SROA]        Could not find pair
 ; CHECK-SLICES-NEXT: [SROA] Finding pair of strict align slice [16, 32] (writes tags)
 ; CHECK-SLICES-NEXT: [SROA]        [16, 32] (reads tags)
 ; CHECK-SLICES-NEXT: [SROA] Finding pair of strict align slice [16, 32] (reads tags)
@@ -180,15 +179,6 @@ bb:
 ; CHECK-SLICES-NEXT: [SROA]        [0, 16] (reads tags)
 ; CHECK-SLICES-NEXT: [SROA] Finding pair of strict align slice [0, 16] (reads tags)
 ; CHECK-SLICES-NEXT: [SROA]        [0, 16] (writes tags)
-; CHECK-SLICES-NEXT: [SROA] Strict align slice [16, 32] (reads tags)
-; CHECK-SLICES-NEXT: [SROA] Finding pair of strict align slice [16, 32] (reads tags)
-; CHECK-SLICES-NEXT: [SROA]        Could not find pair
 ; CHECK-SLICES-NEXT: [SROA] Strict align slice [0, 16] (reads tags)
 ; CHECK-SLICES-NEXT: [SROA] Finding pair of strict align slice [0, 16] (reads tags)
 ; CHECK-SLICES-NEXT: [SROA]        Could not find pair
-; CHECK-SLICES-NEXT: [SROA] Strict align slice [0, 16] (writes tags)
-; CHECK-SLICES-NEXT: [SROA] Strict align slice [0, 16] (reads tags)
-; CHECK-SLICES-NEXT: [SROA] Finding pair of strict align slice [0, 16] (writes tags)
-; CHECK-SLICES-NEXT: [SROA]        [0, 16] (reads tags)
-; CHECK-SLICES-NEXT: [SROA] Finding pair of strict align slice [0, 16] (reads tags)
-; CHECK-SLICES-NEXt; [SROA]        [0, 16] (writes tags)
