@@ -2647,6 +2647,10 @@ public:
 
     SliceSize = NewEndOffset - NewBeginOffset;
 
+    // Strict align slices are only used for partitioning purposes.
+    if (I->isStrictAlignSlice())
+      return CanSROA;
+
     OldUse = I->getUse();
     OldPtr = cast<Instruction>(OldUse->get());
 
