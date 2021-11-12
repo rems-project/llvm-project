@@ -33,64 +33,16 @@ attributes #0 = { norecurse nounwind readnone "correctly-rounded-divide-sqrt-fp-
 
 ; CHECK: .globl memset_c
 ; CHECK-NEXT: .type memset_c,@function
-; CHECK: .set memset_c, memset
-; CHECK-NEXT: .globl memcpy_c
-; CHECK: .type memcpy_c,@function
+; CHECK-NEXT: .set memset_c, memset
+; CHECK: .globl memcpy_c
+; CHECK-NEXT: .type memcpy_c,@function
 ; CHECK-NEXT: .set memcpy_c, memcpy
 ; CHECK: .globl mempcpy_c
 ; CHECK-NEXT: .type mempcpy_c,@function
-; CHECK: .set mempcpy_c, mempcpy
-; CHECK-NEXT: .globl memmove_c
-; CHECK: .type memmove_c,@function
-; CHECK-NEXT:.set memmove_c, memmove
-
-; SYMS:      Name: memcpy
-; SYMS-NEXT: Value: 0x1
-; SYMS-NEXT: Size: 4
-; SYMS-NEXT: Binding: Global
-; SYMS-NEXT: Type: Function
-; SYMS-NEXT: Other: 0
-; SYMS-NEXT: Section: .text.memcpy
-
-; SYMS:        Name: memcpy_c
-; SYMS-NEXT:   Value: 0x1
-; SYMS-NEXT:   Size: 4
-; SYMS-NEXT:   Binding: Global
-; SYMS-NEXT:   Type: Function
-; SYMS-NEXT:   Other: 0
-; SYMS-NEXT:   Section: .text.memcpy
-
-; SYMS:        Name: memmove
-; SYMS-NEXT:   Value: 0x1
-; SYMS-NEXT:   Size: 4
-; SYMS-NEXT:   Binding: Global
-; SYMS-NEXT:   Type: Function
-; SYMS-NEXT:   Other: 0
-; SYMS-NEXT:   Section: .text.memmove
-
-; SYMS:        Name: memmove_c
-; SYMS-NEXT:   Value: 0x1
-; SYMS-NEXT:   Size: 4
-; SYMS-NEXT:   Binding: Global
-; SYMS-NEXT:   Type: Function
-; SYMS-NEXT:   Other: 0
-; SYMS-NEXT:   Section: .text.memmove
-
-; SYMS:        Name: mempcpy
-; SYMS-NEXT:   Value: 0x1
-; SYMS-NEXT:   Size: 4
-; SYMS-NEXT:   Binding: Global
-; SYMS-NEXT:   Type: Function
-; SYMS-NEXT:   Other: 0
-; SYMS-NEXT:   Section: .text.mempcpy
-
-; SYMS:        Name: mempcpy_c
-; SYMS-NEXT:   Value: 0x1
-; SYMS-NEXT:   Size: 4
-; SYMS-NEXT:   Binding: Global
-; SYMS-NEXT:   Type: Function
-; SYMS-NEXT:   Other: 0
-; SYMS-NEXT:   Section: .text.mempcpy
+; CHECK-NEXT: .set mempcpy_c, mempcpy
+; CHECK: .globl memmove_c
+; CHECK-NEXT: .type memmove_c,@function
+; CHECK-NEXT: .set memmove_c, memmove
 
 ; SYMS:        Name: memset
 ; SYMS-NEXT:   Value: 0x1
@@ -100,6 +52,30 @@ attributes #0 = { norecurse nounwind readnone "correctly-rounded-divide-sqrt-fp-
 ; SYMS-NEXT:   Other: 0
 ; SYMS-NEXT:   Section: .text.memset
 
+; SYMS:      Name: memcpy
+; SYMS-NEXT: Value: 0x1
+; SYMS-NEXT: Size: 4
+; SYMS-NEXT: Binding: Global
+; SYMS-NEXT: Type: Function
+; SYMS-NEXT: Other: 0
+; SYMS-NEXT: Section: .text.memcpy
+
+; SYMS:        Name: mempcpy
+; SYMS-NEXT:   Value: 0x1
+; SYMS-NEXT:   Size: 4
+; SYMS-NEXT:   Binding: Global
+; SYMS-NEXT:   Type: Function
+; SYMS-NEXT:   Other: 0
+; SYMS-NEXT:   Section: .text.mempcpy
+
+; SYMS:        Name: memmove
+; SYMS-NEXT:   Value: 0x1
+; SYMS-NEXT:   Size: 4
+; SYMS-NEXT:   Binding: Global
+; SYMS-NEXT:   Type: Function
+; SYMS-NEXT:   Other: 0
+; SYMS-NEXT:   Section: .text.memmove
+
 ; SYMS:        Name: memset_c
 ; SYMS-NEXT:   Value: 0x1
 ; SYMS-NEXT:   Size: 4
@@ -107,3 +83,27 @@ attributes #0 = { norecurse nounwind readnone "correctly-rounded-divide-sqrt-fp-
 ; SYMS-NEXT:   Type: Function
 ; SYMS-NEXT:   Other: 0
 ; SYMS-NEXT:   Section: .text.memset
+
+; SYMS:        Name: memcpy_c
+; SYMS-NEXT:   Value: 0x1
+; SYMS-NEXT:   Size: 4
+; SYMS-NEXT:   Binding: Global
+; SYMS-NEXT:   Type: Function
+; SYMS-NEXT:   Other: 0
+; SYMS-NEXT:   Section: .text.memcpy
+
+; SYMS:        Name: mempcpy_c
+; SYMS-NEXT:   Value: 0x1
+; SYMS-NEXT:   Size: 4
+; SYMS-NEXT:   Binding: Global
+; SYMS-NEXT:   Type: Function
+; SYMS-NEXT:   Other: 0
+; SYMS-NEXT:   Section: .text.mempcpy
+
+; SYMS:        Name: memmove_c
+; SYMS-NEXT:   Value: 0x1
+; SYMS-NEXT:   Size: 4
+; SYMS-NEXT:   Binding: Global
+; SYMS-NEXT:   Type: Function
+; SYMS-NEXT:   Other: 0
+; SYMS-NEXT:   Section: .text.memmove

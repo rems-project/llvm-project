@@ -78,7 +78,7 @@ entry:
 }
 
 ; CHECK-NOT: @_Z4procIQPFvQPKcEEvT_
-define linkonce_odr void @_Z4procIQPFvQPKcEEvT_(void (i8 addrspace(200)*) addrspace(200)* %f) local_unnamed_addr addrspace(200) comdat {
+define internal void @_Z4procIQPFvQPKcEEvT_(void (i8 addrspace(200)*) addrspace(200)* %f) local_unnamed_addr addrspace(200) comdat {
 entry:
   %0 = load i8 addrspace(200)*, i8 addrspace(200)* addrspace(200)* @s, align 16
   call void %f(i8 addrspace(200)* %0)
