@@ -241,6 +241,7 @@ enum {
   fpu_fpsr,
   fpu_fpcr,
 
+#ifdef DECLARE_CAPABILITY_REGISTER_INFOS
   cap_c0,
   cap_c1,
   cap_c2,
@@ -287,6 +288,7 @@ enum {
 
   thread_tpidr_el0,
   thread_ctpidr_el0,
+#endif // DECLARE_CAPABILITY_REGISTER_INFOS
 
   exc_far,
   exc_esr,

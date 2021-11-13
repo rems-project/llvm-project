@@ -244,7 +244,6 @@ RegisterInfoPOSIX_arm64::RegisterInfoPOSIX_arm64(
     const lldb_private::ArchSpec &target_arch, lldb_private::Flags opt_regsets)
     : lldb_private::RegisterInfoAndSetInterface(target_arch),
       m_opt_regsets(opt_regsets) {
-  SetupFP(target_arch.IsAArch64MorelloDescriptorABI());
   switch (target_arch.GetMachine()) {
   case llvm::Triple::aarch64:
   case llvm::Triple::aarch64_32: {
@@ -263,11 +262,13 @@ RegisterInfoPOSIX_arm64::RegisterInfoPOSIX_arm64(
     // to create dynamic register infos and regset array. Push back all optional
     // register infos and regset and calculate register offsets accordingly.
     if (m_opt_regsets.AllSet(eRegsetMaskSVE)) {
+      MarkAsFP(g_register_infos_arm64_sve_le[gpr_x29], /*isCapability=*/false);
       m_register_info_p = g_register_infos_arm64_sve_le;
       m_register_info_count = sve_ffr + 1;
       m_per_regset_regnum_range[m_register_set_count++] =
           std::make_pair(sve_vg, sve_ffr + 1);
     } else {
+      SetupFP(target_arch.IsAArch64MorelloDescriptorABI());
       m_register_info_p = g_register_infos_arm64_le;
       m_register_info_count = fpu_fpcr + 1;
     }

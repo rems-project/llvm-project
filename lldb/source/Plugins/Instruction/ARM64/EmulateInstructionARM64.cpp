@@ -44,6 +44,8 @@
 #define DECLARE_CAPABILITY_REGISTER_INFOS
 
 #include "Plugins/Process/Utility/RegisterInfos_arm64.h"
+#undef DECLARE_CAPABILITY_REGISTER_INFOS
+#undef DECLARE_REGISTER_INFOS_ARM64_STRUCT
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MathExtras.h"
@@ -179,6 +181,7 @@ bool EmulateInstructionARM64::GetRegisterInfo(RegisterKind reg_kind,
       reg_num = gpr_sp_arm64;
       break;
     case LLDB_REGNUM_GENERIC_FP:
+      // TODO Morello: return x17 for the descriptor ABI
       reg_kind = eRegisterKindLLDB;
       reg_num = gpr_x29_arm64;
       break;
