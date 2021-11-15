@@ -11,7 +11,7 @@
 // codecvt<char32_t, char, mbstate_t>
 //  deprecated in C++20
 
-// UNSUPPORTED: c++03, c++11, c++14, c++17
+// UNSUPPORTED: c++03, c++11, c++14, c++17, c++2b
 
 #include <locale>
 

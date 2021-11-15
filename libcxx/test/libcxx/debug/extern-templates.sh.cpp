@@ -14,6 +14,9 @@
 // UNSUPPORTED: libcxx-no-debug-mode
 // UNSUPPORTED: libcpp-has-no-localization
 
+// This requires dynamic linking so won't work with newlib.
+// UNSUPPORTED: libcpp-has-newlib
+
 // XFAIL: LIBCXX-WINDOWS-FIXME
 
 // RUN: %{cxx} %{flags} %{compile_flags} %s %{link_flags} -fPIC -DTU1 -D_LIBCPP_DEBUG=1 -fvisibility=hidden -shared -o %t.lib

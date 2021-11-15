@@ -58,8 +58,11 @@ TEST_MACROS();
 TEST_MACROS();
 #include <cerrno>
 TEST_MACROS();
+#if !defined(_NEWLIB_VERSION)
+// newlib doesn't have fenv.h
 #include <cfenv>
 TEST_MACROS();
+#endif
 #include <cfloat>
 TEST_MACROS();
 #include <charconv>
@@ -128,8 +131,11 @@ TEST_MACROS();
 TEST_MACROS();
 #include <execution>
 TEST_MACROS();
+#if !defined(_NEWLIB_VERSION)
+// newlib doesn't have fenv.h
 #include <fenv.h>
 TEST_MACROS();
+#endif
 #ifndef _LIBCPP_HAS_NO_FILESYSTEM_LIBRARY
 #    include <filesystem>
 TEST_MACROS();
