@@ -665,6 +665,7 @@ static void scan_eh_tab(scan_results &results, _Unwind_Action actions,
     const uint8_t* callSitePtr = callSiteTableStart;
     while (callSitePtr < callSiteTableEnd)
     {
+        bool SealedLandingPad = false;
         // There is one entry per call site.
 #ifndef __USING_SJLJ_EXCEPTIONS__
         // The call sites are non-overlapping in [start, start+length)
@@ -678,6 +679,7 @@ static void scan_eh_tab(scan_results &results, _Unwind_Action actions,
            callSitePtr = __builtin_align_up(callSitePtr, alignof(uintptr_t*));
            landingPad = *((uintptr_t*)callSitePtr);
            callSitePtr += sizeof(uintptr_t);
+           SealedLandingPad = true;
         }
 #endif
         uintptr_t actionEntry = readULEB128(&callSitePtr);
@@ -697,6 +699,8 @@ static void scan_eh_tab(scan_results &results, _Unwind_Action actions,
                 results.reason = _URC_CONTINUE_UNWIND;
                 return;
             }
+            if (!SealedLandingPad)
+                landingPad = (uintptr_t)lpStart + landingPad;
             results.landingPad = landingPad;
 #else  // __USING_SJLJ_EXCEPTIONS__
             ++landingPad;
