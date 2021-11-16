@@ -1,4 +1,6 @@
 ; RUN: llc < %s -march=arm64 -mattr=+c64,+morello -target-abi purecap -o - | FileCheck %s
+; RUN: llc < %s -march=arm64 -mattr=+c64,+morello -target-abi purecap -filetype=obj -o - | llvm-readelf -s - | FileCheck %s --check-prefix=SYM
+; RUN: llc < %s -march=arm64 --relocation-model=pic -mattr=+c64,+morello -target-abi purecap -filetype=obj -o - | llvm-readelf -s - | FileCheck %s --check-prefix=SYM
 
 ; When optimizing the load in instruction in the lpad27 basic block  we used to insert
 ; instructions before the landingpad instruction, which caused us to crash later on.
@@ -88,3 +90,6 @@ attributes #2 = { nounwind }
 ; CHECK-NEXT:	.byte	0                       //     has no landing pad
 ; CHECK-NEXT:	.byte	0                       //   On action: cleanup
 ; CHECK-NEXT: .Lcst_end0:
+
+; The landing pad base alias should have the LSB set.
+; SYM: 0000000000000001    {{[0-9]+}} FUNC    LOCAL  DEFAULT     {{[0-9]+}} .L_ZNKSt3__17num_getIwNS_19istreambuf_iteratorIwNS_11char_traitsIwEEEEE6do_getES4_S4_QRNS_8ios_baseEQRjQRb$eh_alias
