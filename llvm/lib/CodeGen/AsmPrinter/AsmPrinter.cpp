@@ -1454,7 +1454,7 @@ void AsmPrinter::emitFunctionBody() {
                                      MCSA_ELF_TypeFunction);
     OutStreamer->emitAssignment(
         CurrentFnLocalForEH,
-        MCSymbolRefExpr::create(CurrentFnSymForSize, OutContext));
+        MCSymbolRefExpr::create(CurrentFnSym, OutContext));
     if (SizeExp)
       OutStreamer->emitELFSize(CurrentFnLocalForEH, SizeExp);
   }
