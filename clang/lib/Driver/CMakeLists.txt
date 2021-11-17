@@ -71,6 +71,7 @@ add_clang_library(clangDriver
   ToolChains/RISCVToolchain.cpp
   ToolChains/RTEMS.cpp
   ToolChains/Solaris.cpp
+  ToolChains/SPIRV.cpp
   ToolChains/TCE.cpp
   ToolChains/VEToolchain.cpp
   ToolChains/WebAssembly.cpp
