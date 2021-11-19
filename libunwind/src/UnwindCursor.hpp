@@ -916,7 +916,7 @@ public:
 private:
 
 #if defined(_LIBUNWIND_ARM_EHABI)
-  bool getInfoFromEHABISection(pint_t pc, const UnwindInfoSections &sects);
+  bool getInfoFromEHABISection(pc_t pc, const UnwindInfoSections &sects);
 
   int stepWithEHABI() {
     size_t len = 0;
@@ -1401,7 +1401,7 @@ bool UnwindCursor<A, R>::getInfoFromEHABISection(
   if (begin == end)
     return false;
 
-  EHABISectionIterator<A> itNextPC = EHABISectionUpperBound(begin, end, pc);
+  EHABISectionIterator<A> itNextPC = EHABISectionUpperBound(begin, end, pc.address());
   if (itNextPC == begin)
     return false;
   EHABISectionIterator<A> itThisPC = itNextPC - 1;

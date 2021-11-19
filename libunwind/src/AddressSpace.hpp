@@ -920,7 +920,7 @@ inline bool LocalAddressSpace::findUnwindSections(pc_t targetAddr,
 #elif defined(_LIBUNWIND_USE_DL_UNWIND_FIND_EXIDX)
   int length = 0;
   info.arm_section =
-      (uintptr_t)dl_unwind_find_exidx((_Unwind_Ptr)targetAddr, &length);
+      (uintptr_t)dl_unwind_find_exidx((_Unwind_Ptr)targetAddr.get(), &length);
   info.arm_section_length = (uintptr_t)length * sizeof(EHABIIndexEntry);
   if (info.arm_section && info.arm_section_length)
     return true;
