@@ -396,13 +396,16 @@ void MCObjectFileInfo::initELFMCObjectFileInfo(const Triple &T, bool Large) {
   unsigned LSDASectionFlags = ELF::SHF_ALLOC;
 
   // In the CHERI pure-capability ABI we write capabilities to for the landing
-  // pads so the section must be relocated.
+  // pads so the section must be relocated for the absolute encoding.
   // XXX: Would be nice if there was a ELF::SHF_RELRO/SHF_INITIALIZED_DATA
   //   so I don't also have to modify lld.
-  if (Ctx->getAsmInfo()->isCheriPurecapABI()) {
+  if (Ctx->getAsmInfo()->isCheriPurecapABI() &&
+      MCTargetOptions::cheriLandingPadEncoding() ==
+          CheriLandingPadEncoding::Absolute) {
     // TODO: Could we (ab)use SHF_OS_NONCONFORMING
     LSDASectionFlags |= ELF::SHF_WRITE;
   }
+
   LSDASection = Ctx->getELFSection(".gcc_except_table", ELF::SHT_PROGBITS,
                                    LSDASectionFlags);
 

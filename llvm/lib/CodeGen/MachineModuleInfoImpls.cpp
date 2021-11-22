@@ -13,6 +13,7 @@
 
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/MC/MCSymbol.h"
 
 using namespace llvm;
@@ -36,6 +37,14 @@ MachineModuleInfoImpl::SymbolListTy MachineModuleInfoImpl::getSortedStubs(
   MachineModuleInfoImpl::SymbolListTy List(Map.begin(), Map.end());
 
   array_pod_sort(List.begin(), List.end(), SortSymbolPair);
+
+  Map.clear();
+  return List;
+}
+
+MachineModuleInfoImpl::ExprListTy MachineModuleInfoImpl::getSortedLPStubs(
+    MapVector<MCSymbol *, StubExprValueTy> &Map) {
+  MachineModuleInfoImpl::ExprListTy List(Map.begin(), Map.end());
 
   Map.clear();
   return List;

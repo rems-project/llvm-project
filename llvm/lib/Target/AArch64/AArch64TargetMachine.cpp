@@ -675,6 +675,10 @@ void AArch64PassConfig::addPreRegAlloc() {
     // be register coalescer friendly.
     addPass(&PeepholeOptimizerID);
   }
+  if (TM->getOptLevel() != CodeGenOpt::None &&
+      getAArch64TargetMachine().IsMorello()) {
+    addPass(createCheriGetAddressElimPass());
+  }
 }
 
 void AArch64PassConfig::addPostRegAlloc() {

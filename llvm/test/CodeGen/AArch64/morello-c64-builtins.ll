@@ -90,9 +90,8 @@ entry:
 ; CHECK: cthi	[[C8:c[0-9]+]], [[C3]], {{x[0-9]+}}
 ; CHECK: chkssu [[C9:c[0-9]+]], [[C8]], c0
 ; CHECK: cset   [[sealed:w[0-9]+]], mi
-; CHECK: mov    x[[null:[0-9]+]], #0
 ; CHECK: cmp    [[sealed]], #0
-; CHECK: csel   [[C10:c[0-9]+]], [[C9]], c[[null]], ne
+; CHECK: csel   [[C10:c[0-9]+]], [[C9]], czr, ne
 ; CHECK: cvtz   [[C11:c[0-9]+]], [[C10]], {{x[0-9]+}}
   %C0 = call i8 addrspace(200)* @llvm.cheri.cap.perms.and(i8 addrspace(200)* %foo, i64 12)
   %C1 = call i8 addrspace(200)* @llvm.cheri.cap.seal(i8 addrspace(200)* %foo, i8 addrspace(200)* %C0)
@@ -179,9 +178,8 @@ declare i8 addrspace(200)* @llvm.cheri.ddc.get()
 ; CHECK-LABEL: @testCapDiff
 define i64 @testCapDiff(i8 addrspace(200)* %a, i8 addrspace(200)* %b) {
 entry:
-; CHECK: gcvalue {{x[0-9]+}}, {{c[0-9]+}}
-; CHECK-NEXT: gcvalue {{x[0-9]+}}, {{c[0-9]+}}
-; CHECK-NEXT: sub x0, {{x[0-9]+}}, {{x[0-9]+}}
+; CHECK-NOT: gcvalue
+; CHECK: sub x0, {{x[0-9]+}}, {{x[0-9]+}}
   %diff = tail call i64 @llvm.cheri.cap.diff(i8 addrspace(200)* %a, i8 addrspace(200)* %b)
   ret i64 %diff
 }

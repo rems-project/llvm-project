@@ -14,7 +14,7 @@ entry:
 ; CHECK-LABEL: baz
 define dso_local i8 addrspace(200)* @baz() local_unnamed_addr addrspace(200) {
 entry:
-; CHECK: mov x0, #0
+; CHECK: mov x0, xzr
   ret i8 addrspace(200)* null
 }
 

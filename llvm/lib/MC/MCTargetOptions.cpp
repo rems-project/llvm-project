@@ -27,6 +27,19 @@ CheriCapabilityTableABI MCTargetOptions::cheriCapabilityTableABI() {
   return CapTableABI;
 }
 
+static cl::opt<CheriLandingPadEncoding> LandingPadEncoding(
+    "cheri-landing-pad-encoding", cl::desc("encoding to use for landing pads :"),
+    cl::init(CheriLandingPadEncoding::Absolute),
+    cl::values(clEnumValN(CheriLandingPadEncoding::Absolute, "absolute",
+                          "Landing pads are encoded as capabilities"),
+               clEnumValN(CheriLandingPadEncoding::Indirect, "indirect",
+                          "Landing pads are encoded as an offset to a "
+                          "capability (morello)")));
+
+CheriLandingPadEncoding MCTargetOptions::cheriLandingPadEncoding() {
+  return LandingPadEncoding;
+}
+
 MCTargetOptions::MCTargetOptions()
     : MCRelaxAll(false), MCNoExecStack(false), MCFatalWarnings(false),
       MCNoWarn(false), MCNoDeprecatedWarn(false), MCSaveTempLabels(false),

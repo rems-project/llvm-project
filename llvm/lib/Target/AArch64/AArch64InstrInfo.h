@@ -95,6 +95,13 @@ public:
     return getMemScale(MI.getOpcode());
   }
 
+  bool isCheriGetAddressInst(MachineInstr &MI) const override {
+    return MI.getOpcode() == AArch64::CapGetValue;
+  }
+
+  unsigned getCheriAddressSubregIdx(MVT CapTy) const override {
+    return AArch64::sub_64;
+  }
 
   /// Returns the index for the immediate for a given instruction.
   static unsigned getLoadStoreImmIdx(unsigned Opc);

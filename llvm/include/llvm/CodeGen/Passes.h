@@ -484,6 +484,9 @@ namespace llvm {
   /// This pass inserts pseudo probe annotation for callsite profiling.
   FunctionPass *createPseudoProbeInserter();
 
+  /// Create CHERI pass to remove capability address reading instructions.
+  FunctionPass *createCheriGetAddressElimPass();
+
   /// Create IR Type Promotion pass. \see TypePromotion.cpp
   FunctionPass *createTypePromotionPass();
 

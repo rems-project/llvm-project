@@ -15,6 +15,7 @@
 #define LLVM_CODEGEN_MACHINEMODULEINFOIMPLS_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include <cassert>
 
@@ -64,6 +65,8 @@ class MachineModuleInfoELF : public MachineModuleInfoImpl {
   /// mode.
   DenseMap<MCSymbol *, StubValueTy> GVStubs;
 
+  MapVector<MCSymbol *, StubExprValueTy> LPStubs;
+
   virtual void anchor(); // Out of line virtual method.
 
 public:
@@ -74,9 +77,15 @@ public:
     return GVStubs[Sym];
   }
 
+  StubExprValueTy &getLPStubEntry(MCSymbol *Sym) {
+    assert(Sym && "Key cannot be null");
+    return LPStubs[Sym];
+  }
+
   /// Accessor methods to return the set of stubs in sorted order.
 
   SymbolListTy GetGVStubList() { return getSortedStubs(GVStubs); }
+  ExprListTy GetLPStubList() { return getSortedLPStubs(LPStubs); }
 };
 
 /// MachineModuleInfoCOFF - This is a MachineModuleInfoImpl implementation

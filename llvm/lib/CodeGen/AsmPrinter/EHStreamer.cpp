@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineOperand.h"
+#include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -735,14 +736,36 @@ MCSymbol *EHStreamer::emitExceptionTable() {
             // a full capability for the no landing pad case, we emit a 0xc
             // value (encoding-dependent) here to indicate that there is a valid
             // capability at the next capability-aligned location.
+            unsigned Encoding = (MCTargetOptions::cheriLandingPadEncoding() ==
+                CheriLandingPadEncoding::Indirect) ? 0xd : 0xc;
             Asm->OutStreamer->AddComment("(landing pad is a capability)");
-            Asm->emitCallSiteValue(0xc, CallSiteEncoding);
+            Asm->emitCallSiteValue(Encoding, CallSiteEncoding);
           }
 
           if (VerboseAsm)
             Asm->OutStreamer->AddComment(Twine("    jumps to ") +
                                          S.LPad->LandingPadLabel->getName());
-          if (IsPurecap) {
+          if (IsPurecap && MCTargetOptions::cheriLandingPadEncoding() ==
+              CheriLandingPadEncoding::Indirect) {
+            // For purecap we currently emit a capability relocation for the
+            // landing pad target since the saved PC value will be an immutable
+            // sentry capability which does not allow adding an offset.
+            MachineModuleInfoELF &ELFMMI = MMI->getObjFileInfo<MachineModuleInfoELF>();
+            MCSymbol *SSym = Asm->OutContext.createTempSymbol();
+            MachineModuleInfoImpl::StubExprValueTy &StubSym =
+                ELFMMI.getLPStubEntry(SSym);
+            if (!StubSym.first) {
+              const MCExpr *DiffToStart = MCBinaryExpr::createSub(
+                  MCSymbolRefExpr::create(S.LPad->LandingPadLabel, Asm->OutContext),
+                  MCSymbolRefExpr::create(EHFuncBeginSym, Asm->OutContext),
+                  Asm->OutContext);
+              StubSym.first = Asm->getFunctionForEH();
+              StubSym.second = const_cast<MCExpr*>(DiffToStart);
+            }
+            MCSymbol *BaseLabel = Asm->createTempSymbol("lpoff");
+            Asm->OutStreamer->emitLabel(BaseLabel);
+            Asm->emitLabelDifference(SSym, BaseLabel, 8);
+          } else if (IsPurecap) {
             // For purecap we currently emit a capability relocation for the
             // landing pad target since the saved PC value will be an immutable
             // sentry capability which does not allow adding an offset.

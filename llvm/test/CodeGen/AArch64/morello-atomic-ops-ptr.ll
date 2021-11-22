@@ -3,10 +3,8 @@
 ; CHECK-LABEL: test_atomic_load_add_ptr
 define i8 addrspace(200)* @test_atomic_load_add_ptr(i8 addrspace(200)* %offset, i8 addrspace(200) ** %ptr) nounwind {
 ; CHECK-NOT: dmb
-; CHECK: gcvalue x[[TMPADDR1:[0-9]+]], c0
 ; CHECK: ldaxr c[[OLD:[0-9]+]], [x1]
-; CHECK: gcvalue x[[TMPADDR2:[0-9]+]], c[[OLD]]
-; CHECK: add x[[RES:[0-9]+]], x[[TMPADDR2]], x[[TMPADDR1]]
+; CHECK: add x[[RES:[0-9]+]], x[[OLD]], x0
 ; CHECK: scvalue  c[[NEW:[0-9]+]], c[[OLD]], x[[RES]]
 ; CHECK: stlxr   w[[TOK:[0-9]+]], c[[NEW]], [x1]
 ; CHECK: cbnz    w[[TOK]],
@@ -16,10 +14,8 @@ define i8 addrspace(200)* @test_atomic_load_add_ptr(i8 addrspace(200)* %offset, 
 
 ; CHECK-LABEL: test_atomic_load_sub_ptr
 define i8 addrspace(200)* @test_atomic_load_sub_ptr(i8 addrspace(200)* %offset, i8 addrspace(200) ** %ptr) nounwind {
-; CHECK: gcvalue x[[TMPADDR1:[0-9]+]], c0
 ; CHECK: ldaxr c[[OLD:[0-9]+]], [x1]
-; CHECK: gcvalue x[[TMPADDR2:[0-9]+]], c[[OLD]]
-; CHECK: sub x[[RES:[0-9]+]], x[[TMPADDR2]], x[[TMPADDR1]]
+; CHECK: sub x[[RES:[0-9]+]], x[[OLD]], x0
 ; CHECK: scvalue  c[[NEW:[0-9]+]], c[[OLD]], x[[RES]]
 ; CHECK: stxr   w[[TOK:[0-9]+]], c[[NEW]], [x1]
 ; CHECK: cbnz    w[[TOK]],
@@ -29,10 +25,8 @@ define i8 addrspace(200)* @test_atomic_load_sub_ptr(i8 addrspace(200)* %offset, 
 
 ; CHECK-LABEL: test_atomic_load_and_ptr
 define i8 addrspace(200)* @test_atomic_load_and_ptr(i8 addrspace(200)* %offset, i8 addrspace(200) ** %ptr) nounwind {
-; CHECK: gcvalue x[[TMPADDR1:[0-9]+]], c0
 ; CHECK: ldxr c[[OLD:[0-9]+]], [x1]
-; CHECK: gcvalue x[[TMPADDR2:[0-9]+]], c[[OLD]]
-; CHECK: and x[[RES:[0-9]+]], x[[TMPADDR2]], x[[TMPADDR1]]
+; CHECK: and x[[RES:[0-9]+]], x[[OLD]], x0
 ; CHECK: scvalue  c[[NEW:[0-9]+]], c[[OLD]], x[[RES]]
 ; CHECK: stlxr   w[[TOK:[0-9]+]], c[[NEW]], [x1]
 ; CHECK: cbnz    w[[TOK]],
@@ -43,10 +37,8 @@ define i8 addrspace(200)* @test_atomic_load_and_ptr(i8 addrspace(200)* %offset, 
 
 ; CHECK-LABEL: test_atomic_load_or_ptr
 define i8 addrspace(200)* @test_atomic_load_or_ptr(i8 addrspace(200)* %offset, i8 addrspace(200) ** %ptr) nounwind {
-; CHECK: gcvalue x[[TMPADDR1:[0-9]+]], c0
 ; CHECK: ldxr c[[OLD:[0-9]+]], [x1]
-; CHECK: gcvalue x[[TMPADDR2:[0-9]+]], c[[OLD]]
-; CHECK: orr x[[RES:[0-9]+]], x[[TMPADDR2]], x[[TMPADDR1]]
+; CHECK: orr x[[RES:[0-9]+]], x[[OLD]], x0
 ; CHECK: scvalue  c[[NEW:[0-9]+]], c[[OLD]], x[[RES]]
 ; CHECK: stxr   w[[TOK:[0-9]+]], c[[NEW]], [x1]
 ; CHECK: cbnz    w[[TOK]],
@@ -57,10 +49,8 @@ define i8 addrspace(200)* @test_atomic_load_or_ptr(i8 addrspace(200)* %offset, i
 
 ; CHECK-LABEL: test_atomic_load_xor_ptr
 define i8 addrspace(200)* @test_atomic_load_xor_ptr(i8 addrspace(200)* %offset, i8 addrspace(200) ** %ptr) nounwind {
-; CHECK: gcvalue x[[TMPADDR1:[0-9]+]], c0
 ; CHECK: ldaxr c[[OLD:[0-9]+]], [x1]
-; CHECK: gcvalue x[[TMPADDR2:[0-9]+]], c[[OLD]]
-; CHECK: eor x[[RES:[0-9]+]], x[[TMPADDR2]], x[[TMPADDR1]]
+; CHECK: eor x[[RES:[0-9]+]], x[[OLD]], x0
 ; CHECK: scvalue  c[[NEW:[0-9]+]], c[[OLD]], x[[RES]]
 ; CHECK: stlxr   w[[TOK:[0-9]+]], c[[NEW]], [x1]
 ; CHECK: cbnz    w[[TOK]],

@@ -776,8 +776,9 @@ def : Pat<(int_cheri_cap_to_pointer (iFATPTR128 (int_cheri_ddc_get)),
 def : Pat<(int_cheri_cap_to_pointer (iFATPTR128 (int_cheri_pcc_get)),
                                     Capsp:$Cm),
           (CapConvertCapTo64PCC Capsp:$Cm)>;
-def : Pat<(int_cheri_cap_diff Cap:$Cn, Cap:$Cm),
-          (SUBXrr (CapGetValue Cap:$Cn), (CapGetValue Cap:$Cm))>;
+def : Pat<(i64 (int_cheri_cap_diff Cap:$Cn, Cap:$Cm)),
+          (SUBXrr (EXTRACT_SUBREG Cap:$Cn, sub_64),
+                  (EXTRACT_SUBREG Cap:$Cm, sub_64))>;
 } // Predicates = [HasMorello]
 
 let Predicates = [HasMorello, HasNotC64] in {

@@ -240,6 +240,8 @@ public:
   MCSymbol *getFunctionBegin() const { return CurrentFnBegin; }
   MCSymbol *getFunctionEnd() const { return CurrentFnEnd; }
 
+  MCSymbol *getFunctionForEH() const { return CurrentFnLocalForEH; }
+
   // Return the exception symbol associated with the MBB section containing a
   // given basic block.
   MCSymbol *getMBBExceptionSym(const MachineBasicBlock &MBB);
