@@ -360,8 +360,6 @@ protected:
 
   size_t UpdateThreadIDsFromStopReplyThreadsValue(llvm::StringRef value);
 
-  bool HandleNotifyPacket(StringExtractorGDBRemote &packet);
-
   bool StartAsyncThread();
 
   void StopAsyncThread();
@@ -391,8 +389,6 @@ protected:
                     lldb_private::LazyBool associated_with_libdispatch_queue,
                     lldb::addr_t dispatch_queue_t, std::string &queue_name,
                     lldb::QueueKind queue_kind, uint64_t queue_serial);
-
-  void HandleStopReplySequence();
 
   void ClearThreadIDList();
 
