@@ -309,8 +309,8 @@ void elf::addReservedSymbols() {
 }
 
 static OutputSection *findSection(StringRef name, unsigned partition = 1) {
-  for (BaseCommand *base : script->sectionCommands)
-    if (auto *sec = dyn_cast<OutputSection>(base))
+  for (SectionCommand *cmd : script->sectionCommands)
+    if (auto *sec = dyn_cast<OutputSection>(cmd))
       if (sec->name == name && sec->partition == partition)
         return sec;
   return nullptr;
@@ -794,12 +794,12 @@ template <class ELFT> void Writer<ELFT>::copyLocalSymbols() {
 // referring to a section (that happens if the section is a synthetic one), we
 // don't create a section symbol for that section.
 template <class ELFT> void Writer<ELFT>::addSectionSymbols() {
-  for (BaseCommand *base : script->sectionCommands) {
-    auto *sec = dyn_cast<OutputSection>(base);
+  for (SectionCommand *cmd : script->sectionCommands) {
+    auto *sec = dyn_cast<OutputSection>(cmd);
     if (!sec)
       continue;
-    auto i = llvm::find_if(sec->commands, [](BaseCommand *base) {
-      if (auto *isd = dyn_cast<InputSectionDescription>(base))
+    auto i = llvm::find_if(sec->commands, [](SectionCommand *cmd) {
+      if (auto *isd = dyn_cast<InputSectionDescription>(cmd))
         return !isd->sections.empty();
       return false;
     });
@@ -1070,7 +1070,8 @@ static unsigned getSectionRank(const OutputSection *sec) {
   return rank;
 }
 
-static bool compareSections(const BaseCommand *aCmd, const BaseCommand *bCmd) {
+static bool compareSections(const SectionCommand *aCmd,
+                            const SectionCommand *bCmd) {
   const OutputSection *a = cast<OutputSection>(aCmd);
   const OutputSection *b = cast<OutputSection>(bCmd);
 
@@ -1264,7 +1265,7 @@ static int getRankProximityAux(OutputSection *a, OutputSection *b) {
   return countLeadingZeros(a->sortRank ^ b->sortRank);
 }
 
-static int getRankProximity(OutputSection *a, BaseCommand *b) {
+static int getRankProximity(OutputSection *a, SectionCommand *b) {
   auto *sec = dyn_cast<OutputSection>(b);
   return (sec && sec->hasInputSections) ? getRankProximityAux(a, sec) : -1;
 }
@@ -1283,7 +1284,7 @@ static int getRankProximity(OutputSection *a, BaseCommand *b) {
 //  /* The RW PT_LOAD starts here*/
 //  rw_sec : { *(rw_sec) }
 // would mean that the RW PT_LOAD would become unaligned.
-static bool shouldSkip(BaseCommand *cmd) {
+static bool shouldSkip(SectionCommand *cmd) {
   if (auto *assign = dyn_cast<SymbolAssignment>(cmd))
     return assign->name != ".";
   return false;
@@ -1292,13 +1293,13 @@ static bool shouldSkip(BaseCommand *cmd) {
 // We want to place orphan sections so that they share as much
 // characteristics with their neighbors as possible. For example, if
 // both are rw, or both are tls.
-static std::vector<BaseCommand *>::iterator
-findOrphanPos(std::vector<BaseCommand *>::iterator b,
-              std::vector<BaseCommand *>::iterator e) {
+static std::vector<SectionCommand *>::iterator
+findOrphanPos(std::vector<SectionCommand *>::iterator b,
+              std::vector<SectionCommand *>::iterator e) {
   OutputSection *sec = cast<OutputSection>(*e);
 
   // Find the first element that has as close a rank as possible.
-  auto i = std::max_element(b, e, [=](BaseCommand *a, BaseCommand *b) {
+  auto i = std::max_element(b, e, [=](SectionCommand *a, SectionCommand *b) {
     return getRankProximity(sec, a) < getRankProximity(sec, b);
   });
   if (i == e)
@@ -1327,7 +1328,7 @@ findOrphanPos(std::vector<BaseCommand *>::iterator b,
       break;
   }
 
-  auto isOutputSecWithInputSections = [](BaseCommand *cmd) {
+  auto isOutputSecWithInputSections = [](SectionCommand *cmd) {
     auto *os = dyn_cast<OutputSection>(cmd);
     return os && os->hasInputSections;
   };
@@ -1536,7 +1537,7 @@ static void sortSection(OutputSection *sec,
   // digit radix sort. The sections may be sorted stably again by a more
   // significant key.
   if (!order.empty())
-    for (BaseCommand *b : sec->commands)
+    for (SectionCommand *b : sec->commands)
       if (auto *isd = dyn_cast<InputSectionDescription>(b))
         sortISDBySectionOrder(isd, order);
 
@@ -1569,8 +1570,8 @@ template <class ELFT> void Writer<ELFT>::sortInputSections() {
   // Build the order once since it is expensive.
   DenseMap<const InputSectionBase *, int> order = buildSectionOrder();
   maybeShuffle(order);
-  for (BaseCommand *base : script->sectionCommands)
-    if (auto *sec = dyn_cast<OutputSection>(base))
+  for (SectionCommand *cmd : script->sectionCommands)
+    if (auto *sec = dyn_cast<OutputSection>(cmd))
       sortSection(sec, order);
 }
 
@@ -1585,8 +1586,8 @@ template <class ELFT> void Writer<ELFT>::sortSections() {
 
   sortInputSections();
 
-  for (BaseCommand *base : script->sectionCommands) {
-    auto *os = dyn_cast<OutputSection>(base);
+  for (SectionCommand *cmd : script->sectionCommands) {
+    auto *os = dyn_cast<OutputSection>(cmd);
     if (!os)
       continue;
     os->sortRank = getSectionRank(os);
@@ -1601,7 +1602,9 @@ template <class ELFT> void Writer<ELFT>::sortSections() {
 
   if (!script->hasSectionsCommand) {
     // We know that all the OutputSections are contiguous in this case.
-    auto isSection = [](BaseCommand *base) { return isa<OutputSection>(base); };
+    auto isSection = [](SectionCommand *cmd) {
+      return isa<OutputSection>(cmd);
+    };
     std::stable_sort(
         llvm::find_if(script->sectionCommands, isSection),
         llvm::find_if(llvm::reverse(script->sectionCommands), isSection).base(),
@@ -1656,8 +1659,8 @@ template <class ELFT> void Writer<ELFT>::sortSections() {
 
   auto i = script->sectionCommands.begin();
   auto e = script->sectionCommands.end();
-  auto nonScriptI = std::find_if(i, e, [](BaseCommand *base) {
-    if (auto *sec = dyn_cast<OutputSection>(base))
+  auto nonScriptI = std::find_if(i, e, [](SectionCommand *cmd) {
+    if (auto *sec = dyn_cast<OutputSection>(cmd))
       return sec->sectionIndex == UINT32_MAX;
     return false;
   });
@@ -1670,7 +1673,7 @@ template <class ELFT> void Writer<ELFT>::sortSections() {
   // the script with ". = 0xabcd" and the expectation is that every section is
   // after that.
   auto firstSectionOrDotAssignment =
-      std::find_if(i, e, [](BaseCommand *cmd) { return !shouldSkip(cmd); });
+      std::find_if(i, e, [](SectionCommand *cmd) { return !shouldSkip(cmd); });
   if (firstSectionOrDotAssignment != e &&
       isa<SymbolAssignment>(**firstSectionOrDotAssignment))
     ++firstSectionOrDotAssignment;
@@ -1683,7 +1686,7 @@ template <class ELFT> void Writer<ELFT>::sortSections() {
     // As an optimization, find all sections with the same sort rank
     // and insert them with one rotate.
     unsigned rank = orphan->sortRank;
-    auto end = std::find_if(nonScriptI + 1, e, [=](BaseCommand *cmd) {
+    auto end = std::find_if(nonScriptI + 1, e, [=](SectionCommand *cmd) {
       return cast<OutputSection>(cmd)->sortRank != rank;
     });
     std::rotate(pos, nonScriptI, end);
@@ -1724,8 +1727,8 @@ template <class ELFT> void Writer<ELFT>::resolveShfLinkOrder() {
     // Sorting is performed separately.
     std::vector<InputSection **> scriptSections;
     std::vector<InputSection *> sections;
-    for (BaseCommand *base : sec->commands) {
-      auto *isd = dyn_cast<InputSectionDescription>(base);
+    for (SectionCommand *cmd : sec->commands) {
+      auto *isd = dyn_cast<InputSectionDescription>(cmd);
       if (!isd)
         continue;
       bool hasLinkOrder = false;
@@ -1834,7 +1837,7 @@ template <class ELFT> void Writer<ELFT>::finalizeAddressDependentContent() {
 
   // If addrExpr is set, the address may not be a multiple of the alignment.
   // Warn because this is error-prone.
-  for (BaseCommand *cmd : script->sectionCommands)
+  for (SectionCommand *cmd : script->sectionCommands)
     if (auto *os = dyn_cast<OutputSection>(cmd))
       if (os->addr % os->alignment != 0)
         warn("address (0x" + Twine::utohexstr(os->addr) + ") of section " +
@@ -1964,7 +1967,7 @@ static void removeUnusedSyntheticSections() {
         // If we reach here, then ss is an unused synthetic section and we want
         // to remove it from the corresponding input section description, and
         // orphanSections.
-        for (BaseCommand *b : os->commands)
+        for (SectionCommand *b : os->commands)
           if (auto *isd = dyn_cast<InputSectionDescription>(b))
             isdSet.insert(isd);
 
@@ -1995,8 +1998,8 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   // addresses of each section by section name. Add such symbols.
   if (!config->relocatable) {
     addStartEndSymbols();
-    for (BaseCommand *base : script->sectionCommands)
-      if (auto *sec = dyn_cast<OutputSection>(base))
+    for (SectionCommand *cmd : script->sectionCommands)
+      if (auto *sec = dyn_cast<OutputSection>(cmd))
         addStartStopSymbols(sec);
   }
 
@@ -2204,8 +2207,8 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
 
   // Now that we have the final list, create a list of all the
   // OutputSections for convenience.
-  for (BaseCommand *base : script->sectionCommands)
-    if (auto *sec = dyn_cast<OutputSection>(base))
+  for (SectionCommand *cmd : script->sectionCommands)
+    if (auto *sec = dyn_cast<OutputSection>(cmd))
       outputSections.push_back(sec);
 
   // Prefer command line supplied address over other constraints.
