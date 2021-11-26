@@ -295,7 +295,7 @@ getSymbolAssignmentValues(const std::vector<BaseCommand *> &sectionCommands) {
                         std::make_pair(cmd->sym->section, cmd->sym->value));
       continue;
     }
-    for (BaseCommand *sub_base : cast<OutputSection>(base)->sectionCommands)
+    for (BaseCommand *sub_base : cast<OutputSection>(base)->commands)
       if (auto *cmd = dyn_cast<SymbolAssignment>(sub_base))
         if (cmd->sym)
           ret.try_emplace(cmd->sym,
@@ -370,7 +370,7 @@ void LinkerScript::declareSymbols() {
     auto *sec = cast<OutputSection>(base);
     if (sec->constraint != ConstraintKind::NoConstraint)
       continue;
-    for (BaseCommand *base2 : sec->sectionCommands)
+    for (BaseCommand *base2 : sec->commands)
       if (auto *cmd = dyn_cast<SymbolAssignment>(base2))
         declareSymbol(cmd);
   }
@@ -598,7 +598,7 @@ void LinkerScript::discardSynthetic(OutputSection &outCmd) {
       continue;
     std::vector<InputSectionBase *> secs(part.armExidx->exidxSections.begin(),
                                          part.armExidx->exidxSections.end());
-    for (BaseCommand *base : outCmd.sectionCommands)
+    for (BaseCommand *base : outCmd.commands)
       if (auto *cmd = dyn_cast<InputSectionDescription>(base)) {
         std::vector<InputSectionBase *> matches =
             computeInputSections(cmd, secs);
@@ -612,7 +612,7 @@ std::vector<InputSectionBase *>
 LinkerScript::createInputSectionList(OutputSection &outCmd) {
   std::vector<InputSectionBase *> ret;
 
-  for (BaseCommand *base : outCmd.sectionCommands) {
+  for (BaseCommand *base : outCmd.commands) {
     if (auto *cmd = dyn_cast<InputSectionDescription>(base)) {
       cmd->sectionBases = computeInputSections(cmd, inputSections);
       for (InputSectionBase *s : cmd->sectionBases)
@@ -634,7 +634,7 @@ void LinkerScript::processSectionCommands() {
       for (InputSectionBase *s : v)
         discard(s);
       discardSynthetic(*osec);
-      osec->sectionCommands.clear();
+      osec->commands.clear();
       return false;
     }
 
@@ -648,7 +648,7 @@ void LinkerScript::processSectionCommands() {
     if (!matchConstraints(v, osec->constraint)) {
       for (InputSectionBase *s : v)
         s->parent = nullptr;
-      osec->sectionCommands.clear();
+      osec->commands.clear();
       return false;
     }
 
@@ -713,7 +713,7 @@ void LinkerScript::processSymbolAssignments() {
     if (auto *cmd = dyn_cast<SymbolAssignment>(base))
       addSymbol(cmd);
     else
-      for (BaseCommand *sub_base : cast<OutputSection>(base)->sectionCommands)
+      for (BaseCommand *sub_base : cast<OutputSection>(base)->commands)
         if (auto *cmd = dyn_cast<SymbolAssignment>(sub_base))
           addSymbol(cmd);
   }
@@ -826,8 +826,7 @@ addInputSec(StringMap<TinyPtrVector<OutputSection *>> &map,
       // end up being linked to the same output section. The casts are fine
       // because everything in the map was created by the orphan placement code.
       auto *firstIsec = cast<InputSectionBase>(
-          cast<InputSectionDescription>(sec->sectionCommands[0])
-              ->sectionBases[0]);
+          cast<InputSectionDescription>(sec->commands[0])->sectionBases[0]);
       OutputSection *firstIsecOut =
           firstIsec->flags & SHF_LINK_ORDER
               ? firstIsec->getLinkOrderDep()->getOutputSection()
@@ -1072,7 +1071,7 @@ void LinkerScript::assignOffsets(OutputSection *sec) {
   // We visited SectionsCommands from processSectionCommands to
   // layout sections. Now, we visit SectionsCommands again to fix
   // section offsets.
-  for (BaseCommand *base : sec->sectionCommands) {
+  for (BaseCommand *base : sec->commands) {
     // This handles the assignments to symbol or to the dot.
     if (auto *cmd = dyn_cast<SymbolAssignment>(base)) {
       cmd->addr = dot;
@@ -1123,7 +1122,7 @@ static bool isDiscardable(const OutputSection &sec) {
   if (sec.usedInExpression)
     return false;
 
-  for (BaseCommand *base : sec.sectionCommands) {
+  for (BaseCommand *base : sec.commands) {
     if (auto cmd = dyn_cast<SymbolAssignment>(base))
       // Don't create empty output sections just for unreferenced PROVIDE
       // symbols.
