@@ -1340,8 +1340,8 @@ const Defined *LinkerScript::assignAddresses() {
     dot += getHeaderSize();
   }
 
-  auto deleter = std::make_unique<AddressState>();
-  ctx = deleter.get();
+  AddressState state;
+  ctx = &state;
   errorOnMissingSection = true;
   switchTo(aether);
 
