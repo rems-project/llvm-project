@@ -317,6 +317,7 @@ class LinuxCoreTestCase(TestBase):
     @skipIfLLVMTargetMissing("AArch64")
     @expectedFailureAll(archs=["aarch64"], oslist=["freebsd"],
                         bugnumber="llvm.org/pr49415")
+    @skipIfMorello
     def test_aarch64_sve_regs_fpsimd(self):
         # check 64 bit ARM core files
         target = self.dbg.CreateTarget(None)
@@ -403,6 +404,7 @@ class LinuxCoreTestCase(TestBase):
         self.expect("register read --all")
 
     @skipIfLLVMTargetMissing("AArch64")
+    @skipIfMorello
     def test_aarch64_sve_regs_full(self):
         # check 64 bit ARM core files
         target = self.dbg.CreateTarget(None)

@@ -674,6 +674,10 @@ def skipUnlessArch(arch):
 
     return skipTestIfFn(arch_doesnt_match)
 
+def skipIfMorello(func):
+    """Skip the test on this branch."""
+    return unittest2.skipIf(True, "skip on Morello")
+
 def skipIfTargetAndroid(bugnumber=None, api_levels=None, archs=None):
     """Decorator to skip tests when the target is Android.
 
