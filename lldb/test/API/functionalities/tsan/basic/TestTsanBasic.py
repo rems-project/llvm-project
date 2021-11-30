@@ -21,6 +21,7 @@ class TsanBasicTestCase(TestBase):
     @skipIfRemote
     @skipIfLinux
     @skipUnlessThreadSanitizer
+    @no_debug_info_test
     def test(self):
         self.build()
         self.tsan_tests()
