@@ -464,13 +464,17 @@ addr_t JITLoaderGDB::GetSymbolAddress(ModuleList &module_list,
   if (target_symbols.IsEmpty())
     return LLDB_INVALID_ADDRESS;
 
-  SymbolContext sym_ctx;
-  target_symbols.GetContextAtIndex(0, sym_ctx);
+  for (uint32_t i = 0; i < target_symbols.GetSize(); ++i) {
+    SymbolContext sym_ctx;
+    target_symbols.GetContextAtIndex(i, sym_ctx);
 
-  const Address jit_descriptor_addr = sym_ctx.symbol->GetAddress();
-  if (!jit_descriptor_addr.IsValid())
-    return LLDB_INVALID_ADDRESS;
+    const Address jit_descriptor_addr = sym_ctx.symbol->GetAddress();
+    if (jit_descriptor_addr.IsValid()) {
+      const addr_t jit_addr = jit_descriptor_addr.GetLoadAddress(&target);
+      return jit_addr;
+    }
+  }
 
-  const addr_t jit_addr = jit_descriptor_addr.GetLoadAddress(&target);
-  return jit_addr;
+  return LLDB_INVALID_ADDRESS;
+
 }
