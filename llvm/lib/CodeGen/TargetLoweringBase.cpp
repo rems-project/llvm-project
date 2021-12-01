@@ -2051,6 +2051,11 @@ Align TargetLoweringBase::getPrefLoopAlignment(MachineLoop *ML) const {
   return PrefLoopAlignment;
 }
 
+unsigned TargetLoweringBase::getMaxPermittedBytesForAlignment(
+    MachineBasicBlock *MBB) const {
+  return MaxBytesForAlignment;
+}
+
 //===----------------------------------------------------------------------===//
 //  Reciprocal Estimates
 //===----------------------------------------------------------------------===//
