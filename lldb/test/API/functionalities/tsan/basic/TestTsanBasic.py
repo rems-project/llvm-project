@@ -21,6 +21,7 @@ class TsanBasicTestCase(TestBase):
     @skipIfRemote
     @skipIfLinux
     @skipUnlessThreadSanitizer
+    @expectedFailureDarwin # FIXME: https://reviews.llvm.org/D112603
     @no_debug_info_test
     def test(self):
         self.build()
