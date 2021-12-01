@@ -4602,6 +4602,9 @@ SDValue DAGCombiner::visitMULHS(SDNode *N) {
   SDLoc DL(N);
 
   if (VT.isVector()) {
+    if (SDValue FoldedVOp = SimplifyVBinOp(N, DL))
+      return FoldedVOp;
+
     // fold (mulhs x, 0) -> 0
     // do not return N0/N1, because undef node may exist.
     if (ISD::isConstantSplatVectorAllZeros(N0.getNode()) ||
@@ -4659,6 +4662,9 @@ SDValue DAGCombiner::visitMULHU(SDNode *N) {
   SDLoc DL(N);
 
   if (VT.isVector()) {
+    if (SDValue FoldedVOp = SimplifyVBinOp(N, DL))
+      return FoldedVOp;
+
     // fold (mulhu x, 0) -> 0
     // do not return N0/N1, because undef node may exist.
     if (ISD::isConstantSplatVectorAllZeros(N0.getNode()) ||
