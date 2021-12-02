@@ -464,16 +464,16 @@ def simm7s16 : Operand<i32> {
   let DecoderMethod = "DecodeSImm<7>";
 }
 
-def am_sve_fi : ComplexPattern<i64, 2, "SelectAddrModeFrameIndexSVE", []>;
+def am_sve_fi : ComplexPattern<iPTR, 2, "SelectAddrModeFrameIndexSVE", []>;
 
-def am_indexed7s8   : ComplexPattern<i64, 2, "SelectAddrModeIndexed7S8", []>;
-def am_indexed7s16  : ComplexPattern<i64, 2, "SelectAddrModeIndexed7S16", []>;
-def am_indexed7s32  : ComplexPattern<i64, 2, "SelectAddrModeIndexed7S32", []>;
-def am_indexed7s64  : ComplexPattern<i64, 2, "SelectAddrModeIndexed7S64", []>;
-def am_indexed7s128 : ComplexPattern<i64, 2, "SelectAddrModeIndexed7S128", []>;
+def am_indexed7s8   : ComplexPattern<iPTR, 2, "SelectAddrModeIndexed7S8", []>;
+def am_indexed7s16  : ComplexPattern<iPTR, 2, "SelectAddrModeIndexed7S16", []>;
+def am_indexed7s32  : ComplexPattern<iPTR, 2, "SelectAddrModeIndexed7S32", []>;
+def am_indexed7s64  : ComplexPattern<iPTR, 2, "SelectAddrModeIndexed7S64", []>;
+def am_indexed7s128 : ComplexPattern<iPTR, 2, "SelectAddrModeIndexed7S128", []>;
 
-def am_indexedu6s128 : ComplexPattern<i64, 2, "SelectAddrModeIndexedU6S128", []>;
-def am_indexeds9s128 : ComplexPattern<i64, 2, "SelectAddrModeIndexedS9S128", []>;
+def am_indexedu6s128 : ComplexPattern<iPTR, 2, "SelectAddrModeIndexedU6S128", []>;
+def am_indexeds9s128 : ComplexPattern<iPTR, 2, "SelectAddrModeIndexedS9S128", []>;
 
 def UImmS1XForm : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(N->getZExtValue(), SDLoc(N), MVT::i64);
@@ -3269,10 +3269,10 @@ def am_cindexed128 : ComplexPattern<iFATPTR128, 2, "SelectCAddrModeIndexed128", 
 
 // (unsigned immediate)
 // Indexed for 8-bit registers. offset is in range [0,63].
-def am_indexed8_6b : ComplexPattern<i64, 2, "SelectAddrModeIndexedUImm<1,63>", []>;
-def am_indexed16_6b : ComplexPattern<i64, 2, "SelectAddrModeIndexedUImm<2,63>", []>;
-def am_indexed32_6b : ComplexPattern<i64, 2, "SelectAddrModeIndexedUImm<4,63>", []>;
-def am_indexed64_6b : ComplexPattern<i64, 2, "SelectAddrModeIndexedUImm<8,63>", []>;
+def am_indexed8_6b : ComplexPattern<iPTR, 2, "SelectAddrModeIndexedUImm<1,63>", []>;
+def am_indexed16_6b : ComplexPattern<iPTR, 2, "SelectAddrModeIndexedUImm<2,63>", []>;
+def am_indexed32_6b : ComplexPattern<iPTR, 2, "SelectAddrModeIndexedUImm<4,63>", []>;
+def am_indexed64_6b : ComplexPattern<iPTR, 2, "SelectAddrModeIndexedUImm<8,63>", []>;
 
 def gi_am_indexed8 :
     GIComplexOperandMatcher<s64, "selectAddrModeIndexed<8>">,
@@ -3469,11 +3469,11 @@ def cro_Windexed32 : ComplexPattern<iFATPTR128, 4, "SelectCAddrModeWRO<32>", []>
 def cro_Windexed64 : ComplexPattern<iFATPTR128, 4, "SelectCAddrModeWRO<64>", []>;
 def cro_Windexed128 : ComplexPattern<iFATPTR128, 4, "SelectCAddrModeWRO<128>", []>;
 
-def ro_Xindexed8 : ComplexPattern<i64, 4, "SelectAddrModeXRO<8>", []>;
-def ro_Xindexed16 : ComplexPattern<i64, 4, "SelectAddrModeXRO<16>", []>;
-def ro_Xindexed32 : ComplexPattern<i64, 4, "SelectAddrModeXRO<32>", []>;
-def ro_Xindexed64 : ComplexPattern<i64, 4, "SelectAddrModeXRO<64>", []>;
-def ro_Xindexed128 : ComplexPattern<i64, 4, "SelectAddrModeXRO<128>", []>;
+def ro_Xindexed8 : ComplexPattern<iPTR, 4, "SelectAddrModeXRO<8>", []>;
+def ro_Xindexed16 : ComplexPattern<iPTR, 4, "SelectAddrModeXRO<16>", []>;
+def ro_Xindexed32 : ComplexPattern<iPTR, 4, "SelectAddrModeXRO<32>", []>;
+def ro_Xindexed64 : ComplexPattern<iPTR, 4, "SelectAddrModeXRO<64>", []>;
+def ro_Xindexed128 : ComplexPattern<iPTR, 4, "SelectAddrModeXRO<128>", []>;
 
 def gi_ro_Xindexed8 :
     GIComplexOperandMatcher<s64, "selectAddrModeXRO<8>">,
@@ -3491,11 +3491,11 @@ def gi_ro_Xindexed128 :
     GIComplexOperandMatcher<s64, "selectAddrModeXRO<128>">,
     GIComplexPatternEquiv<ro_Xindexed128>;
 
-def ro_Windexed8 : ComplexPattern<i64, 4, "SelectAddrModeWRO<8>", []>;
-def ro_Windexed16 : ComplexPattern<i64, 4, "SelectAddrModeWRO<16>", []>;
-def ro_Windexed32 : ComplexPattern<i64, 4, "SelectAddrModeWRO<32>", []>;
-def ro_Windexed64 : ComplexPattern<i64, 4, "SelectAddrModeWRO<64>", []>;
-def ro_Windexed128 : ComplexPattern<i64, 4, "SelectAddrModeWRO<128>", []>;
+def ro_Windexed8 : ComplexPattern<iPTR, 4, "SelectAddrModeWRO<8>", []>;
+def ro_Windexed16 : ComplexPattern<iPTR, 4, "SelectAddrModeWRO<16>", []>;
+def ro_Windexed32 : ComplexPattern<iPTR, 4, "SelectAddrModeWRO<32>", []>;
+def ro_Windexed64 : ComplexPattern<iPTR, 4, "SelectAddrModeWRO<64>", []>;
+def ro_Windexed128 : ComplexPattern<iPTR, 4, "SelectAddrModeWRO<128>", []>;
 
 def gi_ro_Windexed8 :
     GIComplexOperandMatcher<s64, "selectAddrModeWRO<8>">,
