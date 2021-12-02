@@ -269,12 +269,7 @@ public:
     return SelectCAddrModeXRO(N, Width / 8, Base, Offset, SignExtend, DoShift);
   }
 
-  template<int Width>
   bool SelectDupZeroOrUndef(SDValue N) {
-    if (N.getValueType().isScalableVector() &&
-        N.getValueType().getSizeInBits() != TypeSize::Scalable(Width))
-      return false;
-
     switch(N->getOpcode()) {
     case ISD::UNDEF:
       return true;
@@ -296,12 +291,7 @@ public:
     return false;
   }
 
-  template<int Width>
   bool SelectDupZero(SDValue N) {
-    if (N.getValueType().isScalableVector() &&
-        N.getValueType().getSizeInBits() != TypeSize::Scalable(Width))
-      return false;
-
     switch(N->getOpcode()) {
     case AArch64ISD::DUP:
     case ISD::SPLAT_VECTOR: {
