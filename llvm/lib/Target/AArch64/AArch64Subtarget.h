@@ -287,6 +287,7 @@ protected:
   unsigned MaxPrefetchIterationsAhead = UINT_MAX;
   unsigned PrefFunctionLogAlignment = 0;
   unsigned PrefLoopLogAlignment = 0;
+  unsigned MaxBytesForLoopAlignment = 0;
   unsigned MaxJumpTableSize = 0;
   unsigned WideningBaseCost = 0;
 
@@ -482,6 +483,10 @@ public:
     return PrefFunctionLogAlignment;
   }
   unsigned getPrefLoopLogAlignment() const { return PrefLoopLogAlignment; }
+
+  unsigned getMaxBytesForLoopAlignment() const {
+    return MaxBytesForLoopAlignment;
+  }
 
   unsigned getMaximumJumpTableSize() const { return MaxJumpTableSize; }
 
