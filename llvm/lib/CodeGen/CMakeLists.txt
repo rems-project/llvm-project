@@ -79,7 +79,6 @@ add_llvm_component_library(LLVMCodeGen
   MachineCopyPropagation.cpp
   MachineCSE.cpp
   MachineCheckDebugify.cpp
-  MachineCycleAnalysis.cpp
   MachineDebugify.cpp
   MachineDominanceFrontier.cpp
   MachineDominators.cpp
@@ -107,7 +106,6 @@ add_llvm_component_library(LLVMCodeGen
   MachineScheduler.cpp
   MachineSink.cpp
   MachineSizeOpts.cpp
-  MachineSSAContext.cpp
   MachineSSAUpdater.cpp
   MachineStripDebug.cpp
   MachineTraceMetrics.cpp
