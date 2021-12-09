@@ -131,7 +131,7 @@ class TestAArch64XMLRegOffsets(GDBRemoteTestBase):
             "x22": 0x0000fffffffffc8f, "x23": 0x0000000000000000,
             "x24": 0x0000000000001000, "x25": 0x0000fffffffffc90,
             "x26": 0x0000ffffbf6cd000, "x27": 0x0000ffffbf54c1f0,
-            "x28": 0x0000000000000001, "x29": 0x0000ffffbf54b9d0,
+            "x28": 0x0000000000000001, "fp": 0x0000ffffbf54b9d0,
             "x30": 0x00000000004007e4, "sp": 0x0000ffffbf54b9d0,
             "pc": 0x00000000004007e4, "cpsr": 0x00001000, "w0": 0x00000020,
             "w1": 0x00000020, "w2": 0xbf54c1f0, "w3": 0x5a98aa5d,

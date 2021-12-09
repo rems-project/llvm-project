@@ -70,4 +70,4 @@ class TestQemuAarch64TargetXml(GDBRemoteTestBase):
         self.filecheck("image show-unwind -n foo", __file__,
             "--check-prefix=UNWIND")
 # UNWIND: eh_frame UnwindPlan:
-# UNWIND: row[0]:    0: CFA=x29+16 => x30=[CFA-8]
+# UNWIND: row[0]:    0: CFA=fp+16 => x30=[CFA-8]
