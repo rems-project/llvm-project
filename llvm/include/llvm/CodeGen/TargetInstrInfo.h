@@ -1227,8 +1227,6 @@ public:
                                      MachineInstr &NewMI1,
                                      MachineInstr &NewMI2) const {}
 
-  virtual void setSpecialOperandAttr(MachineInstr &MI, uint16_t Flags) const {}
-
   /// Return true when a target supports MachineCombiner.
   virtual bool useMachineCombiner() const { return false; }
 
