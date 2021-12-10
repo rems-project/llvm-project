@@ -992,6 +992,7 @@ private:
   SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerAAPCS_VASTART(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerAAPCScap_VASTART(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerDarwin_VASTART(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerWin64_VASTART(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG) const;

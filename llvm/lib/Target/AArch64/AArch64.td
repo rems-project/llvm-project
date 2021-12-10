@@ -70,6 +70,10 @@ def FeatureRDM : SubtargetFeature<"rdm", "HasRDM", "true",
 def FeatureMorello : SubtargetFeature<"morello", "HasMorello", "true",
   "Enable Morello instructions">;
 
+def FeatureMorelloNewVarArg : SubtargetFeature<"new-morello-vararg",
+  "HasMorelloNewVarArg", "true",
+  "Bound varargs for morello purecap calls">;
+
 def FeatureC64 : SubtargetFeature<"c64", "HasC64", "true",
   "Enable C64 mode", [FeatureMorello]>;
 

@@ -49,6 +49,9 @@ bool CC_AArch64_AAPCS_Pure_16Cap_Regs(unsigned ValNo, MVT ValVT, MVT LocVT,
 bool CC_AArch64_AAPCS_Pure_32Cap_Regs(unsigned ValNo, MVT ValVT, MVT LocVT,
                                       CCValAssign::LocInfo LocInfo,
                                       ISD::ArgFlagsTy ArgFlags, CCState &State);
+bool CC_AArch64_AAPCS_Pure_VarArg(unsigned ValNo, MVT ValVT, MVT LocVT,
+                                  CCValAssign::LocInfo LocInfo,
+                                  ISD::ArgFlagsTy ArgFlags, CCState &State);
 bool RetCC_AArch64_AAPCS(unsigned ValNo, MVT ValVT, MVT LocVT,
                          CCValAssign::LocInfo LocInfo, ISD::ArgFlagsTy ArgFlags,
                          CCState &State);

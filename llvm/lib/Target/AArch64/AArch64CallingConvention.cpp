@@ -146,6 +146,24 @@ static bool CC_AArch64_Custom_Stack_Block(
   return finishStackBlock(PendingMembers, LocVT, ArgFlags, State, StackAlign);
 }
 
+// Splitting an i128 causes issues for i64 since the first split register needs
+// to be 16-byte aligned and the second needs to be 8 byte aligned, so we can
+// get a contiguous 128 bit integer in memory. Otherwise if an i64 is not part
+// of a register split it needs to be 16 bytes aligned.
+static bool CC_AArch64_VarArgs_SplitReg_Block(
+      unsigned &ValNo, MVT &ValVT, MVT &LocVT, CCValAssign::LocInfo &LocInfo,
+      ISD::ArgFlagsTy &ArgFlags, CCState &State) {
+  SmallVectorImpl<CCValAssign> &PendingMembers = State.getPendingLocs();
+
+  PendingMembers.push_back(
+      CCValAssign::getPending(ValNo, ValVT, LocVT, LocInfo));
+  if (ArgFlags.isSplit())
+    return true;
+
+  Align StackAlign(16);
+  return finishStackBlock(PendingMembers, LocVT, ArgFlags, State, StackAlign);
+}
+
 unsigned getRegisterForPending(const AArch64RegisterInfo *RegInfo,
                                MVT LocVT, MVT PendingLocVT,
                                unsigned RegResult) {

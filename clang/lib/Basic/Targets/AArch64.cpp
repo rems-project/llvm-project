@@ -478,6 +478,7 @@ bool AArch64TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
   HasUnaligned = true;
   Morello = false;
   C64 = false;
+  HasMorelloNewVarArg = false;
   HasFullFP16 = false;
   HasDotProd = false;
   HasFP16FML = false;
@@ -593,6 +594,8 @@ bool AArch64TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
     if (Feature == "+c64") {
       C64 = true;
     }
+    if (Feature == "+new-morello-vararg")
+      HasMorelloNewVarArg = true;
   }
 
   if (C64 && !Morello)
@@ -629,6 +632,8 @@ AArch64TargetInfo::checkCallingConvention(CallingConv CC) const {
 bool AArch64TargetInfo::isCLZForZeroUndef() const { return false; }
 
 TargetInfo::BuiltinVaListKind AArch64TargetInfo::getBuiltinVaListKind() const {
+  if (hasPureCap() && HasMorelloNewVarArg)
+    return TargetInfo::VoidPtrBuiltinVaList;
   return TargetInfo::AArch64ABIBuiltinVaList;
 }
 
