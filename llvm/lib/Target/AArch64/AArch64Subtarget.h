@@ -117,6 +117,8 @@ protected:
   bool HasFP16FML = false;
   bool HasSPE = false;
 
+  bool FixCortexA53_835769 = false;
+
   // ARMv8.1 extensions
   bool HasVH = false;
   bool HasPAN = false;
@@ -589,6 +591,8 @@ public:
   bool hasRCPC_IMMO() const { return HasRCPC_IMMO; }
   bool hasEL2VMSA() const { return HasEL2VMSA; }
   bool hasEL3() const { return HasEL3; }
+
+  bool fixCortexA53_835769() const { return FixCortexA53_835769; }
 
   bool addrSinkUsingGEPs() const override {
     // Keeping GEPs inbounds is important for exploiting AArch64
