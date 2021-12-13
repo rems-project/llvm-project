@@ -301,6 +301,6 @@ body:             |
     %13:_(p0) = G_PTR_ADD %10, %12(s64)
     %15:_(s32) = G_LOAD %13(p0) :: (load (s32))
     $w0 = COPY %15
-    RET_ReallyLR
+    RET_ReallyLR 0
 
 ...
