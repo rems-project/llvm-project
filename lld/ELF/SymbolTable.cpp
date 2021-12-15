@@ -143,10 +143,7 @@ Symbol *SymbolTable::find(StringRef name) {
   auto it = symMap.find(CachedHashStringRef(name));
   if (it == symMap.end())
     return nullptr;
-  Symbol *sym = symVector[it->second];
-  if (sym->isPlaceholder())
-    return nullptr;
-  return sym;
+  return symVector[it->second];
 }
 
 // This function takes care of the case in which shared libraries depend on
