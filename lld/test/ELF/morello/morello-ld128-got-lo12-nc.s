@@ -40,11 +40,11 @@ foo:
 
 // DIS: 0000000000210208 <_start>:
 // DIS-NEXT:   210208:        adrp    c0, 0x220000 <_start+0x40>
-// DIS-NEXT:   21020c:        ldr     c0, [c0, #672]
+// DIS-NEXT:   21020c:        ldr     c0, [c0, #688]
 // DIS-NEXT:   210210:        adrp    c1, 0x220000 <_start+0x48>
-// DIS-NEXT:   210214:        ldr     c1, [c1, #688]
+// DIS-NEXT:   210214:        ldr     c1, [c1, #672]
 // DIS-NEXT:   210218:        adrp    c1, 0x220000 <_start+0x50>
-// DIS-NEXT:   21021c:        ldr     c1, [c1, #688]
+// DIS-NEXT:   21021c:        ldr     c1, [c1, #672]
 // DIS-NEXT:   210220:        adrp    c2, 0x220000 <_start+0x58>
 // DIS-NEXT:   210224:        ldr     c2, [c1, #704]
 
@@ -78,17 +78,17 @@ foo:
 // CHECK: CHERI __cap_relocs [
 // CHECK-NEXT:   Relocation {
 // CHECK-NEXT:     Location: 0x2202A0
-// CHECK-NEXT:     Base: bar (0x200200)
-// CHECK-NEXT:     Offset: 65545
-// CHECK-NEXT:     Length: 131328
-// CHECK-NEXT:     Permissions: (FUNC) (0x8000000000013DBC)
-// CHECK-NEXT:   }
-// CHECK-NEXT:   Relocation {
-// CHECK-NEXT:     Location: 0x2202B0
 // CHECK-NEXT:     Base: foo (0x230300)
 // CHECK-NEXT:     Offset: 0
 // CHECK-NEXT:     Length: 8
 // CHECK-NEXT:     Permissions: (RWDATA) (0x8FBE)
+// CHECK-NEXT:   }
+// CHECK-NEXT:   Relocation {
+// CHECK-NEXT:     Location: 0x2202B0
+// CHECK-NEXT:     Base: bar (0x200200)
+// CHECK-NEXT:     Offset: 65545
+// CHECK-NEXT:     Length: 131328
+// CHECK-NEXT:     Permissions: (FUNC) (0x8000000000013DBC)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Relocation {
 // CHECK-NEXT:     Location: 0x2202C0

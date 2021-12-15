@@ -2,7 +2,7 @@
 ; RUN: llc -mtriple=arm64 -mattr=+morello,+c64 -target-abi purecap -o - -cheri-no-cap-libfunc %s | FileCheck %s --check-prefix=ALL --check-prefix=NOCFUN
 ; RUN: llc -mtriple=arm64 -mattr=+morello,+c64 -target-abi purecap -o - %s | FileCheck %s --check-prefix=ALL --check-prefix=NOCFUN
 
-target datalayout = "e-m:e-pf200:128:128-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"
+target datalayout = "e-m:e-pf200:128:128:128:64-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"
 
 ; ALL-LABEL: bar
 ; CFUN: bl memcpy_c

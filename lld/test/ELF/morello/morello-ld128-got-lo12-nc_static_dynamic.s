@@ -40,11 +40,11 @@ foo:
 
 // DIS: 0000000000210258 <_start>:
 // DIS-NEXT:   210258:        adrp    c0, 0x220000
-// DIS-NEXT:   21025c:        ldr     c0, [c0, #0x280]
+// DIS-NEXT:   21025c:        ldr     c0, [c0, #0x290]
 // DIS-NEXT:   210260:        adrp    c1, 0x220000
-// DIS-NEXT:   210264:        ldr     c1, [c1, #0x290]
+// DIS-NEXT:   210264:        ldr     c1, [c1, #0x280]
 // DIS-NEXT:   210268:        adrp    c1, 0x220000
-// DIS-NEXT:   21026c:        ldr     c1, [c1, #0x290]
+// DIS-NEXT:   21026c:        ldr     c1, [c1, #0x280]
 // DIS-NEXT:   210270:        adrp    c2, 0x220000
 // DIS-NEXT:   210274:        ldr     c2, [c1, #0x2a0]
 
@@ -81,13 +81,13 @@ foo:
 // CHECK-NEXT:       Offset: 0x220280
 // CHECK-NEXT:       Type: R_MORELLO_RELATIVE
 // CHECK-NEXT:       Symbol: - (0)
-// CHECK-NEXT:       Addend: 0x10059
+// CHECK-NEXT:       Addend: 0x0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x220290
 // CHECK-NEXT:       Type: R_MORELLO_RELATIVE
 // CHECK-NEXT:       Symbol: - (0)
-// CHECK-NEXT:       Addend: 0x0
+// CHECK-NEXT:       Addend: 0x10059
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x2202A0
@@ -125,11 +125,11 @@ foo:
 /// Check the fragments in .got match
 // CHECK:      Hex dump of section '.got':
 
-/// _start: address: 0x210259, size = 16 (0x10), perms = exec(0x4)
-// CHECK-NEXT: 0x00220280 00022000 00000000 c0000200 00000004
-
 /// foo: address: 0x2302C0, size = 8 (0x8), perms = RW(0x2)
-// CHECK-NEXT: 0x00220290 c0022300 00000000 08000000 00000002
+// CHECK-NEXT: 0x00220280 c0022300 00000000 08000000 00000002
+
+/// _start: address: 0x210259, size = 16 (0x10), perms = exec(0x4)
+// CHECK-NEXT: 0x00220290 00022000 00000000 c0000200 00000004
 
 /// bar: address: 0x200250, size = 8 (0x8), perms = RO(0x1)
 // CHECK-NEXT: 0x002202a0 50022000 00000000 08000000 00000001
