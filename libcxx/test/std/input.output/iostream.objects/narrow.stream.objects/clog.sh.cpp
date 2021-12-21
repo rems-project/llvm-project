@@ -13,7 +13,6 @@
 // The FVP for now doesn't output to stderr so this doesn't work.
 // Temporarily xfailing this.
 // XFAIL: libcpp-has-newlib
-// XFAIL: LIBCXX-WINDOWS-FIXME
 
 // UNSUPPORTED: executor-has-no-bash
 // FILE_DEPENDENCIES: ../check-stderr.sh

@@ -14,7 +14,6 @@
 // Temporarily xfailing this.
 // XFAIL: libcpp-has-newlib
 // XFAIL: libcpp-has-no-wide-characters
-// XFAIL: LIBCXX-WINDOWS-FIXME
 
 // UNSUPPORTED: executor-has-no-bash
 // FILE_DEPENDENCIES: ../check-stderr.sh
