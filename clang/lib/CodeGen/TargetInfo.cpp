@@ -6410,9 +6410,7 @@ Address AArch64ABIInfo::EmitAAPCScapVAArg(Address VAListAddr,
   BaseTy = CGF.CGM.getPointerInDefaultAS(BaseTy);
 
   llvm::Value *OnStackPtr = CGF.Builder.CreateLoad(VAListAddr, "stack");
-
   llvm::Value *ArgPtr = CGF.Builder.CreateBitCast(OnStackPtr, BaseTy);
-
 
   CharUnits StackSlotSize = CharUnits::fromQuantity(16);
   Address OnStackAddr(ArgPtr, StackSlotSize);
@@ -6424,7 +6422,8 @@ Address AArch64ABIInfo::EmitAAPCScapVAArg(Address VAListAddr,
 
   llvm::Value *StackSizeC = CGF.Builder.getSize(StackSlotSize);
   llvm::Value *NewStack =
-      CGF.Builder.CreateInBoundsGEP(OnStackPtr, StackSizeC, "new_stack");
+      CGF.Builder.CreateInBoundsGEP(CGF.Int8Ty, OnStackPtr, StackSizeC,
+                                    "new_stack");
   CGF.Builder.CreateStore(NewStack, VAListAddr);
   return OnStackAddr;
 }
