@@ -1814,7 +1814,7 @@ template <class ELFT> void Writer<ELFT>::finalizeAddressDependentContent() {
       break;
     }
 
-    if (config->morelloC64Plt) {
+    if (config->morelloC64Plt && !config->relocatable) {
       if (changed)
         script->assignAddresses();
       changed |= morelloLinkerDefinedCapabilityAlign();
