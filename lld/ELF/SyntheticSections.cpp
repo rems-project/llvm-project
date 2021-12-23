@@ -1313,11 +1313,11 @@ DynamicSection<ELFT>::DynamicSection()
 //   created.
 //
 // DT_RELASZ is the total size of the included sections.
-static uint64_t addRelaSz(const RelocationBaseSection &relaDyn) {
-  size_t size = relaDyn.getSize();
-  if (in.relaIplt->getParent() == relaDyn.getParent())
+static uint64_t addRelaSz(RelocationBaseSection *relaDyn) {
+  size_t size = relaDyn->getSize();
+  if (in.relaIplt->getParent() == relaDyn->getParent())
     size += in.relaIplt->getSize();
-  if (in.relaPlt->getParent() == relaDyn.getParent())
+  if (in.relaPlt->getParent() == relaDyn->getParent())
     size += in.relaPlt->getSize();
   if (in.relaDyn->getParent() == relaDyn->getParent())
     size += in.relaDyn->getSize();
@@ -1431,8 +1431,7 @@ DynamicSection<ELFT>::computeContents() {
       (in.relaDyn->isNeeded() &&
        part.relaDyn->getParent() == in.relaDyn->getParent())) {
     addInSec(part.relaDyn->dynamicTag, *part.relaDyn);
-    entries.emplace_back(part.relaDyn->sizeDynamicTag,
-                         addRelaSz(*part.relaDyn));
+    entries.emplace_back(part.relaDyn->sizeDynamicTag, addRelaSz(part.relaDyn));
 
     bool isRela = config->isRela;
     addInt(isRela ? DT_RELAENT : DT_RELENT,
@@ -1779,7 +1778,7 @@ void RelocationBaseSection::addReloc(const DynamicReloc &reloc) {
 }
 
 void RelocationBaseSection::finalizeContents() {
-  SymbolTableBaseSection *symTab = getPartition().dynSymTab.get();
+  SymbolTableBaseSection *symTab = getPartition().dynSymTab;
 
   // When linking glibc statically, .rel{,a}.plt contains R_*_IRELATIVE
   // relocations due to IFUNC (e.g. strcpy). sh_link will be set to 0 in that
@@ -1789,21 +1788,21 @@ void RelocationBaseSection::finalizeContents() {
   else
     getParent()->link = 0;
 
-  if (in.relaPlt.get() == this && in.gotPlt->getParent()) {
+  if (in.relaPlt == this && in.gotPlt->getParent()) {
     getParent()->flags |= ELF::SHF_INFO_LINK;
     // For CheriABI we use the captable as the sh_info value
     if (config->isCheriAbi && in.cheriCapTable && in.cheriCapTable->isNeeded()) {
       assert(in.cheriCapTable->getParent()->sectionIndex != UINT32_MAX);
       getParent()->info = in.cheriCapTable->getParent()->sectionIndex;
-      if (in.relaIplt.get() == this)
+      if (in.relaIplt == this)
         getParent()->info = in.cheriCapTable->getParent()->sectionIndex;
-      if (in.relaDyn.get() == this)
+      if (in.relaDyn == this)
         getParent()->info = in.cheriCapTable->getParent()->sectionIndex;
     } else {
-      if (in.relaPlt.get() == this)
+      if (in.relaPlt == this)
         getParent()->info = in.gotPlt->getParent()->sectionIndex;
     }
-    if (in.relaDyn.get() == this) {
+    if (in.relaDyn == this) {
       if (in.igotPlt && in.igotPlt->isNeeded())
         getParent()->info = in.igotPlt->getParent()->sectionIndex;
       else if (!config->hasDynSymTab)
@@ -1812,7 +1811,7 @@ void RelocationBaseSection::finalizeContents() {
         getParent()->info = 0;
     }
   }
-  if (in.relaIplt.get() == this && in.igotPlt->getParent()) {
+  if (in.relaIplt == this && in.igotPlt->getParent()) {
     getParent()->flags |= ELF::SHF_INFO_LINK;
     // For CheriABI we use the captable as the sh_info value
     if (config->isCheriAbi && in.cheriCapTable && in.cheriCapTable->isNeeded()) {
@@ -1858,7 +1857,7 @@ RelocationSection<ELFT>::RelocationSection(StringRef name, bool sort)
 }
 
 template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *buf) {
-  SymbolTableBaseSection *symTab = getPartition().dynSymTab.get();
+  SymbolTableBaseSection *symTab = getPartition().dynSymTab;
 
   parallelForEach(relocs,
                   [symTab](DynamicReloc &rel) { rel.computeRaw(symTab); });
@@ -1953,8 +1952,8 @@ bool AndroidPackedRelocationSection<ELFT>::updateAllocSize() {
   for (const DynamicReloc &rel : relocs) {
     Elf_Rela r;
     r.r_offset = rel.getOffset();
-    r.setSymbolAndType(rel.getSymIndex(getPartition().dynSymTab.get()),
-                       rel.type, false);
+    r.setSymbolAndType(rel.getSymIndex(getPartition().dynSymTab), rel.type,
+                       false);
     if (config->isRela)
       r.r_addend = rel.computeAddend();
 
@@ -2286,7 +2285,7 @@ void SymbolTableBaseSection::finalizeContents() {
 
   // Only the main partition's dynsym indexes are stored in the symbols
   // themselves. All other partitions use a lookup table.
-  if (this == mainPart->dynSymTab.get()) {
+  if (this == mainPart->dynSymTab) {
     size_t i = 0;
     for (const SymbolTableEntry &s : symbols)
       s.sym->dynsymIndex = ++i;
@@ -2333,7 +2332,7 @@ void SymbolTableBaseSection::addSymbol(Symbol *b) {
 }
 
 size_t SymbolTableBaseSection::getSymbolIndex(Symbol *sym) {
-  if (this == mainPart->dynSymTab.get())
+  if (this == mainPart->dynSymTab)
     return sym->dynsymIndex;
 
   // Initializes symbol lookup tables lazily. This is used only for -r,
@@ -2668,7 +2667,7 @@ HashTableSection::HashTableSection()
 }
 
 void HashTableSection::finalizeContents() {
-  SymbolTableBaseSection *symTab = getPartition().dynSymTab.get();
+  SymbolTableBaseSection *symTab = getPartition().dynSymTab;
 
   if (OutputSection *sec = symTab->getParent())
     getParent()->link = sec->sectionIndex;
@@ -2682,7 +2681,7 @@ void HashTableSection::finalizeContents() {
 }
 
 void HashTableSection::writeTo(uint8_t *buf) {
-  SymbolTableBaseSection *symTab = getPartition().dynSymTab.get();
+  SymbolTableBaseSection *symTab = getPartition().dynSymTab;
 
   // See comment in GnuHashTableSection::writeTo.
   memset(buf, 0, size);
@@ -3999,9 +3998,8 @@ void PartitionIndexSection::writeTo(uint8_t *buf) {
     write32(buf, mainPart->dynStrTab->getVA() + partitions[i].nameStrTab - va);
     write32(buf + 4, partitions[i].elfHeader->getVA() - (va + 4));
 
-    SyntheticSection *next = i == partitions.size() - 1
-                                 ? in.partEnd.get()
-                                 : partitions[i + 1].elfHeader.get();
+    SyntheticSection *next =
+        i == partitions.size() - 1 ? in.partEnd : partitions[i + 1].elfHeader;
     write32(buf + 8, next->getVA() - partitions[i].elfHeader->getVA());
 
     va += 12;
