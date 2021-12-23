@@ -2644,7 +2644,7 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &args) {
     combineEhSections();
     if (InX<ELFT>::capRelocs) {
       combineCapRelocsSections<ELFT>();
-      inputSections.push_back(InX<ELFT>::capRelocs);
+      inputSections.push_back(InX<ELFT>::capRelocs.get());
     }
   }
 

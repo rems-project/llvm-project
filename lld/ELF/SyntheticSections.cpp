@@ -1788,21 +1788,21 @@ void RelocationBaseSection::finalizeContents() {
   else
     getParent()->link = 0;
 
-  if (in.relaPlt == this && in.gotPlt->getParent()) {
+  if (in.relaPlt.get() == this && in.gotPlt->getParent()) {
     getParent()->flags |= ELF::SHF_INFO_LINK;
     // For CheriABI we use the captable as the sh_info value
     if (config->isCheriAbi && in.cheriCapTable && in.cheriCapTable->isNeeded()) {
       assert(in.cheriCapTable->getParent()->sectionIndex != UINT32_MAX);
       getParent()->info = in.cheriCapTable->getParent()->sectionIndex;
-      if (in.relaIplt == this)
+      if (in.relaIplt.get() == this)
         getParent()->info = in.cheriCapTable->getParent()->sectionIndex;
-      if (in.relaDyn == this)
+      if (in.relaDyn.get() == this)
         getParent()->info = in.cheriCapTable->getParent()->sectionIndex;
     } else {
-      if (in.relaPlt == this)
+      if (in.relaPlt.get() == this)
         getParent()->info = in.gotPlt->getParent()->sectionIndex;
     }
-    if (in.relaDyn == this) {
+    if (in.relaDyn.get() == this) {
       if (in.igotPlt && in.igotPlt->isNeeded())
         getParent()->info = in.igotPlt->getParent()->sectionIndex;
       else if (!config->hasDynSymTab)
@@ -1811,7 +1811,7 @@ void RelocationBaseSection::finalizeContents() {
         getParent()->info = 0;
     }
   }
-  if (in.relaIplt == this && in.igotPlt->getParent()) {
+  if (in.relaIplt.get() == this && in.igotPlt->getParent()) {
     getParent()->flags |= ELF::SHF_INFO_LINK;
     // For CheriABI we use the captable as the sh_info value
     if (config->isCheriAbi && in.cheriCapTable && in.cheriCapTable->isNeeded()) {
@@ -3998,8 +3998,9 @@ void PartitionIndexSection::writeTo(uint8_t *buf) {
     write32(buf, mainPart->dynStrTab->getVA() + partitions[i].nameStrTab - va);
     write32(buf + 4, partitions[i].elfHeader->getVA() - (va + 4));
 
-    SyntheticSection *next =
-        i == partitions.size() - 1 ? in.partEnd : partitions[i + 1].elfHeader;
+    SyntheticSection *next = i == partitions.size() - 1
+                                 ? in.partEnd.get()
+                                 : partitions[i + 1].elfHeader;
     write32(buf + 8, next->getVA() - partitions[i].elfHeader->getVA());
 
     va += 12;
