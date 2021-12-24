@@ -3634,6 +3634,7 @@ Register LegalizerHelper::getVectorElementPointer(Register VecPtr, LLT VecTy,
   return MIRBuilder.buildPtrAdd(PtrTy, VecPtr, Mul).getReg(0);
 }
 
+#ifndef NDEBUG
 /// Check that all vector operands have same number of elements. Other operands
 /// should be listed in NonVecOp.
 static bool hasSameNumEltsOnAllVectorOperands(
@@ -3669,6 +3670,7 @@ static bool hasSameNumEltsOnAllVectorOperands(
 
   return true;
 }
+#endif
 
 /// Fill \p DstOps with DstOps that have same number of elements combined as
 /// the Ty. These DstOps have either scalar type when \p NumElts = 1 or are
