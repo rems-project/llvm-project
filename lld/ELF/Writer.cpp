@@ -2150,6 +2150,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
     for (Symbol *sym : symtab->symbols()) {
       if (!sym->isUsedInRegularObj || !includeInSymtab(*sym))
         continue;
+      sym->binding = sym->computeBinding();
       if (in.symTab)
         in.symTab->addSymbol(sym);
 
