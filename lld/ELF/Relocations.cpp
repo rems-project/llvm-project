@@ -897,13 +897,13 @@ static void addGotEntry(Symbol &sym) {
     // entry. Delegate this to addMorelloC64GotRelocation.
     addMorelloC64GotRelocation(
         sym.isPreemptible ? target->gotRel : target->relativeRel, &sym,
-        in.got, off, 0);
+        in.got.get(), off, 0);
     return;
   }
 
   // If preemptible, emit a GLOB_DAT relocation.
   if (sym.isPreemptible) {
-    mainPart->relaDyn->addReloc({target->gotRel, in.got, off,
+    mainPart->relaDyn->addReloc({target->gotRel, in.got.get(), off,
                                  DynamicReloc::AgainstSymbol, sym, 0, R_ABS});
     return;
   }
@@ -1675,7 +1675,7 @@ static bool handleNonPreemptibleIfunc(Symbol &sym) {
   if (sym.hasDirectReloc) {
     // Change the value to the IPLT and redirect all references to it.
     auto &d = cast<Defined>(sym);
-    d.section = in.iplt;
+    d.section = in.iplt.get();
     d.value = sym.pltIndex * target->ipltEntrySize;
     d.size = 0;
     // It's important to set the symbol type here so that dynamic loaders
@@ -1768,8 +1768,8 @@ void elf::postScanRelocations() {
         in.got->relocations.push_back(
             {R_ADDEND, target->symbolicRel, in.got->getTlsIndexOff(), 1, &sym});
       else
-        mainPart->relaDyn->addReloc(
-            {target->tlsModuleIndexRel, in.got, in.got->getTlsIndexOff()});
+        mainPart->relaDyn->addReloc({target->tlsModuleIndexRel, in.got.get(),
+                                     in.got->getTlsIndexOff()});
     }
     if (sym.needsGotDtprel) {
       in.got->addEntry(sym);
