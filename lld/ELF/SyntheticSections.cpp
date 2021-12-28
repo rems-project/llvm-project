@@ -1313,11 +1313,11 @@ DynamicSection<ELFT>::DynamicSection()
 //   created.
 //
 // DT_RELASZ is the total size of the included sections.
-static uint64_t addRelaSz(RelocationBaseSection *relaDyn) {
-  size_t size = relaDyn->getSize();
-  if (in.relaIplt->getParent() == relaDyn->getParent())
+static uint64_t addRelaSz(const RelocationBaseSection &relaDyn) {
+  size_t size = relaDyn.getSize();
+  if (in.relaIplt->getParent() == relaDyn.getParent())
     size += in.relaIplt->getSize();
-  if (in.relaPlt->getParent() == relaDyn->getParent())
+  if (in.relaPlt->getParent() == relaDyn.getParent())
     size += in.relaPlt->getSize();
   if (in.relaDyn->getParent() == relaDyn->getParent())
     size += in.relaDyn->getSize();
@@ -1431,7 +1431,8 @@ DynamicSection<ELFT>::computeContents() {
       (in.relaDyn->isNeeded() &&
        part.relaDyn->getParent() == in.relaDyn->getParent())) {
     addInSec(part.relaDyn->dynamicTag, *part.relaDyn);
-    entries.emplace_back(part.relaDyn->sizeDynamicTag, addRelaSz(part.relaDyn));
+    entries.emplace_back(part.relaDyn->sizeDynamicTag,
+                         addRelaSz(*part.relaDyn));
 
     bool isRela = config->isRela;
     addInt(isRela ? DT_RELAENT : DT_RELENT,
