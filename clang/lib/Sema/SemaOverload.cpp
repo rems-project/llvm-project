@@ -14372,8 +14372,7 @@ ExprResult Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
     FoundDecl = MemExpr->getFoundDecl();
     Qualifier = MemExpr->getQualifier();
     UnbridgedCasts.restore();
-  } else {
-    UnresolvedMemberExpr *UnresExpr = cast<UnresolvedMemberExpr>(NakedMemExpr);
+  } else if (auto *UnresExpr = dyn_cast<UnresolvedMemberExpr>(NakedMemExpr)) {
     Qualifier = UnresExpr->getQualifier();
 
     QualType ObjectType = UnresExpr->getBaseType();
@@ -14486,7 +14485,9 @@ ExprResult Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
     }
 
     MemExpr = cast<MemberExpr>(MemExprE->IgnoreParens());
-  }
+  } else
+    // Unimaged NakedMemExpr type.
+    return ExprError();
 
   QualType ResultType = Method->getReturnType();
   ExprValueKind VK = Expr::getValueKindForType(ResultType);
