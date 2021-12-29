@@ -427,8 +427,7 @@ Status NativeProcessLinux::SetDefaultPtraceOpts(lldb::pid_t pid) {
 }
 
 // Handles all waitpid events from the inferior process.
-void NativeProcessLinux::MonitorCallback(lldb::pid_t pid, bool exited,
-                                         WaitStatus status) {
+void NativeProcessLinux::MonitorCallback(lldb::pid_t pid, WaitStatus status) {
   Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PROCESS));
 
   // Certain activities differ based on whether the pid is the tid of the main
@@ -436,7 +435,7 @@ void NativeProcessLinux::MonitorCallback(lldb::pid_t pid, bool exited,
   const bool is_main_thread = (pid == GetID());
 
   // Handle when the thread exits.
-  if (exited) {
+  if (status.type == WaitStatus::Exit || status.type == WaitStatus::Signal) {
     LLDB_LOG(log,
              "got exit status({0}) , tid = {1} ({2} main thread), process "
              "state = {3}",
@@ -486,7 +485,7 @@ void NativeProcessLinux::MonitorCallback(lldb::pid_t pid, bool exited,
     if (info.si_signo == SIGTRAP)
       MonitorSIGTRAP(info, *thread_sp);
     else
-      MonitorSignal(info, *thread_sp, exited);
+      MonitorSignal(info, *thread_sp);
   } else {
     if (info_err.GetError() == EINVAL) {
       // This is a group stop reception for this tid. We can reach here if we
@@ -754,7 +753,7 @@ void NativeProcessLinux::MonitorSIGTRAP(const siginfo_t &info,
   default:
     LLDB_LOG(log, "received unknown SIGTRAP stop event ({0}, pid {1} tid {2}",
              info.si_code, GetID(), thread.GetID());
-    MonitorSignal(info, thread, false);
+    MonitorSignal(info, thread);
     break;
   }
 }
@@ -802,7 +801,7 @@ void NativeProcessLinux::MonitorWatchpoint(NativeThreadLinux &thread,
 }
 
 void NativeProcessLinux::MonitorSignal(const siginfo_t &info,
-                                       NativeThreadLinux &thread, bool exited) {
+                                       NativeThreadLinux &thread) {
   const int signo = info.si_signo;
   const bool is_from_llgs = info.si_pid == getpid();
 
@@ -1975,16 +1974,11 @@ void NativeProcessLinux::SigchldHandler() {
     }
 
     WaitStatus wait_status = WaitStatus::Decode(status);
-    bool exited = wait_status.type == WaitStatus::Exit ||
-                  (wait_status.type == WaitStatus::Signal &&
-                   wait_pid == static_cast<::pid_t>(GetID()));
 
-    LLDB_LOG(
-        log,
-        "waitpid (-1, &status, _) => pid = {0}, status = {1}, exited = {2}",
-        wait_pid, wait_status, exited);
+    LLDB_LOG(log, "waitpid (-1, &status, _) => pid = {0}, status = {1}",
+             wait_pid, wait_status);
 
-    MonitorCallback(wait_pid, exited, wait_status);
+    MonitorCallback(wait_pid, wait_status);
   }
 }
 
