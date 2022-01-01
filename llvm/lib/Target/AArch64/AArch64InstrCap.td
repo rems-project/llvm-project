@@ -75,6 +75,7 @@ let Predicates = [HasC64] in {
   def : Pat<(AArch64cadrp texternalsym:$cp), (CAdrp texternalsym:$cp)>;
 }
 
+// NB: Not adjusted for C64 - see AArch64TargetLowering::LowerBR_JT
 let Size = 12, Constraints = "@earlyclobber $dst,@earlyclobber $scratch" in {
 def MCJumpTableDest32 : Pseudo<(outs Cap:$dst, GPR64sp:$scratch),
                                (ins Cap:$table, GPR64:$entry, i32imm:$jti), []>,

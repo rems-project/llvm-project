@@ -927,10 +927,7 @@ void AArch64AsmPrinter::LowerJumpTableDest(llvm::MCStreamer &OutStreamer,
   unsigned AdrReg = DestReg;
   const MCExpr *LabelExpr = MCSymbolRefExpr::create(Label, MF->getContext());
   if (STI->hasC64()) {
-    // Adjust the LSB for C64.
-    LabelExpr = MCBinaryExpr::createAdd(LabelExpr,
-                                        MCConstantExpr::create(1, OutContext),
-                                        OutContext);
+    // NB: Not adjusted for C64 - see AArch64TargetLowering::LowerBR_JT
     AdrReg = STI->getRegisterInfo()->getSubReg(DestReg, AArch64::sub_64);
   }
   EmitToStreamer(OutStreamer, MCInstBuilder(AArch64::ADR)

@@ -7,10 +7,11 @@
 ; CHECK-LABEL: jumpfun
 ; CHECK: adrp c[[JT:[0-9]+]], .LJT
 ; CHECK: add c[[JT]], c[[JT]], :lo12:.LJT
-; CHECK: adr c[[BB:[0-9]+]], .LBB0_2+1
+; CHECK: adr c[[BB:[0-9]+]], .LBB0_2
 ; CHECK: ldrb w[[REG:[0-9]+]], [c[[JT]], x[[INDEX:[0-9]+]]]
-; CHECK: add c[[ADDR:[0-9]+]], c[[BB]], x[[REG]], uxtx #2
-; CHECK: br c[[ADDR]]
+; CHECK: add c[[CAP:[0-9]+]], c[[BB]], x[[REG]], uxtx #2
+; CHECK: cvtp x[[ADDR:[0-9]+]], c[[CAP]]
+; CHECK: br x[[ADDR]]
 
 define i32 addrspace(200)* @jumpfun(i32 %a) {
 entry:
@@ -61,10 +62,11 @@ return:
 ; CHECK-LABEL: half_jt
 ; CHECK: adrp c[[JT:[0-9]+]], .LJT
 ; CHECK: add c[[JT]], c[[JT]], :lo12:.LJT
-; CHECK: adr c[[BB:[0-9]+]], .LBB1_2+1
+; CHECK: adr c[[BB:[0-9]+]], .LBB1_2
 ; CHECK: ldrh w[[REG:[0-9]+]], [c[[JT]], x[[INDEX:[0-9]+]], lsl #1]
-; CHECK: add c[[ADDR:[0-9]+]], c[[BB]], x[[REG]], uxtx #2
-; CHECK: br c[[ADDR]]
+; CHECK: add c[[CAP:[0-9]+]], c[[BB]], x[[REG]], uxtx #2
+; CHECK: cvtp x[[ADDR:[0-9]+]], c[[CAP]]
+; CHECK: br x[[ADDR]]
 define i32 addrspace(200)* @half_jt(i32 %a) {
 entry:
   switch i32 %a, label %sw.default [
@@ -122,10 +124,11 @@ return:
 ; CHECK: adrp c[[JT:[0-9]+]], .LJT
 ; CHECK: add c[[JT]], c[[JT]], :lo12:.LJT
 ; CHECK-LABEL: .Ltmp0
-; CHECK: adr c[[PC:[0-9]+]], .Ltmp0+1
+; CHECK: adr c[[PC:[0-9]+]], .Ltmp0
 ; CHECK: ldrsw x[[REG:[0-9]+]], [c[[JT]], x[[INDEX:[0-9]+]], lsl #2]
-; CHECK: add c[[ADDR:[0-9]+]], c[[PC]], x[[REG]], uxtx
-; CHECK: br c[[ADDR]]
+; CHECK: add c[[CAP:[0-9]+]], c[[PC]], x[[REG]], uxtx
+; CHECK: cvtp x[[ADDR:[0-9]+]], c[[CAP]]
+; CHECK: br x[[ADDR]]
 
 define i32 addrspace(200)* @word_jt(i32 %a) {
 entry:
@@ -187,14 +190,14 @@ declare i64 @llvm.aarch64.space(i32, i64)
 ; c64-relocs-NEXT:  Section (3) .rela.text {
 ; c64-relocs-NEXT:    0xC R_MORELLO_ADR_PREL_PG_HI20 .rodata 0x0
 ; c64-relocs-NEXT:    0x10 R_AARCH64_ADD_ABS_LO12_NC .rodata 0x0
-; c64-relocs-NEXT:    0x88 R_MORELLO_ADR_PREL_PG_HI20 .rodata 0x6
-; c64-relocs-NEXT:    0x8C R_AARCH64_ADD_ABS_LO12_NC .rodata 0x6
-; c64-relocs-NEXT:    0xF4 R_MORELLO_ADR_PREL_PG_HI20 .rodata 0x14
-; c64-relocs-NEXT:    0xF8 R_AARCH64_ADD_ABS_LO12_NC .rodata 0x14
+; c64-relocs-NEXT:    0x8C R_MORELLO_ADR_PREL_PG_HI20 .rodata 0x6
+; c64-relocs-NEXT:    0x90 R_AARCH64_ADD_ABS_LO12_NC .rodata 0x6
+; c64-relocs-NEXT:    0xFC R_MORELLO_ADR_PREL_PG_HI20 .rodata 0x14
+; c64-relocs-NEXT:    0x100 R_AARCH64_ADD_ABS_LO12_NC .rodata 0x14
 ; c64-relocs-NEXT:  }
 ; c64-relocs-NEXT:  Section (7) .rela.eh_frame {
 ; c64-relocs-NEXT:    0x20 R_AARCH64_PREL32 .text 0x0
-; c64-relocs-NEXT:    0x34 R_AARCH64_PREL32 .text 0x7C
-; c64-relocs-NEXT:    0x48 R_AARCH64_PREL32 .text 0xE8
+; c64-relocs-NEXT:    0x34 R_AARCH64_PREL32 .text 0x80
+; c64-relocs-NEXT:    0x48 R_AARCH64_PREL32 .text 0xF0
 ; c64-relocs-NEXT:  }
 ; c64-relocs-NEXT: ]

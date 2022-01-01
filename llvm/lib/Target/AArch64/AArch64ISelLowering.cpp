@@ -8578,7 +8578,7 @@ SDValue AArch64TargetLowering::LowerBR_JT(SDValue Op,
   AFI->setJumpTableEntryInfo(JTI, 4, nullptr);
 
   SDNode *Dest = nullptr;
-  if (Subtarget->hasPureCap())
+  if (Subtarget->hasPureCap()) {
     Dest =
         DAG.getMachineNode(AArch64::MCJumpTableDest32, DL, MVT::iFATPTR128,
             MVT::i64,
@@ -8586,7 +8586,19 @@ SDValue AArch64TargetLowering::LowerBR_JT(SDValue Op,
                 JT->getOpcode() != ISD::JumpTable,
                 cast<JumpTableSDNode>(JT.getNode())->getTargetFlags()),
             Entry, DAG.getTargetJumpTable(JTI, MVT::i32));
-  else
+
+    // Rainier delays resolving PCC bounds until the prior indirect capability
+    // branch has resolved. This means jump tables in tight loops create long
+    // ADR->BR->ADR->BR->... chains that quickly back up in the backend if the
+    // BR is a capability BR rather than an integer BR. Since we're deriving
+    // the capability from PCC we don't actually need a capability branch
+    // anyway, though it would be nice if it worked as well and could be used.
+    //
+    // NB: EXTRACT_SUBREG doesn't work if PCCBO is enabled, since integer BR
+    // will subtract PCC's base even in C64, so use CVTP instead.
+    Dest = DAG.getMachineNode(AArch64::CapConvertCapTo64PCC, DL, MVT::i64,
+                              SDValue(Dest, 0));
+  } else
     Dest =
         DAG.getMachineNode(AArch64::JumpTableDest32, DL, MVT::i64, MVT::i64, JT,
                            Entry, DAG.getTargetJumpTable(JTI, MVT::i32));
