@@ -8217,8 +8217,8 @@ ScalarEvolution::computeExitLimitFromICmp(const Loop *L,
   const SCEV *LHS = getSCEV(ExitCond->getOperand(0));
   const SCEV *RHS = getSCEV(ExitCond->getOperand(1));
 
-  ExitLimit EL = computeExitLimitFromICmp(L, Pred, LHS, RHS, ExitIfTrue,
-                                          ControlsExit, AllowPredicates);
+  ExitLimit EL = computeExitLimitFromICmp(L, Pred, LHS, RHS, ControlsExit,
+                                          AllowPredicates);
   if (EL.hasAnyInfo()) return EL;
 
   auto *ExhaustiveCount =
@@ -8234,10 +8234,8 @@ ScalarEvolution::ExitLimit
 ScalarEvolution::computeExitLimitFromICmp(const Loop *L,
                                           ICmpInst::Predicate Pred,
                                           const SCEV *LHS, const SCEV *RHS,
-                                          bool ExitIfTrue,
                                           bool ControlsExit,
                                           bool AllowPredicates) {
-
 
   // Try to evaluate any dependencies out of the loop.
   LHS = getSCEVAtScope(LHS, L);
