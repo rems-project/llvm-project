@@ -26,7 +26,6 @@ class AArch64Subtarget;
 class AArch64TargetMachine;
 class FunctionPass;
 class InstructionSelector;
-class MachineFunctionPass;
 class TargetMachine;
 
 FunctionPass *createAArch64DeadRegisterDefinitions();
