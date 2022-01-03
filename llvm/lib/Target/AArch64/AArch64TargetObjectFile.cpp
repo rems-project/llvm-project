@@ -43,7 +43,8 @@ getAlignmentForPreciseBounds(uint64_t Size, const TargetMachine &TM) const {
   return Align(1 << LogAlign);
 }
 
-AArch64_MachoTargetObjectFile::AArch64_MachoTargetObjectFile() {
+AArch64_MachoTargetObjectFile::AArch64_MachoTargetObjectFile()
+  : TargetLoweringObjectFileMachO() {
   SupportGOTPCRelWithOffset = false;
 }
 
