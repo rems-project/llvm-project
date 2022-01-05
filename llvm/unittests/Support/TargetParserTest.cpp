@@ -1437,17 +1437,14 @@ TEST(TargetParserTest, testAArch64Extension) {
 
 TEST(TargetParserTest, AArch64ExtensionFeatures) {
   std::vector<uint64_t> Extensions = {
-    AArch64::AEK_CRC,      AArch64::AEK_CRYPTO,
-    AArch64::AEK_FP,       AArch64::AEK_SIMD,
-    AArch64::AEK_FP16,     AArch64::AEK_PROFILE,
-    AArch64::AEK_RAS,      AArch64::AEK_LSE,
-    AArch64::AEK_RDM,      AArch64::AEK_DOTPROD,
-    AArch64::AEK_SVE,      AArch64::AEK_SVE2,
-    AArch64::AEK_SVE2AES,  AArch64::AEK_SVE2SM4,
-    AArch64::AEK_SVE2SHA3, AArch64::AEK_SVE2BITPERM,
-    AArch64::AEK_RCPC,     AArch64::AEK_FP16FML,
-    AArch64::AEK_SME,      AArch64::AEK_SMEF64,
-    AArch64::AEK_SMEI64 };
+      AArch64::AEK_CRC,         AArch64::AEK_CRYPTO,  AArch64::AEK_FP,
+      AArch64::AEK_SIMD,        AArch64::AEK_FP16,    AArch64::AEK_PROFILE,
+      AArch64::AEK_RAS,         AArch64::AEK_LSE,     AArch64::AEK_RDM,
+      AArch64::AEK_DOTPROD,     AArch64::AEK_SVE,     AArch64::AEK_SVE2,
+      AArch64::AEK_SVE2AES,     AArch64::AEK_SVE2SM4, AArch64::AEK_SVE2SHA3,
+      AArch64::AEK_SVE2BITPERM, AArch64::AEK_RCPC,    AArch64::AEK_FP16FML,
+      AArch64::AEK_SME,         AArch64::AEK_SMEF64,  AArch64::AEK_SMEI64,
+      AArch64::AEK_PERFMON};
 
   std::vector<StringRef> Features;
 
@@ -1482,6 +1479,7 @@ TEST(TargetParserTest, AArch64ExtensionFeatures) {
   EXPECT_TRUE(llvm::is_contained(Features, "+sme"));
   EXPECT_TRUE(llvm::is_contained(Features, "+sme-f64"));
   EXPECT_TRUE(llvm::is_contained(Features, "+sme-i64"));
+  EXPECT_TRUE(llvm::is_contained(Features, "+perfmon"));
 }
 
 TEST(TargetParserTest, AArch64ArchFeatures) {
@@ -1529,6 +1527,7 @@ TEST(TargetParserTest, AArch64ArchExtFeature) {
       {"sme-i64", "nosme-i64", "+sme-i64", "-sme-i64"},
       {"hbc", "nohbc", "+hbc", "-hbc"},
       {"mops", "nomops", "+mops", "-mops"},
+      {"pmuv3", "nopmuv3", "+perfmon", "-perfmon"},
   };
 
   for (unsigned i = 0; i < array_lengthof(ArchExt); i++) {
