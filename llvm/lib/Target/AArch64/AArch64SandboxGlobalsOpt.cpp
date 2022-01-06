@@ -48,6 +48,7 @@ public:
     Comdat *ObjComdat;
     GlobalValue::LinkageTypes Linkage;
     GlobalValue::VisibilityTypes Visibility;
+    std::string Suffix;
   };
 
   struct GlobalKeyCompare {
@@ -60,6 +61,8 @@ public:
         return (LHS.ObjComdat < RHS.ObjComdat);
       if (LHS.ObjComdat->getSelectionKind() != RHS.ObjComdat->getSelectionKind())
         return LHS.ObjComdat->getSelectionKind() < RHS.ObjComdat->getSelectionKind();
+      if (LHS.Suffix != RHS.Suffix)
+	return LHS.Suffix < RHS.Suffix;
       return LHS.ObjComdat->getName().compare(RHS.ObjComdat->getName()) < 0;
     }
   };
@@ -97,6 +100,7 @@ public:
     Key.Linkage = getCapLinkage(GV);
     Key.ObjComdat = GV->hasComdat() ? getCapComdat(GV) : nullptr;
     Key.Visibility = getCapVisibility(GV);
+    Key.Suffix = GV->hasComdat() ? GV->getName().str() : "";
     Globals[Key].push_back(GV);
   }
 
@@ -143,7 +147,7 @@ public:
 
     GlobalVariable *NGV = new GlobalVariable(*GVS[0]->getParent(),
         Const->getType(), true, Key.Linkage, Const,
-        Twine("__cap_merged_table"), nullptr,
+        Twine("__cap_merged_table") + Twine(Key.Suffix),  nullptr,
         GlobalValue::NotThreadLocal, 0);
     if (Key.ObjComdat)
       NGV->setComdat(Key.ObjComdat);
