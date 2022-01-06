@@ -204,14 +204,13 @@ entry:
 define i32 @test_memory_constraint(i32* %a) nounwind {
   ; CHECK-LABEL: name: test_memory_constraint
   ; CHECK: bb.1 (%ir-block.0):
-  ; CHECK-NEXT:   liveins: $x0
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $x0
-  ; CHECK-NEXT:   INLINEASM &"ldr $0, $1", 8 /* mayload attdialect */, 655370 /* regdef:GPR32common */, def %1, 196622 /* mem:m */, [[COPY]](p0)
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY %1
-  ; CHECK-NEXT:   $w0 = COPY [[COPY1]](s32)
-  ; CHECK-NEXT:   RET_ReallyLR 0, implicit $w0
-  %1 = tail call i32 asm "ldr $0, $1", "=r,*m"(i32* %a)
+  ; CHECK:   liveins: $x0
+  ; CHECK:   [[COPY:%[0-9]+]]:_(p0) = COPY $x0
+  ; CHECK:   INLINEASM &"ldr $0, $1", 8 /* mayload attdialect */, 655370 /* regdef:GPR32common */, def %1, 196622 /* mem:m */, [[COPY]](p0)
+  ; CHECK:   [[COPY1:%[0-9]+]]:_(s32) = COPY %1
+  ; CHECK:   $w0 = COPY [[COPY1]](s32)
+  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  %1 = tail call i32 asm "ldr $0, $1", "=r,*m"(i32* elementtype(i32) %a)
   ret i32 %1
 }
 
