@@ -4790,7 +4790,7 @@ TargetLowering::ParseConstraints(const DataLayout &DL,
     case InlineAsm::isOutput:
       // Indirect outputs just consume an argument.
       if (OpInfo.isIndirect) {
-        OpInfo.CallOperandVal = Call.getArgOperand(ArgNo++);
+        OpInfo.CallOperandVal = Call.getArgOperand(ArgNo);
         break;
       }
 
@@ -4808,7 +4808,7 @@ TargetLowering::ParseConstraints(const DataLayout &DL,
       ++ResNo;
       break;
     case InlineAsm::isInput:
-      OpInfo.CallOperandVal = Call.getArgOperand(ArgNo++);
+      OpInfo.CallOperandVal = Call.getArgOperand(ArgNo);
       break;
     case InlineAsm::isClobber:
       // Nothing to do.
@@ -4818,10 +4818,8 @@ TargetLowering::ParseConstraints(const DataLayout &DL,
     if (OpInfo.CallOperandVal) {
       llvm::Type *OpTy = OpInfo.CallOperandVal->getType();
       if (OpInfo.isIndirect) {
-        llvm::PointerType *PtrTy = dyn_cast<PointerType>(OpTy);
-        if (!PtrTy)
-          report_fatal_error("Indirect operand for inline asm not a pointer!");
-        OpTy = PtrTy->getElementType();
+        OpTy = Call.getAttributes().getParamElementType(ArgNo);
+        assert(OpTy && "Indirect opernad must have elementtype attribute");
       }
 
       // Look for vector wrapped in a struct. e.g. { <16 x i8> }.
@@ -4855,6 +4853,8 @@ TargetLowering::ParseConstraints(const DataLayout &DL,
       } else {
         OpInfo.ConstraintVT = MVT::getVT(OpTy, true);
       }
+
+      ArgNo++;
     }
   }
 
