@@ -152,11 +152,6 @@ public:
   bool isNeeded() const override { return !relocsMap.empty(); }
   size_t getSize() const override { return relocsMap.size() * entsize; }
   void finalizeContents() override;
-  // We need to calculate the PCC to decide how to align the OutputSections
-  // on the boundary of the PCC range. Cache the calculation here so that we
-  // don't need to recalculate later.
-  uint64_t morelloPCCBase;
-  uint64_t morelloPCCLimit;
 
 private:
   bool addEntry(CheriCapRelocLocation loc, CheriCapReloc relocation) {
@@ -390,7 +385,8 @@ void addCapabilityRelocation(Symbol *sym, RelType type, InputSectionBase *sec,
 // Emit either a dynamic relocation or __cap_reloc entry to initialize a
 // GOT slot.
 void addMorelloC64GotRelocation(RelType dynType, Symbol *sym, InputSectionBase *sec, uint64_t offset);
-void addMorelloCapabilityFragment(InputSectionBase *sec, Symbol *sym, uint64_t offset);
+void addMorelloCapabilityFragment(InputSectionBase *sec, Symbol *sym,
+                                  uint64_t offset, bool isExecRel);
 
 // Calculate the size of linker defined capabilities such as the PCC
 // capability. These lengths may result in increased alignment requirements
@@ -402,8 +398,11 @@ bool morelloLinkerDefinedCapabilityAlign();
 // | 56-bits length | 8-bits permission |
 uint64_t getMorelloSizeAndPermissions(int64_t a, const Symbol &sym,
                                       const InputSectionBase *isec,
-                                      uint64_t offset);
+                                      uint64_t offset, bool isExecRel);
 
+uint64_t getMorelloBaseAddress(int64_t a, const Symbol &sym,
+                               const InputSectionBase *isec, uint64_t offset,
+                               bool isExecRel);
 } // namespace elf
 } // namespace lld
 

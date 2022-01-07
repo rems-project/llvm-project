@@ -1645,13 +1645,31 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *buf) {
   }
 }
 
+static uint64_t calcAddend(int64_t va, const Symbol &sym) {
+  if (config->emachine != EM_AARCH64)
+    return va;
+
+  if (!config->isCheriAbi)
+    return va;
+
+  if (sym.isTls())
+    return va;
+
+  // Change addend of Morello executable capabilities to account for the
+  // aligned base.
+  va -= config->morelloPCCBase;
+  // Set the LSB to indicate this is an executable
+  va |= 1;
+  return va;
+}
+
 uint64_t DynamicReloc::getOffset() const {
   return inputSec->getVA(offsetInSec);
 }
 
 int64_t DynamicReloc::computeAddend() const {
   if (useSymVA)
-    return sym->getVA(addend);
+    return calcAddend(sym->getVA(addend), *sym);
   if (!outputSec)
     return addend;
   // See the comment in the DynamicReloc ctor.
@@ -1669,6 +1687,8 @@ uint32_t DynamicReloc::getSymIndex(SymbolTableBaseSection *symTab) const {
     }
     return symTab->getSymbolIndex(sym);
   }
+  if (sym && !sym->isTls())
+    return symTab->getSymbolIndex(sym);
   return 0;
 }
 
