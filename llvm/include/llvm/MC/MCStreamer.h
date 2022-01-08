@@ -43,7 +43,6 @@ namespace llvm {
 
 class AssemblerConstantPools;
 class MCAsmBackend;
-class MCCodeEmitter;
 class MCContext;
 struct MCDwarfFrameInfo;
 class MCExpr;
