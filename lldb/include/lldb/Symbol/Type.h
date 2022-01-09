@@ -321,7 +321,7 @@ private:
 
 class TypeListImpl {
 public:
-  TypeListImpl() : m_content() {}
+  TypeListImpl() {}
 
   void Append(const lldb::TypeImplSP &type) { m_content.push_back(type); }
 
@@ -352,10 +352,7 @@ private:
 
 class TypeMemberImpl {
 public:
-  TypeMemberImpl()
-      : m_type_impl_sp(), m_name()
-
-  {}
+  TypeMemberImpl() {}
 
   TypeMemberImpl(const lldb::TypeImplSP &type_impl_sp, uint64_t bit_offset,
                  ConstString name, uint32_t bitfield_bit_size = 0,
@@ -364,7 +361,7 @@ public:
         m_bitfield_bit_size(bitfield_bit_size), m_is_bitfield(is_bitfield) {}
 
   TypeMemberImpl(const lldb::TypeImplSP &type_impl_sp, uint64_t bit_offset)
-      : m_type_impl_sp(type_impl_sp), m_bit_offset(bit_offset), m_name(),
+      : m_type_impl_sp(type_impl_sp), m_bit_offset(bit_offset),
         m_bitfield_bit_size(0), m_is_bitfield(false) {
     if (m_type_impl_sp)
       m_name = m_type_impl_sp->GetName();
@@ -447,7 +444,7 @@ private:
 
 class TypeMemberFunctionImpl {
 public:
-  TypeMemberFunctionImpl() : m_type(), m_decl(), m_name() {}
+  TypeMemberFunctionImpl() {}
 
   TypeMemberFunctionImpl(const CompilerType &type, const CompilerDecl &decl,
                          const std::string &name,
@@ -484,7 +481,7 @@ private:
 
 class TypeEnumMemberImpl {
 public:
-  TypeEnumMemberImpl() : m_integer_type_sp(), m_name("<invalid>"), m_value() {}
+  TypeEnumMemberImpl() : m_name("<invalid>") {}
 
   TypeEnumMemberImpl(const lldb::TypeImplSP &integer_type_sp, ConstString name,
                      const llvm::APSInt &value);
@@ -512,7 +509,7 @@ protected:
 
 class TypeEnumMemberListImpl {
 public:
-  TypeEnumMemberListImpl() : m_content() {}
+  TypeEnumMemberListImpl() {}
 
   void Append(const lldb::TypeEnumMemberImplSP &type) {
     m_content.push_back(type);
