@@ -73,6 +73,7 @@
 #include <thread>
 
 #include "GDBRemoteRegisterContext.h"
+#include "GDBRemoteRegisterFallback.h"
 #include "Plugins/Platform/MacOSX/PlatformRemoteiOS.h"
 #include "Plugins/Process/Utility/GDBRemoteSignals.h"
 #include "Plugins/Process/Utility/InferiorCallPOSIX.h"
@@ -401,6 +402,7 @@ void ProcessGDBRemote::BuildDynamicRegisterInfo(bool force) {
   //     2 - If the target definition doesn't have any of the info from the
   //     target.xml (registers) then proceed to read the target.xml.
   //     3 - Fall back on the qRegisterInfo packets.
+  //     4 - Use hardcoded defaults if available.
 
   FileSpec target_definition_fspec =
       GetGlobalPluginProperties().GetTargetDefinitionFile();
@@ -517,6 +519,9 @@ void ProcessGDBRemote::BuildDynamicRegisterInfo(bool force) {
       break;
     }
   }
+
+  if (registers.empty())
+    registers = GetFallbackRegisters(arch_to_use);
 
   AddRemoteRegisters(registers, arch_to_use);
 }
