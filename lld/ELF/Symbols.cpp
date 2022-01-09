@@ -132,6 +132,7 @@ DenseMap<const Symbol *, std::pair<const InputFile *, const InputFile *>>
     elf::backwardReferences;
 SmallVector<std::tuple<std::string, const InputFile *, const Symbol &>, 0>
     elf::whyExtract;
+SmallVector<SymbolAux, 0> elf::symAux;
 
 Defined *ElfSym::newLibBss1;
 Defined *ElfSym::newLibBss2;
@@ -240,7 +241,7 @@ uint64_t Symbol::getGotVA() const {
 }
 
 uint64_t Symbol::getGotOffset() const {
-  return gotIndex * target->gotEntrySize;
+  return getGotIdx() * target->gotEntrySize;
 }
 
 uint64_t Symbol::getGotPltVA() const {
@@ -251,15 +252,15 @@ uint64_t Symbol::getGotPltVA() const {
 
 uint64_t Symbol::getGotPltOffset() const {
   if (isInIplt)
-    return pltIndex * target->gotEntrySize;
-  return (pltIndex + target->gotPltHeaderEntriesNum) * target->gotEntrySize;
+    return getPltIdx() * target->gotEntrySize;
+  return (getPltIdx() + target->gotPltHeaderEntriesNum) * target->gotEntrySize;
 }
 
 uint64_t Symbol::getPltVA() const {
   uint64_t outVA = isInIplt
-                       ? in.iplt->getVA() + pltIndex * target->ipltEntrySize
+                       ? in.iplt->getVA() + getPltIdx() * target->ipltEntrySize
                        : in.plt->getVA() + in.plt->headerSize +
-                             pltIndex * target->pltEntrySize;
+                             getPltIdx() * target->pltEntrySize;
 
   // While linking microMIPS code PLT code are always microMIPS
   // code. Set the less-significant bit to track that fact.
