@@ -695,6 +695,13 @@ void GotSection::addEntry(Symbol &sym) {
   symAux.back().gotIdx = numEntries++;
 }
 
+bool GotSection::addTlsDescEntry(Symbol &sym) {
+  assert(sym.auxIdx == symAux.size() - 1);
+  symAux.back().tlsDescIdx = numEntries;
+  numEntries += 2;
+  return true;
+}
+
 bool GotSection::addDynTlsEntry(Symbol &sym) {
   assert(sym.auxIdx == symAux.size() - 1);
   symAux.back().tlsGdIdx = numEntries;
@@ -711,6 +718,14 @@ bool GotSection::addTlsIndex() {
   tlsIndexOff = numEntries * config->gotEntrySize;
   numEntries += 2;
   return true;
+}
+
+uint32_t GotSection::getTlsDescOffset(const Symbol &sym) const {
+  return sym.getTlsDescIdx() * config->gotEntrySize;
+}
+
+uint64_t GotSection::getTlsDescAddr(const Symbol &sym) const {
+  return getVA() + getTlsDescOffset(sym);
 }
 
 uint64_t GotSection::getGlobalDynAddr(const Symbol &b) const {
