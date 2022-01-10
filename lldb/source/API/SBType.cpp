@@ -87,7 +87,7 @@ SBType &SBType::operator=(const SBType &rhs) {
   if (this != &rhs) {
     m_opaque_sp = rhs.m_opaque_sp;
   }
-  return LLDB_RECORD_RESULT(*this);
+  return *this;
 }
 
 SBType::~SBType() = default;
@@ -167,19 +167,17 @@ SBType SBType::GetPointerType(AddressSpace address_space) {
                      address_space);
 
   if (!IsValid())
-    return LLDB_RECORD_RESULT(SBType());
+    return SBType();
 
-  return LLDB_RECORD_RESULT(SBType(
-      TypeImplSP(new TypeImpl(m_opaque_sp->GetPointerType(address_space)))));
+  return SBType(TypeImplSP(new TypeImpl(m_opaque_sp->GetPointerType(address_space))));
 }
 
 SBType SBType::GetPointeeType() {
   LLDB_RECORD_METHOD_NO_ARGS(lldb::SBType, SBType, GetPointeeType);
 
   if (!IsValid())
-    return LLDB_RECORD_RESULT(SBType());
-  return LLDB_RECORD_RESULT(
-      SBType(TypeImplSP(new TypeImpl(m_opaque_sp->GetPointeeType()))));
+    return SBType();
+  return SBType(TypeImplSP(new TypeImpl(m_opaque_sp->GetPointeeType())));
 }
 
 SBType SBType::GetReferenceType(AddressSpace address_space) {
@@ -187,45 +185,42 @@ SBType SBType::GetReferenceType(AddressSpace address_space) {
                      address_space);
 
   if (!IsValid())
-    return LLDB_RECORD_RESULT(SBType());
-  return LLDB_RECORD_RESULT(SBType(
-      TypeImplSP(new TypeImpl(m_opaque_sp->GetReferenceType(address_space)))));
+    return SBType();
+  return SBType(TypeImplSP(new TypeImpl(m_opaque_sp->GetReferenceType(address_space))));
 }
 
 SBType SBType::GetTypedefedType() {
   LLDB_RECORD_METHOD_NO_ARGS(lldb::SBType, SBType, GetTypedefedType);
 
   if (!IsValid())
-    return LLDB_RECORD_RESULT(SBType());
-  return LLDB_RECORD_RESULT(
-      SBType(TypeImplSP(new TypeImpl(m_opaque_sp->GetTypedefedType()))));
+    return SBType();
+  return SBType(TypeImplSP(new TypeImpl(m_opaque_sp->GetTypedefedType())));
 }
 
 SBType SBType::GetDereferencedType() {
   LLDB_RECORD_METHOD_NO_ARGS(lldb::SBType, SBType, GetDereferencedType);
 
   if (!IsValid())
-    return LLDB_RECORD_RESULT(SBType());
-  return LLDB_RECORD_RESULT(
-      SBType(TypeImplSP(new TypeImpl(m_opaque_sp->GetDereferencedType()))));
+    return SBType();
+  return SBType(TypeImplSP(new TypeImpl(m_opaque_sp->GetDereferencedType())));
 }
 
 SBType SBType::GetArrayElementType() {
   LLDB_RECORD_METHOD_NO_ARGS(lldb::SBType, SBType, GetArrayElementType);
 
   if (!IsValid())
-    return LLDB_RECORD_RESULT(SBType());
-  return LLDB_RECORD_RESULT(SBType(TypeImplSP(new TypeImpl(
-      m_opaque_sp->GetCompilerType(true).GetArrayElementType(nullptr)))));
+    return SBType();
+  return SBType(TypeImplSP(new TypeImpl(
+      m_opaque_sp->GetCompilerType(true).GetArrayElementType(nullptr))));
 }
 
 SBType SBType::GetArrayType(uint64_t size) {
   LLDB_RECORD_METHOD(lldb::SBType, SBType, GetArrayType, (uint64_t), size);
 
   if (!IsValid())
-    return LLDB_RECORD_RESULT(SBType());
-  return LLDB_RECORD_RESULT(SBType(TypeImplSP(
-      new TypeImpl(m_opaque_sp->GetCompilerType(true).GetArrayType(size)))));
+    return SBType();
+  return SBType(TypeImplSP(
+      new TypeImpl(m_opaque_sp->GetCompilerType(true).GetArrayType(size))));
 }
 
 SBType SBType::GetVectorElementType() {
@@ -238,7 +233,7 @@ SBType SBType::GetVectorElementType() {
                                                         nullptr))
       type_sb.SetSP(TypeImplSP(new TypeImpl(vector_element_type)));
   }
-  return LLDB_RECORD_RESULT(type_sb);
+  return type_sb;
 }
 
 bool SBType::IsFunctionType() {
@@ -288,9 +283,9 @@ lldb::SBType SBType::GetFunctionReturnType() {
     CompilerType return_type(
         m_opaque_sp->GetCompilerType(true).GetFunctionReturnType());
     if (return_type.IsValid())
-      return LLDB_RECORD_RESULT(SBType(return_type));
+      return SBType(return_type);
   }
-  return LLDB_RECORD_RESULT(lldb::SBType());
+  return lldb::SBType();
 }
 
 lldb::SBTypeList SBType::GetFunctionArgumentTypes() {
@@ -305,7 +300,7 @@ lldb::SBTypeList SBType::GetFunctionArgumentTypes() {
       sb_type_list.Append(SBType(func_type.GetFunctionArgumentAtIndex(i)));
     }
   }
-  return LLDB_RECORD_RESULT(sb_type_list);
+  return sb_type_list;
 }
 
 uint32_t SBType::GetNumberOfMemberFunctions() {
@@ -325,35 +320,33 @@ lldb::SBTypeMemberFunction SBType::GetMemberFunctionAtIndex(uint32_t idx) {
   if (IsValid())
     sb_func_type.reset(new TypeMemberFunctionImpl(
         m_opaque_sp->GetCompilerType(true).GetMemberFunctionAtIndex(idx)));
-  return LLDB_RECORD_RESULT(sb_func_type);
+  return sb_func_type;
 }
 
 lldb::SBType SBType::GetUnqualifiedType() {
   LLDB_RECORD_METHOD_NO_ARGS(lldb::SBType, SBType, GetUnqualifiedType);
 
   if (!IsValid())
-    return LLDB_RECORD_RESULT(SBType());
-  return LLDB_RECORD_RESULT(
-      SBType(TypeImplSP(new TypeImpl(m_opaque_sp->GetUnqualifiedType()))));
+    return SBType();
+  return SBType(TypeImplSP(new TypeImpl(m_opaque_sp->GetUnqualifiedType())));
 }
 
 lldb::SBType SBType::GetCanonicalType() {
   LLDB_RECORD_METHOD_NO_ARGS(lldb::SBType, SBType, GetCanonicalType);
 
   if (IsValid())
-    return LLDB_RECORD_RESULT(
-        SBType(TypeImplSP(new TypeImpl(m_opaque_sp->GetCanonicalType()))));
-  return LLDB_RECORD_RESULT(SBType());
+    return SBType(TypeImplSP(new TypeImpl(m_opaque_sp->GetCanonicalType())));
+  return SBType();
 }
 
 SBType SBType::GetEnumerationIntegerType() {
   LLDB_RECORD_METHOD_NO_ARGS(lldb::SBType, SBType, GetEnumerationIntegerType);
 
   if (IsValid()) {
-    return LLDB_RECORD_RESULT(
-        SBType(m_opaque_sp->GetCompilerType(true).GetEnumerationIntegerType()));
+    return SBType(
+        m_opaque_sp->GetCompilerType(true).GetEnumerationIntegerType());
   }
-  return LLDB_RECORD_RESULT(SBType());
+  return SBType();
 }
 
 lldb::BasicType SBType::GetBasicType() {
@@ -369,9 +362,9 @@ SBType SBType::GetBasicType(lldb::BasicType basic_type) {
                      basic_type);
 
   if (IsValid() && m_opaque_sp->IsValid())
-    return LLDB_RECORD_RESULT(SBType(
-        m_opaque_sp->GetTypeSystem(false)->GetBasicTypeFromAST(basic_type)));
-  return LLDB_RECORD_RESULT(SBType());
+    return SBType(
+        m_opaque_sp->GetTypeSystem(false)->GetBasicTypeFromAST(basic_type));
+  return SBType();
 }
 
 uint32_t SBType::GetNumberOfDirectBaseClasses() {
@@ -428,7 +421,7 @@ SBTypeMember SBType::GetDirectBaseClassAtIndex(uint32_t idx) {
       sb_type_member.reset(new TypeMemberImpl(
           TypeImplSP(new TypeImpl(base_class_type)), bit_offset));
   }
-  return LLDB_RECORD_RESULT(sb_type_member);
+  return sb_type_member;
 }
 
 SBTypeMember SBType::GetVirtualBaseClassAtIndex(uint32_t idx) {
@@ -445,7 +438,7 @@ SBTypeMember SBType::GetVirtualBaseClassAtIndex(uint32_t idx) {
       sb_type_member.reset(new TypeMemberImpl(
           TypeImplSP(new TypeImpl(base_class_type)), bit_offset));
   }
-  return LLDB_RECORD_RESULT(sb_type_member);
+  return sb_type_member;
 }
 
 SBTypeEnumMemberList SBType::GetEnumMembers() {
@@ -468,7 +461,7 @@ SBTypeEnumMemberList SBType::GetEnumMembers() {
       });
     }
   }
-  return LLDB_RECORD_RESULT(sb_enum_member_list);
+  return sb_enum_member_list;
 }
 
 SBTypeMember SBType::GetFieldAtIndex(uint32_t idx) {
@@ -495,7 +488,7 @@ SBTypeMember SBType::GetFieldAtIndex(uint32_t idx) {
       }
     }
   }
-  return LLDB_RECORD_RESULT(sb_type_member);
+  return sb_type_member;
 }
 
 bool SBType::IsTypeComplete() {
@@ -519,10 +512,10 @@ lldb::SBModule SBType::GetModule() {
 
   lldb::SBModule sb_module;
   if (!IsValid())
-    return LLDB_RECORD_RESULT(sb_module);
+    return sb_module;
 
   sb_module.SetSP(m_opaque_sp->GetModule());
-  return LLDB_RECORD_RESULT(sb_module);
+  return sb_module;
 }
 
 const char *SBType::GetName() {
@@ -562,7 +555,7 @@ lldb::SBType SBType::GetTemplateArgumentType(uint32_t idx) {
                      idx);
 
   if (!IsValid())
-    return LLDB_RECORD_RESULT(SBType());
+    return SBType();
 
   CompilerType type;
   switch(GetTemplateArgumentKind(idx)) {
@@ -578,8 +571,8 @@ lldb::SBType SBType::GetTemplateArgumentType(uint32_t idx) {
       break;
   }
   if (type.IsValid())
-    return LLDB_RECORD_RESULT(SBType(type));
-  return LLDB_RECORD_RESULT(SBType());
+    return SBType(type);
+  return SBType();
 }
 
 lldb::TemplateArgumentKind SBType::GetTemplateArgumentKind(uint32_t idx) {
@@ -624,7 +617,7 @@ SBTypeList &SBTypeList::operator=(const SBTypeList &rhs) {
          i < rhs_size; i++)
       Append(const_cast<SBTypeList &>(rhs).GetTypeAtIndex(i));
   }
-  return LLDB_RECORD_RESULT(*this);
+  return *this;
 }
 
 void SBTypeList::Append(SBType type) {
@@ -639,8 +632,8 @@ SBType SBTypeList::GetTypeAtIndex(uint32_t index) {
                      index);
 
   if (m_opaque_up)
-    return LLDB_RECORD_RESULT(SBType(m_opaque_up->GetTypeAtIndex(index)));
-  return LLDB_RECORD_RESULT(SBType());
+    return SBType(m_opaque_up->GetTypeAtIndex(index));
+  return SBType();
 }
 
 uint32_t SBTypeList::GetSize() {
@@ -672,7 +665,7 @@ lldb::SBTypeMember &SBTypeMember::operator=(const lldb::SBTypeMember &rhs) {
     if (rhs.IsValid())
       m_opaque_up = std::make_unique<TypeMemberImpl>(rhs.ref());
   }
-  return LLDB_RECORD_RESULT(*this);
+  return *this;
 }
 
 bool SBTypeMember::IsValid() const {
@@ -700,7 +693,7 @@ SBType SBTypeMember::GetType() {
   if (m_opaque_up) {
     sb_type.SetSP(m_opaque_up->GetTypeImpl());
   }
-  return LLDB_RECORD_RESULT(sb_type);
+  return sb_type;
 }
 
 uint64_t SBTypeMember::GetOffsetInBytes() {
@@ -801,7 +794,7 @@ operator=(const lldb::SBTypeMemberFunction &rhs) {
 
   if (this != &rhs)
     m_opaque_sp = rhs.m_opaque_sp;
-  return LLDB_RECORD_RESULT(*this);
+  return *this;
 }
 
 bool SBTypeMemberFunction::IsValid() const {
@@ -852,7 +845,7 @@ SBType SBTypeMemberFunction::GetType() {
   if (m_opaque_sp) {
     sb_type.SetSP(lldb::TypeImplSP(new TypeImpl(m_opaque_sp->GetType())));
   }
-  return LLDB_RECORD_RESULT(sb_type);
+  return sb_type;
 }
 
 lldb::SBType SBTypeMemberFunction::GetReturnType() {
@@ -862,7 +855,7 @@ lldb::SBType SBTypeMemberFunction::GetReturnType() {
   if (m_opaque_sp) {
     sb_type.SetSP(lldb::TypeImplSP(new TypeImpl(m_opaque_sp->GetReturnType())));
   }
-  return LLDB_RECORD_RESULT(sb_type);
+  return sb_type;
 }
 
 uint32_t SBTypeMemberFunction::GetNumberOfArguments() {
@@ -883,7 +876,7 @@ lldb::SBType SBTypeMemberFunction::GetArgumentTypeAtIndex(uint32_t i) {
     sb_type.SetSP(
         lldb::TypeImplSP(new TypeImpl(m_opaque_sp->GetArgumentAtIndex(i))));
   }
-  return LLDB_RECORD_RESULT(sb_type);
+  return sb_type;
 }
 
 lldb::MemberFunctionKind SBTypeMemberFunction::GetKind() {
