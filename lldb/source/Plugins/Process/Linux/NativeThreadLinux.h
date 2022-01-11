@@ -57,6 +57,11 @@ public:
 
   NativeProcessLinux &GetProcess();
 
+  const NativeProcessLinux &GetProcess() const;
+
+  llvm::Expected<std::unique_ptr<llvm::MemoryBuffer>>
+  GetSiginfo() const override;
+
 private:
   // Interface for friend classes
 
