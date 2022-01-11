@@ -117,8 +117,6 @@ bool AArch64::getExtensionFeatures(uint64_t Extensions,
     Features.push_back("+sme-f64");
   if (Extensions & AArch64::AEK_SMEI64)
     Features.push_back("+sme-i64");
-  if (Extensions & AArch64::AEK_PERFMON)
-    Features.push_back("+perfmon");
   if (Extensions & AEK_SSBS)
     Features.push_back("+ssbs");
 
