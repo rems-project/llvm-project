@@ -6,8 +6,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-// XFAIL: LIBCXX-AIX-FIXME
-
 // <locale>
 
 // class num_put<charT, OutputIterator>
@@ -20,6 +18,7 @@
 // newlib uses '+nan' instead of 'nan'
 // XFAIL: libcpp-has-newlib
 // XFAIL: LIBCXX-WINDOWS-FIXME
+// XFAIL: LIBCXX-AIX-FIXME
 
 #include <locale>
 #include <ios>
