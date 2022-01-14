@@ -81,6 +81,8 @@ std::string Linux::getMultiarchTriple(const Driver &D,
   case llvm::Triple::aarch64:
     if (IsAndroid)
       return "aarch64-linux-android";
+    if (TargetTriple.isPurecap())
+      return "aarch64-linux-gnu_purecap";
     return "aarch64-linux-gnu";
   case llvm::Triple::aarch64_be:
     return "aarch64_be-linux-gnu";
@@ -172,6 +174,9 @@ static StringRef getOSLibDir(const llvm::Triple &Triple, const ArgList &Args) {
 
   if (Triple.getArch() == llvm::Triple::riscv32)
     return "lib32";
+
+  if (Triple.getArch() == llvm::Triple::aarch64 && Triple.isPurecap())
+    return "lib64c";
 
   return Triple.isArch32Bit() ? "lib" : "lib64";
 }
@@ -414,6 +419,9 @@ std::string Linux::getDynamicLinker(const ArgList &Args) const {
          tools::arm::getARMFloatABI(*this, Args) == tools::arm::FloatABI::Hard))
       ArchName += "hf";
 
+    if (Triple.getArch() == llvm::Triple::aarch64 && Triple.isPurecap())
+      ArchName += "_purecap";
+
     return "/lib/ld-musl-" + ArchName + ".so.1";
   }
 
@@ -424,10 +432,12 @@ std::string Linux::getDynamicLinker(const ArgList &Args) const {
   default:
     llvm_unreachable("unsupported architecture");
 
-  case llvm::Triple::aarch64:
+  case llvm::Triple::aarch64: {
     LibDir = "lib";
-    Loader = "ld-linux-aarch64.so.1";
+    Loader = Triple.isPurecap() ? "ld-linux-aarch64_purecap.so.1"
+                                : "ld-linux-aarch64.so.1";
     break;
+  }
   case llvm::Triple::aarch64_be:
     LibDir = "lib";
     Loader = "ld-linux-aarch64_be.so.1";

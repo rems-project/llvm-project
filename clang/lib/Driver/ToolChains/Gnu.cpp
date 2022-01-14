@@ -2082,6 +2082,9 @@ void Generic_GCC::GCCInstallationDetector::AddDefaultGCCPrefixes(
   static const char *const AArch64beLibDirs[] = {"/lib"};
   static const char *const AArch64beTriples[] = {"aarch64_be-none-linux-gnu",
                                                  "aarch64_be-linux-gnu"};
+  static const char *const AArch64PurecapLibDirs[] = {"/lib64c", "/lib"};
+  static const char *const AArch64PurecapTriples[] = {
+      "aarch64-linux-gnu_purecap", "aarch64-none-linux-gnu_purecap"};
 
   static const char *const ARMLibDirs[] = {"/lib"};
   static const char *const ARMTriples[] = {"arm-linux-gnueabi",
@@ -2304,6 +2307,16 @@ void Generic_GCC::GCCInstallationDetector::AddDefaultGCCPrefixes(
 
   switch (TargetTriple.getArch()) {
   case llvm::Triple::aarch64:
+    if (TargetTriple.isPurecap()) {
+      LibDirs.append(begin(AArch64PurecapLibDirs), end(AArch64PurecapLibDirs));
+      TripleAliases.append(begin(AArch64PurecapTriples),
+                           end(AArch64PurecapTriples));
+      BiarchLibDirs.append(begin(AArch64PurecapLibDirs),
+                           end(AArch64PurecapLibDirs));
+      BiarchTripleAliases.append(begin(AArch64PurecapTriples),
+                                 end(AArch64PurecapTriples));
+      break;
+    }
     LibDirs.append(begin(AArch64LibDirs), end(AArch64LibDirs));
     TripleAliases.append(begin(AArch64Triples), end(AArch64Triples));
     BiarchLibDirs.append(begin(AArch64LibDirs), end(AArch64LibDirs));

@@ -225,6 +225,9 @@ public:
 
     CheriPurecap,
 
+    GNUPurecap,
+    MuslPurecap,
+
     MSVC,
     Itanium,
     Cygnus,
@@ -536,7 +539,14 @@ public:
     EnvironmentType Env = getEnvironment();
     return Env == Triple::GNU || Env == Triple::GNUABIN32 ||
            Env == Triple::GNUABI64 || Env == Triple::GNUEABI ||
-           Env == Triple::GNUEABIHF || Env == Triple::GNUX32;
+           Env == Triple::GNUEABIHF || Env == Triple::GNUX32 ||
+           Env == Triple::GNUPurecap;
+  }
+
+  bool isPurecap() const {
+    EnvironmentType Env = getEnvironment();
+    return Env == Triple::MuslPurecap || Env == Triple::GNUPurecap ||
+           Env == Triple::CheriPurecap;
   }
 
   bool isOSContiki() const {
@@ -695,7 +705,8 @@ public:
     return getEnvironment() == Triple::Musl ||
            getEnvironment() == Triple::MuslEABI ||
            getEnvironment() == Triple::MuslEABIHF ||
-           getEnvironment() == Triple::MuslX32;
+           getEnvironment() == Triple::MuslX32 ||
+           getEnvironment() == Triple::MuslPurecap;
   }
 
   /// Tests whether the target is SPIR (32- or 64-bit).

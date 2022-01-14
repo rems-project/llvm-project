@@ -32,7 +32,7 @@ void getMorelloMode(const Driver &D, const llvm::Triple &Triple,
                     bool &C64, bool &PureCap,
                     bool &ReducedCapRegs);
 
-bool isPurecap(const llvm::opt::ArgList &Args);
+bool isPurecap(const llvm::opt::ArgList &Args, llvm::Triple &Triple);
 
 } // end namespace aarch64
 } // end namespace target

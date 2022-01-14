@@ -1726,6 +1726,9 @@ StringRef RenderAArch64ABI(const llvm::Triple &Triple, const ArgList &Args,
   else
     ABIName = "aapcs";
 
+  if (Triple.isPurecap())
+    ABIName = "purecap";
+
   CmdArgs.push_back("-target-abi");
   CmdArgs.push_back(ABIName);
   return ABIName;

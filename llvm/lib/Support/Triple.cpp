@@ -234,6 +234,8 @@ StringRef Triple::getEnvironmentTypeName(EnvironmentType Kind) {
   case UnknownEnvironment: return "unknown";
   case Android: return "android";
   case CheriPurecap: return "purecap";
+  case GNUPurecap: return "gnu_purecap";
+  case MuslPurecap: return "musl_purecap";
   case CODE16: return "code16";
   case CoreCLR: return "coreclr";
   case Cygnus: return "cygnus";
@@ -554,6 +556,8 @@ static Triple::EnvironmentType parseEnvironment(StringRef EnvironmentName) {
   return StringSwitch<Triple::EnvironmentType>(EnvironmentName)
       .StartsWith("cheripurecap", Triple::CheriPurecap)
       .StartsWith("purecap", Triple::CheriPurecap)
+      .StartsWith("gnu_purecap", Triple::GNUPurecap)
+      .StartsWith("musl_purecap", Triple::MuslPurecap)
       .StartsWith("eabihf", Triple::EABIHF)
       .StartsWith("eabi", Triple::EABI)
       .StartsWith("gnuabin32", Triple::GNUABIN32)
