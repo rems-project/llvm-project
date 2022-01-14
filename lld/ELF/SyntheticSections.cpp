@@ -1657,10 +1657,7 @@ static uint64_t calcAddend(int64_t va, const Symbol &sym) {
 
   // Change addend of Morello executable capabilities to account for the
   // aligned base.
-  va -= config->morelloPCCBase;
-  // Set the LSB to indicate this is an executable
-  va |= 1;
-  return va;
+  return va - config->morelloPCCBase;
 }
 
 uint64_t DynamicReloc::getOffset() const {
