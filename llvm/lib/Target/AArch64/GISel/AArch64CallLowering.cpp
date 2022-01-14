@@ -1113,6 +1113,7 @@ bool AArch64CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
     return false;
   }
 
+  Info.IsTailCall = CanTailCallOpt;
   if (CanTailCallOpt)
     return lowerTailCall(MIRBuilder, Info, OutArgs);
 
