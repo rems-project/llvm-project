@@ -1102,7 +1102,7 @@ void GDBRemoteCommunicationServerLLGS::NewSubprocess(
 }
 
 void GDBRemoteCommunicationServerLLGS::DataAvailableCallback() {
-  Log *log(GetLogIfAnyCategoriesSet(GDBR_LOG_COMM));
+  Log *log = GetLog(GDBRLog::Comm);
 
   bool interrupt = false;
   bool done = false;
