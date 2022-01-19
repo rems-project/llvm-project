@@ -3119,7 +3119,8 @@ KnownBits SelectionDAG::computeKnownBits(SDValue Op, const APInt &DemandedElts,
   case ISD::MUL: {
     Known = computeKnownBits(Op.getOperand(1), DemandedElts, Depth + 1);
     Known2 = computeKnownBits(Op.getOperand(0), DemandedElts, Depth + 1);
-    Known = KnownBits::mul(Known, Known2);
+    bool SelfMultiply = Op.getOperand(0) == Op.getOperand(1);
+    Known = KnownBits::mul(Known, Known2, SelfMultiply);
     break;
   }
   case ISD::MULHU: {
@@ -3138,8 +3139,9 @@ KnownBits SelectionDAG::computeKnownBits(SDValue Op, const APInt &DemandedElts,
     assert((Op.getResNo() == 0 || Op.getResNo() == 1) && "Unknown result");
     Known = computeKnownBits(Op.getOperand(1), DemandedElts, Depth + 1);
     Known2 = computeKnownBits(Op.getOperand(0), DemandedElts, Depth + 1);
+    bool SelfMultiply = Op.getOperand(0) == Op.getOperand(1);
     if (Op.getResNo() == 0)
-      Known = KnownBits::mul(Known, Known2);
+      Known = KnownBits::mul(Known, Known2, SelfMultiply);
     else
       Known = KnownBits::mulhu(Known, Known2);
     break;
@@ -3148,8 +3150,9 @@ KnownBits SelectionDAG::computeKnownBits(SDValue Op, const APInt &DemandedElts,
     assert((Op.getResNo() == 0 || Op.getResNo() == 1) && "Unknown result");
     Known = computeKnownBits(Op.getOperand(1), DemandedElts, Depth + 1);
     Known2 = computeKnownBits(Op.getOperand(0), DemandedElts, Depth + 1);
+    bool SelfMultiply = Op.getOperand(0) == Op.getOperand(1);
     if (Op.getResNo() == 0)
-      Known = KnownBits::mul(Known, Known2);
+      Known = KnownBits::mul(Known, Known2, SelfMultiply);
     else
       Known = KnownBits::mulhs(Known, Known2);
     break;
