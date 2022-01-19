@@ -3567,7 +3567,6 @@ static const struct Extension {
   const FeatureBitset Features;
   const FeatureBitset DisableFeatures;
 } ExtensionMap[] = {
-<<<<<<< HEAD
   { "crc", {AArch64::FeatureCRC}, {AArch64::FeatureCRC} },
   { "sm4",  {AArch64::FeatureSM4},  {AArch64::FeatureSM4} },
   { "sha3", {AArch64::FeatureSHA3}, {AArch64::FeatureSHA3} },

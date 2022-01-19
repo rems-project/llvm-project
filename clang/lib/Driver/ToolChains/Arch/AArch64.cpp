@@ -316,7 +316,8 @@ bool aarch64::isPurecap(const llvm::opt::ArgList &Args, llvm::Triple &Triple) {
 }
 
 void aarch64::getMorelloMode(const Driver &D, const llvm::Triple &Triple,
-                             const ArgList &Args, bool &A64C,
+                             const ArgList &Args,
+                             bool &A64C,
                              bool &C64, bool &PureCap,
                              bool &ReducedCapRegs) {
   bool ForcePureCap = false;
@@ -344,7 +345,8 @@ void aarch64::getMorelloMode(const Driver &D, const llvm::Triple &Triple,
     ReducedCapRegs = true;
 
   std::vector<StringRef> Features;
-  getAArch64TargetFeatures(D, Triple, Args, Features, false);
+  llvm::opt::ArgStringList CmdArgs;
+  getAArch64TargetFeatures(D, Triple, Args, CmdArgs, Features, false);
 
   // Look through all the features to take what into account what's coming from
   // -march.
