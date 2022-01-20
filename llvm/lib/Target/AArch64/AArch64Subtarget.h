@@ -226,7 +226,6 @@ protected:
   bool HasETE = false;
   bool HasTRBE = false;
   bool HasBRBE = false;
-  bool HasPAUTH = false;
   bool HasSPE_EEF = false;
 
   // HasZeroCycleRegMove - Has zero-cycle register mov instructions.
@@ -530,7 +529,6 @@ public:
   bool hasRandGen() const { return HasRandGen; }
   bool hasMTE() const { return HasMTE; }
   bool hasTME() const { return HasTME; }
-  bool hasPAUTH() const { return HasPAUTH; }
   // Arm SVE2 extensions
   bool hasSVE2AES() const { return HasSVE2AES; }
   bool hasSVE2SM4() const { return HasSVE2SM4; }
