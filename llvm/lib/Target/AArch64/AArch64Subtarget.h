@@ -699,7 +699,10 @@ public:
     return MinSVEVectorSizeInBits;
   }
 
-  bool useSVEForFixedLengthVectors() const;
+  bool useSVEForFixedLengthVectors() const {
+    // Prefer NEON unless larger SVE registers are available.
+    return hasSVE() && getMinSVEVectorSizeInBits() >= 256;
+  }
 
   unsigned getVScaleForTuning() const { return VScaleForTuning; }
 };
