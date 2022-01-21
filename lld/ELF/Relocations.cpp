@@ -241,6 +241,10 @@ handleTlsRelocation(RelType type, Symbol &sym, InputSectionBase &c,
       uint64_t off = in.got->getGlobalDynOffset(sym);
       mainPart->relaDyn->addReloc(
           {target->tlsDescRel, in.got, off, !sym.isPreemptible, &sym, 0});
+
+      if (config->morelloC64Plt && sym.isTls() && !sym.isPreemptible) {
+        in.got->relocations.push_back({R_SIZE, R_AARCH64_ABS64, off + 24, 0, &sym});
+      }
     }
     if (expr != R_TLSDESC_CALL)
       c.relocations.push_back({expr, type, offset, addend, &sym});
@@ -1201,6 +1205,10 @@ static void addGotEntry(Symbol &sym) {
     mainPart->relaDyn->addReloc(
       sym.isTls() ? target->tlsGotRel : target->gotRel, in.got, off, &sym, 0,
       sym.isPreemptible ? R_ADDEND : R_ABS, target->symbolicRel);
+
+  if (config->morelloC64Plt && sym.isTls() && !sym.isPreemptible) {
+    in.got->relocations.push_back({R_SIZE, R_AARCH64_ABS64, off + 8, 0, &sym});
+  }
 }
 
 // Return true if we can define a symbol in the executable that
