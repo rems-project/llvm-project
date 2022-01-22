@@ -83,7 +83,7 @@ body:             |
         liveins: $lr, $x0, $x1, $x2
 
         BLR_RVMARKER @attachedcall, @foo, $x0, $x1, $x2, csr_aarch64_aapcs, implicit-def dead $lr, implicit $sp, implicit-def $sp, implicit-def $x0
-        RET_ReallyLR
+        RET_ReallyLR 0
 ...
 
 # CHECK-LABEL: : test_bl_pass_w0_w1_args

@@ -223,7 +223,7 @@ def CapOrImm : CapOrImmFmt<(outs Capsp:$Cd), (ins Capsp:$Cn, uimm8:$imm8), "orrf
 def CapOrrReg : CapOrrRegFmt<(outs Capsp:$Cd), (ins Capsp:$Cn, GPR64:$Rm), "orrflgs", "\t$Cd, $Cn, $Rm", []>;
 let isBarrier = 1, isReturn = 1, isTerminator = 1 in
   def CapReturn : CapReturnFmt<(outs), (ins Cap:$Cn), "ret", "\t$Cn", []>;
-let isBarrier = 1, isReturn = 1, isTerminator = 1 in
+let isBarrier = 1, isReturn = 1, isTerminator = 1, Size = 8 in
   def FakeCapReturn : Pseudo<(outs), (ins Cap:$Cn), []>;
 let isBarrier = 1, isReturn = 1, isTerminator = 1 in
   def CapReturnDirect : CapReturnDirectFmt<(outs), (ins Cap:$Cn), "rets", "\t$Cn", []>;

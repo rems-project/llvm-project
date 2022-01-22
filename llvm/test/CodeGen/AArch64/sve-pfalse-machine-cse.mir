@@ -15,12 +15,12 @@ body:             |
     ; CHECK-NEXT: [[UZP1_PPP_B:%[0-9]+]]:ppr = UZP1_PPP_B [[COPY]], [[PFALSE]]
     ; CHECK-NEXT: [[UZP1_PPP_B1:%[0-9]+]]:ppr = UZP1_PPP_B killed [[UZP1_PPP_B]], [[PFALSE]]
     ; CHECK-NEXT: $p0 = COPY [[UZP1_PPP_B1]]
-    ; CHECK-NEXT: RET_ReallyLR implicit $p0
+    ; CHECK-NEXT: RET_ReallyLR 0, implicit $p0
     %0:ppr = COPY $p0
     %2:ppr = PFALSE
     %3:ppr = UZP1_PPP_B %0, %2
     %4:ppr = PFALSE
     %5:ppr = UZP1_PPP_B killed %3, %4
     $p0 = COPY %5
-    RET_ReallyLR implicit $p0
+    RET_ReallyLR 0, implicit $p0
 ...
