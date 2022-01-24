@@ -420,6 +420,8 @@ public:
 
   bool GetQXferMemoryMapReadSupported();
 
+  bool GetQXferSigInfoReadSupported();
+
   LazyBool SupportsAllocDeallocMemory() // const
   {
     // Uncomment this to have lldb pretend the debug server doesn't respond to
@@ -636,6 +638,7 @@ protected:
   LazyBool m_supports_qXfer_siginfo_read = eLazyBoolCalculate;
   LazyBool m_supports_qXfer_capa_read = eLazyBoolCalculate;
   LazyBool m_supports_qXfer_memory_map_read = eLazyBoolCalculate;
+  LazyBool m_supports_qXfer_siginfo_read = eLazyBoolCalculate;
   LazyBool m_supports_augmented_libraries_svr4_read = eLazyBoolCalculate;
   LazyBool m_supports_jThreadExtendedInfo = eLazyBoolCalculate;
   LazyBool m_supports_jLoadedDynamicLibrariesInfos = eLazyBoolCalculate;
