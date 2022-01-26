@@ -17303,7 +17303,7 @@ static SDValue performPostLD1Combine(SDNode *N,
   SelectionDAG &DAG = DCI.DAG;
   EVT VT = N->getValueType(0);
 
-  if (VT.isScalableVector())
+  if (!VT.is128BitVector() && !VT.is64BitVector())
     return SDValue();
 
   unsigned LoadIdx = IsLaneOp ? 1 : 0;
