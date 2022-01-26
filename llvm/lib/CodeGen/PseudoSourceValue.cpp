@@ -23,7 +23,7 @@ using namespace llvm;
 static const char *const PSVNames[] = {
     "Stack", "GOT", "CapTable", "JumpTable", "ConstantPool", "FixedStack",
     "GlobalValueCallEntry", "ExternalSymbolCallEntry"};
-static_assert(size(PSVNames) == PseudoSourceValue::TargetCustom, "Missing entry?");
+static_assert(array_lengthof(PSVNames) == PseudoSourceValue::TargetCustom, "Missing entry?");
 
 PseudoSourceValue::PseudoSourceValue(unsigned Kind, const TargetInstrInfo &TII)
     : Kind(Kind) {
