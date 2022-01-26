@@ -20,7 +20,7 @@ body:             |
     ; CHECK-NEXT: [[ADD:%[0-9]+]]:_(s32) = G_ADD [[ASHR]], [[C1]]
     ; CHECK-NEXT: %saddsat:_(s32) = G_SELECT [[SADDO1]](s1), [[ADD]], [[SADDO]]
     ; CHECK-NEXT: $w0 = COPY %saddsat(s32)
-    ; CHECK-NEXT: RET_ReallyLR implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
     %x:_(s32) = COPY $w0
     %y:_(s32) = COPY $w1
     %saddsat:_(s32) = G_SADDSAT %x, %y
@@ -46,7 +46,7 @@ body:             |
     ; CHECK-NEXT: [[ADD:%[0-9]+]]:_(s64) = G_ADD [[ASHR]], [[C1]]
     ; CHECK-NEXT: %saddsat:_(s64) = G_SELECT [[SADDO1]](s1), [[ADD]], [[SADDO]]
     ; CHECK-NEXT: $x0 = COPY %saddsat(s64)
-    ; CHECK-NEXT: RET_ReallyLR implicit $x0
+    ; CHECK-NEXT: RET_ReallyLR 0, implicit $x0
     %x:_(s64) = COPY $x0
     %y:_(s64) = COPY $x1
     %saddsat:_(s64) = G_SADDSAT %x, %y
@@ -79,7 +79,7 @@ body:             |
     ; CHECK-NEXT: [[ADD1:%[0-9]+]]:_(s32) = G_ADD [[ASHR]], [[C1]]
     ; CHECK-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[TRUNC]](s1), [[ADD1]], [[ADD]]
     ; CHECK-NEXT: $w0 = COPY [[SELECT]](s32)
-    ; CHECK-NEXT: RET_ReallyLR implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
     %copy_1:_(s32) = COPY $w0
     %x:_(s16) = G_TRUNC %copy_1(s32)
     %copy_2:_(s32) = COPY $w1
@@ -115,7 +115,7 @@ body:             |
     ; CHECK-NEXT: [[ADD1:%[0-9]+]]:_(s32) = G_ADD [[ASHR]], [[C1]]
     ; CHECK-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[TRUNC]](s1), [[ADD1]], [[ADD]]
     ; CHECK-NEXT: $w0 = COPY [[SELECT]](s32)
-    ; CHECK-NEXT: RET_ReallyLR implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
     %copy_1:_(s32) = COPY $w0
     %x:_(s1) = G_TRUNC %copy_1(s32)
     %copy_2:_(s32) = COPY $w1
@@ -151,7 +151,7 @@ body:             |
     ; CHECK-NEXT: [[ADD1:%[0-9]+]]:_(s32) = G_ADD [[ASHR]], [[C1]]
     ; CHECK-NEXT: [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[TRUNC]](s1), [[ADD1]], [[ADD]]
     ; CHECK-NEXT: $w0 = COPY [[SELECT]](s32)
-    ; CHECK-NEXT: RET_ReallyLR implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
     %copy_1:_(s32) = COPY $w0
     %x:_(s3) = G_TRUNC %copy_1(s32)
     %copy_2:_(s32) = COPY $w1
@@ -188,7 +188,7 @@ body:             |
     ; CHECK-NEXT: [[ADD1:%[0-9]+]]:_(s64) = G_ADD [[ASHR]], [[C1]]
     ; CHECK-NEXT: [[SELECT:%[0-9]+]]:_(s64) = G_SELECT [[TRUNC]](s1), [[ADD1]], [[ADD]]
     ; CHECK-NEXT: $x0 = COPY [[SELECT]](s64)
-    ; CHECK-NEXT: RET_ReallyLR implicit $x0
+    ; CHECK-NEXT: RET_ReallyLR 0, implicit $x0
     %copy_1:_(s64) = COPY $x0
     %x:_(s36) = G_TRUNC %copy_1(s64)
     %copy_2:_(s64) = COPY $x1
@@ -247,7 +247,7 @@ body:             |
     ; CHECK-NEXT: [[MV6:%[0-9]+]]:_(s64) = G_MERGE_VALUES [[MV]](s32), [[MV1]](s32)
     ; CHECK-NEXT: [[SELECT:%[0-9]+]]:_(s64) = G_SELECT [[TRUNC2]](s1), [[UADDO2]], [[MV6]]
     ; CHECK-NEXT: $x0 = COPY [[SELECT]](s64)
-    ; CHECK-NEXT: RET_ReallyLR implicit $x0
+    ; CHECK-NEXT: RET_ReallyLR 0, implicit $x0
     %copy_1:_(s128) = COPY $q0
     %x:_(s88) = G_TRUNC %copy_1(s128)
     %copy_2:_(s128) = COPY $q1

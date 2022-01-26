@@ -15,7 +15,7 @@ body:             |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<4 x s32>) = COPY $q1
     ; CHECK-NEXT: [[SHUF:%[0-9]+]]:_(<4 x s32>) = G_SHUFFLE_VECTOR [[COPY]](<4 x s32>), [[COPY1]], shufflemask(0, 0, 0, 0)
     ; CHECK-NEXT: $q0 = COPY [[SHUF]](<4 x s32>)
-    ; CHECK-NEXT: RET_ReallyLR implicit $q0
+    ; CHECK-NEXT: RET_ReallyLR 0, implicit $q0
     %0:_(<4 x s32>) = COPY $q0
     %1:_(<4 x s32>) = COPY $q1
     %2:_(<4 x s32>) = G_SHUFFLE_VECTOR %0(<4 x s32>), %1, shufflemask(0, 0, 0, 0)
@@ -38,7 +38,7 @@ body:             |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<2 x s64>) = COPY $q1
     ; CHECK-NEXT: [[SHUF:%[0-9]+]]:_(<2 x s64>) = G_SHUFFLE_VECTOR [[COPY]](<2 x s64>), [[COPY1]], shufflemask(0, 0)
     ; CHECK-NEXT: $q0 = COPY [[SHUF]](<2 x s64>)
-    ; CHECK-NEXT: RET_ReallyLR implicit $q0
+    ; CHECK-NEXT: RET_ReallyLR 0, implicit $q0
     %0:_(<2 x s64>) = COPY $q0
     %1:_(<2 x s64>) = COPY $q1
     %2:_(<2 x s64>) = G_SHUFFLE_VECTOR %0(<2 x s64>), %1, shufflemask(0, 0)
@@ -61,7 +61,7 @@ body:             |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<2 x p0>) = COPY $q1
     ; CHECK-NEXT: [[SHUF:%[0-9]+]]:_(<2 x p0>) = G_SHUFFLE_VECTOR [[COPY]](<2 x p0>), [[COPY1]], shufflemask(0, 0)
     ; CHECK-NEXT: $q0 = COPY [[SHUF]](<2 x p0>)
-    ; CHECK-NEXT: RET_ReallyLR implicit $q0
+    ; CHECK-NEXT: RET_ReallyLR 0, implicit $q0
     %0:_(<2 x p0>) = COPY $q0
     %1:_(<2 x p0>) = COPY $q1
     %2:_(<2 x p0>) = G_SHUFFLE_VECTOR %0(<2 x p0>), %1, shufflemask(0, 0)
@@ -84,7 +84,7 @@ body:             |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s8>) = COPY $q1
     ; CHECK-NEXT: [[SHUF:%[0-9]+]]:_(<16 x s8>) = G_SHUFFLE_VECTOR [[COPY]](<16 x s8>), [[COPY1]], shufflemask(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
     ; CHECK-NEXT: $q0 = COPY [[SHUF]](<16 x s8>)
-    ; CHECK-NEXT: RET_ReallyLR implicit $q0
+    ; CHECK-NEXT: RET_ReallyLR 0, implicit $q0
     %0:_(<16 x s8>) = COPY $q0
     %1:_(<16 x s8>) = COPY $q1
     %2:_(<16 x s8>) = G_SHUFFLE_VECTOR %0(<16 x s8>), %1, shufflemask(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
@@ -107,7 +107,7 @@ body:             |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<8 x s16>) = COPY $q1
     ; CHECK-NEXT: [[SHUF:%[0-9]+]]:_(<8 x s16>) = G_SHUFFLE_VECTOR [[COPY]](<8 x s16>), [[COPY1]], shufflemask(0, 0, 0, 0, 0, 0, 0, 0)
     ; CHECK-NEXT: $q0 = COPY [[SHUF]](<8 x s16>)
-    ; CHECK-NEXT: RET_ReallyLR implicit $q0
+    ; CHECK-NEXT: RET_ReallyLR 0, implicit $q0
     %0:_(<8 x s16>) = COPY $q0
     %1:_(<8 x s16>) = COPY $q1
     %2:_(<8 x s16>) = G_SHUFFLE_VECTOR %0(<8 x s16>), %1, shufflemask(0, 0, 0, 0, 0, 0, 0, 0)
@@ -132,7 +132,7 @@ body:             |
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:_(s64) = COPY [[COPY1]](s64)
     ; CHECK-NEXT: $d0 = COPY [[COPY2]](s64)
     ; CHECK-NEXT: $d1 = COPY [[COPY3]](s64)
-    ; CHECK-NEXT: RET_ReallyLR implicit $d0, implicit $d1
+    ; CHECK-NEXT: RET_ReallyLR 0, implicit $d0, implicit $d1
     %0:_(s64) = COPY $d0
     %1:_(s64) = COPY $d1
     %3:_(s64) = G_SHUFFLE_VECTOR %0:_(s64), %1:_, shufflemask(0)
