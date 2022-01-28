@@ -187,13 +187,6 @@ bool GDBRemoteCommunicationClient::GetQXferMemoryMapReadSupported() {
   return m_supports_qXfer_memory_map_read == eLazyBoolYes;
 }
 
-bool GDBRemoteCommunicationClient::GetQXferSigInfoReadSupported() {
-  if (m_supports_qXfer_siginfo_read == eLazyBoolCalculate) {
-    GetRemoteQSupported();
-  }
-  return m_supports_qXfer_siginfo_read == eLazyBoolYes;
-}
-
 uint64_t GDBRemoteCommunicationClient::GetRemoteMaxPacketSize() {
   if (m_max_packet_size == 0) {
     GetRemoteQSupported();
@@ -296,7 +289,6 @@ void GDBRemoteCommunicationClient::ResetDiscoverableSettings(bool did_exec) {
     m_supports_qXfer_siginfo_read = eLazyBoolCalculate;
     m_supports_qXfer_capa_read = eLazyBoolCalculate;
     m_supports_qXfer_memory_map_read = eLazyBoolCalculate;
-    m_supports_qXfer_siginfo_read = eLazyBoolCalculate;
     m_supports_augmented_libraries_svr4_read = eLazyBoolCalculate;
     m_uses_native_signals = eLazyBoolCalculate;
     m_supports_qProcessInfoPID = true;
@@ -347,7 +339,6 @@ void GDBRemoteCommunicationClient::GetRemoteQSupported() {
   m_supports_qXfer_siginfo_read = eLazyBoolNo;
   m_supports_qXfer_capa_read = eLazyBoolNo;
   m_supports_qXfer_memory_map_read = eLazyBoolNo;
-  m_supports_qXfer_siginfo_read = eLazyBoolNo;
   m_supports_multiprocess = eLazyBoolNo;
   m_supports_qEcho = eLazyBoolNo;
   m_supports_QPassSignals = eLazyBoolNo;
@@ -394,8 +385,6 @@ void GDBRemoteCommunicationClient::GetRemoteQSupported() {
         m_supports_qXfer_capa_read = eLazyBoolYes;
       else if (x == "qXfer:memory-map:read+")
         m_supports_qXfer_memory_map_read = eLazyBoolYes;
-      else if (x == "qXfer:siginfo:read+")
-        m_supports_qXfer_siginfo_read = eLazyBoolYes;
       else if (x == "qEcho")
         m_supports_qEcho = eLazyBoolYes;
       else if (x == "QPassSignals+")
