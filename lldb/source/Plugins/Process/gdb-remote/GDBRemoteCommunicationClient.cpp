@@ -422,8 +422,7 @@ void GDBRemoteCommunicationClient::GetRemoteQSupported() {
             packet_response.GetHexMaxU64(/*little_endian=*/false, UINT64_MAX);
         if (m_max_packet_size == 0) {
           m_max_packet_size = UINT64_MAX; // Must have been a garbled response
-          Log *log(
-              ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
+          Log *log(GetLog(GDBRLog::Process));
           LLDB_LOGF(log, "Garbled PacketSize spec in qSupported response");
         }
       }
@@ -508,8 +507,7 @@ GDBRemoteCommunicationClient::SendThreadSpecificPacketAndWaitForResponse(
     StringExtractorGDBRemote &response) {
   Lock lock(*this);
   if (!lock) {
-    if (Log *log = ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet(
-            GDBR_LOG_PROCESS | GDBR_LOG_PACKETS))
+    if (Log *log = GetLog(GDBRLog::Process | GDBRLog::Packets))
       LLDB_LOGF(log,
                 "GDBRemoteCommunicationClient::%s: Didn't get sequence mutex "
                 "for %s packet.",
@@ -645,7 +643,7 @@ DataBufferSP GDBRemoteCommunicationClient::ReadMemoryTags(lldb::addr_t addr,
   packet.Printf("qMemTags:%" PRIx64 ",%zx:%" PRIx32, addr, len, type);
   StringExtractorGDBRemote response;
 
-  Log *log = ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet(GDBR_LOG_MEMORY);
+  Log *log = GetLog(GDBRLog::Memory);
 
   if (SendPacketAndWaitForResponse(packet.GetString(), response) !=
           PacketResult::Success ||
@@ -1309,7 +1307,7 @@ static void ParseOSType(llvm::StringRef value, std::string &os_name,
 }
 
 bool GDBRemoteCommunicationClient::GetHostInfo(bool force) {
-  Log *log(ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet(GDBR_LOG_PROCESS));
+  Log *log = GetLog(GDBRLog::Process);
 
   if (force || m_qHostInfo_is_valid == eLazyBoolCalculate) {
     // host info computation can require DNS traffic and shelling out to external processes.
@@ -2236,8 +2234,7 @@ bool GDBRemoteCommunicationClient::GetProcessInfo(
 }
 
 bool GDBRemoteCommunicationClient::GetCurrentProcessInfo(bool allow_lazy) {
-  Log *log(ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet(GDBR_LOG_PROCESS |
-                                                         GDBR_LOG_PACKETS));
+  Log *log(GetLog(GDBRLog::Process | GDBRLog::Packets));
 
   if (allow_lazy) {
     if (m_qProcessInfo_is_valid == eLazyBoolYes)
@@ -3013,8 +3010,7 @@ GDBRemoteCommunicationClient::GetCurrentProcessAndThreadIDs(
       ids.emplace_back(1, 1);
     }
   } else {
-    Log *log(ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet(GDBR_LOG_PROCESS |
-                                                           GDBR_LOG_PACKETS));
+    Log *log(GetLog(GDBRLog::Process | GDBRLog::Packets));
     LLDB_LOG(log, "error: failed to get packet sequence mutex, not sending "
                   "packet 'qfThreadInfo'");
     sequence_mutex_unavailable = true;
@@ -3683,7 +3679,7 @@ bool GDBRemoteCommunicationClient::SyncThreadState(lldb::tid_t tid) {
 
 llvm::Expected<TraceSupportedResponse>
 GDBRemoteCommunicationClient::SendTraceSupported(std::chrono::seconds timeout) {
-  Log *log(ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
+  Log *log = GetLog(GDBRLog::Process);
 
   StreamGDBRemote escaped_packet;
   escaped_packet.PutCString("jLLDBTraceSupported");
@@ -3709,7 +3705,7 @@ GDBRemoteCommunicationClient::SendTraceSupported(std::chrono::seconds timeout) {
 llvm::Error
 GDBRemoteCommunicationClient::SendTraceStop(const TraceStopRequest &request,
                                             std::chrono::seconds timeout) {
-  Log *log(ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
+  Log *log = GetLog(GDBRLog::Process);
 
   StreamGDBRemote escaped_packet;
   escaped_packet.PutCString("jLLDBTraceStop:");
@@ -3744,7 +3740,7 @@ GDBRemoteCommunicationClient::SendTraceStop(const TraceStopRequest &request,
 llvm::Error
 GDBRemoteCommunicationClient::SendTraceStart(const llvm::json::Value &params,
                                              std::chrono::seconds timeout) {
-  Log *log(ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
+  Log *log = GetLog(GDBRLog::Process);
 
   StreamGDBRemote escaped_packet;
   escaped_packet.PutCString("jLLDBTraceStart:");
@@ -3779,7 +3775,7 @@ GDBRemoteCommunicationClient::SendTraceStart(const llvm::json::Value &params,
 llvm::Expected<std::string>
 GDBRemoteCommunicationClient::SendTraceGetState(llvm::StringRef type,
                                                 std::chrono::seconds timeout) {
-  Log *log(ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
+  Log *log = GetLog(GDBRLog::Process);
 
   StreamGDBRemote escaped_packet;
   escaped_packet.PutCString("jLLDBTraceGetState:");
@@ -3813,7 +3809,7 @@ GDBRemoteCommunicationClient::SendTraceGetState(llvm::StringRef type,
 llvm::Expected<std::vector<uint8_t>>
 GDBRemoteCommunicationClient::SendTraceGetBinaryData(
     const TraceGetBinaryDataRequest &request, std::chrono::seconds timeout) {
-  Log *log(ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
+  Log *log = GetLog(GDBRLog::Process);
 
   StreamGDBRemote escaped_packet;
   escaped_packet.PutCString("jLLDBTraceGetBinaryData:");
@@ -4258,8 +4254,7 @@ void GDBRemoteCommunicationClient::ServeSymbolLookups(
       // our symbol lookup failed so we must abort
       return;
 
-    } else if (Log *log = ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet(
-                   GDBR_LOG_PROCESS | GDBR_LOG_PACKETS)) {
+    } else if (Log *log = GetLog(GDBRLog::Process | GDBRLog::Packets)) {
       LLDB_LOGF(log,
                 "GDBRemoteCommunicationClient::%s: Didn't get sequence mutex.",
                 __FUNCTION__);
@@ -4273,7 +4268,7 @@ GDBRemoteCommunicationClient::GetSupportedStructuredDataPlugins() {
     // Query the server for the array of supported asynchronous JSON packets.
     m_supported_async_json_packets_is_valid = true;
 
-    Log *log(ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
+    Log *log = GetLog(GDBRLog::Process);
 
     // Poll it now.
     StringExtractorGDBRemote response;
