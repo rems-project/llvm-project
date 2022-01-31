@@ -304,6 +304,7 @@ public:
   static bool isStandardLifetime(const AllocaInfo &AllocaInfo,
                                  const DominatorTree &DT);
   bool instrumentStack(
+      bool ShouldDetectUseAfterScope,
       MapVector<AllocaInst *, AllocaInfo> &AllocasToInstrument,
       SmallVector<Instruction *, 4> &UnrecognizedLifetimes,
       DenseMap<AllocaInst *, std::vector<DbgVariableIntrinsic *>> &AllocaDbgMap,
@@ -1360,6 +1361,7 @@ bool HWAddressSanitizer::isStandardLifetime(const AllocaInfo &AllocaInfo,
 }
 
 bool HWAddressSanitizer::instrumentStack(
+    bool ShouldDetectUseAfterScope,
     MapVector<AllocaInst *, AllocaInfo> &AllocasToInstrument,
     SmallVector<Instruction *, 4> &UnrecognizedLifetimes,
     DenseMap<AllocaInst *, std::vector<DbgVariableIntrinsic *>> &AllocaDbgMap,
@@ -1411,7 +1413,7 @@ bool HWAddressSanitizer::instrumentStack(
     };
     bool StandardLifetime =
         UnrecognizedLifetimes.empty() && isStandardLifetime(Info, GetDT());
-    if (DetectUseAfterScope && StandardLifetime) {
+    if (ShouldDetectUseAfterScope && StandardLifetime) {
       IntrinsicInst *Start = Info.LifetimeStart[0];
       IRB.SetInsertPoint(Start->getNextNode());
       tagAlloca(IRB, AI, Tag, Size);
@@ -1506,8 +1508,14 @@ bool HWAddressSanitizer::sanitizeFunction(
   SmallVector<Instruction *, 8> LandingPadVec;
   SmallVector<Instruction *, 4> UnrecognizedLifetimes;
   DenseMap<AllocaInst *, std::vector<DbgVariableIntrinsic *>> AllocaDbgMap;
+  bool CallsReturnTwice = false;
   for (auto &BB : F) {
     for (auto &Inst : BB) {
+      if (CallInst *CI = dyn_cast<CallInst>(&Inst)) {
+        if (CI->canReturnTwice()) {
+          CallsReturnTwice = true;
+        }
+      }
       if (InstrumentStack) {
         if (AllocaInst *AI = dyn_cast<AllocaInst>(&Inst)) {
           if (isInterestingAlloca(*AI))
@@ -1591,7 +1599,12 @@ bool HWAddressSanitizer::sanitizeFunction(
   if (!AllocasToInstrument.empty()) {
     Value *StackTag =
         ClGenerateTagsWithCalls ? nullptr : getStackBaseTag(EntryIRB);
-    instrumentStack(AllocasToInstrument, UnrecognizedLifetimes, AllocaDbgMap,
+    // Calls to functions that may return twice (e.g. setjmp) confuse the
+    // postdominator analysis, and will leave us to keep memory tagged after
+    // function return. Work around this by always untagging at every return
+    // statement if return_twice functions are called.
+    instrumentStack(DetectUseAfterScope && !CallsReturnTwice,
+                    AllocasToInstrument, UnrecognizedLifetimes, AllocaDbgMap,
                     RetVec, StackTag, GetDT, GetPDT);
   }
   // Pad and align each of the allocas that we instrumented to stop small
