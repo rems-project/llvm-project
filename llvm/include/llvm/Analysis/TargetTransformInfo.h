@@ -1790,7 +1790,7 @@ class TargetTransformInfo::Model final : public TargetTransformInfo::Concept {
 
 public:
   Model(T Impl) : Impl(std::move(Impl)) {}
-  ~Model() override {}
+  ~Model() override = default;
 
   const DataLayout &getDataLayout() const override {
     return Impl.getDataLayout();
