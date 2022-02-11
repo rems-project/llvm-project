@@ -98,6 +98,8 @@ public:
 
   static CheriCapabilityTableABI cheriCapabilityTableABI();
   static CheriLandingPadEncoding cheriLandingPadEncoding();
+  static bool integerBranches();
+  static bool integerReturns();
 
   static bool useTLSGDForPurecap();
 

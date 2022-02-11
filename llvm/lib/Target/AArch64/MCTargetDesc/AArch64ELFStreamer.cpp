@@ -261,7 +261,8 @@ private:
   }
 
   void emitThumbFunc(MCSymbol *Func) override {
-    getAssembler().setIsThumbFunc(Func);
+    if (!MCTargetOptions::integerBranches())
+      getAssembler().setIsThumbFunc(Func);
   }
 
   void adjustCurrentLabels(const MCSubtargetInfo &STI) {

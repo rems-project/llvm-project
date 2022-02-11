@@ -138,6 +138,9 @@ unsigned AArch64InstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
   case AArch64::MCJumpTableDest8:
     NumBytes = 12;
     break;
+  case AArch64::FakeCapReturn:
+    NumBytes = 8;
+    break;
   case AArch64::SPACE:
     NumBytes = MI.getOperand(1).getImm();
     break;

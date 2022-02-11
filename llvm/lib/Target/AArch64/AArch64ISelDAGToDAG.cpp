@@ -4215,8 +4215,10 @@ SelectCapabilityBranch(SDNode *N, bool Clear, bool Tail) {
   SDLoc dl(N);
   SDValue CalleeNode = N->getOperand(1);
 
-  unsigned Opcode = Clear ? AArch64::CBranchLinkClear
-                          : AArch64::CapBranchLink;
+  unsigned Opcode =
+      Clear ? AArch64::CBranchLinkClear
+            : (MCTargetOptions::integerBranches() ? AArch64::FakeCapBranchLink
+                                                  : AArch64::CapBranchLink);
   if (CalleeNode.getOpcode() == ISD::TargetGlobalAddress ||
       CalleeNode.getOpcode() == ISD::TargetExternalSymbol)
     Opcode = Clear ? AArch64::PBLClear : AArch64::BL;

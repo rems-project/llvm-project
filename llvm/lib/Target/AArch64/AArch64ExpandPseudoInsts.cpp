@@ -1401,9 +1401,11 @@ bool AArch64ExpandPseudo::expandMI(MachineBasicBlock &MBB,
     if (ClearRegs != 0 )
       clearUnusedArgRegisters(*MBB.getParent(), MBBI, true);
 
-    unsigned Opc = Opcode == AArch64::CRET_ReallyLR
-                       ? AArch64::CapReturn
-                       : AArch64::RET;
+    unsigned Opc =
+        Opcode == AArch64::CRET_ReallyLR
+            ? (MCTargetOptions::integerReturns() ? AArch64::FakeCapReturn
+                                                 : AArch64::CapReturn)
+            : AArch64::RET;
     unsigned LR = Opcode == AArch64::CRET_ReallyLR ? AArch64::CLR : AArch64::LR;
     MachineInstrBuilder MIB =
         BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(Opc))

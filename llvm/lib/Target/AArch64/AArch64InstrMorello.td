@@ -105,6 +105,8 @@ let isCall = 1, Defs = [LR], Uses = [SP] in {
   def CapBranchLinkDirect : CapBranchLinkDirectFmt<(outs), (ins Cap:$Cn), "blrs", "\t$Cn", []>;
   def CapBranchLinkRestricted : CapBranchLinkRestrictedFmt<(outs), (ins Cap:$Cn), "blrr", "\t$Cn", []>;
 }
+let isCall = 1, Defs = [LR], Uses = [SP] in
+  def FakeCapBranchLink : Pseudo<(outs), (ins Cap:$Cn), []>;
 let isCall = 1, Defs = [LR, CFP], Uses = [SP] in
   def CapBranchLinkSealed : CapBranchLinkSealedFmt<(outs), (ins Cap:$Cn, Cap:$Cm), "blrs", "\tc29, $Cn, $Cm", []>;
 let isBranch = 1, isBarrier = 1, isIndirectBranch = 1, isTerminator = 1 in
@@ -221,6 +223,8 @@ def CapOrImm : CapOrImmFmt<(outs Capsp:$Cd), (ins Capsp:$Cn, uimm8:$imm8), "orrf
 def CapOrrReg : CapOrrRegFmt<(outs Capsp:$Cd), (ins Capsp:$Cn, GPR64:$Rm), "orrflgs", "\t$Cd, $Cn, $Rm", []>;
 let isBarrier = 1, isReturn = 1, isTerminator = 1 in
   def CapReturn : CapReturnFmt<(outs), (ins Cap:$Cn), "ret", "\t$Cn", []>;
+let isBarrier = 1, isReturn = 1, isTerminator = 1 in
+  def FakeCapReturn : Pseudo<(outs), (ins Cap:$Cn), []>;
 let isBarrier = 1, isReturn = 1, isTerminator = 1 in
   def CapReturnDirect : CapReturnDirectFmt<(outs), (ins Cap:$Cn), "rets", "\t$Cn", []>;
 let isBarrier = 1, isReturn = 1, isTerminator = 1 in

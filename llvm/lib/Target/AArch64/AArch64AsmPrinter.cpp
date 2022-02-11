@@ -1292,6 +1292,14 @@ void AArch64AsmPrinter::emitInstruction(const MachineInstr *MI) {
   }
   case AArch64::CTCRETURNr: {
     MCInst TmpInst;
+    if (MCTargetOptions::integerBranches()) {
+      TmpInst.setOpcode(AArch64::BR);
+      TmpInst.addOperand(MCOperand::createReg(
+          STI->getRegisterInfo()->getSubReg(MI->getOperand(0).getReg(),
+                                            AArch64::sub_64)));
+      EmitToStreamer(*OutStreamer, TmpInst);
+      return;
+    }
     TmpInst.setOpcode(AArch64::CapBranch);
     TmpInst.addOperand(MCOperand::createReg(MI->getOperand(0).getReg()));
     EmitToStreamer(*OutStreamer, TmpInst);
@@ -1446,6 +1454,36 @@ void AArch64AsmPrinter::emitInstruction(const MachineInstr *MI) {
     Blr.addOperand(MCOperand::createReg(AArch64::X1));
     EmitToStreamer(*OutStreamer, Blr);
 
+    return;
+  }
+
+  case AArch64::FakeCapBranchLink: {
+    Register DestReg = MI->getOperand(0).getReg();
+    Register XDestReg =
+        STI->getRegisterInfo()->getSubReg(DestReg, AArch64::sub_64);
+    MCInst Blr;
+    Blr.setOpcode(AArch64::BLR);
+    Blr.addOperand(MCOperand::createReg(XDestReg));
+    EmitToStreamer(*OutStreamer, Blr);
+    return;
+  }
+  case AArch64::FakeCapReturn: {
+    Register DestReg = MI->getOperand(0).getReg();
+    Register XDestReg =
+        STI->getRegisterInfo()->getSubReg(DestReg, AArch64::sub_64);
+
+    // Clear LSB before returning.
+    MCInst And;
+    And.setOpcode(AArch64::ANDXri);
+    And.addOperand(MCOperand::createReg(XDestReg));
+    And.addOperand(MCOperand::createReg(XDestReg));
+    And.addOperand(MCOperand::createImm(8190));
+    EmitToStreamer(*OutStreamer, And);
+
+    MCInst Ret;
+    Ret.setOpcode(AArch64::RET);
+    Ret.addOperand(MCOperand::createReg(XDestReg));
+    EmitToStreamer(*OutStreamer, Ret);
     return;
   }
 
