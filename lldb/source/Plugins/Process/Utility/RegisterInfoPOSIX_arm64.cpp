@@ -270,7 +270,7 @@ RegisterInfoPOSIX_arm64::RegisterInfoPOSIX_arm64(
     } else {
       SetupFP(target_arch.IsAArch64MorelloDescriptorABI());
       m_register_info_p = g_register_infos_arm64_le;
-      m_register_info_count = fpu_fpcr + 1;
+      m_register_info_count = exc_far; // We're ignoring the exc and dbg registers.
     }
 
     if (m_opt_regsets.AnySet(eRegsetMaskDynamic)) {
