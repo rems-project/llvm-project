@@ -1218,8 +1218,9 @@ bool InterleavedLoadCombineImpl::combine(std::list<VectorInfo> &InterleavedLoad,
   }
 
   // Create a pointer cast for the wide load.
+  unsigned AS = First->getPointerAddressSpace();
   auto CI = Builder.CreatePointerCast(InsertionPoint->getOperand(0),
-                                      ILTy->getPointerTo(),
+                                      ILTy->getPointerTo(AS),
                                       "interleaved.wide.ptrcast");
 
   // Create the wide load and update the MemorySSA.
