@@ -19,7 +19,11 @@ define { i128, i1 } @test_cmpxchg_128(i128 addrspace(200)* %addr, i128 %desired,
 ; CHECK-NEXT:  // %bb.2: // in Loop: Header=BB0_1 Depth=1
 ; CHECK-NEXT:    stlxp w8, x9, x5, [c4]
 ; CHECK-NEXT:    cbnz w8, .LBB0_1
-; CHECK-NEXT:  .LBB0_3:
+; CHECK-NEXT:    b .LBB0_4
+; CHECK-NEXT:  .LBB0_3: // in Loop: Header=BB0_1 Depth=1
+; CHECK-NEXT:    stlxp w8, x0, x1, [c4]
+; CHECK-NEXT:    cbnz w8, .LBB0_1
+; CHECK-NEXT:  .LBB0_4:
 ; CHECK-NEXT:    eor x9, x1, x3
 ; CHECK-NEXT:    eor x8, x0, x2
 ; CHECK-NEXT:    orr x8, x8, x9

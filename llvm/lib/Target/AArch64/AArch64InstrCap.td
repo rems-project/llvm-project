@@ -272,7 +272,7 @@ def CMP_SWAP_CAP_FATPTR : Pseudo<(outs Cap:$Rd, GPR32:$scratch),
 
 let Constraints = "@earlyclobber $RdLo,@earlyclobber $RdHi,@earlyclobber $scratch",
     mayLoad = 1, mayStore = 1 in {
-class cmp_swap_cap_128 : Pseudo<(outs GPR64:$RdLo, GPR64:$RdHi, GPR32:$scratch),
+class cmp_swap_cap_128 : Pseudo<(outs GPR64:$RdLo, GPR64:$RdHi, GPR32common:$scratch),
                                 (ins Cap:$addr, GPR64:$desiredLo, GPR64:$desiredHi,
                                      GPR64:$newLo, GPR64:$newHi), []>,
                        Sched<[WriteAtomic]>;
