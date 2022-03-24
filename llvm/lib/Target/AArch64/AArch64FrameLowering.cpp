@@ -1036,7 +1036,7 @@ static MachineBasicBlock::iterator convertCalleeSaveRestoreToSPPrePostIncDec(
   // update in so create a normal arithmetic instruction instead.
   if (MBBI->getOperand(MBBI->getNumOperands() - 1).getImm() != 0 ||
       CSStackSizeInc < MinOffset || CSStackSizeInc > MaxOffset) {
-    emitFrameOffset(MBB, MBBI, DL, AArch64::SP, AArch64::SP,
+    emitFrameOffset(MBB, MBBI, DL, SP, SP,
                     StackOffset::getFixed(CSStackSizeInc), TII,
                     InProlog ? MachineInstr::FrameSetup
                              : MachineInstr::FrameDestroy);
