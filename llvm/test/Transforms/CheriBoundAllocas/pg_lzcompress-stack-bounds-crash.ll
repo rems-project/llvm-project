@@ -1,3 +1,4 @@
+; REQUIRES: mips-registered-target, riscv-registered-target
 ; RUN: %cheri_purecap_opt -cheri-bound-allocas %s -o - -S -debug-only="cheri-bound-allocas" 2>&1 | %cheri_FileCheck %s -check-prefix DBG
 ; RUN: %riscv64_cheri_purecap_opt -cheri-bound-allocas %s -o - -S -debug-only="cheri-bound-allocas" 2>&1 | %cheri_FileCheck %s -check-prefix DBG
 ; REQUIRES: asserts

@@ -1,3 +1,4 @@
+; REQUIRES: mips-registered-target, riscv-registered-target
 ; RUN: %cheri_purecap_opt -enable-new-pm=1 -cheri-bound-allocas %s -o - -S | FileCheck %s
 ; RUN: %cheri_purecap_opt -enable-new-pm=0 -cheri-bound-allocas %s -o - -S | FileCheck %s
 ; RUN: %riscv64_cheri_purecap_opt -enable-new-pm=1 -cheri-bound-allocas %s -o - -S | FileCheck %s

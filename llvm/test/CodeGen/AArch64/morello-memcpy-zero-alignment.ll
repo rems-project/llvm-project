@@ -49,7 +49,7 @@ define void @nonMultiple(%struct.D* %rhs) {
  
  if.then76:                                        ; preds = %if.end66
    call void @llvm.memcpy.p0i8.p0i8.i64(i8* nonnull %0, i8* null, i64 28, i32 4, i1 false)
-   unreachable
+   ret void
  
  if.end81:                                         ; preds = %if.end66, %land.lhs.true53
    call void @llvm.memcpy.p0i8.p0i8.i64(i8* nonnull %1, i8* nonnull %0, i64 28, i32 4, i1 false)

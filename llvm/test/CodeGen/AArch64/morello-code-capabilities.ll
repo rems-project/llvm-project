@@ -7,7 +7,8 @@ target triple = "aarch64-none--elf"
 
 define dso_local i8 addrspace(200)* @fun1() addrspace(200) nounwind {
 ; CHECK-LABEL: fun1:
-; CHECK:       // %bb.0: // %entry
+; CHECK:       .Lfunc_begin0:
+; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    adrp c0, fun1
 ; CHECK-NEXT:    add c0, c0, :lo12:fun1
 ; CHECK-NEXT:    seal c0, c0, rb
@@ -18,7 +19,8 @@ entry:
 
 define i8 addrspace(200)* @fun2() addrspace(200) nounwind {
 ; CHECK-LABEL: fun2:
-; CHECK:       // %bb.0: // %entry
+; CHECK:       .Lfunc_begin1:
+; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:  .Ltmp0: // Block address taken
 ; CHECK-NEXT:  // %bb.1: // %newb
 ; CHECK-NEXT:    adrp c0, .Ltmp0
@@ -33,13 +35,14 @@ newb:
 
 define i64 @blockaddress_in_global() addrspace(200) nounwind {
 ; CHECK-LABEL: blockaddress_in_global:
-; CHECK:       // %bb.0: // %entry
+; CHECK:       .Lfunc_begin2:
+; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    adrp c0, :got:addrof_label_in_global
 ; CHECK-NEXT:    ldr c0, [c0, :got_lo12:addrof_label_in_global]
 ; CHECK-NEXT:    ldr c0, [c0, #0]
 ; CHECK-NEXT:    br c0
 ; CHECK-NEXT:  .Ltmp1: // Block address taken
-; CHECK-NEXT:  .LBB2_1: // %label1
+; CHECK-NEXT:  .LBB2_1: // %common.ret
 ; CHECK-NEXT:    mov w0, #2
 ; CHECK-NEXT:    ret c30
 ; CHECK-NEXT:  .Ltmp2: // Block address taken

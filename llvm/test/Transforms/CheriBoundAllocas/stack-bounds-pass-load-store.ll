@@ -4,6 +4,7 @@
 ; we were moving the allocation of the register that is only used later to the beginning
 
 ; REQUIRES: asserts
+; REQUIRES: mips-registered-target
 ; RUN: %cheri_purecap_opt -cheri-bound-allocas %s -o - -S -cheri-stack-bounds=if-needed -debug-only=cheri-bound-allocas 2>%t.dbg | FileCheck %s
 ; RUN: FileCheck %s -input-file=%t.dbg -check-prefix DBG
 
