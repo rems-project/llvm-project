@@ -535,7 +535,11 @@ static bool isLibCallInTailPosition(MachineInstr &MI,
     if (Ret->getNumImplicitOperands() != 1)
       return false;
 
-    if (PReg != Ret->getOperand(0).getReg())
+    // Account for RET_ReallyLR having the first operand an immediate.
+    // FIXME: Use a separate opcode for the register clearing RET_ReallyLR
+    // to remove these changes.
+    int RegIdx = Ret->getOperand(0).isReg() ? 0 : 1;
+    if (PReg != Ret->getOperand(RegIdx).getReg())
       return false;
 
     // Skip over the COPY that we just validated.
