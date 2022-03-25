@@ -1029,6 +1029,8 @@ static MachineBasicBlock::iterator convertCalleeSaveRestoreToSPPrePostIncDec(
   int64_t MinOffset, MaxOffset;
   bool Success = static_cast<const AArch64InstrInfo *>(TII)->getMemOpInfo(
       NewOpc, Scale, Width, MinOffset, MaxOffset);
+  MinOffset = MinOffset * Scale;
+  MaxOffset = MaxOffset * Scale;
   (void)Success;
   assert(Success && "unknown load/store opcode");
 
@@ -1524,12 +1526,12 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
   }
 
   // Allocate space for the callee saves (if any).
-  emitFrameOffset(MBB, CalleeSavesBegin, DL, AArch64::SP, AArch64::SP,
+  emitFrameOffset(MBB, CalleeSavesBegin, DL, SP, SP,
                   -AllocateBefore, TII,
                   MachineInstr::FrameSetup);
 
   // Finally allocate remaining SVE stack space.
-  emitFrameOffset(MBB, CalleeSavesEnd, DL, AArch64::SP, AArch64::SP,
+  emitFrameOffset(MBB, CalleeSavesEnd, DL, SP, SP,
                   -AllocateAfter, TII,
                   MachineInstr::FrameSetup);
 
