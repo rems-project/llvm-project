@@ -1416,6 +1416,25 @@ Value *LLParser::checkValidVariableType(LocTy Loc, const Twine &Name, Type *Ty,
   if (IsCall && ValTy == PointerType::get(Ty->getContext(),
                                           Ty->getPointerAddressSpace()))
     return Val;
+
+  // For calls we also accept variables in the program address space.
+  Type *SuggestedTy = Ty;
+  if (IsCall && isa<PointerType>(Ty)) {
+    Type *TyInProgAS = cast<PointerType>(Ty)->getElementType()->getPointerTo(
+        M->getDataLayout().getProgramAddressSpace());
+    SuggestedTy = TyInProgAS;
+    if (Val->getType() == TyInProgAS)
+      return Val;
+    // HACK: Also allow CHERI .ll files to be parsed without having a target
+    // datalayout = string: This is needed because llc parses the assembly
+    // before the target can set the default datalayout if there isn't an
+    // explicit one in the .ll file
+    Type *TyInCHERIAS =
+        cast<PointerType>(Ty)->getElementType()->getPointerTo(200);
+    if (Val->getType() == TyInCHERIAS)
+      return Val;
+  }
+
   if (Ty->isLabelTy())
     error(Loc, "'" + Name + "' is not a basic block");
   else
