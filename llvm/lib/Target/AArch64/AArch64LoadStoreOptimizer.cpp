@@ -436,33 +436,53 @@ static unsigned getMatchingPairOpcode(unsigned Opc) {
   case AArch64::ASTRSui:
   case AArch64::ASTURSi:
     return AArch64::ASTPSi;
+  case AArch64::ASTRSpre:
+    return AArch64::ASTPSpre;
   case AArch64::ASTRDui:
   case AArch64::ASTURDi:
     return AArch64::ASTPDi;
+  case AArch64::ASTRDpre:
+    return AArch64::ASTPDpre;
   case AArch64::ASTRQui:
   case AArch64::ASTURQi:
     return AArch64::ASTPQi;
+  case AArch64::ASTRQpre:
+    return AArch64::ASTPQpre;
   case AArch64::ASTRWui:
   case AArch64::ASTURWi:
     return AArch64::ASTPWi;
+  case AArch64::ASTRWpre:
+    return AArch64::ASTPWpre;
   case AArch64::ASTRXui:
   case AArch64::ASTURXi:
     return AArch64::ASTPXi;
+  case AArch64::ASTRXpre:
+    return AArch64::ASTPXpre;
   case AArch64::ALDRSui:
   case AArch64::ALDURSi:
     return AArch64::ALDPSi;
+  case AArch64::ALDRSpre:
+    return AArch64::ALDPSpre;
   case AArch64::ALDRDui:
   case AArch64::ALDURDi:
     return AArch64::ALDPDi;
+  case AArch64::ALDRDpre:
+    return AArch64::ALDPDpre;
   case AArch64::ALDRQui:
   case AArch64::ALDURQi:
     return AArch64::ALDPQi;
+  case AArch64::ALDRQpre:
+    return AArch64::ALDPQpre;
   case AArch64::ALDRWui:
   case AArch64::ALDURWi:
     return AArch64::ALDPWi;
+  case AArch64::ALDRWpre:
+    return AArch64::ALDPWpre;
   case AArch64::ALDRXui:
   case AArch64::ALDURXi:
     return AArch64::ALDPXi;
+  case AArch64::ALDRXpre:
+    return AArch64::ALDPXpre;
   case AArch64::ALDRSWui:
   case AArch64::ALDURSWi:
     return AArch64::ALDPSWi;
