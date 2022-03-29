@@ -93,7 +93,7 @@ template<>
 _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 __uintcap_t __rotl(__uintcap_t __t, unsigned int __cnt) _NOEXCEPT
 {
-    static_assert(__bitop_unsigned_integer<__uintcap_t>::value, "__rotl requires unsigned");
+    static_assert(__libcpp_is_unsigned_integer<__uintcap_t>::value, "__rotl requires unsigned");
     const unsigned int __dig = numeric_limits<__uintcap_t>::digits;
     if ((__cnt % __dig) == 0)
         return __t;
@@ -119,7 +119,7 @@ template<>
 _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 __uintcap_t __rotr(__uintcap_t __t, unsigned int __cnt) _NOEXCEPT
 {
-    static_assert(__bitop_unsigned_integer<__uintcap_t>::value, "__rotr requires unsigned");
+    static_assert(__libcpp_is_unsigned_integer<__uintcap_t>::value, "__rotr requires unsigned");
     const unsigned int __dig = numeric_limits<__uintcap_t>::digits;
     if ((__cnt % __dig) == 0)
         return __t;

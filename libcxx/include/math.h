@@ -1233,9 +1233,11 @@ inline _LIBCPP_INLINE_VISIBILITY float copysign(float __lcpp_x, float __lcpp_y) 
   return ::__libcpp_copysign(__lcpp_x, __lcpp_y);
 }
 
+#ifndef _LIBCPP_HAS_NEWLIB
 inline _LIBCPP_INLINE_VISIBILITY long double copysign(long double __lcpp_x, long double __lcpp_y) _NOEXCEPT {
   return ::__libcpp_copysign(__lcpp_x, __lcpp_y);
 }
+#endif
 
 template <class _A1, class _A2>
 inline _LIBCPP_INLINE_VISIBILITY

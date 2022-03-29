@@ -467,6 +467,7 @@ using ::tgammaf _LIBCPP_USING_IF_EXISTS;
 using ::trunc _LIBCPP_USING_IF_EXISTS;
 using ::truncf _LIBCPP_USING_IF_EXISTS;
 
+#ifndef _LIBCPP_HAS_NEWLIB
 using ::acosl _LIBCPP_USING_IF_EXISTS;
 using ::asinl _LIBCPP_USING_IF_EXISTS;
 using ::atanl _LIBCPP_USING_IF_EXISTS;
@@ -527,11 +528,14 @@ using ::scalblnl _LIBCPP_USING_IF_EXISTS;
 using ::scalbnl _LIBCPP_USING_IF_EXISTS;
 using ::tgammal _LIBCPP_USING_IF_EXISTS;
 using ::truncl _LIBCPP_USING_IF_EXISTS;
+#endif // !_LIBCPP_HAS_NEWLIB
 
 #if _LIBCPP_STD_VER > 14
 inline _LIBCPP_INLINE_VISIBILITY float       hypot(       float x,       float y,       float z ) { return sqrt(x*x + y*y + z*z); }
 inline _LIBCPP_INLINE_VISIBILITY double      hypot(      double x,      double y,      double z ) { return sqrt(x*x + y*y + z*z); }
+#ifndef _LIBCPP_HAS_NEWLIB
 inline _LIBCPP_INLINE_VISIBILITY long double hypot( long double x, long double y, long double z ) { return sqrt(x*x + y*y + z*z); }
+#endif
 
 template <class _A1, class _A2, class _A3>
 inline _LIBCPP_INLINE_VISIBILITY

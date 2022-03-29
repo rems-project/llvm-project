@@ -805,6 +805,9 @@ template <> struct __libcpp_is_signed_integer<signed long long> : public true_ty
 #ifndef _LIBCPP_HAS_NO_INT128
 template <> struct __libcpp_is_signed_integer<__int128_t>       : public true_type {};
 #endif
+#if __has_feature(capabilities)
+template <> struct __libcpp_is_signed_integer<__intcap_t>       : public true_type {};
+#endif
 
 template <class _Tp> struct __libcpp_is_unsigned_integer : public false_type {};
 template <> struct __libcpp_is_unsigned_integer<unsigned char>      : public true_type {};
@@ -814,6 +817,9 @@ template <> struct __libcpp_is_unsigned_integer<unsigned long>      : public tru
 template <> struct __libcpp_is_unsigned_integer<unsigned long long> : public true_type {};
 #ifndef _LIBCPP_HAS_NO_INT128
 template <> struct __libcpp_is_unsigned_integer<__uint128_t>        : public true_type {};
+#endif
+#if __has_feature(capabilities)
+template <> struct __libcpp_is_unsigned_integer<__uintcap_t>       : public true_type {};
 #endif
 
 // is_floating_point
