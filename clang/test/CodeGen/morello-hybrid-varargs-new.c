@@ -8,10 +8,10 @@
 
 // CHECK-LABEL: @foo(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[ARGS:%.*]] = alloca [[STRUCT___VA_LIST:%.*]], align 8
-// CHECK-NEXT:    [[ARGS1:%.*]] = bitcast %struct.__va_list* [[ARGS]] to i8*
+// CHECK-NEXT:    [[ARGS:%.*]] = alloca %"struct.std::__va_list", align 8
+// CHECK-NEXT:    [[ARGS1:%.*]] = bitcast %"struct.std::__va_list"* [[ARGS]] to i8*
 // CHECK-NEXT:    call void @llvm.va_start.p0i8(i8* [[ARGS1]])
-// CHECK-NEXT:    [[GR_OFFS_P:%.*]] = getelementptr inbounds [[STRUCT___VA_LIST]], %struct.__va_list* [[ARGS]], i32 0, i32 3
+// CHECK-NEXT:    [[GR_OFFS_P:%.*]] = getelementptr inbounds %"struct.std::__va_list", %"struct.std::__va_list"* [[ARGS]], i32 0, i32 3
 // CHECK-NEXT:    [[GR_OFFS:%.*]] = load i32, i32* [[GR_OFFS_P]], align 8
 // CHECK-NEXT:    [[TMP0:%.*]] = icmp sge i32 [[GR_OFFS]], 0
 // CHECK-NEXT:    br i1 [[TMP0]], label [[VAARG_ON_STACK:%.*]], label [[VAARG_MAYBE_REG:%.*]]
@@ -21,13 +21,13 @@
 // CHECK-NEXT:    [[INREG:%.*]] = icmp sle i32 [[NEW_REG_OFFS]], 0
 // CHECK-NEXT:    br i1 [[INREG]], label [[VAARG_IN_REG:%.*]], label [[VAARG_ON_STACK]]
 // CHECK:       vaarg.in_reg:
-// CHECK-NEXT:    [[REG_TOP_P:%.*]] = getelementptr inbounds [[STRUCT___VA_LIST]], %struct.__va_list* [[ARGS]], i32 0, i32 1
+// CHECK-NEXT:    [[REG_TOP_P:%.*]] = getelementptr inbounds %"struct.std::__va_list", %"struct.std::__va_list"* [[ARGS]], i32 0, i32 1
 // CHECK-NEXT:    [[REG_TOP:%.*]] = load i8*, i8** [[REG_TOP_P]], align 8
 // CHECK-NEXT:    [[TMP1:%.*]] = getelementptr inbounds i8, i8* [[REG_TOP]], i32 [[GR_OFFS]]
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast i8* [[TMP1]] to i8 addrspace(200)***
 // CHECK-NEXT:    br label [[VAARG_END:%.*]]
 // CHECK:       vaarg.on_stack:
-// CHECK-NEXT:    [[STACK_P:%.*]] = getelementptr inbounds [[STRUCT___VA_LIST]], %struct.__va_list* [[ARGS]], i32 0, i32 0
+// CHECK-NEXT:    [[STACK_P:%.*]] = getelementptr inbounds %"struct.std::__va_list", %"struct.std::__va_list"* [[ARGS]], i32 0, i32 0
 // CHECK-NEXT:    [[STACK:%.*]] = load i8*, i8** [[STACK_P]], align 8
 // CHECK-NEXT:    [[NEW_STACK:%.*]] = getelementptr inbounds i8, i8* [[STACK]], i64 8
 // CHECK-NEXT:    store i8* [[NEW_STACK]], i8** [[STACK_P]], align 8
@@ -37,7 +37,7 @@
 // CHECK-NEXT:    [[VAARGS_ADDR:%.*]] = phi i8 addrspace(200)*** [ [[TMP2]], [[VAARG_IN_REG]] ], [ [[TMP3]], [[VAARG_ON_STACK]] ]
 // CHECK-NEXT:    [[VAARG_ADDR:%.*]] = load i8 addrspace(200)**, i8 addrspace(200)*** [[VAARGS_ADDR]], align 8
 // CHECK-NEXT:    [[TMP4:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** [[VAARG_ADDR]], align 16
-// CHECK-NEXT:    [[ARGS2:%.*]] = bitcast %struct.__va_list* [[ARGS]] to i8*
+// CHECK-NEXT:    [[ARGS2:%.*]] = bitcast %"struct.std::__va_list"* [[ARGS]] to i8*
 // CHECK-NEXT:    call void @llvm.va_end.p0i8(i8* [[ARGS2]])
 // CHECK-NEXT:    ret i8 addrspace(200)* [[TMP4]]
 //
@@ -63,10 +63,10 @@ void bar(void) {
 
 // CHECK-LABEL: @baz(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[ARGS:%.*]] = alloca [[STRUCT___VA_LIST:%.*]], align 8
-// CHECK-NEXT:    [[ARGS1:%.*]] = bitcast %struct.__va_list* [[ARGS]] to i8*
+// CHECK-NEXT:    [[ARGS:%.*]] = alloca %"struct.std::__va_list", align 8
+// CHECK-NEXT:    [[ARGS1:%.*]] = bitcast %"struct.std::__va_list"* [[ARGS]] to i8*
 // CHECK-NEXT:    call void @llvm.va_start.p0i8(i8* [[ARGS1]])
-// CHECK-NEXT:    [[GR_OFFS_P:%.*]] = getelementptr inbounds [[STRUCT___VA_LIST]], %struct.__va_list* [[ARGS]], i32 0, i32 3
+// CHECK-NEXT:    [[GR_OFFS_P:%.*]] = getelementptr inbounds %"struct.std::__va_list", %"struct.std::__va_list"* [[ARGS]], i32 0, i32 3
 // CHECK-NEXT:    [[GR_OFFS:%.*]] = load i32, i32* [[GR_OFFS_P]], align 8
 // CHECK-NEXT:    [[TMP0:%.*]] = icmp sge i32 [[GR_OFFS]], 0
 // CHECK-NEXT:    br i1 [[TMP0]], label [[VAARG_ON_STACK:%.*]], label [[VAARG_MAYBE_REG:%.*]]
@@ -76,13 +76,13 @@ void bar(void) {
 // CHECK-NEXT:    [[INREG:%.*]] = icmp sle i32 [[NEW_REG_OFFS]], 0
 // CHECK-NEXT:    br i1 [[INREG]], label [[VAARG_IN_REG:%.*]], label [[VAARG_ON_STACK]]
 // CHECK:       vaarg.in_reg:
-// CHECK-NEXT:    [[REG_TOP_P:%.*]] = getelementptr inbounds [[STRUCT___VA_LIST]], %struct.__va_list* [[ARGS]], i32 0, i32 1
+// CHECK-NEXT:    [[REG_TOP_P:%.*]] = getelementptr inbounds %"struct.std::__va_list", %"struct.std::__va_list"* [[ARGS]], i32 0, i32 1
 // CHECK-NEXT:    [[REG_TOP:%.*]] = load i8*, i8** [[REG_TOP_P]], align 8
 // CHECK-NEXT:    [[TMP1:%.*]] = getelementptr inbounds i8, i8* [[REG_TOP]], i32 [[GR_OFFS]]
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast i8* [[TMP1]] to i8 addrspace(200)***
 // CHECK-NEXT:    br label [[VAARG_END:%.*]]
 // CHECK:       vaarg.on_stack:
-// CHECK-NEXT:    [[STACK_P:%.*]] = getelementptr inbounds [[STRUCT___VA_LIST]], %struct.__va_list* [[ARGS]], i32 0, i32 0
+// CHECK-NEXT:    [[STACK_P:%.*]] = getelementptr inbounds %"struct.std::__va_list", %"struct.std::__va_list"* [[ARGS]], i32 0, i32 0
 // CHECK-NEXT:    [[STACK:%.*]] = load i8*, i8** [[STACK_P]], align 8
 // CHECK-NEXT:    [[NEW_STACK:%.*]] = getelementptr inbounds i8, i8* [[STACK]], i64 8
 // CHECK-NEXT:    store i8* [[NEW_STACK]], i8** [[STACK_P]], align 8
@@ -92,7 +92,7 @@ void bar(void) {
 // CHECK-NEXT:    [[VAARGS_ADDR:%.*]] = phi i8 addrspace(200)*** [ [[TMP2]], [[VAARG_IN_REG]] ], [ [[TMP3]], [[VAARG_ON_STACK]] ]
 // CHECK-NEXT:    [[VAARG_ADDR:%.*]] = load i8 addrspace(200)**, i8 addrspace(200)*** [[VAARGS_ADDR]], align 8
 // CHECK-NEXT:    [[TMP4:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)** [[VAARG_ADDR]], align 16
-// CHECK-NEXT:    [[ARGS2:%.*]] = bitcast %struct.__va_list* [[ARGS]] to i8*
+// CHECK-NEXT:    [[ARGS2:%.*]] = bitcast %"struct.std::__va_list"* [[ARGS]] to i8*
 // CHECK-NEXT:    call void @llvm.va_end.p0i8(i8* [[ARGS2]])
 // CHECK-NEXT:    ret i8 addrspace(200)* [[TMP4]]
 //
@@ -126,10 +126,10 @@ struct str {
 // CHECK-LABEL: @bat(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[RETVAL:%.*]] = alloca [[STRUCT_STR:%.*]], align 16
-// CHECK-NEXT:    [[ARGS:%.*]] = alloca [[STRUCT___VA_LIST:%.*]], align 8
-// CHECK-NEXT:    [[ARGS1:%.*]] = bitcast %struct.__va_list* [[ARGS]] to i8*
+// CHECK-NEXT:    [[ARGS:%.*]] = alloca %"struct.std::__va_list", align 8
+// CHECK-NEXT:    [[ARGS1:%.*]] = bitcast %"struct.std::__va_list"* [[ARGS]] to i8*
 // CHECK-NEXT:    call void @llvm.va_start.p0i8(i8* [[ARGS1]])
-// CHECK-NEXT:    [[GR_OFFS_P:%.*]] = getelementptr inbounds [[STRUCT___VA_LIST]], %struct.__va_list* [[ARGS]], i32 0, i32 3
+// CHECK-NEXT:    [[GR_OFFS_P:%.*]] = getelementptr inbounds %"struct.std::__va_list", %"struct.std::__va_list"* [[ARGS]], i32 0, i32 3
 // CHECK-NEXT:    [[GR_OFFS:%.*]] = load i32, i32* [[GR_OFFS_P]], align 8
 // CHECK-NEXT:    [[TMP0:%.*]] = icmp sge i32 [[GR_OFFS]], 0
 // CHECK-NEXT:    br i1 [[TMP0]], label [[VAARG_ON_STACK:%.*]], label [[VAARG_MAYBE_REG:%.*]]
@@ -139,13 +139,13 @@ struct str {
 // CHECK-NEXT:    [[INREG:%.*]] = icmp sle i32 [[NEW_REG_OFFS]], 0
 // CHECK-NEXT:    br i1 [[INREG]], label [[VAARG_IN_REG:%.*]], label [[VAARG_ON_STACK]]
 // CHECK:       vaarg.in_reg:
-// CHECK-NEXT:    [[REG_TOP_P:%.*]] = getelementptr inbounds [[STRUCT___VA_LIST]], %struct.__va_list* [[ARGS]], i32 0, i32 1
+// CHECK-NEXT:    [[REG_TOP_P:%.*]] = getelementptr inbounds %"struct.std::__va_list", %"struct.std::__va_list"* [[ARGS]], i32 0, i32 1
 // CHECK-NEXT:    [[REG_TOP:%.*]] = load i8*, i8** [[REG_TOP_P]], align 8
 // CHECK-NEXT:    [[TMP1:%.*]] = getelementptr inbounds i8, i8* [[REG_TOP]], i32 [[GR_OFFS]]
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast i8* [[TMP1]] to %struct.str**
 // CHECK-NEXT:    br label [[VAARG_END:%.*]]
 // CHECK:       vaarg.on_stack:
-// CHECK-NEXT:    [[STACK_P:%.*]] = getelementptr inbounds [[STRUCT___VA_LIST]], %struct.__va_list* [[ARGS]], i32 0, i32 0
+// CHECK-NEXT:    [[STACK_P:%.*]] = getelementptr inbounds %"struct.std::__va_list", %"struct.std::__va_list"* [[ARGS]], i32 0, i32 0
 // CHECK-NEXT:    [[STACK:%.*]] = load i8*, i8** [[STACK_P]], align 8
 // CHECK-NEXT:    [[NEW_STACK:%.*]] = getelementptr inbounds i8, i8* [[STACK]], i64 8
 // CHECK-NEXT:    store i8* [[NEW_STACK]], i8** [[STACK_P]], align 8
@@ -157,7 +157,7 @@ struct str {
 // CHECK-NEXT:    [[TMP4:%.*]] = bitcast %struct.str* [[RETVAL]] to i8*
 // CHECK-NEXT:    [[TMP5:%.*]] = bitcast %struct.str* [[VAARG_ADDR]] to i8*
 // CHECK-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP4]], i8* align 16 [[TMP5]], i64 32, i1 false)
-// CHECK-NEXT:    [[ARGS2:%.*]] = bitcast %struct.__va_list* [[ARGS]] to i8*
+// CHECK-NEXT:    [[ARGS2:%.*]] = bitcast %"struct.std::__va_list"* [[ARGS]] to i8*
 // CHECK-NEXT:    call void @llvm.va_end.p0i8(i8* [[ARGS2]])
 // CHECK-NEXT:    [[TMP6:%.*]] = bitcast %struct.str* [[RETVAL]] to { i8 addrspace(200)*, i64 }*
 // CHECK-NEXT:    [[TMP7:%.*]] = load { i8 addrspace(200)*, i64 }, { i8 addrspace(200)*, i64 }* [[TMP6]], align 16

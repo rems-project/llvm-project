@@ -11,7 +11,7 @@
 // RUN:    -emit-llvm -o - %s | FileCheck  %s --check-prefix=LEGACY
 
 // NEW-NOT: %struct.__va_list
-// LEGACY: %struct.__va_list = type { i8 addrspace(200)*, i8 addrspace(200)*, i8 addrspace(200)*, i32, i32 }
+// LEGACY: %"struct.std::__va_list" = type { i8 addrspace(200)*, i8 addrspace(200)*, i8 addrspace(200)*, i32, i32 }
 
 #include <stdarg.h>
 
