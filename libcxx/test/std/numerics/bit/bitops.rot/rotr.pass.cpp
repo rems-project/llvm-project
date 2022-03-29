@@ -121,7 +121,9 @@ int main(int, char**)
     static_assert(test<uint32_t>());
     static_assert(test<uint64_t>());
     static_assert(test<uintmax_t>());
+#ifndef __CHERI_PURE_CAPABILITY__
     static_assert(test<uintptr_t>());
+#endif
     static_assert(test<size_t>());
 
     test<unsigned char>();

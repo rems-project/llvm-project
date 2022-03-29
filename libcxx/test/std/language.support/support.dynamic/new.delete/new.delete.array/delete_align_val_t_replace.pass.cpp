@@ -70,6 +70,7 @@ void operator delete [] (void*, std::align_val_t) noexcept
 struct alignas(OverAligned) A {};
 struct alignas(std::max_align_t) B {};
 
+__attribute__((optnone))
 int main(int, char**)
 {
     reset();

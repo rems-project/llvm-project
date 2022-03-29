@@ -129,7 +129,7 @@ int main(int, char**)
     {
         typedef std::scoped_allocator_adaptor<A1<std::string>> A;
         A a;
-        char buf[100];
+        char buf[100] __attribute__ ((aligned(alignof(std::string))));
         typedef std::string S;
         S* s = (S*)buf;
         a.construct(s, 4, 'c');
@@ -140,7 +140,7 @@ int main(int, char**)
     {
         typedef std::scoped_allocator_adaptor<A1<B>> A;
         A a(A1<B>(5));
-        char buf[100];
+        char buf[100] __attribute__ ((aligned(alignof(B))));
         typedef B S;
         S* s = (S*)buf;
         a.construct(s, 6);
@@ -151,7 +151,7 @@ int main(int, char**)
     {
         typedef std::scoped_allocator_adaptor<A1<int>, A2<C>> A;
         A a(A1<int>(5), A2<C>(7));
-        char buf[100];
+        char buf[100] __attribute__ ((aligned(alignof(C))));
         typedef C S;
         S* s = (S*)buf;
         a.construct(s, 8);
@@ -162,7 +162,7 @@ int main(int, char**)
     {
         typedef std::scoped_allocator_adaptor<A1<int>, A2<D>> A;
         A a(A1<int>(5), A2<D>(3));
-        char buf[100];
+        char buf[100] __attribute__ ((aligned(alignof(D))));
         typedef D S;
         S* s = (S*)buf;
         a.construct(s, 1, 2);
@@ -174,7 +174,7 @@ int main(int, char**)
         typedef std::scoped_allocator_adaptor<A3<E>, A2<E>> K;
         typedef std::scoped_allocator_adaptor<K, A1<E>> A;
         A a(K(), A1<E>(50));
-        char buf[100];
+        char buf[100] __attribute__ ((aligned(alignof(E))));
         typedef E S;
         S* s = (S*)buf;
         A3<E>::constructed = false;
@@ -188,7 +188,7 @@ int main(int, char**)
         typedef std::scoped_allocator_adaptor<A3<F>, A2<F>> K;
         typedef std::scoped_allocator_adaptor<K, A1<F>> A;
         A a(K(), A1<F>(50));
-        char buf[100];
+        char buf[100] __attribute__ ((aligned(alignof(F))));
         typedef F S;
         S* s = (S*)buf;
         A3<F>::constructed = false;
