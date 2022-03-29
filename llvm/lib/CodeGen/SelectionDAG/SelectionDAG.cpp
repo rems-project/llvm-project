@@ -5164,31 +5164,34 @@ SDValue SelectionDAG::FoldConstantArithmetic(unsigned Opcode, const SDLoc &DL,
   assert((!BV1 || !BV2 || BV1->getNumOperands() == BV2->getNumOperands()) &&
          "Vector binop with different number of elements in operands?");
 
-  EVT SVT = VT.getScalarType();
-  EVT LegalSVT = SVT;
+  EVT ResultSVT = VT.getScalarType();
+  EVT LegalSVT = ResultSVT;
   if (NewNodesMustHaveLegalTypes && LegalSVT.isInteger()) {
     LegalSVT = TLI->getTypeToTransformTo(*getContext(), LegalSVT);
-    if (LegalSVT.bitsLT(SVT))
+    if (LegalSVT.bitsLT(ResultSVT))
       return SDValue();
   }
   SmallVector<SDValue, 4> Outputs;
   unsigned NumOps = BV1 ? BV1->getNumOperands() : BV2->getNumOperands();
+  // For operations such as PTRADD, the LHS and RHS could have different types.
+  EVT SVT1 = N1->getValueType(0).getScalarType();
+  EVT SVT2 = N2->getValueType(0).getScalarType();
   for (unsigned I = 0; I != NumOps; ++I) {
-    SDValue V1 = BV1 ? BV1->getOperand(I) : getUNDEF(SVT);
-    SDValue V2 = BV2 ? BV2->getOperand(I) : getUNDEF(SVT);
-    if (SVT.isInteger()) {
-      if (V1->getValueType(0).bitsGT(SVT))
-        V1 = getNode(ISD::TRUNCATE, DL, SVT, V1);
-      if (V2->getValueType(0).bitsGT(SVT))
-        V2 = getNode(ISD::TRUNCATE, DL, SVT, V2);
+    SDValue V1 = BV1 ? BV1->getOperand(I) : getUNDEF(SVT1);
+    SDValue V2 = BV2 ? BV2->getOperand(I) : getUNDEF(SVT2);
+    if (ResultSVT.isInteger()) {
+      if (V1->getValueType(0).bitsGT(ResultSVT))
+        V1 = getNode(ISD::TRUNCATE, DL, ResultSVT, V1);
+      if (V2->getValueType(0).bitsGT(ResultSVT))
+        V2 = getNode(ISD::TRUNCATE, DL, ResultSVT, V2);
     }
 
-    if (V1->getValueType(0) != SVT || V2->getValueType(0) != SVT)
+    if (V1->getValueType(0) != ResultSVT || V2->getValueType(0) != ResultSVT)
       return SDValue();
 
     // Fold one vector element.
-    SDValue ScalarResult = getNode(Opcode, DL, SVT, V1, V2);
-    if (LegalSVT != SVT)
+    SDValue ScalarResult = getNode(Opcode, DL, ResultSVT, V1, V2);
+    if (LegalSVT.isInteger() && LegalSVT != ResultSVT)
       ScalarResult = getNode(ISD::SIGN_EXTEND, DL, LegalSVT, ScalarResult);
 
     // Scalar folding only succeeded if the result is a constant or UNDEF.
