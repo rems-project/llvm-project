@@ -26,7 +26,7 @@ void test_backtrace() {
   }
 }
 
-int test(int i) {
+__attribute__((optnone)) int test(int i) {
   if (i == 0) {
     test_backtrace();
     return 0;
