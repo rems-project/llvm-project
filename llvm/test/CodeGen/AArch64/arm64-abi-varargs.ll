@@ -211,9 +211,8 @@ define void @foo2(i8* %fmt, ...) nounwind {
 ; CHECK-NEXT:    add x8, sp, #48 ; =48
 ; CHECK-NEXT:    add x8, x8, #23 ; =23
 ; CHECK-NEXT:    and x8, x8, #0xfffffffffffffff0
-; CHECK-NEXT:    add x9, x8, #16 ; =16
-; CHECK-NEXT:    stp x9, x0, [sp, #32]
-; CHECK-NEXT:    ldr q0, [x8]
+; CHECK-NEXT:    ldr q0, [x8], #16
+; CHECK-NEXT:    stp x8, x0, [sp, #32]
 ; CHECK-NEXT:    str q0, [sp], #48
 ; CHECK-NEXT:    ret
 entry:
