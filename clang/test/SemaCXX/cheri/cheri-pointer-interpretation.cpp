@@ -2,7 +2,7 @@
 // RUN: %clang_cc1 -fsyntax-only -triple aarch64-none-elf -target-feature +c64 -target-abi purecap -mllvm -cheri-cap-table-abi=pcrel %s -std=c++11 -verify
 
 struct foo_cap { // expected-note {{Add __attribute__((aligned(16))) to ensure sufficient alignment}}
-	void *a; // expected-warning {{Capability field at offset 0 in packed structure will trap if structure is used in an array}}
+	void *a; // expected-warning {{capability field at offset 0 in packed structure will trap if structure is used in an array}}
 	long d;
 	int e;
 } __attribute__((packed,annotate("underaligned_capability")));  // make it 48 instead of 64
