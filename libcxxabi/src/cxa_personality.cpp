@@ -700,6 +700,7 @@ static void scan_eh_tab(scan_results &results, _Unwind_Action actions,
            uint64_t offset = *((uint64_t*)callSitePtr);
            landingPad = *((uintptr_t*)(callSitePtr + offset));
            callSitePtr += sizeof(uint64_t);
+           SealedLandingPad = true;
         } else if (landingPad == 12) {
            callSitePtr = __builtin_align_up(callSitePtr, alignof(uintptr_t*));
            landingPad = *((uintptr_t*)callSitePtr);
