@@ -2550,7 +2550,6 @@ static void computeCalleeSaveRegisterPairs(
       // d9, d8. x21, gap, x20, x19.
       // Set extra alignment on the x21 object to create the gap above it.
       MFI.setObjectAlignment(RPI.FrameIdx, Align(16));
-      NeedGapToAlignStack = false;
     }
 
     int OffsetPost = RPI.isScalable() ? ScalableByteOffset : ByteOffset;
@@ -3019,6 +3018,24 @@ void AArch64FrameLowering::determineCalleeSaves(MachineFunction &MF,
       CSStackSize += RegSize;
   }
 
+  // Save number of saved regs, so we can easily update CSStackSize later.
+  unsigned NumSavedRegs = SavedRegs.count();
+
+  // The frame record needs to be created by saving the appropriate registers
+  uint64_t EstimatedStackSize = MFI.estimateStackSize(MF);
+  if (hasFP(MF) ||
+      windowsRequiresStackProbe(MF, EstimatedStackSize + CSStackSize + 16)) {
+    if (HasPureCap) {
+      AFI->setFrameRecordSize(32);
+      SavedRegs.set(AArch64::CFP);
+      SavedRegs.set(AArch64::CLR);
+    } else {
+      AFI->setFrameRecordSize(16);
+      SavedRegs.set(AArch64::FP);
+      SavedRegs.set(AArch64::LR);
+    }
+  }
+
   // GPRs are saved first and then capabilities in order to get the frame
   // record just above the FP register spill area. If we have an odd number of
   // GPRs and at least one capability, adjust the callee saved area size to
@@ -3039,24 +3056,6 @@ void AArch64FrameLowering::determineCalleeSaves(MachineFunction &MF,
     if (HasCap && NumGPRs % 2 == 1) {
         CSStackSize += 8;
         HasCap = true;
-    }
-  }
-
-  // Save number of saved regs, so we can easily update CSStackSize later.
-  unsigned NumSavedRegs = SavedRegs.count();
-
-  // The frame record needs to be created by saving the appropriate registers
-  uint64_t EstimatedStackSize = MFI.estimateStackSize(MF);
-  if (hasFP(MF) ||
-      windowsRequiresStackProbe(MF, EstimatedStackSize + CSStackSize + 16)) {
-    if (HasPureCap) {
-      AFI->setFrameRecordSize(32);
-      SavedRegs.set(AArch64::CFP);
-      SavedRegs.set(AArch64::CLR);
-    } else {
-      AFI->setFrameRecordSize(16);
-      SavedRegs.set(AArch64::FP);
-      SavedRegs.set(AArch64::LR);
     }
   }
 
