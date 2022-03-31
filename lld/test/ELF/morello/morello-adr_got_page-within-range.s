@@ -1,7 +1,7 @@
 // REQUIRES: aarch64
 // RUN: llvm-mc -filetype=obj -triple=arm64 -target-abi purecap -mattr=+c64,+morello %s -o %t.o
 // RUN: ld.lld %t.o -o %t
-// RUN: llvm-readobj -s %t  | FileCheck %s
+// RUN: llvm-readobj --sections %t  | FileCheck %s
 // RUN: llvm-readobj -r %t.o  | FileCheck %s --check-prefix=RELOCS
 // RUN: llvm-objdump --mattr=+morello -d %t --no-show-raw-insn | FileCheck %s --check-prefix=DISASM
 
