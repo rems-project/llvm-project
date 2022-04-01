@@ -1,19 +1,27 @@
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -rtlib=compiler-rt \
+// RUN:     -resource-dir=%S/Inputs/resource_dir_with_per_target_subdir \
 // RUN:     --target=aarch64-unknown-linux-gnu_purecap \
 // RUN:     --gcc-toolchain="" \
 // RUN:     --sysroot=%S/Inputs/basic_linux_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-AARCH64 %s
 // CHECK-AARCH64: "-target-abi" "purecap"
+// CHECK-AARCH64: "-resource-dir" "[[RESOURCE_DIR:[^"]+]]"
 // CHECK-AARCH64: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
 // CHECK-AARCH64-NOT: "--be8"
 // CHECK-AARCH64: "-EL"
 // CHECK-AARCH64: "-m" "aarch64linux"
+// CHECK-AARCH64: "[[RESOURCE_DIR]]{{/|\\\\}}lib{{/|\\\\}}aarch64-unknown-linux-gnu_purecap{{/|\\\\}}libclang_rt.builtins.a"
 
 // RUN: %clang %s -### -o %t.o 2>&1 \
+// RUN:     -rtlib=compiler-rt \
+// RUN:     -resource-dir=%S/Inputs/resource_dir_with_per_target_subdir \
 // RUN:     --target=aarch64-unknown-linux-musl_purecap \
 // RUN:   | FileCheck --check-prefix=CHECK-MUSL-AARCH64 %s
 // CHECK-MUSL-AARCH64: "-target-abi" "purecap"
+// CHECK-MUSL-AARCH64: "-resource-dir" "[[RESOURCE_DIR:[^"]+]]"
 // CHECK-MUSL-AARCH64:    "-dynamic-linker" "/lib/ld-musl-aarch64_purecap.so.1"
+// CHECK-MUSL-AARCH64: "[[RESOURCE_DIR]]{{/|\\\\}}lib{{/|\\\\}}aarch64-unknown-linux-musl_purecap{{/|\\\\}}libclang_rt.builtins.a"
 
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     --target=aarch64-linux-gnu_purecap -rtlib=platform \
