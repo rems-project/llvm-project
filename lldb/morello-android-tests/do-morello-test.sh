@@ -67,6 +67,9 @@ if test -z "${ORIGINAL_SOURCE_PREFIX}"; then
   exit 5
 fi
 
+# Normalize ANDROID_OUT (i.e. trim trailing /)
+ANDROID_OUT=${ANDROID_OUT%/}
+
 # The test_file is a path to an "APP.test" file, where APP is used as the
 # name of the binary and associated directories everywhere else.
 app=$(basename -s .test ${test_file})
