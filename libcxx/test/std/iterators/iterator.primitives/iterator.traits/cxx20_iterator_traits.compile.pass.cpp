@@ -15,7 +15,7 @@
 
 // Fails one of the testWithoutConcept tests because long is not the same as
 // long long.
-// XFAIL: *
+// XFAIL: libcpp-has-newlib
 
 #include <iterator>
 
