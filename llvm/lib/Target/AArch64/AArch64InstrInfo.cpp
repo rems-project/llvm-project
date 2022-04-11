@@ -3997,15 +3997,18 @@ void AArch64InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
           .addReg(SrcReg)
           .addReg(SrcReg, getKillRegState(KillSrc));
     } else {
-      BuildMI(MBB, I, DL, get(AArch64::STRQpre))
-          .addReg(AArch64::SP, RegState::Define)
+      auto SPReg = Subtarget.hasPureCap() ? AArch64::CSP : AArch64::SP;
+      auto STRQ = Subtarget.hasPureCap() ? AArch64::ASTRQpre : AArch64::STRQpre;
+      BuildMI(MBB, I, DL, get(STRQ))
+          .addReg(SPReg, RegState::Define)
           .addReg(SrcReg, getKillRegState(KillSrc))
-          .addReg(AArch64::SP)
+          .addReg(SPReg)
           .addImm(-16);
-      BuildMI(MBB, I, DL, get(AArch64::LDRQpre))
-          .addReg(AArch64::SP, RegState::Define)
+      auto LDRQ = Subtarget.hasPureCap() ? AArch64::ALDRQpre : AArch64::LDRQpre;
+      BuildMI(MBB, I, DL, get(LDRQ))
+          .addReg(SPReg, RegState::Define)
           .addReg(DestReg, RegState::Define)
-          .addReg(AArch64::SP)
+          .addReg(SPReg)
           .addImm(16);
     }
     return;

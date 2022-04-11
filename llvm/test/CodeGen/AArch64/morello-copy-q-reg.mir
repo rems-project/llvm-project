@@ -20,12 +20,12 @@
   ; ASM-NO-NEON-LABEL: copy_q_reg:
   ; ASM-NO-NEON:       .Lfunc_begin0:
   ; ASM-NO-NEON-NEXT:  // %bb.0:
-  ; ASM-NO-NEON-NEXT:    str q0, [sp, #-16]!
-  ; ASM-NO-NEON-NEXT:    ldr q2, [sp, #16]!
-  ; ASM-NO-NEON-NEXT:    str q1, [sp, #-16]!
-  ; ASM-NO-NEON-NEXT:    ldr q0, [sp, #16]!
-  ; ASM-NO-NEON-NEXT:    str q2, [sp, #-16]!
-  ; ASM-NO-NEON-NEXT:    ldr q1, [sp, #16]!
+  ; ASM-NO-NEON-NEXT:    str q0, [csp, #-16]!
+  ; ASM-NO-NEON-NEXT:    ldr q2, [csp, #16]!
+  ; ASM-NO-NEON-NEXT:    str q1, [csp, #-16]!
+  ; ASM-NO-NEON-NEXT:    ldr q0, [csp, #16]!
+  ; ASM-NO-NEON-NEXT:    str q2, [csp, #-16]!
+  ; ASM-NO-NEON-NEXT:    ldr q1, [csp, #16]!
   ; ASM-NO-NEON-NEXT:    b swap_arg_order
     %ret = tail call i1 @swap_arg_order(fp128 %f2, fp128 %f1)
     ret i1 %ret
