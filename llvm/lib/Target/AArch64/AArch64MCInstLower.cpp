@@ -159,6 +159,8 @@ MCOperand AArch64MCInstLower::lowerSymbolOperandELF(const MachineOperand &MO,
     }
   } else if (MO.getTargetFlags() & AArch64II::MO_PREL) {
     RefFlags |= AArch64MCExpr::VK_PREL;
+  } else if (MO.getTargetFlags() & AArch64II::MO_SIZE) {
+    RefFlags |= AArch64MCExpr::VK_SIZE;
   } else {
     // No modifier means this is a generic reference, classified as absolute for
     // the cases where it matters (:abs_g0: etc).

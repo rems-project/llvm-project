@@ -1039,7 +1039,7 @@ class Type;
       if (!SE.getDataLayout().isFatPointer(Expr->getType()))
         return Expr;
 
-      for (size_t NumOps = Expr->getNumOperands() - 1;;) {
+      for (size_t NumOps = Expr->getNumOperands() - 1;; NumOps--) {
         auto *Op = Expr->getOperand(NumOps);
         if (!SE.getDataLayout().isFatPointer(Op->getType()))
           continue;

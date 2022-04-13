@@ -1988,6 +1988,7 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
     MAKE_CASE(AArch64ISD::ADDClow)
     MAKE_CASE(AArch64ISD::LOADgot)
     MAKE_CASE(AArch64ISD::LOADCgot)
+    MAKE_CASE(AArch64ISD::CLoadTLSInfo)
     MAKE_CASE(AArch64ISD::RET_FLAG)
     MAKE_CASE(AArch64ISD::CRET_FLAG)
     MAKE_CASE(AArch64ISD::BRCOND)
@@ -7191,6 +7192,170 @@ AArch64TargetLowering::LowerDarwinGlobalTLSAddress(SDValue Op,
 /// Convert a thread-local variable reference into a sequence of instructions to
 /// compute the variable's address for the local exec TLS model of ELF targets.
 /// The sequence depends on the maximum TLS area size.
+SDValue AArch64TargetLowering::LowerC64ELFTLSLocalExec(const GlobalValue *GV,
+                                                       SDValue ThreadBase,
+                                                       const SDLoc &DL,
+                                                       SelectionDAG &DAG) const {
+  SDValue TPOff, Addr, Size;
+
+  switch (DAG.getTarget().Options.TLSSize) {
+  default:
+    llvm_unreachable("Unexpected TLS size");
+
+  case 12: {
+    // mrs   c0, CTPIDR_EL0
+    // add   c0, c0, :tprel_lo12:a
+    SDValue Var = DAG.getTargetGlobalAddress(
+        GV, DL, MVT::i64, 0, AArch64II::MO_TLS | AArch64II::MO_PAGEOFF);
+    Addr = SDValue(DAG.getMachineNode(AArch64::CapAddImm, DL, MVT::iFATPTR128,
+                       ThreadBase, Var,
+                       DAG.getTargetConstant(0, DL, MVT::i32)),
+                   0);
+    break;
+  }
+
+  case 24: {
+    // mrs   c0, CTPIDR_EL0
+    // add   c0, c0, :tprel_hi12:a
+    // add   c0, c0, :tprel_lo12_nc:a
+    SDValue HiVar = DAG.getTargetGlobalAddress(
+        GV, DL, MVT::i64, 0, AArch64II::MO_TLS | AArch64II::MO_HI12);
+    SDValue LoVar = DAG.getTargetGlobalAddress(
+        GV, DL, MVT::i64, 0,
+        AArch64II::MO_TLS | AArch64II::MO_PAGEOFF | AArch64II::MO_NC);
+    Addr = SDValue(DAG.getMachineNode(AArch64::CapAddImm, DL, MVT::iFATPTR128,
+                       ThreadBase, HiVar,
+                       DAG.getTargetConstant(0, DL, MVT::i32)),
+                   0);
+    Addr = SDValue(DAG.getMachineNode(AArch64::CapAddImm, DL, MVT::iFATPTR128,
+                       Addr, LoVar,
+                       DAG.getTargetConstant(0, DL, MVT::i32)),
+                   0);
+    break;
+  }
+
+  case 32: {
+    // mrs   c1, CTPIDR_EL0
+    // movz  x0, #:tprel_g1:a
+    // movk  x0, #:tprel_g0_nc:a
+    // add   c0, c1, x0
+    SDValue HiVar = DAG.getTargetGlobalAddress(
+        GV, DL, MVT::i64, 0, AArch64II::MO_TLS | AArch64II::MO_G1);
+    SDValue LoVar = DAG.getTargetGlobalAddress(
+        GV, DL, MVT::i64, 0,
+        AArch64II::MO_TLS | AArch64II::MO_G0 | AArch64II::MO_NC);
+    TPOff = SDValue(DAG.getMachineNode(AArch64::MOVZXi, DL, MVT::i64, HiVar,
+                                       DAG.getTargetConstant(16, DL, MVT::i32)),
+                    0);
+    TPOff = SDValue(DAG.getMachineNode(AArch64::MOVKXi, DL, MVT::i64, TPOff, LoVar,
+                                       DAG.getTargetConstant(0, DL, MVT::i32)),
+                    0);
+    Addr = DAG.getPointerAdd(DL, ThreadBase, TPOff);
+    break;
+  }
+
+  case 48: {
+    // mrs   c1, TPIDR_EL0
+    // movz  x0, #:tprel_g2:a
+    // movk  x0, #:tprel_g1_nc:a
+    // movk  x0, #:tprel_g0_nc:a
+    // add   c0, c1, x0
+    SDValue HiVar = DAG.getTargetGlobalAddress(
+        GV, DL, MVT::i64, 0, AArch64II::MO_TLS | AArch64II::MO_G2);
+    SDValue MiVar = DAG.getTargetGlobalAddress(
+        GV, DL, MVT::i64, 0,
+        AArch64II::MO_TLS | AArch64II::MO_G1 | AArch64II::MO_NC);
+    SDValue LoVar = DAG.getTargetGlobalAddress(
+        GV, DL, MVT::i64, 0,
+        AArch64II::MO_TLS | AArch64II::MO_G0 | AArch64II::MO_NC);
+    TPOff = SDValue(DAG.getMachineNode(AArch64::MOVZXi, DL, MVT::i64, HiVar,
+                                       DAG.getTargetConstant(32, DL, MVT::i32)),
+                    0);
+    TPOff = SDValue(DAG.getMachineNode(AArch64::MOVKXi, DL, MVT::i64, TPOff, MiVar,
+                                       DAG.getTargetConstant(16, DL, MVT::i32)),
+                    0);
+    TPOff = SDValue(DAG.getMachineNode(AArch64::MOVKXi, DL, MVT::i64, TPOff, LoVar,
+                                       DAG.getTargetConstant(0, DL, MVT::i32)),
+                    0);
+    Addr = DAG.getPointerAdd(DL, ThreadBase, TPOff);
+    break;
+  }
+  }
+
+  if (GV->isLocalLinkage(GV->getLinkage())) {
+    // If we already know the size use a scbnds with the constant, which can be
+    // folded to an scbnds with an immediate.
+    uint64_t ValSize = DAG.getDataLayout().getTypeAllocSize(GV->getValueType());
+    Size = DAG.getTargetConstant(ValSize, DL, MVT::i64);
+    return DAG.getCSetBounds(Addr, DL, Size, Align(1), "AArch64 ISel Lowering",
+                             cheri::SetBoundsPointerSource::GlobalVar);
+  }
+
+  // We don't know the size of the symbol. Matterialize it with mov/movk and
+  // set the bounds.
+  switch (DAG.getTarget().Options.TLSSize) {
+  default:
+    llvm_unreachable("Unexpected TLS size");
+
+  case 12: {
+    // movz   x1, #:size_g0:a
+    SDValue Var = DAG.getTargetGlobalAddress(
+        GV, DL, MVT::i64, 0, AArch64II::MO_SIZE | AArch64II::MO_G0);
+    Size = SDValue(DAG.getMachineNode(AArch64::MOVZXi, DL, MVT::i64, Var,
+                                       DAG.getTargetConstant(0, DL, MVT::i32)),
+                    0);
+    break;
+  }
+
+  case 24:
+  case 32: {
+    // movz  x1, #:size_g1:a
+    // movk  x1, #:size_g0_nc:a
+    SDValue HiVar = DAG.getTargetGlobalAddress(
+        GV, DL, MVT::i64, 0, AArch64II::MO_SIZE | AArch64II::MO_G1);
+    SDValue LoVar = DAG.getTargetGlobalAddress(
+        GV, DL, MVT::i64, 0,
+        AArch64II::MO_SIZE | AArch64II::MO_G0 | AArch64II::MO_NC);
+    Size = SDValue(DAG.getMachineNode(AArch64::MOVZXi, DL, MVT::i64, HiVar,
+                                       DAG.getTargetConstant(16, DL, MVT::i32)),
+                    0);
+    Size = SDValue(DAG.getMachineNode(AArch64::MOVKXi, DL, MVT::i64, Size, LoVar,
+                                       DAG.getTargetConstant(0, DL, MVT::i32)),
+                    0);
+    break;
+  }
+
+  case 48: {
+    // movz  x1, #:size_g2:a
+    // movk  x1, #:size_g1_nc:a
+    // movk  x1, #:size_g0_nc:a
+    SDValue HiVar = DAG.getTargetGlobalAddress(
+        GV, DL, MVT::i64, 0, AArch64II::MO_SIZE | AArch64II::MO_G2);
+    SDValue MiVar = DAG.getTargetGlobalAddress(
+        GV, DL, MVT::i64, 0,
+        AArch64II::MO_SIZE | AArch64II::MO_G1 | AArch64II::MO_NC);
+    SDValue LoVar = DAG.getTargetGlobalAddress(
+        GV, DL, MVT::i64, 0,
+        AArch64II::MO_SIZE | AArch64II::MO_G0 | AArch64II::MO_NC);
+    Size = SDValue(DAG.getMachineNode(AArch64::MOVZXi, DL, MVT::i64, HiVar,
+                                       DAG.getTargetConstant(32, DL, MVT::i32)),
+                    0);
+    Size = SDValue(DAG.getMachineNode(AArch64::MOVKXi, DL, MVT::i64, Size, MiVar,
+                                       DAG.getTargetConstant(16, DL, MVT::i32)),
+                    0);
+    Size = SDValue(DAG.getMachineNode(AArch64::MOVKXi, DL, MVT::i64, Size, LoVar,
+                                       DAG.getTargetConstant(0, DL, MVT::i32)),
+                    0);
+    break;
+  }
+  }
+  return DAG.getCSetBounds(Addr, DL, Size, Align(1), "AArch64 ISel Lowering",
+                           cheri::SetBoundsPointerSource::GlobalVar);
+}
+
+/// Convert a thread-local variable reference into a sequence of instructions to
+/// compute the variable's address for the local exec TLS model of ELF targets.
+/// The sequence depends on the maximum TLS area size.
 SDValue AArch64TargetLowering::LowerELFTLSLocalExec(const GlobalValue *GV,
                                                     SDValue ThreadBase,
                                                     const SDLoc &DL,
@@ -7329,13 +7494,7 @@ AArch64TargetLowering::LowerC64ELFTLSDescCallSeq(SDValue SymAddr,
 
   SDValue Addr = DAG.getCopyFromReg(Chain, DL, AArch64::C0, MVT::iFATPTR128,
                                     Glue);
-  SDValue Size = DAG.getCopyFromReg(Chain, DL, AArch64::X1, MVT::i64,
-                                    Addr.getValue(2));
-
-  return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, MVT::iFATPTR128,
-                     DAG.getConstant(Intrinsic::cheri_cap_bounds_set, DL,
-                                     MVT::i32),
-                     Addr, Size);
+  return Addr;
 }
 
 SDValue
@@ -7348,13 +7507,12 @@ AArch64TargetLowering::LowerELFGlobalTLSAddress(SDValue Op,
 
   TLSModel::Model Model = getTargetMachine().getTLSModel(GA->getGlobal());
 
-  if (HasC64 || !EnableAArch64ELFLocalDynamicTLSGeneration) {
+  if (!EnableAArch64ELFLocalDynamicTLSGeneration) {
     if (Model == TLSModel::LocalDynamic)
       Model = TLSModel::GeneralDynamic;
   }
 
-  // C64 doesn't yet support anything except GeneralDynamic.
-  if (HasC64)
+  if (MCTargetOptions::useTLSGDForPurecap() && HasC64)
     Model = TLSModel::GeneralDynamic;
 
   if (getTargetMachine().getCodeModel() == CodeModel::Large &&
@@ -7377,15 +7535,29 @@ AArch64TargetLowering::LowerELFGlobalTLSAddress(SDValue Op,
   SDValue ThreadBase = DAG.getNode(AArch64ISD::THREAD_POINTER, DL, PtrVT);
 
   if (Model == TLSModel::LocalExec) {
-    SDValue TPWithOff = LowerELFTLSLocalExec(GV, ThreadBase, DL, DAG);
-    if (GV->getType()->getAddressSpace() == 200) {
-      TPWithOff = getAddrFromDDC(TPWithOff, DAG);
-    }
+    SDValue TPWithOff =
+        Subtarget->hasPureCap()
+           ? LowerC64ELFTLSLocalExec(GV, ThreadBase, DL, DAG)
+           : LowerELFTLSLocalExec(GV, ThreadBase, DL, DAG);
     return TPWithOff;
   } else if (Model == TLSModel::InitialExec) {
-    if (Subtarget->hasCapGOT())
+    if (Subtarget->hasPureCap())
       PtrVT = MVT::iFATPTR128;
     TPOff = DAG.getTargetGlobalAddress(GV, DL, PtrVT, 0, AArch64II::MO_TLS);
+    if (Subtarget->hasPureCap()) {
+      SDValue Val = DAG.getNode(AArch64ISD::CLoadTLSInfo, DL,
+                                {MVT::iFATPTR128, MVT::i64},
+                                TPOff);
+      SDValue SubReg = DAG.getTargetConstant(AArch64::sub_64, DL, MVT::i32);
+      SDValue Offset =
+          SDValue(DAG.getMachineNode(TargetOpcode::EXTRACT_SUBREG,
+                                     DL, MVT::i64, Val.getValue(0), SubReg),
+                  0);
+      SDValue Size = Val.getValue(1);
+      SDValue Addr = DAG.getPointerAdd(DL, ThreadBase, Offset);
+      return DAG.getCSetBounds(Addr, DL, Size, Align(1), "AArch64 ISel Lowering",
+                               cheri::SetBoundsPointerSource::GlobalVar);
+    }
     TPOff = getGOTAccess(DL, PtrVT,
                          TPOff, Subtarget, DAG);
   } else if (Model == TLSModel::LocalDynamic) {
@@ -7405,6 +7577,50 @@ AArch64TargetLowering::LowerELFGlobalTLSAddress(SDValue Op,
     SDValue SymAddr = DAG.getTargetExternalSymbol("_TLS_MODULE_BASE_", PtrVT,
                                                   AArch64II::MO_TLS);
 
+    if (HasC64) {
+      // Get the module address with no bounds set (there's no point, this
+      // will contain the entire module).
+      TPOff = LowerC64ELFTLSDescCallSeq(SymAddr, ThreadBase, DL,
+                                        DAG);
+      SDValue HiVar = DAG.getTargetGlobalAddress(
+          GV, DL, MVT::i64, 0, AArch64II::MO_TLS | AArch64II::MO_HI12);
+      SDValue LoVar = DAG.getTargetGlobalAddress(
+          GV, DL, MVT::i64, 0,
+          AArch64II::MO_TLS | AArch64II::MO_PAGEOFF | AArch64II::MO_NC);
+
+      TPOff = SDValue(DAG.getMachineNode(AArch64::CapAddImm, DL, MVT::iFATPTR128,
+                                         TPOff, HiVar,
+                                         DAG.getTargetConstant(0, DL, MVT::i32)),
+                      0);
+      TPOff = SDValue(DAG.getMachineNode(AArch64::CapAddImm, DL, MVT::iFATPTR128,
+                                         TPOff, LoVar,
+                                         DAG.getTargetConstant(0, DL, MVT::i32)),
+                      0);
+      SDValue Size;
+      if (GV->isLocalLinkage(GV->getLinkage())) {
+        // If we already know the size use a scbnds with the constant, which can be
+        // folded to an scbnds with an immediate.
+        uint64_t ValSize = DAG.getDataLayout().getTypeAllocSize(GV->getValueType());
+        Size = DAG.getTargetConstant(ValSize, DL, MVT::i64);
+        return DAG.getCSetBounds(TPOff, DL, Size, Align(1), "AArch64 ISel Lowering",
+                                 cheri::SetBoundsPointerSource::GlobalVar);
+      }
+
+      HiVar = DAG.getTargetGlobalAddress(
+          GV, DL, MVT::i64, 0, AArch64II::MO_SIZE | AArch64II::MO_G1);
+      LoVar = DAG.getTargetGlobalAddress(
+          GV, DL, MVT::i64, 0,
+          AArch64II::MO_SIZE | AArch64II::MO_G0 | AArch64II::MO_NC);
+      Size = SDValue(DAG.getMachineNode(AArch64::MOVZXi, DL, MVT::i64, HiVar,
+                                         DAG.getTargetConstant(16, DL, MVT::i32)),
+                      0);
+      Size = SDValue(DAG.getMachineNode(AArch64::MOVKXi, DL, MVT::i64, Size, LoVar,
+                                         DAG.getTargetConstant(0, DL, MVT::i32)),
+                      0);
+      return DAG.getCSetBounds(TPOff, DL, Size, Align(1),
+          "AArch64 ISel Lowering", cheri::SetBoundsPointerSource::GlobalVar);
+
+    }
     // Now we can calculate the offset from TPIDR_EL0 to this module's
     // thread-local area.
     TPOff = LowerELFTLSDescCallSeq(SymAddr, DL, DAG);

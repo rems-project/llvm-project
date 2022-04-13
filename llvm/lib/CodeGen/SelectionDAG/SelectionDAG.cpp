@@ -5308,11 +5308,11 @@ SDValue SelectionDAG::FoldConstantArithmetic(unsigned Opcode, const SDLoc &DL,
   if (!IsBVOrSV1 && !IsBVOrSV2)
     return SDValue();
 
-  EVT SVT = VT.getScalarType();
-  EVT LegalSVT = SVT;
+  EVT ResultSVT = VT.getScalarType();
+  EVT LegalSVT = ResultSVT;
   if (NewNodesMustHaveLegalTypes && LegalSVT.isInteger()) {
     LegalSVT = TLI->getTypeToTransformTo(*getContext(), LegalSVT);
-    if (LegalSVT.bitsLT(SVT))
+    if (LegalSVT.bitsLT(ResultSVT))
       return SDValue();
   }
 
@@ -5328,6 +5328,9 @@ SDValue SelectionDAG::FoldConstantArithmetic(unsigned Opcode, const SDLoc &DL,
   assert((!VT.isScalableVector() || NumOps == 1) &&
          "Scalable vector should only have one scalar");
 
+  // For operations such as PTRADD, the LHS and RHS could have different types.
+  EVT SVT1 = N1->getValueType(0).getScalarType();
+  EVT SVT2 = N2->getValueType(0).getScalarType();
   for (unsigned I = 0; I != NumOps; ++I) {
     // We can have a fixed length SPLAT_VECTOR and a BUILD_VECTOR so we need
     // to use operand 0 of the SPLAT_VECTOR for each fixed element.
@@ -5337,7 +5340,7 @@ SDValue SelectionDAG::FoldConstantArithmetic(unsigned Opcode, const SDLoc &DL,
     else if (N1->getOpcode() == ISD::SPLAT_VECTOR)
       V1 = N1->getOperand(0);
     else
-      V1 = getUNDEF(SVT);
+      V1 = getUNDEF(SVT1);
 
     SDValue V2;
     if (N2->getOpcode() == ISD::BUILD_VECTOR)
@@ -5345,21 +5348,21 @@ SDValue SelectionDAG::FoldConstantArithmetic(unsigned Opcode, const SDLoc &DL,
     else if (N2->getOpcode() == ISD::SPLAT_VECTOR)
       V2 = N2->getOperand(0);
     else
-      V2 = getUNDEF(SVT);
+      V2 = getUNDEF(SVT2);
 
-    if (SVT.isInteger()) {
-      if (V1.getValueType().bitsGT(SVT))
-        V1 = getNode(ISD::TRUNCATE, DL, SVT, V1);
-      if (V2.getValueType().bitsGT(SVT))
-        V2 = getNode(ISD::TRUNCATE, DL, SVT, V2);
+    if (ResultSVT.isInteger()) {
+      if (V1.getValueType().bitsGT(ResultSVT))
+        V1 = getNode(ISD::TRUNCATE, DL, ResultSVT, V1);
+      if (V2.getValueType().bitsGT(ResultSVT))
+        V2 = getNode(ISD::TRUNCATE, DL, ResultSVT, V2);
     }
 
-    if (V1.getValueType() != SVT || V2.getValueType() != SVT)
+    if (V1.getValueType() != ResultSVT || V2.getValueType() != ResultSVT)
       return SDValue();
 
     // Fold one vector element.
-    SDValue ScalarResult = getNode(Opcode, DL, SVT, V1, V2);
-    if (LegalSVT != SVT)
+    SDValue ScalarResult = getNode(Opcode, DL, ResultSVT, V1, V2);
+    if (LegalSVT.isInteger() && LegalSVT != ResultSVT)
       ScalarResult = getNode(ISD::SIGN_EXTEND, DL, LegalSVT, ScalarResult);
 
     // Scalar folding only succeeded if the result is a constant or UNDEF.

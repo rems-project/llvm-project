@@ -76,6 +76,10 @@ enum NodeType : unsigned {
             // Offset Table, TLS record). However, we are doing the load
             // via a capability so restrict this to a register that has
             // a capability sub-register.
+  CLoadTLSInfo, // Load the offset and size of the TLS variable (purecap).
+                // The offset (first result) is returned a capability for
+                // register allocation purposes (we need a scratch capability
+                // for the adrp).
   RET_FLAG, // Return with a flag operand. Operand 0 is the chain operand.
   CRET_FLAG, // Capability return with a flag operand. Operand 0 is the chain operand.
   BRCOND,   // Conditional branch instruction; "b.cond".
@@ -982,6 +986,8 @@ private:
   SDValue LowerELFGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerELFTLSLocalExec(const GlobalValue *GV, SDValue ThreadBase,
                                const SDLoc &DL, SelectionDAG &DAG) const;
+  SDValue LowerC64ELFTLSLocalExec(const GlobalValue *GV, SDValue ThreadBase,
+                                 const SDLoc &DL, SelectionDAG &DAG) const;
   SDValue LowerELFTLSDescCallSeq(SDValue SymAddr, const SDLoc &DL,
                                  SelectionDAG &DAG) const;
   SDValue LowerC64ELFTLSDescCallSeq(SDValue SymAddr, SDValue TP,

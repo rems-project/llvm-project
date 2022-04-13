@@ -1342,11 +1342,6 @@ void AArch64AsmPrinter::emitInstruction(const MachineInstr *MI) {
     MCInstLowering.lowerOperand(MO_TLSDESC_LO12, SymTLSDescLo12);
     MCInstLowering.lowerOperand(MO_TLSDESC, SymTLSDesc);
 
-    MCInst Nop;
-    Nop.setOpcode(AArch64::HINT);
-    Nop.addOperand(MCOperand::createImm(0));
-    EmitToStreamer(*OutStreamer, Nop);
-
     MCInst Adrp;
     Adrp.setOpcode(AArch64::PADRP);
     Adrp.addOperand(MCOperand::createReg(AArch64::C0));
@@ -1368,6 +1363,11 @@ void AArch64AsmPrinter::emitInstruction(const MachineInstr *MI) {
     Add.addOperand(SymTLSDescLo12);
     Add.addOperand(MCOperand::createImm(AArch64_AM::getShiftValue(0)));
     EmitToStreamer(*OutStreamer, Add);
+
+    MCInst Nop;
+    Nop.setOpcode(AArch64::HINT);
+    Nop.addOperand(MCOperand::createImm(0));
+    EmitToStreamer(*OutStreamer, Nop);
 
     // Emit a relocation-annotation. This expands to no code, but requests
     // the following instruction gets an R_AARCH64_TLSDESC_CALL.

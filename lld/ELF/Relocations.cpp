@@ -233,14 +233,18 @@ handleTlsRelocation(RelType type, Symbol &sym, InputSectionBase &c,
     return handleMipsTlsRelocation(type, sym, c, offset, addend, expr);
 
   // AArch64 supports relaxation from General-Dynamic to Initial-Exec if the
-  // symbol is preemptible. This is not implemented for Morello at the moment.
+  // symbol is preemptible.
   if (oneof<R_AARCH64_TLSDESC_PAGE, R_TLSDESC, R_TLSDESC_CALL, R_TLSDESC_PC,
-      R_MORELLO_TLSDESC_PAGE>(expr) &&
-      (config->shared || (sym.isPreemptible && config->morelloC64Plt))) {
+            R_MORELLO_TLSDESC_PAGE>(expr) &&
+      config->shared) {
     if (in.got->addDynTlsEntry(sym)) {
       uint64_t off = in.got->getGlobalDynOffset(sym);
       mainPart->relaDyn->addAddendOnlyRelocIfNonPreemptible(
           target->tlsDescRel, in.got, off, sym, target->tlsDescRel);
+
+      if (config->morelloC64Plt && sym.isTls() && !sym.isPreemptible) {
+        in.got->relocations.push_back({R_SIZE, R_AARCH64_ABS64, off + 24, 0, &sym});
+      }
     }
     if (expr != R_TLSDESC_CALL)
       c.relocations.push_back({expr, type, offset, addend, &sym});
@@ -365,6 +369,8 @@ handleTlsRelocation(RelType type, Symbol &sym, InputSectionBase &c,
                                           sym.getGotOffset(), sym);
       }
     } else {
+      if (config->emachine == EM_AARCH64 && config->morelloC64Plt)
+        in.tlsLEData->addTLSLEData(&sym);
       c.relocations.push_back(
           {target->adjustTlsExpr(type, R_RELAX_TLS_GD_TO_LE), type, offset,
            addend, &sym});
@@ -377,7 +383,12 @@ handleTlsRelocation(RelType type, Symbol &sym, InputSectionBase &c,
   if (oneof<R_GOT, R_GOTPLT, R_GOT_PC, R_AARCH64_GOT_PAGE_PC, R_GOT_OFF,
             R_TLSIE_HINT>(expr) &&
       toExecRelax && isLocalInExecutable) {
-    c.relocations.push_back({R_RELAX_TLS_IE_TO_LE, type, offset, addend, &sym});
+    if (config->emachine == EM_AARCH64 && config->morelloC64Plt) {
+      in.tlsLEData->addTLSLEData(&sym);
+    }
+    c.relocations.push_back(
+        {target->adjustTlsExpr(type, R_RELAX_TLS_IE_TO_LE), type,
+         offset, addend, &sym});
     return 1;
   }
 
@@ -444,7 +455,7 @@ static bool needsGot(RelExpr expr) {
 static bool isRelExpr(RelExpr expr) {
   return oneof<R_PC, R_GOTREL, R_GOTPLTREL, R_MIPS_GOTREL, R_PPC64_CALL,
                R_PPC64_RELAX_TOC, R_AARCH64_PAGE_PC, R_RELAX_GOT_PC,
-               R_RISCV_PC_INDIRECT, R_PPC64_RELAX_GOT_PC,
+               R_RISCV_PC_INDIRECT, R_PPC64_RELAX_GOT_PC, R_MORELLO_VADREF,
                R_CHERI_CAPABILITY_TABLE_REL>(expr);
 }
 
@@ -1209,6 +1220,10 @@ static void addGotEntry(Symbol &sym) {
     mainPart->relaDyn->addAddendOnlyRelocIfNonPreemptible(
         sym.isTls() ? target->tlsGotRel : target->gotRel, in.got, off, sym,
         target->symbolicRel);
+
+  if (config->morelloC64Plt && sym.isTls() && !sym.isPreemptible) {
+    in.got->relocations.push_back({R_SIZE, R_AARCH64_ABS64, off + 8, 0, &sym});
+  }
 }
 
 // Return true if we can define a symbol in the executable that

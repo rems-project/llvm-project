@@ -1059,6 +1059,8 @@ def ProcRainier : SubtargetFeature<"rainier", "ARMProcFamily",
                                     FeatureRCPC,
                                     FeatureSPE,
                                     FeatureSSBS,
+                                    FeaturePostRAScheduler,
+                                    FeatureFuseAES,
                                     FeatureMorello
                                     ]>;
 

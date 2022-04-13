@@ -414,6 +414,14 @@ static void DoInitialMatch(const SCEV *S, Loop *L,
 
   // Look at add operands.
   if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(S)) {
+    const DataLayout &DL = L->getHeader()->getModule()->getDataLayout();
+    if (DL.isFatPointer(Add->getType())) {
+      // We can't separate capability adds since this could take the pointer
+      // out of bounds.
+      Bad.push_back(S);
+      return;
+    }
+
     for (const SCEV *S : Add->operands())
       DoInitialMatch(S, L, Good, Bad, SE);
     return;

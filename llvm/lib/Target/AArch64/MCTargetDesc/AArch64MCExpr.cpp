@@ -42,6 +42,13 @@ StringRef AArch64MCExpr::getVariantKindName() const {
   case VK_ABS_G0:              return ":abs_g0:";
   case VK_ABS_G0_S:            return ":abs_g0_s:";
   case VK_ABS_G0_NC:           return ":abs_g0_nc:";
+  case VK_SIZE_G3:              return ":size_g3:";
+  case VK_SIZE_G2:              return ":size_g2:";
+  case VK_SIZE_G2_NC:           return ":size_g2_nc:";
+  case VK_SIZE_G1:              return ":size_g1:";
+  case VK_SIZE_G1_NC:           return ":size_g1_nc:";
+  case VK_SIZE_G0:              return ":size_g0:";
+  case VK_SIZE_G0_NC:           return ":size_g0_nc:";
   case VK_PREL_G3:             return ":prel_g3:";
   case VK_PREL_G2:             return ":prel_g2:";
   case VK_PREL_G2_NC:          return ":prel_g2_nc:";

@@ -40,6 +40,14 @@ CheriLandingPadEncoding MCTargetOptions::cheriLandingPadEncoding() {
   return LandingPadEncoding;
 }
 
+static cl::opt<bool> MorelloUseGDForTLS(
+    "morello-tls-gd-only", cl::desc("Only use general-dynamic for TLS"),
+    cl::init(false));
+
+bool MCTargetOptions::useTLSGDForPurecap() {
+  return MorelloUseGDForTLS;
+}
+
 MCTargetOptions::MCTargetOptions()
     : MCRelaxAll(false), MCNoExecStack(false), MCFatalWarnings(false),
       MCNoWarn(false), MCNoDeprecatedWarn(false),

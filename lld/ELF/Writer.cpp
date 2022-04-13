@@ -422,6 +422,10 @@ template <class ELFT> void elf::createSyntheticSections() {
     if (config->emachine == EM_AARCH64) {
       in.capRelocs = make<MorelloCapRelocsSection>();
       add(in.capRelocs);
+      if (config->morelloC64Plt) {
+        in.tlsLEData = make<MorelloTLSLEDataSection>();
+        add(in.tlsLEData);
+      }
     } else
       InX<ELFT>::capRelocs = make<CheriCapRelocsSection<ELFT>>();
     in.cheriCapTable = make<CheriCapTableSection>();
@@ -2358,6 +2362,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
     finalizeSynthetic(in.symTab);
     finalizeSynthetic(in.ppc64LongBranchTarget);
     finalizeSynthetic(in.capRelocs);
+    finalizeSynthetic(in.tlsLEData);
   }
 
   // Relaxation to delete inter-basic block jumps created by basic block

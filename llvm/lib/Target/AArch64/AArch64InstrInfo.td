@@ -333,6 +333,8 @@ def SDT_AArch64WrapperLarge : SDTypeProfile<1, 4,
                                          SDTCisSameAs<1, 2>, SDTCisSameAs<1, 3>,
                                          SDTCisSameAs<1, 4>]>;
 def SDTIntToFatPtrOp : SDTypeProfile<1, 1, [SDTCisFatPtrTy<0>, SDTCisInt<1>]>;
+def SDTIntToIntPairOp : SDTypeProfile<2, 1, [SDTCisFatPtrTy<0>, SDTCisInt<1>,
+                                             SDTCisInt<2>]>;
 def SDT_CAddLow : SDTypeProfile<1, 2,
                                 [SDTCisFatPtrTy<0>, SDTCisSameAs<0, 1>,
                                  SDTCisVT<2, i64>]>;
@@ -448,6 +450,7 @@ def AArch64adr           : SDNode<"AArch64ISD::ADR", SDTIntUnaryOp, []>;
 def AArch64addlow        : SDNode<"AArch64ISD::ADDlow", SDTIntBinOp, []>;
 def AArch64LOADgot       : SDNode<"AArch64ISD::LOADgot", SDTIntUnaryOp>;
 def AArch64LOADCgot       : SDNode<"AArch64ISD::LOADCgot", SDTIntToFatPtrOp>;
+def AArch64CLoadTLSInfo  : SDNode<"AArch64ISD::CLoadTLSInfo", SDTIntToIntPairOp>;
 
 def AArch64cadrp          : SDNode<"AArch64ISD::ADRPC", SDTIntToFatPtrOp, []>;
 def AArch64caddlow        : SDNode<"AArch64ISD::ADDClow", SDT_CAddLow, []>;
@@ -746,6 +749,12 @@ let AddedComplexity = 10 in
 def LOADCgot : Pseudo<(outs Capsp:$dst), (ins i64imm:$addr), []>,
                Sched<[WriteLDAdr]>;
 
+let AddedComplexity = 10 in
+def CLoadTLSInfo : Pseudo<(outs Cap:$offset, GPR64:$length),
+                          (ins i64imm:$addr), []>,
+                   Sched<[WriteLDAdr]>;
+
+
 // The MOVaddr instruction should match only when the add is not folded
 // into a load or store address.
 def MOVaddr
@@ -812,6 +821,9 @@ def : Pat<(AArch64LOADCgot tconstpool:$addr),
 
 def : Pat<(AArch64LOADCgot tglobaladdr:$addr),
           (LOADCgot tglobaladdr:$addr)>;
+
+def : Pat<(AArch64CLoadTLSInfo tglobaltlsaddr:$addr),
+          (CLoadTLSInfo tglobaltlsaddr:$addr)>;
 
 // 32-bit jump table destination is actually only 2 instructions since we can
 // use the table itself as a PC-relative base. But optimization occurs after
