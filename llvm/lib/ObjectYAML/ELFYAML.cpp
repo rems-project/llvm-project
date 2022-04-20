@@ -397,6 +397,9 @@ void ScalarBitSetTraits<ELFYAML::ELF_EF>::bitset(IO &IO,
 #define BCase(X) IO.bitSetCase(Value, #X, ELF::X)
 #define BCaseMask(X, M) IO.maskedBitSetCase(Value, #X, ELF::X, ELF::M)
   switch (Object->getMachine()) {
+  case ELF::EM_AARCH64:
+    BCase(EF_AARCH64_CHERI_PURECAP);
+    break;
   case ELF::EM_ARM:
     BCase(EF_ARM_SOFT_FLOAT);
     BCase(EF_ARM_VFP_FLOAT);
