@@ -1568,6 +1568,10 @@ static const EnumEntry<unsigned> ElfHeaderAMDGPUFlagsABIVersion4[] = {
   LLVM_READOBJ_ENUM_ENT(ELF, EF_AMDGPU_FEATURE_SRAMECC_ON_V4)
 };
 
+static const EnumEntry<unsigned> ElfHeaderAArch64Flags[] = {
+  ENUM_ENT(EF_AARCH64_CHERI_PURECAP, "purecap"),
+};
+
 static const EnumEntry<unsigned> ElfHeaderRISCVFlags[] = {
   ENUM_ENT(EF_RISCV_RVC, "RVC"),
   ENUM_ENT(EF_RISCV_FLOAT_ABI_SINGLE, "single-float ABI"),
@@ -3713,6 +3717,8 @@ template <class ELFT> void GNUELFDumper<ELFT>::printFileHeaders() {
                    unsigned(ELF::EF_MIPS_MACH));
   else if (e.e_machine == EM_RISCV)
     ElfFlags = printFlags(e.e_flags, makeArrayRef(ElfHeaderRISCVFlags));
+  else if (e.e_machine == EM_AARCH64)
+    ElfFlags = printFlags(e.e_flags, makeArrayRef(ElfHeaderAArch64Flags));
   else if (e.e_machine == EM_AVR)
     ElfFlags = printFlags(e.e_flags, makeArrayRef(ElfHeaderAVRFlags),
                           unsigned(ELF::EF_AVR_ARCH_MASK));
@@ -6705,6 +6711,8 @@ template <class ELFT> void LLVMELFDumper<ELFT>::printFileHeaders() {
       W.printFlags("Flags", E.e_flags, makeArrayRef(ElfHeaderMipsFlags),
                    unsigned(ELF::EF_MIPS_ARCH), unsigned(ELF::EF_MIPS_ABI),
                    unsigned(ELF::EF_MIPS_MACH));
+    else if (E.e_machine == EM_AARCH64)
+      W.printFlags("Flags", E.e_flags, makeArrayRef(ElfHeaderAArch64Flags));
     else if (E.e_machine == EM_AMDGPU) {
       switch (E.e_ident[ELF::EI_ABIVERSION]) {
       default:
