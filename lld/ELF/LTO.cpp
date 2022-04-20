@@ -131,6 +131,16 @@ static lto::Config createConfig() {
   c.OptLevel = config->ltoo;
   c.CPU = getCPUStr();
   c.MAttrs = getMAttrs();
+
+  // FIXME: There should be a better way of inferring the ABI.
+  if (config->emachine == EM_AARCH64 && config->morelloC64Plt) {
+    c.Options.MCOptions.ABIName = "purecap";
+    // We also have to enable the morello and c64 feature otherwise we get
+    // "LLVM ERROR: purecap ABI code generation only supported with C64".
+    c.MAttrs.push_back("+morello");
+    c.MAttrs.push_back("+c64");
+  }
+
   c.CGOptLevel = args::getCGOptLevel(config->ltoo);
 
   c.PTO.LoopVectorization = c.OptLevel > 1;
