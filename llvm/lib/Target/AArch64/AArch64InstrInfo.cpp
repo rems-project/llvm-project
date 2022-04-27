@@ -4416,6 +4416,10 @@ void AArch64InstrInfo::loadRegFromStackSlot(
   case 16:
     if (AArch64::CapallRegClass.hasSubClassEq(RC)) {
       Opc = (HasC64 ? AArch64::PCapLoadImmPre : AArch64::CapLoadImmPre);
+      if (Register::isVirtualRegister(DestReg))
+        MF.getRegInfo().constrainRegClass(DestReg, &AArch64::CapRegClass);
+      else
+        assert(!isStackPointerRegister(DestReg));
     } else if (AArch64::FPR128RegClass.hasSubClassEq(RC))
       Opc = HasPureCap ? AArch64::ALDRQui : AArch64::LDRQui;
     else if (AArch64::DDRegClass.hasSubClassEq(RC)) {
