@@ -2752,6 +2752,14 @@ static SDValue emitConditionalComparison(SDValue LHS, SDValue RHS,
   const bool FullFP16 =
     static_cast<const AArch64Subtarget &>(DAG.getSubtarget()).hasFullFP16();
 
+  if (LHS.getValueType().isFatPointer()) {
+    SDValue SubReg = DAG.getTargetConstant(AArch64::sub_64, DL, MVT::i32);
+    LHS = SDValue(DAG.getMachineNode(TargetOpcode::EXTRACT_SUBREG,
+                                     DL, MVT::i64, LHS, SubReg), 0);
+    RHS = SDValue(DAG.getMachineNode(TargetOpcode::EXTRACT_SUBREG,
+                                     DL, MVT::i64, RHS, SubReg), 0);
+  }
+
   if (LHS.getValueType().isFloatingPoint()) {
     assert(LHS.getValueType() != MVT::f128);
     if (LHS.getValueType() == MVT::f16 && !FullFP16) {
@@ -2799,8 +2807,6 @@ static bool canEmitConjunction(const SDValue Val, bool &CanNegate,
   unsigned Opcode = Val->getOpcode();
   if (Opcode == ISD::SETCC) {
     if (Val->getOperand(0).getValueType() == MVT::f128)
-      return false;
-    if (Val->getOperand(0).getValueType() == MVT::iFATPTR128)
       return false;
     CanNegate = true;
     MustBeFirst = false;
@@ -2864,16 +2870,14 @@ static SDValue emitConjunctionRec(SelectionDAG &DAG, SDValue Val,
     SDValue LHS = Val->getOperand(0);
     SDValue RHS = Val->getOperand(1);
     ISD::CondCode CC = cast<CondCodeSDNode>(Val->getOperand(2))->get();
-    bool isInteger = LHS.getValueType().isInteger();
+    bool isIntegerCC = LHS.getValueType().isInteger() ||
+                       LHS.getValueType().isFatPointer();
     if (Negate)
       CC = getSetCCInverse(CC, LHS.getValueType());
     SDLoc DL(Val);
     // Determine OutCC and handle FP special case.
-    if (isInteger) {
+    if (isIntegerCC) {
       OutCC = changeIntCCToAArch64CC(CC);
-    } else if (LHS.getValueType().isFatPointer()) {
-      // We have no support for conditionnal compares with capabilities.
-      llvm_unreachable("Not a conjunction disjunction tree");
     } else {
       assert(LHS.getValueType().isFloatingPoint());
       AArch64CC::CondCode ExtraCC;
