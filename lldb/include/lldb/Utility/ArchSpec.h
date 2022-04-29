@@ -93,11 +93,15 @@ public:
   };
 
   // AArch64 specific e_flags
+  // These are expected to match the values in the Morello ELF ABI:
+  // https://github.com/ARM-software/abi-aa/blob/main/aaelf64-morello/aaelf64-morello.rst
+  // They may also contain experimental values, which may be modified at will to
+  // avoid clashes.
   enum AArch64eflags {
-    eAArch64_abi_default = 0x00000000, // default ABI (we don't distinguish between the
-                                       // standard AArch64 ABI and Morello
-                                       // Hybrid or Pure Capability ABIs)
-    eAArch64_abi_descabi = 0x00000001  // Morello Descriptor ABI
+    eAArch64_abi_default = 0x00000000,   // default ABI (standard AArch64 ABI
+                                         // or Morello Hybrid)
+    eAArch64_cheri_purecap = 0x00010000, // Morello Pure Capabilities ABI
+    eAArch64_abi_descabi = 0x00000001    // Morello Descriptor ABI
   };
 
   enum RISCVSubType {
@@ -301,6 +305,9 @@ public:
   ///
   ///  \return a boolean value.
   bool IsMIPS() const;
+
+  /// Returns true for the AArch64 Morello Pure Capability ABI.
+  bool IsAArch64MorelloPureCapABI() const;
 
   /// Returns true for the AArch64 Morello Descriptor ABI.
   bool IsAArch64MorelloDescriptorABI() const;

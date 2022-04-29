@@ -175,6 +175,8 @@ lldb::addr_t NativeProcessELF::GetAddressFromCapability(uint64_t capability[2]) 
 
 llvm::Expected<std::vector<SVR4LibraryInfo>>
 NativeProcessELF::GetLoadedSVR4Libraries() {
+  bool is_purecap = GetArchitecture().IsAArch64MorelloPureCapABI();
+
   // Address of DT_DEBUG.d_ptr which points to r_debug
   lldb::addr_t info_address = GetSharedLibraryInfoAddress();
   if (info_address == LLDB_INVALID_ADDRESS)
@@ -198,18 +200,18 @@ NativeProcessELF::GetLoadedSVR4Libraries() {
                       pointer_size, bytes_read);
   if (!status.Success())
     return status.ToError();
-  link_map = GetAddressFromCapability(link_map_pointer);
+  link_map = is_purecap ? GetAddressFromCapability(link_map_pointer)
+                        : link_map_pointer[0];
   if (address == 0)
     return llvm::createStringError(llvm::inconvertibleErrorCode(),
                                    "Invalid link_map address");
 
   std::vector<SVR4LibraryInfo> library_list;
-  size_t address_size = GetAddressByteSize();
   while (link_map) {
     llvm::Expected<SVR4LibraryInfo> info =
-      pointer_size != address_size ? ReadSVR4LibraryInfo<uint64_t[2]>(link_map) :
-        GetAddressByteSize() == 8 ? ReadSVR4LibraryInfo<uint64_t>(link_map)
-                                  : ReadSVR4LibraryInfo<uint32_t>(link_map);
+        is_purecap                  ? ReadSVR4LibraryInfo<uint64_t[2]>(link_map)
+        : GetAddressByteSize() == 8 ? ReadSVR4LibraryInfo<uint64_t>(link_map)
+                                    : ReadSVR4LibraryInfo<uint32_t>(link_map);
     if (!info)
       return info.takeError();
     if (!info->name.empty() && info->base_addr != 0)

@@ -2177,10 +2177,10 @@ addr_t Process::ReadPointerFromMemory(lldb::addr_t vm_addr, Status &error) {
   Scalar scalar;
   ArchSpec arch = GetTarget().GetArchitecture();
 
-  // If the target supports capabilities, we'll assume the pointer is
-  // a capability.
-  // FIXME: Check if we're really in purecap mode, and not hybrid.
-  if (arch.GetCapabilityType() != lldb::eCapabilityInvalid) {
+  // If the target supports capabilities and we are in purecap mode, the pointer
+  // is definitely a capability.
+  if (arch.GetCapabilityType() != lldb::eCapabilityInvalid &&
+      arch.IsAArch64MorelloPureCapABI()) {
     assert(arch.GetCapabilityType() == eCapabilityMorello_128 &&
            "Unsupported capability type");
 
@@ -3410,13 +3410,13 @@ uint32_t Process::GetAddressByteSize() const {
 }
 
 uint32_t Process::GetPointerByteSize() const {
-  // We're assuming that the pointers are all capabilities if the target
-  // architecture supports them.
-  // FIXME: Check that we're actually in purecap mode, and not hybrid.
   std::uint32_t capability_size = Capability::GetBaseByteSize(
     GetTarget().GetArchitecture().GetCapabilityType());
 
-  if (capability_size)
+  bool is_purecap = GetTarget().GetArchitecture().IsAArch64MorelloPureCapABI();
+  assert((is_purecap ? capability_size : 1) &&
+         "capability size should be set for purecap");
+  if (capability_size && is_purecap)
     return capability_size;
 
   return GetAddressByteSize();

@@ -120,8 +120,6 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch,
              "Target::Target created with architecture {0} ({1})",
              target_arch.GetArchitectureName(),
              target_arch.GetTriple().getTriple().c_str());
-    if (target_arch.GetTriple().isAArch64())
-      m_arch.SetAArch64MorelloDescriptorABI(GetAArch64MorelloDescriptorABI());
   }
 
   UpdateLaunchInfoFromProperties();

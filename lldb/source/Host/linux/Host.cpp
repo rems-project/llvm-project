@@ -125,10 +125,37 @@ static bool IsDirNumeric(const char *dname) {
   return true;
 }
 
+template <typename ElfT, typename BufferT>
+static bool IsMorelloAArch64Purecap(BufferT buffer_sp) {
+  auto elf = llvm::object::ELFFile<ElfT>::create(
+      {buffer_sp->GetChars(), size_t(buffer_sp->GetByteSize())});
+
+  if (!elf)
+    return false;
+
+  return elf->getHeader().e_flags & llvm::ELF::EF_AARCH64_CHERI_PURECAP;
+}
+
+template <typename BufferT>
+static ArchSpec WithABI(ArchSpec arch, BufferT buffer_sp) {
+  bool isMorelloPurecap =
+      (arch.GetMachine() == llvm::Triple::aarch64_be &&
+       IsMorelloAArch64Purecap<llvm::object::ELF64BE>(buffer_sp)) ||
+      (arch.GetMachine() == llvm::Triple::aarch64 &&
+       IsMorelloAArch64Purecap<llvm::object::ELF64LE>(buffer_sp));
+
+  if (isMorelloPurecap)
+    arch.SetFlags(ArchSpec::eAArch64_cheri_purecap);
+
+  return arch;
+}
+
 static ArchSpec GetELFProcessCPUType(llvm::StringRef exe_path) {
   Log *log = GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
 
-  auto buffer_sp = FileSystem::Instance().CreateDataBuffer(exe_path, 0x20, 0);
+  // We're reading the whole ELF header because we might have to check the
+  // e_flags. For 64-bit targets, the ELF header is 64 bytes long.
+  auto buffer_sp = FileSystem::Instance().CreateDataBuffer(exe_path, 64, 0);
   if (!buffer_sp)
     return ArchSpec();
 
@@ -141,7 +168,7 @@ static ArchSpec GetELFProcessCPUType(llvm::StringRef exe_path) {
   case llvm::ELF::ELFCLASS32:
     return HostInfo::GetArchitecture(HostInfo::eArchKind32);
   case llvm::ELF::ELFCLASS64:
-    return HostInfo::GetArchitecture(HostInfo::eArchKind64);
+    return WithABI(HostInfo::GetArchitecture(HostInfo::eArchKind64), buffer_sp);
   default:
     LLDB_LOG(log, "Unknown elf class ({0}) in file {1}", exe_class, exe_path);
     return ArchSpec();

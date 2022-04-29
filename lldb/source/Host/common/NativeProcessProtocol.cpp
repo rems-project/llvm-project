@@ -613,13 +613,13 @@ Status NativeProcessProtocol::RemoveBreakpoint(lldb::addr_t addr,
 }
 
 uint32_t NativeProcessProtocol::GetPointerByteSize() const {
-  // We're assuming that the pointers are all capabilities if the target
-  // architecture supports them.
-  // FIXME: Check that we're actually in purecap mode, and not hybrid.
   std::uint32_t capability_size = Capability::GetBaseByteSize(
     GetArchitecture().GetCapabilityType());
 
-  if (capability_size)
+  bool is_purecap = GetArchitecture().IsAArch64MorelloPureCapABI();
+  assert((is_purecap ? capability_size : 1) &&
+         "capability size must be set for purecap");
+  if (capability_size && is_purecap)
     return capability_size;
 
   return GetAddressByteSize();

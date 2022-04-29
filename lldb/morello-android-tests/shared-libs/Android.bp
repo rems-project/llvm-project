@@ -6,7 +6,7 @@ cc_library_shared {
     cflags: [
       "-g", "-O0",
     ],
-    compile_multilib: "c64",
+    compile_multilib: "both",
 }
 
 cc_test {
@@ -17,7 +17,7 @@ cc_test {
     cflags: [
         "-g", "-O0"
     ],
-    compile_multilib: "c64",
+    compile_multilib: "both",
     shared_libs: ["shared-libs-dyn"],
     gtest: false,
 }

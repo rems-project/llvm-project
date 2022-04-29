@@ -1,4 +1,5 @@
 # RUN: %test-c64 %s
+# RUN: %test-a64 %s
 breakpoint set -p "Break here"
 process launch -E LD_LIBRARY_PATH="/data/local/tmp" --
 

@@ -115,6 +115,10 @@ Status TargetList::CreateTargetInternal(
       prefer_platform_arch = true;
       platform_arch = module_arch;
     }
+
+    // Copy ABI flags for Morello.
+    if (module_arch.GetFlags())
+      platform_arch.SetFlags(module_arch.GetFlags());
   };
 
   if (!user_exe_path.empty()) {
