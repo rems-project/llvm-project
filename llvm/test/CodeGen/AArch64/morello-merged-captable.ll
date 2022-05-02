@@ -29,30 +29,59 @@ target triple = "aarch64-none-unknown-elf"
 
 define i32 @getvals(i8 addrspace(200)* addrspace(200)* nocapture %a) local_unnamed_addr addrspace(200)  {
 ; CHECK-LABEL: getvals:
-; CHECK:         .cfi_startproc purecap
+; CHECK:       .Lfunc_begin0:
+; CHECK-NEXT:    .cfi_startproc purecap
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    adrp c1, .L__cap_merged_table
-; CHECK-NEXT:    add c1, c1, :lo12:.L__cap_merged_table
-; CHECK-NEXT:    ldp c2, c3, [c1, #0]
-; CHECK-NEXT:    ldp c4, c5, [c1, #32]
-; CHECK-NEXT:    stp c2, c3, [c0, #0]
-; CHECK-NEXT:    ldp c2, c3, [c1, #64]
-; CHECK-NEXT:    stp c4, c5, [c0, #32]
-; CHECK-NEXT:    ldp c4, c5, [c1, #96]
-; CHECK-NEXT:    stp c2, c3, [c0, #64]
-; CHECK-NEXT:    ldp c2, c3, [c1, #128]
-; CHECK-NEXT:    stp c4, c5, [c0, #96]
-; CHECK-NEXT:    ldp c4, c5, [c1, #160]
-; CHECK-NEXT:    stp c2, c3, [c0, #128]
-; CHECK-NEXT:    ldp c2, c3, [c1, #192]
-; CHECK-NEXT:    stp c4, c5, [c0, #160]
-; CHECK-NEXT:    ldp c4, c5, [c1, #224]
-; CHECK-NEXT:    stp c2, c3, [c0, #192]
-; CHECK-NEXT:    ldp c2, c3, [c1, #256]
-; CHECK-NEXT:    stp c4, c5, [c0, #224]
-; CHECK-NEXT:    ldp c4, c1, [c1, #288]
-; CHECK-NEXT:    stp c2, c3, [c0, #256]
-; CHECK-NEXT:    stp c4, c1, [c0, #288]
+; CHECK-NEXT:    adrp c2, .L__cap_merged_table+16
+; CHECK-NEXT:    adrp c3, .L__cap_merged_table+32
+; CHECK-NEXT:    adrp c4, .L__cap_merged_table+48
+; CHECK-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table]
+; CHECK-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table+16]
+; CHECK-NEXT:    ldr c3, [c3, :lo12:.L__cap_merged_table+32]
+; CHECK-NEXT:    ldr c4, [c4, :lo12:.L__cap_merged_table+48]
+; CHECK-NEXT:    adrp c5, .L__cap_merged_table+64
+; CHECK-NEXT:    adrp c6, .L__cap_merged_table+80
+; CHECK-NEXT:    adrp c7, .L__cap_merged_table+96
+; CHECK-NEXT:    adrp c8, .L__cap_merged_table+112
+; CHECK-NEXT:    adrp c9, .L__cap_merged_table+128
+; CHECK-NEXT:    adrp c10, .L__cap_merged_table+144
+; CHECK-NEXT:    adrp c11, .L__cap_merged_table+160
+; CHECK-NEXT:    adrp c12, .L__cap_merged_table+176
+; CHECK-NEXT:    stp c1, c2, [c0, #0]
+; CHECK-NEXT:    adrp c1, .L__cap_merged_table+192
+; CHECK-NEXT:    stp c3, c4, [c0, #32]
+; CHECK-NEXT:    ldr c3, [c5, :lo12:.L__cap_merged_table+64]
+; CHECK-NEXT:    ldr c4, [c6, :lo12:.L__cap_merged_table+80]
+; CHECK-NEXT:    ldr c5, [c7, :lo12:.L__cap_merged_table+96]
+; CHECK-NEXT:    ldr c6, [c8, :lo12:.L__cap_merged_table+112]
+; CHECK-NEXT:    adrp c2, .L__cap_merged_table+208
+; CHECK-NEXT:    stp c3, c4, [c0, #64]
+; CHECK-NEXT:    adrp c3, .L__cap_merged_table+224
+; CHECK-NEXT:    stp c5, c6, [c0, #96]
+; CHECK-NEXT:    adrp c4, .L__cap_merged_table+240
+; CHECK-NEXT:    ldr c5, [c9, :lo12:.L__cap_merged_table+128]
+; CHECK-NEXT:    ldr c6, [c10, :lo12:.L__cap_merged_table+144]
+; CHECK-NEXT:    ldr c7, [c11, :lo12:.L__cap_merged_table+160]
+; CHECK-NEXT:    ldr c8, [c12, :lo12:.L__cap_merged_table+176]
+; CHECK-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+192]
+; CHECK-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table+208]
+; CHECK-NEXT:    ldr c3, [c3, :lo12:.L__cap_merged_table+224]
+; CHECK-NEXT:    ldr c4, [c4, :lo12:.L__cap_merged_table+240]
+; CHECK-NEXT:    stp c5, c6, [c0, #128]
+; CHECK-NEXT:    adrp c5, .L__cap_merged_table+256
+; CHECK-NEXT:    stp c7, c8, [c0, #160]
+; CHECK-NEXT:    adrp c6, .L__cap_merged_table+272
+; CHECK-NEXT:    stp c1, c2, [c0, #192]
+; CHECK-NEXT:    adrp c1, .L__cap_merged_table+288
+; CHECK-NEXT:    stp c3, c4, [c0, #224]
+; CHECK-NEXT:    adrp c2, .L__cap_merged_table+304
+; CHECK-NEXT:    ldr c3, [c5, :lo12:.L__cap_merged_table+256]
+; CHECK-NEXT:    ldr c4, [c6, :lo12:.L__cap_merged_table+272]
+; CHECK-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+288]
+; CHECK-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table+304]
+; CHECK-NEXT:    stp c3, c4, [c0, #256]
+; CHECK-NEXT:    stp c1, c2, [c0, #288]
 ; CHECK-NEXT:    ret c30
 ;
 ; MERGE-LABEL: getvals:
@@ -153,7 +182,8 @@ entry:
 
 define i32 @bazz() local_unnamed_addr addrspace(200) {
 ; CHECK-LABEL: bazz:
-; CHECK:         .cfi_startproc purecap
+; CHECK:       .Lfunc_begin1:
+; CHECK-NEXT:    .cfi_startproc purecap
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    adrp c0, .L__cap_merged_table+16
 ; CHECK-NEXT:    adrp c1, .L__cap_merged_table+304
@@ -194,7 +224,8 @@ entry:
 
 define nonnull i32 addrspace(200)* @getx0() local_unnamed_addr addrspace(200) {
 ; CHECK-LABEL: getx0:
-; CHECK:         .cfi_startproc purecap
+; CHECK:       .Lfunc_begin2:
+; CHECK-NEXT:    .cfi_startproc purecap
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    adrp c0, .L__cap_merged_table
 ; CHECK-NEXT:    ldr c0, [c0, :lo12:.L__cap_merged_table]
@@ -219,7 +250,8 @@ entry:
 
 define nonnull i32 addrspace(200)* @getx1() local_unnamed_addr addrspace(200) {
 ; CHECK-LABEL: getx1:
-; CHECK:         .cfi_startproc purecap
+; CHECK:       .Lfunc_begin3:
+; CHECK-NEXT:    .cfi_startproc purecap
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    adrp c0, .L__cap_merged_table+16
 ; CHECK-NEXT:    ldr c0, [c0, :lo12:.L__cap_merged_table+16]
@@ -244,7 +276,8 @@ entry:
 
 define i32 @foo() local_unnamed_addr addrspace(200) {
 ; CHECK-LABEL: foo:
-; CHECK:         .cfi_startproc purecap
+; CHECK:       .Lfunc_begin4:
+; CHECK-NEXT:    .cfi_startproc purecap
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    adrp c0, .L__cap_merged_table+304
 ; CHECK-NEXT:    adrp c1, .L__cap_merged_table+16
@@ -285,7 +318,8 @@ entry:
 
 define i32 @foo1() local_unnamed_addr addrspace(200) {
 ; CHECK-LABEL: foo1:
-; CHECK:         .cfi_startproc purecap
+; CHECK:       .Lfunc_begin5:
+; CHECK-NEXT:    .cfi_startproc purecap
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    adrp c0, .L__cap_merged_table
 ; CHECK-NEXT:    adrp c1, .L__cap_merged_table+304
@@ -326,16 +360,18 @@ entry:
 
 define i32 @bat() local_unnamed_addr addrspace(200) {
 ; CHECK-LABEL: bat:
-; CHECK:         .cfi_startproc purecap
+; CHECK:       .Lfunc_begin6:
+; CHECK-NEXT:    .cfi_startproc purecap
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    adrp c0, .L__cap_merged_table
-; CHECK-NEXT:    add c0, c0, :lo12:.L__cap_merged_table
-; CHECK-NEXT:    ldr c1, [c0, #0]
-; CHECK-NEXT:    ldr c2, [c0, #304]
-; CHECK-NEXT:    ldr c0, [c0, #128]
-; CHECK-NEXT:    ldr w8, [c1]
-; CHECK-NEXT:    ldr w9, [c2]
-; CHECK-NEXT:    ldr w10, [c0]
+; CHECK-NEXT:    adrp c1, .L__cap_merged_table+304
+; CHECK-NEXT:    adrp c2, .L__cap_merged_table+128
+; CHECK-NEXT:    ldr c0, [c0, :lo12:.L__cap_merged_table]
+; CHECK-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+304]
+; CHECK-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table+128]
+; CHECK-NEXT:    ldr w8, [c0]
+; CHECK-NEXT:    ldr w9, [c1]
+; CHECK-NEXT:    ldr w10, [c2]
 ; CHECK-NEXT:    add w8, w9, w8
 ; CHECK-NEXT:    add w0, w8, w10
 ; CHECK-NEXT:    ret c30
@@ -377,16 +413,18 @@ entry:
 
 define i32 @bif() local_unnamed_addr addrspace(200) {
 ; CHECK-LABEL: bif:
-; CHECK:         .cfi_startproc purecap
+; CHECK:       .Lfunc_begin7:
+; CHECK-NEXT:    .cfi_startproc purecap
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    adrp c0, .L__cap_merged_table
-; CHECK-NEXT:    add c0, c0, :lo12:.L__cap_merged_table
-; CHECK-NEXT:    ldr c1, [c0, #304]
-; CHECK-NEXT:    ldr c2, [c0, #112]
-; CHECK-NEXT:    ldr c0, [c0, #0]
-; CHECK-NEXT:    ldr w8, [c1]
-; CHECK-NEXT:    ldr w9, [c2]
-; CHECK-NEXT:    ldr w10, [c0]
+; CHECK-NEXT:    adrp c0, .L__cap_merged_table+304
+; CHECK-NEXT:    adrp c1, .L__cap_merged_table+112
+; CHECK-NEXT:    adrp c2, .L__cap_merged_table
+; CHECK-NEXT:    ldr c0, [c0, :lo12:.L__cap_merged_table+304]
+; CHECK-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+112]
+; CHECK-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table]
+; CHECK-NEXT:    ldr w8, [c0]
+; CHECK-NEXT:    ldr w9, [c1]
+; CHECK-NEXT:    ldr w10, [c2]
 ; CHECK-NEXT:    add w8, w9, w8
 ; CHECK-NEXT:    add w0, w8, w10
 ; CHECK-NEXT:    ret c30

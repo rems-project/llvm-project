@@ -1123,11 +1123,6 @@ private:
 
   const char *LowerXConstraint(EVT ConstraintVT) const override;
 
-  SDValue performADDClowCombine(SDNode *N, TargetLowering::DAGCombinerInfo &DCI,
-                                SelectionDAG &DAG) const;
-  SDValue performADDClowCombineSmall(SDNode *N,
-                                SelectionDAG &DAG) const;
-
   void LowerAsmOperandForConstraint(SDValue Op, std::string &Constraint,
                                     std::vector<SDValue> &Ops,
                                     SelectionDAG &DAG) const override;
