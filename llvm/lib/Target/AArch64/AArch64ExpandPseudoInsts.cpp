@@ -1076,6 +1076,25 @@ bool AArch64ExpandPseudo::expandMI(MachineBasicBlock &MBB,
     MI.eraseFromParent();
     return true;
   }
+  case AArch64::LOADCapTable: {
+    const MachineOperand &MO1 = MI.getOperand(1);
+    unsigned Reg = MI.getOperand(0).getReg();
+    unsigned Flags = MO1.getTargetFlags();
+    MachineInstrBuilder MIB1 =
+        BuildMI(MBB, MBBI, MI.getDebugLoc(),
+                TII->get(AArch64::PADRP), Reg)
+	    .addGlobalAddress(MO1.getGlobal(), MO1.getOffset(),
+	                      Flags | AArch64II::MO_PAGE);
+    MachineInstrBuilder MIB2 =
+        BuildMI(MBB, MBBI, MI.getDebugLoc(),
+                TII->get(AArch64::PCapLoadImmPre), Reg)
+	    .addReg(Reg)
+	    .addGlobalAddress(MO1.getGlobal(), MO1.getOffset(),
+	                      Flags | AArch64II::MO_PAGEOFF | AArch64II::MO_NC);
+    transferImpOps(MI, MIB1, MIB2);
+    MI.eraseFromParent();
+    return true;
+  }
   case AArch64::LOADCgot: {
     // Expand into ADRP + ALDR.
     // The register should already be constrained such that it will have the

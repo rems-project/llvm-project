@@ -76,6 +76,7 @@ enum NodeType : unsigned {
             // Offset Table, TLS record). However, we are doing the load
             // via a capability so restrict this to a register that has
             // a capability sub-register.
+  LOADCapTable, // Load from the capability table
   CLoadTLSInfo, // Load the offset and size of the TLS variable (purecap).
                 // The offset (first result) is returned a capability for
                 // register allocation purposes (we need a scratch capability

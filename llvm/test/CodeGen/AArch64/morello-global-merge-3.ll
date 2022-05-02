@@ -7,15 +7,15 @@
 
 ; CHECK-LABEL: f1:
 define void @f1(i32 %a1, i32 %a2, i32 %a3) {
-; CHECK:	adrp	c3, :got:x
-; CHECK:	ldr	c3, [c3, :got_lo12:x]
-; CHECK:	adrp	c4, .L__cap_merged_table
-; CHECK:	ldr	c4, [c4, :lo12:.L__cap_merged_table]
-; CHECK:	adrp	c5, :got:y
-; CHECK:	ldr	c5, [c5, :got_lo12:y]
-; CHECK:	str	w0, [c3, #12]
-; CHECK:	str	w1, [c5, #12]
-; CHECK:	str	w2, [c4]
+; CHECK:        adrp	c3, :got:x
+; CHECK:        ldr	c3, [c3, :got_lo12:x]
+; CHECK:        adrp	c4, :got:y
+; CHECK:        ldr	c4, [c4, :got_lo12:y]
+; CHECK:        adrp	c5, .L__cap_merged_table
+; CHECK:        ldr	c5, [c5, :lo12:.L__cap_merged_table]
+; CHECK:        str	w0, [c3, #12]
+; CHECK:        str	w1, [c4, #12]
+; CHECK:        str	w2, [c5]
 
   %x3 = getelementptr inbounds [100 x i32], [100 x i32] addrspace(200)* @x, i32 0, i64 3
   %y3 = getelementptr inbounds [100 x i32], [100 x i32] addrspace(200)* @y, i32 0, i64 3

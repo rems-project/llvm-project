@@ -1988,6 +1988,7 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
     MAKE_CASE(AArch64ISD::ADDClow)
     MAKE_CASE(AArch64ISD::LOADgot)
     MAKE_CASE(AArch64ISD::LOADCgot)
+    MAKE_CASE(AArch64ISD::LOADCapTable)
     MAKE_CASE(AArch64ISD::CLoadTLSInfo)
     MAKE_CASE(AArch64ISD::RET_FLAG)
     MAKE_CASE(AArch64ISD::CRET_FLAG)
@@ -7048,15 +7049,10 @@ SDValue AArch64TargetLowering::LowerGlobalAddress(SDValue Op,
       SDValue Addr =
           DAG.getGlobalAddress(AddrGV, DL, Type, Index * 16);
       GlobalAddressSDNode *LGN = cast<GlobalAddressSDNode>(Addr);
-      SDValue LoadAddr = Subtarget->hasC64() ? getFatAddr(LGN, DAG)
-                                             : getAddr(LGN, DAG, OpFlags);
-      // Use MachinePointerInfo::getCapTable to enable machine LICM hoisting.
-      SDValue GlobalAddr = DAG.getLoad(
-          MVT::iFATPTR128, DL, DAG.getEntryNode(), LoadAddr,
-          MachinePointerInfo::getCapTable(DAG.getMachineFunction()), 16,
-          MachineMemOperand::MONonTemporal | MachineMemOperand::MOInvariant |
-          MachineMemOperand::MODereferenceable);
-
+      SDValue GlobalAddr =
+          DAG.getNode(AArch64ISD::LOADCapTable, DL, MVT::iFATPTR128,
+                      getTargetNode(LGN, MVT::iFATPTR128, DAG,
+		                    AArch64II::MO_NO_FLAG));
       if (GN->getOffset() != 0)
         GlobalAddr = DAG.getPointerAdd(DL, GlobalAddr, GN->getOffset());
       return GlobalAddr;
