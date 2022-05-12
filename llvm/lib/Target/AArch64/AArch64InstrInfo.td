@@ -5131,15 +5131,14 @@ def : Pat<(f64 (uint_to_fp (i64 (fp_to_uint f64:$Rn)))),
 def : Pat<(f32 (uint_to_fp (i32 (fp_to_uint f32:$Rn)))),
           (UCVTFv1i32 (i32 (FCVTZUv1i32 f32:$Rn)))>;
 
-let Predicates = [HasFullFP16] in {
+let Predicates = [HasNEON, HasFullFP16] in {
 def : Pat<(f16 (sint_to_fp (i32 (fp_to_sint f16:$Rn)))),
           (SCVTFv1i16 (f16 (FCVTZSv1f16 f16:$Rn)))>;
 def : Pat<(f16 (uint_to_fp (i32 (fp_to_uint f16:$Rn)))),
           (UCVTFv1i16 (f16 (FCVTZUv1f16 f16:$Rn)))>;
 }
-}
 
-let Predicates = [HasNotC64] in {
+let Predicates = [HasNEON, HasNotC64] in {
 // If an integer is about to be converted to a floating point value,
 // just load it on the floating point unit.
 // Here are the patterns for 8 and 16-bits to float.
@@ -5226,7 +5225,8 @@ def : Pat <(f64 (uint_to_fp (i32
                           (LDURSi GPR64sp:$Rn, simm9:$offset), ssub))>;
 // 64-bits -> double are handled in target specific dag combine:
 // performIntToFpCombine.
-}
+} // let Predicates = [HasNEON,HasNotC64]
+} // let Predicates = [HasNEON]
 
 //===----------------------------------------------------------------------===//
 // Advanced SIMD three different-sized vector instructions.
@@ -6877,7 +6877,7 @@ class SExtLoadi8CVTf32Pat<dag addrmode, dag INST>
                                   dsub)),
                                0),
                              ssub)))>,
-    Requires<[NotForCodeSize, UseAlternateSExtLoadCVTF32, HasNotC64]>;
+    Requires<[NotForCodeSize, UseAlternateSExtLoadCVTF32, HasNEON, HasNotC64]>;
 
 def : SExtLoadi8CVTf32Pat<(ro8.Wpat GPR64sp:$Rn, GPR32:$Rm, ro8.Wext:$ext),
                           (LDRBroW  GPR64sp:$Rn, GPR32:$Rm, ro8.Wext:$ext)>;
@@ -6897,8 +6897,7 @@ class SExtLoadi16CVTf32Pat<dag addrmode, dag INST>
                                   INST,
                                   hsub),
                                 0),
-                            ssub)))>, Requires<[NotForCodeSize,
-                                                HasNotC64]>;
+                            ssub)))>, Requires<[NotForCodeSize, HasNEON, HasNotC64]>;
 
 def : SExtLoadi16CVTf32Pat<(ro16.Wpat GPR64sp:$Rn, GPR32:$Rm, ro16.Wext:$ext),
                            (LDRHroW   GPR64sp:$Rn, GPR32:$Rm, ro16.Wext:$ext)>;
@@ -6932,7 +6931,7 @@ class SExtLoadi16CVTf64Pat<dag addrmode, dag INST>
                                    dsub)),
                                0),
                              dsub)))>,
-    Requires<[NotForCodeSize, UseAlternateSExtLoadCVTF32, HasNotC64]>;
+    Requires<[NotForCodeSize, UseAlternateSExtLoadCVTF32, HasNEON, HasNotC64]>;
 
 def : SExtLoadi16CVTf64Pat<(ro16.Wpat GPR64sp:$Rn, GPR32:$Rm, ro16.Wext:$ext),
                            (LDRHroW GPR64sp:$Rn, GPR32:$Rm, ro16.Wext:$ext)>;
@@ -6951,8 +6950,7 @@ class SExtLoadi32CVTf64Pat<dag addrmode, dag INST>
                                   INST,
                                   ssub),
                                0),
-                             dsub)))>, Requires<[NotForCodeSize,
-                                                 HasNotC64]>;
+                             dsub)))>, Requires<[NotForCodeSize, HasNEON, HasNotC64]>;
 
 def : SExtLoadi32CVTf64Pat<(ro32.Wpat GPR64sp:$Rn, GPR32:$Rm, ro32.Wext:$ext),
                            (LDRSroW GPR64sp:$Rn, GPR32:$Rm, ro32.Wext:$ext)>;
