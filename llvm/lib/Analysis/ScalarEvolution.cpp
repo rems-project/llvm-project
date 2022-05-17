@@ -11638,6 +11638,12 @@ bool ScalarEvolution::isImpliedViaOperations(ICmpInst::Predicate Pred,
                                              const SCEV *FoundLHS,
                                              const SCEV *FoundRHS,
                                              unsigned Depth) {
+  if (isa<SCEVCouldNotCompute>(LHS) ||
+      isa<SCEVCouldNotCompute>(FoundLHS) ||
+      isa<SCEVCouldNotCompute>(RHS) ||
+      isa<SCEVCouldNotCompute>(FoundRHS))
+    return false;
+
   assert(getTypeSizeInBits(LHS->getType()) ==
              getTypeSizeInBits(RHS->getType()) &&
          "LHS and RHS have different sizes?");
