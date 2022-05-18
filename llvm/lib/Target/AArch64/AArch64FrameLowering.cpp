@@ -593,32 +593,15 @@ void AArch64FrameLowering::emitCalleeSavedFrameMoves(
 // but we would then have to make sure that we were in fact saving at least one
 // callee-save register in the prologue, which is additional complexity that
 // doesn't seem worth the benefit.
-static unsigned findScratchNonCalleeSaveRegister(MachineBasicBlock *MBB,
-    unsigned OldScratch = AArch64::NoRegister) {
-
-  static const MCPhysReg ScratchCapReg1[2] = {AArch64::C6, AArch64::C9};
-  static const MCPhysReg ScratchCapReg2[2] = {AArch64::C7, AArch64::C10};
-
+static unsigned findScratchNonCalleeSaveRegister(MachineBasicBlock *MBB) {
   MachineFunction *MF = MBB->getParent();
-
   const AArch64Subtarget &Subtarget = MF->getSubtarget<AArch64Subtarget>();
-  bool HasPureCap = Subtarget.hasPureCap();
-  bool Use32CapRegs = !Subtarget.use16CapRegs();
-  // We can use an intra-procedural registers here since aligning the
-  // prologue doesn't require having this live across branches.
-  unsigned DefaultScratch = HasPureCap ? ScratchCapReg1[Use32CapRegs] : AArch64::X9;
-  if (OldScratch == DefaultScratch)
-    DefaultScratch = HasPureCap ? ScratchCapReg2[Use32CapRegs] : AArch64::X10;
-
-  const TargetRegisterClass ScratchRegClass =
-      HasPureCap ? AArch64::CapRegClass : AArch64::GPR64RegClass;
+  assert(!Subtarget.hasPureCap() &&
+      "Purecap doesn't need a scratch register");
 
   // If MBB is an entry block, use X9 as the scratch register
-  if (&MF->front() == MBB) {
-    assert(DefaultScratch != OldScratch &&
-           "Should not reuse scratch register");
-    return DefaultScratch;
-  }
+  if (&MF->front() == MBB)
+    return AArch64::X9;
 
   const AArch64RegisterInfo &TRI = *Subtarget.getRegisterInfo();
   LivePhysRegs LiveRegs(TRI);
@@ -629,15 +612,12 @@ static unsigned findScratchNonCalleeSaveRegister(MachineBasicBlock *MBB,
   for (unsigned i = 0; CSRegs[i]; ++i)
     LiveRegs.addReg(CSRegs[i]);
 
-  if (OldScratch != AArch64::NoRegister)
-    LiveRegs.addReg(OldScratch);
-
-  // Prefer X9/C6 since it was historically used for the prologue scratch reg.
+  // Prefer X9 since it was historically used for the prologue scratch reg.
   const MachineRegisterInfo &MRI = MF->getRegInfo();
-  if (LiveRegs.available(MRI, DefaultScratch))
-    return DefaultScratch;
+  if (LiveRegs.available(MRI, AArch64::X9))
+    return AArch64::X9;
 
-  for (unsigned Reg : ScratchRegClass) {
+  for (unsigned Reg : AArch64::GPR64RegClass) {
     if (LiveRegs.available(MRI, Reg))
       return Reg;
   }
@@ -650,9 +630,11 @@ bool AArch64FrameLowering::canUseAsPrologue(
   MachineBasicBlock *TmpMBB = const_cast<MachineBasicBlock *>(&MBB);
   const AArch64Subtarget &Subtarget = MF->getSubtarget<AArch64Subtarget>();
   const AArch64RegisterInfo *RegInfo = Subtarget.getRegisterInfo();
+  bool HasPureCap = Subtarget.hasPureCap();
 
   // Don't need a scratch register if we're not going to re-align the stack.
-  if (!RegInfo->hasStackRealignment(*MF))
+  // Purecap doesn't need a scratch to re-align the stack.
+  if (HasPureCap || !RegInfo->hasStackRealignment(*MF))
     return true;
   // Otherwise, we can use any block as long as it has a scratch register
   // available.
@@ -1542,7 +1524,7 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
         !IsFunclet && RegInfo->hasStackRealignment(MF);
     unsigned scratchSPReg = SP;
 
-    if (NeedsRealignment) {
+    if (NeedsRealignment && !HasPureCap) {
       scratchSPReg = findScratchNonCalleeSaveRegister(&MBB);
       assert(scratchSPReg != AArch64::NoRegister);
     }
@@ -1559,7 +1541,7 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF,
     if (NeedsRealignment) {
       const unsigned NrBitsToZero = Log2(MFI.getMaxAlign());
       assert(NrBitsToZero > 1);
-      assert(scratchSPReg != SP);
+      assert((scratchSPReg != SP) != HasPureCap);
 
       // SUB X9, SP, NumBytes
       //   -- X9 is temporary register, so shouldn't contain any live data here,

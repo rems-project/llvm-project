@@ -11,8 +11,8 @@ target datalayout = "e-m:e-pf200:128:128-i8:8:32-i16:16:32-i64:64-i128:128-n32:6
 define i32 @fun1() addrspace(200) {
 entry:
 ; Allocate extra memory. CSP still needs to be 16 bytes aligned.
-; PCS16:	sub c6, csp, #1024, lsl #12
-; PCS16-NEXT: sub c6, c6, #4032
+; PCS16:	sub csp, csp, #1024, lsl #12
+; PCS16-NEXT: sub csp, csp, #4032
 
 ; PCS16: mov w[[REG:[0-9]+]], #2048
 ; PCS16-NEXT: movk w8, #64, lsl #16
@@ -34,12 +34,12 @@ declare i32 @g(i32 addrspace(200)*) local_unnamed_addr addrspace(200) #2
 ; CHECK-LABEL: fun2
 define i32 @fun2() addrspace(200) {
 entry:
-; Here we need more alignment than the stack alignment. We know that the scratch register is c6.
-; PCS16: alignd	csp, c6, #14
+; Here we need more alignment than the stack alignment.
+; PCS16: alignd	csp, csp, #14
 ; PCS16: mov w[[REG:[0-9]+]], #33554432
 ; PCS16: scbndse c{{.*}}, c{{.*}}, x[[REG]]
 ;
-; PCS32: alignd	csp, c9, #11
+; PCS32: alignd	csp, csp, #14
 ; PCS32: mov w[[REG:[0-9]+]], #33554432
 ; PCS32: scbndse c{{.*}}, c{{.*}}, x[[REG]]
 
