@@ -1,4 +1,4 @@
-; RUN: llc -verify-machineinstrs -mtriple=aarch64-none-elf -mattr=+c64,+morello -target-abi purecap -pre-RA-sched=linearize -enable-misched=false -disable-post-ra -aarch64-enable-ldst-opt=false < %s | FileCheck %s
+; RUN: llc -verify-machineinstrs -mtriple=aarch64-none-elf -mattr=+c64,+morello,+legacy-morello-vararg -target-abi purecap -pre-RA-sched=linearize -enable-misched=false -disable-post-ra -aarch64-enable-ldst-opt=false < %s | FileCheck %s
 
 %va_list = type {i8 addrspace(200)*, i8 addrspace(200)*, i8 addrspace(200)*, i32, i32}
 

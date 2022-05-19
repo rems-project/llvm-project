@@ -1,4 +1,4 @@
-// RUN: %clang -target aarch64-none-elf -march=morello+c64 -mabi=purecap -emit-llvm -o - -c -S %s -fPIC | FileCheck %s
+// RUN: %clang -target aarch64-none-elf -march=morello+c64 -mabi=purecap -Xclang -morello-vararg=legacy -emit-llvm -o - -c -S %s -fPIC | FileCheck %s
 
 #include <stdarg.h>
 

@@ -1,4 +1,4 @@
-// RUN: %clang %s -target aarch64-none-elf -march=morello+c64 -mabi=purecap -o - -S -emit-llvm \
+// RUN: %clang %s -target aarch64-none-elf -march=morello+c64 -mabi=purecap -Xclang -morello-vararg=legacy -o - -S -emit-llvm \
 // RUN:   | FileCheck %s
 
 // Tests for handling of variable argument lists in the sandbox mode.

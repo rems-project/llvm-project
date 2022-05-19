@@ -1,4 +1,4 @@
-; RUN: llc -march=arm64 -mattr=+c64,+morello,+use-16-cap-regs -target-abi purecap -frame-pointer=all -o - %s | FileCheck %s
+; RUN: llc -march=arm64 -mattr=+c64,+morello,+use-16-cap-regs,+legacy-morello-vararg  -target-abi purecap -frame-pointer=all -o - %s | FileCheck %s
 target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128-pf200:128:128-A200-P200-G200"
 target triple = "aarch64-none--elf"
 

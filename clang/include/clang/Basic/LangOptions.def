@@ -361,7 +361,7 @@ LANGOPT(CheriDataDependentProvenance, 1, 0, "Derive pointer provenance for bitwi
 ENUM_LANGOPT(CheriMemopsInlineBehaviour, CheriMemopsInlineBehaviourMode, 1, CheriMemopsInlineBehaviour_Legacy,
              "Specify when the compiler is allowed to inline memcpy/memmove calls")
 
-LANGOPT(MorelloNewVarArg, 1, 0, "Bound variadic arguments in purecap calls")
+LANGOPT(MorelloNewVarArg, 1, 1, "Bound variadic arguments in purecap calls")
 
 ENUM_LANGOPT(ThreadModel  , ThreadModelKind, 2, ThreadModelKind::POSIX, "Thread Model")
 

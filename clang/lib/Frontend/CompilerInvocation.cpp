@@ -4397,9 +4397,9 @@ static bool ParseTargetArgs(TargetOptions &Opts, ArgList &Args,
   }
 
   if (T.isAArch64()) {
-    if (Args.hasFlag(options::OPT_morello_vararg_new,
-                     options::OPT_morello_vararg_legacy, false))
-      Opts.FeaturesAsWritten.push_back("+new-morello-vararg");
+    if (Args.hasFlag(options::OPT_morello_vararg_legacy,
+                     options::OPT_morello_vararg_new, false))
+      Opts.FeaturesAsWritten.push_back("+legacy-morello-vararg");
   }
 
   if (Arg *A = Args.getLastArg(options::OPT_target_sdk_version_EQ)) {

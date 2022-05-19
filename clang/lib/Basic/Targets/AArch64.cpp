@@ -500,7 +500,7 @@ bool AArch64TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
   HasUnaligned = true;
   Morello = false;
   C64 = false;
-  HasMorelloNewVarArg = false;
+  HasMorelloNewVarArg = true;
   HasFullFP16 = false;
   HasDotProd = false;
   HasFP16FML = false;
@@ -626,8 +626,8 @@ bool AArch64TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
     if (Feature == "+c64") {
       C64 = true;
     }
-    if (Feature == "+new-morello-vararg")
-      HasMorelloNewVarArg = true;
+    if (Feature == "+legacy-morello-vararg")
+      HasMorelloNewVarArg = false;
   }
 
   if (C64 && !Morello)

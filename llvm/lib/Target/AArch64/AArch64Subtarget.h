@@ -152,7 +152,7 @@ protected:
   // Morello extensions
   bool Use16CapRegs = false;
   bool HasMorello = false;
-  bool HasMorelloNewVarArg = false;
+  bool HasMorelloLegacyVarArg = false;
   bool HasPureCap = false;
   bool HasC64 = false;
 
@@ -470,7 +470,7 @@ public:
   bool hasCapGOT() const { return HasMorello && HasPureCap; }
   bool hasPureCap() const { return HasMorello && HasPureCap; }
   bool hasMorello() const { return HasMorello; }
-  bool hasMorelloNewVarArg() const { return HasMorelloNewVarArg; }
+  bool hasMorelloNewVarArg() const { return !HasMorelloLegacyVarArg; }
   bool hasC64() const { return HasMorello && HasC64; }
   bool hasPerfMon() const { return HasPerfMon; }
   bool hasFullFP16() const { return HasFullFP16; }
