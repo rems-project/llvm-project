@@ -211,7 +211,7 @@ bool EhReader::hasLSDA() {
       skipAugP();
     else if (c == 'R')
       readByte();
-    else if (c != 'B' && c != 'S')
+    else if (c != 'B' && c != 'C' && c != 'S')
       failOn(aug.data(), "unknown .eh_frame augmentation string: " + aug);
   }
   return false;
