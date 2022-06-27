@@ -90,13 +90,9 @@ AArch64::AArch64() {
 bool AArch64::calcIsCheriAbi() const {
   bool isCheriAbi = config->eflags & EF_AARCH64_CHERI_PURECAP;
 
-  // XXX: Enable once enough time has passed that users should have rebuilt
-  // their binaries with a toolchain that sets the flag (including LLD itself).
-#if 0
   if (config->isCheriAbi && !objectFiles.empty() && !isCheriAbi)
     error(toString(objectFiles.front()) +
           ": object file is non-CheriABI but emulation forces it");
-#endif
 
   return isCheriAbi;
 }
@@ -113,15 +109,12 @@ uint32_t AArch64::calcEFlags() const {
 
   for (InputFile *f : objectFiles) {
     uint32_t eflags = getEFlags(f);
-    if (eflags & EF_AARCH64_CHERI_PURECAP)
-      target |= EF_AARCH64_CHERI_PURECAP;
 
     if ((eflags & EF_AARCH64_CHERI_PURECAP) !=
         (target & EF_AARCH64_CHERI_PURECAP))
-      warn(toString(f) +
-            ": linking object files with different "
-            "EF_AARCH64_CHERI_PURECAP. "
-            "This will be deprecated and produce an error.");
+      error(toString(f) +
+            ": cannot link object files with different "
+            "EF_AARCH64_CHERI_PURECAP");
   }
 
   return target;
