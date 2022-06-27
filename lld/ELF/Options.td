@@ -90,9 +90,6 @@ defm Ttext: Eq<"Ttext", "Same as --section-start with .text as the sectionname">
 def morello_c64_plt: F<"morello-c64-plt">,
   HelpText<"Emit PLTs in c64 mode.">;
 
-def disable_warn_morello_abi: F<"disable-warn-morello-abi-mismatch">,
-  HelpText<"Disable warnings when mixinging purecap and hybrid ABI objects">;
-
 def Ttext_segment: Separate<["-", "--"], "Ttext-segment">;
 
 defm allow_multiple_definition: B<"allow-multiple-definition",

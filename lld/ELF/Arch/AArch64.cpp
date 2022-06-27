@@ -117,8 +117,7 @@ uint32_t AArch64::calcEFlags() const {
       target |= EF_AARCH64_CHERI_PURECAP;
 
     if ((eflags & EF_AARCH64_CHERI_PURECAP) !=
-        (target & EF_AARCH64_CHERI_PURECAP) &&
-        !config->disableWarnOnMorelloABIMismatch)
+        (target & EF_AARCH64_CHERI_PURECAP))
       warn(toString(f) +
             ": linking object files with different "
             "EF_AARCH64_CHERI_PURECAP. "

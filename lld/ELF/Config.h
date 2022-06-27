@@ -151,7 +151,6 @@ struct Configuration {
   bool armJ1J2BranchEncoding = false;
   bool morelloC64Plt = false;
   bool forceMorelloC64Plt = false;
-  bool disableWarnOnMorelloABIMismatch = false;
   bool asNeeded = false;
   bool bsymbolic = false;
   bool bsymbolicFunctions = false;
