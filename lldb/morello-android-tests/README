@@ -1,5 +1,5 @@
 This directory contains end-to-end tests, expected to run on an FVP model
-with Android.
+or board running Android.
 
 
 Prerequisites
@@ -10,8 +10,8 @@ Android development tree (you don't need to check out the whole llvm repository,
 just this directory). The tests can then be discovered and built using
 Android's own build system.
 
-The tests also assume that an FVP model with Android on it is already running,
-and that lldb-server has already been uploaded to it (e.g. at
+The tests also assume that Android is already running and we can communicate
+with it via adb, and that lldb-server has already been uploaded to it (e.g. at
 `/data/local/tmp/lldb-server`).
 
 In order to run the tests, you will need to have `lit` available. You can either
