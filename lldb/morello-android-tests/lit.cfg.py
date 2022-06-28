@@ -19,14 +19,13 @@ config.name = 'lldb-morello-android'
 do_morello_test = shutil.which(
         'do-morello-test.sh',
         path=os.path.dirname(os.path.realpath(__file__)))
+config.substitutions.append(
+        ("%test-c64", do_morello_test + " c64"))
+config.substitutions.append(
+        ("%test-a64", do_morello_test + " 64"))
 
 # testFormat: The test format to use to interpret tests.
-config.test_format = lit.formats.ShTest(
-        # These are actually all the commands we run, since it's not interesting
-        # at this point to have custom RUN lines for each test.
-        preamble_commands=[
-            do_morello_test + " %s"
-            ])
+config.test_format = lit.formats.ShTest()
 
 def require_param(name):
     if not name in lit_config.params:

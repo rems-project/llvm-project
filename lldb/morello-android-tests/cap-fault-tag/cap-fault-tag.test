@@ -1,3 +1,5 @@
+# RUN: %test-c64 %s
+# RUN: %test-a64 %s
 process launch --
 
 # CHECK: stop reason = signal SIGSEGV: capability tag fault

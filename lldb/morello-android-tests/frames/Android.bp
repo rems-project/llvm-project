@@ -6,6 +6,6 @@ cc_test {
     cflags: [
         "-g", "-O0"
     ],
-    compile_multilib: "c64",
+    compile_multilib: "both",
     gtest: false,
 }

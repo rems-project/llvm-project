@@ -1,5 +1,5 @@
 cc_library_shared {
-    name: "shared",
+    name: "shared-libs-dyn",
     srcs: [
       "shared.c"
     ],
@@ -18,6 +18,6 @@ cc_test {
         "-g", "-O0"
     ],
     compile_multilib: "c64",
-    shared_libs: ["shared"],
+    shared_libs: ["shared-libs-dyn"],
     gtest: false,
 }

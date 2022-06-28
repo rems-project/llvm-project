@@ -22,12 +22,13 @@ function run_on_exit() {
 }
 
 # Process parameters and environment variables.
-if [[ $# -ne 1 ]]; then
-  echo "Usage: $0 <path-to-lldb-commands-file>" >&2
+if [[ $# -ne 2 ]]; then
+  echo "Usage: $0 <abi-suffix> <path-to-lldb-commands-file>" >&2
   exit 2
 fi
 
-test_file=$1
+abi_suffix=$1
+test_file=$2
 
 # This is an environment variable which should be pointing to the out directory of the
 # android development tree containing built data and symbols directory.
@@ -70,7 +71,7 @@ fi
 # name of the binary and associated directories everywhere else.
 app=$(basename -s .test ${test_file})
 
-push_path="/data/nativetestc64/${app}"
+push_path="/data/nativetest${abi_suffix}/${app}"
 build_path="${ANDROID_OUT}${push_path}"
 
 if ! test -f "${build_path}/${app}"; then
@@ -83,8 +84,11 @@ adb push "${build_path}" "${push_path}"
 run_on_exit 'adb shell rm -rf ${push_path}'
 remote_exe="${push_path}/${app}"
 
-# Copy any libraries, in case they're needed (most tests won't need them).
-adb push "${ANDROID_OUT}/symbols/system/libc64" "/data/nativetestc64/libc64"
+# Copy the shared library if it exists.
+shared_lib_path="${ANDROID_OUT}/symbols/system/lib${abi_suffix}/${app}-dyn.so"
+if test -f "${shared_lib_path}"; then
+  adb push "${shared_lib_path}" "/data/local/tmp"
+fi
 
 # The path where the binary with debug symbols is put by the android build
 # system.
@@ -133,7 +137,12 @@ startup_commands=lldb-startup.cmds
 } >"${startup_commands}"
 run_on_exit 'rm -f ${startup_commands}'
 
+abi_check="CHECK-A64"
+if [ "${abi_suffix}" = "c64" ] ; then
+  abi_check="CHECK-C64"
+fi
+
 ${LLDB_EXECUTABLE} --batch --no-lldbinit \
   -s "${startup_commands}" \
   -s "${test_file}" \
-  | "${FILECHECK_EXECUTABLE}" "${test_file}"
+  | "${FILECHECK_EXECUTABLE}" "${test_file}" --check-prefixes CHECK,${abi_check} --allow-unused-prefixes

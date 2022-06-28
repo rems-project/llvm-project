@@ -2,7 +2,7 @@
 
 int main() {
   int i = 0;
-  int *cap_ptr = &i;
+  int * __capability cap_ptr = &i;
 
   // Write outside of i.
   cap_ptr[1] = 2;

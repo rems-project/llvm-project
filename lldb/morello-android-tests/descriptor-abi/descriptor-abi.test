@@ -1,3 +1,4 @@
+# RUN: %test-c64 %s
 breakpoint set -p "Break here"
 
 # This needs to be set before launching the process, otherwise it is ignored.

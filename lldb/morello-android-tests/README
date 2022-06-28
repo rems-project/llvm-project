@@ -69,4 +69,15 @@ This subdirectory should contain:
 
 Each test must build an executable named `$TESTNAME`, which will be
 automatically uploaded to the model and run under lldb by the test harness.
+If you wish to use a shared library for your test, it should be named
+`$TESTNAME-dyn`. Tests with more than one shared library are not currently
+supported.
 
+A test can be built & run under the pure capability ABI, the hybrid ABI or both.
+This is controlled as follows:
+* in the `Android.bp`, set `compile_multilib` to "c64", "a64" or "both"
+* in the `$TESTNAME.test` file, use a RUN line of `%test-c64 %s` for purecap,
+  `%test-a64 %s` for hybrid or both RUN lines for both; use the `CHECK-C64`
+  prefix for checks that are only pertinent to purecap, the `CHECK-A64` prefix
+  for checks that only apply to hybrid, and the `CHECK` prefix for checks that
+  are the same for both ABIs
