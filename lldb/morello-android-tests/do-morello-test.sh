@@ -80,14 +80,22 @@ if ! test -f "${build_path}/${app}"; then
 fi
 
 # Copy the binary to the model.
+if adb shell test -e "${push_path}"; then
+  adb shell rm -rf "${push_path}"
+fi
 adb push "${build_path}" "${push_path}"
 run_on_exit 'adb shell rm -rf ${push_path}'
 remote_exe="${push_path}/${app}"
 
 # Copy the shared library if it exists.
 shared_lib_path="${ANDROID_OUT}/symbols/system/lib${abi_suffix}/${app}-dyn.so"
+shared_lib_remote="/data/local/tmp/${app}-dyn.so"
 if test -f "${shared_lib_path}"; then
+  if adb shell test -f "${shared_lib_remote}"; then
+    adb shell rm  "${shared_lib_remote}"
+  fi
   adb push "${shared_lib_path}" "/data/local/tmp"
+  run_on_exit 'adb shell rm -f ${shared_lib_remote}'
 fi
 
 # The path where the binary with debug symbols is put by the android build
