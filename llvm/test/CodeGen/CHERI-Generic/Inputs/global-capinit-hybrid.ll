@@ -8,7 +8,7 @@
 
 target datalayout = "@HYBRID_DATALAYOUT@"
 
-declare void @extern_fn() #0
+declare void @extern_fn()
 @extern_data = external global i8, align 1
 
 ; TODO: should the inttoptr ones be tagged -> emit a constructor?
