@@ -4,7 +4,6 @@
 // RUN: llvm-readobj --cap-relocs %t | FileCheck %s
 
 /// Check that we can correctly handle PCC's range extending past 2^32
-/// FIXME: This is currently broken
 
 	.text
 	.type code_sym, %function
@@ -19,5 +18,5 @@ code_cap:
 	.size code_cap, . - code_cap
 
 // CHECK:      CHERI __cap_relocs [
-// CHECK-NEXT:   0x100030200 (code_cap) Base: 0x101c8 (<unknown symbol>+4294967297) Length: 4 Perms: (FUNC)
+// CHECK-NEXT:   0x100030200 (code_cap) Base: 0x1000101c8 ($c.0+1) Length: 4 Perms: (FUNC)
 // CHECK-NEXT: ]

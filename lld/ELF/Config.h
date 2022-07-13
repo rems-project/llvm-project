@@ -380,8 +380,8 @@ struct Configuration {
   // We need to calculate the PCC to decide how to align the OutputSections
   // on the boundary of the PCC range. Cache the calculation here so that we
   // don't need to recalculate later.
-  unsigned morelloPCCBase;
-  unsigned morelloPCCLimit;
+  uint64_t morelloPCCBase;
+  uint64_t morelloPCCLimit;
 };
 
 // The only instance of Configuration struct.
