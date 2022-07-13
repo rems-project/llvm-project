@@ -5912,9 +5912,6 @@ public:
   unsigned getCHERICapabilityAS() const override {
     return 200;
   }
-  bool cheriCapabilityAtomicNeedsLibcall(AtomicExpr::AtomicOp Op) const override {
-    return false;
-  }
   void setTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
                            CodeGen::CodeGenModule &CGM) const override {
     const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(D);
@@ -8375,66 +8372,6 @@ public:
   }
   unsigned getCHERICapabilityAS() const override {
     return 200;
-  }
-
-  bool cheriCapabilityAtomicNeedsLibcall(AtomicExpr::AtomicOp Op) const override {
-    switch (Op) {
-    case AtomicExpr::AO__c11_atomic_init:
-    case AtomicExpr::AO__c11_atomic_load:
-    case AtomicExpr::AO__c11_atomic_store:
-    case AtomicExpr::AO__c11_atomic_exchange:
-    case AtomicExpr::AO__c11_atomic_compare_exchange_strong:
-    case AtomicExpr::AO__c11_atomic_compare_exchange_weak:
-    case AtomicExpr::AO__atomic_load:
-    case AtomicExpr::AO__atomic_load_n:
-    case AtomicExpr::AO__atomic_store:
-    case AtomicExpr::AO__atomic_store_n:
-    case AtomicExpr::AO__atomic_exchange:
-    case AtomicExpr::AO__atomic_exchange_n:
-    case AtomicExpr::AO__atomic_compare_exchange:
-    case AtomicExpr::AO__atomic_compare_exchange_n:
-      return false;
-    case AtomicExpr::AO__c11_atomic_fetch_add:
-    case AtomicExpr::AO__c11_atomic_fetch_sub:
-    case AtomicExpr::AO__c11_atomic_fetch_and:
-    case AtomicExpr::AO__c11_atomic_fetch_or:
-    case AtomicExpr::AO__c11_atomic_fetch_xor:
-    case AtomicExpr::AO__c11_atomic_fetch_max:
-    case AtomicExpr::AO__c11_atomic_fetch_min:
-    case AtomicExpr::AO__atomic_fetch_add:
-    case AtomicExpr::AO__atomic_fetch_sub:
-    case AtomicExpr::AO__atomic_fetch_and:
-    case AtomicExpr::AO__atomic_fetch_or:
-    case AtomicExpr::AO__atomic_fetch_xor:
-    case AtomicExpr::AO__atomic_fetch_max:
-    case AtomicExpr::AO__atomic_fetch_min:
-    case AtomicExpr::AO__atomic_fetch_nand:
-    case AtomicExpr::AO__atomic_add_fetch:
-    case AtomicExpr::AO__atomic_sub_fetch:
-    case AtomicExpr::AO__atomic_and_fetch:
-    case AtomicExpr::AO__atomic_or_fetch:
-    case AtomicExpr::AO__atomic_xor_fetch:
-    case AtomicExpr::AO__atomic_max_fetch:
-    case AtomicExpr::AO__atomic_min_fetch:
-    case AtomicExpr::AO__atomic_nand_fetch:
-    case AtomicExpr::AO__opencl_atomic_init:
-    case AtomicExpr::AO__opencl_atomic_load:
-    case AtomicExpr::AO__opencl_atomic_store:
-    case AtomicExpr::AO__opencl_atomic_exchange:
-    case AtomicExpr::AO__opencl_atomic_compare_exchange_strong:
-    case AtomicExpr::AO__opencl_atomic_compare_exchange_weak:
-    case AtomicExpr::AO__opencl_atomic_fetch_add:
-    case AtomicExpr::AO__opencl_atomic_fetch_sub:
-    case AtomicExpr::AO__opencl_atomic_fetch_and:
-    case AtomicExpr::AO__opencl_atomic_fetch_or:
-    case AtomicExpr::AO__opencl_atomic_fetch_xor:
-    case AtomicExpr::AO__opencl_atomic_fetch_min:
-    case AtomicExpr::AO__opencl_atomic_fetch_max:
-      return true; // TODO: allow emitting this without a libcall
-    }
-
-    llvm_unreachable("Unhandled atomic op for capabilities");
-    return true;
   }
 };
 }
@@ -11889,66 +11826,6 @@ public:
 
   unsigned getCHERICapabilityAS() const override {
     return 200;
-  }
-
-  bool cheriCapabilityAtomicNeedsLibcall(AtomicExpr::AtomicOp Op) const override {
-    switch (Op) {
-    case AtomicExpr::AO__c11_atomic_init:
-    case AtomicExpr::AO__c11_atomic_load:
-    case AtomicExpr::AO__c11_atomic_store:
-    case AtomicExpr::AO__c11_atomic_exchange:
-    case AtomicExpr::AO__c11_atomic_compare_exchange_strong:
-    case AtomicExpr::AO__c11_atomic_compare_exchange_weak:
-    case AtomicExpr::AO__atomic_load:
-    case AtomicExpr::AO__atomic_load_n:
-    case AtomicExpr::AO__atomic_store:
-    case AtomicExpr::AO__atomic_store_n:
-    case AtomicExpr::AO__atomic_exchange:
-    case AtomicExpr::AO__atomic_exchange_n:
-    case AtomicExpr::AO__atomic_compare_exchange:
-    case AtomicExpr::AO__atomic_compare_exchange_n:
-      return false;
-    case AtomicExpr::AO__c11_atomic_fetch_add:
-    case AtomicExpr::AO__c11_atomic_fetch_sub:
-    case AtomicExpr::AO__c11_atomic_fetch_and:
-    case AtomicExpr::AO__c11_atomic_fetch_or:
-    case AtomicExpr::AO__c11_atomic_fetch_xor:
-    case AtomicExpr::AO__c11_atomic_fetch_max:
-    case AtomicExpr::AO__c11_atomic_fetch_min:
-    case AtomicExpr::AO__atomic_fetch_add:
-    case AtomicExpr::AO__atomic_fetch_sub:
-    case AtomicExpr::AO__atomic_fetch_and:
-    case AtomicExpr::AO__atomic_fetch_or:
-    case AtomicExpr::AO__atomic_fetch_xor:
-    case AtomicExpr::AO__atomic_fetch_max:
-    case AtomicExpr::AO__atomic_fetch_min:
-    case AtomicExpr::AO__atomic_fetch_nand:
-    case AtomicExpr::AO__atomic_add_fetch:
-    case AtomicExpr::AO__atomic_sub_fetch:
-    case AtomicExpr::AO__atomic_and_fetch:
-    case AtomicExpr::AO__atomic_or_fetch:
-    case AtomicExpr::AO__atomic_xor_fetch:
-    case AtomicExpr::AO__atomic_max_fetch:
-    case AtomicExpr::AO__atomic_min_fetch:
-    case AtomicExpr::AO__atomic_nand_fetch:
-    case AtomicExpr::AO__opencl_atomic_init:
-    case AtomicExpr::AO__opencl_atomic_load:
-    case AtomicExpr::AO__opencl_atomic_store:
-    case AtomicExpr::AO__opencl_atomic_exchange:
-    case AtomicExpr::AO__opencl_atomic_compare_exchange_strong:
-    case AtomicExpr::AO__opencl_atomic_compare_exchange_weak:
-    case AtomicExpr::AO__opencl_atomic_fetch_add:
-    case AtomicExpr::AO__opencl_atomic_fetch_sub:
-    case AtomicExpr::AO__opencl_atomic_fetch_and:
-    case AtomicExpr::AO__opencl_atomic_fetch_or:
-    case AtomicExpr::AO__opencl_atomic_fetch_xor:
-    case AtomicExpr::AO__opencl_atomic_fetch_min:
-    case AtomicExpr::AO__opencl_atomic_fetch_max:
-      return true; // TODO: allow emitting this without a libcall
-    }
-
-    llvm_unreachable("Unhandled atomic op for capabilities");
-    return true;
   }
 };
 } // namespace

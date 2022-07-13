@@ -142,16 +142,6 @@ public:
 
   bool SupportsCapabilities() const override { return Morello; }
 
-  bool hasBuiltinAtomic(uint64_t AtomicSizeInBits,
-                        uint64_t AlignmentInBits) const override {
-    if (SupportsCapabilities() &&
-        AtomicSizeInBits == getCHERICapabilityWidth() &&
-        AlignmentInBits == getCHERICapabilityAlign()) {
-      return true;
-    }
-    return TargetInfo::hasBuiltinAtomic(AtomicSizeInBits, AlignmentInBits);
-  }
-
   CallingConvCheckResult checkCallingConvention(CallingConv CC) const override;
 
   bool isCLZForZeroUndef() const override;
