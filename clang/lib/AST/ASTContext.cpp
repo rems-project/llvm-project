@@ -10741,9 +10741,8 @@ static QualType DecodeTypeFromStr(const char *&Str, const ASTContext &Context,
     assert(!Type.isNull() && "builtin va list type not initialized!");
     if (Type->isArrayType())
       Type = Context.getArrayDecayedType(Type);
-    else {
+    else
       Type = Context.getLValueReferenceType(Type);
-    }
     break;
   case 'q': {
     char *End;
