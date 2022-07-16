@@ -116,17 +116,9 @@ llvm::Constant *CodeGenModule::getBuiltinLibFunction(const FunctionDecl *FD,
 
 /// Emit the conversions required to turn the given value into an
 /// integer of the given size.
-static Value *EmitToIntOrFatPtr(CodeGenFunction &CGF, llvm::Value *V,
+static Value *EmitToInt(CodeGenFunction &CGF, llvm::Value *V,
                         QualType T, llvm::IntegerType *IntType) {
   V = CGF.EmitToMemory(V, T);
-
-  auto &M = CGF.CGM.getModule();
-  const DataLayout &DL = M.getDataLayout();
-  if (llvm::PointerType *PT = dyn_cast<llvm::PointerType>(V->getType())) {
-    unsigned AS = PT->getAddressSpace();
-    if (DL.isFatPointer(AS))
-      return V;
-  }
 
   if (V->getType()->isPointerTy())
     return CGF.Builder.CreatePtrToInt(V, IntType);
@@ -135,17 +127,9 @@ static Value *EmitToIntOrFatPtr(CodeGenFunction &CGF, llvm::Value *V,
   return V;
 }
 
-static Value *EmitFromIntOrFatPtr(CodeGenFunction &CGF, llvm::Value *V,
+static Value *EmitFromInt(CodeGenFunction &CGF, llvm::Value *V,
                           QualType T, llvm::Type *ResultType) {
   V = CGF.EmitFromMemory(V, T);
-
-  auto &M = CGF.CGM.getModule();
-  const DataLayout &DL = M.getDataLayout();
-  if (llvm::PointerType *PT = dyn_cast<llvm::PointerType>(V->getType())) {
-    unsigned AS = PT->getAddressSpace();
-    if (DL.isFatPointer(AS))
-      return V;
-  }
 
   if (ResultType->isPointerTy())
     return CGF.Builder.CreateIntToPtr(V, ResultType);
@@ -226,65 +210,37 @@ static RValue EmitBinaryAtomicPost(CodeGenFunction &CGF,
 
   llvm::Value *DestPtr = CGF.EmitScalarExpr(E->getArg(0));
   unsigned AddrSpace = DestPtr->getType()->getPointerAddressSpace();
-  auto &M = CGF.CGM.getModule();
-  const DataLayout &DL = M.getDataLayout();
-
-  llvm::IntegerType *IntType =
-    llvm::IntegerType::get(CGF.getLLVMContext(),
-                           CGF.getContext().getTypeSize(T));
-  llvm::Type *IntPtrType = IntType->getPointerTo(AddrSpace);
+  bool IsCheriCap = T->isCHERICapabilityType(CGF.CGM.getContext());
 
   llvm::Value *Args[2];
-
   Args[0] = DestPtr;
   Args[1] = CGF.EmitScalarExpr(E->getArg(1));
   llvm::Type *ValueType = Args[1]->getType();
+  if (!IsCheriCap) {
+    llvm::IntegerType *IntType =
+      llvm::IntegerType::get(CGF.getLLVMContext(),
+                             CGF.getContext().getTypeSize(T));
+    llvm::Type *IntPtrType = IntType->getPointerTo(AddrSpace);
 
-  Args[1] = EmitToIntOrFatPtr(CGF, Args[1], T, IntType);
-  bool CapabilityPtr = false;
-  if (llvm::PointerType *PT = dyn_cast<llvm::PointerType>(Args[0]->getType())) {
-    PT = dyn_cast<llvm::PointerType>(PT->getElementType());
-    if (PT) {
-      unsigned AS = PT->getAddressSpace();
-      CapabilityPtr = DL.isFatPointer(AS);
-    }
+    Args[1] = EmitToInt(CGF, Args[1], T, IntType);
+    Args[0] = CGF.Builder.CreateBitCast(Args[0], IntPtrType);
   }
 
-  if (!CapabilityPtr)
-    Args[0] = CGF.Builder.CreateBitCast(DestPtr, IntPtrType);
-
-  llvm::Value *Result =
-      CGF.Builder.CreateAtomicRMW(Kind, Args[0], Args[1],
-                                  llvm::AtomicOrdering::SequentiallyConsistent);
-
-  if (CapabilityPtr) {
-    // Extract the pointer, do the operation, reverse it if required
-    // and add it back again.
-    unsigned AS = cast<llvm::PointerType>(Result->getType())->getAddressSpace();
-    llvm::Type *Char = llvm::IntegerType::get(CGF.getLLVMContext(), 8);
-    llvm::PointerType *Void = llvm::PointerType::get(Char, AS);
-
-    llvm::Value *LHS = CGF.getPointerAddress(Result);
-    llvm::Value *RHS = CGF.getPointerAddress(Args[1]);
-
-    Value *NewResult = CGF.Builder.CreateBinOp(Op, LHS, RHS);
-    if (Invert)
-      NewResult = CGF.Builder.CreateBinOp(llvm::Instruction::Xor, NewResult,
-                                       llvm::ConstantInt::getAllOnesValue(CGF.Int64Ty));
-
-    llvm::Type *OldTy = Result->getType();
-    Result = CGF.Builder.CreateBitCast(Result, Void);
-    Result = CGF.getTargetHooks().setPointerAddress(CGF, Result, NewResult, "",
-        CGF.CurCodeDecl->getLocation());
-    Result = CGF.Builder.CreateBitCast(Result, OldTy);
-  } else {
-    Result = CGF.Builder.CreateBinOp(Op, Result, Args[1]);
-    if (Invert)
-      Result = CGF.Builder.CreateBinOp(llvm::Instruction::Xor, Result,
-                                       llvm::ConstantInt::getAllOnesValue(IntType));
+  llvm::Value *RMWI = CGF.Builder.CreateAtomicRMW(
+      Kind, Args[0], Args[1], llvm::AtomicOrdering::SequentiallyConsistent);
+  llvm::Value *Result = RMWI;
+  if (IsCheriCap) {
+    Result = CGF.getCapabilityIntegerValue(RMWI);
+    Args[1] = CGF.getCapabilityIntegerValue(Args[1]);
   }
-
-  return RValue::get(EmitFromIntOrFatPtr(CGF, Result, T, ValueType));
+  Result = CGF.Builder.CreateBinOp(Op, Result, Args[1]);
+  if (Invert)
+    Result = CGF.Builder.CreateNot(Result);
+  if (IsCheriCap)
+    Result = CGF.setCapabilityIntegerValue(RMWI, Result, E->getExprLoc());
+  else
+    Result = EmitFromInt(CGF, Result, T, ValueType);
+  return RValue::get(Result);
 }
 
 /// Utility to insert an atomic cmpxchg instruction.
@@ -3967,36 +3923,42 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
   case Builtin::BI__sync_fetch_and_add_4:
   case Builtin::BI__sync_fetch_and_add_8:
   case Builtin::BI__sync_fetch_and_add_16:
+  case Builtin::BI__sync_fetch_and_add_cap:
     return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::Add, E);
   case Builtin::BI__sync_fetch_and_sub_1:
   case Builtin::BI__sync_fetch_and_sub_2:
   case Builtin::BI__sync_fetch_and_sub_4:
   case Builtin::BI__sync_fetch_and_sub_8:
   case Builtin::BI__sync_fetch_and_sub_16:
+  case Builtin::BI__sync_fetch_and_sub_cap:
     return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::Sub, E);
   case Builtin::BI__sync_fetch_and_or_1:
   case Builtin::BI__sync_fetch_and_or_2:
   case Builtin::BI__sync_fetch_and_or_4:
   case Builtin::BI__sync_fetch_and_or_8:
   case Builtin::BI__sync_fetch_and_or_16:
+  case Builtin::BI__sync_fetch_and_or_cap:
     return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::Or, E);
   case Builtin::BI__sync_fetch_and_and_1:
   case Builtin::BI__sync_fetch_and_and_2:
   case Builtin::BI__sync_fetch_and_and_4:
   case Builtin::BI__sync_fetch_and_and_8:
   case Builtin::BI__sync_fetch_and_and_16:
+  case Builtin::BI__sync_fetch_and_and_cap:
     return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::And, E);
   case Builtin::BI__sync_fetch_and_xor_1:
   case Builtin::BI__sync_fetch_and_xor_2:
   case Builtin::BI__sync_fetch_and_xor_4:
   case Builtin::BI__sync_fetch_and_xor_8:
   case Builtin::BI__sync_fetch_and_xor_16:
+  case Builtin::BI__sync_fetch_and_xor_cap:
     return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::Xor, E);
   case Builtin::BI__sync_fetch_and_nand_1:
   case Builtin::BI__sync_fetch_and_nand_2:
   case Builtin::BI__sync_fetch_and_nand_4:
   case Builtin::BI__sync_fetch_and_nand_8:
   case Builtin::BI__sync_fetch_and_nand_16:
+  case Builtin::BI__sync_fetch_and_nand_cap:
     return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::Nand, E);
 
   // Clang extensions: not overloaded yet.
@@ -4014,6 +3976,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
   case Builtin::BI__sync_add_and_fetch_4:
   case Builtin::BI__sync_add_and_fetch_8:
   case Builtin::BI__sync_add_and_fetch_16:
+  case Builtin::BI__sync_add_and_fetch_cap:
     return EmitBinaryAtomicPost(*this, llvm::AtomicRMWInst::Add, E,
                                 llvm::Instruction::Add);
   case Builtin::BI__sync_sub_and_fetch_1:
@@ -4021,6 +3984,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
   case Builtin::BI__sync_sub_and_fetch_4:
   case Builtin::BI__sync_sub_and_fetch_8:
   case Builtin::BI__sync_sub_and_fetch_16:
+  case Builtin::BI__sync_sub_and_fetch_cap:
     return EmitBinaryAtomicPost(*this, llvm::AtomicRMWInst::Sub, E,
                                 llvm::Instruction::Sub);
   case Builtin::BI__sync_and_and_fetch_1:
@@ -4028,6 +3992,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
   case Builtin::BI__sync_and_and_fetch_4:
   case Builtin::BI__sync_and_and_fetch_8:
   case Builtin::BI__sync_and_and_fetch_16:
+  case Builtin::BI__sync_and_and_fetch_cap:
     return EmitBinaryAtomicPost(*this, llvm::AtomicRMWInst::And, E,
                                 llvm::Instruction::And);
   case Builtin::BI__sync_or_and_fetch_1:
@@ -4035,6 +4000,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
   case Builtin::BI__sync_or_and_fetch_4:
   case Builtin::BI__sync_or_and_fetch_8:
   case Builtin::BI__sync_or_and_fetch_16:
+  case Builtin::BI__sync_or_and_fetch_cap:
     return EmitBinaryAtomicPost(*this, llvm::AtomicRMWInst::Or, E,
                                 llvm::Instruction::Or);
   case Builtin::BI__sync_xor_and_fetch_1:
@@ -4042,6 +4008,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
   case Builtin::BI__sync_xor_and_fetch_4:
   case Builtin::BI__sync_xor_and_fetch_8:
   case Builtin::BI__sync_xor_and_fetch_16:
+  case Builtin::BI__sync_xor_and_fetch_cap:
     return EmitBinaryAtomicPost(*this, llvm::AtomicRMWInst::Xor, E,
                                 llvm::Instruction::Xor);
   case Builtin::BI__sync_nand_and_fetch_1:
@@ -4049,6 +4016,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
   case Builtin::BI__sync_nand_and_fetch_4:
   case Builtin::BI__sync_nand_and_fetch_8:
   case Builtin::BI__sync_nand_and_fetch_16:
+  case Builtin::BI__sync_nand_and_fetch_cap:
     return EmitBinaryAtomicPost(*this, llvm::AtomicRMWInst::Nand, E,
                                 llvm::Instruction::And, true);
 
@@ -4057,6 +4025,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
   case Builtin::BI__sync_val_compare_and_swap_4:
   case Builtin::BI__sync_val_compare_and_swap_8:
   case Builtin::BI__sync_val_compare_and_swap_16:
+  case Builtin::BI__sync_val_compare_and_swap_cap:
     return RValue::get(MakeAtomicCmpXchgValue(*this, E, false));
 
   case Builtin::BI__sync_bool_compare_and_swap_1:
@@ -4064,6 +4033,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
   case Builtin::BI__sync_bool_compare_and_swap_4:
   case Builtin::BI__sync_bool_compare_and_swap_8:
   case Builtin::BI__sync_bool_compare_and_swap_16:
+  case Builtin::BI__sync_bool_compare_and_swap_cap:
     return RValue::get(MakeAtomicCmpXchgValue(*this, E, true));
 
   case Builtin::BI__sync_swap_1:
@@ -4071,6 +4041,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
   case Builtin::BI__sync_swap_4:
   case Builtin::BI__sync_swap_8:
   case Builtin::BI__sync_swap_16:
+  case Builtin::BI__sync_swap_cap:
     return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::Xchg, E);
 
   case Builtin::BI__sync_lock_test_and_set_1:
@@ -4078,28 +4049,26 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
   case Builtin::BI__sync_lock_test_and_set_4:
   case Builtin::BI__sync_lock_test_and_set_8:
   case Builtin::BI__sync_lock_test_and_set_16:
+  case Builtin::BI__sync_lock_test_and_set_cap:
     return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::Xchg, E);
 
   case Builtin::BI__sync_lock_release_1:
   case Builtin::BI__sync_lock_release_2:
   case Builtin::BI__sync_lock_release_4:
   case Builtin::BI__sync_lock_release_8:
-  case Builtin::BI__sync_lock_release_16: {
+  case Builtin::BI__sync_lock_release_16:
+  case Builtin::BI__sync_lock_release_cap: {
     Value *Ptr = EmitScalarExpr(E->getArg(0));
     QualType ElTy = E->getArg(0)->getType()->getPointeeType();
     CharUnits StoreSize = getContext().getTypeSizeInChars(ElTy);
-    llvm::Type *ITy = llvm::IntegerType::get(getLLVMContext(),
-                                             StoreSize.getQuantity() * 8);
-    auto &M = CGM.getModule();
-    const DataLayout &DL = M.getDataLayout();
-    if (llvm::PointerType *PT = dyn_cast<llvm::PointerType>(Ptr->getType())) {
-      unsigned AS = PT->getAddressSpace();
-      if (!DL.isFatPointer(AS))
-        Ptr = Builder.CreateBitCast(Ptr, ITy->getPointerTo(DefaultAS));
-      else
-        ITy = PT->getElementType();
+    llvm::Type *ITy;
+    if (ElTy->isCHERICapabilityType(getContext()))
+      ITy = ConvertTypeForMem(ElTy);
+    else {
+      ITy = llvm::IntegerType::get(getLLVMContext(),
+                                   StoreSize.getQuantity() * 8);
+      Ptr = Builder.CreateBitCast(Ptr, ITy->getPointerTo(DefaultAS));
     }
-
     llvm::StoreInst *Store =
       Builder.CreateAlignedStore(llvm::Constant::getNullValue(ITy), Ptr,
                                  StoreSize);

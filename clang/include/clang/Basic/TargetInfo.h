@@ -1474,8 +1474,6 @@ public:
   bool areAllPointersCapabilities() const { return CapabilityABI; }
   virtual bool hasCapabilities() const { return false; }
 
-  virtual bool hasCapabilityAtomicBuiltins() const { return true; }
-
   /// Whether the option -fextend-arguments={32,64} is supported on the target.
   virtual bool supportsExtendIntArgs() const { return false; }
 

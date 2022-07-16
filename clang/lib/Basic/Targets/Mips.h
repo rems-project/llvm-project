@@ -572,8 +572,6 @@ public:
 
   bool SupportsCapabilities() const override { return IsCHERI; }
 
-  bool hasCapabilityAtomicBuiltins() const override { return false; }
-
   unsigned getUnwindWordWidth() const override;
 
   bool validateTarget(DiagnosticsEngine &Diags) const override;
