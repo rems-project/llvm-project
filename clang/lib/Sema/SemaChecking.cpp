@@ -1446,8 +1446,6 @@ CheckBuiltinTargetSupport(Sema &S, unsigned BuiltinID, CallExpr *TheCall,
   return true;
 }
 
-static bool checkBuiltinArgument(Sema &S, CallExpr *E, unsigned ArgIndex);
-
 static void CheckNonNullArgument(Sema &S, const Expr *ArgExpr,
                                  SourceLocation CallSiteLoc);
 
