@@ -17,18 +17,6 @@ int *atomic_fun(
   old = (int *)__sync_fetch_and_sub(valc, (char *)2);
   // CHECK: atomicrmw sub i8 addrspace(200)* addrspace(200)* %{{.*}}, i8 addrspace(200)* {{.*}} seq_cst
 
-  old = __sync_fetch_and_min(val, (int *)3);
-  // CHECK: atomicrmw min i32 addrspace(200)* addrspace(200)* %{{.*}}, i32 addrspace(200)* {{.*}} seq_cst
-
-  old = __sync_fetch_and_max(val, (int *)4);
-  // CHECK: atomicrmw max i32 addrspace(200)* addrspace(200)* %{{.*}}, i32 addrspace(200)* {{.*}} seq_cst
-
-  old = (int *)__sync_fetch_and_umin(uval, (unsigned int *)5u);
-  // CHECK: atomicrmw umin i32 addrspace(200)* addrspace(200)* %{{.*}}, i32 addrspace(200)* {{.*}} seq_cst
-
-  old = (int *)__sync_fetch_and_umax(uval, (unsigned int *)6u);
-  // CHECK: atomicrmw umax i32 addrspace(200)* addrspace(200)* %{{.*}}, i32 addrspace(200)* {{.*}} seq_cst
-
   old = __sync_lock_test_and_set(val, (int *)7);
   // CHECK: atomicrmw xchg i32 addrspace(200)* addrspace(200)* %{{.*}}, i32 addrspace(200)* {{.*}} seq_cst
 

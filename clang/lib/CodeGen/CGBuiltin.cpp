@@ -3999,31 +3999,14 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
   case Builtin::BI__sync_fetch_and_nand_16:
     return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::Nand, E);
 
-  // Clang extensions
-
-  case Builtin::BI__sync_fetch_and_min_1:
-  case Builtin::BI__sync_fetch_and_min_2:
-  case Builtin::BI__sync_fetch_and_min_4:
-  case Builtin::BI__sync_fetch_and_min_8:
-  case Builtin::BI__sync_fetch_and_min_16:
+  // Clang extensions: not overloaded yet.
+  case Builtin::BI__sync_fetch_and_min:
     return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::Min, E);
-  case Builtin::BI__sync_fetch_and_max_1:
-  case Builtin::BI__sync_fetch_and_max_2:
-  case Builtin::BI__sync_fetch_and_max_4:
-  case Builtin::BI__sync_fetch_and_max_8:
-  case Builtin::BI__sync_fetch_and_max_16:
+  case Builtin::BI__sync_fetch_and_max:
     return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::Max, E);
-  case Builtin::BI__sync_fetch_and_umin_1:
-  case Builtin::BI__sync_fetch_and_umin_2:
-  case Builtin::BI__sync_fetch_and_umin_4:
-  case Builtin::BI__sync_fetch_and_umin_8:
-  case Builtin::BI__sync_fetch_and_umin_16:
+  case Builtin::BI__sync_fetch_and_umin:
     return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::UMin, E);
-  case Builtin::BI__sync_fetch_and_umax_1:
-  case Builtin::BI__sync_fetch_and_umax_2:
-  case Builtin::BI__sync_fetch_and_umax_4:
-  case Builtin::BI__sync_fetch_and_umax_8:
-  case Builtin::BI__sync_fetch_and_umax_16:
+  case Builtin::BI__sync_fetch_and_umax:
     return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::UMax, E);
 
   case Builtin::BI__sync_add_and_fetch_1:

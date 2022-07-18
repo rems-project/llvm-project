@@ -855,37 +855,13 @@ ATOMIC_BUILTIN(__atomic_fetch_max, "v.", "t")
 
 #undef ATOMIC_BUILTIN
 
-// GCC does not support these, they are a Clang extension.
-BUILTIN(__sync_fetch_and_min, "v.", "t")
-BUILTIN(__sync_fetch_and_min_1, "ccD*c.", "tn")
-BUILTIN(__sync_fetch_and_min_2, "ssD*s.", "tn")
-BUILTIN(__sync_fetch_and_min_4, "iiD*i.", "tn")
-BUILTIN(__sync_fetch_and_min_8, "LLiLLiD*LLi.", "tn")
-BUILTIN(__sync_fetch_and_min_16, "LLLiLLLiD*LLLi.", "tn")
-
-BUILTIN(__sync_fetch_and_max, "v.", "t")
-BUILTIN(__sync_fetch_and_max_1, "ccD*c.", "tn")
-BUILTIN(__sync_fetch_and_max_2, "ssD*s.", "tn")
-BUILTIN(__sync_fetch_and_max_4, "iiD*i.", "tn")
-BUILTIN(__sync_fetch_and_max_8, "LLiLLiD*LLi.", "tn")
-BUILTIN(__sync_fetch_and_max_16, "LLLiLLLiD*LLLi.", "tn")
-
-BUILTIN(__sync_fetch_and_umin, "v.", "t")
-BUILTIN(__sync_fetch_and_umin_1, "ccD*c.", "tn")
-BUILTIN(__sync_fetch_and_umin_2, "ssD*s.", "tn")
-BUILTIN(__sync_fetch_and_umin_4, "iiD*i.", "tn")
-BUILTIN(__sync_fetch_and_umin_8, "LLiLLiD*LLi.", "tn")
-BUILTIN(__sync_fetch_and_umin_16, "LLLiLLLiD*LLLi.", "tn")
-
-BUILTIN(__sync_fetch_and_umax, "v.", "t")
-BUILTIN(__sync_fetch_and_umax_1, "ccD*c.", "tn")
-BUILTIN(__sync_fetch_and_umax_2, "ssD*s.", "tn")
-BUILTIN(__sync_fetch_and_umax_4, "iiD*i.", "tn")
-BUILTIN(__sync_fetch_and_umax_8, "LLiLLiD*LLi.", "tn")
-BUILTIN(__sync_fetch_and_umax_16, "LLLiLLLiD*LLLi.", "tn")
-
 // Non-overloaded atomic builtins.
 BUILTIN(__sync_synchronize, "v", "n")
+// GCC does not support these, they are a Clang extension.
+BUILTIN(__sync_fetch_and_min, "iiD*i", "n")
+BUILTIN(__sync_fetch_and_max, "iiD*i", "n")
+BUILTIN(__sync_fetch_and_umin, "UiUiD*Ui", "n")
+BUILTIN(__sync_fetch_and_umax, "UiUiD*Ui", "n")
 
 // Random libc builtins.
 BUILTIN(__builtin_abort, "v", "Fnr")

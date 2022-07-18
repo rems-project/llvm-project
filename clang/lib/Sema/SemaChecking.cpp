@@ -1694,30 +1694,6 @@ Sema::CheckBuiltinFunctionCall(FunctionDecl *FDecl, unsigned BuiltinID,
   case Builtin::BI__sync_fetch_and_nand_4:
   case Builtin::BI__sync_fetch_and_nand_8:
   case Builtin::BI__sync_fetch_and_nand_16:
-  case Builtin::BI__sync_fetch_and_min:
-  case Builtin::BI__sync_fetch_and_min_1:
-  case Builtin::BI__sync_fetch_and_min_2:
-  case Builtin::BI__sync_fetch_and_min_4:
-  case Builtin::BI__sync_fetch_and_min_8:
-  case Builtin::BI__sync_fetch_and_min_16:
-  case Builtin::BI__sync_fetch_and_max:
-  case Builtin::BI__sync_fetch_and_max_1:
-  case Builtin::BI__sync_fetch_and_max_2:
-  case Builtin::BI__sync_fetch_and_max_4:
-  case Builtin::BI__sync_fetch_and_max_8:
-  case Builtin::BI__sync_fetch_and_max_16:
-  case Builtin::BI__sync_fetch_and_umin:
-  case Builtin::BI__sync_fetch_and_umin_1:
-  case Builtin::BI__sync_fetch_and_umin_2:
-  case Builtin::BI__sync_fetch_and_umin_4:
-  case Builtin::BI__sync_fetch_and_umin_8:
-  case Builtin::BI__sync_fetch_and_umin_16:
-  case Builtin::BI__sync_fetch_and_umax:
-  case Builtin::BI__sync_fetch_and_umax_1:
-  case Builtin::BI__sync_fetch_and_umax_2:
-  case Builtin::BI__sync_fetch_and_umax_4:
-  case Builtin::BI__sync_fetch_and_umax_8:
-  case Builtin::BI__sync_fetch_and_umax_16:
   case Builtin::BI__sync_add_and_fetch:
   case Builtin::BI__sync_add_and_fetch_1:
   case Builtin::BI__sync_add_and_fetch_2:
@@ -6015,12 +5991,7 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
     BUILTIN_ROW(__sync_bool_compare_and_swap),
     BUILTIN_ROW(__sync_lock_test_and_set),
     BUILTIN_ROW(__sync_lock_release),
-    BUILTIN_ROW(__sync_swap),
-
-    BUILTIN_ROW(__sync_fetch_and_min),
-    BUILTIN_ROW(__sync_fetch_and_max),
-    BUILTIN_ROW(__sync_fetch_and_umin),
-    BUILTIN_ROW(__sync_fetch_and_umax),
+    BUILTIN_ROW(__sync_swap)
   };
 #undef BUILTIN_ROW
 
@@ -6209,42 +6180,6 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
   case Builtin::BI__sync_swap_8:
   case Builtin::BI__sync_swap_16:
     BuiltinIndex = 16;
-    break;
-
-  case Builtin::BI__sync_fetch_and_min:
-  case Builtin::BI__sync_fetch_and_min_1:
-  case Builtin::BI__sync_fetch_and_min_2:
-  case Builtin::BI__sync_fetch_and_min_4:
-  case Builtin::BI__sync_fetch_and_min_8:
-  case Builtin::BI__sync_fetch_and_min_16:
-    BuiltinIndex = 17;
-    break;
-
-  case Builtin::BI__sync_fetch_and_max:
-  case Builtin::BI__sync_fetch_and_max_1:
-  case Builtin::BI__sync_fetch_and_max_2:
-  case Builtin::BI__sync_fetch_and_max_4:
-  case Builtin::BI__sync_fetch_and_max_8:
-  case Builtin::BI__sync_fetch_and_max_16:
-    BuiltinIndex = 18;
-    break;
-
-  case Builtin::BI__sync_fetch_and_umin:
-  case Builtin::BI__sync_fetch_and_umin_1:
-  case Builtin::BI__sync_fetch_and_umin_2:
-  case Builtin::BI__sync_fetch_and_umin_4:
-  case Builtin::BI__sync_fetch_and_umin_8:
-  case Builtin::BI__sync_fetch_and_umin_16:
-    BuiltinIndex = 19;
-    break;
-
-  case Builtin::BI__sync_fetch_and_umax:
-  case Builtin::BI__sync_fetch_and_umax_1:
-  case Builtin::BI__sync_fetch_and_umax_2:
-  case Builtin::BI__sync_fetch_and_umax_4:
-  case Builtin::BI__sync_fetch_and_umax_8:
-  case Builtin::BI__sync_fetch_and_umax_16:
-    BuiltinIndex = 20;
     break;
   }
 
