@@ -16,7 +16,8 @@ else:
 
 ASM_FUNCTION_X86_RE = re.compile(
     r'^_?(?P<func>[^:]+):[ \t]*#+[ \t]*(@"?(?P=func)"?| -- Begin function (?P=func))\n(?:\s*\.?Lfunc_begin[^:\n]*:\n)?'
-    r'(?:\.L[^$]+\$local:\n)?'      # drop .L<func>$local:
+    r'(?:\.L(?P=func)\$local:\n)?'      # drop .L<func>$local:
+    r'(?:\s*\.type\s+\.L(?P=func)\$local,@function\n)?'  # drop .type .L<func>$local
     r'(?:[ \t]+.cfi_startproc\n|.seh_proc[^\n]+\n)?'  # drop optional cfi
     r'(?P<body>^##?[ \t]+[^:]+:.*?)\s*'
     r'^\s*(?:[^:\n]+?:\s*\n\s*\.size|\.cfi_endproc|\.globl|\.comm|\.(?:sub)?section|#+ -- End function)',
@@ -93,7 +94,8 @@ ASM_FUNCTION_PPC_RE = re.compile(
 
 ASM_FUNCTION_RISCV_RE = re.compile(
     r'^_?(?P<func>[^:]+):[ \t]*#+[ \t]*@"?(?P=func)"?\n'
-    r'(?:\s*\.?L(?P=func)\$local:\n)?'     # optional .L<func>$local: due to -fno-semantic-interposition
+    r'(?:\s*\.?L(?P=func)\$local:\n)?'  # optional .L<func>$local: due to -fno-semantic-interposition
+    r'(?:\s*\.type\s+\.?L(?P=func)\$local,@function\n)?'  # optional .type .L<func>$local
     r'(?:\s*\.?L(?P=func)\$eh_alias:\n)?'  # optional .L<func>$eh_alias: due to CHERI EH
     r'(?:\s*\.?Lfunc_begin[^:\n]*:\n)?[^:]*?'
     r'(?P<body>^##?[ \t]+[^:]+:.*?)\s*'
