@@ -6,7 +6,7 @@
 
 ; Note: Opt correctly hoists the condition+csetbounds into a preheader, and LLC
 ; used to unconditionally hoist the csetbounds.
-; RUN: opt -mtriple=aarch64 --relocation-model=pic -target-abi purecap -mattr=+morello,+c64 -O3 -S < %s | FileCheck %s --check-prefix=HOIST-OPT
+; RUN: opt -data-layout="e-m:e-pf200:128:128:128:64-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200" -mtriple=aarch64 --relocation-model=pic -target-abi purecap -mattr=+morello,+c64 -enable-new-pm=1 "-passes=default<O3>" -S < %s | FileCheck %s --check-prefix=HOIST-OPT
 ; RUN: llc -mtriple=aarch64 --relocation-model=pic -target-abi purecap -mattr=+morello,+c64 -O3 < %s | FileCheck %s
 
 ; Generated from the following C code (with subobject bounds):
@@ -32,6 +32,7 @@ declare i8 addrspace(200)* @llvm.cheri.cap.bounds.set.i64(i8 addrspace(200)*, i6
 define dso_local void @hoist_csetbounds(i32 signext %cond, %struct.foo addrspace(200)* %f) local_unnamed_addr addrspace(200) nounwind {
 ; CHECK-LABEL: hoist_csetbounds:
 ; CHECK:       .Lhoist_csetbounds$local:
+; CHECK-NEXT:    .type .Lhoist_csetbounds$local,@function
 ; CHECK-NEXT:  .Lfunc_begin0:
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    str c30, [csp, #-80]! // 16-byte Folded Spill
@@ -71,19 +72,19 @@ define dso_local void @hoist_csetbounds(i32 signext %cond, %struct.foo addrspace
 ; HOIST-OPT-NEXT:    [[DST:%.*]] = getelementptr inbounds [[STRUCT_FOO]], [[STRUCT_FOO]] addrspace(200)* [[F]], i64 0, i32 1
 ; HOIST-OPT-NEXT:    [[TMP0:%.*]] = bitcast i32 addrspace(200)* [[DST]] to i8 addrspace(200)*
 ; HOIST-OPT-NEXT:    [[TMP1:%.*]] = bitcast [[STRUCT_FOO]] addrspace(200)* [[F]] to i8 addrspace(200)*
-; HOIST-OPT-NEXT:    [[TMP2:%.*]] = tail call addrspace(200) i8 addrspace(200)* @llvm.cheri.cap.bounds.set.i64(i8 addrspace(200)* nonnull [[TMP1]], i64 4)
+; HOIST-OPT-NEXT:    [[TMP2:%.*]] = tail call i8 addrspace(200)* @llvm.cheri.cap.bounds.set.i64(i8 addrspace(200)* nonnull [[TMP1]], i64 4)
 ; HOIST-OPT-NEXT:    [[ADDRESS_WITH_BOUNDS:%.*]] = bitcast i8 addrspace(200)* [[TMP2]] to i32 addrspace(200)*
-; HOIST-OPT-NEXT:    [[TMP3:%.*]] = tail call addrspace(200) i8 addrspace(200)* @llvm.cheri.cap.bounds.set.i64(i8 addrspace(200)* nonnull [[TMP0]], i64 4)
+; HOIST-OPT-NEXT:    [[TMP3:%.*]] = tail call i8 addrspace(200)* @llvm.cheri.cap.bounds.set.i64(i8 addrspace(200)* nonnull [[TMP0]], i64 4)
 ; HOIST-OPT-NEXT:    [[ADDRESS_WITH_BOUNDS1:%.*]] = bitcast i8 addrspace(200)* [[TMP3]] to i32 addrspace(200)*
 ; HOIST-OPT-NEXT:    br label [[FOR_BODY:%.*]]
 ; HOIST-OPT:       for.cond.cleanup:
 ; HOIST-OPT-NEXT:    ret void
 ; HOIST-OPT:       for.body:
 ; HOIST-OPT-NEXT:    [[I_06:%.*]] = phi i32 [ 0, [[ENTRY_SPLIT]] ], [ [[INC:%.*]], [[FOR_BODY]] ]
-; HOIST-OPT-NEXT:    tail call addrspace(200) void @call(i32 addrspace(200)* [[ADDRESS_WITH_BOUNDS]], i32 addrspace(200)* [[ADDRESS_WITH_BOUNDS1]])
+; HOIST-OPT-NEXT:    tail call void @call(i32 addrspace(200)* [[ADDRESS_WITH_BOUNDS]], i32 addrspace(200)* [[ADDRESS_WITH_BOUNDS1]])
 ; HOIST-OPT-NEXT:    [[INC]] = add nuw nsw i32 [[I_06]], 1
-; HOIST-OPT-NEXT:    [[CMP:%.*]] = icmp ult i32 [[I_06]], 99
-; HOIST-OPT-NEXT:    br i1 [[CMP]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP]]
+; HOIST-OPT-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC]], 100
+; HOIST-OPT-NEXT:    br i1 [[EXITCOND_NOT]], label [[FOR_COND_CLEANUP]], label [[FOR_BODY]]
 ;
 entry:
   %tobool = icmp eq %struct.foo addrspace(200)* %f, null
@@ -92,14 +93,14 @@ entry:
   %1 = bitcast i32 addrspace(200)* %dst to i8 addrspace(200)*
   br label %for.body
 
-for.cond.cleanup:                                 ; preds = %for.inc
+for.cond.cleanup:
   ret void
 
-for.body:                                         ; preds = %entry, %for.inc
+for.body:
   %i.06 = phi i32 [ 0, %entry ], [ %inc, %for.inc ]
   br i1 %tobool, label %for.inc, label %if.then
 
-if.then:                                          ; preds = %for.body
+if.then:
   %2 = call i8 addrspace(200)* @llvm.cheri.cap.bounds.set.i64(i8 addrspace(200)* nonnull %0, i64 4)
   %address.with.bounds = bitcast i8 addrspace(200)* %2 to i32 addrspace(200)*
   %3 = call i8 addrspace(200)* @llvm.cheri.cap.bounds.set.i64(i8 addrspace(200)* nonnull %1, i64 4)
@@ -107,7 +108,7 @@ if.then:                                          ; preds = %for.body
   call void @call(i32 addrspace(200)* %address.with.bounds, i32 addrspace(200)* %address.with.bounds1)
   br label %for.inc
 
-for.inc:                                          ; preds = %for.body, %if.then
+for.inc:
   %inc = add nuw nsw i32 %i.06, 1
   %cmp = icmp ult i32 %i.06, 99
   br i1 %cmp, label %for.body, label %for.cond.cleanup

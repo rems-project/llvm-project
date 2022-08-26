@@ -10,27 +10,25 @@
 
 ; RELOCS: Relocations [
 ; RELOCS-NEXT: Section ({{.+}}) .rela.text.test {
-; FIXME: this relocation should not be against the section!
-; RELOCS-NEXT:   R_MORELLO_CALL26 .text._ZdlPv 0x0
+; RELOCS-NEXT:   R_MORELLO_CALL26 .L_ZdlPv$local 0x0
 ; RELOCS-NEXT: }
 ; RELOCS-NEXT:]
 ; RELOCS: Symbol {
-; FIXME: we should have the symbol in the symbol table!
-; RELOCS-NOT:        Name: .L_ZdlPv$local
-; RELOCS-TODO:   Name: .L_ZdlPv$local
-; RELOCS-TODO:   Value: 0x1
-; RELOCS-TODO:   Size: 4
-; RELOCS-TODO:   Binding: Local (0x0)
-; RELOCS-TODO:   Type: Function (0x2)
-; RELOCS-TODO:   Other: 0
-; RELOCS-TODO:   Section: .text._ZdlPv (0x3)
-; RELOCS-TODO: }
+; RELOCS:        Name: .L_ZdlPv$local
+; RELOCS-NEXT:   Value: 0x1
+; RELOCS-NEXT:   Size: 4
+; RELOCS-NEXT:   Binding: Local (0x0)
+; RELOCS-NEXT:   Type: Function (0x2)
+; RELOCS-NEXT:   Other: 0
+; RELOCS-NEXT:   Section: .text._ZdlPv (0x3)
+; RELOCS-NEXT: }
 
 ; CHECK-LABEL:  .globl	_ZdlPv
 ; CHECK-NEXT:   .p2align	2
 ; CHECK-NEXT:   .type	_ZdlPv,@function
 ; CHECK-NEXT: _ZdlPv:
 ; CHECK-NEXT: .L_ZdlPv$local:
+; CHECK-NEXT: .type .L_ZdlPv$local,@function
 ; CHECK-NEXT: .Lfunc_begin0:
 ; CHECK-NEXT: // %bb.0:
 ; CHECK-NEXT:   ret c30
