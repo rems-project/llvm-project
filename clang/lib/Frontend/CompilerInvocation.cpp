@@ -4400,6 +4400,10 @@ static bool ParseTargetArgs(TargetOptions &Opts, ArgList &Args,
     if (Args.hasFlag(options::OPT_morello_vararg_legacy,
                      options::OPT_morello_vararg_new, false))
       Opts.FeaturesAsWritten.push_back("+legacy-morello-vararg");
+
+    if (Args.hasFlag(options::OPT_morello_bounded_memargs,
+                     options::OPT_morello_no_bounded_memargs, false))
+      Opts.FeaturesAsWritten.push_back("+bounded-morello-memargs");
   }
 
   if (Arg *A = Args.getLastArg(options::OPT_target_sdk_version_EQ)) {
