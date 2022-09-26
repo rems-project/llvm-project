@@ -1684,10 +1684,10 @@ void SelectionDAGLegalize::ExpandDYNAMIC_STACKALLOC(SDNode* Node,
     SDValue SetAddr =
       DAG.getTargetConstant(Intrinsic::cheri_cap_address_set, dl, SizeVT);
     SDValue CRRL =
-      DAG.getTargetConstant(Intrinsic::cheri_round_representable_length, dl,
+      DAG.getTargetConstant(TLI.getDynamicStackallocCrrlIntrinsic(), dl,
                             SizeVT);
     SDValue CRAM =
-      DAG.getTargetConstant(Intrinsic::cheri_representable_alignment_mask, dl,
+      DAG.getTargetConstant(TLI.getDynamicStackallocCramIntrinsic(), dl,
                             SizeVT);
 
     Tmp1 = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, SizeVT, GetAddr, SP);

@@ -2879,6 +2879,12 @@ public:
   bool cheriCapabilityTypeHasPreciseBounds() const {
     return CapTypeHasPreciseBounds;
   }
+  Intrinsic::ID getDynamicStackallocCrrlIntrinsic() const {
+    return DynamicStackallocCrrlIntrinsic;
+  }
+  Intrinsic::ID getDynamicStackallocCramIntrinsic() const {
+    return DynamicStackallocCramIntrinsic;
+  }
   bool supportsUnalignedCapabilityMemOps() const {
     return SupportsUnalignedCapabilityMemOps;
   }
@@ -3228,6 +3234,20 @@ protected:
   /// Whether the CHERI capability type supports precise bounds for any
   /// allocation. Defaults to false for safety over efficiency.
   bool CapTypeHasPreciseBounds = false;
+
+  /// The intrinsics to use for rounding/aligning DYNAMIC_STACKALLOCs on CHERI.
+  /// Normally these are the generic intrinsics, but Morello has a quirk in its
+  /// RRLEN/RRMASK implementation that we work around to provide precise
+  /// results for the generic intrinsics, so these variables allow it to still
+  /// use the imprecise raw versions to avoid instruction overhead at the
+  /// expense of a little extra padding in some stack allocations. Bounds will
+  /// still be precise as those give the inexact cheri_cap_bounds_set the
+  /// original length and let it round as needed, which will not over-round on
+  /// Morello.
+  Intrinsic::ID DynamicStackallocCrrlIntrinsic =
+      Intrinsic::cheri_round_representable_length;
+  Intrinsic::ID DynamicStackallocCramIntrinsic =
+      Intrinsic::cheri_representable_alignment_mask;
 
   /// Whether CHERI Capability loads/stores can be used with unaligned addresses
   /// This makes it possible to do a tag-preserving copy even if the alignment

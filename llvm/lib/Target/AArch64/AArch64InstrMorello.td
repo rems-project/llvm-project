@@ -695,9 +695,9 @@ def : Pat<(AArch64sealimm Cap:$Cd, sealform:$form),
 // Intrinsics
 // FIXME: Some of these are missing the immediate form,
 // so this is sub-optimal for now.
-def : Pat<(int_cheri_round_representable_length GPR64:$Rn),
+def : Pat<(int_morello_round_representable_length_inexact GPR64:$Rn),
           (CapRoundRepresentableLength GPR64:$Rn)>;
-def : Pat<(int_cheri_representable_alignment_mask GPR64:$Rn),
+def : Pat<(int_morello_representable_alignment_mask_inexact GPR64:$Rn),
           (CapRoundRepresentableMask GPR64:$Rn)>;
 def : Pat<(int_cheri_cap_copy_from_high Capsp:$Rn),
           (CapCopyFromHigh Capsp:$Rn)>;

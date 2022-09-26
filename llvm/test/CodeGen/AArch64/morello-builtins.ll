@@ -26,10 +26,10 @@ entry:
   %6 = call i64 @llvm.cheri.cap.offset.get(i8 addrspace(200)* %foo)
   %and9 = and i64 %and7, %6
 ; CHECK-DAG: rrlen	{{x[0-9]+}}, {{x[0-9]+}}
-  %7 = call i64 @llvm.cheri.round.representable.length.i64(i64 42)
+  %7 = call i64 @llvm.morello.round.representable.length.inexact.i64(i64 42)
   %and10 =  and i64 %and9, %7
 ; CHECK-DAG: rrmask	{{x[0-9]+}}, {{x[0-9]+}}
-  %8 = call i64 @llvm.cheri.representable.alignment.mask.i64(i64 42)
+  %8 = call i64 @llvm.morello.representable.alignment.mask.inexact.i64(i64 42)
   %and11 =  and i64 %and10, %8
 ; CHECK-DAG: cfhi	{{x[0-9]+}}, c0
   %9 = call i64 @llvm.cheri.cap.copy.from.high.i64(i8 addrspace(200)* %foo)
@@ -38,6 +38,29 @@ entry:
   %10 = call i64 @llvm.morello.convert.to.ptr(i8 addrspace(200)* %foo, i8 addrspace(200)* %bar)
   %and13 = and i64 %and12, %10
   ret i64 %and13
+}
+
+; CHECK-LABEL: testRepresentableLength
+define i64 @testRepresentableLength(i64 %foo) {
+; CHECK:      sub    [[foo_sub_1:x[0-9]+]], x0, #1
+; CHECK-NEXT: rrlen  [[rrlen_foo_sub_1:x[0-9]+]], [[foo_sub_1]]
+; CHECK-NEXT: rrlen  [[rrlen_foo:x[0-9]+]], x0
+; CHECK-NEXT: cmp    [[rrlen_foo_sub_1]], x0
+; CHECK-NEXT: csel   x0, x0, [[rrlen_foo]]
+  %1 = call i64 @llvm.cheri.round.representable.length.i64(i64 %foo)
+  ret i64 %1
+}
+
+; CHECK-LABEL: testRepresentableMask
+define i64 @testRepresentableMask(i64 %foo) {
+; CHECK:      sub    [[foo_sub_1:x[0-9]+]], x0, #1
+; CHECK-NEXT: rrlen  [[rrlen_foo_sub_1:x[0-9]+]], [[foo_sub_1]]
+; CHECK-NEXT: cmp    x0, #0
+; CHECK-NEXT: ccmp   [[rrlen_foo_sub_1]], x0, #0, ne
+; CHECK-NEXT: csel   [[selected:x[0-9]+]], [[foo_sub_1]], x0, eq
+; CHECK-NEXT: rrmask x0, [[selected]]
+  %1 = call i64 @llvm.cheri.representable.alignment.mask.i64(i64 %foo)
+  ret i64 %1
 }
 
 ; CHECK-LABEL: testEqualityCheck
@@ -75,6 +98,8 @@ declare i64 @llvm.cheri.representable.alignment.mask.i64(i64)
 declare i64 @llvm.cheri.cap.copy.from.high.i64(i8 addrspace(200)*)
 declare i1 @llvm.cheri.cap.equal.exact(i8 addrspace(200)*, i8 addrspace(200)*)
 declare i1 @llvm.cheri.cap.subset.test(i8 addrspace(200)*, i8 addrspace(200)*)
+declare i64 @llvm.morello.round.representable.length.inexact.i64(i64)
+declare i64 @llvm.morello.representable.alignment.mask.inexact.i64(i64)
 declare i64 @llvm.morello.convert.to.ptr(i8 addrspace(200)*, i8 addrspace(200)*)
 
 ; CHECK-LABEL: @testBuiltinsWithCapabilityOutput

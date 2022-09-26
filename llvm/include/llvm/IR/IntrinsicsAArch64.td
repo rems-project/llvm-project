@@ -708,6 +708,10 @@ def int_morello_convert_to_ptr :
 def int_morello_convert_to_offset_null_cap_zero_semantics :
   GCCBuiltin<"__builtin_morello_cvtz">,
   Intrinsic<[llvm_fatptr_ty], [llvm_fatptr_ty, llvm_i64_ty], [IntrNoMem]>;
+def int_morello_round_representable_length_inexact :
+   Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>], [IntrNoMem, IntrWillReturn]>;
+def int_morello_representable_alignment_mask_inexact :
+   Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>], [IntrNoMem, IntrWillReturn]>;
 
 //===----------------------------------------------------------------------===//
 // Crypto

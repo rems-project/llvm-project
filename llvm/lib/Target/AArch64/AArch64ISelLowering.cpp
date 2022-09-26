@@ -239,8 +239,18 @@ static bool isMergePassthruOpcode(unsigned Opc) {
 AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
                                              const AArch64Subtarget &STI)
     : TargetLowering(TM), Subtarget(&STI) {
-  if (STI.hasMorello())
+  if (STI.hasMorello()) {
     CapType = MVT::iFATPTR128;
+
+     // We want stack allocations to be fast, so tolerate a little extra
+     // padding in the quirky Morello edge cases for RRLEN/RRMASK. Note that we
+     // will still have an SCBNDS with the original length so the bounds will
+     // be precise even in that case.
+    DynamicStackallocCrrlIntrinsic =
+        Intrinsic::morello_round_representable_length_inexact;
+    DynamicStackallocCramIntrinsic =
+        Intrinsic::morello_representable_alignment_mask_inexact;
+  }
 
   if (STI.hasMorello())
     SupportsAtomicCapabilityOperations = true;
@@ -4143,14 +4153,58 @@ SDValue AArch64TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     return SDValue();
   }
   case Intrinsic::cheri_round_representable_length: {
-    if (Subtarget->hasMorello())
-      return SDValue();
-    return Op.getOperand(1);
+    if (!Subtarget->hasMorello())
+      return Op.getOperand(1);
+
+    // Morello has a quirk in its RRLEN/RRMASK definition that makes it round
+    // up the final representable length for a given exponent rather than using
+    // the length unmodified, breaking the software interface in edge cases.
+    // Work around this for RRLEN by first checking if RRLEN(Src - 1) == Src
+    // and using that instead if so, since that indicates Src is already
+    // representable and thus covers a superset of the problematic inputs.
+    SDValue RRLEN = DAG.getTargetConstant(
+        Intrinsic::morello_round_representable_length_inexact, dl, MVT::i64);
+    SDValue Src = Op.getOperand(1);
+    SDValue SrcMinusOne = DAG.getNode(ISD::SUB, dl, MVT::i64, Src,
+                                      DAG.getConstant(1, dl, MVT::i64));
+    SDValue RoundedLengthSrc =
+        DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, MVT::i64, RRLEN, Src);
+    SDValue RoundedLengthSrcMinusOne =
+        DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, MVT::i64, RRLEN, SrcMinusOne);
+    SDValue Compare =
+        emitComparison(RoundedLengthSrcMinusOne, Src, ISD::SETEQ, dl, DAG);
+    SDValue EQCCVal = DAG.getConstant(AArch64CC::EQ, dl, MVT::i32);
+    return DAG.getNode(AArch64ISD::CSEL, dl, MVT::i64, Src, RoundedLengthSrc,
+                       EQCCVal, Compare);
   }
   case Intrinsic::cheri_representable_alignment_mask: {
-    if (Subtarget->hasMorello())
-      return SDValue();
-    return DAG.getConstant(-1ULL, dl, MVT::i64);
+    if (!Subtarget->hasMorello())
+      return DAG.getConstant(-1ULL, dl, MVT::i64);
+
+    // Work around the RRLEN/RRMASK quirk described above for RRMASK. If we
+    // have RRLEN(Src - 1) == Src and Src is not 0 (RRLEN(-1) == RRLEN(0) == 0,
+    // but RRMASK(-1) != RRMASK(0) == -1) then use RRMASK(Src - 1) instead of
+    // RRMASK(Src).
+    SDValue Src = Op.getOperand(1);
+    SDValue RRLEN = DAG.getTargetConstant(
+        Intrinsic::morello_round_representable_length_inexact, dl, MVT::i64);
+    SDValue RRMASK = DAG.getTargetConstant(
+        Intrinsic::morello_representable_alignment_mask_inexact, dl, MVT::i64);
+    SDValue SrcMinusOne = DAG.getNode(ISD::SUB, dl, MVT::i64, Src,
+                                      DAG.getConstant(1, dl, MVT::i64));
+    SDValue Compare =
+        emitComparison(Src, DAG.getConstant(0, dl, MVT::i64), ISD::SETNE, dl,
+                       DAG);
+    SDValue RoundedLengthSrcMinusOne =
+        DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, MVT::i64, RRLEN, SrcMinusOne);
+    Compare =
+        emitConditionalComparison(RoundedLengthSrcMinusOne, Src, ISD::SETEQ,
+                                  Compare, AArch64CC::NE, AArch64CC::EQ, dl,
+                                  DAG);
+    SDValue EQCCVal = DAG.getConstant(AArch64CC::EQ, dl, MVT::i32);
+    SDValue Selected = DAG.getNode(AArch64ISD::CSEL, dl, MVT::i64, SrcMinusOne,
+                                   Src, EQCCVal, Compare);
+    return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, MVT::i64, RRMASK, Selected);
   }
   case Intrinsic::cheri_cap_tag_get: {
     SDValue IntRes = DAG.getNode(AArch64ISD::CapTagGet, dl, MVT::i64,
