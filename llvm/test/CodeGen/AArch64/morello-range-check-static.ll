@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=aarch64-linux-gnu -mattr=+morello -aarch64-enable-atomic-cfg-tidy=0 -disable-lsr -verify-machineinstrs -o - %s -relocation-model=pic  | FileCheck %s
+; RUN: llc -mtriple=aarch64-linux-gnu -mattr=+morello -aarch64-enable-atomic-cfg-tidy=0 -aarch64-enable-range-checking=true -disable-lsr -verify-machineinstrs -o - %s -relocation-model=pic  | FileCheck %s
 
 target datalayout = "e-m:e-pf200:128:128-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128"
 
@@ -18,7 +18,7 @@ entry:
 define void @alloca_cast_bounds() {
 entry:
 ; CHECK: mov w[[SIZE:[0-9]+]], #1200
-; CHECK: scbndse c0, c0, x[[SIZE]]
+; CHECK: scbnds c0, c0, x[[SIZE]]
 
   %a = alloca [300 x i32], align 4
   %0 = bitcast [300 x i32] * %a to i8*

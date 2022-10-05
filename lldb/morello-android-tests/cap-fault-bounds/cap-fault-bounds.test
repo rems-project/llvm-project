@@ -3,4 +3,4 @@
 process launch --
 
 # CHECK: stop reason = signal SIGSEGV: capability bounds fault
-# CHECK: cap-fault-bounds`main at main.c:8
+# CHECK: cap-fault-bounds`main at main.c:11

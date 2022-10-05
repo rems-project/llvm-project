@@ -73,7 +73,7 @@ static cl::opt<bool> EnableSandboxGlobalsOpt("aarch64-enable-sandbox-globals-opt
 static cl::opt<bool> EnableRangeChecking("aarch64-enable-range-checking",
                                          cl::desc("Add range information on "
                                                   "pointer casts"),
-                                         cl::init(true), cl::Hidden);
+                                         cl::init(false), cl::Hidden);
 
 static cl::opt<bool> EnableAdvSIMDScalar(
     "aarch64-enable-simd-scalar",

@@ -196,7 +196,7 @@ public:
     visit(F);
 
     if (!(Casts.empty() && ConstantCasts.empty())) {
-      Intrinsic::ID SetLength = Intrinsic::cheri_cap_bounds_set_exact;
+      Intrinsic::ID SetLength = Intrinsic::cheri_cap_bounds_set;
       Type *SizeTy = Type::getIntNTy(M->getContext(),
                                      M->getDataLayout().getIndexSizeInBits(200));
       SetLengthFn = Intrinsic::getDeclaration(M, SetLength, SizeTy);
