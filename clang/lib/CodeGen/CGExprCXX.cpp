@@ -1328,8 +1328,7 @@ static RValue EmitNewDeleteCall(CodeGenFunction &CGF,
   llvm::Function *Fn = dyn_cast<llvm::Function>(CalleePtr);
   if (CalleeDecl->isReplaceableGlobalAllocationFunction() &&
       Fn && Fn->hasFnAttribute(llvm::Attribute::NoBuiltin)) {
-    CallOrInvoke->addAttribute(llvm::AttributeList::FunctionIndex,
-                               llvm::Attribute::Builtin);
+    CallOrInvoke->addFnAttr(llvm::Attribute::Builtin);
   }
 
   return RV;
