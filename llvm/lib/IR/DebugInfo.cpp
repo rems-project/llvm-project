@@ -291,6 +291,8 @@ void DebugInfoFinder::processVariable(const Module &M,
   if (!NodesSeen.insert(DV).second)
     return;
   processScope(DV->getScope());
+  if (DVI.getNumOperands() < 4)
+    return; // Missing arguments, can happen when called by llvm-reduce.
   processType(DV->getType());
 }
 
