@@ -206,22 +206,20 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_BinOp(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::ScalarizeVecRes_PTRADD(SDNode *N) {
+  SDLoc DL(N);
   SDValue LHS = GetScalarizedVector(N->getOperand(0));
-  SDValue RHS;
+  SDValue RHS = N->getOperand(1);
+  EVT RHSVT = RHS.getValueType();
   // Since PTRADD is asymmetric RHS might have not been scalarized.
   // Do an extract element on RHS so that we can scalarize the PTRADD.
-  if (ScalarizedVectors.find(getTableId(N->getOperand(1))) ==
-      ScalarizedVectors.end()) {
-    SDLoc dl(N);
-    SDValue Idx = DAG.getConstant(0, dl,
-                                 TLI.getVectorIdxTy(DAG.getDataLayout()));
-    RHS = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SDLoc(N),
-                      N->getOperand(1).getValueType().getVectorElementType(),
-                      N->getOperand(1), Idx);
+  if (getTypeAction(RHSVT) == TargetLowering::TypeScalarizeVector) {
+    RHS = GetScalarizedVector(RHS);
   } else {
-    RHS = GetScalarizedVector(N->getOperand(1));
+    EVT VT = RHSVT.getVectorElementType();
+    RHS = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, VT, RHS,
+                      DAG.getVectorIdxConstant(0, DL));
   }
-  return DAG.getNode(N->getOpcode(), SDLoc(N),
+  return DAG.getNode(N->getOpcode(), DL,
                      LHS.getValueType(), LHS, RHS, N->getFlags());
 }
 
@@ -1159,34 +1157,25 @@ void DAGTypeLegalizer::SplitVecRes_BinOp(SDNode *N, SDValue &Lo,
 
 void DAGTypeLegalizer::SplitVecRes_PTRADD(SDNode *N, SDValue &Lo,
                                          SDValue &Hi) {
-  SDLoc dl(N);
+  SDLoc DL(N);
   SDValue LHSLo, LHSHi;
   GetSplitVector(N->getOperand(0), LHSLo, LHSHi);
+
   SDValue RHSLo, RHSHi;
+  SDValue RHS = N->getOperand(1);
+  EVT RHSVT = RHS.getValueType();
 
   // PTRADD is asymmetric so RHS might not have been split at this point.
   // If so, we need to create the operands.
-  if (SplitVectors.find(getTableId(N->getOperand(1))) == SplitVectors.end()) {
-    EVT LoVT, HiVT;
-    std::tie(LoVT, HiVT) =
-        DAG.GetSplitDestVTs(N->getOperand(1).getValueType());
-    SDValue IdxLo = DAG.getConstant(0, dl,
-                                    TLI.getVectorIdxTy(DAG.getDataLayout()));
-    SDValue IdxHi = DAG.getConstant(LoVT.getVectorNumElements(), dl,
-                                    TLI.getVectorIdxTy(DAG.getDataLayout()));
-
-    RHSLo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, LoVT, N->getOperand(1),
-                        IdxLo);
-    RHSHi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, HiVT, N->getOperand(1),
-                        IdxHi);
-  } else {
-    GetSplitVector(N->getOperand(1), RHSLo, RHSHi);
-  }
+  if (getTypeAction(RHSVT) == TargetLowering::TypeSplitVector)
+    GetSplitVector(RHS, RHSLo, RHSHi);
+  else
+    std::tie(RHSLo, RHSHi) = DAG.SplitVector(RHS, DL);
 
   const SDNodeFlags Flags = N->getFlags();
   unsigned Opcode = N->getOpcode();
-  Lo = DAG.getNode(Opcode, dl, LHSLo.getValueType(), LHSLo, RHSLo, Flags);
-  Hi = DAG.getNode(Opcode, dl, LHSHi.getValueType(), LHSHi, RHSHi, Flags);
+  Lo = DAG.getNode(Opcode, DL, LHSLo.getValueType(), LHSLo, RHSLo, Flags);
+  Hi = DAG.getNode(Opcode, DL, LHSHi.getValueType(), LHSHi, RHSHi, Flags);
 }
 
 
