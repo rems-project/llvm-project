@@ -4243,7 +4243,8 @@ void AArch64InstrInfo::storeRegToStackSlot(
       Opc = HasPureCap ? AArch64::ASTRDui : AArch64::STRDui;
     } else if (AArch64::WSeqPairsAllClassRegClass.hasSubClassEq(RC)) {
       storeRegPairToStackSlot(getRegisterInfo(), MBB, MBBI,
-                              get(AArch64::STPWi), SrcReg, isKill,
+                              get(HasC64 ? AArch64::ASTPWi : AArch64::STPWi),
+                              SrcReg, isKill,
                               AArch64::sube32, AArch64::subo32, FI, MMO);
       return;
     }
@@ -4264,7 +4265,8 @@ void AArch64InstrInfo::storeRegToStackSlot(
       Offset = false;
     } else if (AArch64::XSeqPairsAllClassRegClass.hasSubClassEq(RC)) {
       storeRegPairToStackSlot(getRegisterInfo(), MBB, MBBI,
-                              get(AArch64::STPXi), SrcReg, isKill,
+                              get(HasC64 ? AArch64::ASTPXi : AArch64::STPXi),
+                              SrcReg, isKill,
                               AArch64::sube64, AArch64::subo64, FI, MMO);
       return;
     } else if (AArch64::ZPRRegClass.hasSubClassEq(RC)) {
@@ -4411,7 +4413,8 @@ void AArch64InstrInfo::loadRegFromStackSlot(
       Opc = HasPureCap ? AArch64::ALDRDui : AArch64::LDRDui;
     } else if (AArch64::WSeqPairsAllClassRegClass.hasSubClassEq(RC)) {
       loadRegPairFromStackSlot(getRegisterInfo(), MBB, MBBI,
-                               get(AArch64::LDPWi), DestReg, AArch64::sube32,
+                               get(HasC64 ? AArch64::ALDPWi : AArch64::LDPWi),
+                               DestReg, AArch64::sube32,
                                AArch64::subo32, FI, MMO);
       return;
     }
@@ -4432,7 +4435,8 @@ void AArch64InstrInfo::loadRegFromStackSlot(
       Offset = false;
     } else if (AArch64::XSeqPairsAllClassRegClass.hasSubClassEq(RC)) {
       loadRegPairFromStackSlot(getRegisterInfo(), MBB, MBBI,
-                               get(AArch64::LDPXi), DestReg, AArch64::sube64,
+                               get(HasC64 ? AArch64::ALDPXi : AArch64::LDPXi),
+                               DestReg, AArch64::sube64,
                                AArch64::subo64, FI, MMO);
       return;
     } else if (AArch64::ZPRRegClass.hasSubClassEq(RC)) {
