@@ -2491,7 +2491,7 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
   bool TakeNextArg = false;
 
   bool UseRelaxRelocations = C.getDefaultToolChain().useRelaxRelocations();
-  bool UseNoExecStack = C.getDefaultToolChain().isNoExecStackDefault();
+  bool UseNoExecStack = false;
   const char *MipsTargetFeature = nullptr;
   StringRef ImplicitIt;
   for (const Arg *A :

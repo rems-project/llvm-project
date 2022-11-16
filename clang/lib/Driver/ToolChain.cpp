@@ -123,10 +123,6 @@ bool ToolChain::useRelaxRelocations() const {
   return ENABLE_X86_RELAX_RELOCATIONS;
 }
 
-bool ToolChain::isNoExecStackDefault() const {
-    return false;
-}
-
 bool ToolChain::isCheriPurecap() const {
   return IsCheriPurecap || EffectiveTriple.isPurecap();
 }
