@@ -818,7 +818,7 @@ static bool alignToRequired(OutputSection *first, OutputSection *last,
     changed = true;
   }
   if ((last->getVA() + last->size) & (reqdAlign - 1)) {
-    last->sectionCommands.push_back(make<SymbolAssignment>(
+    last->commands.push_back(make<SymbolAssignment>(
         ".", [=] { return alignTo(script->getDot(), reqdAlign); },
         last->location));
     changed = true;

@@ -1592,12 +1592,14 @@ DynamicSection<ELFT>::computeContents() {
     }
     if (InX<ELFT>::capRelocs && InX<ELFT>::capRelocs->isNeeded()) {
       addInSec(DT_MIPS_CHERI___CAPRELOCS, InX<ELFT>::capRelocs);
-      addInt(DT_MIPS_CHERI___CAPRELOCSSZ, in.capRelocs->getParent()->size);
+      addInt(DT_MIPS_CHERI___CAPRELOCSSZ,
+             InX<ELFT>::capRelocs->getParent()->size);
     }
   } else if (config->emachine == EM_RISCV) {
     if (InX<ELFT>::capRelocs && InX<ELFT>::capRelocs->isNeeded()) {
       addInSec(DT_RISCV_CHERI___CAPRELOCS, InX<ELFT>::capRelocs);
-      addInt(DT_RISCV_CHERI___CAPRELOCSSZ, in.capRelocs->getParent()->size);
+      addInt(DT_RISCV_CHERI___CAPRELOCSSZ,
+             InX<ELFT>::capRelocs->getParent()->size);
     }
   }
 
