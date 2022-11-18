@@ -5130,7 +5130,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
 
     // Type of the generic packet parameter.
     unsigned GenericAS =
-        CGM.getTargetAddressSpace(LangAS::opencl_generic);
+        getContext().getTargetAddressSpace(LangAS::opencl_generic);
     llvm::Type *I8PTy = llvm::PointerType::get(
         llvm::Type::getInt8Ty(getLLVMContext()), GenericAS);
 
@@ -5278,9 +5278,10 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
   case Builtin::BIto_private: {
     auto Arg0 = EmitScalarExpr(E->getArg(0));
     auto NewArgT = llvm::PointerType::get(Int8Ty,
-      CGM.getTargetAddressSpace(LangAS::opencl_generic));
+      CGM.getContext().getTargetAddressSpace(LangAS::opencl_generic));
     auto NewRetT = llvm::PointerType::get(Int8Ty,
-      CGM.getTargetAddressSpace(E->getType()->getPointeeType().getAddressSpace()));
+      CGM.getContext().getTargetAddressSpace(
+        E->getType()->getPointeeType().getAddressSpace()));
     auto FTy = llvm::FunctionType::get(NewRetT, {NewArgT}, false);
     llvm::Value *NewArg;
     if (Arg0->getType()->getPointerAddressSpace() !=
@@ -5303,7 +5304,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
 
     llvm::Type *QueueTy = ConvertType(getContext().OCLQueueTy);
     llvm::Type *GenericVoidPtrTy = Builder.getInt8PtrTy(
-        CGM.getTargetAddressSpace(LangAS::opencl_generic));
+        getContext().getTargetAddressSpace(LangAS::opencl_generic));
 
     llvm::Value *Queue = EmitScalarExpr(E->getArg(0));
     llvm::Value *Flags = EmitScalarExpr(E->getArg(1));
@@ -5403,7 +5404,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
     if (NumArgs >= 7) {
       llvm::Type *EventTy = ConvertType(getContext().OCLClkEventTy);
       llvm::PointerType *EventPtrTy = EventTy->getPointerTo(
-          CGM.getTargetAddressSpace(LangAS::opencl_generic));
+          CGM.getContext().getTargetAddressSpace(LangAS::opencl_generic));
 
       llvm::Value *NumEvents =
           Builder.CreateZExtOrTrunc(EmitScalarExpr(E->getArg(3)), Int32Ty);
@@ -5481,7 +5482,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
   // parameter.
   case Builtin::BIget_kernel_work_group_size: {
     llvm::Type *GenericVoidPtrTy = Builder.getInt8PtrTy(
-        CGM.getTargetAddressSpace(LangAS::opencl_generic));
+        getContext().getTargetAddressSpace(LangAS::opencl_generic));
     auto Info =
         CGM.getOpenCLRuntime().emitOpenCLEnqueuedBlock(*this, E->getArg(0));
     Value *Kernel = Builder.CreatePointerCast(Info.Kernel, GenericVoidPtrTy);
@@ -5495,7 +5496,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
   }
   case Builtin::BIget_kernel_preferred_work_group_size_multiple: {
     llvm::Type *GenericVoidPtrTy = Builder.getInt8PtrTy(
-        CGM.getTargetAddressSpace(LangAS::opencl_generic));
+        getContext().getTargetAddressSpace(LangAS::opencl_generic));
     auto Info =
         CGM.getOpenCLRuntime().emitOpenCLEnqueuedBlock(*this, E->getArg(0));
     Value *Kernel = Builder.CreatePointerCast(Info.Kernel, GenericVoidPtrTy);
@@ -5510,7 +5511,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const GlobalDecl GD, unsigned BuiltinID,
   case Builtin::BIget_kernel_max_sub_group_size_for_ndrange:
   case Builtin::BIget_kernel_sub_group_count_for_ndrange: {
     llvm::Type *GenericVoidPtrTy = Builder.getInt8PtrTy(
-        CGM.getTargetAddressSpace(LangAS::opencl_generic));
+        getContext().getTargetAddressSpace(LangAS::opencl_generic));
     LValue NDRangeL = EmitAggExprToLValue(E->getArg(0));
     llvm::Value *NDRange = NDRangeL.getAddress(*this).getPointer();
     auto Info =
