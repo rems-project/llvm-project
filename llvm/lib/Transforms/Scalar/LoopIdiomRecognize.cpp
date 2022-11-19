@@ -1468,6 +1468,7 @@ bool LoopIdiomRecognize::processLoopStoreOfLoopLoad(
     AATags = AATags.extendTo(-1);
 
   CallInst *NewCall = nullptr;
+  // https://github.com/CTSRD-CHERI/llvm-project/pull/612
   PreserveCheriTags PreserveTags = PreserveCheriTags::TODO;
   // Check whether to generate an unordered atomic memcpy:
   //  If the load or store are atomic, then they must necessarily be unordered
