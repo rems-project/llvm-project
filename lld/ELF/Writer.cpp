@@ -168,7 +168,7 @@ void elf::combineEhSections() {
   llvm::erase_value(inputSections, nullptr);
 }
 
-template <class ELFT> void elf::combineCapRelocsSections() {
+void elf::combineCapRelocsSections() {
   for (InputSectionBase *&s : inputSections) {
     if (s->name != "__cap_relocs")
       continue;
@@ -177,7 +177,7 @@ template <class ELFT> void elf::combineCapRelocsSections() {
     // We only gather the sections here and add the cap_relocs during
     // finalizeContents() The reason for this is that we don't know if symbols
     // are preemptible when this function is called.
-    InX<ELFT>::capRelocs->addSection(s);
+    invokeELFT(in.capRelocs->addSection, s);
     s = nullptr;
   }
   llvm::erase_value(inputSections, nullptr);
@@ -359,14 +359,14 @@ template <class ELFT> void elf::createSyntheticSections() {
 
   if (config->capabilitySize > 0) {
     if (config->emachine == EM_AARCH64) {
-      in.capRelocs = std::make_unique<MorelloCapRelocsSection>();
-      add(*in.capRelocs);
+      in.morelloCapRelocs = std::make_unique<MorelloCapRelocsSection>();
+      add(*in.morelloCapRelocs);
       if (config->morelloC64Plt) {
         in.tlsLEData = std::make_unique<MorelloTLSLEDataSection>();
         add(*in.tlsLEData);
       }
     } else
-      InX<ELFT>::capRelocs = std::make_unique<CheriCapRelocsSection<ELFT>>();
+      in.capRelocs = std::make_unique<CheriCapRelocsSection>();
     in.cheriCapTable = std::make_unique<CheriCapTableSection>();
     add(*in.cheriCapTable);
     if (config->capTableScope != CapTableScopePolicy::All) {
@@ -2097,8 +2097,8 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
 
   // Now handle __cap_relocs (must be before RelaDyn because it might
   // result in new dynamic relocations being added)
-  if (InX<ELFT>::capRelocs) {
-    finalizeSynthetic(InX<ELFT>::capRelocs.get());
+  if (in.capRelocs) {
+    finalizeSynthetic(in.capRelocs.get());
   }
 
   if (in.plt && in.plt->isNeeded())
@@ -2314,7 +2314,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
     // static symbol table.
     finalizeSynthetic(in.symTab.get());
     finalizeSynthetic(in.ppc64LongBranchTarget.get());
-    finalizeSynthetic(in.capRelocs.get());
+    finalizeSynthetic(in.morelloCapRelocs.get());
     finalizeSynthetic(in.tlsLEData.get());
   }
 
@@ -2429,10 +2429,10 @@ template <class ELFT> void Writer<ELFT>::addStartEndSymbols() {
     define("__cap_table_start", "__cap_table_end",
            in.cheriCapTable->getOutputSection());
 
-  if (config->emachine == EM_AARCH64 && in.capRelocs)
+  if (config->emachine == EM_AARCH64 && in.morelloCapRelocs)
     // These symbol values will be finalized in finalizeContents()
     define("__cap_relocs_start", "__cap_relocs_end",
-           in.capRelocs->getOutputSection());
+           in.morelloCapRelocs->getOutputSection());
 
   if (OutputSection *sec = findSection(".ARM.exidx"))
     define("__exidx_start", "__exidx_end", sec);
@@ -3198,8 +3198,3 @@ template void elf::writeResult<ELF32LE>();
 template void elf::writeResult<ELF32BE>();
 template void elf::writeResult<ELF64LE>();
 template void elf::writeResult<ELF64BE>();
-
-template void elf::combineCapRelocsSections<ELF32LE>();
-template void elf::combineCapRelocsSections<ELF32BE>();
-template void elf::combineCapRelocsSections<ELF64LE>();
-template void elf::combineCapRelocsSections<ELF64BE>();

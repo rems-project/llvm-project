@@ -1170,7 +1170,7 @@ private:
 // Can only be forward declared here since it depends on SyntheticSection
 class MorelloCapRelocsSection;
 class MorelloTLSLEDataSection;
-template <class ELFT> class CheriCapRelocsSection;
+class CheriCapRelocsSection;
 class CheriCapTableSection;
 class CheriCapTableMappingSection;
 
@@ -1250,12 +1250,13 @@ struct InStruct {
   std::unique_ptr<InputSection> attributes;
   std::unique_ptr<BssSection> bss;
   std::unique_ptr<BssSection> bssRelRo;
-  std::unique_ptr<MorelloCapRelocsSection> capRelocs;
+  std::unique_ptr<MorelloCapRelocsSection> morelloCapRelocs;
   std::unique_ptr<MorelloTLSLEDataSection> tlsLEData;
   std::unique_ptr<GotSection> got;
   std::unique_ptr<GotPltSection> gotPlt;
   std::unique_ptr<IgotPltSection> igotPlt;
   std::unique_ptr<CheriCapTableSection> cheriCapTable;
+  std::unique_ptr<CheriCapRelocsSection> capRelocs;
   // For per-file/per-function tables:
   std::unique_ptr<CheriCapTableMappingSection> cheriCapTableMapping;
   std::unique_ptr<PPC64LongBranchTargetSection> ppc64LongBranchTarget;
@@ -1283,14 +1284,6 @@ struct InStruct {
 
 extern InStruct in;
 
-template <class ELFT> struct InX {
-  // XXXAR: needs to be templated because writing depends on endianess
-  // TODO: use the non-templated version
-  static std::unique_ptr<CheriCapRelocsSection<ELFT>> capRelocs;
-};
-
-template <class ELFT>
-std::unique_ptr<CheriCapRelocsSection<ELFT>> InX<ELFT>::capRelocs;
 } // namespace elf
 } // namespace lld
 
