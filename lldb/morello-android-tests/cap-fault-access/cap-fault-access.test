@@ -2,5 +2,5 @@
 # RUN: %test-a64 %s
 process launch --
 
-# CHECK: stop reason = signal SIGSEGV: capability access fault
+# CHECK: stop reason = signal SIGSEGV: capability {{.*}} fault
 # CHECK: cap-fault-access`main at main.c:30
