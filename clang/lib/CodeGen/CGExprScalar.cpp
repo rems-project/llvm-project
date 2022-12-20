@@ -4328,12 +4328,24 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &op) {
   llvm::Value *RHS = op.RHS;
   Value *diffInChars;
   if (expr->getLHS()->getType()->isCHERICapabilityType(CGF.getContext())) {
-    llvm::Function *CapPtrDiff =
-      CGF.CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_diff, CGF.PtrDiffTy);
-    llvm::Type *CapTy = CapPtrDiff->getFunctionType()->getParamType(0);
-    LHS = Builder.CreateBitCast(LHS, CapTy);
-    RHS = Builder.CreateBitCast(RHS, CapTy);
-    diffInChars = Builder.CreateCall(CapPtrDiff, { LHS, RHS});
+    if (!CGF.CGM.getLangOpts().cheriUIntCapUsesAddr()) {
+      llvm::Function *CapPtrDiff =
+        CGF.CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_diff, CGF.PtrDiffTy);
+      llvm::Type *CapTy = CapPtrDiff->getFunctionType()->getParamType(0);
+      LHS = Builder.CreateBitCast(LHS, CapTy);
+      RHS = Builder.CreateBitCast(RHS, CapTy);
+      diffInChars = Builder.CreateCall(CapPtrDiff, { LHS, RHS});
+    } else {
+      llvm::Function *CapAddrGet =
+          CGF.CGM.getIntrinsic(llvm::Intrinsic::cheri_cap_address_get,
+                               CGF.PtrDiffTy);
+      llvm::Type *CapTy = CapAddrGet->getFunctionType()->getParamType(0);
+      LHS = Builder.CreateBitCast(LHS, CapTy);
+      LHS = Builder.CreateCall(CapAddrGet, { LHS });
+      RHS = Builder.CreateBitCast(RHS, CapTy);
+      RHS = Builder.CreateCall(CapAddrGet, { RHS });
+      diffInChars = Builder.CreateSub(LHS, RHS, "sub.ptr.sub");
+    }
   } else {
     LHS = Builder.CreatePtrToInt(op.LHS, CGF.PtrDiffTy, "sub.ptr.lhs.cast");
     RHS  = Builder.CreatePtrToInt(op.RHS, CGF.PtrDiffTy, "sub.ptr.rhs.cast");

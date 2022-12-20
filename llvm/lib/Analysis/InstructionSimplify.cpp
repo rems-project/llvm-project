@@ -853,6 +853,11 @@ static Value *SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
     if (Constant *Result = computePointerDifference(Q.DL, X, Y))
       return ConstantExpr::getIntegerCast(Result, Op0->getType(), true);
 
+  if (match(Op0, m_Intrinsic<Intrinsic::cheri_cap_address_get>(m_Value(X))) &&
+      match(Op1, m_Intrinsic<Intrinsic::cheri_cap_address_get>(m_Value(Y))))
+    if (Constant *Result = computePointerDifference(Q.DL, X, Y))
+      return ConstantExpr::getIntegerCast(Result, Op0->getType(), true);
+
   // i1 sub -> xor.
   if (MaxRecurse && Op0->getType()->isIntOrIntVectorTy(1))
     if (Value *V = SimplifyXorInst(Op0, Op1, Q, MaxRecurse-1))

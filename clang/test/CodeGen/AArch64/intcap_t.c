@@ -142,7 +142,10 @@ __uintcap_t xor(__uintcap_t f)
 int capdiff(__capability int *a, __capability int *b)
 {
   // CHECK-LABEL: @capdiff(i32 addrspace(200)* %{{.*}}, i32 addrspace(200)* %{{.*}}) #0 {
-  // CHECK: call i64 @llvm.cheri.cap.diff
+  // addr: [[ADDR1:%[a-z_0-9]+]] = call i64 @llvm.cheri.cap.address.get.i64(i8 addrspace(200)* {{.*}})
+  // addr: [[ADDR2:%[a-z_0-9]+]] = call i64 @llvm.cheri.cap.address.get.i64(i8 addrspace(200)* {{.*}})
+  // addr: sub i64 [[ADDR1]], [[ADDR2]]
+  // offset: call i64 @llvm.cheri.cap.diff
   return a-b;
 }
 
