@@ -119,6 +119,9 @@ def FuchsiaAlpha : Package<"fuchsia">, ParentPackage<Alpha>;
 def WebKit : Package<"webkit">;
 def WebKitAlpha : Package<"webkit">, ParentPackage<Alpha>;
 
+def CHERI : Package<"cheri">;
+def CHERIAlpha : Package<"cheri">, ParentPackage<Alpha>;
+
 //===----------------------------------------------------------------------===//
 // Core Checkers.
 //===----------------------------------------------------------------------===//
@@ -1673,3 +1676,19 @@ def UncountedLocalVarsChecker : Checker<"UncountedLocalVarsChecker">,
   Documentation<HasDocumentation>;
 
 } // end alpha.webkit
+
+//===----------------------------------------------------------------------===//
+// CHERI checkers.
+//===----------------------------------------------------------------------===//
+
+let ParentPackage = CHERI in {
+
+} // end cheri
+
+let ParentPackage = CHERIAlpha in {
+
+def ProvenanceSourceChecker : Checker<"ProvenanceSourceChecker">,
+  HelpText<"Check expressions with ambiguous provenance source.">,
+  Documentation<NotDocumented>;
+
+} // end alpha.cheri
