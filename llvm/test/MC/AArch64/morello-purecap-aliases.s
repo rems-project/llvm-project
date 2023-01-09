@@ -208,3 +208,8 @@
 // CHECK:   ldtr c1, [c0, #0]
 // CHECK:   stp c0, c1, [c2, #0]
 // CHECK:   ldp c0, c1, [c2, #0]
+
+  retr
+  rets
+// CHECK: retr c30
+// CHECK: rets c30

@@ -300,6 +300,11 @@ let Predicates = [HasMorello] in {
 
 // ======================= Manually added instructions =======================
 
+let Predicates = [HasMorello] in {
+  def : InstAlias<"retr", (CapReturnRestricted CLR), 0>;
+  def : InstAlias<"rets", (CapReturnDirect CLR), 0>;
+}
+
 let Predicates = [HasMorello], DecoderNamespace = "AArch64Morello" in {
 let isSelect = 1, Uses = [NZCV] in
   def CapCondSel : CapCondSelFmt<(outs Cap:$Cd), (ins Cap:$Cn, Cap:$Cm, ccode:$cond),

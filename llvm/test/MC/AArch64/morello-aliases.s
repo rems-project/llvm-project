@@ -210,3 +210,8 @@
    subs xzr, c1, c2
 // CHECK: cmp c1, c2
 // CHECK: cmp c1, c2
+
+   retr
+   rets
+// CHECK: retr c30
+// CHECK: rets c30
