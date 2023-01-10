@@ -255,7 +255,8 @@ public:
                              SmallVectorImpl<StringRef> &LibDirs,
                              SmallVectorImpl<StringRef> &TripleAliases,
                              SmallVectorImpl<StringRef> &BiarchLibDirs,
-                             SmallVectorImpl<StringRef> &BiarchTripleAliases);
+                             SmallVectorImpl<StringRef> &BiarchTripleAliases,
+                             bool IsPurecap);
 
     void AddDefaultGCCPrefixes(const llvm::Triple &TargetTriple,
                                SmallVectorImpl<std::string> &Prefixes,

@@ -1677,12 +1677,20 @@ static void findRISCVMultilibs(const Driver &D,
     Result.Multilibs = RISCVMultilibs;
 }
 
+static bool isPurecap(const llvm::Triple &Triple,
+                      const ArgList &Args) {
+  if (Triple.isAArch64() && tools::aarch64::isPurecap(Args, Triple))
+    return true;
+  return false;
+}
+
 static bool findBiarchMultilibs(const Driver &D,
                                 const llvm::Triple &TargetTriple,
                                 StringRef Path, const ArgList &Args,
                                 bool NeedsBiarchSuffix,
                                 DetectedMultilibs &Result) {
   Multilib Default;
+  bool IsPurecap = isPurecap(TargetTriple, Args);
 
   // Some versions of SUSE and Fedora on ppc64 put 32-bit libs
   // in what would normally be GCCInstallPath and put the 64-bit
@@ -1726,6 +1734,10 @@ static bool findBiarchMultilibs(const Driver &D,
                         .flag("-m32")
                         .flag("-m64")
                         .flag("+mx32");
+  Multilib Alt64c = Multilib()
+                        .gccSuffix("/purecap/c64")
+                        .includeSuffix("/purecap/c64")
+                        .flag("+mabi=purecap");
 
   // GCC toolchain for IAMCU doesn't have crtbegin.o, so look for libgcc.a.
   FilterNonExistent NonExistent(
@@ -1733,10 +1745,12 @@ static bool findBiarchMultilibs(const Driver &D,
 
   // Determine default multilib from: 32, 64, x32
   // Also handle cases such as 64 on 32, 32 on 64, etc.
-  enum { UNKNOWN, WANT32, WANT64, WANTX32 } Want = UNKNOWN;
+  enum { UNKNOWN, WANT32, WANT64, WANTX32, WANT64C } Want = UNKNOWN;
   const bool IsX32 = TargetTriple.isX32();
   if (TargetTriple.isArch32Bit() && !NonExistent(Alt32))
     Want = WANT64;
+  else if (TargetTriple.isArch64Bit() && IsPurecap && !NonExistent(Alt64c))
+    Want = WANT64C;
   else if (TargetTriple.isArch64Bit() && IsX32 && !NonExistent(Altx32))
     Want = WANT64;
   else if (TargetTriple.isArch64Bit() && !IsX32 && !NonExistent(Alt64))
@@ -1756,6 +1770,8 @@ static bool findBiarchMultilibs(const Driver &D,
     Default.flag("-m32").flag("+m64").flag("-mx32");
   else if (Want == WANTX32)
     Default.flag("-m32").flag("-m64").flag("+mx32");
+  else if (Want == WANT64C)
+    Default.flag("-mabi=purecap");
   else
     return false;
 
@@ -1763,6 +1779,7 @@ static bool findBiarchMultilibs(const Driver &D,
   Result.Multilibs.push_back(Alt64);
   Result.Multilibs.push_back(Alt32);
   Result.Multilibs.push_back(Altx32);
+  Result.Multilibs.push_back(Alt64c);
 
   Result.Multilibs.FilterOut(NonExistent);
 
@@ -1770,12 +1787,13 @@ static bool findBiarchMultilibs(const Driver &D,
   addMultilibFlag(TargetTriple.isArch64Bit() && !IsX32, "m64", Flags);
   addMultilibFlag(TargetTriple.isArch32Bit(), "m32", Flags);
   addMultilibFlag(TargetTriple.isArch64Bit() && IsX32, "mx32", Flags);
+  addMultilibFlag(TargetTriple.isArch64Bit() && IsPurecap, "mabi=purecap", Flags);
 
   if (!Result.Multilibs.select(Flags, Result.SelectedMultilib))
     return false;
 
   if (Result.SelectedMultilib == Alt64 || Result.SelectedMultilib == Alt32 ||
-      Result.SelectedMultilib == Altx32)
+      Result.SelectedMultilib == Altx32 || Result.SelectedMultilib == Alt64c)
     Result.BiarchSibling = Default;
 
   return true;
@@ -1907,7 +1925,8 @@ void Generic_GCC::GCCInstallationDetector::init(
   SmallVector<StringRef, 16> CandidateBiarchTripleAliases;
   CollectLibDirsAndTriples(TargetTriple, BiarchVariantTriple, CandidateLibDirs,
                            CandidateTripleAliases, CandidateBiarchLibDirs,
-                           CandidateBiarchTripleAliases);
+                           CandidateBiarchTripleAliases,
+                           isPurecap(TargetTriple, Args));
 
   // Compute the set of prefixes for our search.
   SmallVector<std::string, 8> Prefixes;
@@ -2071,7 +2090,8 @@ void Generic_GCC::GCCInstallationDetector::AddDefaultGCCPrefixes(
     SmallVectorImpl<StringRef> &LibDirs,
     SmallVectorImpl<StringRef> &TripleAliases,
     SmallVectorImpl<StringRef> &BiarchLibDirs,
-    SmallVectorImpl<StringRef> &BiarchTripleAliases) {
+    SmallVectorImpl<StringRef> &BiarchTripleAliases,
+    bool IsPurecap) {
   // Declare a bunch of static data sets that we'll select between below. These
   // are specifically designed to always refer to string literals to avoid any
   // lifetime or initialization issues.
@@ -2309,7 +2329,7 @@ void Generic_GCC::GCCInstallationDetector::AddDefaultGCCPrefixes(
 
   switch (TargetTriple.getArch()) {
   case llvm::Triple::aarch64:
-    if (TargetTriple.isPurecap()) {
+    if (IsPurecap) {
       LibDirs.append(begin(AArch64PurecapLibDirs), end(AArch64PurecapLibDirs));
       TripleAliases.append(begin(AArch64PurecapTriples),
                            end(AArch64PurecapTriples));

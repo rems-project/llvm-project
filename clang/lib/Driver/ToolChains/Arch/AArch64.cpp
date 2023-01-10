@@ -271,7 +271,7 @@ getAArch64EncodingModeFromAbi(const Driver &D, const ArgList &Args,
   return true;
 }
 
-bool aarch64::isPurecap(const llvm::opt::ArgList &Args, llvm::Triple &Triple) {
+bool aarch64::isPurecap(const llvm::opt::ArgList &Args, const llvm::Triple &Triple) {
   if (Triple.isPurecap())
     return true;
   if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ))

@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Linux.h"
+#include "Arch/AArch64.h"
 #include "Arch/ARM.h"
 #include "Arch/Mips.h"
 #include "Arch/PPC.h"
@@ -81,7 +82,7 @@ std::string Linux::getMultiarchTriple(const Driver &D,
   case llvm::Triple::aarch64:
     if (IsAndroid)
       return "aarch64-linux-android";
-    if (TargetTriple.isPurecap())
+    if (IsCheriPurecap)
       return "aarch64-linux-gnu_purecap";
     return "aarch64-linux-gnu";
   case llvm::Triple::aarch64_be:
@@ -174,7 +175,8 @@ static StringRef getOSLibDir(const llvm::Triple &Triple, const ArgList &Args) {
   if (Triple.getArch() == llvm::Triple::riscv32)
     return "lib32";
 
-  if (Triple.getArch() == llvm::Triple::aarch64 && Triple.isPurecap())
+  if (Triple.getArch() == llvm::Triple::aarch64 &&
+      tools::aarch64::isPurecap(Args, Triple))
     return "lib64c";
 
   return Triple.isArch32Bit() ? "lib" : "lib64";
@@ -416,7 +418,7 @@ std::string Linux::getDynamicLinker(const ArgList &Args) const {
          tools::arm::getARMFloatABI(*this, Args) == tools::arm::FloatABI::Hard))
       ArchName += "hf";
 
-    if (Triple.getArch() == llvm::Triple::aarch64 && Triple.isPurecap())
+    if (Triple.getArch() == llvm::Triple::aarch64 && IsCheriPurecap)
       ArchName += "_purecap";
 
     return "/lib/ld-musl-" + ArchName + ".so.1";
@@ -431,8 +433,8 @@ std::string Linux::getDynamicLinker(const ArgList &Args) const {
 
   case llvm::Triple::aarch64: {
     LibDir = "lib";
-    Loader = Triple.isPurecap() ? "ld-linux-aarch64_purecap.so.1"
-                                : "ld-linux-aarch64.so.1";
+    Loader = IsCheriPurecap ? "ld-linux-aarch64_purecap.so.1"
+                            : "ld-linux-aarch64.so.1";
     break;
   }
   case llvm::Triple::aarch64_be:
