@@ -464,7 +464,10 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
   Type *IntIdxTy = DL.getIndexType(PTy);
 
   // For opaque pointers, always generate i8 GEP.
-  if (!PTy->isOpaque()) {
+  // Use i8 GEPs for fat pointers as well to avoid potentially emitting two
+  // GEPs (even if one of them wouldn't be ugly) which might take the pointer
+  // out of bounds and clear the tag.
+  if (!PTy->isOpaque() && !DL.isFatPointer(PTy)) {
     // Descend down the pointer's type and attempt to convert the other
     // operands into GEP indices, at each level. The first index in a GEP
     // indexes into the array implied by the pointer operand; the rest of
@@ -773,11 +776,10 @@ Value *SCEVExpander::visitAddExpr(const SCEVAddExpr *S) {
     const Loop *CurLoop = I->first;
     const SCEV *Op = I->second;
     if (!Sum) {
-      if (DL.isFatPointer(Op->getType()) && !BasePtr && Loops.size() > 1) {
+      if (DL.isFatPointer(Op->getType()) && !BasePtr &&
+          OpsAndLoops.size() > 1) {
         // Prevent hoiting of parts of the GEP for fat pointers as the
-        // computations might clear the tag. Note that this won't work
-        // if the add expression has more than one fat pointer in it
-        // and therefore ambiguous.
+        // computations might clear the tag.
         if (auto *AddRec = dyn_cast<SCEVAddRecExpr>(Op)) {
           auto *BaseSum = SCEVFatRewriter::rewrite(AddRec, SE);
           auto *IntSum = SCEVIntegerRewriter::rewrite(AddRec, SE);
