@@ -7554,6 +7554,26 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
 
     if (auto *II = dyn_cast<IntrinsicInst>(U)) {
       switch (II->getIntrinsicID()) {
+      case Intrinsic::cheri_cap_address_get: {
+        const SCEV *Op = getSCEV(II->getOperand(0));
+        Type *DstIntTy = II->getType();
+        const SCEV *IntOp = getPtrToIntExpr(Op, DstIntTy);
+        if (isa<SCEVCouldNotCompute>(IntOp))
+          return getUnknown(V);
+        return IntOp;
+      }
+      case Intrinsic::cheri_cap_address_set: {
+	// An address_set(X, Y) is the same as X + Y - ptrtoint(X).
+        const SCEV *X = getSCEV(II->getArgOperand(0));
+        const SCEV *Y = getSCEV(II->getArgOperand(1));
+        Type *DstIntTy = II->getOperand(1)->getType();
+        const SCEV *IntOp = getPtrToIntExpr(X, DstIntTy);
+        if (isa<SCEVCouldNotCompute>(IntOp))
+          return getUnknown(V);
+        const SCEV *SetAddr = getAddExpr(X,
+           getMinusSCEV(Y, IntOp, SCEV::FlagAnyWrap), SCEV::FlagAnyWrap);
+        return SetAddr;
+      }
       case Intrinsic::abs:
         return getAbsExpr(
             getSCEV(II->getArgOperand(0)),
