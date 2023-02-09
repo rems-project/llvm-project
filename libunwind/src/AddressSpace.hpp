@@ -447,14 +447,9 @@ constexpr int check_same_type() {
   return 0;
 }
 
-#if defined(__CHERI_PURE_CAPABILITY__)
-#if defined(_LIBUNWIND_IS_BAREMETAL)
+#if defined(__CHERI_PURE_CAPABILITY__) && defined(_LIBUNWIND_IS_BAREMETAL)
 extern "C" uintcap_t __get_eh_frame_capability();
 extern "C" uintcap_t __get_eh_frame_hdr_capability();
-#else
-__attribute__((weak)) extern "C" Elf_Dyn _DYNAMIC[];
-// #pragma weak _DYNAMIC
-#endif
 #endif
 
 inline LocalAddressSpace::pint_t
@@ -578,6 +573,14 @@ typedef ElfW(Phdr) Elf_Phdr;
 #endif
 #if !defined(Elf_Addr)
 typedef ElfW(Addr) Elf_Addr;
+#endif
+#if !defined(Elf_Dyn)
+typedef ElfW(Dyn) Elf_Dyn;
+#endif
+
+#if defined(__CHERI_PURE_CAPABILITY__) && !defined(_LIBUNWIND_IS_BAREMETAL)
+__attribute__((weak)) extern "C" Elf_Dyn _DYNAMIC[];
+// #pragma weak _DYNAMIC
 #endif
 
 static uintptr_t calculateImageBase(struct dl_phdr_info *pinfo) {
