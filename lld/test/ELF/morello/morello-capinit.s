@@ -2,6 +2,8 @@
 // RUN: llvm-mc --triple=aarch64-none-elf -mattr=+c64,+morello -filetype=obj %s -o %t.o
 // RUN: ld.lld %t.o -o %t
 // RUN: llvm-readobj --cap-relocs --symbols %t | FileCheck %s
+// RUN: ld.lld --local-caprelocs=legacy %t.o -o %t1
+// RUN: llvm-readobj --cap-relocs --symbols %t1 | FileCheck %s
 
 /// Basics of the .capinit relocation using static linking.
 /// We create two capabilites via .capinit. These will produce R_MORELLO_CAPINIT

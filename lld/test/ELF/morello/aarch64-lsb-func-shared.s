@@ -24,8 +24,13 @@ bar:
 // CHECK-NEXT: 20380 00020000 00000000 c0010200 00000004
 
 // RELS: Relocations [
-// RELS-NEXT:  Section (5) .rela.dyn {
+// RELS-NEXT: .rela.dyn {
+// RELS-NEXT:    0x20380 R_MORELLO_RELATIVE bar 0x100BC
 
-// SYMS-NEXT:    0x20380 R_MORELLO_RELATIVE bar 0x100BC
-// SYMS: Name: bar (18)
+// SYMS: Name: bar
 // SYMS-NEXT: Value: 0x102BC
+// SYMS-NEXT: Size: 4
+// SYMS-NEXT: Binding: Global
+// SYMS-NEXT: Type: Function
+// SYMS-NEXT: Other: 0
+// SYMS-NEXT: Section: .text

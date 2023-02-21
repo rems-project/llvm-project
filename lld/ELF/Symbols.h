@@ -491,6 +491,10 @@ struct ElfSym {
   static Defined *newLibBss1;
   static Defined *newLibBss2;
   static Defined *newLibEnd;
+
+  // __rela_dyn_{start,end} symbols.
+  static Defined *relaDynStart;
+  static Defined *relaDynEnd;
 };
 
 // A buffer class that is large enough to hold any Symbol-derived

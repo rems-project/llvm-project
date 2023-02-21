@@ -402,11 +402,22 @@ static uint64_t getTargetSize(const CheriCapRelocLocation &location,
     if (isAbsoluteSym)
       return targetSize;
 
-    // Morello may store symbol size in lower 8-bytes of the 16-byte frag
-    // reserved by .capinit
     if (config->emachine == EM_AARCH64 && !targetSym->isInGot()) {
+      // For caprelocs, the Morello linker obtains the symbol size from the
+      // lower 8-bytes of a 16-byte frag reserved by .capinit (buf+8).
+
+      // For dynamic relocations, the linker breaks the 16-byte frag into two
+      // 8-byte locations (see addMorelloCapabilityFragment()) and obtains the
+      // size from the second of these locations when processing the
+      // R_MORELLO_CAPFRAG_SIZE_AND_PERM internal  static relocation (see
+      // getMorelloSizeAndPermissions()). So (buf) can be used because it
+      // already has the 8 byte offset built into it.
+
       const uint8_t *buf = location.section->data().begin() + location.offset;
-      targetSize = read64le(buf + 8);
+      targetSize = ((config->localCapRelocsMode == CapRelocsMode::Legacy) &&
+                    !config->shared)
+                       ? read64le(buf + 8)
+                       : read64le(buf);
       if (targetSize)
         return targetSize;
     }
@@ -925,32 +936,40 @@ void addMorelloCapabilityFragment(InputSectionBase *sec, Symbol *sym,
 static void addCapDynamicRelocation(RelType dynType, Symbol *sym,
                                     InputSectionBase *sec, uint64_t offset,
                                     int64_t addend) {
-  // The symbol VA is used in case of a relative relocation against an
-  // executable symbol. However the VA undergoes another transformation
-  // so that the fragment pointed by the relocation is representable by the
-  // CHERI Concentrate compression scheme. See calcAddend().
   bool isExecRel =
       (sym->isFunc() || sym->isGnuIFunc()) &&
       (dynType == R_MORELLO_RELATIVE || dynType == R_MORELLO_IRELATIVE);
-  mainPart->relaDyn->addReloc({dynType, sec, offset,
-                               isExecRel ? DynamicReloc::AArch64ExecRel
-			                 : DynamicReloc::AgainstSymbol,
-                               *sym, addend, R_ABS});
+  if (dynType == R_MORELLO_RELATIVE && !sym->includeInDynsym() &&
+      config->localCapRelocsMode == CapRelocsMode::ElfReloc) {
+    in.relaDyn->addReloc(
+        {dynType, sec, offset,
+         isExecRel ? DynamicReloc::AArch64ExecRel : DynamicReloc::AgainstSymbol,
+         *sym, addend, R_ABS});
+  } else {
+    mainPart->relaDyn->addReloc(
+        {dynType, sec, offset,
+         isExecRel ? DynamicReloc::AArch64ExecRel : DynamicReloc::AgainstSymbol,
+         *sym, addend, R_ABS});
+  }
   addMorelloCapabilityFragment(sec, sym, offset, isExecRel);
 }
 
 // Relocation arising from addGotEntry() or addPltEntry().
 // This can happen for both static and dynamic linking as capabilities can only
 // be initialized at run-time.
-void addMorelloC64GotRelocation(RelType dynType, Symbol *sym, InputSectionBase *sec, uint64_t offset) {
+void addMorelloC64GotRelocation(RelType dynType, Symbol *sym,
+                                InputSectionBase *sec, uint64_t offset,
+                                int64_t addend) {
   // If there is a Dynamic Symbol Table, there cannot be a caprelocs section.
   // R_MORELLO_IRELATIVE can be present even without a Dynamic Symbol Table
   // being present.
-  if (config->hasDynSymTab || dynType == R_MORELLO_IRELATIVE)
-    addCapDynamicRelocation(dynType, sym, sec, offset, 0);
-  else
-    in.capRelocs->addCapReloc({sec, offset}, {sym, 0u},
-                              sym->isPreemptible, 0);
+  if (config->hasDynSymTab || dynType == R_MORELLO_IRELATIVE ||
+      config->localCapRelocsMode == CapRelocsMode::ElfReloc) {
+    addCapDynamicRelocation(dynType, sym, sec, offset, addend);
+  } else {
+    in.capRelocs->addCapReloc({sec, offset}, {sym, 0u}, sym->isPreemptible,
+                              addend);
+  }
 }
 
 // For the .capinit R_MORELLO_CAPINIT relocation. Called from the
@@ -958,17 +977,12 @@ void addMorelloC64GotRelocation(RelType dynType, Symbol *sym, InputSectionBase *
 static void addMorelloCapabilityRelocation(Symbol *sym, RelType type,
                                          InputSectionBase *sec, uint64_t offset,
                                          int64_t addend) {
-  if (config->hasDynSymTab) {
-    // When dynamic linking we propagate the R_MORELLO_CAPINIT if the symbol is
-    // preemptible, otherwise we use R_MORELLO_RELATIVE.
-    RelType dynType = (sym->includeInDynsym() && sym->isPreemptible)
-                          ? R_MORELLO_CAPINIT
-                          : R_MORELLO_RELATIVE;
-    addCapDynamicRelocation(dynType, sym, sec, offset, addend);
-  } else {
-    in.capRelocs->addCapReloc({sec, offset}, {sym, 0u},
-                              sym->isPreemptible, addend);
-  }
+  // When dynamic linking we propagate the R_MORELLO_CAPINIT if the symbol is
+  // preemptible, otherwise we use R_MORELLO_RELATIVE.
+  RelType dynType = (sym->includeInDynsym() && sym->isPreemptible)
+                        ? R_MORELLO_CAPINIT
+                        : R_MORELLO_RELATIVE;
+  addMorelloC64GotRelocation(dynType, sym, sec, offset, addend);
 }
 
 MorelloTLSLEDataSection::MorelloTLSLEDataSection()

@@ -84,6 +84,7 @@ private:
   std::unique_ptr<FileOutputBuffer> &buffer;
 
   void addRelIpltSymbols();
+  void addCapDynRelocsSymbols();
   void addStartEndSymbols();
   void addStartStopSymbols(OutputSection *sec);
 
@@ -594,6 +595,15 @@ template <class ELFT> void elf::createSyntheticSections() {
   in.relaPlt = make<RelocationSection<ELFT>>(
       config->isRela ? ".rela.plt" : ".rel.plt", /*sort=*/false);
   add(in.relaPlt);
+
+  if (config->emachine == EM_AARCH64 &&
+      config->localCapRelocsMode == CapRelocsMode::ElfReloc) {
+    in.relaDyn = make<RelocationSection<ELFT>>(relaDynName, /*sort=*/false);
+  } else if (config->androidPackDynRelocs)
+    in.relaDyn = make<AndroidPackedRelocationSection<ELFT>>(relaDynName);
+  else
+    in.relaDyn = make<RelocationSection<ELFT>>(relaDynName, config->zCombreloc);
+  add(in.relaDyn);
 
   // The relaIplt immediately follows .rel[a].dyn to ensure that the IRelative
   // relocations are processed last by the dynamic loader. We cannot place the
@@ -1173,6 +1183,28 @@ template <class ELFT> void Writer<ELFT>::addRelIpltSymbols() {
       Out::elfHeader, 0, STV_HIDDEN, STB_WEAK);
 }
 
+// The beginning and the ending of .rela.dyn section are marked
+// with __rela_dyn_{start,end} symbols if it is a statically linked
+// executable. The runtime needs these symbols in order to resolve
+// all RELATIVE relocs and create capabilities on startup.
+template <class ELFT> void Writer<ELFT>::addCapDynRelocsSymbols() {
+  if (config->emachine != EM_AARCH64 || config->relocatable ||
+      needsInterpSection())
+    return;
+
+  // By default, __rela_dyn_{start,end} belong to a dummy section 0
+  // because .rela.dyn might be empty and thus removed from output.
+  // We'll override Out::elfHeader with in.relaDyn later when we are
+  // sure that .rela.dyn exists in output.
+  ElfSym::relaDynStart = addOptionalRegular(
+      config->isRela ? "__rela_dyn_start" : "__rel_dyn_start", Out::elfHeader,
+      0, STV_HIDDEN, STB_WEAK);
+
+  ElfSym::relaDynEnd =
+      addOptionalRegular(config->isRela ? "__rela_dyn_end" : "__rel_dyn_end",
+                         Out::elfHeader, 0, STV_HIDDEN, STB_WEAK);
+}
+
 template <class ELFT>
 void Writer<ELFT>::forEachRelSec(
     llvm::function_ref<void(InputSectionBase &)> fn) {
@@ -1215,6 +1247,14 @@ template <class ELFT> void Writer<ELFT>::setReservedSymbolSections() {
     ElfSym::relaIpltEnd->section = in.relaIplt;
     ElfSym::relaIpltEnd->value = in.relaIplt->getSize();
     ElfSym::relaIpltEnd->isSectionStartSymbol = false;
+  }
+
+  //  __rela_dyn_{start,end} mark the start and the end of in.relaDyn.
+  if (ElfSym::relaDynStart && in.relaDyn->isNeeded()) {
+    ElfSym::relaDynStart->section = in.relaDyn;
+    ElfSym::relaDynEnd->section = in.relaDyn;
+    ElfSym::relaDynEnd->value = in.relaDyn->getSize();
+    ElfSym::relaDynEnd->isSectionStartSymbol = false;
   }
 
   PhdrEntry *last = nullptr;
@@ -2059,6 +2099,9 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   // Define __rel[a]_iplt_{start,end} symbols if needed.
   addRelIpltSymbols();
 
+  // Define __rela_dyn_{start,end} symbols if needed.
+  addCapDynRelocsSymbols();
+
   // RISC-V's gp can address +/- 2 KiB, set it to .sdata + 0x800. This symbol
   // should only be defined in an executable. If .sdata does not exist, its
   // value/section does not matter but it has to be relative, so set its
@@ -2310,6 +2353,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
     finalizeSynthetic(in.iplt);
     finalizeSynthetic(in.ppc32Got2);
     finalizeSynthetic(in.partIndex);
+    finalizeSynthetic(in.relaDyn);
 
     // Dynamic section must be the last one in this list and dynamic
     // symbol table section (dynSymTab) must be the first one.

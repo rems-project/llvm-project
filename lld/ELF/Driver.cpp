@@ -366,8 +366,10 @@ static void checkOptions() {
     if (config->exportDynamic)
       error("-r and --export-dynamic may not be used together");
   }
-  if (config->localCapRelocsMode == CapRelocsMode::ElfReloc)
-    error("local-cap-relocs=elf is not implemented yet");
+  if (config->emachine != EM_AARCH64)
+    if (config->localCapRelocsMode == CapRelocsMode::ElfReloc)
+      error("local-cap-relocs=elf is not implemented yet");
+
   if (config->localCapRelocsMode == CapRelocsMode::CBuildCap)
     error("local-cap-relocs=cbuildcap is not implemented yet");
   assert(config->preemptibleCapRelocsMode != CapRelocsMode::CBuildCap);
@@ -387,6 +389,10 @@ static void checkOptions() {
 
   if (config->zRetpolineplt && config->zForceIbt)
     error("-z force-ibt may not be used with -z retpolineplt");
+
+  if (config->localCapRelocsMode == CapRelocsMode::CBuildCap) {
+    error("--morello-static-caps=cbuildcap is not supported");
+  }
 
   if (config->emachine != EM_AARCH64) {
     if (config->zPacPlt)
@@ -1079,6 +1085,7 @@ static void readConfigs(opt::InputArgList &args) {
                    /* Default */ true);
   config->allowUndefinedCapRelocs = args.hasArg(OPT_allow_undefined_cap_relocs);
   config->forceMorelloC64Plt = args.hasArg(OPT_morello_c64_plt);
+  config->localCapRelocsMode = getLocalCapRelocsMode(args);
   config->auxiliaryList = args::getStrings(args, OPT_auxiliary);
   if (opt::Arg *arg = args.getLastArg(OPT_Bno_symbolic, OPT_Bsymbolic_functions,
                                       OPT_Bsymbolic)) {
