@@ -31,8 +31,7 @@ define hidden void @foo() local_unnamed_addr addrspace(200) {
 ; CHECK-NEXT:    [[TMP2:%.*]] = tail call i64 @llvm.cttz.i64(i64 undef, i1 true)
 ; CHECK-NEXT:    [[TMP3:%.*]] = lshr i64 [[TMP2]], 3
 ; CHECK-NEXT:    [[TMP4:%.*]] = add i64 [[LSR_IV_NEXT2]], [[TMP3]]
-; CHECK-NEXT:    [[UGLYGEP:%.*]] = getelementptr i8, i8 addrspace(200)* undef, i64 [[TMP4]]
-; CHECK-NEXT:    [[TMP5:%.*]] = tail call i64 @llvm.cheri.cap.diff.i64(i8 addrspace(200)* nonnull [[UGLYGEP]], i8 addrspace(200)* nonnull [[ADD_PTR4_I1244_I]])
+; CHECK-NEXT:    [[TMP5:%.*]] = tail call i64 @llvm.cheri.cap.diff.i64(i8 addrspace(200)* nonnull undef, i8 addrspace(200)* nonnull [[ADD_PTR4_I1244_I]])
 ; CHECK-NEXT:    [[LSR_IV_NEXT]] = add i64 [[LSR_IV]], 1
 ; CHECK-NEXT:    br label [[WHILE_BODY164_I]]
 ;

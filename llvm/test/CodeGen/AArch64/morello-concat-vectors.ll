@@ -31,6 +31,7 @@ define void @foo() local_unnamed_addr addrspace(200) align 2 {
 ; CHECK-NEXT:  // %bb.1: // %for.body21.preheader180
 ; CHECK-NEXT:    add csp, csp, #16
 ; CHECK-NEXT:    ret c30
+; CHECK-NEXT:    .p2align 5, 0x0, 16
 ; CHECK-NEXT:  .LBB0_2: // %vector.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    b .LBB0_2
