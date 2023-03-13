@@ -404,8 +404,6 @@ public:
 
   bool GetQXferLibrariesSVR4ReadSupported();
 
-  bool GetQXferSigInfoReadSupported();
-
   bool GetQXferCapaReadSupported();
 
   uint64_t GetRemoteMaxPacketSize();
@@ -635,7 +633,6 @@ protected:
   LazyBool m_supports_qXfer_libraries_read = eLazyBoolCalculate;
   LazyBool m_supports_qXfer_libraries_svr4_read = eLazyBoolCalculate;
   LazyBool m_supports_qXfer_features_read = eLazyBoolCalculate;
-  LazyBool m_supports_qXfer_siginfo_read = eLazyBoolCalculate;
   LazyBool m_supports_qXfer_capa_read = eLazyBoolCalculate;
   LazyBool m_supports_qXfer_memory_map_read = eLazyBoolCalculate;
   LazyBool m_supports_qXfer_siginfo_read = eLazyBoolCalculate;

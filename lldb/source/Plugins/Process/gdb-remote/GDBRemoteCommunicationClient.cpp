@@ -167,13 +167,6 @@ bool GDBRemoteCommunicationClient::GetQXferFeaturesReadSupported() {
   return m_supports_qXfer_features_read == eLazyBoolYes;
 }
 
-bool GDBRemoteCommunicationClient::GetQXferSigInfoReadSupported() {
-  if (m_supports_qXfer_siginfo_read == eLazyBoolCalculate) {
-    GetRemoteQSupported();
-  }
-  return m_supports_qXfer_siginfo_read == eLazyBoolYes;
-}
-
 bool GDBRemoteCommunicationClient::GetQXferCapaReadSupported() {
   if (m_supports_qXfer_capa_read == eLazyBoolCalculate)
     GetRemoteQSupported();
@@ -719,8 +712,7 @@ GDBRemoteCommunicationClient::SendPacketsAndConcatenateResponses(
     llvm::StringRef payload_suffix) {
   Lock lock(*this);
   if (!lock) {
-    Log *log(ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet(GDBR_LOG_PROCESS |
-                                                           GDBR_LOG_PACKETS));
+    Log *log(GetLog(GDBRLog::Process | GDBRLog::Packets));
     LLDB_LOGF(log,
               "error: failed to get packet sequence mutex, not sending "
               "packets with prefix '%s'",
@@ -774,8 +766,7 @@ GDBRemoteCommunicationClient::SendThreadSpecificPacketsAndConcatenateResponses(
     std::string &response_string) {
   Lock lock(*this);
   if (!lock) {
-    Log *log = ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet(GDBR_LOG_PROCESS |
-                                                             GDBR_LOG_PACKETS);
+    Log *log(GetLog(GDBRLog::Process | GDBRLog::Packets));
     LLDB_LOG(log, "failed to get packet sequence mutex, not sending packets "
                   "with prefix '{0}'", payload_prefix);
     return PacketResult::ErrorNoSequenceLock;
