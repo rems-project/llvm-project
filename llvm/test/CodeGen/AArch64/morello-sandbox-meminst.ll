@@ -2,7 +2,7 @@
 ; RUN: llc -march=arm64 -mattr=+c64,+morello -target-abi purecap -cheri-no-cap-libfunc -o - %s | FileCheck %s --check-prefix=ALL --check-prefix=NOCFUN
 ; RUN: llc -march=arm64 -mattr=+c64,+morello -target-abi purecap -o - %s | FileCheck %s --check-prefix=ALL --check-prefix=NOCFUN
 
-target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128-pf200:128:128-A200-P200-G200"
+target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128-pf200:128:128:128:64-A200-P200-G200"
 target triple = "aarch64-none--elf"
 
 %struct.x = type { i32, i32, i32, i32, i32, i32, i32, i32, i32, i32 }

@@ -1,5 +1,5 @@
 ; RUN: llc -o - -march=arm64 -mattr=+morello,+c64 -target-abi purecap %s | FileCheck %s
-target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128-pf200:128:128-A200-P200-G200"
+target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128-pf200:128:128:128:64-A200-P200-G200"
 target triple = "aarch64-none--elf"
 
 declare i8 addrspace(200)* @llvm.returnaddress.p200i8(i32) addrspace(200)

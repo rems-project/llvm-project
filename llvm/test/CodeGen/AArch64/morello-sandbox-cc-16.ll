@@ -1,7 +1,7 @@
 ; RUN: llc -mtriple=aarch64-none-elf -mattr=+morello,+c64,+use-16-cap-regs -target-abi purecap -o - %s \
 ; RUN:   | FileCheck %s
 
-target datalayout = "e-m:e-pf200:128:128-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"
+target datalayout = "e-m:e-pf200:128:128:128:64-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"
 target triple = "aarch64-none--elf"
 
 declare [2 x i8 addrspace(200)*] @g1([2 x i8 addrspace(200)*])

@@ -1,7 +1,7 @@
 ; RUN: llc -mtriple=aarch64-linux-gnu -mattr=+morello -aarch64-enable-atomic-cfg-tidy=0 -disable-lsr -verify-machineinstrs -mcpu=rainier -o - %s | FileCheck --check-prefix=CHECK %s
 
 ; This file contains tests for the AArch64 load/store optimizer, based on ldst-opt.ll.
-target datalayout = "e-m:e-pf200:128:128-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128"
+target datalayout = "e-m:e-pf200:128:128:128:64-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128"
 
 %padding = type { i8*, i8*, i8*, i8* }
 %s.byte = type { i8, i8 }

@@ -1,5 +1,5 @@
 ; RUN: opt -mattr=+morello -S -loop-vectorize -instcombine %s -o - | FileCheck %s
-target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128-pf200:128:128"
+target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128-pf200:128:128:128:64"
 target triple = "aarch64-none--elf"
 
 ; CHECK-LABEL: @test

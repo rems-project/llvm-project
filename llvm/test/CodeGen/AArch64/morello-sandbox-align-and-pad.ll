@@ -1,7 +1,7 @@
 ; RUN: llc -mtriple=arm64 -mattr=+c64,+morello,+use-16-cap-regs -target-abi purecap -o - %s -verify-machineinstrs | FileCheck %s --check-prefix=PCS16
 ; RUN: llc -mtriple=arm64 -mattr=+c64,+morello -target-abi purecap -o - %s -verify-machineinstrs | FileCheck %s --check-prefix=PCS32
 
-target datalayout = "e-m:e-pf200:128:128-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"
+target datalayout = "e-m:e-pf200:128:128:128:64-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"
 
 @ss = local_unnamed_addr addrspace(200) global [1048577 x i32] zeroinitializer, align 4
 @s3 = common local_unnamed_addr addrspace(200) global [1048577 x i32] zeroinitializer, align 4
