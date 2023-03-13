@@ -2053,6 +2053,12 @@ void AArch64InstPrinter::printMRSSystemRegister(const MCInst *MI, unsigned OpNo,
     return;
   }
 
+  bool HasHCX = STI.getFeatureBits()[AArch64::FeatureHCX] != 0;
+  if (HasHCX && Val == AArch64SysReg::HCRX_EL2) {
+    O << "HCRX_EL2";
+    return;
+  }
+
   const AArch64SysReg::SysReg *Reg = lookupSysReg(Val, true /*Read*/, STI);
 
   if (isValidSysReg(Reg, true /*Read*/, STI))
@@ -2083,6 +2089,12 @@ void AArch64InstPrinter::printMSRSystemRegister(const MCInst *MI, unsigned OpNo,
   bool HasMorello = STI.getFeatureBits()[AArch64::FeatureMorello] != 0;
   if (HasMorello && Val == AArch64SysReg::CCTLR_EL2) {
     O << "CCTLR_EL2";
+    return;
+  }
+
+  bool HasHCX = STI.getFeatureBits()[AArch64::FeatureHCX] != 0;
+  if (HasHCX && Val == AArch64SysReg::HCRX_EL2) {
+    O << "HCRX_EL2";
     return;
   }
 
