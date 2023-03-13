@@ -14,16 +14,16 @@ define i32 @test_initial_exec() {
   %val = load i32, i32* @initial_exec_var
 
 ; CHECK: adrp x[[GOTADDR:[0-9]+]], :gottprel:initial_exec_var
-; CHECK: mrs x[[TP:[0-9]+]], TPIDR_EL0
 ; CHECK: ldr x[[TP_OFFSET:[0-9]+]], [x[[GOTADDR]], :gottprel_lo12:initial_exec_var]
-; CHECK: ldr w0, [x[[TP_OFFSET]], x[[TP]]]
+; CHECK: mrs x[[TP:[0-9]+]], TPIDR_EL0
+; CHECK: ldr w0, [x[[TP]], x[[TP_OFFSET]]]
 
 ; CHECK-RELOC: R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21
 ; CHECK-RELOC: R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC
 
-; CHECK-TINY: mrs x[[TP:[0-9]+]], TPIDR_EL0
 ; CHECK-TINY: ldr x[[TP_OFFSET:[0-9]+]], :gottprel:initial_exec_var
-; CHECK-TINY: ldr w0, [x[[TP_OFFSET]], x[[TP]]]
+; CHECK-TINY: mrs x[[TP:[0-9]+]], TPIDR_EL0
+; CHECK-TINY: ldr w0, [x[[TP]], x[[TP_OFFSET]]]
 
 ; CHECK-TINY-RELOC: R_AARCH64_TLSIE_LD_GOTTPREL_PREL19
 
@@ -35,16 +35,16 @@ define i32* @test_initial_exec_addr() {
   ret i32* @initial_exec_var
 
 ; CHECK: adrp x[[GOTADDR:[0-9]+]], :gottprel:initial_exec_var
-; CHECK: mrs [[TP:x[0-9]+]], TPIDR_EL0
 ; CHECK: ldr [[TP_OFFSET:x[0-9]+]], [x[[GOTADDR]], :gottprel_lo12:initial_exec_var]
-; CHECK: add x0, [[TP_OFFSET]], [[TP]]
+; CHECK: mrs [[TP:x[0-9]+]], TPIDR_EL0
+; CHECK: add x0, [[TP]], [[TP_OFFSET]]
 
 ; CHECK-RELOC: R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21
 ; CHECK-RELOC: R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC
 
-; CHECK-TINY: mrs [[TP:x[0-9]+]], TPIDR_EL0
 ; CHECK-TINY: ldr x[[TP_OFFSET:[0-9]+]], :gottprel:initial_exec_var
-; CHECK-TINY: add x0, x[[TP_OFFSET]], [[TP]]
+; CHECK-TINY: mrs [[TP:x[0-9]+]], TPIDR_EL0
+; CHECK-TINY: add x0, [[TP]], x[[TP_OFFSET]]
 
 ; CHECK-TINY-RELOC: R_AARCH64_TLSIE_LD_GOTTPREL_PREL19
 

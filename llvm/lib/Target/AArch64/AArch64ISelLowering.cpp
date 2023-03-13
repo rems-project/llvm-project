@@ -7981,8 +7981,7 @@ AArch64TargetLowering::LowerELFGlobalTLSAddress(SDValue Op,
       return DAG.getCSetBounds(Addr, DL, Size, Align(1), "AArch64 ISel Lowering",
                                cheri::SetBoundsPointerSource::GlobalVar);
     }
-    TPOff = getGOTAccess(DL, PtrVT,
-                         TPOff, Subtarget, DAG);
+    TPOff = DAG.getNode(AArch64ISD::LOADgot, DL, PtrVT, TPOff);
   } else if (Model == TLSModel::LocalDynamic) {
     // Local-dynamic accesses proceed in two phases. A general-dynamic TLS
     // descriptor call against the special symbol _TLS_MODULE_BASE_ to calculate
@@ -8079,11 +8078,7 @@ AArch64TargetLowering::LowerELFGlobalTLSAddress(SDValue Op,
   } else
     llvm_unreachable("Unsupported ELF TLS access model");
 
-  SDValue Add = DAG.getPointerAdd(DL, TPOff, ThreadBase);
-  if (GV->getType()->getAddressSpace() == 200 && Add.getValueType() != MVT::iFATPTR128) {
-    Add = getAddrFromDDC(Add, DAG);
-  }
-  return Add;
+  return DAG.getNode(ISD::ADD, DL, PtrVT, ThreadBase, TPOff);
 }
 
 SDValue
