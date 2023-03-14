@@ -61,7 +61,6 @@ class LLVM_LIBRARY_VISIBILITY AArch64TargetInfo : public TargetInfo {
 
   bool Morello;
   bool C64;
-  bool HasMorelloNewVarArg;
   const unsigned CapSize;
 
   static const Builtin::Info BuiltinInfo[];

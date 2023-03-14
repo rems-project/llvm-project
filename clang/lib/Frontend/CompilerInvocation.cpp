@@ -3819,10 +3819,6 @@ bool CompilerInvocation::ParseLangArgs(LangOptions &Opts, ArgList &Args,
   else if (Args.hasArg(OPT_fwrapv))
     Opts.setSignedOverflowBehavior(LangOptions::SOB_Defined);
 
-  Opts.MorelloNewVarArg =
-      Args.hasFlag(OPT_morello_vararg_new, OPT_morello_vararg_legacy,
-                   Opts.MorelloNewVarArg);
-
   Opts.MSCompatibilityVersion = 0;
   if (const Arg *A = Args.getLastArg(OPT_fms_compatibility_version)) {
     VersionTuple VT;
@@ -4471,12 +4467,6 @@ static bool ParseTargetArgs(TargetOptions &Opts, ArgList &Args,
                    options::OPT_no_cheri_exact_equality, false)) {
     if (!llvm::is_contained(Opts.FeaturesAsWritten, "+cheri-exact-equals"))
       Opts.FeaturesAsWritten.push_back("+cheri-exact-equals");
-  }
-
-  if (T.isAArch64()) {
-    if (Args.hasFlag(options::OPT_morello_vararg_legacy,
-                     options::OPT_morello_vararg_new, false))
-      Opts.FeaturesAsWritten.push_back("+legacy-morello-vararg");
   }
 
   if (Arg *A = Args.getLastArg(options::OPT_target_sdk_version_EQ)) {

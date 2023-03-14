@@ -5867,7 +5867,7 @@ private:
       llvm::report_fatal_error("Passing SVE types to variadic functions is "
                                "currently not supported");
 
-    if (hasPureCap && CGF.getContext().getLangOpts().MorelloNewVarArg)
+    if (hasPureCap)
       return EmitAAPCScapVAArg(VAListAddr, Ty, CGF);
     return Kind == Win64 ? EmitMSVAArg(CGF, VAListAddr, Ty)
                          : isDarwinPCS() ? EmitDarwinVAArg(VAListAddr, Ty, CGF)
@@ -6134,8 +6134,7 @@ AArch64ABIInfo::classifyArgumentType(QualType Ty, bool IsVariadic,
       if (EIT->getNumBits() > 128)
         return getNaturalAlignIndirect(Ty);
 
-    if (IsVariadic && getContext().getLangOpts().MorelloNewVarArg &&
-        Ty->isCHERICapabilityType(getContext()) &&
+    if (IsVariadic && Ty->isCHERICapabilityType(getContext()) &&
         !getContext().getTargetInfo().areAllPointersCapabilities())
       // Varargs containing capabilities are passed indirectly.
       return getNaturalAlignIndirect(Ty, /*ByVal=*/false);
@@ -6167,7 +6166,7 @@ AArch64ABIInfo::classifyArgumentType(QualType Ty, bool IsVariadic,
     return ABIArgInfo::getDirect(llvm::Type::getInt8Ty(getVMContext()));
   }
 
-  if (IsVariadic && getContext().getLangOpts().MorelloNewVarArg &&
+  if (IsVariadic &&
       getContext().getTargetInfo().areAllPointersCapabilities() &&
       std::max(Size, (uint64_t)getContext().getTypeAlign(Ty)) > 128)
     return getNaturalAlignIndirect(Ty, /*ByVal=*/false);
@@ -6196,7 +6195,7 @@ AArch64ABIInfo::classifyArgumentType(QualType Ty, bool IsVariadic,
   }
 
   if (containsCapabilities(Ty)) {
-    if (IsVariadic && getContext().getLangOpts().MorelloNewVarArg &&
+    if (IsVariadic &&
         !getContext().getTargetInfo().areAllPointersCapabilities())
       // Varargs containing capabilities are passed indirectly.
       return getNaturalAlignIndirect(Ty, /*ByVal=*/false);
@@ -6429,28 +6428,18 @@ Address AArch64ABIInfo::EmitAAPCSVAArg(Address VAListAddr, QualType Ty,
     BaseTy = ArrTy->getElementType();
     NumRegs = ArrTy->getNumElements();
   }
-
-  if (llvm::StructType *StrTy = dyn_cast<llvm::StructType>(BaseTy)) {
-    if (containsCapabilities(Ty)) {
-      BaseTy = llvm::PointerType::get(CGF.Int8Ty, 200);
-      NumRegs = getContext().getTypeSizeInChars(Ty).getQuantity() / 16;
-    }
-  }
-
   bool IsFPR = BaseTy->isFloatingPointTy() || BaseTy->isVectorTy();
 
   // The AArch64 va_list type and handling is specified in the Procedure Call
   // Standard, section B.4:
   //
-  //    AAPCS64 mode   |   Purecap ABI
-  // ------------------+-------------------
-  // struct {          |  struct {
-  //   void *__stack;  |    __capability void *__stack;
-  //   void *__gr_top; |    __capability void *__gr_top;
-  //   void *__vr_top; |    __capability void *__vr_top;
-  //   int __gr_offs;  |    int __gr_offs;
-  //   int __vr_offs;  |    int __vr_offs;
-  // };                |  };
+  // struct {
+  //   void *__stack;
+  //   void *__gr_top;
+  //   void *__vr_top;
+  //   int __gr_offs;
+  //   int __vr_offs;
+  // };
 
   llvm::BasicBlock *MaybeRegBlock = CGF.createBasicBlock("vaarg.maybe_reg");
   llvm::BasicBlock *InRegBlock = CGF.createBasicBlock("vaarg.in_reg");
@@ -6463,18 +6452,8 @@ Address AArch64ABIInfo::EmitAAPCSVAArg(Address VAListAddr, QualType Ty,
   Address reg_offs_p = Address::invalid();
   llvm::Value *reg_offs = nullptr;
   int reg_top_index;
-  bool HasCaps =
-      getContext().getLangOpts().MorelloNewVarArg ? false
-                                                  : containsCapabilities(Ty);
-  // Indirect arguments should be capabilities in
-  // sandbox mode and therefore 16 bytes.
-  int RegSize = IsIndirect ? (hasPureCap ? 16 : 8) : TySize.getQuantity();
+  int RegSize = IsIndirect ? 8 : TySize.getQuantity();
   if (!IsFPR) {
-    // Structs which contain capabilities are currently limited to just
-    // one capability so they wikl get passed entirely through capability
-    // registers.
-    if (HasCaps)
-      RegSize = RegSize / 2;
     // 3 is the field number of __gr_offs
     reg_offs_p = CGF.Builder.CreateStructGEP(VAListAddr, 3, "gr_offs_p");
     reg_offs = CGF.Builder.CreateLoad(reg_offs_p, "gr_offs");
@@ -6509,7 +6488,7 @@ Address AArch64ABIInfo::EmitAAPCSVAArg(Address VAListAddr, QualType Ty,
   // Integer arguments may need to correct register alignment (for example a
   // "struct { __int128 a; };" gets passed in x_2N, x_{2N+1}). In this case we
   // align __gr_offs to calculate the potential address.
-  if (!IsFPR && !IsIndirect && !HasCaps && TyAlign.getQuantity() > 8) {
+  if (!IsFPR && !IsIndirect && TyAlign.getQuantity() > 8) {
     int Align = TyAlign.getQuantity();
 
     reg_offs = CGF.Builder.CreateAdd(
@@ -6526,8 +6505,7 @@ Address AArch64ABIInfo::EmitAAPCSVAArg(Address VAListAddr, QualType Ty,
   // registers of the appropriate kind.
   llvm::Value *NewOffset = nullptr;
   NewOffset = CGF.Builder.CreateAdd(
-      reg_offs, llvm::ConstantInt::get(CGF.Int32Ty, RegSize),
-      "new_reg_offs");
+      reg_offs, llvm::ConstantInt::get(CGF.Int32Ty, RegSize), "new_reg_offs");
   CGF.Builder.CreateStore(NewOffset, reg_offs_p);
 
   // Now we're in a position to decide whether this argument really was in
@@ -6550,23 +6528,8 @@ Address AArch64ABIInfo::EmitAAPCSVAArg(Address VAListAddr, QualType Ty,
   Address reg_top_p =
       CGF.Builder.CreateStructGEP(VAListAddr, reg_top_index, "reg_top_p");
   reg_top = CGF.Builder.CreateLoad(reg_top_p, "reg_top");
-  bool IsReversedCaps = (HasCaps && shouldPassInCapabilityRegisters(Ty) &&
-                         TySize.getQuantity() > 16);
-
-  // If the type contains capabilities its base address is at
-  // reg_top - 2 * reg_offs - 16 * NumCapRegs (considering that the capabilities
-  // are stored in reverse order in memory).
-  if (HasCaps) {
-    unsigned NumRegs = TySize.getQuantity() / 16;
-    auto *Adjustment = llvm::ConstantInt::get(CGF.Int32Ty,  -8 * NumRegs);
-    auto *Two = llvm::ConstantInt::get(CGF.Int32Ty, 2);
-    reg_offs = CGF.Builder.CreateSub(Adjustment, reg_offs,
-                                     "cap_neg_unscaled_reg_offs");
-    reg_offs = CGF.Builder.CreateMul(reg_offs, Two,
-                                     "cap_neg_scaled_reg_offs");
-  }
   Address BaseAddr(CGF.Builder.CreateInBoundsGEP(CGF.Int8Ty, reg_top, reg_offs),
-                   CharUnits::fromQuantity((IsFPR || HasCaps) ? 16 : 8));
+                   CharUnits::fromQuantity(IsFPR ? 16 : 8));
   Address RegAddr = Address::invalid();
   llvm::Type *MemTy = CGF.ConvertTypeForMem(Ty);
 
@@ -6610,36 +6573,6 @@ Address AArch64ABIInfo::EmitAAPCSVAArg(Address VAListAddr, QualType Ty,
     }
 
     RegAddr = CGF.Builder.CreateElementBitCast(Tmp, MemTy);
-  } else if (IsReversedCaps) {
-    assert(!CGF.CGM.getDataLayout().isBigEndian() &&
-           "big endian not supported");
-    assert(TySize.getQuantity() == 32 &&
-           "Expected type of size 32");
-
-    // 256-bit types containing capabilities are stored reversed in memory in the
-    // capability save area. The temporary alloca is an array of capabilities.
-    llvm::Type *CapType = llvm::PointerType::get(CGF.Int8Ty, 200);
-    llvm::Type *TempTy = llvm::ArrayType::get(CapType,
-                             TySize.getQuantity() / 16);
-    // FIXME: fix alignment for overaligned types???
-    Address Tmp = CGF.CreateTempAlloca(TempTy,
-                                       CharUnits::fromQuantity(16));
-    // Reverse the capability order.
-    for (unsigned i = 0; i < TySize.getQuantity() / 16; ++i) {
-      CharUnits BaseOffset = CharUnits::fromQuantity(16 - 16 * i);
-      Address LoadAddr =
-        CGF.Builder.CreateConstInBoundsByteGEP(BaseAddr, BaseOffset);
-      LoadAddr = CGF.Builder.CreateElementBitCast(LoadAddr, BaseTy);
-
-      Address StoreAddr =
-        CGF.Builder.CreateConstArrayGEP(Tmp, i);
-
-      llvm::Value *Elem = CGF.Builder.CreateLoad(LoadAddr);
-      CGF.Builder.CreateStore(Elem, StoreAddr);
-    }
-
-    // The temporary alloca now holds the result.
-    RegAddr = CGF.Builder.CreateElementBitCast(Tmp, MemTy);
   } else {
     // Otherwise the object is contiguous in memory.
 
@@ -6669,11 +6602,8 @@ Address AArch64ABIInfo::EmitAAPCSVAArg(Address VAListAddr, QualType Ty,
   // floating-point ones might be affected.
   if (!IsIndirect && TyAlign.getQuantity() > 8) {
     int Align = TyAlign.getQuantity();
-    llvm::Value *OriginalSP = OnStackPtr;
-    if (hasPureCap)
-      OnStackPtr = CGF.getPointerAddress(OnStackPtr);
-    else
-      OnStackPtr = CGF.Builder.CreatePtrToInt(OnStackPtr, CGF.Int64Ty);
+
+    OnStackPtr = CGF.Builder.CreatePtrToInt(OnStackPtr, CGF.Int64Ty);
 
     OnStackPtr = CGF.Builder.CreateAdd(
         OnStackPtr, llvm::ConstantInt::get(CGF.Int64Ty, Align - 1),
@@ -6681,17 +6611,14 @@ Address AArch64ABIInfo::EmitAAPCSVAArg(Address VAListAddr, QualType Ty,
     OnStackPtr = CGF.Builder.CreateAnd(
         OnStackPtr, llvm::ConstantInt::get(CGF.Int64Ty, -Align),
         "align_stack");
-    if (hasPureCap)
-      OnStackPtr = CGF.getTargetHooks().setPointerAddress(CGF, OriginalSP,
-          OnStackPtr, "", CGF.CurCodeDecl->getLocation());
-    else
-      OnStackPtr = CGF.Builder.CreateIntToPtr(OnStackPtr, CGF.Int8PtrTy);
+
+    OnStackPtr = CGF.Builder.CreateIntToPtr(OnStackPtr, CGF.Int8PtrTy);
   }
   Address OnStackAddr(OnStackPtr,
                       std::max(CharUnits::fromQuantity(8), TyAlign));
 
-  CharUnits StackSlotSize =
-      CharUnits::fromQuantity(HasCaps ? 16 : 8);
+  // All stack slots are multiples of 8 bytes.
+  CharUnits StackSlotSize = CharUnits::fromQuantity(8);
   CharUnits StackSize;
   if (IsIndirect)
     StackSize = StackSlotSize;

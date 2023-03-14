@@ -596,12 +596,6 @@ def : Flag<["-"], "cheri-comparison=address">, Flags<[NoXarchOption,CC1Option]>,
 def : Flag<["-"], "cheri-comparison=exact">, Flags<[NoXarchOption,CC1Option]>, Group<cheri_Group>,
   HelpText<cheri_exact_equality.HelpText>, Alias<cheri_exact_equality>;
 
-
-def morello_vararg_new : Flag<["-"], "morello-vararg=new">, Flags<[CC1Option]>, Group<cheri_Group>,
-  HelpText<"Bound variadic arguments in purecap calls (default)">;
-def morello_vararg_legacy : Flag<["-"], "morello-vararg=legacy">, Flags<[CC1Option]>, Group<cheri_Group>,
-  HelpText<"Use the legacy PCS for passing variandic arguments in purecap calls">;
-
 class InternalDriverOpt : Group<internal_driver_Group>,
   Flags<[NoXarchOption, HelpHidden]>;
 def driver_mode : Joined<["--"], "driver-mode=">, Group<internal_driver_Group>,
