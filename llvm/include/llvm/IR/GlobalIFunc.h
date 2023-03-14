@@ -80,8 +80,8 @@ public:
         static_cast<const GlobalIFunc *>(this)->getResolverFunction());
   }
 
-  static FunctionType *getResolverFunctionType(Type *IFuncValTy) {
-    return FunctionType::get(IFuncValTy->getPointerTo(), false);
+  static FunctionType *getResolverFunctionType(Type *IFuncValTy, unsigned AS) {
+    return FunctionType::get(IFuncValTy->getPointerTo(AS), false);
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:

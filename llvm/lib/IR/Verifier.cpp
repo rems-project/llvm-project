@@ -861,10 +861,11 @@ void Verifier::visitGlobalIFunc(const GlobalIFunc &GI) {
 
   // Check that the immediate resolver operand (prior to any bitcasts) has the
   // correct type
+  auto PointerAS = DL.getProgramAddressSpace();
   const Type *ResolverTy = GI.getResolver()->getType();
   const Type *ResolverFuncTy =
-      GlobalIFunc::getResolverFunctionType(GI.getValueType());
-  Assert(ResolverTy == ResolverFuncTy->getPointerTo(),
+      GlobalIFunc::getResolverFunctionType(GI.getValueType(), PointerAS);
+  Assert(ResolverTy == ResolverFuncTy->getPointerTo(PointerAS),
          "IFunc resolver has incorrect type", &GI);
 }
 

@@ -5281,7 +5281,9 @@ void CodeGenModule::emitIFuncDefinition(GlobalDecl GD) {
   Aliases.push_back(GD);
 
   llvm::Type *DeclTy = getTypes().ConvertTypeForMem(D->getType());
-  llvm::Type *ResolverTy = llvm::GlobalIFunc::getResolverFunctionType(DeclTy);
+  llvm::Type *ResolverTy =
+      llvm::GlobalIFunc::getResolverFunctionType(DeclTy,
+                                                 getFunctionAddrSpace());
   llvm::Constant *Resolver =
       GetOrCreateLLVMFunction(IFA->getResolver(), ResolverTy, {},
                               /*ForVTable=*/false);
