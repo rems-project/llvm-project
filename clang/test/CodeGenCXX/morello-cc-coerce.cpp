@@ -7,7 +7,7 @@ struct some_other_struct {
 
 struct some_struct {
 // CHECK-LABEL: define {{[^@]+}}@_ZN11some_struct6getterEv
-// CHECK-SAME: ([[STRUCT_SOME_STRUCT:%.*]] addrspace(200)* nonnull align 16 dereferenceable(16) [[THIS:%.*]]) addrspace(200) #[[ATTR0:[0-9]+]] comdat align 2 {
+// CHECK-SAME: ([[STRUCT_SOME_STRUCT:%.*]] addrspace(200)* noundef nonnull align 16 dereferenceable(16) [[THIS:%.*]]) addrspace(200) #[[ATTR0:[0-9]+]] comdat align 2 {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[RETVAL:%.*]] = alloca [[STRUCT_SOME_OTHER_STRUCT:%.*]], align 16, addrspace(200)
 // CHECK-NEXT:    [[THIS_ADDR:%.*]] = alloca [[STRUCT_SOME_STRUCT]] addrspace(200)*, align 16, addrspace(200)
