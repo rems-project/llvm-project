@@ -41,12 +41,12 @@ baz::baz(const baz&) = default;
 // PURECAP-NEXT:  entry:
 // PURECAP-NEXT:    [[A1:%.*]] = getelementptr inbounds [[STRUCT_FOO:%.*]], [[STRUCT_FOO]] addrspace(200)* [[THIS:%.*]], i32 0, i32 0
 // PURECAP-NEXT:    [[A12:%.*]] = getelementptr inbounds [[STRUCT_FOO]], [[STRUCT_FOO]] addrspace(200)* [[TMP0:%.*]], i32 0, i32 0
-// PURECAP-NEXT:    call void @_ZN3foo3barC1ERKS0_(%"struct.foo::bar" addrspace(200)* nonnull align 4 dereferenceable(8) [[A1]], %"struct.foo::bar" addrspace(200)* nonnull align 4 dereferenceable(8) [[A12]])
+// PURECAP-NEXT:    call void @_ZN3foo3barC1ERKS0_(%"struct.foo::bar" addrspace(200)* noundef nonnull align 4 dereferenceable(8) [[A1]], %"struct.foo::bar" addrspace(200)* noundef nonnull align 4 dereferenceable(8) [[A12]])
 // PURECAP-NEXT:    [[A2:%.*]] = getelementptr inbounds [[STRUCT_FOO]], [[STRUCT_FOO]] addrspace(200)* [[THIS]], i32 0, i32 1
 // PURECAP-NEXT:    [[A23:%.*]] = getelementptr inbounds [[STRUCT_FOO]], [[STRUCT_FOO]] addrspace(200)* [[TMP0]], i32 0, i32 1
 // PURECAP-NEXT:    [[TMP1:%.*]] = bitcast float addrspace(200)* [[A2]] to i8 addrspace(200)*
 // PURECAP-NEXT:    [[TMP2:%.*]] = bitcast float addrspace(200)* [[A23]] to i8 addrspace(200)*
-// PURECAP-NEXT:    call void @llvm.memcpy.p200i8.p200i8.i64(i8 addrspace(200)* align 8 [[TMP1]], i8 addrspace(200)* align 8 [[TMP2]], i64 8, i1 false)
+// PURECAP-NEXT:    call void @llvm.memcpy.p200i8.p200i8.i64(i8 addrspace(200)* align 8 [[TMP1]], i8 addrspace(200)* align 8 [[TMP2]], i64 8, i1 false) #[[ATTR3:[0-9]+]]
 // PURECAP-NEXT:    [[TMP3:%.*]] = getelementptr inbounds i8, i8 addrspace(200)* [[TMP1]], i64 8
 // PURECAP-NEXT:    [[TMP4:%.*]] = getelementptr inbounds i8, i8 addrspace(200)* [[TMP2]], i64 8
 // PURECAP-NEXT:    call void @llvm.memcpy.p200i8.p200i8.i64(i8 addrspace(200)* align 16 [[TMP3]], i8 addrspace(200)* align 16 [[TMP4]], i64 32, i1 false)
@@ -55,7 +55,7 @@ baz::baz(const baz&) = default;
 //
 // PURECAP-LABEL: @_ZN3fooC1ERKS_(
 // PURECAP-NEXT:  entry:
-// PURECAP-NEXT:    call void @_ZN3fooC2ERKS_([[STRUCT_FOO:%.*]] addrspace(200)* nonnull align 16 dereferenceable(48) [[THIS:%.*]], [[STRUCT_FOO]] addrspace(200)* nonnull align 16 dereferenceable(48) [[TMP0:%.*]])
+// PURECAP-NEXT:    call void @_ZN3fooC2ERKS_([[STRUCT_FOO:%.*]] addrspace(200)* noundef nonnull align 16 dereferenceable(48) [[THIS:%.*]], [[STRUCT_FOO]] addrspace(200)* noundef nonnull align 16 dereferenceable(48) [[TMP0:%.*]])
 // PURECAP-NEXT:    ret void
 //
 //
@@ -63,14 +63,14 @@ baz::baz(const baz&) = default;
 // PURECAP-NEXT:  entry:
 // PURECAP-NEXT:    [[A1:%.*]] = getelementptr inbounds [[STRUCT_BAZ:%.*]], [[STRUCT_BAZ]] addrspace(200)* [[THIS:%.*]], i32 0, i32 0
 // PURECAP-NEXT:    [[A12:%.*]] = getelementptr inbounds [[STRUCT_BAZ]], [[STRUCT_BAZ]] addrspace(200)* [[TMP0:%.*]], i32 0, i32 0
-// PURECAP-NEXT:    call void @_ZN3baz3bizC1ERKS0_(%"struct.baz::biz" addrspace(200)* nonnull align 4 dereferenceable(8) [[A1]], %"struct.baz::biz" addrspace(200)* nonnull align 4 dereferenceable(8) [[A12]])
+// PURECAP-NEXT:    call void @_ZN3baz3bizC1ERKS0_(%"struct.baz::biz" addrspace(200)* noundef nonnull align 4 dereferenceable(8) [[A1]], %"struct.baz::biz" addrspace(200)* noundef nonnull align 4 dereferenceable(8) [[A12]])
 // PURECAP-NEXT:    [[A2:%.*]] = getelementptr inbounds [[STRUCT_BAZ]], [[STRUCT_BAZ]] addrspace(200)* [[THIS]], i32 0, i32 1
 // PURECAP-NEXT:    [[TMP1:%.*]] = bitcast i24 addrspace(200)* [[A2]] to i32 addrspace(200)*
 // PURECAP-NEXT:    [[A23:%.*]] = getelementptr inbounds [[STRUCT_BAZ]], [[STRUCT_BAZ]] addrspace(200)* [[TMP0]], i32 0, i32 1
 // PURECAP-NEXT:    [[TMP2:%.*]] = bitcast i24 addrspace(200)* [[A23]] to i32 addrspace(200)*
 // PURECAP-NEXT:    [[TMP3:%.*]] = bitcast i32 addrspace(200)* [[TMP1]] to i8 addrspace(200)*
 // PURECAP-NEXT:    [[TMP4:%.*]] = bitcast i32 addrspace(200)* [[TMP2]] to i8 addrspace(200)*
-// PURECAP-NEXT:    call void @llvm.memcpy.p200i8.p200i8.i64(i8 addrspace(200)* align 8 [[TMP3]], i8 addrspace(200)* align 8 [[TMP4]], i64 8, i1 false)
+// PURECAP-NEXT:    call void @llvm.memcpy.p200i8.p200i8.i64(i8 addrspace(200)* align 8 [[TMP3]], i8 addrspace(200)* align 8 [[TMP4]], i64 8, i1 false) #[[ATTR3]]
 // PURECAP-NEXT:    [[TMP5:%.*]] = getelementptr inbounds i8, i8 addrspace(200)* [[TMP3]], i64 8
 // PURECAP-NEXT:    [[TMP6:%.*]] = getelementptr inbounds i8, i8 addrspace(200)* [[TMP4]], i64 8
 // PURECAP-NEXT:    call void @llvm.memcpy.p200i8.p200i8.i64(i8 addrspace(200)* align 16 [[TMP5]], i8 addrspace(200)* align 16 [[TMP6]], i64 32, i1 false)
@@ -79,7 +79,7 @@ baz::baz(const baz&) = default;
 //
 // PURECAP-LABEL: @_ZN3bazC1ERKS_(
 // PURECAP-NEXT:  entry:
-// PURECAP-NEXT:    call void @_ZN3bazC2ERKS_([[STRUCT_BAZ:%.*]] addrspace(200)* nonnull align 16 dereferenceable(48) [[THIS:%.*]], [[STRUCT_BAZ]] addrspace(200)* nonnull align 16 dereferenceable(48) [[TMP0:%.*]])
+// PURECAP-NEXT:    call void @_ZN3bazC2ERKS_([[STRUCT_BAZ:%.*]] addrspace(200)* noundef nonnull align 16 dereferenceable(48) [[THIS:%.*]], [[STRUCT_BAZ]] addrspace(200)* noundef nonnull align 16 dereferenceable(48) [[TMP0:%.*]])
 // PURECAP-NEXT:    ret void
 //
 //
@@ -87,12 +87,12 @@ baz::baz(const baz&) = default;
 // HYBRID-NEXT:  entry:
 // HYBRID-NEXT:    [[A1:%.*]] = getelementptr inbounds [[STRUCT_FOO:%.*]], %struct.foo* [[THIS:%.*]], i32 0, i32 0
 // HYBRID-NEXT:    [[A12:%.*]] = getelementptr inbounds [[STRUCT_FOO]], %struct.foo* [[TMP0:%.*]], i32 0, i32 0
-// HYBRID-NEXT:    call void @_ZN3foo3barC1ERKS0_(%"struct.foo::bar"* nonnull align 4 dereferenceable(8) [[A1]], %"struct.foo::bar"* nonnull align 4 dereferenceable(8) [[A12]])
+// HYBRID-NEXT:    call void @_ZN3foo3barC1ERKS0_(%"struct.foo::bar"* noundef nonnull align 4 dereferenceable(8) [[A1]], %"struct.foo::bar"* noundef nonnull align 4 dereferenceable(8) [[A12]])
 // HYBRID-NEXT:    [[A2:%.*]] = getelementptr inbounds [[STRUCT_FOO]], %struct.foo* [[THIS]], i32 0, i32 1
 // HYBRID-NEXT:    [[A23:%.*]] = getelementptr inbounds [[STRUCT_FOO]], %struct.foo* [[TMP0]], i32 0, i32 1
 // HYBRID-NEXT:    [[TMP1:%.*]] = bitcast float* [[A2]] to i8*
 // HYBRID-NEXT:    [[TMP2:%.*]] = bitcast float* [[A23]] to i8*
-// HYBRID-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 [[TMP1]], i8* align 8 [[TMP2]], i64 8, i1 false)
+// HYBRID-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 [[TMP1]], i8* align 8 [[TMP2]], i64 8, i1 false) #[[ATTR3:[0-9]+]]
 // HYBRID-NEXT:    [[TMP3:%.*]] = getelementptr inbounds i8, i8* [[TMP1]], i64 8
 // HYBRID-NEXT:    [[TMP4:%.*]] = getelementptr inbounds i8, i8* [[TMP2]], i64 8
 // HYBRID-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP3]], i8* align 16 [[TMP4]], i64 32, i1 false)
@@ -101,7 +101,7 @@ baz::baz(const baz&) = default;
 //
 // HYBRID-LABEL: @_ZN3fooC1ERKS_(
 // HYBRID-NEXT:  entry:
-// HYBRID-NEXT:    call void @_ZN3fooC2ERKS_(%struct.foo* nonnull align 16 dereferenceable(48) [[THIS:%.*]], %struct.foo* nonnull align 16 dereferenceable(48) [[TMP0:%.*]])
+// HYBRID-NEXT:    call void @_ZN3fooC2ERKS_(%struct.foo* noundef nonnull align 16 dereferenceable(48) [[THIS:%.*]], %struct.foo* noundef nonnull align 16 dereferenceable(48) [[TMP0:%.*]])
 // HYBRID-NEXT:    ret void
 //
 //
@@ -109,14 +109,14 @@ baz::baz(const baz&) = default;
 // HYBRID-NEXT:  entry:
 // HYBRID-NEXT:    [[A1:%.*]] = getelementptr inbounds [[STRUCT_BAZ:%.*]], %struct.baz* [[THIS:%.*]], i32 0, i32 0
 // HYBRID-NEXT:    [[A12:%.*]] = getelementptr inbounds [[STRUCT_BAZ]], %struct.baz* [[TMP0:%.*]], i32 0, i32 0
-// HYBRID-NEXT:    call void @_ZN3baz3bizC1ERKS0_(%"struct.baz::biz"* nonnull align 4 dereferenceable(8) [[A1]], %"struct.baz::biz"* nonnull align 4 dereferenceable(8) [[A12]])
+// HYBRID-NEXT:    call void @_ZN3baz3bizC1ERKS0_(%"struct.baz::biz"* noundef nonnull align 4 dereferenceable(8) [[A1]], %"struct.baz::biz"* noundef nonnull align 4 dereferenceable(8) [[A12]])
 // HYBRID-NEXT:    [[A2:%.*]] = getelementptr inbounds [[STRUCT_BAZ]], %struct.baz* [[THIS]], i32 0, i32 1
 // HYBRID-NEXT:    [[TMP1:%.*]] = bitcast i24* [[A2]] to i32*
 // HYBRID-NEXT:    [[A23:%.*]] = getelementptr inbounds [[STRUCT_BAZ]], %struct.baz* [[TMP0]], i32 0, i32 1
 // HYBRID-NEXT:    [[TMP2:%.*]] = bitcast i24* [[A23]] to i32*
 // HYBRID-NEXT:    [[TMP3:%.*]] = bitcast i32* [[TMP1]] to i8*
 // HYBRID-NEXT:    [[TMP4:%.*]] = bitcast i32* [[TMP2]] to i8*
-// HYBRID-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 [[TMP3]], i8* align 8 [[TMP4]], i64 8, i1 false)
+// HYBRID-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 8 [[TMP3]], i8* align 8 [[TMP4]], i64 8, i1 false) #[[ATTR3]]
 // HYBRID-NEXT:    [[TMP5:%.*]] = getelementptr inbounds i8, i8* [[TMP3]], i64 8
 // HYBRID-NEXT:    [[TMP6:%.*]] = getelementptr inbounds i8, i8* [[TMP4]], i64 8
 // HYBRID-NEXT:    call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 [[TMP5]], i8* align 16 [[TMP6]], i64 32, i1 false)
@@ -125,6 +125,6 @@ baz::baz(const baz&) = default;
 //
 // HYBRID-LABEL: @_ZN3bazC1ERKS_(
 // HYBRID-NEXT:  entry:
-// HYBRID-NEXT:    call void @_ZN3bazC2ERKS_(%struct.baz* nonnull align 16 dereferenceable(48) [[THIS:%.*]], %struct.baz* nonnull align 16 dereferenceable(48) [[TMP0:%.*]])
+// HYBRID-NEXT:    call void @_ZN3bazC2ERKS_(%struct.baz* noundef nonnull align 16 dereferenceable(48) [[THIS:%.*]], %struct.baz* noundef nonnull align 16 dereferenceable(48) [[TMP0:%.*]])
 // HYBRID-NEXT:    ret void
 //

@@ -9,8 +9,8 @@ struct a {
 // CHECK-LABEL: define {{[^@]+}}@test1
 // CHECK-SAME: (void (...) addrspace(200)* inreg readnone [[ARG_COERCE:%.*]]) local_unnamed_addr #[[ATTR0:[0-9]+]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP1:%.*]] = bitcast void (...) addrspace(200)* [[ARG_COERCE]] to i8 addrspace(200)*
 // CHECK-NEXT:    [[TMP0:%.*]] = call i8 addrspace(200)* @llvm.cheri.ddc.get()
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast void (...) addrspace(200)* [[ARG_COERCE]] to i8 addrspace(200)*
 // CHECK-NEXT:    [[TMP2:%.*]] = call i64 @llvm.cheri.cap.to.pointer.i64(i8 addrspace(200)* [[TMP0]], i8 addrspace(200)* [[TMP1]])
 // CHECK-NEXT:    ret i64 [[TMP2]]
 //

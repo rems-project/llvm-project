@@ -70,7 +70,7 @@ struct ff4 {
 
 struct ff4 g4(struct ff4 f1);
 
-// CHECK: define void @fun6(%struct.ff4 addrspace(200)* noalias sret(%struct.ff4) align 16 %{{.*}}, %struct.ff4 addrspace(200)* %{{.*}}, %struct.ff4 addrspace(200)* %{{.*}}, %struct.ff4 addrspace(200)* %{{.*}})
+// CHECK: define void @fun6(%struct.ff4 addrspace(200)* noalias sret(%struct.ff4) align 16 %{{.*}}, %struct.ff4 addrspace(200)* noundef %{{.*}}, %struct.ff4 addrspace(200)* noundef %{{.*}}, %struct.ff4 addrspace(200)* noundef %{{.*}})
 // CHECK: ret void
 struct ff4 fun6(struct ff4 f0, struct ff4 f2, struct ff4 f1) {
   return g4(f1);
@@ -97,7 +97,7 @@ struct ff6 {
 
 struct ff6 g6(struct ff6 f1);
 
-// CHECK: define void @fun8(%struct.ff6 addrspace(200)* noalias sret(%struct.ff6) align 16 %{{.*}}, %struct.ff6 addrspace(200)* %{{.*}}, %struct.ff6 addrspace(200)* %{{.*}}, %struct.ff6 addrspace(200)* %{{.*}})
+// CHECK: define void @fun8(%struct.ff6 addrspace(200)* noalias sret(%struct.ff6) align 16 %{{.*}}, %struct.ff6 addrspace(200)* noundef %{{.*}}, %struct.ff6 addrspace(200)* noundef %{{.*}}, %struct.ff6 addrspace(200)* noundef %{{.*}})
 // CHECK: ret void
 struct ff6 fun8(struct ff6 f0, struct ff6 f2, struct ff6 f1) {
   return g6(f1);
@@ -145,7 +145,7 @@ struct ff9 {
 
 struct ff9 g9(struct ff9 f1);
 
-// CHECK: define void @fun11(%struct.ff9 addrspace(200)* noalias sret(%struct.ff9) align 16 %{{.*}}, %struct.ff9 addrspace(200)* %{{.*}}, %struct.ff9 addrspace(200)* %{{.*}}, %struct.ff9 addrspace(200)* %{{.*}})
+// CHECK: define void @fun11(%struct.ff9 addrspace(200)* noalias sret(%struct.ff9) align 16 %{{.*}}, %struct.ff9 addrspace(200)* noundef %{{.*}}, %struct.ff9 addrspace(200)* noundef %{{.*}}, %struct.ff9 addrspace(200)* noundef %{{.*}})
 // CHECK: ret void
 struct ff9 fun11(struct ff9 f0, struct ff9 f2, struct ff9 f1) {
   return g9(f1);
