@@ -83,7 +83,7 @@ entry:
   %0 = bitcast %struct.inmem addrspace(200)* %byval-temp to i8 addrspace(200)*
   call void @llvm.lifetime.start.p200i8(i64 32, i8 addrspace(200)* nonnull %0) #0
   %1 = bitcast %struct.inmem addrspace(200)* %x to i8 addrspace(200)*
-  call void @llvm.memcpy.p200i8.p200i8.i64(i8 addrspace(200)* nonnull align 4 dereferenceable(32) %0, i8 addrspace(200)* nonnull align 4 dereferenceable(32) %1, i64 32, i1 false)
+  call void @llvm.memcpy.p200i8.p200i8.i64(i8 addrspace(200)* nonnull align 4 dereferenceable(32) %0, i8 addrspace(200)* nonnull align 4 dereferenceable(32) %1, i64 32, i1 false) no_preserve_cheri_tags
   %call = call i32 (i32, ...) @callee(i32 1, %struct.inmem addrspace(200)* nonnull %byval-temp) #0
   call void @llvm.lifetime.end.p200i8(i64 32, i8 addrspace(200)* nonnull %0) #0
   ret i32 %call

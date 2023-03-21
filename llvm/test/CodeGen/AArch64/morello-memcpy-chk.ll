@@ -5,9 +5,9 @@
 target datalayout = "e-m:e-pf200:128:128:128:64-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"
 
 ; ALL-LABEL: bar
-; CFUN: bl memcpy_c
+; CFUN: b memcpy_c
 ; NOCFUN-NOT: memcpy_c
-; NOCFUN: bl memcpy
+; NOCFUN: b memcpy
 define void @bar(i8 addrspace(200)* %dst, i8 addrspace(200)* %src, i32 %size) addrspace(200) {
 entry:
   %conv.i = zext i32 %size to i64
@@ -19,17 +19,17 @@ entry:
 ; ALL-LABEL: baz
 define void @baz(i8 addrspace(200)* %dst, i8 addrspace(200)* %src) addrspace(200) {
 entry:
-; CFUN: bl memcpy_c
+; CFUN: b memcpy_c
 ; NOCFUN-NOT: memcpy_c
-; NOCFUN: bl memcpy
+; NOCFUN: b memcpy
   %call.i = tail call i8 addrspace(200)* @__memcpy_chk(i8 addrspace(200)* %dst, i8 addrspace(200)* %src, i64 32, i64 32) #0
   ret void
 }
 
 ; ALLL-LABEL: foo
-; CFUN: bl memcpy_c
+; CFUN: b memcpy_c
 ; NOCFUN-NOT: memcpy_c
-; NOCFUN: bl memcpy
+; NOCFUN: b memcpy
 define void @foo(i8 addrspace(200)* %dst, i8 addrspace(200)* %src, i32 %size) addrspace(200) {
 entry:
   %call.i = tail call i8 addrspace(200)* @__memcpy_chk(i8 addrspace(200)* %dst, i8 addrspace(200)* %src, i64 32, i64 32) #0
@@ -37,9 +37,9 @@ entry:
 }
 
 ; ALL-LABEL: barmove
-; CFUN: bl memmove_c
+; CFUN: b memmove_c
 ; NOCFUN-NOT: memmove_c
-; NOCFUN: bl memmove
+; NOCFUN: b memmove
 define void @barmove(i8 addrspace(200)* %dst, i8 addrspace(200)* %src, i32 %size) addrspace(200) {
 entry:
   %conv.i = zext i32 %size to i64
@@ -51,17 +51,17 @@ entry:
 ; ALL-LABEL: bazmove
 define void @bazmove(i8 addrspace(200)* %dst, i8 addrspace(200)* %src) addrspace(200) {
 entry:
-; CFUN: bl memmove_c
+; CFUN: b memmove_c
 ; NOCFUN-NOT: memmove_c
-; NOCFUN: bl memmove
+; NOCFUN: b memmove
   %call.i = tail call i8 addrspace(200)* @__memmove_chk(i8 addrspace(200)* %dst, i8 addrspace(200)* %src, i64 32, i64 32) #0
   ret void
 }
 
 ; ALL-LABEL: foomove
-; CFUN: bl memmove_c
+; CFUN: b memmove_c
 ; NOCFUN-NOT: memmove_c
-; NOCFUN: bl memmove
+; NOCFUN: b memmove
 define void @foomove(i8 addrspace(200)* %dst, i8 addrspace(200)* %src, i32 %size) addrspace(200) {
 entry:
   %call.i = tail call i8 addrspace(200)* @__memmove_chk(i8 addrspace(200)* %dst, i8 addrspace(200)* %src, i64 32, i64 32) #0

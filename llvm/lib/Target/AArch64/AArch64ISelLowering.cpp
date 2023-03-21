@@ -9298,6 +9298,7 @@ SDValue AArch64TargetLowering::LowerVACOPY(SDValue Op,
                                            SelectionDAG &DAG) const {
   bool UseBoundedVarArgs =
       Subtarget->hasPureCap() && Subtarget->hasMorelloNewVarArg();
+  bool HasPureCap = Subtarget->hasPureCap();
   // AAPCS has three pointers and two ints (= 32 bytes), Darwin has single
   // pointer.
   SDLoc DL(Op);
@@ -9316,8 +9317,9 @@ SDValue AArch64TargetLowering::LowerVACOPY(SDValue Op,
   return DAG.getMemcpy(Op.getOperand(0), DL, Op.getOperand(1), Op.getOperand(2),
                        DAG.getConstant(VaListSize, DL, MVT::i32),
                        Align(PtrSize), false, false, false,
-                       PreserveCheriTags::TODO, MachinePointerInfo(DestSV),
-                       MachinePointerInfo(SrcSV));
+                       HasPureCap ? PreserveCheriTags::Required
+                                  : PreserveCheriTags::Unnecessary,
+                       MachinePointerInfo(DestSV), MachinePointerInfo(SrcSV));
 }
 
 SDValue AArch64TargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG) const {
@@ -13939,9 +13941,11 @@ EVT AArch64TargetLowering::getOptimalMemOpType(
   // The copied area may contain capabilities, so inlining needs to be done
   // wisely, resorting to the memcpy if there is any risk. Don't use capabilities
   // for memset since the resulting tag is always 0.
-  if (Subtarget->hasMorello() && Op.size() >= 16 && !Op.isMemset()) {
+  if (Subtarget->hasMorello() && Op.size() >= 16 && !Op.isMemset() &&
+      Op.PreserveTags != PreserveCheriTags::Unnecessary) {
     if (Op.isAligned(Align(16)))
       return MVT::iFATPTR128;
+    return MVT::isVoid;
   }
 
   bool CanImplicitFloat = !FuncAttributes.hasFnAttr(Attribute::NoImplicitFloat);

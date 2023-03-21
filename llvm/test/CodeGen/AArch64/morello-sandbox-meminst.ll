@@ -10,17 +10,17 @@ target triple = "aarch64-none--elf"
 @blob = common addrspace(200) global %struct.x zeroinitializer, align 4
 @blob2 = common addrspace(200) global %struct.x zeroinitializer, align 4
 
-declare void @llvm.memset.p200i8.i64(i8 addrspace(200)* nocapture, i8, i64, i32, i1) addrspace(200)
-declare void @llvm.memcpy.p200i8.p200i8.i64(i8 addrspace(200)* nocapture, i8 addrspace(200)* nocapture readonly, i64, i32, i1) addrspace(200)
-declare void @llvm.memmove.p200i8.p200i8.i64(i8 addrspace(200)* nocapture, i8 addrspace(200)* nocapture readonly, i64, i32, i1) addrspace(200)
+declare void @llvm.memset.p200i8.i64(i8 addrspace(200)* nocapture, i8, i64, i1) addrspace(200)
+declare void @llvm.memcpy.p200i8.p200i8.i64(i8 addrspace(200)* nocapture, i8 addrspace(200)* nocapture readonly, i64, i1) addrspace(200)
+declare void @llvm.memmove.p200i8.p200i8.i64(i8 addrspace(200)* nocapture, i8 addrspace(200)* nocapture readonly, i64, i1) addrspace(200)
 
 ; ALL-LABEL: checkMemInst
 define void @checkMemInst() {
 entry:
-  call void @llvm.memset.p200i8.i64(i8 addrspace(200)* bitcast (%struct.x addrspace(200)* @blob to i8 addrspace(200)*), i8 0, i64 40, i32 4, i1 false)
-  call void @llvm.memcpy.p200i8.p200i8.i64(i8 addrspace(200)* bitcast (%struct.x addrspace(200)* @blob2 to i8 addrspace(200)*), i8 addrspace(200)* bitcast (%struct.x addrspace(200)* @blob to i8 addrspace(200)*), i64 40, i32 4, i1 false)
+  call void @llvm.memset.p200i8.i64(i8 addrspace(200)* bitcast (%struct.x addrspace(200)* @blob to i8 addrspace(200)*), i8 0, i64 40, i1 false)
+  call void @llvm.memcpy.p200i8.p200i8.i64(i8 addrspace(200)* bitcast (%struct.x addrspace(200)* @blob2 to i8 addrspace(200)*), i8 addrspace(200)* bitcast (%struct.x addrspace(200)* @blob to i8 addrspace(200)*), i64 40, i1 false) no_preserve_cheri_tags
 
-  tail call void @llvm.memmove.p200i8.p200i8.i64(i8 addrspace(200)* bitcast (%struct.x addrspace(200)* @blob2 to i8 addrspace(200)*), i8 addrspace(200)* bitcast (%struct.x addrspace(200)* @blob to i8 addrspace(200)*), i64 40, i32 4, i1 false)
+  tail call void @llvm.memmove.p200i8.p200i8.i64(i8 addrspace(200)* bitcast (%struct.x addrspace(200)* @blob2 to i8 addrspace(200)*), i8 addrspace(200)* bitcast (%struct.x addrspace(200)* @blob to i8 addrspace(200)*), i64 40, i1 false) no_preserve_cheri_tags
   ret void
 ; ALL-NOT: bl	memset
 ; ALL-NOT: bl	memcpy
@@ -116,7 +116,7 @@ entry:
 ; ALL: movi v0.2d, #0000000000000000
 ; ALL-DAG: str xzr, [c0, #32]
 ; ALL-DAG: stp q0, q0, [c0]
-  call void @llvm.memset.p200i8.i64(i8 addrspace(200)* %in, i8 0, i64 40, i32 16, i1 false)
+  call void @llvm.memset.p200i8.i64(i8 addrspace(200)* align 16 %in, i8 0, i64 40, i1 false)
   ret void
 }
 
@@ -126,7 +126,7 @@ define void @checkMemCpyIntrinsic(i8 addrspace(200) *%in, i8 addrspace(200) *%ou
 ; ALL-DAG:	str	x[[REG]], [c1, #32]
 ; ALL-DAG:	ldp	c[[REG1:[0-9]+]], c[[REG2:[0-9]+]], [c0, #0]
 ; ALL-DAG:	stp	c[[REG1]], c[[REG2]], [c1, #0]
-  call void @llvm.memcpy.p200i8.p200i8.i64(i8 addrspace(200)* %out, i8 addrspace(200)* %in, i64 40, i32 16, i1 false)
+  call void @llvm.memcpy.p200i8.p200i8.i64(i8 addrspace(200)* align 16 %out, i8 addrspace(200)* align 16 %in, i64 40, i1 false)
   ret void
 }
 
@@ -136,7 +136,7 @@ define void @checkMemMoveIntrinsic(i8 addrspace(200) *%in, i8 addrspace(200) *%o
 ; ALL-DAG:	ldp	c[[REG1:[0-9]+]], c[[REG2:[0-9]+]], [c0, #0]
 ; ALL-DAG:	str	x[[REG3]], [c1, #32]
 ; ALL-DAG:	stp	c[[REG1:[0-9]+]], c[[REG2:[0-9]+]], [c1, #0]
-  tail call void @llvm.memmove.p200i8.p200i8.i64(i8 addrspace(200)* %out, i8 addrspace(200)* %in, i64 40, i32 16, i1 false)
+  tail call void @llvm.memmove.p200i8.p200i8.i64(i8 addrspace(200)* align 16 %out, i8 addrspace(200)* align 16 %in, i64 40, i1 false)
   ret void
 }
 
@@ -144,7 +144,7 @@ define void @checkMemMoveIntrinsic(i8 addrspace(200) *%in, i8 addrspace(200) *%o
 define void @checkMemMoveIntrinsic_inline(i8 addrspace(200) *%in, i8 addrspace(200) *%out) {
 ; ALL-DAG:	ldp q[[REG1:[0-9]+]], q[[REG2:[0-9]+]], [c0]
 ; ALL-DAG:	stp q[[REG1]], q[[REG2]], [c1]
-  tail call void @llvm.memmove.p200i8.p200i8.i64(i8 addrspace(200)* %out, i8 addrspace(200)* %in, i64 32, i32 8, i1 false)
+  tail call void @llvm.memmove.p200i8.p200i8.i64(i8 addrspace(200)* align 8 %out, i8 addrspace(200)* align 8 %in, i64 32, i1 false) no_preserve_cheri_tags
   ret void
 }
 
@@ -153,8 +153,6 @@ define void @checkMemMoveIntrinsic_inline_cap(i8 addrspace(200) *%in, i8 addrspa
 ; CFUN: b memmove_c
 ; NOCFUN-NOT: memmove_c
 ; NOCFUN: b memmove
-  tail call void @llvm.memmove.p200i8.p200i8.i64(i8 addrspace(200)* %out, i8 addrspace(200)* %in, i64 40, i32 8, i1 false) #0
+  tail call void @llvm.memmove.p200i8.p200i8.i64(i8 addrspace(200)* align 8 %out, i8 addrspace(200)* align 8 %in, i64 40, i1 false)
   ret void
 }
-
-attributes #0 = { "must-preserve-cheri-tags" }
