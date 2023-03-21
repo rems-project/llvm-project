@@ -88,7 +88,7 @@ namespace llvm {
   /// the Len and ObjSize have type 'intptr_t' and Dst/Src are pointers.
   Value *emitMemCpyChk(Value *Dst, Value *Src, Value *Len, Value *ObjSize,
                        IRBuilderBase &B, const DataLayout &DL,
-                       const TargetLibraryInfo *TLI, bool HasCap);
+                       const TargetLibraryInfo *TLI);
 
   /// Emit a call to the mempcpy function.
   Value *emitMemPCpy(Value *Dst, Value *Src, Value *Len, IRBuilderBase &B,

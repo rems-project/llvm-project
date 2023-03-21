@@ -1306,7 +1306,7 @@ Value *llvm::emitStpNCpy(Value *Dst, Value *Src, Value *Len, IRBuilderBase &B,
 
 Value *llvm::emitMemCpyChk(Value *Dst, Value *Src, Value *Len, Value *ObjSize,
                            IRBuilderBase &B, const DataLayout &DL,
-                           const TargetLibraryInfo *TLI, bool HasCap) {
+                           const TargetLibraryInfo *TLI) {
   if (!TLI->has(LibFunc_memcpy_chk))
     return nullptr;
 
@@ -1323,8 +1323,6 @@ Value *llvm::emitMemCpyChk(Value *Dst, Value *Src, Value *Len, Value *ObjSize,
       I8Ptr, DL.getIntPtrType(Context, I8Ptr->getPointerAddressSpace()),
       DL.getIntPtrType(Context, I8Ptr->getPointerAddressSpace()));
   CallInst *CI = B.CreateCall(MemCpy, {Dst, Src, Len, ObjSize});
-  if (HasCap)
-    CI->addFnAttr(Attribute::MustPreserveCheriTags);
   if (const Function *F =
           dyn_cast<Function>(MemCpy.getCallee()->stripPointerCasts()))
     CI->setCallingConv(F->getCallingConv());

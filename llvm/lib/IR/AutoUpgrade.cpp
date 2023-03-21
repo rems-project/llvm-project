@@ -4149,10 +4149,6 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     // Memcpy/Memmove also support source alignment.
     if (auto *MTI = dyn_cast<MemTransferInst>(MemCI))
       MTI->setSourceAlignment(Align->getMaybeAlignValue());
-    MemCI->setTailCallKind(CI->getTailCallKind());
-    MemCI->setCallingConv(CI->getCallingConv());
-    if (CI->hasFnAttr("must-preserve-cheri-tags"))
-      MemCI->addFnAttr(Attribute::MustPreserveCheriTags);
     break;
   }
   }

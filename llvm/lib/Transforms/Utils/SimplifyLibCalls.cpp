@@ -3370,7 +3370,7 @@ Value *FortifiedLibCallSimplifier::optimizeStrpCpyChk(CallInst *CI,
   Type *SizeTTy = DL.getIntPtrType(CI->getContext(),
                                    Dst->getType()->getPointerAddressSpace());
   Value *LenV = ConstantInt::get(SizeTTy, Len);
-  Value *Ret = emitMemCpyChk(Dst, Src, LenV, ObjSize, B, DL, TLI, false);
+  Value *Ret = emitMemCpyChk(Dst, Src, LenV, ObjSize, B, DL, TLI);
   // If the function was an __stpcpy_chk, and we were able to fold it into
   // a __memcpy_chk, we still need to return the correct end pointer.
   if (Ret && Func == LibFunc_stpcpy_chk)
