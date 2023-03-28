@@ -141,7 +141,7 @@ __uintcap_t xor(__uintcap_t f)
 
 int capdiff(__capability int *a, __capability int *b)
 {
-  // CHECK-LABEL: @capdiff(i32 addrspace(200)* %{{.*}}, i32 addrspace(200)* %{{.*}}) #0 {
+  // CHECK-LABEL: @capdiff(i32 addrspace(200)* noundef %{{.*}}, i32 addrspace(200)* noundef %{{.*}}) #0 {
   // CHECK: call i64 @llvm.cheri.cap.diff
   return a-b;
 }
