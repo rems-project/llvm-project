@@ -141,7 +141,6 @@ bool AArch64TargetInfo::setABI(const std::string &Name) {
     IntPtrType = TargetInfo::SignedIntCap;
   } else {
     CapabilityABI = false;
-    IntPtrType = TargetInfo::SignedLong;
   }
 
   ABI = Name;
