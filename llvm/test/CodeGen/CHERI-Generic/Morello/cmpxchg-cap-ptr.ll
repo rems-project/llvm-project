@@ -9,7 +9,7 @@
 define { i8, i1 } @test_cmpxchg_strong_i8(i8 addrspace(200)* %ptr, i8 %exp, i8 %new) nounwind {
 ; PURECAP-LABEL: test_cmpxchg_strong_i8:
 ; PURECAP:       .Lfunc_begin0:
-; PURECAP-NEXT:  // %bb.0: // %entry
+; PURECAP-NEXT:  // %bb.0:
 ; PURECAP-NEXT:    mov c3, c0
 ; PURECAP-NEXT:    // kill: def $w2 killed $w2 def $x2
 ; PURECAP-NEXT:  .LBB0_1: // %cmpxchg.start
@@ -32,7 +32,7 @@ define { i8, i1 } @test_cmpxchg_strong_i8(i8 addrspace(200)* %ptr, i8 %exp, i8 %
 ; PURECAP-NEXT:    ret c30
 ;
 ; HYBRID-LABEL: test_cmpxchg_strong_i8:
-; HYBRID:       // %bb.0: // %entry
+; HYBRID:       // %bb.0:
 ; HYBRID-NEXT:    stp x30, x19, [sp, #-16]! // 16-byte Folded Spill
 ; HYBRID-NEXT:    mov w19, w1
 ; HYBRID-NEXT:    bl __sync_val_compare_and_swap_1_c
@@ -40,15 +40,14 @@ define { i8, i1 } @test_cmpxchg_strong_i8(i8 addrspace(200)* %ptr, i8 %exp, i8 %
 ; HYBRID-NEXT:    cset w1, eq
 ; HYBRID-NEXT:    ldp x30, x19, [sp], #16 // 16-byte Folded Reload
 ; HYBRID-NEXT:    ret
-entry:
-  %0 = cmpxchg i8 addrspace(200)* %ptr, i8 %exp, i8 %new acq_rel acquire
-  ret { i8, i1 } %0
+  %1 = cmpxchg i8 addrspace(200)* %ptr, i8 %exp, i8 %new acq_rel acquire
+  ret { i8, i1 } %1
 }
 
 define { i16, i1 } @test_cmpxchg_strong_i16(i16 addrspace(200)* %ptr, i16 %exp, i16 %new) nounwind {
 ; PURECAP-LABEL: test_cmpxchg_strong_i16:
 ; PURECAP:       .Lfunc_begin1:
-; PURECAP-NEXT:  // %bb.0: // %entry
+; PURECAP-NEXT:  // %bb.0:
 ; PURECAP-NEXT:    mov c3, c0
 ; PURECAP-NEXT:    // kill: def $w2 killed $w2 def $x2
 ; PURECAP-NEXT:  .LBB1_1: // %cmpxchg.start
@@ -71,7 +70,7 @@ define { i16, i1 } @test_cmpxchg_strong_i16(i16 addrspace(200)* %ptr, i16 %exp, 
 ; PURECAP-NEXT:    ret c30
 ;
 ; HYBRID-LABEL: test_cmpxchg_strong_i16:
-; HYBRID:       // %bb.0: // %entry
+; HYBRID:       // %bb.0:
 ; HYBRID-NEXT:    stp x30, x19, [sp, #-16]! // 16-byte Folded Spill
 ; HYBRID-NEXT:    mov w19, w1
 ; HYBRID-NEXT:    bl __sync_val_compare_and_swap_2_c
@@ -79,15 +78,14 @@ define { i16, i1 } @test_cmpxchg_strong_i16(i16 addrspace(200)* %ptr, i16 %exp, 
 ; HYBRID-NEXT:    cset w1, eq
 ; HYBRID-NEXT:    ldp x30, x19, [sp], #16 // 16-byte Folded Reload
 ; HYBRID-NEXT:    ret
-entry:
-  %0 = cmpxchg i16 addrspace(200)* %ptr, i16 %exp, i16 %new acq_rel acquire
-  ret { i16, i1 } %0
+  %1 = cmpxchg i16 addrspace(200)* %ptr, i16 %exp, i16 %new acq_rel acquire
+  ret { i16, i1 } %1
 }
 
 define { i32, i1 } @test_cmpxchg_strong_i32(i32 addrspace(200)* %ptr, i32 %exp, i32 %new) nounwind {
 ; PURECAP-LABEL: test_cmpxchg_strong_i32:
 ; PURECAP:       .Lfunc_begin2:
-; PURECAP-NEXT:  // %bb.0: // %entry
+; PURECAP-NEXT:  // %bb.0:
 ; PURECAP-NEXT:    mov c3, c0
 ; PURECAP-NEXT:  .LBB2_1: // %cmpxchg.start
 ; PURECAP-NEXT:    // =>This Inner Loop Header: Depth=1
@@ -109,7 +107,7 @@ define { i32, i1 } @test_cmpxchg_strong_i32(i32 addrspace(200)* %ptr, i32 %exp, 
 ; PURECAP-NEXT:    ret c30
 ;
 ; HYBRID-LABEL: test_cmpxchg_strong_i32:
-; HYBRID:       // %bb.0: // %entry
+; HYBRID:       // %bb.0:
 ; HYBRID-NEXT:    stp x30, x19, [sp, #-16]! // 16-byte Folded Spill
 ; HYBRID-NEXT:    mov w19, w1
 ; HYBRID-NEXT:    bl __sync_val_compare_and_swap_4_c
@@ -117,15 +115,14 @@ define { i32, i1 } @test_cmpxchg_strong_i32(i32 addrspace(200)* %ptr, i32 %exp, 
 ; HYBRID-NEXT:    cset w1, eq
 ; HYBRID-NEXT:    ldp x30, x19, [sp], #16 // 16-byte Folded Reload
 ; HYBRID-NEXT:    ret
-entry:
-  %0 = cmpxchg i32 addrspace(200)* %ptr, i32 %exp, i32 %new acq_rel acquire
-  ret { i32, i1 } %0
+  %1 = cmpxchg i32 addrspace(200)* %ptr, i32 %exp, i32 %new acq_rel acquire
+  ret { i32, i1 } %1
 }
 
 define { i64, i1 } @test_cmpxchg_strong_i64(i64 addrspace(200)* %ptr, i64 %exp, i64 %new) nounwind {
 ; PURECAP-LABEL: test_cmpxchg_strong_i64:
 ; PURECAP:       .Lfunc_begin3:
-; PURECAP-NEXT:  // %bb.0: // %entry
+; PURECAP-NEXT:  // %bb.0:
 ; PURECAP-NEXT:    mov c3, c0
 ; PURECAP-NEXT:  .LBB3_1: // %cmpxchg.start
 ; PURECAP-NEXT:    // =>This Inner Loop Header: Depth=1
@@ -145,7 +142,7 @@ define { i64, i1 } @test_cmpxchg_strong_i64(i64 addrspace(200)* %ptr, i64 %exp, 
 ; PURECAP-NEXT:    ret c30
 ;
 ; HYBRID-LABEL: test_cmpxchg_strong_i64:
-; HYBRID:       // %bb.0: // %entry
+; HYBRID:       // %bb.0:
 ; HYBRID-NEXT:    stp x30, x19, [sp, #-16]! // 16-byte Folded Spill
 ; HYBRID-NEXT:    mov x19, x1
 ; HYBRID-NEXT:    bl __sync_val_compare_and_swap_8_c
@@ -153,15 +150,14 @@ define { i64, i1 } @test_cmpxchg_strong_i64(i64 addrspace(200)* %ptr, i64 %exp, 
 ; HYBRID-NEXT:    cset w1, eq
 ; HYBRID-NEXT:    ldp x30, x19, [sp], #16 // 16-byte Folded Reload
 ; HYBRID-NEXT:    ret
-entry:
-  %0 = cmpxchg i64 addrspace(200)* %ptr, i64 %exp, i64 %new acq_rel acquire
-  ret { i64, i1 } %0
+  %1 = cmpxchg i64 addrspace(200)* %ptr, i64 %exp, i64 %new acq_rel acquire
+  ret { i64, i1 } %1
 }
 
 define { i8 addrspace(200)*, i1 } @test_cmpxchg_strong_cap(i8 addrspace(200)* addrspace(200)* %ptr, i8 addrspace(200)* %exp, i8 addrspace(200)* %new) nounwind {
 ; PURECAP-LABEL: test_cmpxchg_strong_cap:
 ; PURECAP:       .Lfunc_begin4:
-; PURECAP-NEXT:  // %bb.0: // %entry
+; PURECAP-NEXT:  // %bb.0:
 ; PURECAP-NEXT:    mov c3, c1
 ; PURECAP-NEXT:    casal c3, c2, [c0]
 ; PURECAP-NEXT:    cmp x3, x1
@@ -170,7 +166,7 @@ define { i8 addrspace(200)*, i1 } @test_cmpxchg_strong_cap(i8 addrspace(200)* ad
 ; PURECAP-NEXT:    ret c30
 ;
 ; HYBRID-LABEL: test_cmpxchg_strong_cap:
-; HYBRID:       // %bb.0: // %entry
+; HYBRID:       // %bb.0:
 ; HYBRID-NEXT:    sub sp, sp, #32 // =32
 ; HYBRID-NEXT:    str x30, [sp, #16] // 8-byte Folded Spill
 ; HYBRID-NEXT:    str c1, [sp, #0] // 16-byte Folded Spill
@@ -181,15 +177,14 @@ define { i8 addrspace(200)*, i1 } @test_cmpxchg_strong_cap(i8 addrspace(200)* ad
 ; HYBRID-NEXT:    cset w1, eq
 ; HYBRID-NEXT:    add sp, sp, #32 // =32
 ; HYBRID-NEXT:    ret
-entry:
-  %0 = cmpxchg i8 addrspace(200)* addrspace(200)* %ptr, i8 addrspace(200)* %exp, i8 addrspace(200)* %new acq_rel acquire
-  ret { i8 addrspace(200)*, i1 } %0
+  %1 = cmpxchg i8 addrspace(200)* addrspace(200)* %ptr, i8 addrspace(200)* %exp, i8 addrspace(200)* %new acq_rel acquire
+  ret { i8 addrspace(200)*, i1 } %1
 }
 
 define { i32 addrspace(200)*, i1 } @test_cmpxchg_strong_cap_i32(i32 addrspace(200)* addrspace(200)* %ptr, i32 addrspace(200)* %exp, i32 addrspace(200)* %new) nounwind {
 ; PURECAP-LABEL: test_cmpxchg_strong_cap_i32:
 ; PURECAP:       .Lfunc_begin5:
-; PURECAP-NEXT:  // %bb.0: // %entry
+; PURECAP-NEXT:  // %bb.0:
 ; PURECAP-NEXT:    mov c3, c1
 ; PURECAP-NEXT:    casal c3, c2, [c0]
 ; PURECAP-NEXT:    cmp x3, x1
@@ -198,7 +193,7 @@ define { i32 addrspace(200)*, i1 } @test_cmpxchg_strong_cap_i32(i32 addrspace(20
 ; PURECAP-NEXT:    ret c30
 ;
 ; HYBRID-LABEL: test_cmpxchg_strong_cap_i32:
-; HYBRID:       // %bb.0: // %entry
+; HYBRID:       // %bb.0:
 ; HYBRID-NEXT:    sub sp, sp, #32 // =32
 ; HYBRID-NEXT:    str x30, [sp, #16] // 8-byte Folded Spill
 ; HYBRID-NEXT:    str c1, [sp, #0] // 16-byte Folded Spill
@@ -209,16 +204,15 @@ define { i32 addrspace(200)*, i1 } @test_cmpxchg_strong_cap_i32(i32 addrspace(20
 ; HYBRID-NEXT:    cset w1, eq
 ; HYBRID-NEXT:    add sp, sp, #32 // =32
 ; HYBRID-NEXT:    ret
-entry:
-  %0 = cmpxchg weak i32 addrspace(200)* addrspace(200)* %ptr, i32 addrspace(200)* %exp, i32 addrspace(200)* %new acq_rel acquire
-  ret { i32 addrspace(200)*, i1 } %0
+  %1 = cmpxchg weak i32 addrspace(200)* addrspace(200)* %ptr, i32 addrspace(200)* %exp, i32 addrspace(200)* %new acq_rel acquire
+  ret { i32 addrspace(200)*, i1 } %1
 }
 
 
 define { i8, i1 } @test_cmpxchg_weak_i8(i8 addrspace(200)* %ptr, i8 %exp, i8 %new) nounwind {
 ; PURECAP-LABEL: test_cmpxchg_weak_i8:
 ; PURECAP:       .Lfunc_begin6:
-; PURECAP-NEXT:  // %bb.0: // %entry
+; PURECAP-NEXT:  // %bb.0: // %cmpxchg.start
 ; PURECAP-NEXT:    mov c3, c0
 ; PURECAP-NEXT:    ldaxrb w0, [c0]
 ; PURECAP-NEXT:    // kill: def $w2 killed $w2 def $x2
@@ -242,7 +236,7 @@ define { i8, i1 } @test_cmpxchg_weak_i8(i8 addrspace(200)* %ptr, i8 %exp, i8 %ne
 ; PURECAP-NEXT:    ret c30
 ;
 ; HYBRID-LABEL: test_cmpxchg_weak_i8:
-; HYBRID:       // %bb.0: // %entry
+; HYBRID:       // %bb.0:
 ; HYBRID-NEXT:    stp x30, x19, [sp, #-16]! // 16-byte Folded Spill
 ; HYBRID-NEXT:    mov w19, w1
 ; HYBRID-NEXT:    bl __sync_val_compare_and_swap_1_c
@@ -250,15 +244,14 @@ define { i8, i1 } @test_cmpxchg_weak_i8(i8 addrspace(200)* %ptr, i8 %exp, i8 %ne
 ; HYBRID-NEXT:    cset w1, eq
 ; HYBRID-NEXT:    ldp x30, x19, [sp], #16 // 16-byte Folded Reload
 ; HYBRID-NEXT:    ret
-entry:
-  %0 = cmpxchg weak i8 addrspace(200)* %ptr, i8 %exp, i8 %new acq_rel acquire
-  ret { i8, i1 } %0
+  %1 = cmpxchg weak i8 addrspace(200)* %ptr, i8 %exp, i8 %new acq_rel acquire
+  ret { i8, i1 } %1
 }
 
 define { i16, i1 } @test_cmpxchg_weak_i16(i16 addrspace(200)* %ptr, i16 %exp, i16 %new) nounwind {
 ; PURECAP-LABEL: test_cmpxchg_weak_i16:
 ; PURECAP:       .Lfunc_begin7:
-; PURECAP-NEXT:  // %bb.0: // %entry
+; PURECAP-NEXT:  // %bb.0: // %cmpxchg.start
 ; PURECAP-NEXT:    mov c3, c0
 ; PURECAP-NEXT:    ldaxrh w0, [c0]
 ; PURECAP-NEXT:    // kill: def $w2 killed $w2 def $x2
@@ -282,7 +275,7 @@ define { i16, i1 } @test_cmpxchg_weak_i16(i16 addrspace(200)* %ptr, i16 %exp, i1
 ; PURECAP-NEXT:    ret c30
 ;
 ; HYBRID-LABEL: test_cmpxchg_weak_i16:
-; HYBRID:       // %bb.0: // %entry
+; HYBRID:       // %bb.0:
 ; HYBRID-NEXT:    stp x30, x19, [sp, #-16]! // 16-byte Folded Spill
 ; HYBRID-NEXT:    mov w19, w1
 ; HYBRID-NEXT:    bl __sync_val_compare_and_swap_2_c
@@ -290,15 +283,14 @@ define { i16, i1 } @test_cmpxchg_weak_i16(i16 addrspace(200)* %ptr, i16 %exp, i1
 ; HYBRID-NEXT:    cset w1, eq
 ; HYBRID-NEXT:    ldp x30, x19, [sp], #16 // 16-byte Folded Reload
 ; HYBRID-NEXT:    ret
-entry:
-  %0 = cmpxchg weak i16 addrspace(200)* %ptr, i16 %exp, i16 %new acq_rel acquire
-  ret { i16, i1 } %0
+  %1 = cmpxchg weak i16 addrspace(200)* %ptr, i16 %exp, i16 %new acq_rel acquire
+  ret { i16, i1 } %1
 }
 
 define { i32, i1 } @test_cmpxchg_weak_i32(i32 addrspace(200)* %ptr, i32 %exp, i32 %new) nounwind {
 ; PURECAP-LABEL: test_cmpxchg_weak_i32:
 ; PURECAP:       .Lfunc_begin8:
-; PURECAP-NEXT:  // %bb.0: // %entry
+; PURECAP-NEXT:  // %bb.0: // %cmpxchg.start
 ; PURECAP-NEXT:    mov c3, c0
 ; PURECAP-NEXT:    ldaxr w0, [c0]
 ; PURECAP-NEXT:    cmp w0, w1
@@ -321,7 +313,7 @@ define { i32, i1 } @test_cmpxchg_weak_i32(i32 addrspace(200)* %ptr, i32 %exp, i3
 ; PURECAP-NEXT:    ret c30
 ;
 ; HYBRID-LABEL: test_cmpxchg_weak_i32:
-; HYBRID:       // %bb.0: // %entry
+; HYBRID:       // %bb.0:
 ; HYBRID-NEXT:    stp x30, x19, [sp, #-16]! // 16-byte Folded Spill
 ; HYBRID-NEXT:    mov w19, w1
 ; HYBRID-NEXT:    bl __sync_val_compare_and_swap_4_c
@@ -329,15 +321,14 @@ define { i32, i1 } @test_cmpxchg_weak_i32(i32 addrspace(200)* %ptr, i32 %exp, i3
 ; HYBRID-NEXT:    cset w1, eq
 ; HYBRID-NEXT:    ldp x30, x19, [sp], #16 // 16-byte Folded Reload
 ; HYBRID-NEXT:    ret
-entry:
-  %0 = cmpxchg weak i32 addrspace(200)* %ptr, i32 %exp, i32 %new acq_rel acquire
-  ret { i32, i1 } %0
+  %1 = cmpxchg weak i32 addrspace(200)* %ptr, i32 %exp, i32 %new acq_rel acquire
+  ret { i32, i1 } %1
 }
 
 define { i64, i1 } @test_cmpxchg_weak_i64(i64 addrspace(200)* %ptr, i64 %exp, i64 %new) nounwind {
 ; PURECAP-LABEL: test_cmpxchg_weak_i64:
 ; PURECAP:       .Lfunc_begin9:
-; PURECAP-NEXT:  // %bb.0: // %entry
+; PURECAP-NEXT:  // %bb.0: // %cmpxchg.start
 ; PURECAP-NEXT:    mov c3, c0
 ; PURECAP-NEXT:    ldaxr x0, [c0]
 ; PURECAP-NEXT:    cmp x0, x1
@@ -357,7 +348,7 @@ define { i64, i1 } @test_cmpxchg_weak_i64(i64 addrspace(200)* %ptr, i64 %exp, i6
 ; PURECAP-NEXT:    ret c30
 ;
 ; HYBRID-LABEL: test_cmpxchg_weak_i64:
-; HYBRID:       // %bb.0: // %entry
+; HYBRID:       // %bb.0:
 ; HYBRID-NEXT:    stp x30, x19, [sp, #-16]! // 16-byte Folded Spill
 ; HYBRID-NEXT:    mov x19, x1
 ; HYBRID-NEXT:    bl __sync_val_compare_and_swap_8_c
@@ -365,15 +356,14 @@ define { i64, i1 } @test_cmpxchg_weak_i64(i64 addrspace(200)* %ptr, i64 %exp, i6
 ; HYBRID-NEXT:    cset w1, eq
 ; HYBRID-NEXT:    ldp x30, x19, [sp], #16 // 16-byte Folded Reload
 ; HYBRID-NEXT:    ret
-entry:
-  %0 = cmpxchg weak i64 addrspace(200)* %ptr, i64 %exp, i64 %new acq_rel acquire
-  ret { i64, i1 } %0
+  %1 = cmpxchg weak i64 addrspace(200)* %ptr, i64 %exp, i64 %new acq_rel acquire
+  ret { i64, i1 } %1
 }
 
 define { i8 addrspace(200)*, i1 } @test_cmpxchg_weak_cap(i8 addrspace(200)* addrspace(200)* %ptr, i8 addrspace(200)* %exp, i8 addrspace(200)* %new) nounwind {
 ; PURECAP-LABEL: test_cmpxchg_weak_cap:
 ; PURECAP:       .Lfunc_begin10:
-; PURECAP-NEXT:  // %bb.0: // %entry
+; PURECAP-NEXT:  // %bb.0:
 ; PURECAP-NEXT:    mov c3, c1
 ; PURECAP-NEXT:    casal c3, c2, [c0]
 ; PURECAP-NEXT:    cmp x3, x1
@@ -382,7 +372,7 @@ define { i8 addrspace(200)*, i1 } @test_cmpxchg_weak_cap(i8 addrspace(200)* addr
 ; PURECAP-NEXT:    ret c30
 ;
 ; HYBRID-LABEL: test_cmpxchg_weak_cap:
-; HYBRID:       // %bb.0: // %entry
+; HYBRID:       // %bb.0:
 ; HYBRID-NEXT:    sub sp, sp, #32 // =32
 ; HYBRID-NEXT:    str x30, [sp, #16] // 8-byte Folded Spill
 ; HYBRID-NEXT:    str c1, [sp, #0] // 16-byte Folded Spill
@@ -393,15 +383,14 @@ define { i8 addrspace(200)*, i1 } @test_cmpxchg_weak_cap(i8 addrspace(200)* addr
 ; HYBRID-NEXT:    cset w1, eq
 ; HYBRID-NEXT:    add sp, sp, #32 // =32
 ; HYBRID-NEXT:    ret
-entry:
-  %0 = cmpxchg weak i8 addrspace(200)* addrspace(200)* %ptr, i8 addrspace(200)* %exp, i8 addrspace(200)* %new acq_rel acquire
-  ret { i8 addrspace(200)*, i1 } %0
+  %1 = cmpxchg weak i8 addrspace(200)* addrspace(200)* %ptr, i8 addrspace(200)* %exp, i8 addrspace(200)* %new acq_rel acquire
+  ret { i8 addrspace(200)*, i1 } %1
 }
 
 define { i32 addrspace(200)*, i1 } @test_cmpxchg_weak_cap_i32(i32 addrspace(200)* addrspace(200)* %ptr, i32 addrspace(200)* %exp, i32 addrspace(200)* %new) nounwind {
 ; PURECAP-LABEL: test_cmpxchg_weak_cap_i32:
 ; PURECAP:       .Lfunc_begin11:
-; PURECAP-NEXT:  // %bb.0: // %entry
+; PURECAP-NEXT:  // %bb.0:
 ; PURECAP-NEXT:    mov c3, c1
 ; PURECAP-NEXT:    casal c3, c2, [c0]
 ; PURECAP-NEXT:    cmp x3, x1
@@ -410,7 +399,7 @@ define { i32 addrspace(200)*, i1 } @test_cmpxchg_weak_cap_i32(i32 addrspace(200)
 ; PURECAP-NEXT:    ret c30
 ;
 ; HYBRID-LABEL: test_cmpxchg_weak_cap_i32:
-; HYBRID:       // %bb.0: // %entry
+; HYBRID:       // %bb.0:
 ; HYBRID-NEXT:    sub sp, sp, #32 // =32
 ; HYBRID-NEXT:    str x30, [sp, #16] // 8-byte Folded Spill
 ; HYBRID-NEXT:    str c1, [sp, #0] // 16-byte Folded Spill
@@ -421,7 +410,6 @@ define { i32 addrspace(200)*, i1 } @test_cmpxchg_weak_cap_i32(i32 addrspace(200)
 ; HYBRID-NEXT:    cset w1, eq
 ; HYBRID-NEXT:    add sp, sp, #32 // =32
 ; HYBRID-NEXT:    ret
-entry:
-  %0 = cmpxchg weak i32 addrspace(200)* addrspace(200)* %ptr, i32 addrspace(200)* %exp, i32 addrspace(200)* %new acq_rel acquire
-  ret { i32 addrspace(200)*, i1 } %0
+  %1 = cmpxchg weak i32 addrspace(200)* addrspace(200)* %ptr, i32 addrspace(200)* %exp, i32 addrspace(200)* %new acq_rel acquire
+  ret { i32 addrspace(200)*, i1 } %1
 }

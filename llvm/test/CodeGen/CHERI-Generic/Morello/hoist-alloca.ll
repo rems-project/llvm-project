@@ -30,8 +30,8 @@
 ; }
 
 ; RUN: llc -mtriple=aarch64 --relocation-model=pic -target-abi purecap -mattr=+morello,+c64 -o %t.mir -stop-before=early-machinelicm < %s
-; RUN: echo "DONOTAUTOGEN" | llc -mtriple=aarch64 --relocation-model=pic -target-abi purecap -mattr=+morello,+c64 -run-pass=early-machinelicm \
-; RUN:    -debug-only=machinelicm %t.mir -o /dev/null 2>&1 | FileCheck --check-prefix=MACHINELICM-DBG %s
+; RUN: llc -mtriple=aarch64 --relocation-model=pic -target-abi purecap -mattr=+morello,+c64 -run-pass=early-machinelicm -debug-only=machinelicm %t.mir -o /dev/null 2>%t.dbg
+; RUN: FileCheck --input-file=%t.dbg --check-prefix=MACHINELICM-DBG %s
 ; Check that MachineLICM hoists the CheriBoundedStackPseudoImm (MIPS) / IncOffset+SetBoundsImm (RISCV) instructions
 ; For Morello there is no setbounds inside the loop due to the different alloca bunding pass, so there is nothing to hoist here.
 ; MACHINELICM-DBG-LABEL: ******** Pre-regalloc Machine LICM: hoist_alloca_uncond
@@ -74,10 +74,10 @@ entry:
   %buf2 = alloca [22 x i32], align 4, addrspace(200)
   br label %for.body
 
-for.cond.cleanup:                                 ; preds = %for.body
+for.cond.cleanup:
   ret void
 
-for.body:                                         ; preds = %for.body, %entry
+for.body:
   %i.04 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
   %arraydecay = getelementptr inbounds [123 x i32], [123 x i32] addrspace(200)* %buf1, i64 0, i64 0
   %arraydecay1 = getelementptr inbounds [22 x i32], [22 x i32] addrspace(200)* %buf2, i64 0, i64 0
@@ -131,20 +131,20 @@ entry:
   %tobool.not = icmp eq i32 %cond, 0
   br label %for.body
 
-for.cond.cleanup:                                 ; preds = %for.inc
+for.cond.cleanup:
   ret void
 
-for.body:                                         ; preds = %for.inc, %entry
+for.body:
   %i.04 = phi i32 [ 0, %entry ], [ %inc, %for.inc ]
   br i1 %tobool.not, label %for.inc, label %if.then
 
-if.then:                                          ; preds = %for.body
+if.then:
   %arraydecay = getelementptr inbounds [123 x i32], [123 x i32] addrspace(200)* %buf1, i64 0, i64 0
   %arraydecay1 = getelementptr inbounds [22 x i32], [22 x i32] addrspace(200)* %buf2, i64 0, i64 0
   call void @call(i32 addrspace(200)* nonnull %arraydecay, i32 addrspace(200)* nonnull %arraydecay1)
   br label %for.inc
 
-for.inc:                                          ; preds = %for.body, %if.then
+for.inc:
   %inc = add nuw nsw i32 %i.04, 1
   %exitcond.not = icmp eq i32 %inc, 100
   br i1 %exitcond.not, label %for.cond.cleanup, label %for.body

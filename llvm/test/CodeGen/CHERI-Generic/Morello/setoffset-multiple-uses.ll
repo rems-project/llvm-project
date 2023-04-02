@@ -22,7 +22,7 @@ define void @infer_values_from_null_set_offset() addrspace(200) nounwind {
 ; ASM-NEXT:    ldr c30, [csp], #16 // 16-byte Folded Reload
 ; ASM-NEXT:    ret c30
 ; CHECK-LABEL: define {{[^@]+}}@infer_values_from_null_set_offset
-; CHECK-SAME: () addrspace(200) [[ATTR1:#.*]] {
+; CHECK-SAME: () addrspace(200) #[[ATTR1:[0-9]+]] {
 ; CHECK-NEXT:    [[OFFSET_CHECK:%.*]] = call i64 @check_fold(i64 123456)
 ; CHECK-NEXT:    ret void
 ;
@@ -50,7 +50,7 @@ define void @multiple_uses_big_constant() addrspace(200) nounwind {
 ; ASM-NEXT:    ldp c30, c19, [csp], #32 // 32-byte Folded Reload
 ; ASM-NEXT:    ret c30
 ; CHECK-LABEL: define {{[^@]+}}@multiple_uses_big_constant
-; CHECK-SAME: () addrspace(200) [[ATTR1]] {
+; CHECK-SAME: () addrspace(200) #[[ATTR1]] {
 ; CHECK-NEXT:    call void @check_fold_i8ptr(i8 addrspace(200)* getelementptr (i8, i8 addrspace(200)* null, i64 123456))
 ; CHECK-NEXT:    call void @check_fold_i8ptr(i8 addrspace(200)* getelementptr (i8, i8 addrspace(200)* null, i64 123456))
 ; CHECK-NEXT:    call void @check_fold_i8ptr(i8 addrspace(200)* getelementptr (i8, i8 addrspace(200)* null, i64 123456))
@@ -80,7 +80,7 @@ define void @multiple_uses_small_constant() addrspace(200) nounwind {
 ; ASM-NEXT:    ldp c30, c19, [csp], #32 // 32-byte Folded Reload
 ; ASM-NEXT:    ret c30
 ; CHECK-LABEL: define {{[^@]+}}@multiple_uses_small_constant
-; CHECK-SAME: () addrspace(200) [[ATTR1]] {
+; CHECK-SAME: () addrspace(200) #[[ATTR1]] {
 ; CHECK-NEXT:    call void @check_fold_i8ptr(i8 addrspace(200)* getelementptr (i8, i8 addrspace(200)* null, i64 123))
 ; CHECK-NEXT:    call void @check_fold_i8ptr(i8 addrspace(200)* getelementptr (i8, i8 addrspace(200)* null, i64 123))
 ; CHECK-NEXT:    call void @check_fold_i8ptr(i8 addrspace(200)* getelementptr (i8, i8 addrspace(200)* null, i64 123))

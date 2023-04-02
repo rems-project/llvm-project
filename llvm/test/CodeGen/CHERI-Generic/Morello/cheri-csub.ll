@@ -5,18 +5,17 @@
 
 define i64 @subp(i8 addrspace(200)* readnone %a, i8 addrspace(200)* readnone %b) nounwind {
 ; HYBRID-LABEL: subp:
-; HYBRID:       // %bb.0: // %entry
+; HYBRID:       // %bb.0:
 ; HYBRID-NEXT:    sub x0, x0, x1
 ; HYBRID-NEXT:    ret
 ;
 ; PURECAP-LABEL: subp:
 ; PURECAP:       .Lfunc_begin0:
-; PURECAP-NEXT:  // %bb.0: // %entry
+; PURECAP-NEXT:  // %bb.0:
 ; PURECAP-NEXT:    sub x0, x0, x1
 ; PURECAP-NEXT:    ret c30
-entry:
-  %0 = tail call i64 @llvm.cheri.cap.diff.i64(i8 addrspace(200)* %a, i8 addrspace(200)* %b)
-  ret i64 %0
+  %1 = tail call i64 @llvm.cheri.cap.diff.i64(i8 addrspace(200)* %a, i8 addrspace(200)* %b)
+  ret i64 %1
 }
 
 declare i64 @llvm.cheri.cap.diff.i64(i8 addrspace(200)*, i8 addrspace(200)*)
