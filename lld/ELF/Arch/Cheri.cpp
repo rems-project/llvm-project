@@ -911,7 +911,7 @@ bool MorelloCapRelocsSection::linkerDefinedCapabilityAlign() {
     auto targetSym = reloc.target.sym();
     if (targetSize == 0 && !targetSym->isPreemptible &&
         isSectionStartSymbol(targetSym->getName()) &&
-        !targetSym->isUndefWeak()) {
+        !targetSym->isUndefined()) {
       OutputSection *os = targetSym->getOutputSection();
       assert(os);
       changed |= alignToRequired(os, os, getMorelloRequiredAlignment(os->size));
