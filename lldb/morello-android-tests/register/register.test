@@ -5,11 +5,12 @@ process launch --
 
 register read c11
 # CHECK-LABEL: (lldb) register read c11
-# CHECK: c11 = 0x{{[0-9a-fA-F]+}}7ef3beefdeaddeaddeadbeef
+# CHECK: c11 = 0x00000000007ef3beefdeaddeaddeadbeef
 
+# XXX: Morello sign-extends address[55:0] to give 0xffaddeaddeadbeef-0xffaddeaddeadbef3 as the real bounds
 register read -f capability c11
 # CHECK-LABEL: (lldb) register read -f capability c11
-# CHECK: c11 = 0xdeaddeaddeadbeef [,0xdeaddeaddeadbeef-0xdeaddeaddeadbef3]
+# CHECK: c11 = 0xdeaddeaddeadbeef [,0xdeaddeaddeadbeef-0xdeaddeaddeadbef3] (invalid)
 
 register read x11
 # CHECK-LABEL: (lldb) register read x11
