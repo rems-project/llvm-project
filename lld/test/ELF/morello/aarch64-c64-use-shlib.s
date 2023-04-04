@@ -86,32 +86,32 @@ from_app:
 appdata: .xword 8
 
 // CHECK: Contents of section .got:
-/// rodata (shlib.so) RW (default) size 8
-// CHECK-NEXT:  220600 00000000 00000000 08000000 00000002
-/// data (shlib.so) RW (default) size 8
-// CHECK-NEXT:  220610 00000000 00000000 08000000 00000002
-/// appdata 0x23000 rw size 8
-// CHECK-NEXT:  220620 60062300 00000000 08000000 00000002
 /// from_app 230622 exec size 4
-// CHECK-NEXT:  220630 00022000 00000000 c0040300 00000004
+// CHECK-NEXT:  220600 00022000 00000000 c0040300 00000004
 /// func2 (shlib.so) exec size 4
-// CHECK-NEXT:  220640 00000000 00000000 04000000 00000004
+// CHECK-NEXT:  220610 00000000 00000000 04000000 00000004
+/// rodata (shlib.so) RW (default) size 8
+// CHECK-NEXT:  220620 00000000 00000000 08000000 00000002
+/// data (shlib.so) RW (default) size 8
+// CHECK-NEXT:  220630 00000000 00000000 08000000 00000002
 /// _start 210431 exec size 4
-// CHECK-NEXT:  220650 00022000 00000000 c0040300 00000004
+// CHECK-NEXT:  220640 00022000 00000000 c0040300 00000004
+/// appdata 0x23000 rw size 8
+// CHECK-NEXT:  220650 60062300 00000000 08000000 00000002
 
 // CHECK-PIE: Contents of section .got:
-/// rodata (shlib.so) RW (default) size 8
-// CHECK-PIE-NEXT:  20610 00000000 00000000 08000000 00000002
-/// data (shlib.so) RW (default) size 8
-// CHECK-PIE-NEXT:  20620 00000000 00000000 08000000 00000002
-/// appdata 0x30670 rw size 8
-// CHECK-PIE-NEXT:  20630 70060300 00000000 08000000 00000002
 /// from_app 14069 exec size 4
-// CHECK-PIE-NEXT:  20640 00020000 00000000 c0040300 00000004
+// CHECK-PIE-NEXT:  20610 00020000 00000000 c0040300 00000004
 /// func2 (shlib.so) exec size 4
-// CHECK-PIE-NEXT:  20650 00000000 00000000 04000000 00000004
+// CHECK-PIE-NEXT:  20620 00000000 00000000 04000000 00000004
+/// rodata (shlib.so) RW (default) size 8
+// CHECK-PIE-NEXT:  20630 00000000 00000000 08000000 00000002
+/// data (shlib.so) RW (default) size 8
+// CHECK-PIE-NEXT:  20640 00000000 00000000 08000000 00000002
 /// _start 10431 exec size 4
-// CHECK-PIE-NEXT:  20660 00020000 00000000 c0040300 00000004
+// CHECK-PIE-NEXT:  20650 00020000 00000000 c0040300 00000004
+/// appdata 0x30670 rw size 8
+// CHECK-PIE-NEXT:  20660 70060300 00000000 08000000 00000002
 
 // CHECK: Contents of section .data:
 // CHECK-NEXT:  230660 08000000 00000000
@@ -138,17 +138,23 @@ appdata: .xword 8
 // CHECK: 0000000000210430 <_start>:
 // CHECK-NEXT:   210430:        bl      0x210490 <rodata+0x210490>
 // CHECK-NEXT:   210434:        adrp    c0, 0x220000 <rodata+0x210474>
-// CHECK-NEXT:   210438:        ldr     c0, [c0, #0x600]
+// rodata
+// CHECK-NEXT:   210438:        ldr     c0, [c0, #0x620]
 // CHECK-NEXT:   21043c:        adrp    c1, 0x220000 <rodata+0x21047c>
-// CHECK-NEXT:   210440:        ldr     c1, [c1, #0x610]
+// data
+// CHECK-NEXT:   210440:        ldr     c1, [c1, #0x630]
 // CHECK-NEXT:   210444:        adrp    c2, 0x220000 <rodata+0x210484>
-// CHECK-NEXT:   210448:        ldr     c2, [c2, #0x620]
+// appdata
+// CHECK-NEXT:   210448:        ldr     c2, [c2, #0x650]
 // CHECK-NEXT:   21044c:        adrp    c3, 0x220000 <rodata+0x21048c>
-// CHECK-NEXT:   210450:        ldr     c3, [c3, #0x630]
+// from_app
+// CHECK-NEXT:   210450:        ldr     c3, [c3, #0x600]
 // CHECK-NEXT:   210454:        adrp    c4, 0x220000 <rodata+0x210494>
-// CHECK-NEXT:   210458:        ldr     c4, [c4, #0x640]
+// func2
+// CHECK-NEXT:   210458:        ldr     c4, [c4, #0x610]
 // CHECK-NEXT:   21045c:        adrp    c5, 0x220000 <rodata+0x21049c>
-// CHECK-NEXT:   210460:        ldr     c5, [c5, #0x650]
+// _start
+// CHECK-NEXT:   210460:        ldr     c5, [c5, #0x640]
 // CHECK-NEXT:   210464:        ret
 
 // CHECK: 0000000000210468 <from_app>:
@@ -174,17 +180,23 @@ appdata: .xword 8
 // CHECK-PIE: 0000000000010430 <_start>:
 // CHECK-PIE-NEXT:    10430:            bl      0x10490 <rodata+0x10490>
 // CHECK-PIE-NEXT:    10434:            adrp    c0, 0x20000 <rodata+0x10474>
-// CHECK-PIE-NEXT:    10438:            ldr     c0, [c0, #0x610]
+// rodata
+// CHECK-PIE-NEXT:    10438:            ldr     c0, [c0, #0x630]
 // CHECK-PIE-NEXT:    1043c:            adrp    c1, 0x20000 <rodata+0x1047c>
-// CHECK-PIE-NEXT:    10440:            ldr     c1, [c1, #0x620]
+// data
+// CHECK-PIE-NEXT:    10440:            ldr     c1, [c1, #0x640]
 // CHECK-PIE-NEXT:    10444:            adrp    c2, 0x20000 <rodata+0x10484>
-// CHECK-PIE-NEXT:    10448:            ldr     c2, [c2, #0x630]
+// appdata
+// CHECK-PIE-NEXT:    10448:            ldr     c2, [c2, #0x660]
 // CHECK-PIE-NEXT:    1044c:            adrp    c3, 0x20000 <rodata+0x1048c>
-// CHECK-PIE-NEXT:    10450:            ldr     c3, [c3, #0x640]
+// from_app
+// CHECK-PIE-NEXT:    10450:            ldr     c3, [c3, #0x610]
 // CHECK-PIE-NEXT:    10454:            adrp    c4, 0x20000 <rodata+0x10494>
-// CHECK-PIE-NEXT:    10458:            ldr     c4, [c4, #0x650]
+// func2
+// CHECK-PIE-NEXT:    10458:            ldr     c4, [c4, #0x620]
 // CHECK-PIE-NEXT:    1045c:            adrp    c5, 0x20000 <rodata+0x1049c>
-// CHECK-PIE-NEXT:    10460:            ldr     c5, [c5, #0x660]
+// _start
+// CHECK-PIE-NEXT:    10460:            ldr     c5, [c5, #0x650]
 // CHECK-PIE-NEXT:    10464:            ret
 
 // CHECK-PIE: 0000000000010468 <from_app>:
@@ -211,26 +223,26 @@ appdata: .xword 8
 // RELS-NEXT:   Section (5) .rela.dyn {
 /// .capinit appdata
 // RELS-NEXT:     0x2204C0 R_MORELLO_RELATIVE - 0x0
-/// .got appdata
-// RELS-NEXT:     0x220620 R_MORELLO_RELATIVE - 0x0
-/// _start
-// RELS-NEXT:     0x220650 R_MORELLO_RELATIVE - 0x10231
-/// .capinit from_app (strictly speaking don't need symbol here)
+//// .capinit from_app (strictly speaking don't need symbol here)
 // RELS-NEXT:     0x2204D0 R_MORELLO_RELATIVE from_app 0x10269
 /// .got from_app (strictly speaking don't need symbol here)
-// RELS-NEXT:     0x220630 R_MORELLO_RELATIVE from_app 0x10269
+// RELS-NEXT:     0x220600 R_MORELLO_RELATIVE from_app 0x10269
+/// _start
+// RELS-NEXT:     0x220640 R_MORELLO_RELATIVE - 0x10231
+// .got appdata
+// RELS-NEXT:     0x220650 R_MORELLO_RELATIVE - 0x0
 /// .capinit func2
 // RELS-NEXT:     0x2204E0 R_MORELLO_CAPINIT func2 0x0
 /// .got func2
-// RELS-NEXT:     0x220640 R_MORELLO_GLOB_DAT func2 0x0
+// RELS-NEXT:     0x220610 R_MORELLO_GLOB_DAT func2 0x0
 /// .capinit rodata
 // RELS-NEXT:     0x2204A0 R_MORELLO_CAPINIT rodata 0x0
 /// .got rodata
-// RELS-NEXT:     0x220600 R_MORELLO_GLOB_DAT rodata 0x0
+// RELS-NEXT:     0x220620 R_MORELLO_GLOB_DAT rodata 0x0
 /// .capinit data
 // RELS-NEXT:     0x2204B0 R_MORELLO_CAPINIT data 0x0
 /// .got data
-// RELS-NEXT:     0x220610 R_MORELLO_GLOB_DAT data 0x0
+// RELS-NEXT:     0x220630 R_MORELLO_GLOB_DAT data 0x0
 // RELS-NEXT:   }
 // RELS-NEXT:   Section (6) .rela.plt {
 // RELS-NEXT:     0x2306A0 R_MORELLO_JUMP_SLOT func 0x0
@@ -239,26 +251,26 @@ appdata: .xword 8
 // RELS-PIE-NEXT:   Section (5) .rela.dyn {
 /// .capinit appdata
 // RELS-PIE-NEXT:     0x204C0 R_MORELLO_RELATIVE - 0x0
-/// .got appdata
-// RELS-PIE-NEXT:     0x20630 R_MORELLO_RELATIVE - 0x0
-/// _start
-// RELS-PIE-NEXT:     0x20660 R_MORELLO_RELATIVE - 0x10231
 /// .capinit from_app (strictly speaking don't need symbol here)
 // RELS-PIE-NEXT:     0x204D0 R_MORELLO_RELATIVE from_app 0x10269
 /// .got from_app (strictly speaking don't need symbol here)
-// RELS-PIE-NEXT:     0x20640 R_MORELLO_RELATIVE from_app 0x10269
+// RELS-PIE-NEXT:     0x20610 R_MORELLO_RELATIVE from_app 0x10269
+/// _start
+// RELS-PIE-NEXT:     0x20650 R_MORELLO_RELATIVE - 0x10231
+/// .got appdata
+// RELS-PIE-NEXT:     0x20660 R_MORELLO_RELATIVE - 0x0
 /// .capinit func2
 // RELS-PIE-NEXT:     0x204E0 R_MORELLO_CAPINIT func2 0x0
 /// .got func2
-// RELS-PIE-NEXT:     0x20650 R_MORELLO_GLOB_DAT func2 0x0
+// RELS-PIE-NEXT:     0x20620 R_MORELLO_GLOB_DAT func2 0x0
 /// .capinit rodata
 // RELS-PIE-NEXT:     0x204A0 R_MORELLO_CAPINIT rodata 0x0
 /// .got rodata
-// RELS-PIE-NEXT:     0x20610 R_MORELLO_GLOB_DAT rodata 0x0
+// RELS-PIE-NEXT:     0x20630 R_MORELLO_GLOB_DAT rodata 0x0
 /// .capinit data
 // RELS-PIE-NEXT:     0x204B0 R_MORELLO_CAPINIT data 0x0
 /// .got data
-// RELS-PIE-NEXT:     0x20620 R_MORELLO_GLOB_DAT data 0x0
+// RELS-PIE-NEXT:     0x20640 R_MORELLO_GLOB_DAT data 0x0
 // RELS-PIE-NEXT:   }
 // RELS-PIE-NEXT:   Section (6) .rela.plt {
 // RELS-PIE-NEXT:     0x306B0 R_MORELLO_JUMP_SLOT func 0x0
