@@ -23,7 +23,7 @@ entry:
 ; pass doesn't schedule the store to [sp, #0] next to the
 ; add and we end up not forming this instruction.
 
-; CHECK-LABEL: nonMultiple
+; CHECK-LABEL: nonMultiple1
 ; CHECK-DAG:    ldr	w{{.*}}, [sp, #56]
 ; CHECK-DAG:	ldr	x{{.*}}, [sp, #48]
 ; CHECK-DAG:	ldr	c{{.*}}, [sp, #32]
@@ -31,10 +31,10 @@ entry:
 ; CHECK-DAG:	str	x{{.*}}, [sp, #16]
 ; CHECK-DAG:	str	c{{.*}}, [sp, #0]
 
-define void @nonMultiple(%struct.D* %rhs) {
+define void @nonMultiple1(%struct.D* %rhs) {
  entry:
-   %aset = alloca %struct.C, align 4
-   %bset = alloca %struct.C, align 4
+   %aset = alloca %struct.C, align 16
+   %bset = alloca %struct.C, align 16
    %0 = bitcast %struct.C* %aset to i8*
    %1 = bitcast %struct.C* %bset to i8*
    br i1 undef, label %land.lhs.true53, label %if.end66
@@ -48,9 +48,38 @@ define void @nonMultiple(%struct.D* %rhs) {
    br i1 %cmp74, label %if.then76, label %if.end81
  
  if.then76:                                        ; preds = %if.end66
-   call void @llvm.memcpy.p0i8.p0i8.i64(i8* nonnull %0, i8* null, i64 28, i32 4, i1 false)
+   call void @llvm.memcpy.p0i8.p0i8.i64(i8* nonnull align 16 %0, i8* align 16 null, i64 28, i32 4, i1 false)
    ret void
  
+ if.end81:                                         ; preds = %if.end66, %land.lhs.true53
+   call void @llvm.memcpy.p0i8.p0i8.i64(i8* nonnull align 16 %1, i8* nonnull align 16 %0, i64 28, i32 4, i1 false)
+   ret void
+ }
+
+; FIXME: it should be possible to increase the alignment of the aset and bset
+; stack objects in order to allow memcpy inlining.
+; CHECK-LABEL: nonMultiple2
+; CHECK: bl memcpy
+define void @nonMultiple2(%struct.D* %rhs) {
+ entry:
+   %aset = alloca %struct.C, align 4
+   %bset = alloca %struct.C, align 4
+   %0 = bitcast %struct.C* %aset to i8*
+   %1 = bitcast %struct.C* %bset to i8*
+   br i1 undef, label %land.lhs.true53, label %if.end66
+
+ land.lhs.true53:                                  ; preds = %entry
+   %digits60 = getelementptr inbounds %struct.D, %struct.D* %rhs, i64 0, i32 0
+   br label %if.end81
+
+ if.end66:                                         ; preds = %entry
+   %cmp74 = icmp eq i32 undef, 1
+   br i1 %cmp74, label %if.then76, label %if.end81
+
+ if.then76:                                        ; preds = %if.end66
+   call void @llvm.memcpy.p0i8.p0i8.i64(i8* nonnull %0, i8* null, i64 28, i32 4, i1 false)
+   ret void
+
  if.end81:                                         ; preds = %if.end66, %land.lhs.true53
    call void @llvm.memcpy.p0i8.p0i8.i64(i8* nonnull %1, i8* nonnull %0, i64 28, i32 4, i1 false)
    ret void
