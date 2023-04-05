@@ -77,6 +77,7 @@ define i32 @test_musttail_variadic_spill(i32 %arg0, ...) {
 ; CHECK-NEXT:    mov x5, x24
 ; CHECK-NEXT:    mov x6, x25
 ; CHECK-NEXT:    mov x8, x27
+; CHECK-NEXT:    mov x7, x26
 ; CHECK-NEXT:    ldp q3, q2, [sp, #64] ; 32-byte Folded Reload
 ; CHECK-NEXT:    ldp q5, q4, [sp, #32] ; 32-byte Folded Reload
 ; CHECK-NEXT:    ldp q7, q6, [sp] ; 32-byte Folded Reload
@@ -148,6 +149,7 @@ define void @f_thunk(i8* %this, ...) {
 ; CHECK-NEXT:    mov x5, x24
 ; CHECK-NEXT:    mov x6, x25
 ; CHECK-NEXT:    mov x8, x27
+; CHECK-NEXT:    mov x7, x26
 ; CHECK-NEXT:    ldp q3, q2, [sp, #64] ; 32-byte Folded Reload
 ; CHECK-NEXT:    ldp q5, q4, [sp, #32] ; 32-byte Folded Reload
 ; CHECK-NEXT:    ldp q7, q6, [sp] ; 32-byte Folded Reload
