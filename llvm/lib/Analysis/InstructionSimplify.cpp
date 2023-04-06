@@ -857,6 +857,13 @@ static Value *SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
     if (Constant *Result = computePointerDifference(Q.DL, X, Y))
       return ConstantExpr::getIntegerCast(Result, Op0->getType(), true);
 
+  if (match(Op0, m_TruncOrSelf(m_Intrinsic<Intrinsic::cheri_cap_address_get>(
+                     m_Value(X)))) &&
+      match(Op1, m_TruncOrSelf(m_Intrinsic<Intrinsic::cheri_cap_address_get>(
+                     m_Value(Y)))))
+    if (Constant *Result = computePointerDifference(Q.DL, X, Y))
+      return ConstantExpr::getIntegerCast(Result, Op0->getType(), true);
+
   // i1 sub -> xor.
   if (MaxRecurse && Op0->getType()->isIntOrIntVectorTy(1))
     if (Value *V = SimplifyXorInst(Op0, Op1, Q, MaxRecurse-1))
@@ -1697,12 +1704,25 @@ static Value *simplifyAndOrOfICmpsWithZero(ICmpInst *Cmp0, ICmpInst *Cmp1,
       match(Y, m_c_And(m_PtrToInt(m_Specific(X)), m_Value())))
     return Cmp1;
 
+  // Same as above, just for cheri.cap.address.get
+  if (match(Y,
+            m_c_And(m_TruncOrSelf(m_Intrinsic<Intrinsic::cheri_cap_address_get>(
+                        m_CombineOr(m_Specific(X), m_BitCast(m_Specific(X))))),
+                    m_Value())))
+    return Cmp1;
+
   // (([ptrtoint] Y & ?) == 0) || (Y == 0) --> ([ptrtoint] Y & ?) == 0
   // ((? & [ptrtoint] Y) == 0) || (Y == 0) --> (? & [ptrtoint] Y) == 0
   // (([ptrtoint] Y & ?) != 0) && (Y != 0) --> ([ptrtoint] Y & ?) != 0
   // ((? & [ptrtoint] Y) != 0) && (Y != 0) --> (? & [ptrtoint] Y) != 0
   if (match(X, m_c_And(m_Specific(Y), m_Value())) ||
       match(X, m_c_And(m_PtrToInt(m_Specific(Y)), m_Value())))
+    return Cmp0;
+
+  if (match(X,
+            m_c_And(m_TruncOrSelf(m_Intrinsic<Intrinsic::cheri_cap_address_get>(
+                        m_CombineOr(m_Specific(X), m_BitCast(m_Specific(Y))))),
+                    m_Value())))
     return Cmp0;
 
   return nullptr;
@@ -4526,6 +4546,14 @@ static Value *SimplifyGEPInst(Type *SrcTy, Value *Ptr,
             CanSimplify())
           return P;
 
+        if (TyAllocSize == 1 &&
+            match(Indices[0], m_Sub(m_Intrinsic<Intrinsic::cheri_cap_address_get>(
+                                    m_Value(P)),
+                                m_Intrinsic<Intrinsic::cheri_cap_address_get>(
+                                    m_Specific(Ptr)))) &&
+            CanSimplify())
+          return P;
+
         // getelementptr V, (ashr (sub P, V), C) -> P if P points to a type of
         // size 1 << C.
         if (match(Indices[0], m_AShr(m_Sub(m_PtrToInt(m_Value(P)),
@@ -4534,11 +4562,31 @@ static Value *SimplifyGEPInst(Type *SrcTy, Value *Ptr,
             TyAllocSize == 1ULL << C && CanSimplify())
           return P;
 
+        if (match(Indices[0],
+                  m_AShr(m_Sub(m_Intrinsic<Intrinsic::cheri_cap_address_get>(
+                                   m_BitCast(m_Value(P))),
+                               m_Intrinsic<Intrinsic::cheri_cap_address_get>(
+                                   m_CombineOr(m_Specific(Ptr),
+                                               m_BitCast(m_Specific(Ptr))))),
+                         m_ConstantInt(C))) &&
+            TyAllocSize == 1ULL << C && CanSimplify())
+          return P;
+
         // getelementptr V, (sdiv (sub P, V), C) -> P if P points to a type of
         // size C.
         if (match(Indices[0], m_SDiv(m_Sub(m_PtrToInt(m_Value(P)),
                                            m_PtrToInt(m_Specific(Ptr))),
                                      m_SpecificInt(TyAllocSize))) &&
+            CanSimplify())
+          return P;
+
+        if (match(Indices[0],
+                  m_SDiv(m_Sub(m_Intrinsic<Intrinsic::cheri_cap_address_get>(
+                                   m_BitCast(m_Value(P))),
+                               m_Intrinsic<Intrinsic::cheri_cap_address_get>(
+                                   m_CombineOr(m_Specific(Ptr),
+                                               m_BitCast(m_Specific(Ptr))))),
+                         m_SpecificInt(TyAllocSize))) &&
             CanSimplify())
           return P;
       }

@@ -1917,6 +1917,10 @@ Instruction *InstCombinerImpl::visitSub(BinaryOperator &I) {
       return BinaryOperator::CreateAdd(X, ConstantExpr::getSub(C, C2));
   }
 
+#if 0
+  // This transform would be useful in order to remove uses of
+  // cheri_cap_address_get. However this is more difficult to support
+  // in the optimizers than just using a sub.
   // (ptraddr_t)cap1 - (ptraddr_t)cap2 --> cheri_cap_diff(cap1, cap2)
   if (match(Op0, m_Intrinsic<Intrinsic::cheri_cap_address_get>(m_Value(X))) &&
       match(Op1, m_Intrinsic<Intrinsic::cheri_cap_address_get>(m_Value(Y)))) {
@@ -1926,6 +1930,7 @@ Instruction *InstCombinerImpl::visitSub(BinaryOperator &I) {
     assert(Call->getType() == I.getType());
     return Call;
   }
+#endif
 
   const APInt *Op0C;
   if (match(Op0, m_APInt(Op0C)) && Op0C->isMask()) {

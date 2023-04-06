@@ -4469,6 +4469,12 @@ static bool ParseTargetArgs(TargetOptions &Opts, ArgList &Args,
       Opts.FeaturesAsWritten.push_back("+cheri-exact-equals");
   }
 
+  if (T.isAArch64()) {
+    if (Args.hasFlag(options::OPT_morello_bounded_memargs,
+                     options::OPT_morello_no_bounded_memargs, false))
+      Opts.FeaturesAsWritten.push_back("+bounded-morello-memargs");
+  }
+
   if (Arg *A = Args.getLastArg(options::OPT_target_sdk_version_EQ)) {
     llvm::VersionTuple Version;
     if (Version.tryParse(A->getValue()))

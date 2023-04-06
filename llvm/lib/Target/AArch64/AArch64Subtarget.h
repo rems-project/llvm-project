@@ -168,6 +168,7 @@ protected:
   bool Use16CapRegs = false;
   bool HasMorello = false;
   bool HasMorelloLegacyVarArg = false;
+  bool HasMorelloBoundedMemArgs = false;
   bool HasPureCap = false;
   bool HasC64 = false;
 
@@ -508,6 +509,9 @@ public:
   bool hasPureCap() const { return HasMorello && HasPureCap; }
   bool hasMorello() const { return HasMorello; }
   bool hasMorelloNewVarArg() const { return !HasMorelloLegacyVarArg; }
+  bool hasMorelloBoundedMemArgs() const {
+    return hasPureCap() && HasMorelloBoundedMemArgs;
+  }
   bool hasC64() const { return HasMorello && HasC64; }
   bool hasPerfMon() const { return HasPerfMon; }
   bool hasFullFP16() const { return HasFullFP16; }

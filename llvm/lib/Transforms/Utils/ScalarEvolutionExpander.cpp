@@ -64,6 +64,31 @@ Value *SCEVExpander::ReuseOrCreateCast(Value *V, Type *Ty,
 
   Value *Ret = nullptr;
 
+  if (Op == Instruction::PtrToInt && DL.isFatPointer(V->getType())) {
+    // For capability to int casts we need to emit a cheri.cap.address.get
+    // with various casts around it.
+    const DataLayout &DL = SE.getDataLayout();
+    auto CapAS = V->getType()->getPointerAddressSpace();
+    auto I8CapTy =
+        IntegerType::getInt8Ty(SE.getContext())->getPointerTo(CapAS);
+    Ret = V;
+
+    SCEVInsertPointGuard Guard(Builder, this);
+    Builder.SetInsertPoint(&*IP);
+    if (Ret->getType() != I8CapTy)
+      Ret = Builder.CreateCast(Instruction::BitCast, Ret, I8CapTy,
+                               V->getName());
+    Ret = Builder.CreateIntrinsic(
+        Intrinsic::cheri_cap_address_get, DL.getIntPtrType(Ret->getType()),
+        Ret, nullptr, V->getName());
+    if (Ret->getType() != Ty)
+      Ret = Builder.CreateZExtOrTrunc(Ret, Ty, V->getName());
+
+    assert(!isa<Instruction>(Ret) ||
+           SE.DT.dominates(cast<Instruction>(Ret), &*BIP));
+    return Ret;
+  }
+
   // Check to see if there is already a cast!
   for (User *U : V->users()) {
     if (U->getType() != Ty)

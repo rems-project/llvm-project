@@ -599,6 +599,11 @@ def : Flag<["-"], "cheri-comparison=exact">, Flags<[NoXarchOption,CC1Option]>, G
 def morello_vararg_new : Flag<["-"], "morello-vararg=new">, Flags<[CC1Option]>, Group<cheri_Group>,
   HelpText<"Bound variadic arguments in purecap calls (default)">;
 
+def morello_bounded_memargs : Flag<["-"], "morello-bounded-memargs">, Flags<[CC1Option]>, Group<cheri_Group>,
+  HelpText<"Use C9 for passing arguments in memory">;
+def morello_no_bounded_memargs : Flag<["-"], "no-morello-bounded-memargs">, Flags<[CC1Option]>, Group<cheri_Group>,
+  HelpText<"Use CSP for passing arguments in memory (default)">;
+
 class InternalDriverOpt : Group<internal_driver_Group>,
   Flags<[NoXarchOption, HelpHidden]>;
 def driver_mode : Joined<["--"], "driver-mode=">, Group<internal_driver_Group>,
