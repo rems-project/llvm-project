@@ -104,6 +104,7 @@ void initializeLDTLSCleanupPass(PassRegistry&);
 void initializeSVEIntrinsicOptsPass(PassRegistry&);
 void initializeAArch64StackTaggingPass(PassRegistry&);
 void initializeAArch64SandboxPass(PassRegistry&);
+void initializeMorelloRangeCheckerPass(PassRegistry &);
 void initializeAArch64SandboxGlobalsOptPass(PassRegistry&);
 void initializeAArch64SandboxGlobalAddressingPass(PassRegistry&);
 void initializeAArch64StackTaggingPreRAPass(PassRegistry&);
