@@ -4840,13 +4840,14 @@ SDValue AArch64TargetLowering::LowerADDRSPACECAST(SDValue Op,
       auto *FatInt8PtrTy = Type::getInt8PtrTy(*DAG.getContext(), 200);
       auto *Int64Ty = Type::getInt64Ty(*DAG.getContext());
       auto *GAddr = const_cast<GlobalValue *>(GN->getGlobal());
-      auto *FTy = PointerType::get(GAddr->getType()->getElementType(), 200);
+      unsigned GlobalAS = GAddr->getType()->getAddressSpace();
+      auto *Int8PtrTy = Type::getInt8PtrTy(*DAG.getContext(), GlobalAS);
       auto *Addr =
         ConstantExpr::getGetElementPtr(
-            FatInt8PtrTy->getElementType(),
-            ConstantExpr::getPointerCast(
-                ConstantExpr::getAddrSpaceCast(GAddr, FTy),
-                FatInt8PtrTy),
+            Type::getInt8Ty(*DAG.getContext()),
+                ConstantExpr::getAddrSpaceCast(
+                    ConstantExpr::getPointerCast(GAddr, Int8PtrTy),
+                    FatInt8PtrTy),
             ConstantInt::get(Int64Ty, GN->getOffset()));
       // Now load the constant from a constant pool.
       SDNode *CPNode =

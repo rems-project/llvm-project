@@ -271,8 +271,7 @@ public:
         ConstantInt *CI = dyn_cast<ConstantInt>(AllocaBase->getArraySize());
         if (!CI)
           continue;
-        PointerType *AllocaTy = AllocaBase->getType();
-        Type *AllocationTy = AllocaTy->getElementType();
+        Type *AllocationTy = AllocaBase->getAllocatedType();
         uint64_t ElementSize = DL.getTypeAllocSize(AllocationTy);
         uint64_t TotalSize = CI->getLimitedValue() * ElementSize;
 
@@ -387,8 +386,7 @@ public:
       ConstantInt *CI = cast<ConstantInt>(AI->getArraySize());
       if (!CI)
         continue;
-      PointerType *AllocaTy = AI->getType();
-      Type *AllocationTy = AllocaTy->getElementType();
+      Type *AllocationTy = AI->getAllocatedType();
       uint64_t ElementSize = DL.getTypeAllocSize(AllocationTy);
       uint64_t TotalSize = CI->getLimitedValue() * ElementSize;
       Size +=TotalSize;
@@ -436,7 +434,7 @@ public:
       assert(AI->getType()->getPointerAddressSpace() == 200);
       B.SetInsertPoint(AI->getParent(), IP);
       PointerType *AllocaTy = AI->getType();
-      Type *AllocationTy = AllocaTy->getElementType();
+      Type *AllocationTy = AI->getAllocatedType();
       AllocaInst *Alloca = nullptr;
       Instruction *CastAlloca;
       Function *SetLenFun;
