@@ -16,6 +16,6 @@ body:             |
 
     renamable $w5 = nsw SUBSWrr renamable $w3, renamable $w2, implicit-def dead $nzcv
     renamable $w6 = nsw SUBSWrr renamable $w5, renamable $w3, implicit-def $nzcv
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

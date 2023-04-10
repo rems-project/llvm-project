@@ -33,7 +33,7 @@ body:             |
     G_BRCOND %cmp_trunc(s1), %bb.1
     G_BR %bb.0
   bb.1:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 name:            fold_anyext
@@ -64,7 +64,7 @@ body:             |
     G_BRCOND %cmp_trunc(s1), %bb.1
     G_BR %bb.0
   bb.1:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 name:            fold_multiple
@@ -98,7 +98,7 @@ body:             |
     G_BRCOND %cmp_trunc(s1), %bb.1
     G_BR %bb.0
   bb.1:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 name:            dont_fold_more_than_one_use
@@ -120,7 +120,7 @@ body:             |
   ; CHECK:   B %bb.0
   ; CHECK: bb.1:
   ; CHECK:   $x0 = COPY %zext
-  ; CHECK:   RET_ReallyLR 0, implicit $x0
+  ; CHECK:   RET_ReallyLR implicit $x0
   bb.0:
     successors: %bb.0, %bb.1
     liveins: $x0
@@ -135,4 +135,4 @@ body:             |
     G_BR %bb.0
   bb.1:
     $x0 = COPY %zext:gpr(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0

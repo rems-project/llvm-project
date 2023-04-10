@@ -10,7 +10,7 @@ body: |
     $d8 = IMPLICIT_DEF
     $d9 = IMPLICIT_DEF
     $x19 = IMPLICIT_DEF
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 # CHECK-LABEL: TestFrameRecordLocation
 

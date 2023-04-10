@@ -92,7 +92,7 @@ define i64 @dont_tail_call_sret_alloca_returned() {
   ; CHECK:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
   ; CHECK:   [[LOAD:%[0-9]+]]:_(s64) = G_LOAD [[FRAME_INDEX]](p0) :: (dereferenceable load (s64) from %ir.l)
   ; CHECK:   $x0 = COPY [[LOAD]](s64)
-  ; CHECK:   RET_ReallyLR 0, implicit $x0
+  ; CHECK:   RET_ReallyLR implicit $x0
   %l = alloca i64, align 8
   tail call void @test_explicit_sret(i64* %l)
   %r = load i64, i64* %l, align 8

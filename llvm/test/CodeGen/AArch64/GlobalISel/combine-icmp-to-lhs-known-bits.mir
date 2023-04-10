@@ -20,7 +20,7 @@ body:             |
     ; CHECK: %cmp:_(s1) = G_TRUNC %known_zero_or_one(s32)
     ; CHECK: %ext:_(s32) = G_ZEXT %cmp(s1)
     ; CHECK: $w0 = COPY %ext(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %x:_(s32) = COPY $w0
     %one:_(s32) = G_CONSTANT i32 1
     %known_zero_or_one:_(s32) = G_AND %x, %one
@@ -28,7 +28,7 @@ body:             |
     %cmp:_(s1) = G_ICMP intpred(ne), %known_zero_or_one(s32), %zero
     %ext:_(s32) = G_ZEXT %cmp(s1)
     $w0 = COPY %ext(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -47,14 +47,14 @@ body:             |
     ; CHECK: %cmp:_(s1) = G_TRUNC %known_zero_or_one(s32)
     ; CHECK: %ext:_(s32) = G_ZEXT %cmp(s1)
     ; CHECK: $w0 = COPY %ext(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %x:_(s32) = COPY $w0
     %one:_(s32) = G_CONSTANT i32 1
     %known_zero_or_one:_(s32) = G_AND %x, %one
     %cmp:_(s1) = G_ICMP intpred(eq), %known_zero_or_one(s32), %one
     %ext:_(s32) = G_ZEXT %cmp(s1)
     $w0 = COPY %ext(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -76,7 +76,7 @@ body:             |
     ; CHECK: %cmp:_(s1) = G_ICMP intpred(eq), %known_zero_or_one(s32), %wrong_cst
     ; CHECK: %ext:_(s32) = G_ZEXT %cmp(s1)
     ; CHECK: $w0 = COPY %ext(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %x:_(s32) = COPY $w0
     %one:_(s32) = G_CONSTANT i32 1
     %known_zero_or_one:_(s32) = G_AND %x, %one
@@ -84,7 +84,7 @@ body:             |
     %cmp:_(s1) = G_ICMP intpred(eq), %known_zero_or_one(s32), %wrong_cst
     %ext:_(s32) = G_ZEXT %cmp(s1)
     $w0 = COPY %ext(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -106,7 +106,7 @@ body:             |
     ; CHECK: %cmp:_(s1) = G_ICMP intpred(ne), %known_zero_or_one(s32), %wrong_cst
     ; CHECK: %ext:_(s32) = G_ZEXT %cmp(s1)
     ; CHECK: $w0 = COPY %ext(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %x:_(s32) = COPY $w0
     %one:_(s32) = G_CONSTANT i32 1
     %known_zero_or_one:_(s32) = G_AND %x, %one
@@ -114,7 +114,7 @@ body:             |
     %cmp:_(s1) = G_ICMP intpred(ne), %known_zero_or_one(s32), %wrong_cst
     %ext:_(s32) = G_ZEXT %cmp(s1)
     $w0 = COPY %ext(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -139,7 +139,7 @@ body:             |
     ; CHECK: %elt:_(s1) = G_EXTRACT_VECTOR_ELT %cmp(<2 x s1>), %zero(s32)
     ; CHECK: %ext:_(s32) = G_ZEXT %elt(s1)
     ; CHECK: $w0 = COPY %ext(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %x:_(<2 x s32>) = COPY $x0
     %one:_(s32) = G_CONSTANT i32 1
     %one_vec:_(<2 x s32>) = G_BUILD_VECTOR %one, %one
@@ -150,7 +150,7 @@ body:             |
     %elt:_(s1) = G_EXTRACT_VECTOR_ELT %cmp, %zero
     %ext:_(s32) = G_ZEXT %elt(s1)
     $w0 = COPY %ext(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -168,14 +168,14 @@ body:             |
     ; CHECK: %known_zero_or_one:_(s32) = G_AND %x, %one
     ; CHECK: %cmp:_(s32) = COPY %known_zero_or_one(s32)
     ; CHECK: $w0 = COPY %cmp(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %x:_(s32) = COPY $w0
     %one:_(s32) = G_CONSTANT i32 1
     %known_zero_or_one:_(s32) = G_AND %x, %one
     %zero:_(s32) = G_CONSTANT i32 0
     %cmp:_(s32) = G_ICMP intpred(ne), %known_zero_or_one(s32), %zero
     $w0 = COPY %cmp(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -194,7 +194,7 @@ body:             |
     ; CHECK: %cmp:_(s64) = COPY %known_zero_or_one(s64)
     ; CHECK: %trunc:_(s32) = G_TRUNC %cmp(s64)
     ; CHECK: $w0 = COPY %trunc(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %x:_(s64) = COPY $x0
     %one:_(s64) = G_CONSTANT i64 1
     %known_zero_or_one:_(s64) = G_AND %x, %one
@@ -202,7 +202,7 @@ body:             |
     %cmp:_(s64) = G_ICMP intpred(ne), %known_zero_or_one(s64), %zero
     %trunc:_(s32) = G_TRUNC %cmp
     $w0 = COPY %trunc(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -220,11 +220,11 @@ body:             |
     ; CHECK: %known_zero_or_one:_(s32) = G_AND %x, %one
     ; CHECK: %cmp:_(s64) = G_ZEXT %known_zero_or_one(s32)
     ; CHECK: $x0 = COPY %cmp(s64)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %x:_(s32) = COPY $w0
     %one:_(s32) = G_CONSTANT i32 1
     %known_zero_or_one:_(s32) = G_AND %x, %one
     %zero:_(s32) = G_CONSTANT i32 0
     %cmp:_(s64) = G_ICMP intpred(ne), %known_zero_or_one(s32), %zero
     $x0 = COPY %cmp(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0

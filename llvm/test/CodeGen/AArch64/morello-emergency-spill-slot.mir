@@ -22,4 +22,4 @@ body: |
     ; CHECK: PCapStoreUnscaledImm $c8, $cfp, -48
     PCapStoreImmPre $c8, %stack.2, 0
     PCapStoreImmPre $clr, %stack.1, 0
-    RET_ReallyLR 0, implicit $c0, implicit $c1, implicit $c2, implicit $c3, implicit $c4, implicit $c5, implicit $c6, implicit $c7, implicit $c8, implicit $c9, implicit $c10, implicit $c11, implicit $c12, implicit $c13, implicit $c14, implicit $c15, implicit $c16, implicit $c17, implicit $c18, implicit $c19, implicit $c20, implicit $c21, implicit $c22, implicit $c23, implicit $c24, implicit $c25, implicit $c26, implicit $c27, implicit $c28, implicit $clr
+    RET_ReallyLR implicit $c0, implicit $c1, implicit $c2, implicit $c3, implicit $c4, implicit $c5, implicit $c6, implicit $c7, implicit $c8, implicit $c9, implicit $c10, implicit $c11, implicit $c12, implicit $c13, implicit $c14, implicit $c15, implicit $c16, implicit $c17, implicit $c18, implicit $c19, implicit $c20, implicit $c21, implicit $c22, implicit $c23, implicit $c24, implicit $c25, implicit $c26, implicit $c27, implicit $c28, implicit $clr

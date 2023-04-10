@@ -16,13 +16,13 @@ body:             |
     ; CHECK-NEXT: %mul:_(s64), %o:_(s1) = G_SADDO %copy, %copy
     ; CHECK-NEXT: %overflow_ext:_(s32) = G_ZEXT %o(s1)
     ; CHECK-NEXT: $w0 = COPY %overflow_ext(s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %copy:_(s64) = COPY $x0
     %two:_(s64) = G_CONSTANT i64 2
     %mul:_(s64), %o:_(s1) = G_SMULO %copy, %two
     %overflow_ext:_(s32) = G_ZEXT %o(s1)
     $w0 = COPY %overflow_ext(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            umulo_to_uaddo
@@ -38,13 +38,13 @@ body:             |
     ; CHECK-NEXT: %mul:_(s64), %o:_(s1) = G_UADDO %copy, %copy
     ; CHECK-NEXT: %overflow_ext:_(s32) = G_ZEXT %o(s1)
     ; CHECK-NEXT: $w0 = COPY %overflow_ext(s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %copy:_(s64) = COPY $x0
     %two:_(s64) = G_CONSTANT i64 2
     %mul:_(s64), %o:_(s1) = G_UMULO %copy, %two
     %overflow_ext:_(s32) = G_ZEXT %o(s1)
     $w0 = COPY %overflow_ext(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            vector
@@ -60,14 +60,14 @@ body:             |
     ; CHECK-NEXT: %mul:_(<2 x s32>), %o:_(<2 x s1>) = G_SADDO %copy, %copy
     ; CHECK-NEXT: %overflow_ext:_(<2 x s32>) = G_ANYEXT %o(<2 x s1>)
     ; CHECK-NEXT: $d0 = COPY %overflow_ext(<2 x s32>)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $d0
+    ; CHECK-NEXT: RET_ReallyLR implicit $d0
     %copy:_(<2 x s32>) = COPY $d0
     %two:_(s32) = G_CONSTANT i32 2
     %splat_two:_(<2 x s32>) = G_BUILD_VECTOR %two(s32), %two(s32)
     %mul:_(<2 x s32>), %o:_(<2 x s1>) = G_SMULO %copy, %splat_two
     %overflow_ext:_(<2 x s32>) = G_ANYEXT %o(<2 x s1>)
     $d0 = COPY %overflow_ext(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 ...
 ---
 name:            dont_combine_wrong_cst
@@ -84,13 +84,13 @@ body:             |
     ; CHECK-NEXT: %mul:_(s64), %o:_(s1) = G_UMULO %copy, %three
     ; CHECK-NEXT: %overflow_ext:_(s32) = G_ZEXT %o(s1)
     ; CHECK-NEXT: $w0 = COPY %overflow_ext(s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %copy:_(s64) = COPY $x0
     %three:_(s64) = G_CONSTANT i64 3
     %mul:_(s64), %o:_(s1) = G_UMULO %copy, %three
     %overflow_ext:_(s32) = G_ZEXT %o(s1)
     $w0 = COPY %overflow_ext(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            dont_combine_not_cst
@@ -107,11 +107,11 @@ body:             |
     ; CHECK-NEXT: %mul:_(s64), %o:_(s1) = G_UMULO %copy1, %copy2
     ; CHECK-NEXT: %overflow_ext:_(s32) = G_ZEXT %o(s1)
     ; CHECK-NEXT: $w0 = COPY %overflow_ext(s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %copy1:_(s64) = COPY $x0
     %copy2:_(s64) = COPY $x1
     %mul:_(s64), %o:_(s1) = G_UMULO %copy1, %copy2
     %overflow_ext:_(s32) = G_ZEXT %o(s1)
     $w0 = COPY %overflow_ext(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...

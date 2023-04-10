@@ -14,9 +14,9 @@ body:             |
     ; CHECK: %ptr:_(<2 x p0>) = COPY $q0
     ; CHECK: %int:_(<2 x s64>) = G_PTRTOINT %ptr(<2 x p0>)
     ; CHECK: $q0 = COPY %int(<2 x s64>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %ptr:_(<2 x p0>) = COPY $q0
     %int:_(<2 x s64>) = G_PTRTOINT %ptr(<2 x p0>)
     $q0 = COPY %int(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 ...

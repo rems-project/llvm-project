@@ -50,7 +50,7 @@ body:             |
     ; CHECK: %{{[0-9]+}}:_(<8 x s16>) = G_BUILD_VECTOR %{{[0-9]+}}(s16), %{{[0-9]+}}(s16), %{{[0-9]+}}(s16), %{{[0-9]+}}(s16), %{{[0-9]+}}(s16), %{{[0-9]+}}(s16), %{{[0-9]+}}(s16), %{{[0-9]+}}(s16)
     %1:_(<8 x s16>) = G_FCEIL %0
     $q0 = COPY %1(<8 x s16>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -81,6 +81,6 @@ body:             |
     ; CHECK: %{{[0-9]+}}:_(<4 x s16>) = G_BUILD_VECTOR %{{[0-9]+}}(s16), %{{[0-9]+}}(s16), %{{[0-9]+}}(s16), %{{[0-9]+}}(s16)
     %1:_(<4 x s16>) = G_FCEIL %0
     $d0 = COPY %1(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...

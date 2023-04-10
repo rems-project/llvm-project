@@ -88,11 +88,11 @@ body:             |
     ; CHECK: [[LDRWui:%[0-9]+]]:gpr32 = LDRWui [[COPY]], 0 :: (load (s32) from %ir.ptr)
     ; CHECK: [[SUBREG_TO_REG:%[0-9]+]]:gpr64all = SUBREG_TO_REG 0, [[LDRWui]], %subreg.sub_32
     ; CHECK: $x0 = COPY [[SUBREG_TO_REG]]
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %0:gpr(p0) = COPY $x0
     %2:gpr(s64) = G_ZEXTLOAD %0(p0) :: (load (s32) from %ir.ptr)
     $x0 = COPY %2(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -108,11 +108,11 @@ body:             |
     ; CHECK: [[LDRHHui:%[0-9]+]]:gpr32 = LDRHHui [[COPY]], 0 :: (load (s16) from %ir.ptr)
     ; CHECK: [[SUBREG_TO_REG:%[0-9]+]]:gpr64all = SUBREG_TO_REG 0, [[LDRHHui]], %subreg.sub_32
     ; CHECK: $x0 = COPY [[SUBREG_TO_REG]]
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %0:gpr(p0) = COPY $x0
     %2:gpr(s64) = G_ZEXTLOAD %0(p0) :: (load (s16) from %ir.ptr)
     $x0 = COPY %2(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -128,11 +128,11 @@ body:             |
     ; CHECK: [[LDRBBui:%[0-9]+]]:gpr32 = LDRBBui [[COPY]], 0 :: (load (s8) from %ir.ptr)
     ; CHECK: [[SUBREG_TO_REG:%[0-9]+]]:gpr64all = SUBREG_TO_REG 0, [[LDRBBui]], %subreg.sub_32
     ; CHECK: $x0 = COPY [[SUBREG_TO_REG]]
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %0:gpr(p0) = COPY $x0
     %2:gpr(s64) = G_ZEXTLOAD %0(p0) :: (load (s8) from %ir.ptr)
     $x0 = COPY %2(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -147,11 +147,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:gpr64sp = COPY $x0
     ; CHECK: [[LDRBBui:%[0-9]+]]:gpr32 = LDRBBui [[COPY]], 0 :: (load (s8) from %ir.ptr)
     ; CHECK: $w0 = COPY [[LDRBBui]]
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %0:gpr(p0) = COPY $x0
     %2:gpr(s32) = G_ZEXTLOAD %0(p0) :: (load (s8) from %ir.ptr)
     $w0 = COPY %2(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -166,10 +166,10 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:gpr64sp = COPY $x0
     ; CHECK: [[LDRHHui:%[0-9]+]]:gpr32 = LDRHHui [[COPY]], 0 :: (load (s16) from %ir.ptr)
     ; CHECK: $w0 = COPY [[LDRHHui]]
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %0:gpr(p0) = COPY $x0
     %2:gpr(s32) = G_ZEXTLOAD %0(p0) :: (load (s16) from %ir.ptr)
     $w0 = COPY %2(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...

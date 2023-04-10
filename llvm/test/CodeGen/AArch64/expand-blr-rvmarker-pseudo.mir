@@ -47,7 +47,7 @@ body:             |
         liveins: $lr, $x0
 
         BLR_RVMARKER @attachedcall, $x0, csr_aarch64_aapcs, implicit-def dead $lr, implicit $sp, implicit-def $sp, implicit-def dead $x0
-        RET_ReallyLR 0, implicit killed $w0
+        RET_ReallyLR implicit killed $w0
 ...
 
 # CHECK-LABEL: : test_bl_pass_x0_arg
@@ -65,7 +65,7 @@ body:             |
         liveins: $lr, $x0
 
         BLR_RVMARKER @attachedcall, @foo, $x0, csr_aarch64_aapcs, implicit-def dead $lr, implicit $sp, implicit-def $sp, implicit-def dead $x0
-        RET_ReallyLR 0, implicit killed $w0
+        RET_ReallyLR implicit killed $w0
 ...
 
 # CHECK-LABEL: : test_bl_pass_x0_x1_x2_args
@@ -83,7 +83,7 @@ body:             |
         liveins: $lr, $x0, $x1, $x2
 
         BLR_RVMARKER @attachedcall, @foo, $x0, $x1, $x2, csr_aarch64_aapcs, implicit-def dead $lr, implicit $sp, implicit-def $sp, implicit-def $x0
-        RET_ReallyLR 0
+        RET_ReallyLR
 ...
 
 # CHECK-LABEL: : test_bl_pass_w0_w1_args
@@ -101,7 +101,7 @@ body:             |
         liveins: $lr, $w0, $w1
 
         BLR_RVMARKER @attachedcall, @foo, $w0, $w1, csr_aarch64_aapcs, implicit-def dead $lr, implicit $sp, implicit-def $sp, implicit-def dead $x0
-        RET_ReallyLR 0, implicit killed $w0
+        RET_ReallyLR implicit killed $w0
 ...
 
 
@@ -120,5 +120,5 @@ body:             |
         liveins: $lr, $x8, $w0, $w1
 
         BLR_RVMARKER @attachedcall, $x8, $w0, $w1, csr_aarch64_aapcs, implicit-def dead $lr, implicit $sp, implicit-def $sp, implicit-def dead $x0
-        RET_ReallyLR 0, implicit killed $w0
+        RET_ReallyLR implicit killed $w0
 ...

@@ -33,7 +33,7 @@
 # CHECK-DAG: ST2GOffset $sp, $sp, 2
 # CHECK-DAG: ST2GOffset $sp, $sp, 0
 # CHECK-DAG: $w0 = COPY $wzr
-# CHECK-DAG: RET_ReallyLR 0, implicit killed $w0
+# CHECK-DAG: RET_ReallyLR implicit killed $w0
 
 name:            stg16_16_16_16_ret
 tracksRegLiveness: true
@@ -49,7 +49,7 @@ body:             |
     STGOffset $sp, %stack.2.c, 0 :: (store (s128) into %ir.c)
     $w0 = COPY $wzr
     STGOffset $sp, %stack.3.d, 0 :: (store (s128) into %ir.d)
-    RET_ReallyLR 0, implicit killed $w0
+    RET_ReallyLR implicit killed $w0
 
 ...
 
@@ -78,6 +78,6 @@ body:             |
     ST2GOffset $sp, %stack.1.b, 2 :: (store (s256) into %ir.b + 32, align 16)
     STRBBui killed renamable $w8, %stack.0.a, 0 :: (store (s8) into %ir.a, align 16)
     ST2GOffset $sp, %stack.1.b, 0 :: (store (s256) into %ir.b, align 16)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

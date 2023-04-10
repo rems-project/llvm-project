@@ -38,6 +38,6 @@ body:             |
     B %bb.2
 
   bb.3:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

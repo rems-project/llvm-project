@@ -9,7 +9,7 @@ define i16 @convert_to_fp16(float %src) {
   ; CHECK:   [[FPTRUNC:%[0-9]+]]:_(s16) = G_FPTRUNC [[COPY]](s32)
   ; CHECK:   [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[FPTRUNC]](s16)
   ; CHECK:   $w0 = COPY [[ANYEXT]](s32)
-  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  ; CHECK:   RET_ReallyLR implicit $w0
   %cvt = call i16 @llvm.convert.to.fp16.f32(float %src)
   ret i16 %cvt
 }
@@ -22,7 +22,7 @@ define float @convert_from_fp16(i16 %src) {
   ; CHECK:   [[TRUNC:%[0-9]+]]:_(s16) = G_TRUNC [[COPY]](s32)
   ; CHECK:   [[FPEXT:%[0-9]+]]:_(s32) = G_FPEXT [[TRUNC]](s16)
   ; CHECK:   $s0 = COPY [[FPEXT]](s32)
-  ; CHECK:   RET_ReallyLR 0, implicit $s0
+  ; CHECK:   RET_ReallyLR implicit $s0
   %cvt = call float @llvm.convert.from.fp16.f32(i16 %src)
   ret float %cvt
 }

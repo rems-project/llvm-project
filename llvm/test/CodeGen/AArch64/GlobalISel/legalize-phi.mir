@@ -49,7 +49,7 @@ body:             |
   ; CHECK:   [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[PHI]](s16)
   ; CHECK:   [[AND:%[0-9]+]]:_(s32) = G_AND [[ANYEXT]], [[C3]]
   ; CHECK:   $w0 = COPY [[AND]](s32)
-  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  ; CHECK:   RET_ReallyLR implicit $w0
   bb.0:
    ; Test that we insert legalization artifacts(Truncs here) into the correct BBs
    ; while legalizing the G_PHI to s16.
@@ -84,7 +84,7 @@ body:             |
     %11:_(s1) = G_PHI %5(s1), %bb.1, %8(s1), %bb.2
     %10(s32) = G_ZEXT %9(s1)
     $w0 = COPY %10(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -119,7 +119,7 @@ body:             |
   ; CHECK: bb.2:
   ; CHECK:   [[PHI:%[0-9]+]]:_(p0) = G_PHI [[COPY]](p0), %bb.0, [[COPY1]](p0), %bb.1
   ; CHECK:   $x0 = COPY [[PHI]](p0)
-  ; CHECK:   RET_ReallyLR 0, implicit $x0
+  ; CHECK:   RET_ReallyLR implicit $x0
   bb.1:
 
     successors: %bb.2, %bb.3
@@ -138,7 +138,7 @@ body:             |
   bb.3:
     %3(p0) = G_PHI %0(p0), %bb.1, %1(p0), %bb.2
     $x0 = COPY %3(p0)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -190,7 +190,7 @@ body:             |
   ; CHECK:   [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[PHI]](s16)
   ; CHECK:   [[AND:%[0-9]+]]:_(s32) = G_AND [[ANYEXT]], [[C3]]
   ; CHECK:   $w0 = COPY [[AND]](s32)
-  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  ; CHECK:   RET_ReallyLR implicit $w0
   bb.0:
     successors: %bb.1(0x40000000), %bb.2(0x40000000)
     liveins: $w0
@@ -224,7 +224,7 @@ body:             |
     %9(s1) = G_PHI %8(s1), %bb.1, %5(s1), %bb.2
     %10(s32) = G_ZEXT %9(s1)
     $w0 = COPY %10(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -268,7 +268,7 @@ body:             |
   ; CHECK:   [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 255
   ; CHECK:   [[AND1:%[0-9]+]]:_(s32) = G_AND [[ADD]], [[C3]]
   ; CHECK:   $w0 = COPY [[AND1]](s32)
-  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  ; CHECK:   RET_ReallyLR implicit $w0
   bb.0:
     successors: %bb.1(0x80000000)
     liveins: $w0
@@ -290,7 +290,7 @@ body:             |
   bb.3:
     %6(s32) = G_ZEXT %3(s8)
     $w0 = COPY %6(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -326,7 +326,7 @@ body:             |
   ; CHECK:   G_BRCOND [[TRUNC]](s1), %bb.1
   ; CHECK: bb.2:
   ; CHECK:   $w0 = COPY [[AND]](s32)
-  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  ; CHECK:   RET_ReallyLR implicit $w0
   bb.0:
     successors: %bb.1(0x80000000)
     liveins: $w0
@@ -346,7 +346,7 @@ body:             |
 
   bb.3:
     $w0 = COPY %2(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -408,7 +408,7 @@ body:             |
   ; CHECK:   [[AND1:%[0-9]+]]:_(s32) = G_AND [[ANYEXT1]], [[C4]]
   ; CHECK:   [[ADD2:%[0-9]+]]:_(s32) = G_ADD [[AND]], [[AND1]]
   ; CHECK:   $w0 = COPY [[ADD2]](s32)
-  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  ; CHECK:   RET_ReallyLR implicit $w0
   bb.0:
     successors: %bb.1(0x40000000), %bb.2(0x40000000)
     liveins: $w0
@@ -447,7 +447,7 @@ body:             |
     %12(s32) = G_ZEXT %10(s8)
     %13(s32) = G_ADD %11, %12
     $w0 = COPY %13(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -512,7 +512,7 @@ body:             |
   ; CHECK:   [[ANYEXT1:%[0-9]+]]:_(s32) = G_ANYEXT [[PHI1]](s16)
   ; CHECK:   [[AND1:%[0-9]+]]:_(s32) = G_AND [[ANYEXT1]], [[C6]]
   ; CHECK:   $w0 = COPY [[AND1]](s32)
-  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  ; CHECK:   RET_ReallyLR implicit $w0
   bb.0:
     successors: %bb.1(0x40000000), %bb.3(0x40000000)
     liveins: $w0, $w1
@@ -548,7 +548,7 @@ body:             |
     %13(s8) = G_PHI %7(s8), %bb.1, %6(s8), %bb.0
     %14(s32) = G_ZEXT %13(s8)
     $w0 = COPY %14(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -591,7 +591,7 @@ body:             |
     %4:_(s64) = G_PHI %0(s64), %bb.0
     G_STORE %3(s128), %1(p0) :: (store (s128))
     G_STORE %4(s64), %1(p0) :: (store (s64))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -618,7 +618,7 @@ body:             |
   bb.1:
     %3:_(<16 x s8>) = G_PHI %0(<16 x s8>), %bb.0
     $q0 = COPY %3(<16 x s8>)
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 name:             s88
@@ -642,7 +642,7 @@ body:             |
   ; CHECK: bb.3:
   ; CHECK:   [[PHI:%[0-9]+]]:_(s64) = G_PHI [[DEF]](s64), %bb.1, [[DEF1]](s64), %bb.2
   ; CHECK:   $x0 = COPY [[PHI]](s64)
-  ; CHECK:   RET_ReallyLR 0, implicit $x0
+  ; CHECK:   RET_ReallyLR implicit $x0
   bb.0:
     successors: %bb.1(0x40000000), %bb.2(0x40000000)
     liveins: $x0
@@ -660,7 +660,7 @@ body:             |
     %phi:_(s88) = G_PHI %imp_1:_(s88), %bb.1, %imp_2:_(s88), %bb.2
     %trunc:_(s64) = G_TRUNC %phi
     $x0 = COPY %trunc
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...
 ---
 name:            v4s64
@@ -691,7 +691,7 @@ body:             |
   ; CHECK:   [[PHI1:%[0-9]+]]:_(<2 x s64>) = G_PHI [[LOAD3]](<2 x s64>), %bb.1, [[LOAD1]](<2 x s64>), %bb.0
   ; CHECK:   $q0 = COPY [[PHI]](<2 x s64>)
   ; CHECK:   $q1 = COPY [[PHI1]](<2 x s64>)
-  ; CHECK:   RET_ReallyLR 0, implicit $q0, implicit $q1
+  ; CHECK:   RET_ReallyLR implicit $q0, implicit $q1
   bb.0:
     successors: %bb.1(0x50000000), %bb.2(0x30000000)
     liveins: $x0, $x1
@@ -709,7 +709,7 @@ body:             |
     %unmerge_1:_(<2 x s64>), %unmerge_2:_(<2 x s64>) = G_UNMERGE_VALUES %phi(<4 x s64>)
     $q0 = COPY %unmerge_1(<2 x s64>)
     $q1 = COPY %unmerge_2(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0, implicit $q1
+    RET_ReallyLR implicit $q0, implicit $q1
 ...
 ---
 name:            v8s32
@@ -734,7 +734,7 @@ body:             |
   ; CHECK:   [[C:%[0-9]+]]:_(s64) = G_CONSTANT i64 1
   ; CHECK:   %extract:_(s32) = G_EXTRACT_VECTOR_ELT [[PHI]](<4 x s32>), [[C]](s64)
   ; CHECK:   $w0 = COPY %extract(s32)
-  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  ; CHECK:   RET_ReallyLR implicit $w0
   bb.0:
     successors: %bb.1(0x50000000), %bb.2(0x30000000)
     liveins: $x0, $x1
@@ -749,7 +749,7 @@ body:             |
     %one:_(s32) = G_CONSTANT i32 1
     %extract:_(s32) = G_EXTRACT_VECTOR_ELT %phi(<8 x s32>), %one(s32)
     $w0 = COPY %extract
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            v16s16
@@ -774,7 +774,7 @@ body:             |
   ; CHECK:   [[C:%[0-9]+]]:_(s64) = G_CONSTANT i64 1
   ; CHECK:   %extract:_(s16) = G_EXTRACT_VECTOR_ELT [[PHI]](<8 x s16>), [[C]](s64)
   ; CHECK:   $h0 = COPY %extract(s16)
-  ; CHECK:   RET_ReallyLR 0, implicit $h0
+  ; CHECK:   RET_ReallyLR implicit $h0
   bb.0:
     successors: %bb.1(0x50000000), %bb.2(0x30000000)
     liveins: $x0, $x1
@@ -789,7 +789,7 @@ body:             |
     %one:_(s16) = G_CONSTANT i16 1
     %extract:_(s16) = G_EXTRACT_VECTOR_ELT %phi(<16 x s16>), %one(s16)
     $h0 = COPY %extract
-    RET_ReallyLR 0, implicit $h0
+    RET_ReallyLR implicit $h0
 ...
 ---
 name:            v32s8
@@ -813,7 +813,7 @@ body:             |
   ; CHECK:   [[SEXT:%[0-9]+]]:_(s64) = G_SEXT %one(s8)
   ; CHECK:   %extract:_(s8) = G_EXTRACT_VECTOR_ELT %phi(<32 x s8>), [[SEXT]](s64)
   ; CHECK:   $b0 = COPY %extract(s8)
-  ; CHECK:   RET_ReallyLR 0, implicit $b0
+  ; CHECK:   RET_ReallyLR implicit $b0
   bb.0:
     successors: %bb.1(0x50000000), %bb.2(0x30000000)
     liveins: $x0, $x1
@@ -828,7 +828,7 @@ body:             |
     %one:_(s8) = G_CONSTANT i8 1
     %extract:_(s8) = G_EXTRACT_VECTOR_ELT %phi(<32 x s8>), %one(s8)
     $b0 = COPY %extract
-    RET_ReallyLR 0, implicit $b0
+    RET_ReallyLR implicit $b0
 ...
 ---
 name:            v4p0
@@ -863,7 +863,7 @@ body:             |
   ; CHECK:   [[PHI1:%[0-9]+]]:_(<2 x p0>) = G_PHI [[BITCAST3]](<2 x p0>), %bb.1, [[BITCAST1]](<2 x p0>), %bb.0
   ; CHECK:   $q0 = COPY [[PHI]](<2 x p0>)
   ; CHECK:   $q1 = COPY [[PHI1]](<2 x p0>)
-  ; CHECK:   RET_ReallyLR 0, implicit $q0, implicit $q1
+  ; CHECK:   RET_ReallyLR implicit $q0, implicit $q1
   bb.0:
     successors: %bb.1(0x50000000), %bb.2(0x30000000)
     liveins: $x0, $x1
@@ -881,4 +881,4 @@ body:             |
     %unmerge_1:_(<2 x p0>), %unmerge_2:_(<2 x p0>) = G_UNMERGE_VALUES %phi(<4 x p0>)
     $q0 = COPY %unmerge_1(<2 x p0>)
     $q1 = COPY %unmerge_2(<2 x p0>)
-    RET_ReallyLR 0, implicit $q0, implicit $q1
+    RET_ReallyLR implicit $q0, implicit $q1

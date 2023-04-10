@@ -34,13 +34,13 @@ define { i8*, i32 } @bar() personality i8* bitcast (i32 (...)* @__gxx_personalit
   ; CHECK-NEXT:   [[PTRTOINT:%[0-9]+]]:_(s32) = G_PTRTOINT [[COPY2]](p0)
   ; CHECK-NEXT:   $x0 = COPY [[COPY1]](p0)
   ; CHECK-NEXT:   $w1 = COPY [[PTRTOINT]](s32)
-  ; CHECK-NEXT:   RET_ReallyLR 0, implicit $x0, implicit $w1
+  ; CHECK-NEXT:   RET_ReallyLR implicit $x0, implicit $w1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3.continue:
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
   ; CHECK-NEXT:   $x0 = COPY [[DEF]](p0)
   ; CHECK-NEXT:   $w1 = COPY [[C1]](s32)
-  ; CHECK-NEXT:   RET_ReallyLR 0, implicit $x0, implicit $w1
+  ; CHECK-NEXT:   RET_ReallyLR implicit $x0, implicit $w1
   %res32 = invoke i32 @foo(i32 42) to label %continue unwind label %broken
 
 
@@ -174,7 +174,7 @@ define i32 @test_lpad_phi() personality i8* bitcast (i32 (...)* @__gxx_personali
   ; CHECK-NEXT: bb.3.continue:
   ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:_(s32) = G_PHI [[C2]](s32), %bb.1, [[C3]](s32), %bb.2
   ; CHECK-NEXT:   $w0 = COPY [[PHI1]](s32)
-  ; CHECK-NEXT:   RET_ReallyLR 0, implicit $w0
+  ; CHECK-NEXT:   RET_ReallyLR implicit $w0
   store i32 42, i32* @global_var
   invoke void @may_throw()
           to label %continue unwind label %lpad

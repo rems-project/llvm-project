@@ -14,7 +14,7 @@ body:             |
   bb.0.entry:
   liveins: $lr, $fp, $lr, $fp
 
-  ; CHECK: RET_ReallyLR 0
-  RET_ReallyLR 0
+  ; CHECK: RET_ReallyLR
+  RET_ReallyLR
 
 ...

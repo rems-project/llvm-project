@@ -24,10 +24,10 @@ body:             |
   ; CHECK:   B %bb.1
   ; CHECK: bb.1:
   ; CHECK:   $s0 = COPY %cmp_lhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s0
+  ; CHECK:   RET_ReallyLR implicit $s0
   ; CHECK: bb.2:
   ; CHECK:   $s1 = COPY %cmp_rhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s1
+  ; CHECK:   RET_ReallyLR implicit $s1
   bb.0:
     successors: %bb.1(0x50000000), %bb.2(0x30000000)
     liveins: $s0, $s1, $w0, $w1
@@ -40,10 +40,10 @@ body:             |
     G_BR %bb.1
   bb.1:
     $s0 = COPY %cmp_lhs
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
   bb.2:
     $s1 = COPY %cmp_rhs
-    RET_ReallyLR 0, implicit $s1
+    RET_ReallyLR implicit $s1
 
 ...
 ---
@@ -63,10 +63,10 @@ body:             |
   ; CHECK:   B %bb.1
   ; CHECK: bb.1:
   ; CHECK:   $s0 = COPY %cmp_lhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s0
+  ; CHECK:   RET_ReallyLR implicit $s0
   ; CHECK: bb.2:
   ; CHECK:   $s1 = COPY %cmp_rhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s1
+  ; CHECK:   RET_ReallyLR implicit $s1
   bb.0:
     successors: %bb.1(0x50000000), %bb.2(0x30000000)
     liveins: $s0, $s1, $w0, $w1
@@ -79,10 +79,10 @@ body:             |
     G_BR %bb.1
   bb.1:
     $s0 = COPY %cmp_lhs
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
   bb.2:
     $s1 = COPY %cmp_rhs
-    RET_ReallyLR 0, implicit $s1
+    RET_ReallyLR implicit $s1
 
 ...
 ---
@@ -102,10 +102,10 @@ body:             |
   ; CHECK:   B %bb.1
   ; CHECK: bb.1:
   ; CHECK:   $s0 = COPY %cmp_lhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s0
+  ; CHECK:   RET_ReallyLR implicit $s0
   ; CHECK: bb.2:
   ; CHECK:   $s1 = COPY %cmp_rhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s1
+  ; CHECK:   RET_ReallyLR implicit $s1
   bb.0:
     successors: %bb.1(0x50000000), %bb.2(0x30000000)
     liveins: $s0, $s1, $w0, $w1
@@ -118,10 +118,10 @@ body:             |
     G_BR %bb.1
   bb.1:
     $s0 = COPY %cmp_lhs
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
   bb.2:
     $s1 = COPY %cmp_rhs
-    RET_ReallyLR 0, implicit $s1
+    RET_ReallyLR implicit $s1
 
 ...
 ---
@@ -141,10 +141,10 @@ body:             |
   ; CHECK:   B %bb.1
   ; CHECK: bb.1:
   ; CHECK:   $s0 = COPY %cmp_lhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s0
+  ; CHECK:   RET_ReallyLR implicit $s0
   ; CHECK: bb.2:
   ; CHECK:   $s1 = COPY %cmp_rhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s1
+  ; CHECK:   RET_ReallyLR implicit $s1
   bb.0:
     successors: %bb.1(0x50000000), %bb.2(0x30000000)
     liveins: $s0, $s1, $w0, $w1
@@ -157,10 +157,10 @@ body:             |
     G_BR %bb.1
   bb.1:
     $s0 = COPY %cmp_lhs
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
   bb.2:
     $s1 = COPY %cmp_rhs
-    RET_ReallyLR 0, implicit $s1
+    RET_ReallyLR implicit $s1
 
 ...
 ---
@@ -180,10 +180,10 @@ body:             |
   ; CHECK:   B %bb.1
   ; CHECK: bb.1:
   ; CHECK:   $s0 = COPY %cmp_lhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s0
+  ; CHECK:   RET_ReallyLR implicit $s0
   ; CHECK: bb.2:
   ; CHECK:   $s1 = COPY %cmp_rhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s1
+  ; CHECK:   RET_ReallyLR implicit $s1
   bb.0:
     successors: %bb.1(0x50000000), %bb.2(0x30000000)
     liveins: $s0, $s1, $w0, $w1
@@ -196,10 +196,10 @@ body:             |
     G_BR %bb.1
   bb.1:
     $s0 = COPY %cmp_lhs
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
   bb.2:
     $s1 = COPY %cmp_rhs
-    RET_ReallyLR 0, implicit $s1
+    RET_ReallyLR implicit $s1
 
 ...
 ---
@@ -220,10 +220,10 @@ body:             |
   ; CHECK:   B %bb.1
   ; CHECK: bb.1:
   ; CHECK:   $s0 = COPY %cmp_lhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s0
+  ; CHECK:   RET_ReallyLR implicit $s0
   ; CHECK: bb.2:
   ; CHECK:   $s1 = COPY %cmp_rhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s1
+  ; CHECK:   RET_ReallyLR implicit $s1
   bb.0:
     successors: %bb.1(0x50000000), %bb.2(0x30000000)
     liveins: $s0, $s1, $w0, $w1
@@ -236,10 +236,10 @@ body:             |
     G_BR %bb.1
   bb.1:
     $s0 = COPY %cmp_lhs
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
   bb.2:
     $s1 = COPY %cmp_rhs
-    RET_ReallyLR 0, implicit $s1
+    RET_ReallyLR implicit $s1
 
 ...
 ---
@@ -259,10 +259,10 @@ body:             |
   ; CHECK:   B %bb.1
   ; CHECK: bb.1:
   ; CHECK:   $s0 = COPY %cmp_lhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s0
+  ; CHECK:   RET_ReallyLR implicit $s0
   ; CHECK: bb.2:
   ; CHECK:   $s1 = COPY %cmp_rhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s1
+  ; CHECK:   RET_ReallyLR implicit $s1
   bb.0:
     successors: %bb.1(0x50000000), %bb.2(0x30000000)
     liveins: $s0, $s1, $w0, $w1
@@ -275,10 +275,10 @@ body:             |
     G_BR %bb.1
   bb.1:
     $s0 = COPY %cmp_lhs
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
   bb.2:
     $s1 = COPY %cmp_rhs
-    RET_ReallyLR 0, implicit $s1
+    RET_ReallyLR implicit $s1
 
 ...
 ---
@@ -298,10 +298,10 @@ body:             |
   ; CHECK:   B %bb.1
   ; CHECK: bb.1:
   ; CHECK:   $s0 = COPY %cmp_lhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s0
+  ; CHECK:   RET_ReallyLR implicit $s0
   ; CHECK: bb.2:
   ; CHECK:   $s1 = COPY %cmp_rhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s1
+  ; CHECK:   RET_ReallyLR implicit $s1
   bb.0:
     successors: %bb.1(0x50000000), %bb.2(0x30000000)
     liveins: $s0, $s1, $w0, $w1
@@ -314,10 +314,10 @@ body:             |
     G_BR %bb.1
   bb.1:
     $s0 = COPY %cmp_lhs
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
   bb.2:
     $s1 = COPY %cmp_rhs
-    RET_ReallyLR 0, implicit $s1
+    RET_ReallyLR implicit $s1
 
 ...
 ---
@@ -338,10 +338,10 @@ body:             |
   ; CHECK:   B %bb.1
   ; CHECK: bb.1:
   ; CHECK:   $s0 = COPY %cmp_lhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s0
+  ; CHECK:   RET_ReallyLR implicit $s0
   ; CHECK: bb.2:
   ; CHECK:   $s1 = COPY %cmp_rhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s1
+  ; CHECK:   RET_ReallyLR implicit $s1
   bb.0:
     successors: %bb.1(0x50000000), %bb.2(0x30000000)
     liveins: $s0, $s1, $w0, $w1
@@ -354,10 +354,10 @@ body:             |
     G_BR %bb.1
   bb.1:
     $s0 = COPY %cmp_lhs
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
   bb.2:
     $s1 = COPY %cmp_rhs
-    RET_ReallyLR 0, implicit $s1
+    RET_ReallyLR implicit $s1
 
 ...
 ---
@@ -377,10 +377,10 @@ body:             |
   ; CHECK:   B %bb.1
   ; CHECK: bb.1:
   ; CHECK:   $s0 = COPY %cmp_lhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s0
+  ; CHECK:   RET_ReallyLR implicit $s0
   ; CHECK: bb.2:
   ; CHECK:   $s1 = COPY %cmp_rhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s1
+  ; CHECK:   RET_ReallyLR implicit $s1
   bb.0:
     successors: %bb.1(0x50000000), %bb.2(0x30000000)
     liveins: $s0, $s1, $w0, $w1
@@ -393,10 +393,10 @@ body:             |
     G_BR %bb.1
   bb.1:
     $s0 = COPY %cmp_lhs
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
   bb.2:
     $s1 = COPY %cmp_rhs
-    RET_ReallyLR 0, implicit $s1
+    RET_ReallyLR implicit $s1
 
 ...
 ---
@@ -416,10 +416,10 @@ body:             |
   ; CHECK:   B %bb.1
   ; CHECK: bb.1:
   ; CHECK:   $s0 = COPY %cmp_lhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s0
+  ; CHECK:   RET_ReallyLR implicit $s0
   ; CHECK: bb.2:
   ; CHECK:   $s1 = COPY %cmp_rhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s1
+  ; CHECK:   RET_ReallyLR implicit $s1
   bb.0:
     successors: %bb.1(0x50000000), %bb.2(0x30000000)
     liveins: $s0, $s1, $w0, $w1
@@ -432,10 +432,10 @@ body:             |
     G_BR %bb.1
   bb.1:
     $s0 = COPY %cmp_lhs
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
   bb.2:
     $s1 = COPY %cmp_rhs
-    RET_ReallyLR 0, implicit $s1
+    RET_ReallyLR implicit $s1
 
 ...
 ---
@@ -455,10 +455,10 @@ body:             |
   ; CHECK:   B %bb.1
   ; CHECK: bb.1:
   ; CHECK:   $s0 = COPY %cmp_lhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s0
+  ; CHECK:   RET_ReallyLR implicit $s0
   ; CHECK: bb.2:
   ; CHECK:   $s1 = COPY %cmp_rhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s1
+  ; CHECK:   RET_ReallyLR implicit $s1
   bb.0:
     successors: %bb.1(0x50000000), %bb.2(0x30000000)
     liveins: $s0, $s1, $w0, $w1
@@ -471,10 +471,10 @@ body:             |
     G_BR %bb.1
   bb.1:
     $s0 = COPY %cmp_lhs
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
   bb.2:
     $s1 = COPY %cmp_rhs
-    RET_ReallyLR 0, implicit $s1
+    RET_ReallyLR implicit $s1
 
 ...
 ---
@@ -494,10 +494,10 @@ body:             |
   ; CHECK:   B %bb.1
   ; CHECK: bb.1:
   ; CHECK:   $s0 = COPY %cmp_lhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s0
+  ; CHECK:   RET_ReallyLR implicit $s0
   ; CHECK: bb.2:
   ; CHECK:   $s1 = COPY %cmp_rhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s1
+  ; CHECK:   RET_ReallyLR implicit $s1
   bb.0:
     successors: %bb.1(0x50000000), %bb.2(0x30000000)
     liveins: $s0, $s1, $w0, $w1
@@ -510,10 +510,10 @@ body:             |
     G_BR %bb.1
   bb.1:
     $s0 = COPY %cmp_lhs
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
   bb.2:
     $s1 = COPY %cmp_rhs
-    RET_ReallyLR 0, implicit $s1
+    RET_ReallyLR implicit $s1
 
 ...
 ---
@@ -533,10 +533,10 @@ body:             |
   ; CHECK:   B %bb.1
   ; CHECK: bb.1:
   ; CHECK:   $s0 = COPY %cmp_lhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s0
+  ; CHECK:   RET_ReallyLR implicit $s0
   ; CHECK: bb.2:
   ; CHECK:   $s1 = COPY %cmp_rhs
-  ; CHECK:   RET_ReallyLR 0, implicit $s1
+  ; CHECK:   RET_ReallyLR implicit $s1
   bb.0:
     successors: %bb.1(0x50000000), %bb.2(0x30000000)
     liveins: $s0, $s1, $w0, $w1
@@ -549,7 +549,7 @@ body:             |
     G_BR %bb.1
   bb.1:
     $s0 = COPY %cmp_lhs
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
   bb.2:
     $s1 = COPY %cmp_rhs
-    RET_ReallyLR 0, implicit $s1
+    RET_ReallyLR implicit $s1

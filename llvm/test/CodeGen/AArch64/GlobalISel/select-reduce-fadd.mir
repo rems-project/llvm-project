@@ -14,11 +14,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr64 = COPY $d0
     ; CHECK: [[FADDPv2i32p:%[0-9]+]]:fpr32 = FADDPv2i32p [[COPY]]
     ; CHECK: $w0 = COPY [[FADDPv2i32p]]
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %0:fpr(<2 x s32>) = COPY $d0
     %1:fpr(s32) = G_VECREDUCE_FADD %0(<2 x s32>)
     $w0 = COPY %1(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -35,10 +35,10 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr128 = COPY $q0
     ; CHECK: [[FADDPv2i64p:%[0-9]+]]:fpr64 = FADDPv2i64p [[COPY]]
     ; CHECK: $x0 = COPY [[FADDPv2i64p]]
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %0:fpr(<2 x s64>) = COPY $q0
     %2:fpr(s64) = G_VECREDUCE_FADD %0(<2 x s64>)
     $x0 = COPY %2(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...

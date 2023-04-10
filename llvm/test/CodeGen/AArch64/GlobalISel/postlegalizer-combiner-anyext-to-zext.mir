@@ -20,13 +20,13 @@ body:             |
     ; CHECK-NEXT: %icmp:_(s32) = G_ICMP intpred(eq), %copy(s64), %cst_1
     ; CHECK-NEXT: %ext:_(s64) = G_ZEXT %icmp(s32)
     ; CHECK-NEXT: $x0 = COPY %ext(s64)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $x0
+    ; CHECK-NEXT: RET_ReallyLR implicit $x0
     %copy:_(s64) = COPY $x0
     %cst_1:_(s64) = G_CONSTANT i64 1
     %icmp:_(s32) = G_ICMP intpred(eq), %copy(s64), %cst_1
     %ext:_(s64) = G_ANYEXT %icmp(s32)
     $x0 = COPY %ext(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 
 ...
@@ -48,14 +48,14 @@ body:             |
     ; CHECK-NEXT: %icmp:_(<2 x s32>) = G_ICMP intpred(eq), %copy(<2 x s32>), %vec_cst_1
     ; CHECK-NEXT: %ext:_(<2 x s64>) = G_ANYEXT %icmp(<2 x s32>)
     ; CHECK-NEXT: $q0 = COPY %ext(<2 x s64>)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $q0
+    ; CHECK-NEXT: RET_ReallyLR implicit $q0
     %copy:_(<2 x s32>) = COPY $d0
     %cst_1:_(s32) = G_CONSTANT i32 1
     %vec_cst_1:_(<2 x s32>) = G_BUILD_VECTOR %cst_1, %cst_1
     %icmp:_(<2 x s32>) = G_ICMP intpred(eq), %copy(<2 x s32>), %vec_cst_1
     %ext:_(<2 x s64>) = G_ANYEXT %icmp(<2 x s32>)
     $q0 = COPY %ext(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -75,10 +75,10 @@ body:             |
     ; CHECK-NEXT: %fcmp:_(s32) = G_FCMP intpred(eq), %copy(s64), %cst_1
     ; CHECK-NEXT: %ext:_(s64) = G_ZEXT %fcmp(s32)
     ; CHECK-NEXT: $x0 = COPY %ext(s64)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $x0
+    ; CHECK-NEXT: RET_ReallyLR implicit $x0
     %copy:_(s64) = COPY $d0
     %cst_1:_(s64) = G_FCONSTANT double 1.0
     %fcmp:_(s32) = G_FCMP intpred(eq), %copy(s64), %cst_1
     %ext:_(s64) = G_ANYEXT %fcmp(s32)
     $x0 = COPY %ext(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0

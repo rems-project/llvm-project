@@ -349,7 +349,6 @@ bool AArch64CallLowering::lowerReturn(MachineIRBuilder &MIRBuilder,
                                       FunctionLoweringInfo &FLI,
                                       Register SwiftErrorVReg) const {
   auto MIB = MIRBuilder.buildInstrNoInsert(AArch64::RET_ReallyLR);
-  MIB.addImm(0);
   assert(((Val && !VRegs.empty()) || (!Val && VRegs.empty())) &&
          "Return value without a vreg");
 

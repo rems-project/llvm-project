@@ -30,7 +30,7 @@ body:             |
     %cst:gpr(s64) = G_CONSTANT i64 4580179968
     %addr:gpr(p0) = G_PTR_ADD %copy, %cst(s64)
     %load:gpr(s64) = G_LOAD %addr(p0) :: (volatile load (s64))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -60,7 +60,7 @@ body:             |
     %cst:gpr(s64) = G_CONSTANT i64 61440
     %addr:gpr(p0) = G_PTR_ADD %copy, %cst(s64)
     %load:gpr(s64) = G_LOAD %addr(p0) :: (volatile load (s64))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -84,7 +84,7 @@ body:             |
     %cst:gpr(s64) = G_CONSTANT i64 -61440
     %addr:gpr(p0) = G_PTR_ADD %copy, %cst(s64)
     %load:gpr(s64) = G_LOAD %addr(p0) :: (volatile load (s64))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -107,7 +107,7 @@ body:             |
     %cst:gpr(s64) = G_CONSTANT i64 16
     %addr:gpr(p0) = G_PTR_ADD %copy, %cst(s64)
     %load:gpr(s64) = G_LOAD %addr(p0) :: (volatile load (s64))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -130,7 +130,7 @@ body:             |
     %cst:gpr(s64) = G_CONSTANT i64 -16
     %addr:gpr(p0) = G_PTR_ADD %copy, %cst(s64)
     %load:gpr(s64) = G_LOAD %addr(p0) :: (volatile load (s64))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -153,7 +153,7 @@ body:             |
     %cst:gpr(s64) = G_CONSTANT i64 0
     %addr:gpr(p0) = G_PTR_ADD %copy, %cst(s64)
     %load:gpr(s64) = G_LOAD %addr(p0) :: (volatile load (s64))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -177,7 +177,7 @@ body:             |
     %cst:gpr(s64) = G_CONSTANT i64 17
     %addr:gpr(p0) = G_PTR_ADD %copy, %cst(s64)
     %load:gpr(s64) = G_LOAD %addr(p0) :: (volatile load (s64))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -208,4 +208,4 @@ body:             |
     %cst:gpr(s64) = G_CONSTANT i64 1118208
     %addr:gpr(p0) = G_PTR_ADD %copy, %cst(s64)
     %load:gpr(s64) = G_LOAD %addr(p0) :: (volatile load (s64))
-    RET_ReallyLR 0
+    RET_ReallyLR

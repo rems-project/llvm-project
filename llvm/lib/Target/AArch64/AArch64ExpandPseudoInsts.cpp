@@ -1404,23 +1404,27 @@ bool AArch64ExpandPseudo::expandMI(MachineBasicBlock &MBB,
     return true;
   }
 
+  case AArch64::RET_ReallyLRClear:
+  case AArch64::CRET_ReallyLRClear:
   case AArch64::RET_ReallyLR:
   case AArch64::CRET_ReallyLR: {
+    if (Opcode == AArch64::RET_ReallyLRClear ||
+        Opcode == AArch64::CRET_ReallyLRClear)
+      clearUnusedArgRegisters(*MBB.getParent(), MBBI, true);
+
+    bool CapRet = (Opcode == AArch64::CRET_ReallyLR ||
+                   Opcode == AArch64::CRET_ReallyLRClear);
+    unsigned Opc =
+        CapRet
+            ? (MCTargetOptions::integerReturns() ? AArch64::FakeCapReturn
+                                                 : AArch64::CapReturn)
+            : AArch64::RET;
     // Hiding the LR use with RET_ReallyLR may lead to extra kills in the
     // function and missing live-ins. We are fine in practice because callee
     // saved register handling ensures the register value is restored before
     // RET, but we need the undef flag here to appease the MachineVerifier
     // liveness checks.
-    uint64_t ClearRegs = MI.getOperand(0).getImm();
-    if (ClearRegs != 0 )
-      clearUnusedArgRegisters(*MBB.getParent(), MBBI, true);
-
-    unsigned Opc =
-        Opcode == AArch64::CRET_ReallyLR
-            ? (MCTargetOptions::integerReturns() ? AArch64::FakeCapReturn
-                                                 : AArch64::CapReturn)
-            : AArch64::RET;
-    unsigned LR = Opcode == AArch64::CRET_ReallyLR ? AArch64::CLR : AArch64::LR;
+    unsigned LR = CapRet ? AArch64::CLR : AArch64::LR;
     MachineInstrBuilder MIB =
         BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(Opc))
           .addReg(LR, RegState::Undef);

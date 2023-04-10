@@ -52,7 +52,7 @@ body:             |
     %0:fpr(s64) = COPY $d0
     %1:gpr(p0) = G_FRAME_INDEX %stack.0.alloca
     G_STORE %0(s64), %1(p0) :: (store (s32) into %ir.alloca)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -81,7 +81,7 @@ body:             |
     %0:fpr(s64) = COPY $d0
     %1:gpr(p0) = G_FRAME_INDEX %stack.0.alloca
     G_STORE %0(s64), %1(p0) :: (store (s16) into %ir.alloca)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -110,6 +110,6 @@ body:             |
     %0:fpr(s64) = COPY $d0
     %1:gpr(p0) = G_FRAME_INDEX %stack.0.alloca
     G_STORE %0(s64), %1(p0) :: (store (s8) into %ir.alloca)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

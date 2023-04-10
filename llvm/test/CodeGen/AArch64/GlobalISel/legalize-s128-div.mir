@@ -48,7 +48,7 @@ body:             |
     %3:_(s128) = G_LOAD %1(p0) :: (load (s128) from %ir.v2ptr)
     %4:_(s128) = G_UDIV %2, %3
     G_STORE %4(s128), %0(p0) :: (store (s128) into %ir.v1ptr)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -90,6 +90,6 @@ body:             |
     %3:_(s128) = G_LOAD %1(p0) :: (load (s128) from %ir.v2ptr)
     %4:_(s128) = G_SDIV %2, %3
     G_STORE %4(s128), %0(p0) :: (store (s128) into %ir.v1ptr)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

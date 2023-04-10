@@ -24,12 +24,12 @@ body:             |
     ; CHECK: [[COPY8:%[0-9]+]]:fpr(s16) = COPY [[TRUNC]](s16)
     ; CHECK: [[BUILD_VECTOR:%[0-9]+]]:fpr(<8 x s16>) = G_BUILD_VECTOR [[COPY1]](s16), [[COPY2]](s16), [[COPY3]](s16), [[COPY4]](s16), [[COPY5]](s16), [[COPY6]](s16), [[COPY7]](s16), [[COPY8]](s16)
     ; CHECK: $q0 = COPY [[BUILD_VECTOR]](<8 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:_(s32) = COPY $w0
     %1:_(s16) = G_TRUNC %0(s32)
     %2:_(<8 x s16>) = G_BUILD_VECTOR %1(s16), %1(s16), %1(s16), %1(s16), %1(s16), %1(s16), %1(s16), %1(s16)
     $q0 = COPY %2(<8 x s16>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -54,7 +54,7 @@ body:             |
     ; CHECK: [[C8:%[0-9]+]]:gpr(s8) = G_CONSTANT i8 55
     ; CHECK: [[BUILD_VECTOR:%[0-9]+]]:fpr(<16 x s8>) = G_BUILD_VECTOR [[C]](s8), [[C1]](s8), [[C2]](s8), [[C3]](s8), [[C4]](s8), [[C]](s8), [[C1]](s8), [[C5]](s8), [[C6]](s8), [[C4]](s8), [[C]](s8), [[C7]](s8), [[C2]](s8), [[C3]](s8), [[C4]](s8), [[C8]](s8)
     ; CHECK: $q0 = COPY [[BUILD_VECTOR]](<16 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %1:_(s8) = G_CONSTANT i8 4
     %2:_(s8) = G_CONSTANT i8 10
     %3:_(s8) = G_CONSTANT i8 3
@@ -66,7 +66,7 @@ body:             |
     %9:_(s8) = G_CONSTANT i8 55
     %0:_(<16 x s8>) = G_BUILD_VECTOR %1(s8), %2(s8), %3(s8), %4(s8), %5(s8), %1(s8), %2(s8), %6(s8), %7(s8), %5(s8), %1(s8), %8(s8), %3(s8), %4(s8), %5(s8), %9(s8)
     $q0 = COPY %0(<16 x s8>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -96,7 +96,7 @@ body:             |
     ; CHECK: [[LOAD1:%[0-9]+]]:fpr(s32) = G_LOAD [[PTR_ADD1]](p0) :: (load (s32))
     ; CHECK: [[BUILD_VECTOR:%[0-9]+]]:fpr(<2 x s32>) = G_BUILD_VECTOR [[LOAD]](s32), [[LOAD1]](s32)
     ; CHECK: $d0 = COPY [[BUILD_VECTOR]](<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(p0) = COPY $x0
     %4:_(s64) = G_CONSTANT i64 328
     %5:_(p0) = G_PTR_ADD %0, %4(s64)
@@ -106,6 +106,6 @@ body:             |
     %20:_(s32) = G_LOAD %7(p0) :: (load (s32))
     %21:_(<2 x s32>) = G_BUILD_VECTOR %15(s32), %20(s32)
     $d0 = COPY %21(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...

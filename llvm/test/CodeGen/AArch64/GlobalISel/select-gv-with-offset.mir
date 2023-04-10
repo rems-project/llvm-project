@@ -22,17 +22,17 @@ body:             |
     ; LARGE: [[MOVKXi1:%[0-9]+]]:gpr64 = MOVKXi [[MOVKXi]], target-flags(aarch64-g2, aarch64-nc) @g + 1, 32
     ; LARGE: %g:gpr64 = MOVKXi [[MOVKXi1]], target-flags(aarch64-g3) @g + 1, 48
     ; LARGE: $x0 = COPY %g
-    ; LARGE: RET_ReallyLR 0, implicit $x0
+    ; LARGE: RET_ReallyLR implicit $x0
     ; SMALL-LABEL: name: select_gv_with_offset
     ; SMALL: liveins: $x0
     ; SMALL: %g:gpr64common = MOVaddr target-flags(aarch64-page) @g + 1, target-flags(aarch64-pageoff, aarch64-nc) @g + 1
     ; SMALL: $x0 = COPY %g
-    ; SMALL: RET_ReallyLR 0, implicit $x0
+    ; SMALL: RET_ReallyLR implicit $x0
     ; TINY-LABEL: name: select_gv_with_offset
     ; TINY: liveins: $x0
     ; TINY: %g:gpr64 = ADR @g + 1
     ; TINY: $x0 = COPY %g
-    ; TINY: RET_ReallyLR 0, implicit $x0
+    ; TINY: RET_ReallyLR implicit $x0
     %g:gpr(p0) = G_GLOBAL_VALUE @g + 1
     $x0 = COPY %g(p0)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0

@@ -13,7 +13,7 @@ define float @test_fmuladd(float %x, float %y, float %z) {
   ; FPFAST:   [[COPY2:%[0-9]+]]:_(s32) = COPY $s2
   ; FPFAST:   [[FMA:%[0-9]+]]:_(s32) = G_FMA [[COPY]], [[COPY1]], [[COPY2]]
   ; FPFAST:   $s0 = COPY [[FMA]](s32)
-  ; FPFAST:   RET_ReallyLR 0, implicit $s0
+  ; FPFAST:   RET_ReallyLR implicit $s0
   ; FPOFF-LABEL: name: test_fmuladd
   ; FPOFF: bb.1 (%ir-block.0):
   ; FPOFF:   liveins: $s0, $s1, $s2
@@ -23,7 +23,7 @@ define float @test_fmuladd(float %x, float %y, float %z) {
   ; FPOFF:   [[FMUL:%[0-9]+]]:_(s32) = G_FMUL [[COPY]], [[COPY1]]
   ; FPOFF:   [[FADD:%[0-9]+]]:_(s32) = G_FADD [[FMUL]], [[COPY2]]
   ; FPOFF:   $s0 = COPY [[FADD]](s32)
-  ; FPOFF:   RET_ReallyLR 0, implicit $s0
+  ; FPOFF:   RET_ReallyLR implicit $s0
   %res = call float @llvm.fmuladd.f32(float %x, float %y, float %z)
   ret float %res
 }

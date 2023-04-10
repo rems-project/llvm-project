@@ -29,5 +29,5 @@ body: |
     G_STORE %2(s32), %0(p0) :: (store (s32), align 2, addrspace 3)
     ; addrspace 0 is accepted by the parser but not printed
     G_STORE %2(s32), %0(p0) :: (store (s32), addrspace 0)
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...

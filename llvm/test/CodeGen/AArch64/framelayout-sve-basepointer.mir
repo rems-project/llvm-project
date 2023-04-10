@@ -19,5 +19,5 @@ body: |
   bb.0:
     liveins: $x0
     STRXui $x0, %stack.1, 0
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...

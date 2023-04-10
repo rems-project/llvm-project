@@ -48,7 +48,7 @@ body:             |
     ; CHECK: [[ADDSWrr:%[0-9]+]]:gpr32 = ADDSWrr [[COPY]], [[COPY1]], implicit-def $nzcv
     ; CHECK: [[CSINCWr:%[0-9]+]]:gpr32 = CSINCWr [[COPY2]], $wzr, 0, implicit $nzcv
     ; CHECK: $w0 = COPY [[CSINCWr]]
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %0:gpr(s32) = COPY $w0
     %1:gpr(s32) = COPY $w1
     %2:gpr(s32) = G_CONSTANT i32 0
@@ -58,7 +58,7 @@ body:             |
     %4:gpr(s1) = G_TRUNC %7(s32)
     %5:gpr(s32) = G_SELECT %4(s1), %6, %2
     $w0 = COPY %5(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -79,7 +79,7 @@ body:             |
     ; CHECK: [[ADDSWrr:%[0-9]+]]:gpr32 = ADDSWrr [[COPY]], [[COPY1]], implicit-def $nzcv
     ; CHECK: [[CSINCWr:%[0-9]+]]:gpr32 = CSINCWr [[COPY2]], $wzr, 0, implicit $nzcv
     ; CHECK: $w0 = COPY [[CSINCWr]]
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %0:gpr(s32) = COPY $w0
     %1:gpr(s32) = COPY $w1
     %2:gpr(s32) = G_CONSTANT i32 0
@@ -89,7 +89,7 @@ body:             |
     %4:gpr(s1) = G_TRUNC %7(s32)
     %5:gpr(s32) = G_SELECT %4(s1), %6, %2
     $w0 = COPY %5(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -111,7 +111,7 @@ body:             |
     ; CHECK: [[SUBSWrr1:%[0-9]+]]:gpr32 = SUBSWrr [[COPY]], [[SUBSWrr]], implicit-def $nzcv
     ; CHECK: [[CSINCWr:%[0-9]+]]:gpr32 = CSINCWr [[COPY2]], $wzr, 10, implicit $nzcv
     ; CHECK: $w0 = COPY [[CSINCWr]]
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %0:gpr(s32) = COPY $w0
     %1:gpr(s32) = COPY $w1
     %2:gpr(s32) = G_CONSTANT i32 0
@@ -121,7 +121,7 @@ body:             |
     %4:gpr(s1) = G_TRUNC %7(s32)
     %5:gpr(s32) = G_SELECT %4(s1), %6, %2
     $w0 = COPY %5(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -143,7 +143,7 @@ body:             |
     ; CHECK: [[SUBSWrr1:%[0-9]+]]:gpr32 = SUBSWrr [[SUBSWrr]], [[COPY1]], implicit-def $nzcv
     ; CHECK: [[CSINCWr:%[0-9]+]]:gpr32 = CSINCWr [[COPY2]], $wzr, 10, implicit $nzcv
     ; CHECK: $w0 = COPY [[CSINCWr]]
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %0:gpr(s32) = COPY $w0
     %1:gpr(s32) = COPY $w1
     %2:gpr(s32) = G_CONSTANT i32 0
@@ -153,7 +153,7 @@ body:             |
     %4:gpr(s1) = G_TRUNC %7(s32)
     %5:gpr(s32) = G_SELECT %4(s1), %6, %2
     $w0 = COPY %5(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -174,7 +174,7 @@ body:             |
     ; CHECK: [[ADDSXrr:%[0-9]+]]:gpr64 = ADDSXrr [[COPY]], [[COPY1]], implicit-def $nzcv
     ; CHECK: [[CSINCXr:%[0-9]+]]:gpr64 = CSINCXr [[COPY2]], $xzr, 0, implicit $nzcv
     ; CHECK: $x0 = COPY [[CSINCXr]]
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %0:gpr(s64) = COPY $x0
     %1:gpr(s64) = COPY $x1
     %2:gpr(s64) = G_CONSTANT i64 0
@@ -184,7 +184,7 @@ body:             |
     %4:gpr(s1) = G_TRUNC %7(s32)
     %5:gpr(s64) = G_SELECT %4(s1), %6, %2
     $x0 = COPY %5(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -205,7 +205,7 @@ body:             |
     ; CHECK: [[ADDSXrr:%[0-9]+]]:gpr64 = ADDSXrr [[COPY]], [[COPY1]], implicit-def $nzcv
     ; CHECK: [[CSINCXr:%[0-9]+]]:gpr64 = CSINCXr [[COPY2]], $xzr, 0, implicit $nzcv
     ; CHECK: $x0 = COPY [[CSINCXr]]
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %0:gpr(s64) = COPY $x0
     %1:gpr(s64) = COPY $x1
     %2:gpr(s64) = G_CONSTANT i64 0
@@ -215,7 +215,7 @@ body:             |
     %4:gpr(s1) = G_TRUNC %7(s32)
     %5:gpr(s64) = G_SELECT %4(s1), %6, %2
     $x0 = COPY %5(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -237,7 +237,7 @@ body:             |
     ; CHECK: [[SUBSXrr1:%[0-9]+]]:gpr64 = SUBSXrr [[COPY]], [[SUBSXrr]], implicit-def $nzcv
     ; CHECK: [[CSINCXr:%[0-9]+]]:gpr64 = CSINCXr [[COPY2]], $xzr, 10, implicit $nzcv
     ; CHECK: $x0 = COPY [[CSINCXr]]
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %0:gpr(s64) = COPY $x0
     %1:gpr(s64) = COPY $x1
     %2:gpr(s64) = G_CONSTANT i64 0
@@ -247,7 +247,7 @@ body:             |
     %4:gpr(s1) = G_TRUNC %7(s32)
     %5:gpr(s64) = G_SELECT %4(s1), %6, %2
     $x0 = COPY %5(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -269,7 +269,7 @@ body:             |
     ; CHECK: [[SUBSXrr1:%[0-9]+]]:gpr64 = SUBSXrr [[SUBSXrr]], [[COPY1]], implicit-def $nzcv
     ; CHECK: [[CSINCXr:%[0-9]+]]:gpr64 = CSINCXr [[COPY2]], $xzr, 10, implicit $nzcv
     ; CHECK: $x0 = COPY [[CSINCXr]]
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %0:gpr(s64) = COPY $x0
     %1:gpr(s64) = COPY $x1
     %2:gpr(s64) = G_CONSTANT i64 0
@@ -279,7 +279,7 @@ body:             |
     %4:gpr(s1) = G_TRUNC %7(s32)
     %5:gpr(s64) = G_SELECT %4(s1), %6, %2
     $x0 = COPY %5(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -298,7 +298,7 @@ body:             |
     ; CHECK: [[ANDSWrr:%[0-9]+]]:gpr32 = ANDSWrr [[COPY1]], [[COPY]], implicit-def $nzcv
     ; CHECK: [[CSINCWr:%[0-9]+]]:gpr32 = CSINCWr [[COPY1]], $wzr, 1, implicit $nzcv
     ; CHECK: $w0 = COPY [[CSINCWr]]
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %0:gpr(s32) = COPY $w0
     %1:gpr(s32) = COPY $w1
     %2:gpr(s32) = G_CONSTANT i32 0
@@ -309,7 +309,7 @@ body:             |
     %4:gpr(s1) = G_TRUNC %7(s32)
     %5:gpr(s32) = G_SELECT %4(s1), %6, %2
     $w0 = COPY %5(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -328,7 +328,7 @@ body:             |
     ; CHECK: [[ANDSXrr:%[0-9]+]]:gpr64 = ANDSXrr [[COPY1]], [[COPY]], implicit-def $nzcv
     ; CHECK: [[CSINCXr:%[0-9]+]]:gpr64 = CSINCXr [[COPY1]], $xzr, 1, implicit $nzcv
     ; CHECK: $x0 = COPY [[CSINCXr]]
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %0:gpr(s64) = COPY $x0
     %1:gpr(s64) = COPY $x1
     %2:gpr(s64) = G_CONSTANT i64 0
@@ -339,7 +339,7 @@ body:             |
     %4:gpr(s1) = G_TRUNC %7(s32)
     %5:gpr(s64) = G_SELECT %4(s1), %6, %2
     $x0 = COPY %5(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -359,7 +359,7 @@ body:             |
     ; CHECK: [[SUBSWri:%[0-9]+]]:gpr32 = SUBSWri [[ANDWrr]], 0, 0, implicit-def $nzcv
     ; CHECK: [[CSINCWr:%[0-9]+]]:gpr32 = CSINCWr [[COPY1]], $wzr, 9, implicit $nzcv
     ; CHECK: $w0 = COPY [[CSINCWr]]
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %0:gpr(s32) = COPY $w0
     %1:gpr(s32) = COPY $w1
     %2:gpr(s32) = G_CONSTANT i32 0
@@ -370,7 +370,7 @@ body:             |
     %4:gpr(s1) = G_TRUNC %7(s32)
     %5:gpr(s32) = G_SELECT %4(s1), %6, %2
     $w0 = COPY %5(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -390,7 +390,7 @@ body:             |
     ; CHECK: [[SUBSWri:%[0-9]+]]:gpr32 = SUBSWri [[ANDWrr]], 42, 0, implicit-def $nzcv
     ; CHECK: [[CSINCWr:%[0-9]+]]:gpr32 = CSINCWr [[COPY1]], $wzr, 9, implicit $nzcv
     ; CHECK: $w0 = COPY [[CSINCWr]]
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %0:gpr(s32) = COPY $w0
     %1:gpr(s32) = COPY $w1
     %2:gpr(s32) = G_CONSTANT i32 0
@@ -401,7 +401,7 @@ body:             |
     %4:gpr(s1) = G_TRUNC %7(s32)
     %5:gpr(s32) = G_SELECT %4(s1), %6, %2
     $w0 = COPY %5(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -419,7 +419,7 @@ body:             |
     ; CHECK: [[ANDSWri:%[0-9]+]]:gpr32 = ANDSWri [[COPY]], 1, implicit-def $nzcv
     ; CHECK: [[CSINCWr:%[0-9]+]]:gpr32 = CSINCWr $wzr, $wzr, 1, implicit $nzcv
     ; CHECK: $w0 = COPY [[CSINCWr]]
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %0:gpr(s32) = COPY $w0
     %1:gpr(s32) = COPY $w1
     %2:gpr(s32) = G_CONSTANT i32 0
@@ -432,7 +432,7 @@ body:             |
     %5:gpr(s32) = G_AND %1, %4
     %6:gpr(s32) = G_ICMP intpred(eq), %5(s32), %2
     $w0 = COPY %6(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 
 ...
@@ -452,7 +452,7 @@ body:             |
     ; CHECK: [[ANDSWrr:%[0-9]+]]:gpr32 = ANDSWrr [[COPY]], [[MOVi32imm]], implicit-def $nzcv
     ; CHECK: [[CSINCWr:%[0-9]+]]:gpr32 = CSINCWr $wzr, $wzr, 1, implicit $nzcv
     ; CHECK: $w0 = COPY [[CSINCWr]]
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %0:gpr(s32) = COPY $w0
     %1:gpr(s32) = COPY $w1
     %2:gpr(s32) = G_CONSTANT i32 0
@@ -465,7 +465,7 @@ body:             |
     %5:gpr(s32) = G_AND %1, %4
     %6:gpr(s32) = G_ICMP intpred(eq), %5(s32), %2
     $w0 = COPY %6(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -484,7 +484,7 @@ body:             |
     ; CHECK: [[SUBSXrr:%[0-9]+]]:gpr64 = SUBSXrr [[COPY]], [[COPY1]], implicit-def $nzcv
     ; CHECK: [[CSINCWr:%[0-9]+]]:gpr32 = CSINCWr $wzr, $wzr, 1, implicit $nzcv
     ; CHECK: $w0 = COPY [[CSINCWr]]
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %0:gpr(s64) = COPY $x0
     %1:gpr(s64) = COPY $x1
     ; When we find the defs of the LHS and RHS of the compare, we walk over
@@ -492,7 +492,7 @@ body:             |
     ; register.
     %7:gpr(s32) = G_ICMP intpred(eq), %0, %1
     $w0 = COPY %7(s32)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -513,7 +513,7 @@ body:             |
     ; CHECK: [[ANDSXrs:%[0-9]+]]:gpr64 = ANDSXrs %zero, %copy, 16, implicit-def $nzcv
     ; CHECK: %select:gpr64 = CSINCXr %zero, $xzr, 1, implicit $nzcv
     ; CHECK: $x0 = COPY %select
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %copy:gpr(s64) = COPY $x1
     %zero:gpr(s64) = G_CONSTANT i64 0
     %one:gpr(s64) = G_CONSTANT i64 1
@@ -524,7 +524,7 @@ body:             |
     %cmp_trunc:gpr(s1) = G_TRUNC %cmp(s32)
     %select:gpr(s64) = G_SELECT %cmp_trunc(s1), %one, %zero
     $x0 = COPY %select(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -545,7 +545,7 @@ body:             |
     ; CHECK: [[ANDSWrs:%[0-9]+]]:gpr32 = ANDSWrs %zero, %copy, 16, implicit-def $nzcv
     ; CHECK: %select:gpr32 = CSINCWr %zero, $wzr, 1, implicit $nzcv
     ; CHECK: $w0 = COPY %select
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %copy:gpr(s32) = COPY $w1
     %zero:gpr(s32) = G_CONSTANT i32 0
     %one:gpr(s32) = G_CONSTANT i32 1
@@ -556,7 +556,7 @@ body:             |
     %cmp_trunc:gpr(s1) = G_TRUNC %cmp(s32)
     %select:gpr(s32) = G_SELECT %cmp_trunc(s1), %one, %zero
     $w0 = COPY %select(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -575,14 +575,14 @@ body:             |
     ; CHECK: [[SUBSWri:%[0-9]+]]:gpr32 = SUBSWri %reg0, 1, 0, implicit-def $nzcv
     ; CHECK: %cmp:gpr32 = CSINCWr $wzr, $wzr, 0, implicit $nzcv
     ; CHECK: $w0 = COPY %cmp
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %reg0:gpr(s32) = COPY $w0
     %negative_one:gpr(s32) = G_CONSTANT i32 -1
     %zero:gpr(s32) = G_CONSTANT i32 0
     %sub:gpr(s32) = G_SUB %zero, %negative_one
     %cmp:gpr(s32) = G_ICMP intpred(ne), %reg0(s32), %sub
     $w0 = COPY %cmp(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -603,7 +603,7 @@ body:             |
     ; CHECK: [[ADDSXrx:%[0-9]+]]:gpr64 = ADDSXrx %reg0, %reg1, 50, implicit-def $nzcv
     ; CHECK: %cmp:gpr32 = CSINCWr $wzr, $wzr, 0, implicit $nzcv
     ; CHECK: $w0 = COPY %cmp
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %reg0:gpr(s64) = COPY $x0
     %zero:gpr(s64) = G_CONSTANT i64 0
     %sub:gpr(s64) = G_SUB %zero, %reg0
@@ -615,4 +615,4 @@ body:             |
 
     %cmp:gpr(s32) = G_ICMP intpred(ne), %sub(s64), %shift
     $w0 = COPY %cmp(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0

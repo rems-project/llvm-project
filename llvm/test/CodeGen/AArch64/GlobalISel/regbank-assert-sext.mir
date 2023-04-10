@@ -21,11 +21,11 @@ body:             |
     ; CHECK: %copy:gpr(s32) = COPY $w0
     ; CHECK: %copy_assert_sext:gpr(s32) = G_ASSERT_SEXT %copy, 16
     ; CHECK: $w1 = COPY %copy_assert_sext(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w1
+    ; CHECK: RET_ReallyLR implicit $w1
     %copy:_(s32) = COPY $w0
     %copy_assert_sext:_(s32) = G_ASSERT_SEXT %copy(s32), 16
     $w1 = COPY %copy_assert_sext(s32)
-    RET_ReallyLR 0, implicit $w1
+    RET_ReallyLR implicit $w1
 
 ...
 ---
@@ -44,11 +44,11 @@ body:             |
     ; CHECK: %copy:gpr(<2 x s32>) = COPY $x0
     ; CHECK: %copy_assert_sext:gpr(<2 x s32>) = G_ASSERT_SEXT %copy, 16
     ; CHECK: $x1 = COPY %copy_assert_sext(<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $x1
+    ; CHECK: RET_ReallyLR implicit $x1
     %copy:_(<2 x s32>) = COPY $x0
     %copy_assert_sext:_(<2 x s32>) = G_ASSERT_SEXT %copy(<2 x s32>), 16
     $x1 = COPY %copy_assert_sext(<2 x s32>)
-    RET_ReallyLR 0, implicit $x1
+    RET_ReallyLR implicit $x1
 
 ...
 ---
@@ -67,11 +67,11 @@ body:             |
     ; CHECK: %copy:fpr(s32) = COPY $s0
     ; CHECK: %copy_assert_sext:fpr(s32) = G_ASSERT_SEXT %copy, 16
     ; CHECK: $s1 = COPY %copy_assert_sext(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $s1
+    ; CHECK: RET_ReallyLR implicit $s1
     %copy:_(s32) = COPY $s0
     %copy_assert_sext:_(s32) = G_ASSERT_SEXT %copy(s32), 16
     $s1 = COPY %copy_assert_sext(s32)
-    RET_ReallyLR 0, implicit $s1
+    RET_ReallyLR implicit $s1
 
 ...
 ---
@@ -90,11 +90,11 @@ body:             |
     ; CHECK: %copy:fpr(<2 x s32>) = COPY $d0
     ; CHECK: %copy_assert_sext:fpr(<2 x s32>) = G_ASSERT_SEXT %copy, 16
     ; CHECK: $d1 = COPY %copy_assert_sext(<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $d1
+    ; CHECK: RET_ReallyLR implicit $d1
     %copy:_(<2 x s32>) = COPY $d0
     %copy_assert_sext:_(<2 x s32>) = G_ASSERT_SEXT %copy(<2 x s32>), 16
     $d1 = COPY %copy_assert_sext(<2 x s32>)
-    RET_ReallyLR 0, implicit $d1
+    RET_ReallyLR implicit $d1
 
 ...
 ---
@@ -111,11 +111,11 @@ body:             |
     ; CHECK: %copy:fpr(s32) = COPY $s0
     ; CHECK: %copy_assert_sext:fpr(s32) = G_ASSERT_SEXT %copy, 16
     ; CHECK: $w1 = COPY %copy_assert_sext(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w1
+    ; CHECK: RET_ReallyLR implicit $w1
     %copy:_(s32) = COPY $s0
     %copy_assert_sext:_(s32) = G_ASSERT_SEXT %copy(s32), 16
     $w1 = COPY %copy_assert_sext(s32)
-    RET_ReallyLR 0, implicit $w1
+    RET_ReallyLR implicit $w1
 
 ...
 ---
@@ -141,7 +141,7 @@ body:             |
     %copy:_(s32) = COPY $s0
     %copy_assert_sext:_(s32) = G_ASSERT_SEXT %copy(s32), 16
     G_STORE %copy_assert_sext(s32), %ptr(p0) :: (store (s32))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -166,7 +166,7 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr(s64) = COPY %gpr(s64)
     ; CHECK: %select:fpr(s64) = G_SELECT %cond(s1), %fpr_assert_sext, [[COPY]]
     ; CHECK: $d0 = COPY %select(s64)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %w0:_(s32) = COPY $w0
     %cond:_(s1) = G_TRUNC %w0(s32)
     %fpr:_(s64) = COPY $d0
@@ -174,7 +174,7 @@ body:             |
     %gpr:_(s64) = COPY $x1
     %select:_(s64) = G_SELECT %cond(s1), %fpr_assert_sext, %gpr
     $d0 = COPY %select(s64)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -290,7 +290,7 @@ body:             |
   ; CHECK: bb.1:
   ; CHECK:   %copy_assert_sext:gpr(s32) = G_ASSERT_SEXT %copy, 16
   ; CHECK:   $w1 = COPY %copy_assert_sext(s32)
-  ; CHECK:   RET_ReallyLR 0, implicit $w1
+  ; CHECK:   RET_ReallyLR implicit $w1
   bb.0:
     successors: %bb.1
     liveins: $w0, $w1
@@ -300,7 +300,7 @@ body:             |
     ; The G_ASSERT_SEXT should end up on a GPR.
     %copy_assert_sext:_(s32) = G_ASSERT_SEXT %copy(s32), 16
     $w1 = COPY %copy_assert_sext
-    RET_ReallyLR 0, implicit $w1
+    RET_ReallyLR implicit $w1
 
 ...
 ---
@@ -318,7 +318,7 @@ body:             |
   ; CHECK: bb.1:
   ; CHECK:   %copy_assert_sext:fpr(s32) = G_ASSERT_SEXT %copy, 16
   ; CHECK:   $s1 = COPY %copy_assert_sext(s32)
-  ; CHECK:   RET_ReallyLR 0, implicit $s1
+  ; CHECK:   RET_ReallyLR implicit $s1
   bb.0:
     successors: %bb.1
     liveins: $s0, $s1
@@ -328,7 +328,7 @@ body:             |
     ; The G_ASSERT_SEXT should end up on a FPR.
     %copy_assert_sext:_(s32) = G_ASSERT_SEXT %copy(s32), 16
     $s1 = COPY %copy_assert_sext
-    RET_ReallyLR 0, implicit $s1
+    RET_ReallyLR implicit $s1
 
 
 ...

@@ -104,7 +104,7 @@ body:             |
   ; SINK1: bb.2.for.cond.cleanup:
   ; SINK1:   [[PHI:%[0-9]+]]:gpr32all = PHI [[COPY]], %bb.0, %4, %bb.3
   ; SINK1:   $w0 = COPY [[PHI]]
-  ; SINK1:   RET_ReallyLR 0, implicit $w0
+  ; SINK1:   RET_ReallyLR implicit $w0
   ; SINK1: bb.3.for.body:
   ; SINK1:   successors: %bb.2(0x04000000), %bb.3(0x7c000000)
   ; SINK1:   [[PHI1:%[0-9]+]]:gpr32sp = PHI [[COPY]], %bb.1, %5, %bb.3
@@ -131,7 +131,7 @@ body:             |
   ; SINK2: bb.2.for.cond.cleanup:
   ; SINK2:   [[PHI:%[0-9]+]]:gpr32all = PHI [[COPY]], %bb.0, %4, %bb.3
   ; SINK2:   $w0 = COPY [[PHI]]
-  ; SINK2:   RET_ReallyLR 0, implicit $w0
+  ; SINK2:   RET_ReallyLR implicit $w0
   ; SINK2: bb.3.for.body:
   ; SINK2:   successors: %bb.2(0x04000000), %bb.3(0x7c000000)
   ; SINK2:   [[PHI1:%[0-9]+]]:gpr32sp = PHI [[COPY]], %bb.1, %5, %bb.3
@@ -161,7 +161,7 @@ body:             |
   bb.2.for.cond.cleanup:
     %1:gpr32all = PHI %6, %bb.0, %4, %bb.3
     $w0 = COPY %1
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
   bb.3.for.body:
     successors: %bb.2(0x04000000), %bb.3(0x7c000000)

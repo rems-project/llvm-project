@@ -49,6 +49,6 @@ body:             |
     %52 = SUBSWri %49, 0, 0, implicit-def $nzcv
     %53 = CSNEGWr %49, %49, 5, implicit $nzcv
     Bcc 1, %bb.0, implicit $nzcv
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

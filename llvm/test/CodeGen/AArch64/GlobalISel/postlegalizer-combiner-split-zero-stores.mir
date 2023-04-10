@@ -26,7 +26,7 @@ body:             |
     %zero:_(s64) = G_CONSTANT i64 0
     %zerovec:_(<2 x s64>) = G_BUILD_VECTOR %zero, %zero
     G_STORE %zerovec(<2 x s64>), %0(p0) :: (store (<2 x s64>))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -51,7 +51,7 @@ body:             |
     %zero:_(s32) = G_CONSTANT i32 0
     %zerovec:_(<4 x s32>) = G_BUILD_VECTOR %zero, %zero, %zero, %zero
     G_STORE %zerovec(<4 x s32>), %0(p0) :: (store (<4 x s32>))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -76,7 +76,7 @@ body:             |
     %zero:_(s16) = G_CONSTANT i16 0
     %zerovec:_(<8 x s16>) = G_BUILD_VECTOR %zero, %zero, %zero, %zero, %zero, %zero, %zero, %zero
     G_STORE %zerovec(<8 x s16>), %0(p0) :: (store (<8 x s16>))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 
@@ -101,7 +101,7 @@ body:             |
     %zero:_(s32) = G_CONSTANT i32 0
     %zerovec:_(<2 x s32>) = G_BUILD_VECTOR %zero, %zero
     G_STORE %zerovec(<2 x s32>), %0(p0) :: (store (<2 x s32>))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -126,7 +126,7 @@ body:             |
     %zerovec:_(<2 x s64>) = G_BUILD_VECTOR %zero, %zero
     G_STORE %zerovec(<2 x s64>), %0(p0) :: (store (<2 x s64>))
     $q0 = COPY %zerovec
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -149,7 +149,7 @@ body:             |
     %zero:_(s64) = G_CONSTANT i64 0
     %zerovec:_(<2 x s64>) = G_BUILD_VECTOR %zero, %zero
     G_STORE %zerovec(<2 x s64>), %0(p0) :: (store (<2 x s32>))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -172,7 +172,7 @@ body:             |
     %zero:_(s64) = G_CONSTANT i64 0
     %zerovec:_(<2 x s64>) = G_BUILD_VECTOR %zero, %zero
     G_STORE %zerovec(<2 x s64>), %0(p0) :: (volatile store (<2 x s64>))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -195,6 +195,6 @@ body:             |
     %0:_(p0) = COPY $x0
     %zero:_(s128) = G_CONSTANT i128 0
     G_STORE %zero(s128), %0(p0) :: (store (s128))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

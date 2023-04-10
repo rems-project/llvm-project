@@ -78,7 +78,7 @@ stack:
   - { id: 1, stack-id: default, size: 16, alignment: 8 }
 body:             |
   bb.0.entry:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ---
 ...
 # +----------+
@@ -126,7 +126,7 @@ body:             |
   bb.0.entry:
     $x20 = IMPLICIT_DEF
     $x21 = IMPLICIT_DEF
-    RET_ReallyLR 0
+    RET_ReallyLR
 ---
 ...
 # +----------+
@@ -166,7 +166,7 @@ stack:
   - { id: 1, stack-id: default, size: 16, alignment: 32 }
 body:             |
   bb.0.entry:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ---
 ...
 # +----------+
@@ -223,7 +223,7 @@ body:             |
     STR_ZXI $z1, %stack.1, 0
     STR_PXI $p0, %stack.2, 0
 
-    RET_ReallyLR 0
+    RET_ReallyLR
 ---
 ...
 # +-----------+
@@ -281,7 +281,7 @@ body:             |
     STR_ZXI $z1, %stack.1, 0
     STR_PXI $p0, %stack.2, 0
 
-    RET_ReallyLR 0
+    RET_ReallyLR
 ---
 ...
 # +-----------+
@@ -328,7 +328,7 @@ body:             |
     liveins: $x0
 
     $x0 = LDRXui %fixed-stack.0, 0
-    RET_ReallyLR 0
+    RET_ReallyLR
 ---
 ...
 # Test that the address to access an SVE data vector at an offset that
@@ -398,7 +398,7 @@ body:             |
     STR_ZXI $z0, %stack.0, 0
     STR_PXI $p0, %stack.1, 0
 
-    RET_ReallyLR 0
+    RET_ReallyLR
 ---
 ...
 # Test that non-SVE objects are accessed from BP when there are
@@ -441,7 +441,7 @@ body:             |
 
     STRXui $xzr, %stack.1, 0
 
-    RET_ReallyLR 0
+    RET_ReallyLR
 ---
 ...
 # CHECK-LABEL: name: save_restore_pregs_sve
@@ -475,7 +475,7 @@ body:             |
     $p5 = IMPLICIT_DEF
     $p6 = IMPLICIT_DEF
 
-    RET_ReallyLR 0
+    RET_ReallyLR
 ---
 ...
 # CHECK-LABEL: name: save_restore_zregs_sve
@@ -517,7 +517,7 @@ body:             |
     $z9 = IMPLICIT_DEF
     $z10 = IMPLICIT_DEF
 
-    RET_ReallyLR 0
+    RET_ReallyLR
 ---
 ...
 # Test allocation/deallocation of the stack frame together with the
@@ -616,7 +616,7 @@ body:             |
     $x20 = IMPLICIT_DEF
     $x21 = IMPLICIT_DEF
 
-    RET_ReallyLR 0
+    RET_ReallyLR
 ---
 ...
 # Test allocation/deallocation of the stack frame together with the
@@ -703,7 +703,7 @@ body:             |
     $p14 = IMPLICIT_DEF
     $p15 = IMPLICIT_DEF
 
-    RET_ReallyLR 0
+    RET_ReallyLR
 ---
 # Frame layout should be:
 # +---------------------+ <- Old SP
@@ -777,7 +777,7 @@ body:             |
     $p4  = IMPLICIT_DEF
     $p15 = IMPLICIT_DEF
 
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ---
 # Make sure we account for the offset between the fp and the sve area, if it exists.
@@ -812,5 +812,5 @@ body:             |
 
     STR_ZXI $z0, %stack.0, 0
 
-    RET_ReallyLR 0
+    RET_ReallyLR
 ---

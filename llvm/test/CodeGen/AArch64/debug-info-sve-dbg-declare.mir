@@ -217,6 +217,6 @@ body:             |
     renamable $x4 = ADDXri %stack.9.localp1, 0, 0
     BL @bar, csr_aarch64_sve_aapcs, implicit-def dead $lr, implicit $sp, implicit killed $x0, implicit killed $x1, implicit killed $x2, implicit killed $x3, implicit killed $x4, implicit-def $sp, implicit-def $z0, debug-location !54
     ADJCALLSTACKUP 0, 0, implicit-def dead $sp, implicit $sp, debug-location !54
-    RET_ReallyLR 0, implicit killed $z0, debug-location !55
+    RET_ReallyLR implicit killed $z0, debug-location !55
 
 ...

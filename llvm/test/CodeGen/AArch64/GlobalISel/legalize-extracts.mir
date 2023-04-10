@@ -14,13 +14,13 @@ body: |
     ; CHECK: [[COPY:%[0-9]+]]:_(s64) = COPY $x0
     ; CHECK: [[EXTRACT:%[0-9]+]]:_(s32) = G_EXTRACT [[COPY]](s64), 32
     ; CHECK: $w0 = COPY [[EXTRACT]](s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %0:_(s64) = COPY $x0
     %1:_(s64) = COPY $x1
     %2:_(s128) = G_MERGE_VALUES %0, %1
     %3:_(s32) = G_EXTRACT %2, 32
     $w0 = COPY %3
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            p0_from_s128
@@ -33,11 +33,11 @@ body: |
     ; CHECK: %val:_(s128) = COPY $q0
     ; CHECK: %extract:_(p0) = G_EXTRACT %val(s128), 0
     ; CHECK: $x0 = COPY %extract(p0)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %val:_(s128) = COPY $q0
     %extract:_(p0) = G_EXTRACT %val, 0
     $x0 = COPY %extract
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...
 ---
 name:            s64_from_s128
@@ -50,11 +50,11 @@ body: |
     ; CHECK: %val:_(s128) = COPY $q0
     ; CHECK: %extract:_(s64) = G_EXTRACT %val(s128), 0
     ; CHECK: $x0 = COPY %extract(s64)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %val:_(s128) = COPY $q0
     %extract:_(s64) = G_EXTRACT %val, 0
     $x0 = COPY %extract
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...
 ---
 name:            s32_from_s128
@@ -67,11 +67,11 @@ body: |
     ; CHECK: %val:_(s128) = COPY $q0
     ; CHECK: %extract:_(s32) = G_EXTRACT %val(s128), 0
     ; CHECK: $w0 = COPY %extract(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %val:_(s128) = COPY $q0
     %extract:_(s32) = G_EXTRACT %val, 0
     $w0 = COPY %extract
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            s32_from_s64
@@ -84,11 +84,11 @@ body: |
     ; CHECK: %val:_(s64) = COPY $x0
     ; CHECK: %extract:_(s32) = G_EXTRACT %val(s64), 0
     ; CHECK: $w0 = COPY %extract(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %val:_(s64) = COPY $x0
     %extract:_(s32) = G_EXTRACT %val, 0
     $w0 = COPY %extract
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            s32_from_p0
@@ -101,11 +101,11 @@ body: |
     ; CHECK: %val:_(p0) = COPY $x0
     ; CHECK: %extract:_(s32) = G_EXTRACT %val(p0), 0
     ; CHECK: $w0 = COPY %extract(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %val:_(p0) = COPY $x0
     %extract:_(s32) = G_EXTRACT %val, 0
     $w0 = COPY %extract
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            s16_from_s128
@@ -118,11 +118,11 @@ body: |
     ; CHECK: %val:_(s128) = COPY $q0
     ; CHECK: %extract:_(s16) = G_EXTRACT %val(s128), 0
     ; CHECK: $h0 = COPY %extract(s16)
-    ; CHECK: RET_ReallyLR 0, implicit $h0
+    ; CHECK: RET_ReallyLR implicit $h0
     %val:_(s128) = COPY $q0
     %extract:_(s16) = G_EXTRACT %val, 0
     $h0 = COPY %extract
-    RET_ReallyLR 0, implicit $h0
+    RET_ReallyLR implicit $h0
 ...
 ---
 name:            s16_from_s64
@@ -135,11 +135,11 @@ body: |
     ; CHECK: %val:_(s64) = COPY $x0
     ; CHECK: %extract:_(s16) = G_EXTRACT %val(s64), 0
     ; CHECK: $h0 = COPY %extract(s16)
-    ; CHECK: RET_ReallyLR 0, implicit $h0
+    ; CHECK: RET_ReallyLR implicit $h0
     %val:_(s64) = COPY $x0
     %extract:_(s16) = G_EXTRACT %val, 0
     $h0 = COPY %extract
-    RET_ReallyLR 0, implicit $h0
+    RET_ReallyLR implicit $h0
 ...
 ---
 name:            s16_from_s32
@@ -152,11 +152,11 @@ body: |
     ; CHECK: %val:_(s32) = COPY $w0
     ; CHECK: %extract:_(s16) = G_EXTRACT %val(s32), 0
     ; CHECK: $h0 = COPY %extract(s16)
-    ; CHECK: RET_ReallyLR 0, implicit $h0
+    ; CHECK: RET_ReallyLR implicit $h0
     %val:_(s32) = COPY $w0
     %extract:_(s16) = G_EXTRACT %val, 0
     $h0 = COPY %extract
-    RET_ReallyLR 0, implicit $h0
+    RET_ReallyLR implicit $h0
 ...
 ---
 name:            s8_from_s128
@@ -169,11 +169,11 @@ body: |
     ; CHECK: %val:_(s128) = COPY $q0
     ; CHECK: %extract:_(s8) = G_TRUNC %val(s128)
     ; CHECK: $b0 = COPY %extract(s8)
-    ; CHECK: RET_ReallyLR 0, implicit $b0
+    ; CHECK: RET_ReallyLR implicit $b0
     %val:_(s128) = COPY $q0
     %extract:_(s8) = G_EXTRACT %val, 0
     $b0 = COPY %extract
-    RET_ReallyLR 0, implicit $b0
+    RET_ReallyLR implicit $b0
 ...
 ---
 name:            s8_from_s64
@@ -186,11 +186,11 @@ body: |
     ; CHECK: %val:_(s64) = COPY $x0
     ; CHECK: %extract:_(s8) = G_TRUNC %val(s64)
     ; CHECK: $b0 = COPY %extract(s8)
-    ; CHECK: RET_ReallyLR 0, implicit $b0
+    ; CHECK: RET_ReallyLR implicit $b0
     %val:_(s64) = COPY $x0
     %extract:_(s8) = G_EXTRACT %val, 0
     $b0 = COPY %extract
-    RET_ReallyLR 0, implicit $b0
+    RET_ReallyLR implicit $b0
 ...
 ---
 name:            s8_from_s32
@@ -203,11 +203,11 @@ body: |
     ; CHECK: %val:_(s32) = COPY $w0
     ; CHECK: %extract:_(s8) = G_TRUNC %val(s32)
     ; CHECK: $b0 = COPY %extract(s8)
-    ; CHECK: RET_ReallyLR 0, implicit $b0
+    ; CHECK: RET_ReallyLR implicit $b0
     %val:_(s32) = COPY $w0
     %extract:_(s8) = G_EXTRACT %val, 0
     $b0 = COPY %extract
-    RET_ReallyLR 0, implicit $b0
+    RET_ReallyLR implicit $b0
 ...
 ---
 name:            s8_from_s16
@@ -221,11 +221,11 @@ body: |
     ; CHECK: [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT %val(s16)
     ; CHECK: %extract:_(s8) = G_TRUNC [[ANYEXT]](s32)
     ; CHECK: $b0 = COPY %extract(s8)
-    ; CHECK: RET_ReallyLR 0, implicit $b0
+    ; CHECK: RET_ReallyLR implicit $b0
     %val:_(s16) = COPY $h0
     %extract:_(s8) = G_EXTRACT %val, 0
     $b0 = COPY %extract
-    RET_ReallyLR 0, implicit $b0
+    RET_ReallyLR implicit $b0
 ...
 ---
 name:            s1_from_s32
@@ -239,12 +239,12 @@ body: |
     ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
     ; CHECK: %ext:_(s32) = G_AND %val, [[C]]
     ; CHECK: $w0 = COPY %ext(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %val:_(s32) = COPY $w0
     %extract:_(s1) = G_EXTRACT %val, 0
     %ext:_(s32) = G_ZEXT %extract
     $w0 = COPY %ext
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            s3_from_s32
@@ -258,12 +258,12 @@ body: |
     ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
     ; CHECK: %ext:_(s32) = G_AND %val, [[C]]
     ; CHECK: $w0 = COPY %ext(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %val:_(s32) = COPY $w0
     %extract:_(s3) = G_EXTRACT %val, 0
     %ext:_(s32) = G_ZEXT %extract
     $w0 = COPY %ext
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            s3_from_s35
@@ -278,12 +278,12 @@ body: |
     ; CHECK: [[TRUNC:%[0-9]+]]:_(s32) = G_TRUNC [[DEF]](s64)
     ; CHECK: %ext:_(s32) = G_AND [[TRUNC]], [[C]]
     ; CHECK: $w0 = COPY %ext(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %val:_(s35) = G_IMPLICIT_DEF
     %extract:_(s3) = G_EXTRACT %val, 0
     %ext:_(s32) = G_ZEXT %extract
     $w0 = COPY %ext
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            s4_from_s32
@@ -297,12 +297,12 @@ body: |
     ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 15
     ; CHECK: %ext:_(s32) = G_AND %val, [[C]]
     ; CHECK: $w0 = COPY %ext(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %val:_(s32) = COPY $w0
     %extract:_(s4) = G_EXTRACT %val, 0
     %ext:_(s32) = G_ZEXT %extract
     $w0 = COPY %ext
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            s64_from_s264
@@ -315,8 +315,8 @@ body: |
     ; CHECK: [[DEF:%[0-9]+]]:_(s64) = G_IMPLICIT_DEF
     ; CHECK: %extract:_(s64) = COPY [[DEF]](s64)
     ; CHECK: $x0 = COPY %extract(s64)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %val:_(s264) = G_IMPLICIT_DEF
     %extract:_(s64) = G_EXTRACT %val, 0
     $x0 = COPY %extract
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0

@@ -2108,6 +2108,8 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
     MAKE_CASE(AArch64ISD::CLoadTLSInfo)
     MAKE_CASE(AArch64ISD::RET_FLAG)
     MAKE_CASE(AArch64ISD::CRET_FLAG)
+    MAKE_CASE(AArch64ISD::RET_FLAGClear)
+    MAKE_CASE(AArch64ISD::CRET_FLAGClear)
     MAKE_CASE(AArch64ISD::BRCOND)
     MAKE_CASE(AArch64ISD::CSEL)
     MAKE_CASE(AArch64ISD::CSINV)
@@ -7344,7 +7346,7 @@ AArch64TargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
     }
   }
 
-  SmallVector<SDValue, 4> RetOps({Chain, DAG.getConstant(0, DL, MVT::i64)});
+  SmallVector<SDValue, 4> RetOps(1, Chain);
   for (auto &RetVal : RetVals) {
     Chain = DAG.getCopyToReg(Chain, DL, RetVal.first, RetVal.second, Flag);
     Flag = Chain.getValue(1);
@@ -7383,16 +7385,19 @@ AArch64TargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
 
   RetOps[0] = Chain; // Update chain.
 
-  if (CallConv == CallingConv::CHERI_CCall ||
-      CallConv == CallingConv::CHERI_CCallee)
-    RetOps[1] = DAG.getConstant(1, DL, MVT::i64);
-
   // Add the flag if we have it.
   if (Flag.getNode())
     RetOps.push_back(Flag);
 
+  bool Clear = (CallConv == CallingConv::CHERI_CCall ||
+                CallConv == CallingConv::CHERI_CCallee);
   unsigned Opcode =
       Subtarget->hasPureCap() ? AArch64ISD::CRET_FLAG : AArch64ISD::RET_FLAG;
+  if (Clear)
+    Opcode =
+        Subtarget->hasPureCap() ? AArch64ISD::CRET_FLAGClear
+                                : AArch64ISD::RET_FLAGClear;
+
   return DAG.getNode(Opcode, DL, MVT::Other, RetOps);
 }
 
@@ -19510,7 +19515,9 @@ bool AArch64TargetLowering::isUsedByReturnOnly(SDNode *N,
   bool HasRet = false;
   for (SDNode *Node : Copy->uses()) {
     if (Node->getOpcode() != AArch64ISD::RET_FLAG &&
-        Node->getOpcode() != AArch64ISD::CRET_FLAG)
+        Node->getOpcode() != AArch64ISD::CRET_FLAG &&
+        Node->getOpcode() != AArch64ISD::RET_FLAGClear &&
+        Node->getOpcode() != AArch64ISD::CRET_FLAGClear)
       return false;
     HasRet = true;
   }

@@ -21,7 +21,7 @@ body:             |
     ; CHECK: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD1]](p0) :: (load (s32))
     ; CHECK: G_STORE [[C2]](s32), [[PTR_ADD]](p0) :: (store (s32))
     ; CHECK: $w0 = COPY [[LOAD]](s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %0:_(p0) = COPY $x0
     %2:_(s64) = G_CONSTANT i64 1600
     %4:_(s64) = G_CONSTANT i64 6
@@ -31,7 +31,7 @@ body:             |
     %7:_(s32) = G_LOAD %11(p0) :: (load 4)
     G_STORE %9(s32), %10(p0) :: (store 4) ; other use of %10
     $w0 = COPY %7(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -53,7 +53,7 @@ body:             |
     ; CHECK: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD1]](p0) :: (load (s32))
     ; CHECK: G_STORE [[C1]](s32), [[PTR_ADD]](p0) :: (store (s32))
     ; CHECK: $w0 = COPY [[LOAD]](s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %0:_(p0) = COPY $x0
     %2:_(s64) = G_CONSTANT i64 10
     %4:_(s64) = G_CONSTANT i64 6
@@ -63,7 +63,7 @@ body:             |
     %7:_(s32) = G_LOAD %11(p0) :: (load 4)
     G_STORE %9(s32), %10(p0) :: (store 4) ; other use of %10
     $w0 = COPY %7(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -81,13 +81,13 @@ body:             |
     ; CHECK: [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s64)
     ; CHECK: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD]](p0) :: (load (s32))
     ; CHECK: $w0 = COPY [[LOAD]](s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %0:_(p0) = COPY $x0
     %10:_(s64) = G_CONSTANT i64 4783
     %9:_(p0) = G_PTR_ADD %0, %10(s64)
     %7:_(s32) = G_LOAD %9(p0) :: (load 4)
     $w0 = COPY %7(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -109,7 +109,7 @@ body:             |
     ; CHECK: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD1]](p0) :: (load (s32))
     ; CHECK: G_STORE [[C1]](s32), [[PTR_ADD]](p0) :: (store (s32))
     ; CHECK: $w0 = COPY [[LOAD]](s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %0:_(p0) = COPY $x0
     %2:_(s64) = G_CONSTANT i64 17
     %4:_(s64) = G_CONSTANT i64 4079
@@ -119,7 +119,7 @@ body:             |
     %7:_(s32) = G_LOAD %11(p0) :: (load 4)
     G_STORE %9(s32), %10(p0) :: (store 4) ; other use of %10
     $w0 = COPY %7(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -140,7 +140,7 @@ body:             |
     ; CHECK: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD]], [[C]](s64)
     ; CHECK: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD1]](p0) :: (load (s8))
     ; CHECK: $w0 = COPY [[LOAD]](s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %0:_(p0) = COPY $x0
     %1:_(s64) = COPY $x1
     %2:_(s64) = G_CONSTANT i64 1
@@ -148,7 +148,7 @@ body:             |
     %4:_(p0) = G_PTR_ADD %0, %3(s64)
     %7:_(s32) = G_LOAD %4(p0) :: (load 1)
     $w0 = COPY %7(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -171,7 +171,7 @@ body:             |
     ; CHECK: G_STORE [[C2]](s32), [[PTR_ADD]](p0) :: (store (s32))
     ; CHECK: G_STORE %ptr_to_int(s64), [[PTR_ADD]](p0) :: (store (s64))
     ; CHECK: $w0 = COPY [[LOAD]](s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %0:_(p0) = COPY $x0
     %2:_(s64) = G_CONSTANT i64 1600
     %4:_(s64) = G_CONSTANT i64 6
@@ -183,7 +183,7 @@ body:             |
     G_STORE %9(s32), %10(p0) :: (store 4) ; other use of %10
     G_STORE %ptr_to_int(s64), %10(p0) :: (store 8)
     $w0 = COPY %7(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            reassoc_cst_inner_lhs
@@ -220,7 +220,7 @@ body:             |
     %12:_(p0) = G_PTR_ADD %9, %11(s64)
     %14:_(s32) = G_LOAD %12(p0) :: (load (s32))
     $w0 = COPY %14
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -260,7 +260,7 @@ body:             |
     %14:_(s32) = G_LOAD %12(p0) :: (load (s32))
     $w0 = COPY %14
     $x0 = COPY %9
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -301,6 +301,6 @@ body:             |
     %13:_(p0) = G_PTR_ADD %10, %12(s64)
     %15:_(s32) = G_LOAD %13(p0) :: (load (s32))
     $w0 = COPY %15
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

@@ -203,6 +203,6 @@ body:             |
 
   bb.28:
     $x0 = COPY %56
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...

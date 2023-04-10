@@ -68,6 +68,6 @@ body:             |
     %2:_(s128) = G_MERGE_VALUES %5(s64), %6(s64)
     %7:_(s128), %8:_(s1) = G_ATOMIC_CMPXCHG_WITH_SUCCESS %0(p0), %1, %2 :: (load store acquire acquire (s128))
     G_STORE %7(s128), %0(p0) :: (store (s128))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

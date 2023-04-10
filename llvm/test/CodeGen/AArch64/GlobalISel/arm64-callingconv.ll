@@ -18,7 +18,7 @@ define i32 @args_i32(i32 %w0, i32 %w1, i32 %w2, i32 %w3,
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:_(s32) = COPY $w6
   ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:_(s32) = COPY $w7
   ; CHECK-NEXT:   $w0 = COPY [[COPY]](s32)
-  ; CHECK-NEXT:   RET_ReallyLR 0, implicit $w0
+  ; CHECK-NEXT:   RET_ReallyLR implicit $w0
                      i32 %w4, i32 %w5, i32 %w6, i32 %w7) {
   ret i32 %w0
 }
@@ -37,7 +37,7 @@ define i64 @args_i64(i64 %x0, i64 %x1, i64 %x2, i64 %x3,
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:_(s64) = COPY $x6
   ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:_(s64) = COPY $x7
   ; CHECK-NEXT:   $x0 = COPY [[COPY]](s64)
-  ; CHECK-NEXT:   RET_ReallyLR 0, implicit $x0
+  ; CHECK-NEXT:   RET_ReallyLR implicit $x0
                      i64 %x4, i64 %x5, i64 %x6, i64 %x7) {
   ret i64 %x0
 }
@@ -57,7 +57,7 @@ define i8* @args_ptrs(i8* %x0, i16* %x1, <2 x i8>* %x2, {i8, i16, i32}* %x3,
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:_(p0) = COPY $x6
   ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:_(p0) = COPY $x7
   ; CHECK-NEXT:   $x0 = COPY [[COPY]](p0)
-  ; CHECK-NEXT:   RET_ReallyLR 0, implicit $x0
+  ; CHECK-NEXT:   RET_ReallyLR implicit $x0
                       [3 x float]* %x4, double* %x5, i8* %x6, i8* %x7) {
   ret i8* %x0
 }
@@ -69,7 +69,7 @@ define [1 x double] @args_arr([1 x double] %d0) {
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(s64) = COPY $d0
   ; CHECK-NEXT:   $d0 = COPY [[COPY]](s64)
-  ; CHECK-NEXT:   RET_ReallyLR 0, implicit $d0
+  ; CHECK-NEXT:   RET_ReallyLR implicit $d0
   ret [1 x double] %d0
 }
 
@@ -223,7 +223,7 @@ define i32 @i8i16caller() nounwind readnone {
   ; CHECK-NEXT:   ADJCALLSTACKUP 32, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s32) = G_TRUNC [[COPY1]](s64)
   ; CHECK-NEXT:   $w0 = COPY [[TRUNC]](s32)
-  ; CHECK-NEXT:   RET_ReallyLR 0, implicit $w0
+  ; CHECK-NEXT:   RET_ReallyLR implicit $w0
 entry:
   %call = tail call i64 @i8i16callee(i64 0, i64 1, i64 2, i8 signext 3, i16 signext 4, i64 5, i64 6, i64 7, i8 97, i16  98, i8  99, i8  100)
   %conv = trunc i64 %call to i32

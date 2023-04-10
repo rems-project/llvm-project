@@ -13,7 +13,7 @@ body:             |
     ; FP16: %b:_(s16) = COPY $h1
     ; FP16: %maxnum:_(s16) = G_FMAXNUM %a, %b
     ; FP16: $h0 = COPY %maxnum(s16)
-    ; FP16: RET_ReallyLR 0, implicit $h0
+    ; FP16: RET_ReallyLR implicit $h0
     ; NO-FP16-LABEL: name: s16_legal_with_full_fp16
     ; NO-FP16: %a:_(s16) = COPY $h0
     ; NO-FP16: %b:_(s16) = COPY $h1
@@ -22,12 +22,12 @@ body:             |
     ; NO-FP16: [[FMAXNUM:%[0-9]+]]:_(s32) = G_FMAXNUM [[FPEXT]], [[FPEXT1]]
     ; NO-FP16: %maxnum:_(s16) = G_FPTRUNC [[FMAXNUM]](s32)
     ; NO-FP16: $h0 = COPY %maxnum(s16)
-    ; NO-FP16: RET_ReallyLR 0, implicit $h0
+    ; NO-FP16: RET_ReallyLR implicit $h0
     %a:_(s16) = COPY $h0
     %b:_(s16) = COPY $h1
     %maxnum:_(s16) = G_FMAXNUM %a, %b
     $h0 = COPY %maxnum(s16)
-    RET_ReallyLR 0, implicit $h0
+    RET_ReallyLR implicit $h0
 
 ...
 ---
@@ -41,18 +41,18 @@ body:             |
     ; FP16: %b:_(s32) = COPY $s1
     ; FP16: %maxnum:_(s32) = G_FMAXNUM %a, %b
     ; FP16: $s0 = COPY %maxnum(s32)
-    ; FP16: RET_ReallyLR 0, implicit $s0
+    ; FP16: RET_ReallyLR implicit $s0
     ; NO-FP16-LABEL: name: s32_legal
     ; NO-FP16: %a:_(s32) = COPY $s0
     ; NO-FP16: %b:_(s32) = COPY $s1
     ; NO-FP16: %maxnum:_(s32) = G_FMAXNUM %a, %b
     ; NO-FP16: $s0 = COPY %maxnum(s32)
-    ; NO-FP16: RET_ReallyLR 0, implicit $s0
+    ; NO-FP16: RET_ReallyLR implicit $s0
     %a:_(s32) = COPY $s0
     %b:_(s32) = COPY $s1
     %maxnum:_(s32) = G_FMAXNUM %a, %b
     $s0 = COPY %maxnum(s32)
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
 
 ...
 ---
@@ -66,18 +66,18 @@ body:             |
     ; FP16: %b:_(s64) = COPY $d1
     ; FP16: %maxnum:_(s64) = G_FMAXNUM %a, %b
     ; FP16: $d0 = COPY %maxnum(s64)
-    ; FP16: RET_ReallyLR 0, implicit $d0
+    ; FP16: RET_ReallyLR implicit $d0
     ; NO-FP16-LABEL: name: s64_legal
     ; NO-FP16: %a:_(s64) = COPY $d0
     ; NO-FP16: %b:_(s64) = COPY $d1
     ; NO-FP16: %maxnum:_(s64) = G_FMAXNUM %a, %b
     ; NO-FP16: $d0 = COPY %maxnum(s64)
-    ; NO-FP16: RET_ReallyLR 0, implicit $d0
+    ; NO-FP16: RET_ReallyLR implicit $d0
     %a:_(s64) = COPY $d0
     %b:_(s64) = COPY $d1
     %maxnum:_(s64) = G_FMAXNUM %a, %b
     $d0 = COPY %maxnum(s64)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -96,7 +96,7 @@ body:             |
     ; FP16: %maxnum:_(s128) = COPY $q0
     ; FP16: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; FP16: $q0 = COPY %maxnum(s128)
-    ; FP16: RET_ReallyLR 0, implicit $q0
+    ; FP16: RET_ReallyLR implicit $q0
     ; NO-FP16-LABEL: name: s128_libcall
     ; NO-FP16: %a:_(s128) = COPY $q0
     ; NO-FP16: %b:_(s128) = COPY $q1
@@ -107,9 +107,9 @@ body:             |
     ; NO-FP16: %maxnum:_(s128) = COPY $q0
     ; NO-FP16: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; NO-FP16: $q0 = COPY %maxnum(s128)
-    ; NO-FP16: RET_ReallyLR 0, implicit $q0
+    ; NO-FP16: RET_ReallyLR implicit $q0
     %a:_(s128) = COPY $q0
     %b:_(s128) = COPY $q1
     %maxnum:_(s128) = G_FMAXNUM %a, %b
     $q0 = COPY %maxnum(s128)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0

@@ -23,7 +23,7 @@ define i32 @cse_gep([4 x i32]* %ptr, i32 %idx) {
   ; O0:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD2]](p0) :: (load (s32) from %ir.gep2)
   ; O0:   [[ADD:%[0-9]+]]:_(s32) = G_ADD [[LOAD1]], [[LOAD1]]
   ; O0:   $w0 = COPY [[ADD]](s32)
-  ; O0:   RET_ReallyLR 0, implicit $w0
+  ; O0:   RET_ReallyLR implicit $w0
   ; O3-LABEL: name: cse_gep
   ; O3: bb.1 (%ir-block.0):
   ; O3:   liveins: $w1, $x0
@@ -40,7 +40,7 @@ define i32 @cse_gep([4 x i32]* %ptr, i32 %idx) {
   ; O3:   [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD1]](p0) :: (load (s32) from %ir.gep2)
   ; O3:   [[ADD:%[0-9]+]]:_(s32) = G_ADD [[LOAD1]], [[LOAD1]]
   ; O3:   $w0 = COPY [[ADD]](s32)
-  ; O3:   RET_ReallyLR 0, implicit $w0
+  ; O3:   RET_ReallyLR implicit $w0
   %sidx = sext i32 %idx to i64
   %gep1 = getelementptr inbounds [4 x i32], [4 x i32]* %ptr, i64 %sidx, i64 0
   %v1 = load i32, i32* %gep1

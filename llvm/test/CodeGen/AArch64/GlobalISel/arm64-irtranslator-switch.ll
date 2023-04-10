@@ -34,7 +34,7 @@ define i32 @switch(i32 %argc) {
   ; CHECK: bb.5.return:
   ; CHECK:   [[PHI:%[0-9]+]]:_(s32) = G_PHI [[ADD]](s32), %bb.2, [[ADD1]](s32), %bb.3, [[ADD2]](s32), %bb.4
   ; CHECK:   $w0 = COPY [[PHI]](s32)
-  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  ; CHECK:   RET_ReallyLR implicit $w0
 entry:
   switch i32 %argc, label %default [
     i32 100, label %case100
@@ -81,11 +81,11 @@ define i32 @test_cfg_remap(i32 %in) {
   ; CHECK:   G_BR %bb.4
   ; CHECK: bb.3.other:
   ; CHECK:   $w0 = COPY [[DEF]](s32)
-  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  ; CHECK:   RET_ReallyLR implicit $w0
   ; CHECK: bb.4.phi.block:
   ; CHECK:   [[PHI:%[0-9]+]]:_(s32) = G_PHI [[C]](s32), %bb.5, [[C2]](s32), %bb.2
   ; CHECK:   $w0 = COPY [[PHI]](s32)
-  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  ; CHECK:   RET_ReallyLR implicit $w0
 entry:
   switch i32 %in, label %phi.block [i32 1, label %next
                                     i32 57, label %other]
@@ -136,11 +136,11 @@ define i32 @test_cfg_remap_multiple_preds(i32 %in) {
   ; CHECK:   G_BR %bb.5
   ; CHECK: bb.4.other:
   ; CHECK:   $w0 = COPY [[DEF]](s32)
-  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  ; CHECK:   RET_ReallyLR implicit $w0
   ; CHECK: bb.5.phi.block:
   ; CHECK:   [[PHI:%[0-9]+]]:_(s32) = G_PHI [[C]](s32), %bb.7, [[C]](s32), %bb.8, [[C4]](s32), %bb.3
   ; CHECK:   $w0 = COPY [[C3]](s32)
-  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  ; CHECK:   RET_ReallyLR implicit $w0
 entry:
   switch i32 %in, label %odd [i32 1, label %next
                               i32 57, label %other
@@ -190,7 +190,7 @@ define i32 @jt_test(i32 %x) {
   ; CHECK: bb.4.return:
   ; CHECK:   [[PHI:%[0-9]+]]:_(s32) = G_PHI [[MUL]](s32), %bb.3, [[ADD]](s32), %bb.2, [[C3]](s32), %bb.1, [[C3]](s32), %bb.5
   ; CHECK:   $w0 = COPY [[PHI]](s32)
-  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  ; CHECK:   RET_ReallyLR implicit $w0
 entry:
   switch i32 %x, label %return [
     i32 75, label %sw.bb
@@ -1325,7 +1325,7 @@ define i32 @range_test(i32 %x) {
   ; CHECK: bb.4.return:
   ; CHECK:   [[PHI:%[0-9]+]]:_(s32) = G_PHI [[MUL]](s32), %bb.3, [[ADD]](s32), %bb.2, [[C4]](s32), %bb.5
   ; CHECK:   $w0 = COPY [[PHI]](s32)
-  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  ; CHECK:   RET_ReallyLR implicit $w0
 entry:
   switch i32 %x, label %return [
     i32 24, label %sw.bb
@@ -1439,7 +1439,7 @@ define i1 @i1_value_cmp_is_signed(i1) {
   ; CHECK:   [[ZEXT:%[0-9]+]]:_(s8) = G_ZEXT [[TRUNC1]](s1)
   ; CHECK:   [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[ZEXT]](s8)
   ; CHECK:   $w0 = COPY [[ANYEXT]](s32)
-  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  ; CHECK:   RET_ReallyLR implicit $w0
 Entry:
   switch i1 %0, label %BadValue [
     i1 false, label %OkValue

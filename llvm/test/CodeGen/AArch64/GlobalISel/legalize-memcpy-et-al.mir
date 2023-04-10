@@ -26,7 +26,7 @@ body:             |
     %2:_(s32) = COPY $w2
     %3:_(s64) = G_ZEXT %2(s32)
     G_MEMCPY %0(p0), %1(p0), %3(s64), 0 :: (store unknown-size), (load unknown-size)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -51,7 +51,7 @@ body:             |
     %2:_(s32) = COPY $w2
     %3:_(s64) = G_ZEXT %2(s32)
     G_MEMCPY %0(p0), %1(p0), %3(s64), 1 :: (store unknown-size), (load unknown-size)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -79,7 +79,7 @@ body:             |
     %2:_(s32) = COPY $w2
     %3:_(s64) = G_ZEXT %2(s32)
     G_MEMMOVE %0(p0), %1(p0), %3(s64), 0 :: (store unknown-size), (load unknown-size)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -108,7 +108,7 @@ body:             |
     %3:_(s8) = G_TRUNC %1(s32)
     %4:_(s64) = G_ZEXT %2(s32)
     G_MEMSET %0(p0), %3(s8), %4(s64), 0 :: (store unknown-size)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -131,14 +131,14 @@ body:             |
     ; CHECK: BL &memcpy, csr_aarch64_aapcs_thisreturn, implicit-def $lr, implicit $sp, implicit $x0, implicit $x1, implicit $x2
     ; CHECK: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK: $x0 = COPY [[ZEXT]](s64)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %0:_(p0) = COPY $x1
     %1:_(p0) = COPY $x0
     %2:_(s32) = COPY $w2
     %3:_(s64) = G_ZEXT %2(s32)
     G_MEMCPY %0(p0), %1(p0), %3(s64), 1 :: (store unknown-size), (load unknown-size)
     $x0 = COPY %3
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -202,7 +202,7 @@ body:             |
     %2:_(s64) = COPY $x2
     G_MEMCPY %0(p0), %1(p0), %2(s64), 1 :: (store (s8)), (load (s8))
     $x0 = COPY %0(p0)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -236,13 +236,13 @@ body:             |
     ; CHECK: BL &memcpy, csr_aarch64_aapcs_thisreturn, implicit-def $lr, implicit $sp, implicit $x0, implicit $x1, implicit $x2
     ; CHECK: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK: $x1 = COPY [[COPY]](p0)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %0:_(p0) = COPY $x0
     %1:_(p0) = COPY $x1
     %2:_(s64) = COPY $x2
     G_MEMCPY %0(p0), %1(p0), %2(s64), 1 :: (store (s8)), (load (s8))
     $x1 = COPY %0(p0)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -277,14 +277,14 @@ body:             |
     ; CHECK: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK: $x0 = COPY [[COPY]](p0)
     ; CHECK: $x0 = COPY [[COPY]](p0)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %0:_(p0) = COPY $x0
     %1:_(p0) = COPY $x1
     %2:_(s64) = COPY $x2
     G_MEMCPY %0(p0), %1(p0), %2(s64), 1 :: (store (s8)), (load (s8))
     $x0 = COPY %0(p0)
     $x0 = COPY %0(p0)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -318,13 +318,13 @@ body:             |
     ; CHECK: BL &memcpy, csr_aarch64_aapcs_thisreturn, implicit-def $lr, implicit $sp, implicit $x0, implicit $x1, implicit $x2
     ; CHECK: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK: $x1 = COPY [[COPY]](p0)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %0:_(p0) = COPY $x1
     %1:_(p0) = COPY $x0
     %2:_(s64) = COPY $x2
     G_MEMCPY %0(p0), %1(p0), %2(s64), 1 :: (store (s8)), (load (s8))
     $x1 = COPY %0(p0)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -364,4 +364,4 @@ body:             |
     %2:_(s64) = COPY $x2
     G_MEMCPY %0(p0), %1(p0), %2(s64), 1 :: (store (s8)), (load (s8))
     $x0 = COPY %0(p0)
-    RET_ReallyLR 0
+    RET_ReallyLR

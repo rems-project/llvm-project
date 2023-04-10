@@ -37,7 +37,7 @@ body:             |
     %4:gpr32 = COPY $wzr
     %5:gpr32 = CSINCWr %4, $wzr, 0, implicit $nzcv
     $w0 = COPY %5
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -73,7 +73,7 @@ body:             |
     %6:gpr32 = COPY $wzr
     %7:gpr32 = CSINCWr %6, $wzr, 0, implicit $nzcv
     $w0 = COPY %7
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -109,7 +109,7 @@ body:             |
     %6:gpr32 = COPY $wzr
     %7:gpr32 = CSINCWr %6, $wzr, 0, implicit $nzcv
     $w0 = COPY %7
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -145,7 +145,7 @@ body:             |
     %6:gpr32 = COPY $wzr
     %7:gpr32 = CSINCWr %6, $wzr, 0, implicit $nzcv
     $w0 = COPY %7
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -178,7 +178,7 @@ body:             |
     %4:gpr32 = COPY $wzr
     %5:gpr32 = CSINCWr %4, $wzr, 0, implicit $nzcv
     $w0 = COPY %5
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -211,7 +211,7 @@ body:             |
     %5:gpr32 = COPY $wzr
     %6:gpr32 = CSINCWr %5, $wzr, 0, implicit $nzcv
     $w0 = COPY %6
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -244,7 +244,7 @@ body:             |
     %5:gpr32 = COPY $wzr
     %6:gpr32 = CSINCWr %5, $wzr, 0, implicit $nzcv
     $w0 = COPY %6
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -277,7 +277,7 @@ body:             |
     %5:gpr32 = COPY $wzr
     %6:gpr32 = CSINCWr %5, $wzr, 0, implicit $nzcv
     $w0 = COPY %6
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -311,7 +311,7 @@ body:             |
     %4:gpr32 = COPY $wzr
     %5:gpr32 = CSINCWr %4, $wzr, 0, implicit $nzcv
     $w0 = COPY %5
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -347,7 +347,7 @@ body:             |
     %6:gpr32 = COPY $wzr
     %7:gpr32 = CSINCWr %6, $wzr, 0, implicit $nzcv
     $w0 = COPY %7
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -383,7 +383,7 @@ body:             |
     %6:gpr32 = COPY $wzr
     %7:gpr32 = CSINCWr %6, $wzr, 0, implicit $nzcv
     $w0 = COPY %7
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -420,7 +420,7 @@ body:             |
     %4:gpr32 = COPY $wzr
     %5:gpr32 = CSINCWr %4, $wzr, 0, implicit $nzcv
     $w0 = COPY %5
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -457,7 +457,7 @@ body:             |
     %4:gpr32 = COPY $wzr
     %5:gpr32 = CSINCWr %4, $wzr, 0, implicit $nzcv
     $w0 = COPY %5
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -495,7 +495,7 @@ body:             |
     %4:gpr32 = COPY $wzr
     %5:gpr32 = CSINCWr %4, $wzr, 0, implicit $nzcv
     $w0 = COPY %5
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -529,6 +529,6 @@ body:             |
     %4:gpr32 = COPY $wzr
     %5:gpr32 = CSINCWr %4, $wzr, 0, implicit $nzcv
     $w0 = COPY %5
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...

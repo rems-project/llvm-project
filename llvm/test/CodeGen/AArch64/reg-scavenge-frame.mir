@@ -82,5 +82,5 @@ body:             |
     HINT 0, implicit $fp
     HINT 0, implicit $lr
 
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...

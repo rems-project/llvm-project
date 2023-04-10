@@ -32,10 +32,10 @@ body:             |
 
   bb.1.if.then:
     $w0 = MOVi32imm 1
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
   bb.2.if.end:
     $w0 = MOVi32imm 0
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...

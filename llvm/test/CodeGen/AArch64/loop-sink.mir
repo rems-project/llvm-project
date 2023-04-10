@@ -566,7 +566,7 @@ body:             |
   ; CHECK: bb.2.for.cond.cleanup:
   ; CHECK:   [[PHI:%[0-9]+]]:gpr32all = PHI [[COPY]], %bb.0, %4, %bb.3
   ; CHECK:   $w0 = COPY [[PHI]]
-  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  ; CHECK:   RET_ReallyLR implicit $w0
   ; CHECK: bb.3.for.body:
   ; CHECK:   successors: %bb.2(0x04000000), %bb.3(0x7c000000)
   ; CHECK:   [[PHI1:%[0-9]+]]:gpr32sp = PHI [[COPY]], %bb.1, %5, %bb.3
@@ -600,7 +600,7 @@ body:             |
   bb.2.for.cond.cleanup:
     %1:gpr32all = PHI %6, %bb.0, %4, %bb.3
     $w0 = COPY %1
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
   bb.3.for.body:
     successors: %bb.2(0x04000000), %bb.3(0x7c000000)
@@ -687,7 +687,7 @@ body:             |
   ; CHECK: bb.2.for.cond.cleanup:
   ; CHECK:   [[PHI:%[0-9]+]]:gpr32all = PHI [[COPY]], %bb.0, %4, %bb.3
   ; CHECK:   $w0 = COPY [[PHI]]
-  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  ; CHECK:   RET_ReallyLR implicit $w0
   ; CHECK: bb.3.for.body:
   ; CHECK:   successors: %bb.2(0x04000000), %bb.3(0x7c000000)
   ; CHECK:   [[PHI1:%[0-9]+]]:gpr32sp = PHI [[COPY]], %bb.1, %5, %bb.3
@@ -721,7 +721,7 @@ body:             |
   bb.2.for.cond.cleanup:
     %1:gpr32all = PHI %6, %bb.0, %4, %bb.3
     $w0 = COPY %1
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
   bb.3.for.body:
     successors: %bb.2(0x04000000), %bb.3(0x7c000000)
@@ -817,7 +817,7 @@ body:             |
   ; CHECK:   BL @use, csr_aarch64_aapcs, implicit-def dead $lr, implicit $sp, implicit $w0, implicit-def $sp, implicit-def $w0
   ; CHECK:   ADJCALLSTACKUP 0, 0, implicit-def dead $sp, implicit $sp
   ; CHECK:   $w0 = COPY [[PHI]]
-  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  ; CHECK:   RET_ReallyLR implicit $w0
   ; CHECK: bb.3.for.body:
   ; CHECK:   successors: %bb.5(0x04000000), %bb.3(0x7c000000)
   ; CHECK:   [[PHI2:%[0-9]+]]:gpr32sp = PHI [[COPY]], %bb.1, %6, %bb.3
@@ -856,7 +856,7 @@ body:             |
     BL @use, csr_aarch64_aapcs, implicit-def dead $lr, implicit $sp, implicit $w0, implicit-def $sp, implicit-def $w0
     ADJCALLSTACKUP 0, 0, implicit-def dead $sp, implicit $sp
     $w0 = COPY %1
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
   bb.3.for.body:
     successors: %bb.2(0x04000000), %bb.3(0x7c000000)
@@ -937,7 +937,7 @@ body:             |
   ; CHECK: bb.2.for.cond.cleanup:
   ; CHECK:   [[PHI:%[0-9]+]]:gpr32all = PHI [[COPY]], %bb.0, %4, %bb.3
   ; CHECK:   $w0 = COPY [[PHI]]
-  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  ; CHECK:   RET_ReallyLR implicit $w0
   ; CHECK: bb.3.for.body:
   ; CHECK:   successors: %bb.2(0x04000000), %bb.3(0x7c000000)
   ; CHECK:   [[PHI1:%[0-9]+]]:gpr32sp = PHI [[COPY]], %bb.1, %5, %bb.3
@@ -967,7 +967,7 @@ body:             |
   bb.2.for.cond.cleanup:
     %1:gpr32all = PHI %6, %bb.0, %4, %bb.3
     $w0 = COPY %1
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
   bb.3.for.body:
     successors: %bb.2(0x04000000), %bb.3(0x7c000000)
@@ -1096,7 +1096,7 @@ body:             |
   bb.2.for.cond.cleanup:
     %2:gpr32 = PHI %11, %bb.0, %6, %bb.3
     STRWui %2, %10, 0 :: (store (s32) into %ir.write, !tbaa !6)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
   bb.3.for.body:
     successors: %bb.2(0x04000000), %bb.3(0x7c000000)
@@ -1237,7 +1237,7 @@ body:             |
   bb.2.for.cond.cleanup:
     %2:gpr32 = PHI %12, %bb.0, %6, %bb.3
     STRWui %2, %10, 0 :: (store (s32) into %ir.write, !tbaa !6)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
   bb.3.for.body:
     successors: %bb.2(0x04000000), %bb.3(0x7c000000)
@@ -1378,7 +1378,7 @@ body:             |
   bb.2.for.cond.cleanup:
     %2:gpr32 = PHI %12, %bb.0, %6, %bb.3
     STRWui %2, %10, 0 :: (store (s32) into %ir.write, !tbaa !6)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
   bb.3.for.body:
     successors: %bb.2(0x04000000), %bb.3(0x7c000000)

@@ -127,6 +127,6 @@ body:             |
     early-clobber $sp, $fp, $lr = frame-destroy LDPXpost $sp, 2
     frame-destroy SEH_SaveFPLR_X -16
     frame-destroy SEH_EpilogEnd
-    RET_ReallyLR 0, implicit killed $w0
+    RET_ReallyLR implicit killed $w0
 
 ...

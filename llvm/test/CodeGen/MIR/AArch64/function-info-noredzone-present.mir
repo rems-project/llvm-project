@@ -16,7 +16,7 @@ frameInfo:
 machineFunctionInfo: {}
 body:             |
   bb.0.entry:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 
@@ -35,7 +35,7 @@ machineFunctionInfo:
   hasRedZone:      false
 body:             |
   bb.0:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 
@@ -54,6 +54,6 @@ machineFunctionInfo:
   hasRedZone:      true
 body:             |
   bb.0.entry:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

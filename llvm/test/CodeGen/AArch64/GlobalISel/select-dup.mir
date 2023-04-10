@@ -17,11 +17,11 @@ body:             |
     ; CHECK: %copy:gpr32 = COPY $w0
     ; CHECK: %dup:fpr128 = DUPv4i32gpr %copy
     ; CHECK: $q0 = COPY %dup
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %copy:gpr(s32) = COPY $w0
     %dup:fpr(<4 x s32>) = G_DUP %copy(s32)
     $q0 = COPY %dup(<4 x s32>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -38,11 +38,11 @@ body:             |
     ; CHECK: %copy:gpr64 = COPY $x0
     ; CHECK: %dup:fpr128 = DUPv2i64gpr %copy
     ; CHECK: $q0 = COPY %dup
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %copy:gpr(s64) = COPY $x0
     %dup:fpr(<2 x s64>) = G_DUP %copy(s64)
     $q0 = COPY %dup(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -59,11 +59,11 @@ body:             |
     ; CHECK: %copy:gpr32 = COPY $w0
     ; CHECK: %dup:fpr64 = DUPv2i32gpr %copy
     ; CHECK: $d0 = COPY %dup
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %copy:gpr(s32) = COPY $w0
     %dup:fpr(<2 x s32>) = G_DUP %copy(s32)
     $d0 = COPY %dup(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -83,11 +83,11 @@ body:             |
     ; CHECK: [[INSERT_SUBREG:%[0-9]+]]:fpr128 = INSERT_SUBREG [[DEF]], %copy, %subreg.ssub
     ; CHECK: %dup:fpr128 = DUPv4i32lane [[INSERT_SUBREG]], 0
     ; CHECK: $q0 = COPY %dup
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %copy:fpr(s32) = COPY $s0
     %dup:fpr(<4 x s32>) = G_DUP %copy(s32)
     $q0 = COPY %dup(<4 x s32>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -106,11 +106,11 @@ body:             |
     ; CHECK: [[INSERT_SUBREG:%[0-9]+]]:fpr128 = INSERT_SUBREG [[DEF]], %copy, %subreg.dsub
     ; CHECK: %dup:fpr128 = DUPv2i64lane [[INSERT_SUBREG]], 0
     ; CHECK: $q0 = COPY %dup
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %copy:fpr(s64) = COPY $d0
     %dup:fpr(<2 x s64>) = G_DUP %copy(s64)
     $q0 = COPY %dup(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -129,11 +129,11 @@ body:             |
     ; CHECK: [[INSERT_SUBREG:%[0-9]+]]:fpr128 = INSERT_SUBREG [[DEF]], %copy, %subreg.ssub
     ; CHECK: %dup:fpr64 = DUPv2i32lane [[INSERT_SUBREG]], 0
     ; CHECK: $d0 = COPY %dup
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %copy:fpr(s32) = COPY $s0
     %dup:fpr(<2 x s32>) = G_DUP %copy(s32)
     $d0 = COPY %dup(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 
 ...
@@ -153,11 +153,11 @@ body:             |
     ; CHECK: [[INSERT_SUBREG:%[0-9]+]]:fpr128 = INSERT_SUBREG [[DEF]], %copy, %subreg.hsub
     ; CHECK: %dup:fpr64 = DUPv4i16lane [[INSERT_SUBREG]], 0
     ; CHECK: $d0 = COPY %dup
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %copy:fpr(s16) = COPY $h0
     %dup:fpr(<4 x s16>) = G_DUP %copy(s16)
     $d0 = COPY %dup(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 ...
 ---
 name:            DUPv4i16gpr
@@ -173,11 +173,11 @@ body:             |
     ; CHECK: %copy:gpr32 = COPY $w0
     ; CHECK: %dup:fpr64 = DUPv4i16gpr %copy
     ; CHECK: $d0 = COPY %dup
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %copy:gpr(s32) = COPY $w0
     %dup:fpr(<4 x s16>) = G_DUP %copy(s32)
     $d0 = COPY %dup(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -196,11 +196,11 @@ body:             |
     ; CHECK: [[INSERT_SUBREG:%[0-9]+]]:fpr128 = INSERT_SUBREG [[DEF]], %copy, %subreg.hsub
     ; CHECK: %dup:fpr128 = DUPv8i16lane [[INSERT_SUBREG]], 0
     ; CHECK: $q0 = COPY %dup
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %copy:fpr(s16) = COPY $h0
     %dup:fpr(<8 x s16>) = G_DUP %copy(s16)
     $q0 = COPY %dup(<8 x s16>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -217,11 +217,11 @@ body:             |
     ; CHECK: %copy:gpr32 = COPY $w0
     ; CHECK: %dup:fpr128 = DUPv8i16gpr %copy
     ; CHECK: $q0 = COPY %dup
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %copy:gpr(s32) = COPY $w0
     %dup:fpr(<8 x s16>) = G_DUP %copy(s32)
     $q0 = COPY %dup(<8 x s16>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -239,12 +239,12 @@ body:             |
     ; CHECK: %copy:gpr32 = COPY $w0
     ; CHECK: %dup:fpr128 = DUPv8i16gpr %copy
     ; CHECK: $q0 = COPY %dup
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %copy:gpr(s32) = COPY $w0
     %trunc:gpr(s16) = G_TRUNC %copy
     %dup:fpr(<8 x s16>) = G_DUP %trunc(s16)
     $q0 = COPY %dup(<8 x s16>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -261,12 +261,12 @@ body:             |
     ; CHECK: %copy:gpr32 = COPY $w0
     ; CHECK: %dup:fpr64 = DUPv4i16gpr %copy
     ; CHECK: $d0 = COPY %dup
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %copy:gpr(s32) = COPY $w0
     %trunc:gpr(s16) = G_TRUNC %copy
     %dup:fpr(<4 x s16>) = G_DUP %trunc(s16)
     $d0 = COPY %dup(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -283,11 +283,11 @@ body:             |
     ; CHECK: %copy:gpr32 = COPY $w0
     ; CHECK: %dup:fpr64 = DUPv8i8gpr %copy
     ; CHECK: $d0 = COPY %dup
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %copy:gpr(s32) = COPY $w0
     %dup:fpr(<8 x s8>) = G_DUP %copy(s32)
     $d0 = COPY %dup(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -304,12 +304,12 @@ body:             |
     ; CHECK: %copy:gpr32 = COPY $w0
     ; CHECK: %dup:fpr64 = DUPv8i8gpr %copy
     ; CHECK: $d0 = COPY %dup
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %copy:gpr(s32) = COPY $w0
     %trunc:gpr(s8) = G_TRUNC %copy(s32)
     %dup:fpr(<8 x s8>) = G_DUP %trunc(s8)
     $d0 = COPY %dup(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -326,11 +326,11 @@ body:             |
     ; CHECK: %copy:gpr32 = COPY $w0
     ; CHECK: %dup:fpr128 = DUPv16i8gpr %copy
     ; CHECK: $q0 = COPY %dup
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %copy:gpr(s32) = COPY $w0
     %dup:fpr(<16 x s8>) = G_DUP %copy(s32)
     $q0 = COPY %dup(<16 x s8>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 ...
 ---
 name:            DUPv16i8gpr_s8_src
@@ -347,12 +347,12 @@ body:             |
     ; CHECK: %copy:gpr32 = COPY $w0
     ; CHECK: %dup:fpr128 = DUPv16i8gpr %copy
     ; CHECK: $q0 = COPY %dup
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %copy:gpr(s32) = COPY $w0
     %trunc:gpr(s8) = G_TRUNC %copy
     %dup:fpr(<16 x s8>) = G_DUP %trunc(s8)
     $q0 = COPY %dup(<16 x s8>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 ...
 ---
 name:            dup_v2p0
@@ -372,11 +372,11 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:gpr64 = COPY [[COPY]]
     ; CHECK: [[DUPv2i64gpr:%[0-9]+]]:fpr128 = DUPv2i64gpr [[COPY1]]
     ; CHECK: $q0 = COPY [[DUPv2i64gpr]]
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:gpr(p0) = COPY $x0
     %4:fpr(<2 x p0>) = G_DUP %0(p0)
     $q0 = COPY %4(<2 x p0>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -392,11 +392,11 @@ body:             |
     ; CHECK: [[ADRP:%[0-9]+]]:gpr64common = ADRP target-flags(aarch64-page) %const.0
     ; CHECK: [[LDRQui:%[0-9]+]]:fpr128 = LDRQui [[ADRP]], target-flags(aarch64-pageoff, aarch64-nc) %const.0
     ; CHECK: $q0 = COPY [[LDRQui]]
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %cst:gpr(s32) = G_CONSTANT i32 3
     %dup:fpr(<4 x s32>) = G_DUP %cst(s32)
     $q0 = COPY %dup(<4 x s32>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -412,11 +412,11 @@ body:             |
     ; CHECK: [[ADRP:%[0-9]+]]:gpr64common = ADRP target-flags(aarch64-page) %const.0
     ; CHECK: [[LDRDui:%[0-9]+]]:fpr64 = LDRDui [[ADRP]], target-flags(aarch64-pageoff, aarch64-nc) %const.0
     ; CHECK: $d0 = COPY [[LDRDui]]
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %cst:gpr(s8) = G_CONSTANT i8 3
     %dup:fpr(<8 x s8>) = G_DUP %cst(s8)
     $d0 = COPY %dup(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 ...
 ---
 name:            cst_v2p0
@@ -432,8 +432,8 @@ body:             |
     ; CHECK: [[ADRP:%[0-9]+]]:gpr64common = ADRP target-flags(aarch64-page) %const.0
     ; CHECK: [[LDRQui:%[0-9]+]]:fpr128 = LDRQui [[ADRP]], target-flags(aarch64-pageoff, aarch64-nc) %const.0
     ; CHECK: $q0 = COPY [[LDRQui]]
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %cst:gpr(p0) = G_CONSTANT i64 3
     %dup:fpr(<2 x p0>) = G_DUP %cst(p0)
     $q0 = COPY %dup(<2 x p0>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0

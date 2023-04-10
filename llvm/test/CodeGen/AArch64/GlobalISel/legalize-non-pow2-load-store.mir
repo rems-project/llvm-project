@@ -25,14 +25,14 @@ body:             |
     ; CHECK: G_STORE [[OR]](s32), [[COPY1]](p0) :: (store (s16), align 4)
     ; CHECK: G_STORE [[LSHR]](s32), [[PTR_ADD1]](p0) :: (store (s8) into unknown-address + 2, align 2)
     ; CHECK: $w0 = COPY [[C]](s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %0:_(p0) = COPY $x0
     %1:_(p0) = COPY $x1
     %3:_(s32) = G_CONSTANT i32 0
     %2:_(s24) = G_LOAD %0(p0) :: (load (s24), align 4)
     G_STORE %2(s24), %1(p0) :: (store (s24), align 4)
     $w0 = COPY %3(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -65,6 +65,6 @@ body:             |
     %0:_(p0) = COPY $x0
     %1:_(s56) = G_CONSTANT i56 32
     G_STORE %1(s56), %0(p0) :: (store (s56), align 8)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

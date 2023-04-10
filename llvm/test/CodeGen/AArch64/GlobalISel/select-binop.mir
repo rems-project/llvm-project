@@ -1051,12 +1051,12 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:fpr128 = COPY $q1
     ; CHECK: [[ADDv8i16_:%[0-9]+]]:fpr128 = ADDv8i16 [[COPY]], [[COPY1]]
     ; CHECK: $q0 = COPY [[ADDv8i16_]]
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:fpr(<8 x s16>) = COPY $q0
     %1:fpr(<8 x s16>) = COPY $q1
     %2:fpr(<8 x s16>) = G_ADD %0, %1
     $q0 = COPY %2(<8 x s16>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -1080,12 +1080,12 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:fpr128 = COPY $q1
     ; CHECK: [[ADDv16i8_:%[0-9]+]]:fpr128 = ADDv16i8 [[COPY]], [[COPY1]]
     ; CHECK: $q0 = COPY [[ADDv16i8_]]
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:fpr(<16 x s8>) = COPY $q0
     %1:fpr(<16 x s8>) = COPY $q1
     %2:fpr(<16 x s8>) = G_ADD %0, %1
     $q0 = COPY %2(<16 x s8>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -1103,12 +1103,12 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:fpr64 = COPY $d1
     ; CHECK: [[ADDv4i16_:%[0-9]+]]:fpr64 = ADDv4i16 [[COPY]], [[COPY1]]
     ; CHECK: $d0 = COPY [[ADDv4i16_]]
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:fpr(<4 x s16>) = COPY $d0
     %1:fpr(<4 x s16>) = COPY $d1
     %2:fpr(<4 x s16>) = G_ADD %0, %1
     $d0 = COPY %2(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 ...
 ---
 name:            or_v4i16
@@ -1125,12 +1125,12 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:fpr64 = COPY $d1
     ; CHECK: [[ORRv8i8_:%[0-9]+]]:fpr64 = ORRv8i8 [[COPY]], [[COPY1]]
     ; CHECK: $d0 = COPY [[ORRv8i8_]]
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:fpr(<4 x s16>) = COPY $d0
     %1:fpr(<4 x s16>) = COPY $d1
     %2:fpr(<4 x s16>) = G_OR %0, %1
     $d0 = COPY %2(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 ...
 ---
 name:            xor_v4i16
@@ -1147,12 +1147,12 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:fpr64 = COPY $d1
     ; CHECK: [[EORv8i8_:%[0-9]+]]:fpr64 = EORv8i8 [[COPY]], [[COPY1]]
     ; CHECK: $d0 = COPY [[EORv8i8_]]
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:fpr(<4 x s16>) = COPY $d0
     %1:fpr(<4 x s16>) = COPY $d1
     %2:fpr(<4 x s16>) = G_XOR %0, %1
     $d0 = COPY %2(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 ...
 ---
 name:            mul_v4i16
@@ -1169,10 +1169,10 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:fpr64 = COPY $d1
     ; CHECK: [[MULv4i16_:%[0-9]+]]:fpr64 = MULv4i16 [[COPY]], [[COPY1]]
     ; CHECK: $d0 = COPY [[MULv4i16_]]
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:fpr(<4 x s16>) = COPY $d0
     %1:fpr(<4 x s16>) = COPY $d1
     %2:fpr(<4 x s16>) = G_MUL %0, %1
     $d0 = COPY %2(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 ...

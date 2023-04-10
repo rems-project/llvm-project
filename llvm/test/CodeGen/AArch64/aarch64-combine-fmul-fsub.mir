@@ -19,7 +19,7 @@ body:             |
     %3:fpr64 = FMULv2f32 %0, %1
     %4:fpr64 = FSUBv2f32 killed %3, %2
     $d0 = COPY %4
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 # UNPROFITABLE-LABEL: name: f1_2s
@@ -45,7 +45,7 @@ body:             |
     %3:fpr128 = FMULv4f32 %0, %1
     %4:fpr128 = FSUBv4f32 killed %3, %2
     $q0 = COPY %4
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 # UNPROFITABLE-LABEL: name: f1_4s
@@ -71,7 +71,7 @@ body:             |
     %3:fpr128 = FMULv2f64 %0, %1
     %4:fpr128 = FSUBv2f64 killed %3, %2
     $q0 = COPY %4
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 # UNPROFITABLE-LABEL: name: f1_2d
@@ -101,7 +101,7 @@ body:             |
     %5:fpr64 = FMULv2f32 %2, %3
     %6:fpr64 = FSUBv2f32 killed %4, %5
     $q0 = COPY %6
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 # ALL-LABEL: name: f1_both_fmul_2s
@@ -127,7 +127,7 @@ body:             |
     %5:fpr128 = FMULv4f32 %2, %3
     %6:fpr128 = FSUBv4f32 killed %4, %5
     $q0 = COPY %6
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 # ALL-LABEL: name: f1_both_fmul_4s
@@ -153,7 +153,7 @@ body:             |
     %5:fpr128 = FMULv2f64 %2, %3
     %6:fpr128 = FSUBv2f64 killed %4, %5
     $q0 = COPY %6
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 # ALL-LABEL: name: f1_both_fmul_2d

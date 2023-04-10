@@ -200,10 +200,10 @@ body: |
     ; CHECK-LABEL: name: optnone_i64
     ; CHECK: [[MOVi64imm:%[0-9]+]]:gpr64 = MOVi64imm 42
     ; CHECK: $x0 = COPY [[MOVi64imm]]
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %0:gpr(s64) = G_CONSTANT i64 42
     $x0 = COPY %0(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...
 ---
 name:            opt_i64
@@ -215,8 +215,8 @@ body: |
     ; CHECK: [[MOVi32imm:%[0-9]+]]:gpr32 = MOVi32imm 42
     ; CHECK: [[SUBREG_TO_REG:%[0-9]+]]:gpr64all = SUBREG_TO_REG 0, [[MOVi32imm]], %subreg.sub_32
     ; CHECK: $x0 = COPY [[SUBREG_TO_REG]]
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %0:gpr(s64) = G_CONSTANT i64 42
     $x0 = COPY %0(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...

@@ -21,13 +21,13 @@ body:             |
     ; CHECK: [[ADDWrr:%[0-9]+]]:gpr32 = ADDWrr [[COPY1]], [[COPY]]
     ; CHECK: [[SUBREG_TO_REG:%[0-9]+]]:gpr64 = SUBREG_TO_REG 0, [[ADDWrr]], %subreg.sub_32
     ; CHECK: $x0 = COPY [[SUBREG_TO_REG]]
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %0:gpr(s32) = COPY $w0
     %1:gpr(s32) = COPY $w1
     %2:gpr(s32) = G_ADD %1, %0
     %3:gpr(s64) = G_ZEXT %2(s32)
     $x0 = COPY %3(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -48,11 +48,11 @@ body:             |
     ; CHECK: [[SUBREG_TO_REG:%[0-9]+]]:gpr64 = SUBREG_TO_REG 0, [[DEF]], %subreg.sub_32
     ; CHECK: [[UBFMXri:%[0-9]+]]:gpr64 = UBFMXri [[SUBREG_TO_REG]], 0, 15
     ; CHECK: $x0 = COPY [[UBFMXri]]
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %0:gpr(s16) = G_IMPLICIT_DEF
     %3:gpr(s64) = G_ZEXT %0(s16)
     $x0 = COPY %3(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -72,11 +72,11 @@ body:             |
     ; CHECK: [[ORRWrs:%[0-9]+]]:gpr32 = ORRWrs $wzr, %copy, 0
     ; CHECK: %zext:gpr64 = SUBREG_TO_REG 0, [[ORRWrs]], %subreg.sub_32
     ; CHECK: $x0 = COPY %zext
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %copy:gpr(s32) = COPY $w0
     %zext:gpr(s64) = G_ZEXT %copy(s32)
     $x0 = COPY %zext(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -97,13 +97,13 @@ body:             |
     ; CHECK: [[ORRWrs:%[0-9]+]]:gpr32 = ORRWrs $wzr, %bitcast1, 0
     ; CHECK: %zext:gpr64 = SUBREG_TO_REG 0, [[ORRWrs]], %subreg.sub_32
     ; CHECK: $x0 = COPY %zext
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %copy:gpr(s32) = COPY $w0
     %bitcast0:gpr(<4 x s8>) = G_BITCAST %copy(s32)
     %bitcast1:gpr(s32) = G_BITCAST %bitcast0
     %zext:gpr(s64) = G_ZEXT %bitcast1(s32)
     $x0 = COPY %zext(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -124,12 +124,12 @@ body:             |
     ; CHECK: [[ORRWrs:%[0-9]+]]:gpr32 = ORRWrs $wzr, %trunc, 0
     ; CHECK: %zext:gpr64 = SUBREG_TO_REG 0, [[ORRWrs]], %subreg.sub_32
     ; CHECK: $x0 = COPY %zext
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %copy:gpr(s64) = COPY $x0
     %trunc:gpr(s32) = G_TRUNC %copy(s64)
     %zext:gpr(s64) = G_ZEXT %trunc(s32)
     $x0 = COPY %zext(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -154,7 +154,7 @@ body:             |
   ; CHECK:   [[ORRWrs:%[0-9]+]]:gpr32 = ORRWrs $wzr, %phi, 0
   ; CHECK:   [[SUBREG_TO_REG:%[0-9]+]]:gpr64 = SUBREG_TO_REG 0, [[ORRWrs]], %subreg.sub_32
   ; CHECK:   $x0 = COPY [[SUBREG_TO_REG]]
-  ; CHECK:   RET_ReallyLR 0, implicit $x0
+  ; CHECK:   RET_ReallyLR implicit $x0
   ; We should have a ORRWrs here, because isDef32 disallows phis.
 
   bb.0:
@@ -173,7 +173,7 @@ body:             |
     %phi:gpr(s32) = G_PHI %copy1(s32), %bb.0, %copy2(s32), %bb.1
     %5:gpr(s64) = G_ZEXT %phi(s32)
     $x0 = COPY %5(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -195,11 +195,11 @@ body:             |
     ; CHECK: [[ORRWrs:%[0-9]+]]:gpr32 = ORRWrs $wzr, [[ADDWrr]], 0
     ; CHECK: [[SUBREG_TO_REG:%[0-9]+]]:gpr64 = SUBREG_TO_REG 0, [[ORRWrs]], %subreg.sub_32
     ; CHECK: $x0 = COPY [[SUBREG_TO_REG]]
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %0:gpr(s32) = COPY $w0
     %1:gpr(s32) = COPY $w1
     %2:gpr(s32) = G_ADD %1, %0
     %3:gpr(s32) = COPY %2(s32)
     %4:gpr(s64) = G_ZEXT %3(s32)
     $x0 = COPY %4(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0

@@ -14,12 +14,12 @@ body: |
     ; CHECK: %vec1:_(<8 x s8>) = G_IMPLICIT_DEF
     ; CHECK: %smin:_(<8 x s8>) = G_SMIN %vec, %vec1
     ; CHECK: $x0 = COPY %smin(<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %vec:_(<8 x s8>) = G_IMPLICIT_DEF
     %vec1:_(<8 x s8>) = G_IMPLICIT_DEF
     %smin:_(<8 x s8>) = G_SMIN %vec, %vec1
     $x0 = COPY %smin
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -35,12 +35,12 @@ body: |
     ; CHECK: %vec1:_(<16 x s8>) = G_IMPLICIT_DEF
     ; CHECK: %smin:_(<16 x s8>) = G_SMIN %vec, %vec1
     ; CHECK: $q0 = COPY %smin(<16 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %vec:_(<16 x s8>) = G_IMPLICIT_DEF
     %vec1:_(<16 x s8>) = G_IMPLICIT_DEF
     %smin:_(<16 x s8>) = G_SMIN %vec, %vec1
     $q0 = COPY %smin
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -84,12 +84,12 @@ body: |
     ; CHECK: %vec1:_(<4 x s16>) = G_IMPLICIT_DEF
     ; CHECK: %smin:_(<4 x s16>) = G_SMIN %vec, %vec1
     ; CHECK: $x0 = COPY %smin(<4 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %vec:_(<4 x s16>) = G_IMPLICIT_DEF
     %vec1:_(<4 x s16>) = G_IMPLICIT_DEF
     %smin:_(<4 x s16>) = G_SMIN %vec, %vec1
     $x0 = COPY %smin
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -105,12 +105,12 @@ body: |
     ; CHECK: %vec1:_(<8 x s16>) = G_IMPLICIT_DEF
     ; CHECK: %smin:_(<8 x s16>) = G_SMIN %vec, %vec1
     ; CHECK: $q0 = COPY %smin(<8 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %vec:_(<8 x s16>) = G_IMPLICIT_DEF
     %vec1:_(<8 x s16>) = G_IMPLICIT_DEF
     %smin:_(<8 x s16>) = G_SMIN %vec, %vec1
     $q0 = COPY %smin
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -154,12 +154,12 @@ body: |
     ; CHECK: %vec1:_(<2 x s32>) = G_IMPLICIT_DEF
     ; CHECK: %smin:_(<2 x s32>) = G_SMIN %vec, %vec1
     ; CHECK: $x0 = COPY %smin(<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %vec:_(<2 x s32>) = G_IMPLICIT_DEF
     %vec1:_(<2 x s32>) = G_IMPLICIT_DEF
     %smin:_(<2 x s32>) = G_SMIN %vec, %vec1
     $x0 = COPY %smin
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -175,12 +175,12 @@ body: |
     ; CHECK: %vec1:_(<4 x s32>) = G_IMPLICIT_DEF
     ; CHECK: %smin:_(<4 x s32>) = G_SMIN %vec, %vec1
     ; CHECK: $q0 = COPY %smin(<4 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %vec:_(<4 x s32>) = G_IMPLICIT_DEF
     %vec1:_(<4 x s32>) = G_IMPLICIT_DEF
     %smin:_(<4 x s32>) = G_SMIN %vec, %vec1
     $q0 = COPY %smin
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -234,12 +234,12 @@ body: |
     ; CHECK: [[AND1:%[0-9]+]]:_(<2 x s64>) = G_AND %vec1, [[XOR]]
     ; CHECK: %smin:_(<2 x s64>) = G_OR [[AND]], [[AND1]]
     ; CHECK: $q0 = COPY %smin(<2 x s64>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %vec:_(<2 x s64>) = G_IMPLICIT_DEF
     %vec1:_(<2 x s64>) = G_IMPLICIT_DEF
     %smin:_(<2 x s64>) = G_SMIN %vec, %vec1
     $q0 = COPY %smin
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -297,12 +297,12 @@ body: |
     ; CHECK: %vec1:_(<8 x s8>) = G_IMPLICIT_DEF
     ; CHECK: %umin:_(<8 x s8>) = G_UMIN %vec, %vec1
     ; CHECK: $x0 = COPY %umin(<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %vec:_(<8 x s8>) = G_IMPLICIT_DEF
     %vec1:_(<8 x s8>) = G_IMPLICIT_DEF
     %umin:_(<8 x s8>) = G_UMIN %vec, %vec1
     $x0 = COPY %umin
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -318,12 +318,12 @@ body: |
     ; CHECK: %vec1:_(<16 x s8>) = G_IMPLICIT_DEF
     ; CHECK: %umin:_(<16 x s8>) = G_UMIN %vec, %vec1
     ; CHECK: $q0 = COPY %umin(<16 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %vec:_(<16 x s8>) = G_IMPLICIT_DEF
     %vec1:_(<16 x s8>) = G_IMPLICIT_DEF
     %umin:_(<16 x s8>) = G_UMIN %vec, %vec1
     $q0 = COPY %umin
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -367,12 +367,12 @@ body: |
     ; CHECK: %vec1:_(<4 x s16>) = G_IMPLICIT_DEF
     ; CHECK: %umin:_(<4 x s16>) = G_UMIN %vec, %vec1
     ; CHECK: $x0 = COPY %umin(<4 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %vec:_(<4 x s16>) = G_IMPLICIT_DEF
     %vec1:_(<4 x s16>) = G_IMPLICIT_DEF
     %umin:_(<4 x s16>) = G_UMIN %vec, %vec1
     $x0 = COPY %umin
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -388,12 +388,12 @@ body: |
     ; CHECK: %vec1:_(<8 x s16>) = G_IMPLICIT_DEF
     ; CHECK: %umin:_(<8 x s16>) = G_UMIN %vec, %vec1
     ; CHECK: $q0 = COPY %umin(<8 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %vec:_(<8 x s16>) = G_IMPLICIT_DEF
     %vec1:_(<8 x s16>) = G_IMPLICIT_DEF
     %umin:_(<8 x s16>) = G_UMIN %vec, %vec1
     $q0 = COPY %umin
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -437,12 +437,12 @@ body: |
     ; CHECK: %vec1:_(<2 x s32>) = G_IMPLICIT_DEF
     ; CHECK: %umin:_(<2 x s32>) = G_UMIN %vec, %vec1
     ; CHECK: $x0 = COPY %umin(<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %vec:_(<2 x s32>) = G_IMPLICIT_DEF
     %vec1:_(<2 x s32>) = G_IMPLICIT_DEF
     %umin:_(<2 x s32>) = G_UMIN %vec, %vec1
     $x0 = COPY %umin
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -458,12 +458,12 @@ body: |
     ; CHECK: %vec1:_(<4 x s32>) = G_IMPLICIT_DEF
     ; CHECK: %umin:_(<4 x s32>) = G_UMIN %vec, %vec1
     ; CHECK: $q0 = COPY %umin(<4 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %vec:_(<4 x s32>) = G_IMPLICIT_DEF
     %vec1:_(<4 x s32>) = G_IMPLICIT_DEF
     %umin:_(<4 x s32>) = G_UMIN %vec, %vec1
     $q0 = COPY %umin
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -517,12 +517,12 @@ body: |
     ; CHECK: [[AND1:%[0-9]+]]:_(<2 x s64>) = G_AND %vec1, [[XOR]]
     ; CHECK: %umin:_(<2 x s64>) = G_OR [[AND]], [[AND1]]
     ; CHECK: $q0 = COPY %umin(<2 x s64>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %vec:_(<2 x s64>) = G_IMPLICIT_DEF
     %vec1:_(<2 x s64>) = G_IMPLICIT_DEF
     %umin:_(<2 x s64>) = G_UMIN %vec, %vec1
     $q0 = COPY %umin
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -580,12 +580,12 @@ body: |
     ; CHECK: %vec1:_(<8 x s8>) = G_IMPLICIT_DEF
     ; CHECK: %smax:_(<8 x s8>) = G_SMAX %vec, %vec1
     ; CHECK: $x0 = COPY %smax(<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %vec:_(<8 x s8>) = G_IMPLICIT_DEF
     %vec1:_(<8 x s8>) = G_IMPLICIT_DEF
     %smax:_(<8 x s8>) = G_SMAX %vec, %vec1
     $x0 = COPY %smax
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -601,12 +601,12 @@ body: |
     ; CHECK: %vec1:_(<16 x s8>) = G_IMPLICIT_DEF
     ; CHECK: %smax:_(<16 x s8>) = G_SMAX %vec, %vec1
     ; CHECK: $q0 = COPY %smax(<16 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %vec:_(<16 x s8>) = G_IMPLICIT_DEF
     %vec1:_(<16 x s8>) = G_IMPLICIT_DEF
     %smax:_(<16 x s8>) = G_SMAX %vec, %vec1
     $q0 = COPY %smax
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -622,12 +622,12 @@ body: |
     ; CHECK: %vec1:_(<4 x s16>) = G_IMPLICIT_DEF
     ; CHECK: %smax:_(<4 x s16>) = G_SMAX %vec, %vec1
     ; CHECK: $x0 = COPY %smax(<4 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %vec:_(<4 x s16>) = G_IMPLICIT_DEF
     %vec1:_(<4 x s16>) = G_IMPLICIT_DEF
     %smax:_(<4 x s16>) = G_SMAX %vec, %vec1
     $x0 = COPY %smax
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -671,12 +671,12 @@ body: |
     ; CHECK: %vec1:_(<8 x s16>) = G_IMPLICIT_DEF
     ; CHECK: %smax:_(<8 x s16>) = G_SMAX %vec, %vec1
     ; CHECK: $q0 = COPY %smax(<8 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %vec:_(<8 x s16>) = G_IMPLICIT_DEF
     %vec1:_(<8 x s16>) = G_IMPLICIT_DEF
     %smax:_(<8 x s16>) = G_SMAX %vec, %vec1
     $q0 = COPY %smax
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -720,12 +720,12 @@ body: |
     ; CHECK: %vec1:_(<2 x s32>) = G_IMPLICIT_DEF
     ; CHECK: %smax:_(<2 x s32>) = G_SMAX %vec, %vec1
     ; CHECK: $x0 = COPY %smax(<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %vec:_(<2 x s32>) = G_IMPLICIT_DEF
     %vec1:_(<2 x s32>) = G_IMPLICIT_DEF
     %smax:_(<2 x s32>) = G_SMAX %vec, %vec1
     $x0 = COPY %smax
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -741,12 +741,12 @@ body: |
     ; CHECK: %vec1:_(<4 x s32>) = G_IMPLICIT_DEF
     ; CHECK: %smax:_(<4 x s32>) = G_SMAX %vec, %vec1
     ; CHECK: $q0 = COPY %smax(<4 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %vec:_(<4 x s32>) = G_IMPLICIT_DEF
     %vec1:_(<4 x s32>) = G_IMPLICIT_DEF
     %smax:_(<4 x s32>) = G_SMAX %vec, %vec1
     $q0 = COPY %smax
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -800,12 +800,12 @@ body: |
     ; CHECK: [[AND1:%[0-9]+]]:_(<2 x s64>) = G_AND %vec1, [[XOR]]
     ; CHECK: %smax:_(<2 x s64>) = G_OR [[AND]], [[AND1]]
     ; CHECK: $q0 = COPY %smax(<2 x s64>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %vec:_(<2 x s64>) = G_IMPLICIT_DEF
     %vec1:_(<2 x s64>) = G_IMPLICIT_DEF
     %smax:_(<2 x s64>) = G_SMAX %vec, %vec1
     $q0 = COPY %smax
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -863,12 +863,12 @@ body: |
     ; CHECK: %vec1:_(<8 x s8>) = G_IMPLICIT_DEF
     ; CHECK: %umax:_(<8 x s8>) = G_UMAX %vec, %vec1
     ; CHECK: $x0 = COPY %umax(<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %vec:_(<8 x s8>) = G_IMPLICIT_DEF
     %vec1:_(<8 x s8>) = G_IMPLICIT_DEF
     %umax:_(<8 x s8>) = G_UMAX %vec, %vec1
     $x0 = COPY %umax
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -884,12 +884,12 @@ body: |
     ; CHECK: %vec1:_(<16 x s8>) = G_IMPLICIT_DEF
     ; CHECK: %umax:_(<16 x s8>) = G_UMAX %vec, %vec1
     ; CHECK: $q0 = COPY %umax(<16 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %vec:_(<16 x s8>) = G_IMPLICIT_DEF
     %vec1:_(<16 x s8>) = G_IMPLICIT_DEF
     %umax:_(<16 x s8>) = G_UMAX %vec, %vec1
     $q0 = COPY %umax
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -933,12 +933,12 @@ body: |
     ; CHECK: %vec1:_(<4 x s16>) = G_IMPLICIT_DEF
     ; CHECK: %umax:_(<4 x s16>) = G_UMAX %vec, %vec1
     ; CHECK: $x0 = COPY %umax(<4 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %vec:_(<4 x s16>) = G_IMPLICIT_DEF
     %vec1:_(<4 x s16>) = G_IMPLICIT_DEF
     %umax:_(<4 x s16>) = G_UMAX %vec, %vec1
     $x0 = COPY %umax
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -954,12 +954,12 @@ body: |
     ; CHECK: %vec1:_(<8 x s16>) = G_IMPLICIT_DEF
     ; CHECK: %umax:_(<8 x s16>) = G_UMAX %vec, %vec1
     ; CHECK: $q0 = COPY %umax(<8 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %vec:_(<8 x s16>) = G_IMPLICIT_DEF
     %vec1:_(<8 x s16>) = G_IMPLICIT_DEF
     %umax:_(<8 x s16>) = G_UMAX %vec, %vec1
     $q0 = COPY %umax
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -1003,12 +1003,12 @@ body: |
     ; CHECK: %vec1:_(<2 x s32>) = G_IMPLICIT_DEF
     ; CHECK: %umax:_(<2 x s32>) = G_UMAX %vec, %vec1
     ; CHECK: $x0 = COPY %umax(<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %vec:_(<2 x s32>) = G_IMPLICIT_DEF
     %vec1:_(<2 x s32>) = G_IMPLICIT_DEF
     %umax:_(<2 x s32>) = G_UMAX %vec, %vec1
     $x0 = COPY %umax
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -1024,12 +1024,12 @@ body: |
     ; CHECK: %vec1:_(<4 x s32>) = G_IMPLICIT_DEF
     ; CHECK: %umax:_(<4 x s32>) = G_UMAX %vec, %vec1
     ; CHECK: $q0 = COPY %umax(<4 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %vec:_(<4 x s32>) = G_IMPLICIT_DEF
     %vec1:_(<4 x s32>) = G_IMPLICIT_DEF
     %umax:_(<4 x s32>) = G_UMAX %vec, %vec1
     $q0 = COPY %umax
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -1083,12 +1083,12 @@ body: |
     ; CHECK: [[AND1:%[0-9]+]]:_(<2 x s64>) = G_AND %vec1, [[XOR]]
     ; CHECK: %umax:_(<2 x s64>) = G_OR [[AND]], [[AND1]]
     ; CHECK: $q0 = COPY %umax(<2 x s64>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %vec:_(<2 x s64>) = G_IMPLICIT_DEF
     %vec1:_(<2 x s64>) = G_IMPLICIT_DEF
     %umax:_(<2 x s64>) = G_UMAX %vec, %vec1
     $q0 = COPY %umax
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---

@@ -21,13 +21,13 @@ body:             |
     ; CHECK-NEXT: [[FRINTXSr:%[0-9]+]]:fpr32 = FRINTXSr [[FCVTSHr]]
     ; CHECK-NEXT: [[FCVTHSr:%[0-9]+]]:fpr16 = FCVTHSr [[FRINTXSr]]
     ; CHECK-NEXT: $h0 = COPY [[FCVTHSr]]
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $h0
+    ; CHECK-NEXT: RET_ReallyLR implicit $h0
     %0:fpr(s16) = COPY $h0
     %2:fpr(s32) = G_FPEXT %0(s16)
     %3:fpr(s32) = G_FRINT %2
     %1:fpr(s16) = G_FPTRUNC %3(s32)
     $h0 = COPY %1(s16)
-    RET_ReallyLR 0, implicit $h0
+    RET_ReallyLR implicit $h0
 
 ...
 ---
@@ -80,7 +80,7 @@ body:             |
     ; CHECK-NEXT: [[INSvi16lane2:%[0-9]+]]:fpr128 = INSvi16lane [[INSvi16lane1]], 3, [[INSERT_SUBREG6]], 0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:fpr64 = COPY [[INSvi16lane2]].dsub
     ; CHECK-NEXT: $d0 = COPY [[COPY2]]
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $d0
+    ; CHECK-NEXT: RET_ReallyLR implicit $d0
     %0:fpr(<4 x s16>) = COPY $d0
     %2:fpr(s16), %3:fpr(s16), %4:fpr(s16), %5:fpr(s16) = G_UNMERGE_VALUES %0(<4 x s16>)
     %16:fpr(s32) = G_FPEXT %2(s16)
@@ -97,7 +97,7 @@ body:             |
     %9:fpr(s16) = G_FPTRUNC %11(s32)
     %1:fpr(<4 x s16>) = G_BUILD_VECTOR %6(s16), %7(s16), %8(s16), %9(s16)
     $d0 = COPY %1(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -171,7 +171,7 @@ body:             |
     ; CHECK-NEXT: [[INSERT_SUBREG7:%[0-9]+]]:fpr128 = INSERT_SUBREG [[DEF7]], [[FCVTHSr7]], %subreg.hsub
     ; CHECK-NEXT: [[INSvi16lane6:%[0-9]+]]:fpr128 = INSvi16lane [[INSvi16lane5]], 7, [[INSERT_SUBREG7]], 0
     ; CHECK-NEXT: $q0 = COPY [[INSvi16lane6]]
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $q0
+    ; CHECK-NEXT: RET_ReallyLR implicit $q0
     %0:fpr(<8 x s16>) = COPY $q0
     %2:fpr(s16), %3:fpr(s16), %4:fpr(s16), %5:fpr(s16), %6:fpr(s16), %7:fpr(s16), %8:fpr(s16), %9:fpr(s16) = G_UNMERGE_VALUES %0(<8 x s16>)
     %32:fpr(s32) = G_FPEXT %2(s16)
@@ -200,4 +200,4 @@ body:             |
     %17:fpr(s16) = G_FPTRUNC %19(s32)
     %1:fpr(<8 x s16>) = G_BUILD_VECTOR %10(s16), %11(s16), %12(s16), %13(s16), %14(s16), %15(s16), %16(s16), %17(s16)
     $q0 = COPY %1(<8 x s16>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0

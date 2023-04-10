@@ -16,7 +16,7 @@
 ; CHECK:   [[ADD:%[0-9]+]]:_(s8) = G_ADD [[TRUNC]], [[TRUNC1]]
 ; CHECK:   [[SEXT:%[0-9]+]]:_(s32) = G_SEXT [[ADD]](s8)
 ; CHECK:   $w0 = COPY [[SEXT]](s32)
-; CHECK:   RET_ReallyLR 0, implicit $w0
+; CHECK:   RET_ReallyLR implicit $w0
 define signext i8 @test_stack_slots([8 x i64], i8 signext %lhs, i8 signext %rhs) {
   %sum = add i8 %lhs, %rhs
   ret i8 %sum

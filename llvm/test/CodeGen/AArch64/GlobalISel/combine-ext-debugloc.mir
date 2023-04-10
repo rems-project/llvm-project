@@ -75,6 +75,6 @@ body:             |
     G_STORE %13(s64), %12(p0) :: (store (s64) into stack, align 1)
     BL @printf, csr_aarch64_aapcs, implicit-def $lr, implicit $sp, implicit $x0
     ADJCALLSTACKUP 8, 0, implicit-def $sp, implicit $sp
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

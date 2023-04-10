@@ -21,7 +21,7 @@ body: |
   bb.1:
     liveins: $x19, $x20, $x21, $x22, $x23, $x24, $x25, $x26, $x27, $x28
 
-    RET_ReallyLR 0, implicit $x19, implicit $x20, implicit $x21, implicit $x22, implicit $x23, implicit $x24, implicit $x25, implicit $x26, implicit $x27, implicit $x28
+    RET_ReallyLR implicit $x19, implicit $x20, implicit $x21, implicit $x22, implicit $x23, implicit $x24, implicit $x25, implicit $x26, implicit $x27, implicit $x28
 ...
 ---
 name: fpDoesNotFit
@@ -38,4 +38,4 @@ body: |
     STRXui undef $x8, %stack.0, -34
     ; Pick SP here. Picking FP will require scavenging a register.
     ; CHECK: STRXui undef $x8, $sp, 4062
-    RET_ReallyLR 0
+    RET_ReallyLR

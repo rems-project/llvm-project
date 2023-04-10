@@ -151,13 +151,13 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr128 = COPY $q0
     ; CHECK: [[COPY1:%[0-9]+]]:fpr64 = COPY [[COPY]].dsub
     ; CHECK: $x0 = COPY [[COPY1]]
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %1:fpr(<2 x s64>) = COPY $q0
     %2:fpr(<2 x p0>) = G_INTTOPTR %1(<2 x s64>)
     %4:gpr(s64) = G_CONSTANT i64 0
     %3:fpr(p0) = G_EXTRACT_VECTOR_ELT %2(<2 x p0>), %4(s64)
     $x0 = COPY %3(p0)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...
 ...
 ---
@@ -172,9 +172,9 @@ body:             |
     ; CHECK: liveins: $q0
     ; CHECK: %ptr:fpr128 = COPY $q0
     ; CHECK: $q0 = COPY %ptr
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %ptr:fpr(<2 x p0>) = COPY $q0
     %int:fpr(<2 x s64>) = G_PTRTOINT %ptr(<2 x p0>)
     $q0 = COPY %int(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 ...

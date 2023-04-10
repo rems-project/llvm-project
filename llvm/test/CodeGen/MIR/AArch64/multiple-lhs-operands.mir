@@ -27,5 +27,5 @@ body: |
     BL @foo, csr_aarch64_aapcs, implicit-def dead $lr, implicit $sp, implicit-def $sp
   ; CHECK: $sp, $fp, $lr = LDPXpost $sp, 2
     $sp, $fp, $lr = LDPXpost $sp, 2
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...

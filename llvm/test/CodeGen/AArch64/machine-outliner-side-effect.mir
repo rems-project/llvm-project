@@ -25,7 +25,7 @@ body:             |
     BL @spam, csr_aarch64_aapcs, implicit-def dead $lr, implicit $sp, implicit $x0, implicit-def $sp, implicit-def $x0
     renamable $x3 = COPY $x0
 
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 

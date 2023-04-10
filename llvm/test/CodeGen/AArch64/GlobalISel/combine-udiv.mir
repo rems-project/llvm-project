@@ -45,13 +45,13 @@ body:             |
     ; CHECK-NEXT: [[ADD:%[0-9]+]]:_(<8 x s16>) = G_ADD [[LSHR]], [[UMULH]]
     ; CHECK-NEXT: [[LSHR1:%[0-9]+]]:_(<8 x s16>) = G_LSHR [[ADD]], [[BUILD_VECTOR1]](<8 x s16>)
     ; CHECK-NEXT: $q0 = COPY [[LSHR1]](<8 x s16>)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $q0
+    ; CHECK-NEXT: RET_ReallyLR implicit $q0
     %0:_(<8 x s16>) = COPY $q0
     %2:_(s16) = G_CONSTANT i16 23
     %1:_(<8 x s16>) = G_BUILD_VECTOR %2(s16), %2(s16), %2(s16), %2(s16), %2(s16), %2(s16), %2(s16), %2(s16)
     %3:_(<8 x s16>) = G_UDIV %0, %1
     $q0 = COPY %3(<8 x s16>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -106,7 +106,7 @@ body:             |
     ; CHECK-NEXT: [[ICMP:%[0-9]+]]:_(<8 x s1>) = G_ICMP intpred(eq), [[BUILD_VECTOR]](<8 x s16>), [[BUILD_VECTOR5]]
     ; CHECK-NEXT: [[SELECT:%[0-9]+]]:_(<8 x s16>) = G_SELECT [[ICMP]](<8 x s1>), [[COPY]], [[LSHR1]]
     ; CHECK-NEXT: $q0 = COPY [[SELECT]](<8 x s16>)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $q0
+    ; CHECK-NEXT: RET_ReallyLR implicit $q0
     %0:_(<8 x s16>) = COPY $q0
     %2:_(s16) = G_CONSTANT i16 23
     %3:_(s16) = G_CONSTANT i16 34
@@ -119,7 +119,7 @@ body:             |
     %1:_(<8 x s16>) = G_BUILD_VECTOR %2(s16), %3(s16), %4(s16), %5(s16), %6(s16), %7(s16), %8(s16), %9(s16)
     %10:_(<8 x s16>) = G_UDIV %0, %1
     $q0 = COPY %10(<8 x s16>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -168,7 +168,7 @@ body:             |
     ; CHECK-NEXT: [[ICMP:%[0-9]+]]:_(<8 x s1>) = G_ICMP intpred(eq), [[BUILD_VECTOR]](<8 x s16>), [[BUILD_VECTOR4]]
     ; CHECK-NEXT: [[SELECT:%[0-9]+]]:_(<8 x s16>) = G_SELECT [[ICMP]](<8 x s1>), [[COPY]], [[LSHR1]]
     ; CHECK-NEXT: $q0 = COPY [[SELECT]](<8 x s16>)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $q0
+    ; CHECK-NEXT: RET_ReallyLR implicit $q0
     %0:_(<8 x s16>) = COPY $q0
     %2:_(s16) = G_CONSTANT i16 -34
     %3:_(s16) = G_CONSTANT i16 35
@@ -181,7 +181,7 @@ body:             |
     %1:_(<8 x s16>) = G_BUILD_VECTOR %2(s16), %3(s16), %4(s16), %5(s16), %6(s16), %7(s16), %8(s16), %9(s16)
     %10:_(<8 x s16>) = G_UDIV %0, %1
     $q0 = COPY %10(<8 x s16>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -232,7 +232,7 @@ body:             |
     ; CHECK-NEXT: [[ICMP:%[0-9]+]]:_(<8 x s1>) = G_ICMP intpred(eq), [[BUILD_VECTOR]](<8 x s16>), [[BUILD_VECTOR4]]
     ; CHECK-NEXT: [[SELECT:%[0-9]+]]:_(<8 x s16>) = G_SELECT [[ICMP]](<8 x s1>), [[COPY]], [[LSHR1]]
     ; CHECK-NEXT: $q0 = COPY [[SELECT]](<8 x s16>)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $q0
+    ; CHECK-NEXT: RET_ReallyLR implicit $q0
     %0:_(<8 x s16>) = COPY $q0
     %2:_(s16) = G_CONSTANT i16 7
     %3:_(s16) = G_CONSTANT i16 23
@@ -245,7 +245,7 @@ body:             |
     %1:_(<8 x s16>) = G_BUILD_VECTOR %2(s16), %3(s16), %4(s16), %5(s16), %6(s16), %7(s16), %8(s16), %9(s16)
     %10:_(<8 x s16>) = G_UDIV %0, %1
     $q0 = COPY %10(<8 x s16>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -276,14 +276,14 @@ body:             |
     ; CHECK-NEXT: [[ICMP:%[0-9]+]]:_(<16 x s1>) = G_ICMP intpred(eq), [[BUILD_VECTOR]](<16 x s8>), [[BUILD_VECTOR3]]
     ; CHECK-NEXT: [[SELECT:%[0-9]+]]:_(<16 x s8>) = G_SELECT [[ICMP]](<16 x s1>), [[COPY]], [[LSHR]]
     ; CHECK-NEXT: $q0 = COPY [[SELECT]](<16 x s8>)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $q0
+    ; CHECK-NEXT: RET_ReallyLR implicit $q0
     %0:_(<16 x s8>) = COPY $q0
     %2:_(s8) = G_CONSTANT i8 -64
     %3:_(s8) = G_CONSTANT i8 1
     %1:_(<16 x s8>) = G_BUILD_VECTOR %2(s8), %3(s8), %3(s8), %3(s8), %3(s8), %3(s8), %3(s8), %3(s8), %3(s8), %3(s8), %3(s8), %3(s8), %3(s8), %3(s8), %3(s8), %3(s8)
     %4:_(<16 x s8>) = G_UDIV %0, %1
     $q0 = COPY %4(<16 x s8>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -334,7 +334,7 @@ body:             |
     ; CHECK-NEXT: [[ICMP:%[0-9]+]]:_(<8 x s1>) = G_ICMP intpred(eq), [[BUILD_VECTOR]](<8 x s16>), [[BUILD_VECTOR4]]
     ; CHECK-NEXT: [[SELECT:%[0-9]+]]:_(<8 x s16>) = G_SELECT [[ICMP]](<8 x s1>), [[COPY]], [[LSHR]]
     ; CHECK-NEXT: $q0 = COPY [[SELECT]](<8 x s16>)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $q0
+    ; CHECK-NEXT: RET_ReallyLR implicit $q0
     %0:_(<8 x s16>) = COPY $q0
     %2:_(s16) = G_CONSTANT i16 1
     %3:_(s16) = G_CONSTANT i16 119
@@ -347,6 +347,6 @@ body:             |
     %1:_(<8 x s16>) = G_BUILD_VECTOR %2(s16), %3(s16), %4(s16), %5(s16), %6(s16), %7(s16), %8(s16), %9(s16)
     %10:_(<8 x s16>) = G_UDIV %0, %1
     $q0 = COPY %10(<8 x s16>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...

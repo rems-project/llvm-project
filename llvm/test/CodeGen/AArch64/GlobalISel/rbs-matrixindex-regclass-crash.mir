@@ -51,6 +51,6 @@ body:             |
     $x16 = COPY %0(s64)
     $x17 = COPY %0(s64)
     INLINEASM &"svc 0", 1 /* sideeffect attdialect */, 10 /* regdef */, implicit-def $x0, 10 /* regdef */, implicit-def $x1, 10 /* regdef */, implicit-def $x2, 10 /* regdef */, implicit-def $x3, 10 /* regdef */, implicit-def $x4, 10 /* regdef */, implicit-def $x5, 10 /* regdef */, implicit-def $x6, 10 /* regdef */, implicit-def $x7, 10 /* regdef */, implicit-def $x8, 10 /* regdef */, implicit-def $x9, 10 /* regdef */, implicit-def $x10, 10 /* regdef */, implicit-def $x11, 10 /* regdef */, implicit-def $x12, 10 /* regdef */, implicit-def $x13, 10 /* regdef */, implicit-def $x14, 10 /* regdef */, implicit-def $x15, 10 /* regdef */, implicit-def $x16, 10 /* regdef */, implicit-def $x17, 9 /* reguse */, $x0, 9 /* reguse */, $x1, 9 /* reguse */, $x2, 9 /* reguse */, $x3, 9 /* reguse */, $x4, 9 /* reguse */, $x5, 9 /* reguse */, $x6, 9 /* reguse */, $x7, 9 /* reguse */, $x8, 9 /* reguse */, $x9, 9 /* reguse */, $x10, 9 /* reguse */, $x11, 9 /* reguse */, $x12, 9 /* reguse */, $x13, 9 /* reguse */, $x14, 9 /* reguse */, $x15, 9 /* reguse */, $x16, 9 /* reguse */, $x17
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

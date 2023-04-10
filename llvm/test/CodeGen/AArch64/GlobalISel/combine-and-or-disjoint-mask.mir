@@ -18,14 +18,14 @@ body:             |
     ; CHECK-NEXT: %two:_(s32) = G_CONSTANT i32 2
     ; CHECK-NEXT: %and:_(s32) = G_AND %x, %two
     ; CHECK-NEXT: $w0 = COPY %and(s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %x:_(s32) = COPY $w0
     %one:_(s32) = G_CONSTANT i32 1
     %two:_(s32) = G_CONSTANT i32 2
     %or:_(s32) = G_OR %x, %one
     %and:_(s32) = G_AND %or, %two
     $w0 = COPY %and(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            intersecting_masks
@@ -43,14 +43,14 @@ body:             |
     ; CHECK-NEXT: %or:_(s32) = G_OR %x, %one
     ; CHECK-NEXT: %and:_(s32) = G_AND %or, %two
     ; CHECK-NEXT: $w0 = COPY %and(s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %x:_(s32) = COPY $w0
     %one:_(s32) = G_CONSTANT i32 3
     %two:_(s32) = G_CONSTANT i32 2
     %or:_(s32) = G_OR %x, %one
     %and:_(s32) = G_AND %or, %two
     $w0 = COPY %and(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            disjoint_masks_v
@@ -70,7 +70,7 @@ body:             |
     ; CHECK-NEXT: %or:_(<2 x s32>) = G_OR %x, %one_v
     ; CHECK-NEXT: %and:_(<2 x s32>) = G_AND %or, %two_v
     ; CHECK-NEXT: $x0 = COPY %and(<2 x s32>)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $x0
+    ; CHECK-NEXT: RET_ReallyLR implicit $x0
     %x:_(<2 x s32>) = COPY $x0
     %one:_(s32) = G_CONSTANT i32 1
     %one_v:_(<2 x s32>) = G_DUP %one
@@ -79,5 +79,5 @@ body:             |
     %or:_(<2 x s32>) = G_OR %x, %one_v
     %and:_(<2 x s32>) = G_AND %or, %two_v
     $x0 = COPY %and(<2 x s32>)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...

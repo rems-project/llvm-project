@@ -15,8 +15,12 @@ let isCall = 1, Defs = [LR], Uses = [SP] in {
 }
 
 let isBarrier = 1, isReturn = 1, isTerminator = 1 in {
-  def CRET_ReallyLR : Pseudo<(outs), (ins i64imm:$clearregs),
-                             [(AArch64cretflag (i64 imm:$clearregs))]>;
+  def CRET_ReallyLR : Pseudo<(outs), (ins),
+                             [(AArch64cretflag)]>;
+  def CRET_ReallyLRClear : Pseudo<(outs), (ins),
+                                  [(AArch64cretflagclear)]>;
+  def RET_ReallyLRClear : Pseudo<(outs), (ins),
+                                 [(AArch64retflagclear)]>;
 }
 
 let isCall = 1, isTerminator = 1, isReturn = 1,

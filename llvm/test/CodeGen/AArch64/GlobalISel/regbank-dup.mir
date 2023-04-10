@@ -19,11 +19,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:gpr(s32) = COPY $w0
     ; CHECK: [[DUP:%[0-9]+]]:fpr(<4 x s32>) = G_DUP [[COPY]](s32)
     ; CHECK: $q0 = COPY [[DUP]](<4 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:_(s32) = COPY $w0
     %4:_(<4 x s32>) = G_DUP %0(s32)
     $q0 = COPY %4(<4 x s32>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -40,11 +40,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:gpr(s64) = COPY $x0
     ; CHECK: [[DUP:%[0-9]+]]:fpr(<2 x s64>) = G_DUP [[COPY]](s64)
     ; CHECK: $q0 = COPY [[DUP]](<2 x s64>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:_(s64) = COPY $x0
     %4:_(<2 x s64>) = G_DUP %0(s64)
     $q0 = COPY %4(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -61,11 +61,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:gpr(s32) = COPY $w0
     ; CHECK: [[DUP:%[0-9]+]]:fpr(<2 x s32>) = G_DUP [[COPY]](s32)
     ; CHECK: $d0 = COPY [[DUP]](<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(s32) = COPY $w0
     %4:_(<2 x s32>) = G_DUP %0(s32)
     $d0 = COPY %4(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -82,11 +82,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr(s32) = COPY $s0
     ; CHECK: [[DUP:%[0-9]+]]:fpr(<4 x s32>) = G_DUP [[COPY]](s32)
     ; CHECK: $q0 = COPY [[DUP]](<4 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:_(s32) = COPY $s0
     %4:_(<4 x s32>) = G_DUP %0(s32)
     $q0 = COPY %4(<4 x s32>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -103,11 +103,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr(s64) = COPY $d0
     ; CHECK: [[DUP:%[0-9]+]]:fpr(<2 x s64>) = G_DUP [[COPY]](s64)
     ; CHECK: $q0 = COPY [[DUP]](<2 x s64>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:_(s64) = COPY $d0
     %4:_(<2 x s64>) = G_DUP %0(s64)
     $q0 = COPY %4(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -124,11 +124,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr(s32) = COPY $s0
     ; CHECK: [[DUP:%[0-9]+]]:fpr(<2 x s32>) = G_DUP [[COPY]](s32)
     ; CHECK: $d0 = COPY [[DUP]](<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(s32) = COPY $s0
     %4:_(<2 x s32>) = G_DUP %0(s32)
     $d0 = COPY %4(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -145,11 +145,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr(s64) = COPY $d0
     ; CHECK: [[DUP:%[0-9]+]]:fpr(<2 x s64>) = G_DUP [[COPY]](s64)
     ; CHECK: $q0 = COPY [[DUP]](<2 x s64>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:_(s64) = COPY $d0
     %6:_(<2 x s64>) = G_DUP %0(s64)
     $q0 = COPY %6(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -167,11 +167,11 @@ body:             |
     ; CHECK: %trunc:gpr(s8) = G_TRUNC [[COPY]](s32)
     ; CHECK: [[DUP:%[0-9]+]]:fpr(<16 x s8>) = G_DUP %trunc(s8)
     ; CHECK: $q0 = COPY [[DUP]](<16 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:_(s32) = COPY $w0
     %trunc:_(s8) = G_TRUNC %0(s32)
     %1:_(<16 x s8>) = G_DUP %trunc(s8)
     $q0 = COPY %1(<16 x s8>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...

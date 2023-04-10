@@ -21,13 +21,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<2 x s64>) = G_ICMP intpred(eq), [[COPY]](<2 x s64>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<2 x s32>) = G_TRUNC [[ICMP]](<2 x s64>)
     ; CHECK: $d0 = COPY [[TRUNC]](<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<2 x s64>) = COPY $q0
     %1:_(<2 x s64>) = COPY $q1
     %2:_(<2 x s1>) = G_ICMP intpred(eq), %0(<2 x s64>), %1
     %3:_(<2 x s32>) = G_ANYEXT %2(<2 x s1>)
     $d0 = COPY %3(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -51,13 +51,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<4 x s32>) = G_ICMP intpred(eq), [[COPY]](<4 x s32>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<4 x s16>) = G_TRUNC [[ICMP]](<4 x s32>)
     ; CHECK: $d0 = COPY [[TRUNC]](<4 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<4 x s32>) = COPY $q0
     %1:_(<4 x s32>) = COPY $q1
     %2:_(<4 x s1>) = G_ICMP intpred(eq), %0(<4 x s32>), %1
     %3:_(<4 x s16>) = G_ANYEXT %2(<4 x s1>)
     $d0 = COPY %3(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -80,13 +80,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<2 x s32>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<2 x s32>) = G_ICMP intpred(eq), [[COPY]](<2 x s32>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<2 x s32>) = COPY $d0
     %1:_(<2 x s32>) = COPY $d1
     %2:_(<2 x s1>) = G_ICMP intpred(eq), %0(<2 x s32>), %1
     %3:_(<2 x s32>) = G_ANYEXT %2(<2 x s1>)
     $d0 = COPY %3(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -110,13 +110,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<8 x s16>) = G_ICMP intpred(eq), [[COPY]](<8 x s16>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<8 x s8>) = G_TRUNC [[ICMP]](<8 x s16>)
     ; CHECK: $d0 = COPY [[TRUNC]](<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<8 x s16>) = COPY $q0
     %1:_(<8 x s16>) = COPY $q1
     %2:_(<8 x s1>) = G_ICMP intpred(eq), %0(<8 x s16>), %1
     %3:_(<8 x s8>) = G_ANYEXT %2(<8 x s1>)
     $d0 = COPY %3(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -139,13 +139,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<4 x s16>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<4 x s16>) = G_ICMP intpred(eq), [[COPY]](<4 x s16>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<4 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<4 x s16>) = COPY $d0
     %1:_(<4 x s16>) = COPY $d1
     %2:_(<4 x s1>) = G_ICMP intpred(eq), %0(<4 x s16>), %1
     %3:_(<4 x s16>) = G_ANYEXT %2(<4 x s1>)
     $d0 = COPY %3(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -168,13 +168,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<16 x s8>) = COPY $q1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<16 x s8>) = G_ICMP intpred(eq), [[COPY]](<16 x s8>), [[COPY1]]
     ; CHECK: $q0 = COPY [[ICMP]](<16 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:_(<16 x s8>) = COPY $q0
     %1:_(<16 x s8>) = COPY $q1
     %2:_(<16 x s1>) = G_ICMP intpred(eq), %0(<16 x s8>), %1
     %3:_(<16 x s8>) = G_ANYEXT %2(<16 x s1>)
     $q0 = COPY %3(<16 x s8>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -197,13 +197,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<8 x s8>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<8 x s8>) = G_ICMP intpred(eq), [[COPY]](<8 x s8>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<8 x s8>) = COPY $d0
     %1:_(<8 x s8>) = COPY $d1
     %2:_(<8 x s1>) = G_ICMP intpred(eq), %0(<8 x s8>), %1
     %3:_(<8 x s8>) = G_ANYEXT %2(<8 x s1>)
     $d0 = COPY %3(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -227,13 +227,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<2 x s64>) = G_ICMP intpred(ugt), [[COPY]](<2 x s64>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<2 x s32>) = G_TRUNC [[ICMP]](<2 x s64>)
     ; CHECK: $d0 = COPY [[TRUNC]](<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<2 x s64>) = COPY $q0
     %1:_(<2 x s64>) = COPY $q1
     %2:_(<2 x s1>) = G_ICMP intpred(ugt), %0(<2 x s64>), %1
     %3:_(<2 x s32>) = G_ANYEXT %2(<2 x s1>)
     $d0 = COPY %3(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -257,13 +257,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<4 x s32>) = G_ICMP intpred(ugt), [[COPY]](<4 x s32>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<4 x s16>) = G_TRUNC [[ICMP]](<4 x s32>)
     ; CHECK: $d0 = COPY [[TRUNC]](<4 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<4 x s32>) = COPY $q0
     %1:_(<4 x s32>) = COPY $q1
     %2:_(<4 x s1>) = G_ICMP intpred(ugt), %0(<4 x s32>), %1
     %3:_(<4 x s16>) = G_ANYEXT %2(<4 x s1>)
     $d0 = COPY %3(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -286,13 +286,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<2 x s32>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<2 x s32>) = G_ICMP intpred(ugt), [[COPY]](<2 x s32>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<2 x s32>) = COPY $d0
     %1:_(<2 x s32>) = COPY $d1
     %2:_(<2 x s1>) = G_ICMP intpred(ugt), %0(<2 x s32>), %1
     %3:_(<2 x s32>) = G_ANYEXT %2(<2 x s1>)
     $d0 = COPY %3(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -316,13 +316,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<8 x s16>) = G_ICMP intpred(ugt), [[COPY]](<8 x s16>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<8 x s8>) = G_TRUNC [[ICMP]](<8 x s16>)
     ; CHECK: $d0 = COPY [[TRUNC]](<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<8 x s16>) = COPY $q0
     %1:_(<8 x s16>) = COPY $q1
     %2:_(<8 x s1>) = G_ICMP intpred(ugt), %0(<8 x s16>), %1
     %3:_(<8 x s8>) = G_ANYEXT %2(<8 x s1>)
     $d0 = COPY %3(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -345,13 +345,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<4 x s16>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<4 x s16>) = G_ICMP intpred(ugt), [[COPY]](<4 x s16>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<4 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<4 x s16>) = COPY $d0
     %1:_(<4 x s16>) = COPY $d1
     %2:_(<4 x s1>) = G_ICMP intpred(ugt), %0(<4 x s16>), %1
     %3:_(<4 x s16>) = G_ANYEXT %2(<4 x s1>)
     $d0 = COPY %3(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -374,13 +374,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<16 x s8>) = COPY $q1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<16 x s8>) = G_ICMP intpred(ugt), [[COPY]](<16 x s8>), [[COPY1]]
     ; CHECK: $q0 = COPY [[ICMP]](<16 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:_(<16 x s8>) = COPY $q0
     %1:_(<16 x s8>) = COPY $q1
     %2:_(<16 x s1>) = G_ICMP intpred(ugt), %0(<16 x s8>), %1
     %3:_(<16 x s8>) = G_ANYEXT %2(<16 x s1>)
     $q0 = COPY %3(<16 x s8>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -403,13 +403,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<8 x s8>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<8 x s8>) = G_ICMP intpred(ugt), [[COPY]](<8 x s8>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<8 x s8>) = COPY $d0
     %1:_(<8 x s8>) = COPY $d1
     %2:_(<8 x s1>) = G_ICMP intpred(ugt), %0(<8 x s8>), %1
     %3:_(<8 x s8>) = G_ANYEXT %2(<8 x s1>)
     $d0 = COPY %3(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -433,13 +433,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<2 x s64>) = G_ICMP intpred(uge), [[COPY]](<2 x s64>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<2 x s32>) = G_TRUNC [[ICMP]](<2 x s64>)
     ; CHECK: $d0 = COPY [[TRUNC]](<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<2 x s64>) = COPY $q0
     %1:_(<2 x s64>) = COPY $q1
     %2:_(<2 x s1>) = G_ICMP intpred(uge), %0(<2 x s64>), %1
     %3:_(<2 x s32>) = G_ANYEXT %2(<2 x s1>)
     $d0 = COPY %3(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -463,13 +463,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<4 x s32>) = G_ICMP intpred(uge), [[COPY]](<4 x s32>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<4 x s16>) = G_TRUNC [[ICMP]](<4 x s32>)
     ; CHECK: $d0 = COPY [[TRUNC]](<4 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<4 x s32>) = COPY $q0
     %1:_(<4 x s32>) = COPY $q1
     %2:_(<4 x s1>) = G_ICMP intpred(uge), %0(<4 x s32>), %1
     %3:_(<4 x s16>) = G_ANYEXT %2(<4 x s1>)
     $d0 = COPY %3(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -492,13 +492,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<2 x s32>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<2 x s32>) = G_ICMP intpred(uge), [[COPY]](<2 x s32>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<2 x s32>) = COPY $d0
     %1:_(<2 x s32>) = COPY $d1
     %2:_(<2 x s1>) = G_ICMP intpred(uge), %0(<2 x s32>), %1
     %3:_(<2 x s32>) = G_ANYEXT %2(<2 x s1>)
     $d0 = COPY %3(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -522,13 +522,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<8 x s16>) = G_ICMP intpred(uge), [[COPY]](<8 x s16>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<8 x s8>) = G_TRUNC [[ICMP]](<8 x s16>)
     ; CHECK: $d0 = COPY [[TRUNC]](<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<8 x s16>) = COPY $q0
     %1:_(<8 x s16>) = COPY $q1
     %2:_(<8 x s1>) = G_ICMP intpred(uge), %0(<8 x s16>), %1
     %3:_(<8 x s8>) = G_ANYEXT %2(<8 x s1>)
     $d0 = COPY %3(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -551,13 +551,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<4 x s16>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<4 x s16>) = G_ICMP intpred(uge), [[COPY]](<4 x s16>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<4 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<4 x s16>) = COPY $d0
     %1:_(<4 x s16>) = COPY $d1
     %2:_(<4 x s1>) = G_ICMP intpred(uge), %0(<4 x s16>), %1
     %3:_(<4 x s16>) = G_ANYEXT %2(<4 x s1>)
     $d0 = COPY %3(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -580,13 +580,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<16 x s8>) = COPY $q1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<16 x s8>) = G_ICMP intpred(uge), [[COPY]](<16 x s8>), [[COPY1]]
     ; CHECK: $q0 = COPY [[ICMP]](<16 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:_(<16 x s8>) = COPY $q0
     %1:_(<16 x s8>) = COPY $q1
     %2:_(<16 x s1>) = G_ICMP intpred(uge), %0(<16 x s8>), %1
     %3:_(<16 x s8>) = G_ANYEXT %2(<16 x s1>)
     $q0 = COPY %3(<16 x s8>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -609,13 +609,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<8 x s8>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<8 x s8>) = G_ICMP intpred(uge), [[COPY]](<8 x s8>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<8 x s8>) = COPY $d0
     %1:_(<8 x s8>) = COPY $d1
     %2:_(<8 x s1>) = G_ICMP intpred(uge), %0(<8 x s8>), %1
     %3:_(<8 x s8>) = G_ANYEXT %2(<8 x s1>)
     $d0 = COPY %3(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -639,13 +639,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<2 x s64>) = G_ICMP intpred(ult), [[COPY]](<2 x s64>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<2 x s32>) = G_TRUNC [[ICMP]](<2 x s64>)
     ; CHECK: $d0 = COPY [[TRUNC]](<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<2 x s64>) = COPY $q0
     %1:_(<2 x s64>) = COPY $q1
     %2:_(<2 x s1>) = G_ICMP intpred(ult), %0(<2 x s64>), %1
     %3:_(<2 x s32>) = G_ANYEXT %2(<2 x s1>)
     $d0 = COPY %3(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -669,13 +669,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<4 x s32>) = G_ICMP intpred(ult), [[COPY]](<4 x s32>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<4 x s16>) = G_TRUNC [[ICMP]](<4 x s32>)
     ; CHECK: $d0 = COPY [[TRUNC]](<4 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<4 x s32>) = COPY $q0
     %1:_(<4 x s32>) = COPY $q1
     %2:_(<4 x s1>) = G_ICMP intpred(ult), %0(<4 x s32>), %1
     %3:_(<4 x s16>) = G_ANYEXT %2(<4 x s1>)
     $d0 = COPY %3(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -698,13 +698,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<2 x s32>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<2 x s32>) = G_ICMP intpred(ult), [[COPY]](<2 x s32>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<2 x s32>) = COPY $d0
     %1:_(<2 x s32>) = COPY $d1
     %2:_(<2 x s1>) = G_ICMP intpred(ult), %0(<2 x s32>), %1
     %3:_(<2 x s32>) = G_ANYEXT %2(<2 x s1>)
     $d0 = COPY %3(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -728,13 +728,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<8 x s16>) = G_ICMP intpred(ult), [[COPY]](<8 x s16>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<8 x s8>) = G_TRUNC [[ICMP]](<8 x s16>)
     ; CHECK: $d0 = COPY [[TRUNC]](<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<8 x s16>) = COPY $q0
     %1:_(<8 x s16>) = COPY $q1
     %2:_(<8 x s1>) = G_ICMP intpred(ult), %0(<8 x s16>), %1
     %3:_(<8 x s8>) = G_ANYEXT %2(<8 x s1>)
     $d0 = COPY %3(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -757,13 +757,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<4 x s16>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<4 x s16>) = G_ICMP intpred(ult), [[COPY]](<4 x s16>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<4 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<4 x s16>) = COPY $d0
     %1:_(<4 x s16>) = COPY $d1
     %2:_(<4 x s1>) = G_ICMP intpred(ult), %0(<4 x s16>), %1
     %3:_(<4 x s16>) = G_ANYEXT %2(<4 x s1>)
     $d0 = COPY %3(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -786,13 +786,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<16 x s8>) = COPY $q1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<16 x s8>) = G_ICMP intpred(ult), [[COPY]](<16 x s8>), [[COPY1]]
     ; CHECK: $q0 = COPY [[ICMP]](<16 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:_(<16 x s8>) = COPY $q0
     %1:_(<16 x s8>) = COPY $q1
     %2:_(<16 x s1>) = G_ICMP intpred(ult), %0(<16 x s8>), %1
     %3:_(<16 x s8>) = G_ANYEXT %2(<16 x s1>)
     $q0 = COPY %3(<16 x s8>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -815,13 +815,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<8 x s8>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<8 x s8>) = G_ICMP intpred(ult), [[COPY]](<8 x s8>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<8 x s8>) = COPY $d0
     %1:_(<8 x s8>) = COPY $d1
     %2:_(<8 x s1>) = G_ICMP intpred(ult), %0(<8 x s8>), %1
     %3:_(<8 x s8>) = G_ANYEXT %2(<8 x s1>)
     $d0 = COPY %3(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -845,13 +845,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<2 x s64>) = G_ICMP intpred(ule), [[COPY]](<2 x s64>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<2 x s32>) = G_TRUNC [[ICMP]](<2 x s64>)
     ; CHECK: $d0 = COPY [[TRUNC]](<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<2 x s64>) = COPY $q0
     %1:_(<2 x s64>) = COPY $q1
     %2:_(<2 x s1>) = G_ICMP intpred(ule), %0(<2 x s64>), %1
     %3:_(<2 x s32>) = G_ANYEXT %2(<2 x s1>)
     $d0 = COPY %3(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -875,13 +875,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<4 x s32>) = G_ICMP intpred(ule), [[COPY]](<4 x s32>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<4 x s16>) = G_TRUNC [[ICMP]](<4 x s32>)
     ; CHECK: $d0 = COPY [[TRUNC]](<4 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<4 x s32>) = COPY $q0
     %1:_(<4 x s32>) = COPY $q1
     %2:_(<4 x s1>) = G_ICMP intpred(ule), %0(<4 x s32>), %1
     %3:_(<4 x s16>) = G_ANYEXT %2(<4 x s1>)
     $d0 = COPY %3(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -904,13 +904,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<2 x s32>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<2 x s32>) = G_ICMP intpred(ule), [[COPY]](<2 x s32>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<2 x s32>) = COPY $d0
     %1:_(<2 x s32>) = COPY $d1
     %2:_(<2 x s1>) = G_ICMP intpred(ule), %0(<2 x s32>), %1
     %3:_(<2 x s32>) = G_ANYEXT %2(<2 x s1>)
     $d0 = COPY %3(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -934,13 +934,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<8 x s16>) = G_ICMP intpred(ule), [[COPY]](<8 x s16>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<8 x s8>) = G_TRUNC [[ICMP]](<8 x s16>)
     ; CHECK: $d0 = COPY [[TRUNC]](<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<8 x s16>) = COPY $q0
     %1:_(<8 x s16>) = COPY $q1
     %2:_(<8 x s1>) = G_ICMP intpred(ule), %0(<8 x s16>), %1
     %3:_(<8 x s8>) = G_ANYEXT %2(<8 x s1>)
     $d0 = COPY %3(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -963,13 +963,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<4 x s16>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<4 x s16>) = G_ICMP intpred(ule), [[COPY]](<4 x s16>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<4 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<4 x s16>) = COPY $d0
     %1:_(<4 x s16>) = COPY $d1
     %2:_(<4 x s1>) = G_ICMP intpred(ule), %0(<4 x s16>), %1
     %3:_(<4 x s16>) = G_ANYEXT %2(<4 x s1>)
     $d0 = COPY %3(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -992,13 +992,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<16 x s8>) = COPY $q1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<16 x s8>) = G_ICMP intpred(ule), [[COPY]](<16 x s8>), [[COPY1]]
     ; CHECK: $q0 = COPY [[ICMP]](<16 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:_(<16 x s8>) = COPY $q0
     %1:_(<16 x s8>) = COPY $q1
     %2:_(<16 x s1>) = G_ICMP intpred(ule), %0(<16 x s8>), %1
     %3:_(<16 x s8>) = G_ANYEXT %2(<16 x s1>)
     $q0 = COPY %3(<16 x s8>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -1021,13 +1021,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<8 x s8>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<8 x s8>) = G_ICMP intpred(ule), [[COPY]](<8 x s8>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<8 x s8>) = COPY $d0
     %1:_(<8 x s8>) = COPY $d1
     %2:_(<8 x s1>) = G_ICMP intpred(ule), %0(<8 x s8>), %1
     %3:_(<8 x s8>) = G_ANYEXT %2(<8 x s1>)
     $d0 = COPY %3(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1051,13 +1051,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<2 x s64>) = G_ICMP intpred(sgt), [[COPY]](<2 x s64>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<2 x s32>) = G_TRUNC [[ICMP]](<2 x s64>)
     ; CHECK: $d0 = COPY [[TRUNC]](<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<2 x s64>) = COPY $q0
     %1:_(<2 x s64>) = COPY $q1
     %2:_(<2 x s1>) = G_ICMP intpred(sgt), %0(<2 x s64>), %1
     %3:_(<2 x s32>) = G_ANYEXT %2(<2 x s1>)
     $d0 = COPY %3(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1081,13 +1081,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<4 x s32>) = G_ICMP intpred(sgt), [[COPY]](<4 x s32>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<4 x s16>) = G_TRUNC [[ICMP]](<4 x s32>)
     ; CHECK: $d0 = COPY [[TRUNC]](<4 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<4 x s32>) = COPY $q0
     %1:_(<4 x s32>) = COPY $q1
     %2:_(<4 x s1>) = G_ICMP intpred(sgt), %0(<4 x s32>), %1
     %3:_(<4 x s16>) = G_ANYEXT %2(<4 x s1>)
     $d0 = COPY %3(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1110,13 +1110,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<2 x s32>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<2 x s32>) = G_ICMP intpred(sgt), [[COPY]](<2 x s32>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<2 x s32>) = COPY $d0
     %1:_(<2 x s32>) = COPY $d1
     %2:_(<2 x s1>) = G_ICMP intpred(sgt), %0(<2 x s32>), %1
     %3:_(<2 x s32>) = G_ANYEXT %2(<2 x s1>)
     $d0 = COPY %3(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1140,13 +1140,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<8 x s16>) = G_ICMP intpred(sgt), [[COPY]](<8 x s16>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<8 x s8>) = G_TRUNC [[ICMP]](<8 x s16>)
     ; CHECK: $d0 = COPY [[TRUNC]](<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<8 x s16>) = COPY $q0
     %1:_(<8 x s16>) = COPY $q1
     %2:_(<8 x s1>) = G_ICMP intpred(sgt), %0(<8 x s16>), %1
     %3:_(<8 x s8>) = G_ANYEXT %2(<8 x s1>)
     $d0 = COPY %3(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1169,13 +1169,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<4 x s16>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<4 x s16>) = G_ICMP intpred(sgt), [[COPY]](<4 x s16>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<4 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<4 x s16>) = COPY $d0
     %1:_(<4 x s16>) = COPY $d1
     %2:_(<4 x s1>) = G_ICMP intpred(sgt), %0(<4 x s16>), %1
     %3:_(<4 x s16>) = G_ANYEXT %2(<4 x s1>)
     $d0 = COPY %3(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1198,13 +1198,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<16 x s8>) = COPY $q1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<16 x s8>) = G_ICMP intpred(sgt), [[COPY]](<16 x s8>), [[COPY1]]
     ; CHECK: $q0 = COPY [[ICMP]](<16 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:_(<16 x s8>) = COPY $q0
     %1:_(<16 x s8>) = COPY $q1
     %2:_(<16 x s1>) = G_ICMP intpred(sgt), %0(<16 x s8>), %1
     %3:_(<16 x s8>) = G_ANYEXT %2(<16 x s1>)
     $q0 = COPY %3(<16 x s8>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -1227,13 +1227,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<8 x s8>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<8 x s8>) = G_ICMP intpred(sgt), [[COPY]](<8 x s8>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<8 x s8>) = COPY $d0
     %1:_(<8 x s8>) = COPY $d1
     %2:_(<8 x s1>) = G_ICMP intpred(sgt), %0(<8 x s8>), %1
     %3:_(<8 x s8>) = G_ANYEXT %2(<8 x s1>)
     $d0 = COPY %3(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1257,13 +1257,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<2 x s64>) = G_ICMP intpred(sge), [[COPY]](<2 x s64>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<2 x s32>) = G_TRUNC [[ICMP]](<2 x s64>)
     ; CHECK: $d0 = COPY [[TRUNC]](<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<2 x s64>) = COPY $q0
     %1:_(<2 x s64>) = COPY $q1
     %2:_(<2 x s1>) = G_ICMP intpred(sge), %0(<2 x s64>), %1
     %3:_(<2 x s32>) = G_ANYEXT %2(<2 x s1>)
     $d0 = COPY %3(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1287,13 +1287,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<4 x s32>) = G_ICMP intpred(sge), [[COPY]](<4 x s32>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<4 x s16>) = G_TRUNC [[ICMP]](<4 x s32>)
     ; CHECK: $d0 = COPY [[TRUNC]](<4 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<4 x s32>) = COPY $q0
     %1:_(<4 x s32>) = COPY $q1
     %2:_(<4 x s1>) = G_ICMP intpred(sge), %0(<4 x s32>), %1
     %3:_(<4 x s16>) = G_ANYEXT %2(<4 x s1>)
     $d0 = COPY %3(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1316,13 +1316,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<2 x s32>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<2 x s32>) = G_ICMP intpred(sge), [[COPY]](<2 x s32>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<2 x s32>) = COPY $d0
     %1:_(<2 x s32>) = COPY $d1
     %2:_(<2 x s1>) = G_ICMP intpred(sge), %0(<2 x s32>), %1
     %3:_(<2 x s32>) = G_ANYEXT %2(<2 x s1>)
     $d0 = COPY %3(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1346,13 +1346,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<8 x s16>) = G_ICMP intpred(sge), [[COPY]](<8 x s16>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<8 x s8>) = G_TRUNC [[ICMP]](<8 x s16>)
     ; CHECK: $d0 = COPY [[TRUNC]](<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<8 x s16>) = COPY $q0
     %1:_(<8 x s16>) = COPY $q1
     %2:_(<8 x s1>) = G_ICMP intpred(sge), %0(<8 x s16>), %1
     %3:_(<8 x s8>) = G_ANYEXT %2(<8 x s1>)
     $d0 = COPY %3(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1375,13 +1375,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<4 x s16>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<4 x s16>) = G_ICMP intpred(sge), [[COPY]](<4 x s16>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<4 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<4 x s16>) = COPY $d0
     %1:_(<4 x s16>) = COPY $d1
     %2:_(<4 x s1>) = G_ICMP intpred(sge), %0(<4 x s16>), %1
     %3:_(<4 x s16>) = G_ANYEXT %2(<4 x s1>)
     $d0 = COPY %3(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1404,13 +1404,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<16 x s8>) = COPY $q1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<16 x s8>) = G_ICMP intpred(sge), [[COPY]](<16 x s8>), [[COPY1]]
     ; CHECK: $q0 = COPY [[ICMP]](<16 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:_(<16 x s8>) = COPY $q0
     %1:_(<16 x s8>) = COPY $q1
     %2:_(<16 x s1>) = G_ICMP intpred(sge), %0(<16 x s8>), %1
     %3:_(<16 x s8>) = G_ANYEXT %2(<16 x s1>)
     $q0 = COPY %3(<16 x s8>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -1433,13 +1433,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<8 x s8>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<8 x s8>) = G_ICMP intpred(sge), [[COPY]](<8 x s8>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<8 x s8>) = COPY $d0
     %1:_(<8 x s8>) = COPY $d1
     %2:_(<8 x s1>) = G_ICMP intpred(sge), %0(<8 x s8>), %1
     %3:_(<8 x s8>) = G_ANYEXT %2(<8 x s1>)
     $d0 = COPY %3(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1463,13 +1463,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<2 x s64>) = G_ICMP intpred(slt), [[COPY]](<2 x s64>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<2 x s32>) = G_TRUNC [[ICMP]](<2 x s64>)
     ; CHECK: $d0 = COPY [[TRUNC]](<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<2 x s64>) = COPY $q0
     %1:_(<2 x s64>) = COPY $q1
     %2:_(<2 x s1>) = G_ICMP intpred(slt), %0(<2 x s64>), %1
     %3:_(<2 x s32>) = G_ANYEXT %2(<2 x s1>)
     $d0 = COPY %3(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1493,13 +1493,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<4 x s32>) = G_ICMP intpred(slt), [[COPY]](<4 x s32>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<4 x s16>) = G_TRUNC [[ICMP]](<4 x s32>)
     ; CHECK: $d0 = COPY [[TRUNC]](<4 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<4 x s32>) = COPY $q0
     %1:_(<4 x s32>) = COPY $q1
     %2:_(<4 x s1>) = G_ICMP intpred(slt), %0(<4 x s32>), %1
     %3:_(<4 x s16>) = G_ANYEXT %2(<4 x s1>)
     $d0 = COPY %3(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1522,13 +1522,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<2 x s32>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<2 x s32>) = G_ICMP intpred(slt), [[COPY]](<2 x s32>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<2 x s32>) = COPY $d0
     %1:_(<2 x s32>) = COPY $d1
     %2:_(<2 x s1>) = G_ICMP intpred(slt), %0(<2 x s32>), %1
     %3:_(<2 x s32>) = G_ANYEXT %2(<2 x s1>)
     $d0 = COPY %3(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1552,13 +1552,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<8 x s16>) = G_ICMP intpred(slt), [[COPY]](<8 x s16>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<8 x s8>) = G_TRUNC [[ICMP]](<8 x s16>)
     ; CHECK: $d0 = COPY [[TRUNC]](<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<8 x s16>) = COPY $q0
     %1:_(<8 x s16>) = COPY $q1
     %2:_(<8 x s1>) = G_ICMP intpred(slt), %0(<8 x s16>), %1
     %3:_(<8 x s8>) = G_ANYEXT %2(<8 x s1>)
     $d0 = COPY %3(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1581,13 +1581,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<4 x s16>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<4 x s16>) = G_ICMP intpred(slt), [[COPY]](<4 x s16>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<4 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<4 x s16>) = COPY $d0
     %1:_(<4 x s16>) = COPY $d1
     %2:_(<4 x s1>) = G_ICMP intpred(slt), %0(<4 x s16>), %1
     %3:_(<4 x s16>) = G_ANYEXT %2(<4 x s1>)
     $d0 = COPY %3(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1610,13 +1610,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<16 x s8>) = COPY $q1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<16 x s8>) = G_ICMP intpred(slt), [[COPY]](<16 x s8>), [[COPY1]]
     ; CHECK: $q0 = COPY [[ICMP]](<16 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:_(<16 x s8>) = COPY $q0
     %1:_(<16 x s8>) = COPY $q1
     %2:_(<16 x s1>) = G_ICMP intpred(slt), %0(<16 x s8>), %1
     %3:_(<16 x s8>) = G_ANYEXT %2(<16 x s1>)
     $q0 = COPY %3(<16 x s8>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -1639,13 +1639,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<8 x s8>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<8 x s8>) = G_ICMP intpred(slt), [[COPY]](<8 x s8>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<8 x s8>) = COPY $d0
     %1:_(<8 x s8>) = COPY $d1
     %2:_(<8 x s1>) = G_ICMP intpred(slt), %0(<8 x s8>), %1
     %3:_(<8 x s8>) = G_ANYEXT %2(<8 x s1>)
     $d0 = COPY %3(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1669,13 +1669,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<2 x s64>) = G_ICMP intpred(sle), [[COPY]](<2 x s64>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<2 x s32>) = G_TRUNC [[ICMP]](<2 x s64>)
     ; CHECK: $d0 = COPY [[TRUNC]](<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<2 x s64>) = COPY $q0
     %1:_(<2 x s64>) = COPY $q1
     %2:_(<2 x s1>) = G_ICMP intpred(sle), %0(<2 x s64>), %1
     %3:_(<2 x s32>) = G_ANYEXT %2(<2 x s1>)
     $d0 = COPY %3(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1699,13 +1699,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<4 x s32>) = G_ICMP intpred(sle), [[COPY]](<4 x s32>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<4 x s16>) = G_TRUNC [[ICMP]](<4 x s32>)
     ; CHECK: $d0 = COPY [[TRUNC]](<4 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<4 x s32>) = COPY $q0
     %1:_(<4 x s32>) = COPY $q1
     %2:_(<4 x s1>) = G_ICMP intpred(sle), %0(<4 x s32>), %1
     %3:_(<4 x s16>) = G_ANYEXT %2(<4 x s1>)
     $d0 = COPY %3(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1728,13 +1728,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<2 x s32>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<2 x s32>) = G_ICMP intpred(sle), [[COPY]](<2 x s32>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<2 x s32>) = COPY $d0
     %1:_(<2 x s32>) = COPY $d1
     %2:_(<2 x s1>) = G_ICMP intpred(sle), %0(<2 x s32>), %1
     %3:_(<2 x s32>) = G_ANYEXT %2(<2 x s1>)
     $d0 = COPY %3(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1758,13 +1758,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<8 x s16>) = G_ICMP intpred(sle), [[COPY]](<8 x s16>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<8 x s8>) = G_TRUNC [[ICMP]](<8 x s16>)
     ; CHECK: $d0 = COPY [[TRUNC]](<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<8 x s16>) = COPY $q0
     %1:_(<8 x s16>) = COPY $q1
     %2:_(<8 x s1>) = G_ICMP intpred(sle), %0(<8 x s16>), %1
     %3:_(<8 x s8>) = G_ANYEXT %2(<8 x s1>)
     $d0 = COPY %3(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1787,13 +1787,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<4 x s16>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<4 x s16>) = G_ICMP intpred(sle), [[COPY]](<4 x s16>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<4 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<4 x s16>) = COPY $d0
     %1:_(<4 x s16>) = COPY $d1
     %2:_(<4 x s1>) = G_ICMP intpred(sle), %0(<4 x s16>), %1
     %3:_(<4 x s16>) = G_ANYEXT %2(<4 x s1>)
     $d0 = COPY %3(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1816,13 +1816,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<16 x s8>) = COPY $q1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<16 x s8>) = G_ICMP intpred(sle), [[COPY]](<16 x s8>), [[COPY1]]
     ; CHECK: $q0 = COPY [[ICMP]](<16 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:_(<16 x s8>) = COPY $q0
     %1:_(<16 x s8>) = COPY $q1
     %2:_(<16 x s1>) = G_ICMP intpred(sle), %0(<16 x s8>), %1
     %3:_(<16 x s8>) = G_ANYEXT %2(<16 x s1>)
     $q0 = COPY %3(<16 x s8>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -1845,13 +1845,13 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:_(<8 x s8>) = COPY $d1
     ; CHECK: [[ICMP:%[0-9]+]]:_(<8 x s8>) = G_ICMP intpred(sle), [[COPY]](<8 x s8>), [[COPY1]]
     ; CHECK: $d0 = COPY [[ICMP]](<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<8 x s8>) = COPY $d0
     %1:_(<8 x s8>) = COPY $d1
     %2:_(<8 x s1>) = G_ICMP intpred(sle), %0(<8 x s8>), %1
     %3:_(<8 x s8>) = G_ANYEXT %2(<8 x s1>)
     $d0 = COPY %3(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1875,13 +1875,13 @@ body:             |
     ; CHECK: [[ICMP:%[0-9]+]]:_(<2 x s64>) = G_ICMP intpred(eq), [[COPY]](<2 x p0>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<2 x s32>) = G_TRUNC [[ICMP]](<2 x s64>)
     ; CHECK: $d0 = COPY [[TRUNC]](<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<2 x p0>) = COPY $q0
     %1:_(<2 x p0>) = COPY $q1
     %2:_(<2 x s1>) = G_ICMP intpred(eq), %0(<2 x p0>), %1
     %3:_(<2 x s32>) = G_ANYEXT %2(<2 x s1>)
     $d0 = COPY %3(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -1910,7 +1910,7 @@ body:             |
     ; CHECK: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s16>) = G_CONCAT_VECTORS [[TRUNC]](<4 x s16>), [[TRUNC1]](<4 x s16>)
     ; CHECK: [[TRUNC2:%[0-9]+]]:_(<8 x s8>) = G_TRUNC [[CONCAT_VECTORS]](<8 x s16>)
     ; CHECK: $d0 = COPY [[TRUNC2]](<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %2:_(<4 x s32>) = COPY $q0
     %3:_(<4 x s32>) = COPY $q1
     %0:_(<8 x s32>) = G_CONCAT_VECTORS %2(<4 x s32>), %3(<4 x s32>)
@@ -1920,7 +1920,7 @@ body:             |
     %6:_(<8 x s1>) = G_ICMP intpred(eq), %0(<8 x s32>), %1
     %7:_(<8 x s8>) = G_ANYEXT %6(<8 x s1>)
     $d0 = COPY %7(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 ...
 ---
 name:            icmp_8xs32
@@ -1948,7 +1948,7 @@ body:             |
     ; CHECK: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s16>) = G_CONCAT_VECTORS [[TRUNC]](<4 x s16>), [[TRUNC1]](<4 x s16>)
     ; CHECK: [[TRUNC2:%[0-9]+]]:_(<8 x s8>) = G_TRUNC [[CONCAT_VECTORS]](<8 x s16>)
     ; CHECK: $d0 = COPY [[TRUNC2]](<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %2:_(<4 x s32>) = COPY $q0
     %3:_(<4 x s32>) = COPY $q1
     %0:_(<8 x s32>) = G_CONCAT_VECTORS %2(<4 x s32>), %3(<4 x s32>)
@@ -1958,7 +1958,7 @@ body:             |
     %6:_(<8 x s32>) = G_ICMP intpred(eq), %0(<8 x s32>), %1
     %7:_(<8 x s8>) = G_TRUNC %6(<8 x s32>)
     $d0 = COPY %7(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 ...
 ---
 name:            fcmp_8xs1
@@ -1986,7 +1986,7 @@ body:             |
     ; CHECK: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s16>) = G_CONCAT_VECTORS [[TRUNC]](<4 x s16>), [[TRUNC1]](<4 x s16>)
     ; CHECK: [[TRUNC2:%[0-9]+]]:_(<8 x s8>) = G_TRUNC [[CONCAT_VECTORS]](<8 x s16>)
     ; CHECK: $d0 = COPY [[TRUNC2]](<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %2:_(<4 x s32>) = COPY $q0
     %3:_(<4 x s32>) = COPY $q1
     %0:_(<8 x s32>) = G_CONCAT_VECTORS %2(<4 x s32>), %3(<4 x s32>)
@@ -1996,7 +1996,7 @@ body:             |
     %6:_(<8 x s1>) = G_FCMP floatpred(one), %0(<8 x s32>), %1
     %7:_(<8 x s8>) = G_ANYEXT %6(<8 x s1>)
     $d0 = COPY %7(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 ...
 ---
 name:            fcmp_8xs32
@@ -2024,7 +2024,7 @@ body:             |
     ; CHECK: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s16>) = G_CONCAT_VECTORS [[TRUNC]](<4 x s16>), [[TRUNC1]](<4 x s16>)
     ; CHECK: [[TRUNC2:%[0-9]+]]:_(<8 x s8>) = G_TRUNC [[CONCAT_VECTORS]](<8 x s16>)
     ; CHECK: $d0 = COPY [[TRUNC2]](<8 x s8>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %2:_(<4 x s32>) = COPY $q0
     %3:_(<4 x s32>) = COPY $q1
     %0:_(<8 x s32>) = G_CONCAT_VECTORS %2(<4 x s32>), %3(<4 x s32>)
@@ -2034,7 +2034,7 @@ body:             |
     %6:_(<8 x s32>) = G_FCMP floatpred(oeq), %0(<8 x s32>), %1
     %7:_(<8 x s8>) = G_TRUNC %6(<8 x s32>)
     $d0 = COPY %7(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 ...
 ---
 name:            fcmp_v4s32
@@ -2057,12 +2057,12 @@ body:             |
     ; CHECK: [[FCMP:%[0-9]+]]:_(<4 x s32>) = G_FCMP floatpred(olt), [[COPY]](<4 x s32>), [[COPY1]]
     ; CHECK: [[TRUNC:%[0-9]+]]:_(<4 x s16>) = G_TRUNC [[FCMP]](<4 x s32>)
     ; CHECK: $d0 = COPY [[TRUNC]](<4 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<4 x s32>) = COPY $q0
     %1:_(<4 x s32>) = COPY $q1
     %2:_(<4 x s1>) = G_FCMP floatpred(olt), %0(<4 x s32>), %1
     %3:_(<4 x s16>) = G_ANYEXT %2(<4 x s1>)
     $d0 = COPY %3(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...

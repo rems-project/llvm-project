@@ -12,7 +12,7 @@ define aarch64_sve_vector_pcs <vscale x 4 x i32> @callee_with_many_sve_arg(<vsca
 ; CHECK-DAG: [[PTRUE:%[0-9]+]]:ppr_3b = PTRUE_S 31
 ; CHECK-DAG: [[RES:%[0-9]+]]:zpr = LD1W_IMM killed [[PTRUE]], [[BASE]]
 ; CHECK-DAG: $z0 = COPY [[RES]]
-; CHECK:     RET_ReallyLR 0, implicit $z0
+; CHECK:     RET_ReallyLR implicit $z0
   ret <vscale x 4 x i32> %z9
 }
 
@@ -32,7 +32,7 @@ define aarch64_sve_vector_pcs <vscale x 4 x i32> @caller_with_many_sve_arg(<vsca
 ; CHECK-DAG:  $x0 = COPY [[BASE1]]
 ; CHECK-DAG:  $x1 = COPY [[BASE2]]
 ; CHECK-NEXT: BL @callee_with_many_sve_arg
-; CHECK:      RET_ReallyLR 0, implicit $z0
+; CHECK:      RET_ReallyLR implicit $z0
   %ret = call aarch64_sve_vector_pcs <vscale x 4 x i32> @callee_with_many_sve_arg(<vscale x 4 x i32> %z, <vscale x 4 x i32> %z, <vscale x 4 x i32> %z, <vscale x 4 x i32> %z, <vscale x 4 x i32> %z, <vscale x 4 x i32> %z, <vscale x 4 x i32> %z, <vscale x 4 x i32> %z, <vscale x 4 x i32> %z, <vscale x 4 x i32> %z)
   ret <vscale x 4 x i32> %ret
 }
@@ -48,7 +48,7 @@ define aarch64_sve_vector_pcs <vscale x 16 x i1> @callee_with_many_svepred_arg(<
 ; CHECK-DAG: [[BASE:%[0-9]+]]:gpr64common = COPY $x1
 ; CHECK-DAG: [[RES:%[0-9]+]]:ppr = LDR_PXI [[BASE]], 0
 ; CHECK-DAG: $p0 = COPY [[RES]]
-; CHECK:     RET_ReallyLR 0, implicit $p0
+; CHECK:     RET_ReallyLR implicit $p0
   ret <vscale x 16 x i1> %p5
 }
 
@@ -67,7 +67,7 @@ define aarch64_sve_vector_pcs <vscale x 16 x i1> @caller_with_many_svepred_arg(<
 ; CHECK-DAG: $x0 = COPY [[BASE1]]
 ; CHECK-DAG: $x1 = COPY [[BASE2]]
 ; CHECK-NEXT: BL @callee_with_many_svepred_arg
-; CHECK:     RET_ReallyLR 0, implicit $p0
+; CHECK:     RET_ReallyLR implicit $p0
   %ret = call aarch64_sve_vector_pcs <vscale x 16 x i1> @callee_with_many_svepred_arg(<vscale x 16 x i1> %p, <vscale x 16 x i1> %p, <vscale x 16 x i1> %p, <vscale x 16 x i1> %p, <vscale x 16 x i1> %p, <vscale x 16 x i1> %p)
   ret <vscale x 16 x i1> %ret
 }
@@ -90,7 +90,7 @@ define aarch64_sve_vector_pcs <vscale x 4 x i32> @callee_with_many_gpr_sve_arg(i
 ; CHECK-DAG: [[PTRUE:%[0-9]+]]:ppr_3b = PTRUE_S 31
 ; CHECK-DAG: [[RES:%[0-9]+]]:zpr = LD1W_IMM killed [[PTRUE]], killed [[BASE]]
 ; CHECK-DAG: $z0 = COPY [[RES]]
-; CHECK: RET_ReallyLR 0, implicit $z0
+; CHECK: RET_ReallyLR implicit $z0
   ret <vscale x 4 x i32> %z9
 }
 
@@ -112,7 +112,7 @@ define aarch64_sve_vector_pcs <vscale x 4 x i32> @caller_with_many_gpr_sve_arg(i
 ; CHECK-DAG: STRXui killed [[BASE1]], [[SP]], 0
 ; CHECK-DAG: STRXui killed [[BASE2]], [[SP]], 1
 ; CHECK:     BL @callee_with_many_gpr_sve_arg
-; CHECK:     RET_ReallyLR 0, implicit $z0
+; CHECK:     RET_ReallyLR implicit $z0
   %ret = call aarch64_sve_vector_pcs <vscale x 4 x i32> @callee_with_many_gpr_sve_arg(i64 %x, i64 %x, i64 %x, i64 %x, i64 %x, i64 %x, i64 %x, i64 %x, <vscale x 4 x i32> %z, <vscale x 4 x i32> %z, <vscale x 4 x i32> %z, <vscale x 4 x i32> %z, <vscale x 4 x i32> %z, <vscale x 4 x i32> %z, <vscale x 4 x i32> %z, <vscale x 4 x i32> %z, <vscale x 2 x i64> %z2, <vscale x 4 x i32> %z)
   ret <vscale x 4 x i32> %ret
 }

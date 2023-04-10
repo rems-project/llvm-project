@@ -10,7 +10,7 @@ define <2 x half> @f16_vec_param(<2 x half> %v) {
   ; CHECK:   [[DEF:%[0-9]+]]:_(<2 x s16>) = G_IMPLICIT_DEF
   ; CHECK:   [[CONCAT_VECTORS:%[0-9]+]]:_(<4 x s16>) = G_CONCAT_VECTORS [[UV]](<2 x s16>), [[DEF]](<2 x s16>)
   ; CHECK:   $d0 = COPY [[CONCAT_VECTORS]](<4 x s16>)
-  ; CHECK:   RET_ReallyLR 0, implicit $d0
+  ; CHECK:   RET_ReallyLR implicit $d0
   ret <2 x half> %v
 }
 
@@ -22,6 +22,6 @@ define <2 x i16> @i16_vec_param(<2 x i16> %v) {
   ; CHECK:   [[TRUNC:%[0-9]+]]:_(<2 x s16>) = G_TRUNC [[COPY]](<2 x s32>)
   ; CHECK:   [[ANYEXT:%[0-9]+]]:_(<2 x s32>) = G_ANYEXT [[TRUNC]](<2 x s16>)
   ; CHECK:   $d0 = COPY [[ANYEXT]](<2 x s32>)
-  ; CHECK:   RET_ReallyLR 0, implicit $d0
+  ; CHECK:   RET_ReallyLR implicit $d0
   ret <2 x i16> %v
 }

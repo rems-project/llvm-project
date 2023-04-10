@@ -10,7 +10,7 @@ define <1 x float> @ret_v1f32(<1 x float> %v) {
   ; CHECK:   [[DEF:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
   ; CHECK:   [[BUILD_VECTOR:%[0-9]+]]:_(<2 x s32>) = G_BUILD_VECTOR [[UV]](s32), [[DEF]](s32)
   ; CHECK:   $d0 = COPY [[BUILD_VECTOR]](<2 x s32>)
-  ; CHECK:   RET_ReallyLR 0, implicit $d0
+  ; CHECK:   RET_ReallyLR implicit $d0
   ret <1 x float> %v
 }
 
@@ -20,7 +20,7 @@ define <1 x i8*> @ret_v1p0(<1 x i8*> %v) {
   ; CHECK:   liveins: $d0
   ; CHECK:   [[COPY:%[0-9]+]]:_(p0) = COPY $d0
   ; CHECK:   $d0 = COPY [[COPY]](p0)
-  ; CHECK:   RET_ReallyLR 0, implicit $d0
+  ; CHECK:   RET_ReallyLR implicit $d0
   ret <1 x i8*> %v
 }
 
@@ -30,6 +30,6 @@ define <1 x i8 addrspace(1)*> @ret_v1p1(<1 x i8 addrspace(1)*> %v) {
   ; CHECK:   liveins: $d0
   ; CHECK:   [[COPY:%[0-9]+]]:_(p1) = COPY $d0
   ; CHECK:   $d0 = COPY [[COPY]](p1)
-  ; CHECK:   RET_ReallyLR 0, implicit $d0
+  ; CHECK:   RET_ReallyLR implicit $d0
   ret <1 x i8 addrspace(1)*> %v
 }

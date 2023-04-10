@@ -141,6 +141,6 @@ body:             |
   bb.3.return:
     liveins: $w0
 
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...

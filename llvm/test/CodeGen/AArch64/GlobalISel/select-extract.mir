@@ -18,12 +18,12 @@ body:             |
     ; CHECK-NEXT: [[DUPi64_:%[0-9]+]]:fpr64 = DUPi64 [[COPY]], 1
     ; CHECK-NEXT: $d3 = COPY [[COPY1]]
     ; CHECK-NEXT: $d4 = COPY [[DUPi64_]]
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $d3
+    ; CHECK-NEXT: RET_ReallyLR implicit $d3
     %0:fpr(s128) = COPY $q0
     %2:fpr(s64) = G_EXTRACT %0(s128), 0
     %3:fpr(s64) = G_EXTRACT %0(s128), 64
     $d3 = COPY %2(s64)
     $d4 = COPY %3(s64)
-    RET_ReallyLR 0, implicit $d3
+    RET_ReallyLR implicit $d3
 
 ...

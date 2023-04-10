@@ -35,7 +35,7 @@ body:             |
     B %bb.2
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -73,7 +73,7 @@ body:             |
     B %bb.2
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -108,7 +108,7 @@ body:             |
     B %bb.2
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -141,7 +141,7 @@ body:             |
     B %bb.2
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -173,7 +173,7 @@ body:             |
     B %bb.2
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -206,7 +206,7 @@ body:             |
     B %bb.2
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -239,7 +239,7 @@ body:             |
     B %bb.2
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -271,7 +271,7 @@ body:             |
     B %bb.2
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -304,7 +304,7 @@ body:             |
     B %bb.2
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -343,6 +343,6 @@ body:             |
     B %bb.2
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

@@ -23,7 +23,7 @@ body:             |
     %src1:fpr(<8 x s8>) = COPY $d0
     %src2:fpr(<8 x s8>) = COPY $d1
     G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.neon.st2), %src1(<8 x s8>), %src2(<8 x s8>), %ptr(p0) :: (store (<2 x s64>))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -48,7 +48,7 @@ body:             |
     %src1:fpr(<16 x s8>) = COPY $q0
     %src2:fpr(<16 x s8>) = COPY $q1
     G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.neon.st2), %src1(<16 x s8>), %src2(<16 x s8>), %ptr(p0) :: (store (<4 x s64>))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -73,7 +73,7 @@ body:             |
     %src1:fpr(<4 x s16>) = COPY $d0
     %src2:fpr(<4 x s16>) = COPY $d1
     G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.neon.st2), %src1(<4 x s16>), %src2(<4 x s16>), %ptr(p0) :: (store (<2 x s64>))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -98,7 +98,7 @@ body:             |
     %src1:fpr(<8 x s16>) = COPY $q0
     %src2:fpr(<8 x s16>) = COPY $q1
     G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.neon.st2), %src1(<8 x s16>), %src2(<8 x s16>), %ptr(p0) :: (store (<4 x s64>))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -122,7 +122,7 @@ body:             |
     %src1:fpr(<2 x s32>) = COPY $d0
     %src2:fpr(<2 x s32>) = COPY $d1
     G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.neon.st2), %src1(<2 x s32>), %src2(<2 x s32>), %ptr(p0) :: (store (<2 x s64>))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -146,7 +146,7 @@ body:             |
     %src1:fpr(<4 x s32>) = COPY $q0
     %src2:fpr(<4 x s32>) = COPY $q1
     G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.neon.st2), %src1(<4 x s32>), %src2(<4 x s32>), %ptr(p0) :: (store (<4 x s64>))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -170,7 +170,7 @@ body:             |
     %src1:fpr(<2 x s64>) = COPY $q0
     %src2:fpr(<2 x s64>) = COPY $q1
     G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.neon.st2), %src1(<2 x s64>), %src2(<2 x s64>), %ptr(p0) :: (store (<4 x s64>))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -194,7 +194,7 @@ body:             |
     %src1:fpr(<2 x p0>) = COPY $q0
     %src2:fpr(<2 x p0>) = COPY $q1
     G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.neon.st2), %src1(<2 x p0>), %src2(<2 x p0>), %ptr(p0) :: (store (<4 x s64>))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -218,7 +218,7 @@ body:             |
     %src1:gpr(s64) = COPY $x0
     %src2:gpr(s64) = COPY $x1
     G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.neon.st2), %src1(s64), %src2(s64), %ptr(p0) :: (store (<2 x s64>))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -242,6 +242,6 @@ body:             |
     %src1:gpr(p0) = COPY $x0
     %src2:gpr(p0) = COPY $x1
     G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.neon.st2), %src1(p0), %src2(p0), %ptr(p0) :: (store (<2 x s64>))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

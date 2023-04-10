@@ -32,7 +32,7 @@ body:             |
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   [[PHI:%[0-9]+]]:gpr32 = PHI [[ADDWri]], %bb.2
   ; CHECK-NEXT:   $w0 = COPY [[PHI]]
-  ; CHECK-NEXT:   RET_ReallyLR 0, implicit $w0
+  ; CHECK-NEXT:   RET_ReallyLR implicit $w0
   bb.1:
     successors: %bb.3
     liveins: $w0
@@ -56,6 +56,6 @@ body:             |
   bb.4:
     %7:gpr(s32) = G_PHI %6(s32), %bb.3
     $w0 = COPY %7(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...

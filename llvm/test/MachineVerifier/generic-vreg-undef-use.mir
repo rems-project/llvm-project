@@ -20,6 +20,6 @@ body:             |
 
     ; Make sure this fails with a target instruction
     ; CHECK: *** Bad machine code: Generic virtual register use cannot be undef ***
-    RET_ReallyLR 0, implicit $x0, implicit undef %3:_(s32)
+    RET_ReallyLR implicit $x0, implicit undef %3:_(s32)
 ...
 

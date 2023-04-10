@@ -28,6 +28,6 @@ body:             |
     %1:_(p0) = COPY $x0
     %2:_(<4 x s64>) = G_FPEXT %0(<4 x s32>)
     G_STORE %2(<4 x s64>), %1(p0) :: (store (<4 x s64>))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

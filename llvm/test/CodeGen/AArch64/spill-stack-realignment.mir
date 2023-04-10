@@ -32,4 +32,4 @@ body:             |
     STRSui $s0, %stack.1, 0
     ; Force preserve a CSR to create a hole in the CSR stack region.
     $x28 = IMPLICIT_DEF
-    RET_ReallyLR 0
+    RET_ReallyLR

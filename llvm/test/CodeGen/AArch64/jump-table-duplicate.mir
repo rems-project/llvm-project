@@ -183,6 +183,6 @@ body:             |
   
     $fp, $lr = frame-destroy LDPXi $sp, 2 :: (load (s64) from %stack.1), (load (s64) from %stack.0)
     early-clobber $sp, $x20, $x19 = frame-destroy LDPXpost $sp, 4 :: (load (s64) from %stack.3), (load (s64) from %stack.2)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...

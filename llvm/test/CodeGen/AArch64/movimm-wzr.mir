@@ -34,7 +34,7 @@ body:             |
   bb.0 (%ir-block.0):
     $wzr = MOVi32imm 42
     $xzr = MOVi64imm 42
-    RET_ReallyLR 0, implicit killed $w0
+    RET_ReallyLR implicit killed $w0
 
 ...
 

@@ -83,14 +83,14 @@ body:             |
     ; CHECK-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(ne), [[TRUNC]](s32), [[ASHR1]]
     ; CHECK-NEXT: $w0 = COPY %mul(s32)
     ; CHECK-NEXT: $w0 = COPY [[ICMP]](s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %lhs:_(s32) = COPY $w0
     %rhs:_(s32) = COPY $w1
     %mul:_(s32), %overflow:_(s1) = G_SMULO %lhs, %rhs
     $w0 = COPY %mul(s32)
     %ext_overflow:_(s32) = G_ANYEXT %overflow(s1)
     $w0 = COPY %ext_overflow(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -111,14 +111,14 @@ body:             |
     ; CHECK-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(ne), [[TRUNC]](s32), [[C1]]
     ; CHECK-NEXT: $w0 = COPY %mul(s32)
     ; CHECK-NEXT: $w0 = COPY [[ICMP]](s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %lhs:_(s32) = COPY $w0
     %rhs:_(s32) = COPY $w1
     %mul:_(s32), %overflow:_(s1) = G_UMULO %lhs, %rhs
     $w0 = COPY %mul(s32)
     %ext_overflow:_(s32) = G_ANYEXT %overflow(s1)
     $w0 = COPY %ext_overflow(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -148,7 +148,7 @@ body:             |
     ; CHECK-NEXT: [[OR:%[0-9]+]]:_(s32) = G_OR [[ICMP]], [[ICMP1]]
     ; CHECK-NEXT: $w0 = COPY [[MUL1]](s32)
     ; CHECK-NEXT: $w0 = COPY [[OR]](s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %lhs_wide:_(s32) = COPY $w0
     %rhs_wide:_(s32) = COPY $w1
     %lhs:_(s24) = G_TRUNC %lhs_wide
@@ -158,7 +158,7 @@ body:             |
     $w0 = COPY %ext_mul(s32)
     %ext_overflow:_(s32) = G_ANYEXT %overflow(s1)
     $w0 = COPY %ext_overflow(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -179,12 +179,12 @@ body:             |
     ; CHECK-NEXT: [[MUL1:%[0-9]+]]:_(s64) = G_MUL [[UV1]], [[UV3]]
     ; CHECK-NEXT: [[BUILD_VECTOR:%[0-9]+]]:_(<2 x s64>) = G_BUILD_VECTOR [[MUL]](s64), [[MUL1]](s64)
     ; CHECK-NEXT: $q0 = COPY [[BUILD_VECTOR]](<2 x s64>)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $q0
+    ; CHECK-NEXT: RET_ReallyLR implicit $q0
     %0:_(<2 x s64>) = COPY $q0
     %1:_(<2 x s64>) = COPY $q1
     %2:_(<2 x s64>) = G_MUL %0, %1
     $q0 = COPY %2(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 ...
 ---
 name:            test_umulo_overflow_no_invalid_mir
@@ -230,7 +230,7 @@ body:             |
     ; CHECK-NEXT: [[AND:%[0-9]+]]:_(s64) = G_AND [[ANYEXT]], [[C1]]
     ; CHECK-NEXT: $x0 = COPY [[MUL]](s64)
     ; CHECK-NEXT: $x1 = COPY [[AND]](s64)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $x0
+    ; CHECK-NEXT: RET_ReallyLR implicit $x0
     %0:_(p0) = COPY $x0
     %1:_(s64) = COPY $x1
     %2:_(s64) = COPY $x2
@@ -248,7 +248,7 @@ body:             |
     %16:_(s64) = G_ZEXT %10(s1)
     $x0 = COPY %9(s64)
     $x1 = COPY %16(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -271,12 +271,12 @@ body:             |
     ; CHECK-NEXT: [[LSHR:%[0-9]+]]:_(s64) = G_LSHR [[MUL]], [[C]](s64)
     ; CHECK-NEXT: %mul:_(s32) = G_TRUNC [[LSHR]](s64)
     ; CHECK-NEXT: $w0 = COPY %mul(s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %0:_(s32) = COPY $w0
     %1:_(s32) = COPY $w1
     %mul:_(s32) = G_UMULH %0, %1
     $w0 = COPY %mul(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -299,12 +299,12 @@ body:             |
     ; CHECK-NEXT: [[ASHR:%[0-9]+]]:_(s64) = G_ASHR [[MUL]], [[C]](s64)
     ; CHECK-NEXT: %mul:_(s32) = G_TRUNC [[ASHR]](s64)
     ; CHECK-NEXT: $w0 = COPY %mul(s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %0:_(s32) = COPY $w0
     %1:_(s32) = COPY $w1
     %mul:_(s32) = G_SMULH %0, %1
     $w0 = COPY %mul(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -324,12 +324,12 @@ body:             |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<8 x s16>) = COPY $q1
     ; CHECK-NEXT: %mul:_(<8 x s16>) = G_UMULH [[COPY]], [[COPY1]]
     ; CHECK-NEXT: $q0 = COPY %mul(<8 x s16>)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $q0
+    ; CHECK-NEXT: RET_ReallyLR implicit $q0
     %0:_(<8 x s16>) = COPY $q0
     %1:_(<8 x s16>) = COPY $q1
     %mul:_(<8 x s16>) = G_UMULH %0, %1
     $q0 = COPY %mul(<8 x s16>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -349,12 +349,12 @@ body:             |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s8>) = COPY $q1
     ; CHECK-NEXT: %mul:_(<16 x s8>) = G_UMULH [[COPY]], [[COPY1]]
     ; CHECK-NEXT: $q0 = COPY %mul(<16 x s8>)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $q0
+    ; CHECK-NEXT: RET_ReallyLR implicit $q0
     %0:_(<16 x s8>) = COPY $q0
     %1:_(<16 x s8>) = COPY $q1
     %mul:_(<16 x s8>) = G_UMULH %0, %1
     $q0 = COPY %mul(<16 x s8>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -374,12 +374,12 @@ body:             |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<4 x s32>) = COPY $q1
     ; CHECK-NEXT: %mul:_(<4 x s32>) = G_UMULH [[COPY]], [[COPY1]]
     ; CHECK-NEXT: $q0 = COPY %mul(<4 x s32>)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $q0
+    ; CHECK-NEXT: RET_ReallyLR implicit $q0
     %0:_(<4 x s32>) = COPY $q0
     %1:_(<4 x s32>) = COPY $q1
     %mul:_(<4 x s32>) = G_UMULH %0, %1
     $q0 = COPY %mul(<4 x s32>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -399,12 +399,12 @@ body:             |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<8 x s16>) = COPY $q1
     ; CHECK-NEXT: %mul:_(<8 x s16>) = G_SMULH [[COPY]], [[COPY1]]
     ; CHECK-NEXT: $q0 = COPY %mul(<8 x s16>)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $q0
+    ; CHECK-NEXT: RET_ReallyLR implicit $q0
     %0:_(<8 x s16>) = COPY $q0
     %1:_(<8 x s16>) = COPY $q1
     %mul:_(<8 x s16>) = G_SMULH %0, %1
     $q0 = COPY %mul(<8 x s16>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -424,12 +424,12 @@ body:             |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s8>) = COPY $q1
     ; CHECK-NEXT: %mul:_(<16 x s8>) = G_SMULH [[COPY]], [[COPY1]]
     ; CHECK-NEXT: $q0 = COPY %mul(<16 x s8>)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $q0
+    ; CHECK-NEXT: RET_ReallyLR implicit $q0
     %0:_(<16 x s8>) = COPY $q0
     %1:_(<16 x s8>) = COPY $q1
     %mul:_(<16 x s8>) = G_SMULH %0, %1
     $q0 = COPY %mul(<16 x s8>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -449,11 +449,11 @@ body:             |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<4 x s32>) = COPY $q1
     ; CHECK-NEXT: %mul:_(<4 x s32>) = G_SMULH [[COPY]], [[COPY1]]
     ; CHECK-NEXT: $q0 = COPY %mul(<4 x s32>)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $q0
+    ; CHECK-NEXT: RET_ReallyLR implicit $q0
     %0:_(<4 x s32>) = COPY $q0
     %1:_(<4 x s32>) = COPY $q1
     %mul:_(<4 x s32>) = G_SMULH %0, %1
     $q0 = COPY %mul(<4 x s32>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...

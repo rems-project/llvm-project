@@ -25,5 +25,5 @@ body: |
     %2:_(s32) = G_LOAD %0(p0) :: ("aarch64-strided-access" load (s32))
     G_STORE %1(s64), %0(p0) :: ("aarch64-suppress-pair" store (s64))
     G_STORE %2(s32), %0(p0) :: ("aarch64-strided-access" store (s32))
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...

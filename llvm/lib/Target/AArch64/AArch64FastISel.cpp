@@ -3851,7 +3851,7 @@ bool AArch64FastISel::selectRet(const Instruction *I) {
   }
 
   MachineInstrBuilder MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-                                    TII.get(AArch64::RET_ReallyLR)).addImm(0);
+                                    TII.get(AArch64::RET_ReallyLR));
   for (unsigned RetReg : RetRegs)
     MIB.addReg(RetReg, RegState::Implicit);
   return true;

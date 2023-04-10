@@ -54,6 +54,6 @@ body:             |
     G_MEMCPY %0(p0), %1(p0), %3(s64), 1, debug-location !DILocation(line: 6, column: 1, scope: !11) :: (store unknown-size), (load unknown-size)
     DBG_VALUE 0, $noreg, !13, !DIExpression(), debug-location !DILocation(line: 6, column: 1, scope: !11)
     DBG_VALUE 0, $noreg, !13, !DIExpression(), debug-location !DILocation(line: 6, column: 1, scope: !11)
-    RET_ReallyLR 0, debug-location !DILocation(line: 7, column: 1, scope: !11)
+    RET_ReallyLR debug-location !DILocation(line: 7, column: 1, scope: !11)
 
 ...

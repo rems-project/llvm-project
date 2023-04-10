@@ -142,7 +142,7 @@ body:             |
     G_STORE %5(s64), %0(p0) :: (store (s64))
 
   bb.3:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -182,6 +182,6 @@ body:             |
     G_STORE %6(s64), %0(p0) :: (store (s64))
 
   bb.3:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 

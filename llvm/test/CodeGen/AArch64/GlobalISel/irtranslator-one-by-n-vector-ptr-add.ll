@@ -17,7 +17,7 @@ define <1 x i8*> @one_elt_vector_ptr_add_non_vector_idx(<1 x i8*> %vec) {
   ; CHECK:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[SEXT]](s64)
   ; CHECK:   [[COPY2:%[0-9]+]]:_(p0) = COPY [[PTR_ADD]](p0)
   ; CHECK:   $d0 = COPY [[COPY2]](p0)
-  ; CHECK:   RET_ReallyLR 0, implicit $d0
+  ; CHECK:   RET_ReallyLR implicit $d0
   %ptr_add = getelementptr i8, <1 x i8*> %vec, <1 x i32> <i32 1>
   ret <1 x i8*> %ptr_add
 }
@@ -36,7 +36,7 @@ define <1 x i8*> @one_elt_vector_ptr_add_non_vector_ptr(i8* %vec) {
   ; CHECK:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[SEXT]](s64)
   ; CHECK:   [[COPY2:%[0-9]+]]:_(p0) = COPY [[PTR_ADD]](p0)
   ; CHECK:   $d0 = COPY [[COPY2]](p0)
-  ; CHECK:   RET_ReallyLR 0, implicit $d0
+  ; CHECK:   RET_ReallyLR implicit $d0
   %ptr_add = getelementptr i8, i8* %vec, <1 x i32> <i32 1>
   ret <1 x i8*> %ptr_add
 }

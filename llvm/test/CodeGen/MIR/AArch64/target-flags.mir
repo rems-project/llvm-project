@@ -35,5 +35,5 @@ body: |
     $x11 = SUBXri killed $x11, 52, 0
     STRWui killed $w10, killed $x8, target-flags(aarch64-nc) @var_i32
     STRXui killed $x11, killed $x9, target-flags(aarch64-pageoff, aarch64-nc) @var_i64
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...

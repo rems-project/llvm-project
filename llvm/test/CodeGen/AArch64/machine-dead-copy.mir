@@ -21,7 +21,7 @@ body: |
     liveins: $w0,  $w1
     $w20 = COPY $w1
     BL @foo, csr_aarch64_aapcs, implicit $w0, implicit-def $w0
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 # The first copy is not a dead copy which is used in the second copy after the
@@ -36,7 +36,7 @@ body: |
     $w20 = COPY $w1
     BL @foo, csr_aarch64_aapcs, implicit $w0, implicit-def $w0
     $w0 = COPY $w20
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 # Both the first and second copy are dead copies which are not used.
@@ -50,7 +50,7 @@ body: |
     $w20 = COPY $w1
     BL @foo, csr_aarch64_aapcs, implicit $w0, implicit-def $w0
     $w20 = COPY $w0
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 # The second copy is removed as a NOP copy, after then the first copy become
 # dead which should be removed as well.
@@ -64,7 +64,7 @@ body: |
     $w20 = COPY $w0
     $w0 = COPY $w20
     BL @foo, csr_aarch64_aapcs, implicit $w0, implicit-def $w0
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 
 # Don't try to erase any COPY which overlaps itself.
@@ -79,7 +79,7 @@ body: |
     $q28_q29_q30_q31 = COPY killed $q26_q27_q28_q29
     $q26_q27_q28_q29 = COPY killed $q28_q29_q30_q31
     BL @foo, csr_aarch64_aapcs, implicit killed $q26_q27_q28_q29
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 
 # Don't try to analyze any COPY which overlaps itself.
@@ -94,6 +94,6 @@ body: |
     $q28_q29_q30_q31 = COPY killed $q26_q27_q28_q29
     $q30 = COPY $q28
     BL @foo, csr_aarch64_aapcs, implicit killed $q28_q29_q30_q31
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 

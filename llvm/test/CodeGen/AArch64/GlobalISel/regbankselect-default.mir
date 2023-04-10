@@ -868,7 +868,7 @@ body:             |
   ; CHECK: bb.2:
   ; CHECK:   [[PHI:%[0-9]+]]:gpr(p0) = G_PHI [[COPY]](p0), %bb.0, [[COPY1]](p0), %bb.1
   ; CHECK:   $x0 = COPY [[PHI]](p0)
-  ; CHECK:   RET_ReallyLR 0, implicit $x0
+  ; CHECK:   RET_ReallyLR implicit $x0
   bb.0:
     successors: %bb.1, %bb.2
     liveins: $w2, $x0, $x1
@@ -887,7 +887,7 @@ body:             |
   bb.2:
     %3(p0) = G_PHI %0(p0), %bb.0, %1(p0), %bb.1
     $x0 = COPY %3(p0)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 
@@ -905,5 +905,5 @@ body: |
     ; CHECK: RET_ReallyLR
     %0:_(s64) = COPY $x16
     %1:_(s64) = COPY $x17
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...

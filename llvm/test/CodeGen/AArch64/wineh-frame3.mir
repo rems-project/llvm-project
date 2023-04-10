@@ -13,7 +13,7 @@
 # CHECK-NEXT: early-clobber $sp, $x19 = frame-destroy LDRXpost $sp, 16
 # CHECK-NEXT: frame-destroy SEH_SaveReg_X 19, -16
 # CHECK-NEXT: frame-destroy SEH_EpilogEnd
-# CHECK-NEXT: RET_ReallyLR 0, implicit $x0
+# CHECK-NEXT: RET_ReallyLR implicit $x0
 ...
 ---
 name:            test
@@ -55,5 +55,5 @@ body:             |
     $x19 = ADDXrr $x0, killed $x1
     $x22 = ADDXrr killed $x19, $x0
     $x0 = COPY killed $x22
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...

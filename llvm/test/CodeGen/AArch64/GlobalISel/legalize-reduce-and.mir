@@ -18,13 +18,13 @@ body:             |
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
     ; CHECK-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[COPY]], [[C]]
     ; CHECK-NEXT: $w0 = COPY [[AND]](s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %1:_(s32) = COPY $w0
     %0:_(s1) = G_TRUNC %1(s32)
     %2:_(s1) = G_VECREDUCE_AND %0(s1)
     %4:_(s32) = G_ZEXT %2(s1)
     $w0 = COPY %4(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -46,13 +46,13 @@ body:             |
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
     ; CHECK-NEXT: [[AND1:%[0-9]+]]:_(s32) = G_AND [[AND]], [[C]]
     ; CHECK-NEXT: $w0 = COPY [[AND1]](s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %1:_(<2 x s32>) = COPY $d0
     %0:_(<2 x s1>) = G_TRUNC %1(<2 x s32>)
     %2:_(s1) = G_VECREDUCE_AND %0(<2 x s1>)
     %4:_(s32) = G_ZEXT %2(s1)
     $w0 = COPY %4(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -80,13 +80,13 @@ body:             |
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
     ; CHECK-NEXT: [[AND3:%[0-9]+]]:_(s32) = G_AND [[AND2]], [[C]]
     ; CHECK-NEXT: $w0 = COPY [[AND3]](s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %1:_(<4 x s16>) = COPY $d0
     %0:_(<4 x s1>) = G_TRUNC %1(<4 x s16>)
     %2:_(s1) = G_VECREDUCE_AND %0(<4 x s1>)
     %4:_(s32) = G_ZEXT %2(s1)
     $w0 = COPY %4(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -122,13 +122,13 @@ body:             |
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
     ; CHECK-NEXT: [[AND7:%[0-9]+]]:_(s32) = G_AND [[AND6]], [[C]]
     ; CHECK-NEXT: $w0 = COPY [[AND7]](s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %1:_(<8 x s8>) = COPY $d0
     %0:_(<8 x s1>) = G_TRUNC %1(<8 x s8>)
     %2:_(s1) = G_VECREDUCE_AND %0(<8 x s1>)
     %4:_(s32) = G_ZEXT %2(s1)
     $w0 = COPY %4(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -183,13 +183,13 @@ body:             |
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
     ; CHECK-NEXT: [[AND15:%[0-9]+]]:_(s32) = G_AND [[AND14]], [[C]]
     ; CHECK-NEXT: $w0 = COPY [[AND15]](s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %1:_(<16 x s8>) = COPY $q0
     %0:_(<16 x s1>) = G_TRUNC %1(<16 x s8>)
     %2:_(s1) = G_VECREDUCE_AND %0(<16 x s1>)
     %4:_(s32) = G_ZEXT %2(s1)
     $w0 = COPY %4(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -209,14 +209,14 @@ body:             |
     ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(s64) = G_BITCAST [[COPY]](<8 x s8>)
     ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s32) = G_TRUNC [[BITCAST]](s64)
     ; CHECK-NEXT: $w0 = COPY [[TRUNC]](s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %1:_(<8 x s8>) = COPY $d0
     %11:_(s64) = G_BITCAST %1(<8 x s8>)
     %0:_(s8) = G_TRUNC %11(s64)
     %9:_(s8) = G_VECREDUCE_AND %0(s8)
     %10:_(s32) = G_ANYEXT %9(s8)
     $w0 = COPY %10(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -240,7 +240,7 @@ body:             |
     ; CHECK-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[COPY]], [[COPY1]]
     ; CHECK-NEXT: [[AND1:%[0-9]+]]:_(s32) = G_AND [[AND]], [[COPY2]]
     ; CHECK-NEXT: $w0 = COPY [[AND1]](s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %1:_(s32) = COPY $w0
     %2:_(s32) = COPY $w1
     %3:_(s32) = COPY $w2
@@ -249,7 +249,7 @@ body:             |
     %5:_(s8) = G_VECREDUCE_AND %0(<3 x s8>)
     %6:_(s32) = G_ANYEXT %5(s8)
     $w0 = COPY %6(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -275,13 +275,13 @@ body:             |
     ; CHECK-NEXT: [[AND1:%[0-9]+]]:_(s32) = G_AND [[ANYEXT2]], [[ANYEXT3]]
     ; CHECK-NEXT: [[AND2:%[0-9]+]]:_(s32) = G_AND [[AND]], [[AND1]]
     ; CHECK-NEXT: $w0 = COPY [[AND2]](s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %1:_(<4 x s16>) = COPY $d0
     %0:_(<4 x s8>) = G_TRUNC %1(<4 x s16>)
     %2:_(s8) = G_VECREDUCE_AND %0(<4 x s8>)
     %3:_(s32) = G_ANYEXT %2(s8)
     $w0 = COPY %3(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -315,12 +315,12 @@ body:             |
     ; CHECK-NEXT: [[AND5:%[0-9]+]]:_(s32) = G_AND [[AND2]], [[AND3]]
     ; CHECK-NEXT: [[AND6:%[0-9]+]]:_(s32) = G_AND [[AND4]], [[AND5]]
     ; CHECK-NEXT: $w0 = COPY [[AND6]](s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %0:_(<8 x s8>) = COPY $d0
     %1:_(s8) = G_VECREDUCE_AND %0(<8 x s8>)
     %2:_(s32) = G_ANYEXT %1(s8)
     $w0 = COPY %2(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -356,12 +356,12 @@ body:             |
     ; CHECK-NEXT: [[AND6:%[0-9]+]]:_(s32) = G_AND [[AND3]], [[AND4]]
     ; CHECK-NEXT: [[AND7:%[0-9]+]]:_(s32) = G_AND [[AND5]], [[AND6]]
     ; CHECK-NEXT: $w0 = COPY [[AND7]](s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %0:_(<16 x s8>) = COPY $q0
     %1:_(s8) = G_VECREDUCE_AND %0(<16 x s8>)
     %2:_(s32) = G_ANYEXT %1(s8)
     $w0 = COPY %2(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -400,14 +400,14 @@ body:             |
     ; CHECK-NEXT: [[AND7:%[0-9]+]]:_(s32) = G_AND [[AND4]], [[AND5]]
     ; CHECK-NEXT: [[AND8:%[0-9]+]]:_(s32) = G_AND [[AND6]], [[AND7]]
     ; CHECK-NEXT: $w0 = COPY [[AND8]](s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %1:_(<16 x s8>) = COPY $q0
     %2:_(<16 x s8>) = COPY $q1
     %0:_(<32 x s8>) = G_CONCAT_VECTORS %1(<16 x s8>), %2(<16 x s8>)
     %3:_(s8) = G_VECREDUCE_AND %0(<32 x s8>)
     %4:_(s32) = G_ANYEXT %3(s8)
     $w0 = COPY %4(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -433,12 +433,12 @@ body:             |
     ; CHECK-NEXT: [[AND1:%[0-9]+]]:_(s32) = G_AND [[ANYEXT2]], [[ANYEXT3]]
     ; CHECK-NEXT: [[AND2:%[0-9]+]]:_(s32) = G_AND [[AND]], [[AND1]]
     ; CHECK-NEXT: $w0 = COPY [[AND2]](s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %0:_(<4 x s16>) = COPY $d0
     %1:_(s16) = G_VECREDUCE_AND %0(<4 x s16>)
     %2:_(s32) = G_ANYEXT %1(s16)
     $w0 = COPY %2(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -466,12 +466,12 @@ body:             |
     ; CHECK-NEXT: [[AND2:%[0-9]+]]:_(s32) = G_AND [[ANYEXT2]], [[ANYEXT3]]
     ; CHECK-NEXT: [[AND3:%[0-9]+]]:_(s32) = G_AND [[AND1]], [[AND2]]
     ; CHECK-NEXT: $w0 = COPY [[AND3]](s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %0:_(<8 x s16>) = COPY $q0
     %1:_(s16) = G_VECREDUCE_AND %0(<8 x s16>)
     %2:_(s32) = G_ANYEXT %1(s16)
     $w0 = COPY %2(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -502,14 +502,14 @@ body:             |
     ; CHECK-NEXT: [[AND3:%[0-9]+]]:_(s32) = G_AND [[ANYEXT2]], [[ANYEXT3]]
     ; CHECK-NEXT: [[AND4:%[0-9]+]]:_(s32) = G_AND [[AND2]], [[AND3]]
     ; CHECK-NEXT: $w0 = COPY [[AND4]](s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %1:_(<8 x s16>) = COPY $q0
     %2:_(<8 x s16>) = COPY $q1
     %0:_(<16 x s16>) = G_CONCAT_VECTORS %1(<8 x s16>), %2(<8 x s16>)
     %3:_(s16) = G_VECREDUCE_AND %0(<16 x s16>)
     %4:_(s32) = G_ANYEXT %3(s16)
     $w0 = COPY %4(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -530,11 +530,11 @@ body:             |
     ; CHECK-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[UV]], [[UV1]]
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY [[AND]](s32)
     ; CHECK-NEXT: $w0 = COPY [[COPY1]](s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %0:_(<2 x s32>) = COPY $d0
     %1:_(s32) = G_VECREDUCE_AND %0(<2 x s32>)
     $w0 = COPY %1(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -557,11 +557,11 @@ body:             |
     ; CHECK-NEXT: [[AND1:%[0-9]+]]:_(s32) = G_AND [[UV2]], [[UV3]]
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY [[AND1]](s32)
     ; CHECK-NEXT: $w0 = COPY [[COPY1]](s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %0:_(<4 x s32>) = COPY $q0
     %1:_(s32) = G_VECREDUCE_AND %0(<4 x s32>)
     $w0 = COPY %1(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -587,13 +587,13 @@ body:             |
     ; CHECK-NEXT: [[AND2:%[0-9]+]]:_(s32) = G_AND [[UV2]], [[UV3]]
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY [[AND2]](s32)
     ; CHECK-NEXT: $w0 = COPY [[COPY2]](s32)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+    ; CHECK-NEXT: RET_ReallyLR implicit $w0
     %1:_(<4 x s32>) = COPY $q0
     %2:_(<4 x s32>) = COPY $q1
     %0:_(<8 x s32>) = G_CONCAT_VECTORS %1(<4 x s32>), %2(<4 x s32>)
     %3:_(s32) = G_VECREDUCE_AND %0(<8 x s32>)
     $w0 = COPY %3(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -614,11 +614,11 @@ body:             |
     ; CHECK-NEXT: [[AND:%[0-9]+]]:_(s64) = G_AND [[UV]], [[UV1]]
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s64) = COPY [[AND]](s64)
     ; CHECK-NEXT: $x0 = COPY [[COPY1]](s64)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $x0
+    ; CHECK-NEXT: RET_ReallyLR implicit $x0
     %0:_(<2 x s64>) = COPY $q0
     %1:_(s64) = G_VECREDUCE_AND %0(<2 x s64>)
     $x0 = COPY %1(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -642,12 +642,12 @@ body:             |
     ; CHECK-NEXT: [[AND1:%[0-9]+]]:_(s64) = G_AND [[UV]], [[UV1]]
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s64) = COPY [[AND1]](s64)
     ; CHECK-NEXT: $x0 = COPY [[COPY2]](s64)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $x0
+    ; CHECK-NEXT: RET_ReallyLR implicit $x0
     %1:_(<2 x s64>) = COPY $q0
     %2:_(<2 x s64>) = COPY $q1
     %0:_(<4 x s64>) = G_CONCAT_VECTORS %1(<2 x s64>), %2(<2 x s64>)
     %3:_(s64) = G_VECREDUCE_AND %0(<4 x s64>)
     $x0 = COPY %3(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...

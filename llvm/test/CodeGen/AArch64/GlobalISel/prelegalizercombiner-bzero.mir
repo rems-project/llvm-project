@@ -37,7 +37,7 @@ body:             |
     %zero:_(s8) = G_CONSTANT i8 0
     %width:_(s64) = COPY $x1
     G_MEMSET %ptr(p0), %zero(s8), %width(s64), 0 :: (store (s32))
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 name:            bzero_tail_unknown_width
@@ -62,7 +62,7 @@ body:             |
     %zero:_(s8) = G_CONSTANT i8 0
     %width:_(s64) = COPY $x1
     G_MEMSET %ptr(p0), %zero(s8), %width(s64), 1 :: (store (s32))
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 name:            bzero_constant_width
@@ -89,7 +89,7 @@ body:             |
     %zero:_(s8) = G_CONSTANT i8 0
     %width:_(s64) = G_CONSTANT i64 1024
     G_MEMSET %ptr(p0), %zero(s8), %width(s64), 0 :: (store (s32))
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 name:            bzero_constant_width_minsize
@@ -116,7 +116,7 @@ body:             |
     %zero:_(s8) = G_CONSTANT i8 0
     %width:_(s64) = G_CONSTANT i64 256
     G_MEMSET %ptr(p0), %zero(s8), %width(s64), 0 :: (store (s32))
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 name:            not_zero
@@ -144,4 +144,4 @@ body:             |
     %not_zero:_(s8) = G_CONSTANT i8 1
     %width:_(s64) = G_CONSTANT i64 256
     G_MEMSET %ptr(p0), %not_zero(s8), %width(s64), 0 :: (store (s32))
-    RET_ReallyLR 0
+    RET_ReallyLR

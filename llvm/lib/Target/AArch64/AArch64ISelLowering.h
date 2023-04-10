@@ -83,6 +83,10 @@ enum NodeType : unsigned {
                 // for the adrp).
   RET_FLAG, // Return with a flag operand. Operand 0 is the chain operand.
   CRET_FLAG, // Capability return with a flag operand. Operand 0 is the chain operand.
+  RET_FLAGClear, // Return with a flag operand. Operand 0 is the chain operand.
+                 // Clears unused registers.
+  CRET_FLAGClear, // Capability return with a flag operand. Operand 0 is the
+                  // chain operand. Clears unused registers.
   BRCOND,   // Conditional branch instruction; "b.cond".
   CSEL,
   CSINV, // Conditional select invert.

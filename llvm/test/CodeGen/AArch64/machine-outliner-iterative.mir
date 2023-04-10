@@ -77,7 +77,7 @@ body:             |
     $x0 = COPY killed renamable $x19
     BL @widget, csr_aarch64_aapcs, implicit-def dead $lr, implicit $sp, implicit $x0, implicit-def $sp
     early-clobber $sp, $lr, $x19 = frame-destroy LDPXpost $sp, 2 :: (load (s64) from %stack.1), (load (s64) from %stack.0)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -103,7 +103,7 @@ body:             |
     $x0 = COPY killed renamable $x19
     BL @widget, csr_aarch64_aapcs, implicit-def dead $lr, implicit $sp, implicit $x0, implicit-def $sp
     early-clobber $sp, $lr, $x19 = frame-destroy LDPXpost $sp, 2 :: (load (s64) from %stack.1), (load (s64) from %stack.0)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -129,7 +129,7 @@ body:             |
     $x0 = COPY killed renamable $x19
     BL @widget, csr_aarch64_aapcs, implicit-def dead $lr, implicit $sp, implicit $x0, implicit-def $sp
     early-clobber $sp, $lr, $x19 = frame-destroy LDPXpost $sp, 2 :: (load (s64) from %stack.1), (load (s64) from %stack.0)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 

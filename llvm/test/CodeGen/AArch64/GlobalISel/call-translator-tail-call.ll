@@ -123,7 +123,7 @@ define i32 @test_too_big_stack() {
   ; DARWIN-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $w0
   ; DARWIN-NEXT:   ADJCALLSTACKUP 4, 0, implicit-def $sp, implicit $sp
   ; DARWIN-NEXT:   $w0 = COPY [[COPY1]](s32)
-  ; DARWIN-NEXT:   RET_ReallyLR 0, implicit $w0
+  ; DARWIN-NEXT:   RET_ReallyLR implicit $w0
   ; WINDOWS-LABEL: name: test_too_big_stack
   ; WINDOWS: bb.1.entry:
   ; WINDOWS-NEXT:   [[DEF:%[0-9]+]]:_(s64) = G_IMPLICIT_DEF
@@ -149,7 +149,7 @@ define i32 @test_too_big_stack() {
   ; WINDOWS-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $w0
   ; WINDOWS-NEXT:   ADJCALLSTACKUP 16, 0, implicit-def $sp, implicit $sp
   ; WINDOWS-NEXT:   $w0 = COPY [[COPY1]](s32)
-  ; WINDOWS-NEXT:   RET_ReallyLR 0, implicit $w0
+  ; WINDOWS-NEXT:   RET_ReallyLR implicit $w0
 entry:
   %call = tail call i32 @too_big_stack(i64 undef, i64 undef, i64 undef, i64 undef, i64 undef, i64 undef, i64 undef, i64 undef, i8 8, i16 9)
   ret i32 %call

@@ -22,12 +22,12 @@ body:             |
     ; CHECK: liveins: $x0
     ; CHECK: %add_low:gpr64common = MOVaddr target-flags(aarch64-page) @x, target-flags(aarch64-pageoff, aarch64-nc) @x
     ; CHECK: $x0 = COPY %add_low
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %copy:gpr(p0) = COPY $x0
     %adrp:gpr64(p0) = ADRP target-flags(aarch64-page) @x
     %add_low:gpr(p0) = G_ADD_LOW %adrp(p0), target-flags(aarch64-pageoff, aarch64-nc) @x
     $x0 = COPY %add_low
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -42,12 +42,12 @@ body:             |
     ; CHECK: liveins: $x0
     ; CHECK: %add_low:gpr64common = MOVaddr target-flags(aarch64-page) @x + 1, target-flags(aarch64-pageoff, aarch64-nc) @x + 1
     ; CHECK: $x0 = COPY %add_low
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %copy:gpr(p0) = COPY $x0
     %adrp:gpr64(p0) = ADRP target-flags(aarch64-page) @x + 1
     %add_low:gpr(p0) = G_ADD_LOW %adrp(p0), target-flags(aarch64-pageoff, aarch64-nc) @x + 1
     $x0 = COPY %add_low
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -63,8 +63,8 @@ body:             |
     ; CHECK: %ptr:gpr64sp = COPY $x0
     ; CHECK: %add_low:gpr64sp = ADDXri %ptr, target-flags(aarch64-pageoff, aarch64-nc) @x, 0
     ; CHECK: $x0 = COPY %add_low
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %ptr:gpr(p0) = COPY $x0
     %add_low:gpr(p0) = G_ADD_LOW %ptr(p0), target-flags(aarch64-pageoff, aarch64-nc) @x
     $x0 = COPY %add_low
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0

@@ -14,13 +14,13 @@ body:             |
   ; CHECK:   liveins: $x0, $x1
   ; CHECK: bb.1:
   ; CHECK:   renamable $w0 = MOVi32imm -1
-  ; CHECK:   RET_ReallyLR 0, implicit killed $w0
+  ; CHECK:   RET_ReallyLR implicit killed $w0
   bb.1:
     liveins: $x0, $x1
 
   bb.2:
     %0:gpr32 = MOVi32imm -1
     $w0 = COPY %0
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...

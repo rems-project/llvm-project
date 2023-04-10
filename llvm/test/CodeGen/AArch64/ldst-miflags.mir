@@ -14,7 +14,7 @@ body:             |
   ; CHECK-NEXT: frame-destroy ORRWrs
   ; No merging happening here, make sure we keep the flags of the previous
   ; instruction.
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -30,7 +30,7 @@ body:             |
   ; CHECK-NEXT: frame-destroy ANDWri
   ; No merging happening here, make sure we keep the flags of the previous
   ; instruction.
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -46,7 +46,7 @@ body:             |
   ; CHECK-NEXT: frame-destroy UBFMWri
   ; No merging happening here, make sure we keep the flags of the previous
   ; instruction.
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -58,7 +58,7 @@ body:             |
     frame-destroy STRHHui $wzr, $x0, 1 :: (store (s32))
 
   ; CHECK: frame-setup frame-destroy STRWui
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -71,7 +71,7 @@ body:             |
     $x1 = frame-destroy LDRXui $x2, 1 :: (load (s64))
 
   ; CHECK: frame-setup frame-destroy LDPXi
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 name:            case4
@@ -82,7 +82,7 @@ body:             |
     $sp = frame-destroy ADDXri $sp, 64, 0
 
   ; CHECK: = frame-setup frame-destroy LDPXpost
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -94,6 +94,6 @@ body:             |
     $sp = frame-destroy ADDXri $sp, 64, 0
 
   ; CHECK: = frame-setup frame-destroy LDRXpost
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

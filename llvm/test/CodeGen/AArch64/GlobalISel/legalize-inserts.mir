@@ -21,7 +21,7 @@ body: |
     %5:_(s192) = G_INSERT %4, %3, 0
     %6:_(s64), %7:_(s64), %8:_(s64) = G_UNMERGE_VALUES %5
     $x0 = COPY %6
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 name:            test_inserts_s96
@@ -585,13 +585,13 @@ body: |
     ; CHECK: %op:_(s1) = G_TRUNC %val2(s32)
     ; CHECK: %ins:_(s32) = G_INSERT %val1, %op(s1), 0
     ; CHECK: $w0 = COPY %ins(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %val1:_(s32) = COPY $w0
     %val2:_(s32) = COPY $w1
     %op:_(s1) = G_TRUNC %val2
     %ins:_(s32) = G_INSERT %val1, %op(s1), 0
     $w0 = COPY %ins
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            s8_s32_legal
@@ -603,12 +603,12 @@ body: |
     ; CHECK: %op:_(s8) = COPY $b0
     ; CHECK: %ins:_(s32) = G_INSERT %val, %op(s8), 0
     ; CHECK: $w0 = COPY %ins(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %val:_(s32) = COPY $w0
     %op:_(s8) = COPY $b0
     %ins:_(s32) = G_INSERT %val, %op(s8), 0
     $w0 = COPY %ins
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            s16_s32_legal
@@ -620,12 +620,12 @@ body: |
     ; CHECK: %op:_(s16) = COPY $h0
     ; CHECK: %ins:_(s32) = G_INSERT %val, %op(s16), 0
     ; CHECK: $w0 = COPY %ins(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %val:_(s32) = COPY $w0
     %op:_(s16) = COPY $h0
     %ins:_(s32) = G_INSERT %val, %op(s16), 0
     $w0 = COPY %ins
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            s32_s64_legal
@@ -637,12 +637,12 @@ body: |
     ; CHECK: %op:_(s32) = COPY $w0
     ; CHECK: %ins:_(s64) = G_INSERT %val, %op(s32), 0
     ; CHECK: $x0 = COPY %ins(s64)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %val:_(s64) = COPY $x0
     %op:_(s32) = COPY $w0
     %ins:_(s64) = G_INSERT %val, %op(s32), 0
     $x0 = COPY %ins
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...
 ---
 name:            s32_p0_legal
@@ -654,12 +654,12 @@ body: |
     ; CHECK: %op:_(s32) = COPY $w0
     ; CHECK: %ins:_(p0) = G_INSERT %val, %op(s32), 0
     ; CHECK: $x0 = COPY %ins(p0)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %val:_(p0) = COPY $x0
     %op:_(s32) = COPY $w0
     %ins:_(p0) = G_INSERT %val, %op(s32), 0
     $x0 = COPY %ins
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...
 ---
 name:            s32_s128
@@ -673,12 +673,12 @@ body: |
     ; CHECK: [[INSERT:%[0-9]+]]:_(s64) = G_INSERT [[UV]], %op(s32), 0
     ; CHECK: %ins:_(s128) = G_MERGE_VALUES [[INSERT]](s64), [[UV1]](s64)
     ; CHECK: $q0 = COPY %ins(s128)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %val:_(s128) = COPY $q0
     %op:_(s32) = COPY $w0
     %ins:_(s128) = G_INSERT %val, %op(s32), 0
     $q0 = COPY %ins
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 ...
 ---
 name:            s1_s128
@@ -693,13 +693,13 @@ body: |
     ; CHECK: [[INSERT:%[0-9]+]]:_(s64) = G_INSERT [[UV]], %op(s1), 0
     ; CHECK: %ins:_(s128) = G_MERGE_VALUES [[INSERT]](s64), [[UV1]](s64)
     ; CHECK: $q0 = COPY %ins(s128)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %val1:_(s128) = COPY $q0
     %val2:_(s32) = COPY $w1
     %op:_(s1) = G_TRUNC %val2
     %ins:_(s128) = G_INSERT %val1, %op(s1), 0
     $q0 = COPY %ins
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 ...
 ---
 name:            s4_s32
@@ -714,10 +714,10 @@ body: |
     ; CHECK: %op:_(s4) = G_TRUNC %val2(s32)
     ; CHECK: %ins:_(s32) = G_INSERT %val1, %op(s4), 0
     ; CHECK: $w0 = COPY %ins(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %val1:_(s32) = COPY $w0
     %val2:_(s32) = COPY $w1
     %op:_(s4) = G_TRUNC %val2
     %ins:_(s32) = G_INSERT %val1, %op(s4), 0
     $w0 = COPY %ins
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0

@@ -19,19 +19,19 @@ body:             |
     ; NO-FP16: [[FADD:%[0-9]+]]:_(s32) = G_FADD [[FPEXT]], [[FPEXT1]]
     ; NO-FP16: %op:_(s16) = G_FPTRUNC [[FADD]](s32)
     ; NO-FP16: $h0 = COPY %op(s16)
-    ; NO-FP16: RET_ReallyLR 0, implicit $h0
+    ; NO-FP16: RET_ReallyLR implicit $h0
     ; FP16-LABEL: name: fadd
     ; FP16: liveins: $h0, $h1
     ; FP16: %x:_(s16) = COPY $h0
     ; FP16: %y:_(s16) = COPY $h1
     ; FP16: %op:_(s16) = G_FADD %x, %y
     ; FP16: $h0 = COPY %op(s16)
-    ; FP16: RET_ReallyLR 0, implicit $h0
+    ; FP16: RET_ReallyLR implicit $h0
     %x:_(s16) = COPY $h0
     %y:_(s16) = COPY $h1
     %op:_(s16) = G_FADD %x, %y
     $h0 = COPY %op(s16)
-    RET_ReallyLR 0, implicit $h0
+    RET_ReallyLR implicit $h0
 
 ...
 ---
@@ -50,19 +50,19 @@ body:             |
     ; NO-FP16: [[FSUB:%[0-9]+]]:_(s32) = G_FSUB [[FPEXT]], [[FPEXT1]]
     ; NO-FP16: %op:_(s16) = G_FPTRUNC [[FSUB]](s32)
     ; NO-FP16: $h0 = COPY %op(s16)
-    ; NO-FP16: RET_ReallyLR 0, implicit $h0
+    ; NO-FP16: RET_ReallyLR implicit $h0
     ; FP16-LABEL: name: fsub
     ; FP16: liveins: $h0, $h1
     ; FP16: %x:_(s16) = COPY $h0
     ; FP16: %y:_(s16) = COPY $h1
     ; FP16: %op:_(s16) = G_FSUB %x, %y
     ; FP16: $h0 = COPY %op(s16)
-    ; FP16: RET_ReallyLR 0, implicit $h0
+    ; FP16: RET_ReallyLR implicit $h0
     %x:_(s16) = COPY $h0
     %y:_(s16) = COPY $h1
     %op:_(s16) = G_FSUB %x, %y
     $h0 = COPY %op(s16)
-    RET_ReallyLR 0, implicit $h0
+    RET_ReallyLR implicit $h0
 
 ...
 ---
@@ -81,19 +81,19 @@ body:             |
     ; NO-FP16: [[FMUL:%[0-9]+]]:_(s32) = G_FMUL [[FPEXT]], [[FPEXT1]]
     ; NO-FP16: %op:_(s16) = G_FPTRUNC [[FMUL]](s32)
     ; NO-FP16: $h0 = COPY %op(s16)
-    ; NO-FP16: RET_ReallyLR 0, implicit $h0
+    ; NO-FP16: RET_ReallyLR implicit $h0
     ; FP16-LABEL: name: fmul
     ; FP16: liveins: $h0, $h1
     ; FP16: %x:_(s16) = COPY $h0
     ; FP16: %y:_(s16) = COPY $h1
     ; FP16: %op:_(s16) = G_FMUL %x, %y
     ; FP16: $h0 = COPY %op(s16)
-    ; FP16: RET_ReallyLR 0, implicit $h0
+    ; FP16: RET_ReallyLR implicit $h0
     %x:_(s16) = COPY $h0
     %y:_(s16) = COPY $h1
     %op:_(s16) = G_FMUL %x, %y
     $h0 = COPY %op(s16)
-    RET_ReallyLR 0, implicit $h0
+    RET_ReallyLR implicit $h0
 
 ...
 ---
@@ -112,19 +112,19 @@ body:             |
     ; NO-FP16: [[FDIV:%[0-9]+]]:_(s32) = G_FDIV [[FPEXT]], [[FPEXT1]]
     ; NO-FP16: %op:_(s16) = G_FPTRUNC [[FDIV]](s32)
     ; NO-FP16: $h0 = COPY %op(s16)
-    ; NO-FP16: RET_ReallyLR 0, implicit $h0
+    ; NO-FP16: RET_ReallyLR implicit $h0
     ; FP16-LABEL: name: fdiv
     ; FP16: liveins: $h0, $h1
     ; FP16: %x:_(s16) = COPY $h0
     ; FP16: %y:_(s16) = COPY $h1
     ; FP16: %op:_(s16) = G_FDIV %x, %y
     ; FP16: $h0 = COPY %op(s16)
-    ; FP16: RET_ReallyLR 0, implicit $h0
+    ; FP16: RET_ReallyLR implicit $h0
     %x:_(s16) = COPY $h0
     %y:_(s16) = COPY $h1
     %op:_(s16) = G_FDIV %x, %y
     $h0 = COPY %op(s16)
-    RET_ReallyLR 0, implicit $h0
+    RET_ReallyLR implicit $h0
 
 ...
 ---
@@ -141,16 +141,16 @@ body:             |
     ; NO-FP16: [[FNEG:%[0-9]+]]:_(s32) = G_FNEG [[FPEXT]]
     ; NO-FP16: %op:_(s16) = G_FPTRUNC [[FNEG]](s32)
     ; NO-FP16: $h0 = COPY %op(s16)
-    ; NO-FP16: RET_ReallyLR 0, implicit $h0
+    ; NO-FP16: RET_ReallyLR implicit $h0
     ; FP16-LABEL: name: fneg
     ; FP16: liveins: $h0
     ; FP16: %x:_(s16) = COPY $h0
     ; FP16: %op:_(s16) = G_FNEG %x
     ; FP16: $h0 = COPY %op(s16)
-    ; FP16: RET_ReallyLR 0, implicit $h0
+    ; FP16: RET_ReallyLR implicit $h0
     %x:_(s16) = COPY $h0
     %op:_(s16) = G_FNEG %x
     $h0 = COPY %op(s16)
-    RET_ReallyLR 0, implicit $h0
+    RET_ReallyLR implicit $h0
 
 ...

@@ -20,7 +20,7 @@ body:             |
     BL @spam, csr_darwin_aarch64_aapcs, implicit-def dead $lr, implicit $sp, implicit $x0, implicit killed $x1, implicit-def $sp, implicit-def $x0
     renamable $x1 = COPY $x0
 
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -34,7 +34,7 @@ body:             |
     BL @spam, csr_darwin_aarch64_aapcs, implicit-def dead $lr, implicit $sp, implicit $x0, implicit killed $x1, implicit-def $sp, implicit-def $x0
     renamable $x2 = COPY $x0
 
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -48,7 +48,7 @@ body:             |
     BL @spam, csr_darwin_aarch64_aapcs, implicit-def dead $lr, implicit $sp, implicit $x0, implicit killed $x1, implicit-def $sp, implicit-def $x0
     renamable $x3 = COPY $x0
 
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 

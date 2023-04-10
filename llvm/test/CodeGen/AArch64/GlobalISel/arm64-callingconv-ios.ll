@@ -94,7 +94,7 @@ define i32 @i8i16caller() nounwind readnone {
   ; CHECK-NEXT:   ADJCALLSTACKUP 6, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s32) = G_TRUNC [[COPY1]](s64)
   ; CHECK-NEXT:   $w0 = COPY [[TRUNC]](s32)
-  ; CHECK-NEXT:   RET_ReallyLR 0, implicit $w0
+  ; CHECK-NEXT:   RET_ReallyLR implicit $w0
 entry:
   %call = tail call i64 @i8i16callee(i64 0, i64 1, i64 2, i8 signext 3, i16 signext 4, i64 5, i64 6, i64 7, i8 97, i16  98, i8  99, i8  100)
   %conv = trunc i64 %call to i32

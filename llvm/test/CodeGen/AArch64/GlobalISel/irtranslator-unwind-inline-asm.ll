@@ -26,7 +26,7 @@ define dso_local void @test() personality i8* bitcast (i32 (...)* @__gxx_persona
   ; CHECK-NEXT:   G_BR %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2.invoke.cont:
-  ; CHECK-NEXT:   RET_ReallyLR 0
+  ; CHECK-NEXT:   RET_ReallyLR
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3.lpad (landing-pad):
   ; CHECK-NEXT:   liveins: $x0, $x1
@@ -73,7 +73,7 @@ define void @test2() #0 personality i32 (...)* @__gcc_personality_v0 {
   ; CHECK-NEXT:   G_BR %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2.a:
-  ; CHECK-NEXT:   RET_ReallyLR 0
+  ; CHECK-NEXT:   RET_ReallyLR
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3.b (landing-pad):
   ; CHECK-NEXT:   liveins: $x0, $x1

@@ -14,7 +14,7 @@
   ; CHECK: [[COPY1:%[0-9]+]]:_(s32) = COPY $w1
   ; CHECK: [[INT:%[0-9]+]]:_(s32) = G_INTRINSIC intrinsic(@llvm.aarch64.sdiv), [[COPY]](s32), [[COPY1]](s32)
   ; CHECK: $w0 = COPY [[INT]](s32)
-  ; CHECK: RET_ReallyLR 0, implicit $w0
+  ; CHECK: RET_ReallyLR implicit $w0
   entry:
     %sdiv = call i32 @llvm.aarch64.sdiv.i32(i32 %a, i32 %b)
     ret i32 %sdiv

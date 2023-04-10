@@ -43,7 +43,7 @@ define i32 @foo() {
   ; CHECK: bb.3.if.end:
   ; CHECK:   [[C6:%[0-9]+]]:gpr(s32) = G_CONSTANT i32 0
   ; CHECK:   $w0 = COPY [[C6]](s32)
-  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  ; CHECK:   RET_ReallyLR implicit $w0
 entry:
   %0 = load i32, i32* @var1, align 4
   %cmp = icmp eq i32 %0, 1
@@ -89,7 +89,7 @@ define i32 @darwin_tls() {
   ; CHECK: bb.3.if.end:
   ; CHECK:   [[C2:%[0-9]+]]:gpr(s32) = G_CONSTANT i32 0
   ; CHECK:   $w0 = COPY [[C2]](s32)
-  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  ; CHECK:   RET_ReallyLR implicit $w0
 entry:
   %0 = load i32, i32* @var1, align 4
   %cmp = icmp eq i32 %0, 1

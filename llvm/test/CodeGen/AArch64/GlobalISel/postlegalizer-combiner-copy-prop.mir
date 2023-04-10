@@ -24,6 +24,6 @@ body:             |
     %3:_(s64) = COPY %2
     %4:_(s64) = G_ADD %3, %3
     $x0 = COPY %4
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

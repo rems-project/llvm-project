@@ -42,11 +42,11 @@ define i32 @test_bittest(i16 %p) {
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2.sw.epilog:
   ; CHECK-NEXT:   $w0 = COPY [[C2]](s32)
-  ; CHECK-NEXT:   RET_ReallyLR 0, implicit $w0
+  ; CHECK-NEXT:   RET_ReallyLR implicit $w0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3.cb1:
   ; CHECK-NEXT:   $w0 = COPY [[C1]](s32)
-  ; CHECK-NEXT:   RET_ReallyLR 0, implicit $w0
+  ; CHECK-NEXT:   RET_ReallyLR implicit $w0
   switch i16 %p, label %sw.epilog [
     i16 58, label %cb1
     i16 59, label %cb1
@@ -179,11 +179,11 @@ define i32 @test_bittest_single_bt_only_with_fallthrough(i16 %p) {
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2.sw.epilog:
   ; CHECK-NEXT:   $w0 = COPY [[C1]](s32)
-  ; CHECK-NEXT:   RET_ReallyLR 0, implicit $w0
+  ; CHECK-NEXT:   RET_ReallyLR implicit $w0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3.cb1:
   ; CHECK-NEXT:   $w0 = COPY [[C]](s32)
-  ; CHECK-NEXT:   RET_ReallyLR 0, implicit $w0
+  ; CHECK-NEXT:   RET_ReallyLR implicit $w0
   switch i16 %p, label %sw.epilog [
     i16 58, label %cb1
     i16 59, label %cb1
@@ -307,11 +307,11 @@ define i32 @test_odd_type(i328 %p) {
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2.sw.epilog:
   ; CHECK-NEXT:   $w0 = COPY [[C2]](s32)
-  ; CHECK-NEXT:   RET_ReallyLR 0, implicit $w0
+  ; CHECK-NEXT:   RET_ReallyLR implicit $w0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3.cb1:
   ; CHECK-NEXT:   $w0 = COPY [[C1]](s32)
-  ; CHECK-NEXT:   RET_ReallyLR 0, implicit $w0
+  ; CHECK-NEXT:   RET_ReallyLR implicit $w0
   switch i328 %p, label %sw.epilog [
     i328 58, label %cb1
     i328 59, label %cb1
@@ -369,11 +369,11 @@ define i32 @test_large_pow2_type(i256 %p) {
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2.sw.epilog:
   ; CHECK-NEXT:   $w0 = COPY [[C2]](s32)
-  ; CHECK-NEXT:   RET_ReallyLR 0, implicit $w0
+  ; CHECK-NEXT:   RET_ReallyLR implicit $w0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3.cb1:
   ; CHECK-NEXT:   $w0 = COPY [[C1]](s32)
-  ; CHECK-NEXT:   RET_ReallyLR 0, implicit $w0
+  ; CHECK-NEXT:   RET_ReallyLR implicit $w0
   switch i256 %p, label %sw.epilog [
     i256 58, label %cb1
     i256 59, label %cb1

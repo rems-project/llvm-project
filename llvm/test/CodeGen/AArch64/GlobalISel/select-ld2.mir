@@ -17,12 +17,12 @@ body:             |
     ; CHECK: %dst2:fpr64 = COPY [[LD2Twov8b]].dsub1
     ; CHECK: $d0 = COPY %dst1
     ; CHECK: $d1 = COPY %dst2
-    ; CHECK: RET_ReallyLR 0, implicit $d0, implicit $d1
+    ; CHECK: RET_ReallyLR implicit $d0, implicit $d1
     %ptr:gpr(p0) = COPY $x0
     %dst1:fpr(<8 x s8>), %dst2:fpr(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.neon.ld2), %ptr(p0) :: (load (<8 x s64>))
     $d0 = COPY %dst1(<8 x s8>)
     $d1 = COPY %dst2(<8 x s8>)
-    RET_ReallyLR 0, implicit $d0, implicit $d1
+    RET_ReallyLR implicit $d0, implicit $d1
 ...
 ---
 name:            LD2Twov16b
@@ -40,12 +40,12 @@ body:             |
     ; CHECK: %dst2:fpr128 = COPY [[LD2Twov16b]].qsub1
     ; CHECK: $q0 = COPY %dst1
     ; CHECK: $q1 = COPY %dst2
-    ; CHECK: RET_ReallyLR 0, implicit $q0, implicit $q1
+    ; CHECK: RET_ReallyLR implicit $q0, implicit $q1
     %ptr:gpr(p0) = COPY $x0
     %dst1:fpr(<16 x s8>), %dst2:fpr(<16 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.neon.ld2), %ptr(p0) :: (load (<16 x s64>))
     $q0 = COPY %dst1(<16 x s8>)
     $q1 = COPY %dst2(<16 x s8>)
-    RET_ReallyLR 0, implicit $q0, implicit $q1
+    RET_ReallyLR implicit $q0, implicit $q1
 ...
 ---
 name:            LD2Twov4h
@@ -63,12 +63,12 @@ body:             |
     ; CHECK: %dst2:fpr64 = COPY [[LD2Twov4h]].dsub1
     ; CHECK: $d0 = COPY %dst1
     ; CHECK: $d1 = COPY %dst2
-    ; CHECK: RET_ReallyLR 0, implicit $d0, implicit $d1
+    ; CHECK: RET_ReallyLR implicit $d0, implicit $d1
     %ptr:gpr(p0) = COPY $x0
     %dst1:fpr(<4 x s16>), %dst2:fpr(<4 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.neon.ld2), %ptr(p0) :: (load (<4 x s64>))
     $d0 = COPY %dst1(<4 x s16>)
     $d1 = COPY %dst2(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0, implicit $d1
+    RET_ReallyLR implicit $d0, implicit $d1
 ...
 ---
 name:            LD2Twov8h
@@ -86,12 +86,12 @@ body:             |
     ; CHECK: %dst2:fpr128 = COPY [[LD2Twov8h]].qsub1
     ; CHECK: $q0 = COPY %dst1
     ; CHECK: $q1 = COPY %dst2
-    ; CHECK: RET_ReallyLR 0, implicit $q0, implicit $q1
+    ; CHECK: RET_ReallyLR implicit $q0, implicit $q1
     %ptr:gpr(p0) = COPY $x0
     %dst1:fpr(<8 x s16>), %dst2:fpr(<8 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.neon.ld2), %ptr(p0) :: (load (<8 x s64>))
     $q0 = COPY %dst1(<8 x s16>)
     $q1 = COPY %dst2(<8 x s16>)
-    RET_ReallyLR 0, implicit $q0, implicit $q1
+    RET_ReallyLR implicit $q0, implicit $q1
 ...
 ---
 name:            LD2Twov2s
@@ -109,12 +109,12 @@ body:             |
     ; CHECK: %dst2:fpr64 = COPY [[LD2Twov2s]].dsub1
     ; CHECK: $d0 = COPY %dst1
     ; CHECK: $d1 = COPY %dst2
-    ; CHECK: RET_ReallyLR 0, implicit $d0, implicit $d1
+    ; CHECK: RET_ReallyLR implicit $d0, implicit $d1
     %ptr:gpr(p0) = COPY $x0
     %dst1:fpr(<2 x s32>), %dst2:fpr(<2 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.neon.ld2), %ptr(p0) :: (load (<2 x s64>))
     $d0 = COPY %dst1(<2 x s32>)
     $d1 = COPY %dst2(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0, implicit $d1
+    RET_ReallyLR implicit $d0, implicit $d1
 ...
 ---
 name:            LD2Twov4s
@@ -132,12 +132,12 @@ body:             |
     ; CHECK: %dst2:fpr128 = COPY [[LD2Twov4s]].qsub1
     ; CHECK: $q0 = COPY %dst1
     ; CHECK: $q1 = COPY %dst2
-    ; CHECK: RET_ReallyLR 0, implicit $q0, implicit $q1
+    ; CHECK: RET_ReallyLR implicit $q0, implicit $q1
     %ptr:gpr(p0) = COPY $x0
     %dst1:fpr(<4 x s32>), %dst2:fpr(<4 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.neon.ld2), %ptr(p0) :: (load (<4 x s64>))
     $q0 = COPY %dst1(<4 x s32>)
     $q1 = COPY %dst2(<4 x s32>)
-    RET_ReallyLR 0, implicit $q0, implicit $q1
+    RET_ReallyLR implicit $q0, implicit $q1
 ...
 ---
 name:            LD2Twov2d_s64
@@ -155,12 +155,12 @@ body:             |
     ; CHECK: %dst2:fpr128 = COPY [[LD2Twov2d]].qsub1
     ; CHECK: $q0 = COPY %dst1
     ; CHECK: $q1 = COPY %dst2
-    ; CHECK: RET_ReallyLR 0, implicit $q0, implicit $q1
+    ; CHECK: RET_ReallyLR implicit $q0, implicit $q1
     %ptr:gpr(p0) = COPY $x0
     %dst1:fpr(<2 x s64>), %dst2:fpr(<2 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.neon.ld2), %ptr(p0) :: (load (<2 x s64>))
     $q0 = COPY %dst1(<2 x s64>)
     $q1 = COPY %dst2(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0, implicit $q1
+    RET_ReallyLR implicit $q0, implicit $q1
 ...
 ---
 name:            LD2Twov2d_p0
@@ -178,12 +178,12 @@ body:             |
     ; CHECK: %dst2:fpr128 = COPY [[LD2Twov2d]].qsub1
     ; CHECK: $q0 = COPY %dst1
     ; CHECK: $q1 = COPY %dst2
-    ; CHECK: RET_ReallyLR 0, implicit $q0, implicit $q1
+    ; CHECK: RET_ReallyLR implicit $q0, implicit $q1
     %ptr:gpr(p0) = COPY $x0
     %dst1:fpr(<2 x p0>), %dst2:fpr(<2 x p0>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.neon.ld2), %ptr(p0) :: (load (<2 x p0>))
     $q0 = COPY %dst1(<2 x p0>)
     $q1 = COPY %dst2(<2 x p0>)
-    RET_ReallyLR 0, implicit $q0, implicit $q1
+    RET_ReallyLR implicit $q0, implicit $q1
 ...
 ---
 name:            LD1Twov1d_s64
@@ -201,12 +201,12 @@ body:             |
     ; CHECK: %dst2:fpr64 = COPY [[LD1Twov1d]].dsub1
     ; CHECK: $d0 = COPY %dst1
     ; CHECK: $d1 = COPY %dst2
-    ; CHECK: RET_ReallyLR 0, implicit $d0, implicit $d1
+    ; CHECK: RET_ReallyLR implicit $d0, implicit $d1
     %ptr:gpr(p0) = COPY $x0
     %dst1:fpr(s64), %dst2:fpr(s64) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.neon.ld2), %ptr(p0) :: (load (s64))
     $d0 = COPY %dst1(s64)
     $d1 = COPY %dst2(s64)
-    RET_ReallyLR 0, implicit $d0, implicit $d1
+    RET_ReallyLR implicit $d0, implicit $d1
 ...
 ---
 name:            LD1Twov1d_p0
@@ -224,9 +224,9 @@ body:             |
     ; CHECK: %dst2:fpr64 = COPY [[LD1Twov1d]].dsub1
     ; CHECK: $d0 = COPY %dst1
     ; CHECK: $d1 = COPY %dst2
-    ; CHECK: RET_ReallyLR 0, implicit $d0, implicit $d1
+    ; CHECK: RET_ReallyLR implicit $d0, implicit $d1
     %ptr:gpr(p0) = COPY $x0
     %dst1:fpr(p0), %dst2:fpr(p0) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.neon.ld2), %ptr(p0) :: (load (p0))
     $d0 = COPY %dst1(p0)
     $d1 = COPY %dst2(p0)
-    RET_ReallyLR 0, implicit $d0, implicit $d1
+    RET_ReallyLR implicit $d0, implicit $d1

@@ -21,7 +21,7 @@ define i3 @bug47619(i64 %arg, i64 %arg1, i64 %arg2, i64 %arg3, i64 %arg4, i64 %a
   ; CHECK:   [[TRUNC:%[0-9]+]]:_(s3) = G_TRUNC [[LOAD]](s32)
   ; CHECK:   [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[TRUNC]](s3)
   ; CHECK:   $w0 = COPY [[ANYEXT]](s32)
-  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  ; CHECK:   RET_ReallyLR implicit $w0
 bb:
   ret i3 %arg8
 }

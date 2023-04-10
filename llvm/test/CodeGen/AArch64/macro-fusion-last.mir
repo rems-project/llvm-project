@@ -24,5 +24,5 @@ body: |
     Bcc 1, %bb.1, implicit killed $nzcv
 
   bb.1:
-    RET_ReallyLR 0, implicit undef $x0
+    RET_ReallyLR implicit undef $x0
 ...

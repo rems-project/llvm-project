@@ -29,5 +29,5 @@ body: |
     G_STORE %3(s16), %0(p0) :: (store release (s16))
     G_STORE %2(s32), %0(p0) :: (store acq_rel (s32))
     G_STORE %1(s64), %0(p0) :: (store syncscope("singlethread") seq_cst (s64))
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...

@@ -22,11 +22,11 @@ body:             |
     ; CHECK: [[LDXRB:%[0-9]+]]:gpr32 = LDXRB [[COPY]] :: (volatile load (s8) from %ir.addr)
     ; CHECK: [[SUBREG_TO_REG:%[0-9]+]]:gpr64all = SUBREG_TO_REG 0, [[LDXRB]], %subreg.sub_32
     ; CHECK: $x1 = COPY [[SUBREG_TO_REG]]
-    ; CHECK: RET_ReallyLR 0, implicit $x1
+    ; CHECK: RET_ReallyLR implicit $x1
     %0:gpr(p0) = COPY $x0
     %1:gpr(s64) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.ldxr), %0(p0) :: (volatile load (s8) from %ir.addr)
     $x1 = COPY %1(s64)
-    RET_ReallyLR 0, implicit $x1
+    RET_ReallyLR implicit $x1
 
 ...
 ---
@@ -44,11 +44,11 @@ body:             |
     ; CHECK: [[LDXRH:%[0-9]+]]:gpr32 = LDXRH [[COPY]] :: (volatile load (s16) from %ir.addr)
     ; CHECK: [[SUBREG_TO_REG:%[0-9]+]]:gpr64all = SUBREG_TO_REG 0, [[LDXRH]], %subreg.sub_32
     ; CHECK: $x1 = COPY [[SUBREG_TO_REG]]
-    ; CHECK: RET_ReallyLR 0, implicit $x1
+    ; CHECK: RET_ReallyLR implicit $x1
     %0:gpr(p0) = COPY $x0
     %1:gpr(s64) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.ldxr), %0(p0) :: (volatile load (s16) from %ir.addr)
     $x1 = COPY %1(s64)
-    RET_ReallyLR 0, implicit $x1
+    RET_ReallyLR implicit $x1
 
 ...
 ---
@@ -66,11 +66,11 @@ body:             |
     ; CHECK: [[LDXRW:%[0-9]+]]:gpr32 = LDXRW [[COPY]] :: (volatile load (s32) from %ir.addr)
     ; CHECK: [[SUBREG_TO_REG:%[0-9]+]]:gpr64all = SUBREG_TO_REG 0, [[LDXRW]], %subreg.sub_32
     ; CHECK: $x1 = COPY [[SUBREG_TO_REG]]
-    ; CHECK: RET_ReallyLR 0, implicit $x1
+    ; CHECK: RET_ReallyLR implicit $x1
     %0:gpr(p0) = COPY $x0
     %1:gpr(s64) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.ldxr), %0(p0) :: (volatile load (s32) from %ir.addr)
     $x1 = COPY %1(s64)
-    RET_ReallyLR 0, implicit $x1
+    RET_ReallyLR implicit $x1
 
 
 ...
@@ -88,8 +88,8 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:gpr64sp = COPY $x0
     ; CHECK: [[LDXRX:%[0-9]+]]:gpr64 = LDXRX [[COPY]] :: (volatile load (s64) from %ir.addr)
     ; CHECK: $x1 = COPY [[LDXRX]]
-    ; CHECK: RET_ReallyLR 0, implicit $x1
+    ; CHECK: RET_ReallyLR implicit $x1
     %0:gpr(p0) = COPY $x0
     %1:gpr(s64) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.ldxr), %0(p0) :: (volatile load (s64) from %ir.addr)
     $x1 = COPY %1(s64)
-    RET_ReallyLR 0, implicit $x1
+    RET_ReallyLR implicit $x1

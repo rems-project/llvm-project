@@ -23,7 +23,7 @@ body:             |
     %ptr:_(p0) = COPY $x0
     %width:_(s64) = COPY $x1
     G_BZERO %ptr(p0), %width(s64), 0 :: (store (s32))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -42,4 +42,4 @@ body:             |
     %ptr:_(p0) = COPY $x0
     %width:_(s64) = COPY $x1
     G_BZERO %ptr(p0), %width(s64), 1 :: (store (s32))
-    RET_ReallyLR 0
+    RET_ReallyLR

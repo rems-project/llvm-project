@@ -70,7 +70,7 @@ body:             |
     %1:_(p0) = COPY $x1
     %2:_(s64) = COPY $x2
     G_MEMMOVE %0(p0), %1(p0), %2(s64), 1 :: (store (s8) into %ir.0, align 4), (load (s8) from %ir.1, align 4)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -104,7 +104,7 @@ body:             |
     %1:_(p0) = COPY $x1
     %2:_(s64) = G_CONSTANT i64 48
     G_MEMMOVE %0(p0), %1(p0), %2(s64), 1 :: (store (s8) into %ir.0, align 4), (load (s8) from %ir.1, align 4)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -126,7 +126,7 @@ body:             |
     %1:_(p0) = COPY $x1
     %2:_(s64) = G_CONSTANT i64 96
     G_MEMMOVE %0(p0), %1(p0), %2(s64), 1 :: (store (s8) into %ir.0, align 4), (load (s8) from %ir.1, align 4)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -166,7 +166,7 @@ body:             |
     %1:_(p0) = COPY $x1
     %2:_(s64) = G_CONSTANT i64 52
     G_MEMMOVE %0(p0), %1(p0), %2(s64), 1 :: (store (s8) into %ir.0, align 4), (load (s8) from %ir.1, align 4)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -200,7 +200,7 @@ body:             |
     %1:_(p2) = COPY $x1
     %2:_(s64) = G_CONSTANT i64 48
     G_MEMMOVE %0(p1), %1(p2), %2(s64), 1 :: (store (s8) into %ir.0, align 4), (load (s8) from %ir.1, align 4)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 
 ...

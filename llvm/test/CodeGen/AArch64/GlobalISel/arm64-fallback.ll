@@ -43,7 +43,7 @@ end:
   br label %block
 }
 
-; FALLBACK-WITH-REPORT-ERR: remark: <unknown>:0:0: cannot select: RET_ReallyLR 0, implicit $x0 (in function: strict_align_feature)
+; FALLBACK-WITH-REPORT-ERR: remark: <unknown>:0:0: cannot select: RET_ReallyLR implicit $x0 (in function: strict_align_feature)
 ; FALLBACK-WITH-REPORT-ERR: warning: Instruction selection used fallback path for strict_align_feature
 ; FALLBACK-WITH-REPORT-OUT-LABEL: strict_align_feature
 define i64 @strict_align_feature(i64* %p) #0 {

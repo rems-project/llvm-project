@@ -126,6 +126,6 @@ body:             |
     $x0 = ADDXri %stack.0.B, 0, 0
     BL @"?func3@@YAHPEAH@Z", csr_aarch64_aapcs, implicit-def dead $lr, implicit $sp, implicit $x0, implicit-def $sp, implicit-def $w0
     ADJCALLSTACKUP 0, 0, implicit-def dead $sp, implicit $sp
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...

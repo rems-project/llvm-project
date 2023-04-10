@@ -180,6 +180,6 @@ body:             |
     early-clobber $sp, $d12 = frame-destroy LDRDpost $sp, 128 :: (load (s64) from %stack.14)
     frame-destroy SEH_SaveFReg_X 12, -128
     frame-destroy SEH_EpilogEnd
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...

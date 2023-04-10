@@ -56,6 +56,6 @@ body:             |
     %8:zpr = LD1B_IMM %5, %stack.0, 0 :: (load unknown-size from %stack.0, align 16)
     $z0 = COPY %8
     $z1 = COPY %7
-    RET_ReallyLR 0, implicit $z0, implicit $z1
+    RET_ReallyLR implicit $z0, implicit $z1
 
 ...

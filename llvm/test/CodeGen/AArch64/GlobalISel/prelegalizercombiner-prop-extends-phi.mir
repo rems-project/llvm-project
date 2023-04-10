@@ -27,7 +27,7 @@ body:             |
   ; CHECK: bb.3:
   ; CHECK:   %ext:_(s64) = G_PHI [[SEXT]](s64), %bb.1, [[SEXT1]](s64), %bb.2
   ; CHECK:   $x0 = COPY %ext(s64)
-  ; CHECK:   RET_ReallyLR 0, implicit $x0
+  ; CHECK:   RET_ReallyLR implicit $x0
   bb.1.entry:
     liveins: $w0, $w1
 
@@ -50,7 +50,7 @@ body:             |
     %phi:_(s32) = G_PHI %cst32_4(s32), %bb.2, %cst32_10(s32), %bb.3
     %ext:_(s64) = G_SEXT %phi
     $x0 = COPY %ext(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 
@@ -80,7 +80,7 @@ body:             |
   ; CHECK: bb.3:
   ; CHECK:   %ext:_(s64) = G_PHI [[ZEXT]](s64), %bb.1, [[ZEXT1]](s64), %bb.2
   ; CHECK:   $x0 = COPY %ext(s64)
-  ; CHECK:   RET_ReallyLR 0, implicit $x0
+  ; CHECK:   RET_ReallyLR implicit $x0
   bb.1.entry:
     liveins: $w0, $w1
 
@@ -103,7 +103,7 @@ body:             |
     %phi:_(s32) = G_PHI %cst32_4(s32), %bb.2, %cst32_10(s32), %bb.3
     %ext:_(s64) = G_ZEXT %phi
     $x0 = COPY %ext(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 
@@ -153,7 +153,7 @@ body:             |
     %phi:_(<4 x s32>) = G_PHI %ld1(<4 x s32>), %bb.2, %ld2(<4 x s32>), %bb.3
     %ext:_(<4 x s64>) = G_SEXT %phi
     G_STORE %ext(<4 x s64>), %ptr(p0) :: (store (<4 x s64>))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 
@@ -186,7 +186,7 @@ body:             |
   ; CHECK:   %ext:_(s64) = G_SEXT %phi(s32)
   ; CHECK:   %ptr:_(p0) = G_PTR_ADD %base, %ext(s64)
   ; CHECK:   $x0 = COPY %ptr(p0)
-  ; CHECK:   RET_ReallyLR 0, implicit $x0
+  ; CHECK:   RET_ReallyLR implicit $x0
   bb.1.entry:
     liveins: $w0, $w1, $x2
 
@@ -211,7 +211,7 @@ body:             |
     %ext:_(s64) = G_SEXT %phi
     %ptr:_(p0) = G_PTR_ADD %base, %ext
     $x0 = COPY %ptr(p0)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 
@@ -245,7 +245,7 @@ body:             |
   ; CHECK:   %ptr:_(p0) = G_PTR_ADD %base, %ext(s64)
   ; CHECK:   $x0 = COPY %ptr(p0)
   ; CHECK:   $x1 = COPY %ext(s64)
-  ; CHECK:   RET_ReallyLR 0, implicit $x0
+  ; CHECK:   RET_ReallyLR implicit $x0
   bb.1.entry:
     liveins: $w0, $w1, $x2
 
@@ -271,7 +271,7 @@ body:             |
     %ptr:_(p0) = G_PTR_ADD %base, %ext
     $x0 = COPY %ptr(p0)
     $x1 = COPY %ext(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 
@@ -307,7 +307,7 @@ body:             |
   ; CHECK:   %phi:_(s32) = G_PHI %cst32_4(s32), %bb.1, %cst32_10(s32), %bb.2, %cst32_42(s32), %bb.3
   ; CHECK:   %ext:_(s64) = G_ZEXT %phi(s32)
   ; CHECK:   $x0 = COPY %ext(s64)
-  ; CHECK:   RET_ReallyLR 0, implicit $x0
+  ; CHECK:   RET_ReallyLR implicit $x0
   bb.1.entry:
     liveins: $w0, $w1
 
@@ -336,7 +336,7 @@ body:             |
     %phi:_(s32) = G_PHI %cst32_4(s32), %bb.2, %cst32_10(s32), %bb.3, %cst32_42(s32), %bb.5
     %ext:_(s64) = G_ZEXT %phi
     $x0 = COPY %ext(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 
@@ -366,7 +366,7 @@ body:             |
   ; CHECK:   %phi:_(s32) = G_PHI %add(s32), %bb.1, %cst32_10(s32), %bb.2
   ; CHECK:   %ext:_(s64) = G_SEXT %phi(s32)
   ; CHECK:   $x0 = COPY %ext(s64)
-  ; CHECK:   RET_ReallyLR 0, implicit $x0
+  ; CHECK:   RET_ReallyLR implicit $x0
   bb.1.entry:
     liveins: $w0, $w1
 
@@ -389,7 +389,7 @@ body:             |
     %phi:_(s32) = G_PHI %add(s32), %bb.2, %cst32_10(s32), %bb.3
     %ext:_(s64) = G_SEXT %phi
     $x0 = COPY %ext(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 
@@ -420,7 +420,7 @@ body:             |
   ; CHECK: bb.3:
   ; CHECK:   %ext:_(s64) = G_PHI [[ANYEXT]](s64), %bb.1, [[ANYEXT1]](s64), %bb.2
   ; CHECK:   $x0 = COPY %ext(s64)
-  ; CHECK:   RET_ReallyLR 0, implicit $x0
+  ; CHECK:   RET_ReallyLR implicit $x0
   bb.1.entry:
     liveins: $w0, $w1
 
@@ -443,6 +443,6 @@ body:             |
     %phi:_(s32) = G_PHI %add(s32), %bb.2, %cst32_10(s32), %bb.3
     %ext:_(s64) = G_ANYEXT %phi
     $x0 = COPY %ext(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...

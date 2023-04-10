@@ -20,13 +20,13 @@ body:             |
     ; CHECK: FCMPSri [[COPY]], implicit-def $nzcv
     ; CHECK: [[CSINCWr:%[0-9]+]]:gpr32 = CSINCWr $wzr, $wzr, 1, implicit $nzcv
     ; CHECK: $s0 = COPY [[CSINCWr]]
-    ; CHECK: RET_ReallyLR 0, implicit $s0
+    ; CHECK: RET_ReallyLR implicit $s0
     %0:fpr(s32) = COPY $s0
     %1:fpr(s32) = COPY $s1
     %2:fpr(s32) = G_FCONSTANT float 0.000000e+00
     %3:gpr(s32) = G_FCMP floatpred(oeq), %0(s32), %2
     $s0 = COPY %3(s32)
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
 
 ...
 ---
@@ -47,13 +47,13 @@ body:             |
     ; CHECK: FCMPSrr [[COPY]], [[FMOVSi]], implicit-def $nzcv
     ; CHECK: [[CSINCWr:%[0-9]+]]:gpr32 = CSINCWr $wzr, $wzr, 1, implicit $nzcv
     ; CHECK: $s0 = COPY [[CSINCWr]]
-    ; CHECK: RET_ReallyLR 0, implicit $s0
+    ; CHECK: RET_ReallyLR implicit $s0
     %0:fpr(s32) = COPY $s0
     %1:fpr(s32) = COPY $s1
     %2:fpr(s32) = G_FCONSTANT float 1.000000e+00
     %3:gpr(s32) = G_FCMP floatpred(oeq), %0(s32), %2
     $s0 = COPY %3(s32)
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
 
 ...
 ---
@@ -74,13 +74,13 @@ body:             |
     ; CHECK: FCMPDrr [[COPY]], [[FMOVDi]], implicit-def $nzcv
     ; CHECK: [[CSINCWr:%[0-9]+]]:gpr32 = CSINCWr $wzr, $wzr, 1, implicit $nzcv
     ; CHECK: $s0 = COPY [[CSINCWr]]
-    ; CHECK: RET_ReallyLR 0, implicit $s0
+    ; CHECK: RET_ReallyLR implicit $s0
     %0:fpr(s64) = COPY $d0
     %1:fpr(s64) = COPY $d1
     %2:fpr(s64) = G_FCONSTANT double 1.000000e+00
     %3:gpr(s32) = G_FCMP floatpred(oeq), %0(s64), %2
     $s0 = COPY %3(s32)
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
 
 
 ...
@@ -100,13 +100,13 @@ body:             |
     ; CHECK: FCMPDri [[COPY]], implicit-def $nzcv
     ; CHECK: [[CSINCWr:%[0-9]+]]:gpr32 = CSINCWr $wzr, $wzr, 1, implicit $nzcv
     ; CHECK: $s0 = COPY [[CSINCWr]]
-    ; CHECK: RET_ReallyLR 0, implicit $s0
+    ; CHECK: RET_ReallyLR implicit $s0
     %0:fpr(s64) = COPY $d0
     %1:fpr(s64) = COPY $d1
     %2:fpr(s64) = G_FCONSTANT double 0.000000e+00
     %3:gpr(s32) = G_FCMP floatpred(oeq), %0(s64), %2
     $s0 = COPY %3(s32)
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
 ...
 
 ---
@@ -125,13 +125,13 @@ body:             |
     ; CHECK: FCMPSri [[COPY]], implicit-def $nzcv
     ; CHECK: [[CSINCWr:%[0-9]+]]:gpr32 = CSINCWr $wzr, $wzr, 1, implicit $nzcv
     ; CHECK: $s0 = COPY [[CSINCWr]]
-    ; CHECK: RET_ReallyLR 0, implicit $s0
+    ; CHECK: RET_ReallyLR implicit $s0
     %0:fpr(s32) = COPY $s0
     %1:fpr(s32) = COPY $s1
     %2:fpr(s32) = G_FCONSTANT float 0.000000e+00
     %3:gpr(s32) = G_FCMP floatpred(oeq), %2(s32), %0
     $s0 = COPY %3(s32)
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
 
 ...
 ---
@@ -151,12 +151,12 @@ body:             |
     ; CHECK: FCMPSrr [[FMOVS0_]], [[COPY]], implicit-def $nzcv
     ; CHECK: [[CSINCWr:%[0-9]+]]:gpr32 = CSINCWr $wzr, $wzr, 5, implicit $nzcv
     ; CHECK: $s0 = COPY [[CSINCWr]]
-    ; CHECK: RET_ReallyLR 0, implicit $s0
+    ; CHECK: RET_ReallyLR implicit $s0
     %0:fpr(s32) = COPY $s0
     %1:fpr(s32) = COPY $s1
     %2:fpr(s32) = G_FCONSTANT float 0.000000e+00
     %3:gpr(s32) = G_FCMP floatpred(olt), %2(s32), %0
     $s0 = COPY %3(s32)
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
 
 ...

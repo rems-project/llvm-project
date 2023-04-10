@@ -78,6 +78,6 @@ body:             |
     STRSui %17, %2, 0 :: (store (s32))
 
   bb.3:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

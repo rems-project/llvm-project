@@ -105,11 +105,11 @@ body: |
 
   bb.1:
     $fp = COPY %0
-    RET_ReallyLR 0
+    RET_ReallyLR
 
   bb.2:
     STRXui $fp, $fp, 0
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 # CHECK-LABEL: name: func2
@@ -128,8 +128,8 @@ body: |
     ; CHECK: STRXui undef $x0, $fp, 0
     ; CHECK-NEXT: RET_ReallyLR
     STRXui undef $x0, %0, 0
-    RET_ReallyLR 0
+    RET_ReallyLR
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...

@@ -17,7 +17,7 @@ body: |
     liveins: $x0
     $x0 = ADDXri $x0, 1, 0
     $x0 = ADDXri $x0, 2, 0
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
   bb.2:
     ; CHECK-LABEL: bb.2:
@@ -25,5 +25,5 @@ body: |
     liveins: $x0
     $x0 = ADDXri $x0, 1, 0
     $x0 = ADDXri $x0, 3, 0
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...

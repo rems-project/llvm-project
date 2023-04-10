@@ -47,7 +47,7 @@ body:             |
     G_STORE %8(s64), %0(p0) :: (store release (s32))
 
   bb.3:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -96,7 +96,7 @@ body:             |
     G_STORE %8(s64), %0(p0) :: (store release (s16))
 
   bb.3:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -145,6 +145,6 @@ body:             |
     G_STORE %8(s64), %0(p0) :: (store release (s8))
 
   bb.3:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

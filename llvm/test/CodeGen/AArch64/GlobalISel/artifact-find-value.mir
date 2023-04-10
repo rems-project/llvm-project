@@ -47,7 +47,7 @@ body:             |
   G_STORE %val1:_(<2 x s64>), %2:_(p0) :: (store (<2 x s64>))
   G_STORE %val2:_(<2 x s64>), %2:_(p0) :: (store (<2 x s64>))
   G_STORE %val3:_(<2 x s64>), %2:_(p0) :: (store (<2 x s64>))
-  RET_ReallyLR 0
+  RET_ReallyLR
 
 ...
 
@@ -98,7 +98,7 @@ body:             |
   G_STORE %val1:_(<2 x s64>), %2:_(p0) :: (store (<2 x s64>))
   G_STORE %val2:_(<2 x s64>), %2:_(p0) :: (store (<2 x s64>))
   G_STORE %val3:_(<2 x s64>), %2:_(p0) :: (store (<2 x s64>))
-  RET_ReallyLR 0
+  RET_ReallyLR
 
 ...
 ---
@@ -144,7 +144,7 @@ body:             |
   G_STORE %val1:_(<2 x s64>), %2:_(p0) :: (store (<2 x s64>))
   ; val2 should be <%6, %8>
   G_STORE %val2:_(<2 x s64>), %2:_(p0) :: (store (<2 x s64>))
-  RET_ReallyLR 0
+  RET_ReallyLR
 
 ...
 ---
@@ -190,7 +190,7 @@ body:             |
   G_STORE %val3:_(<2 x s64>), %2:_(p0) :: (store (<2 x s64>))
   ; val4 should be <%6, %8>
   G_STORE %val4:_(<2 x s64>), %2:_(p0) :: (store (<2 x s64>))
-  RET_ReallyLR 0
+  RET_ReallyLR
 
 ...
 ---
@@ -238,6 +238,6 @@ body:             |
   G_STORE %val3:_(<2 x s64>), %2:_(p0) :: (store (<2 x s64>))
   ; val4 should be <%6, %8>
   G_STORE %val4:_(<2 x s64>), %2:_(p0) :: (store (<2 x s64>))
-  RET_ReallyLR 0
+  RET_ReallyLR
 
 ...

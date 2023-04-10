@@ -26,14 +26,14 @@ body:             |
     ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
     ; CHECK: %and:_(s32) = G_UBFX %x, %lsb(s32), [[C]]
     ; CHECK: $w0 = COPY %and(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %x:_(s32) = COPY $w0
     %lsb:_(s32) = G_CONSTANT i32 5
     %mask:_(s32) = G_CONSTANT i32 255
     %shift:_(s32) = G_LSHR %x, %lsb
     %and:_(s32) = G_AND %shift, %mask
     $w0 = COPY %and
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -55,14 +55,14 @@ body:             |
     ; CHECK: %mask:_(s64) = G_CONSTANT i64 1
     ; CHECK: %and:_(s64) = G_UBFX %x, %lsb(s64), %mask
     ; CHECK: $x0 = COPY %and(s64)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %x:_(s64) = COPY $x0
     %lsb:_(s64) = G_CONSTANT i64 5
     %mask:_(s64) = G_CONSTANT i64 1
     %shift:_(s64) = G_LSHR %x, %lsb
     %and:_(s64) = G_AND %shift, %mask
     $x0 = COPY %and
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -83,14 +83,14 @@ body:             |
     ; CHECK: %shift:_(s32) = G_LSHR %x, %lsb(s32)
     ; CHECK: %and:_(s32) = G_AND %shift, %y
     ; CHECK: $w0 = COPY %and(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %x:_(s32) = COPY $w0
     %y:_(s32) = COPY $w1
     %lsb:_(s32) = G_CONSTANT i32 5
     %shift:_(s32) = G_LSHR %x, %lsb
     %and:_(s32) = G_AND %shift, %y
     $w0 = COPY %and
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -108,14 +108,14 @@ body:             |
     ; CHECK: %shift:_(s32) = G_LSHR %x, %lsb(s32)
     ; CHECK: %and:_(s32) = G_AND %shift, %not_a_mask
     ; CHECK: $w0 = COPY %and(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %x:_(s32) = COPY $w0
     %lsb:_(s32) = G_CONSTANT i32 5
     %not_a_mask:_(s32) = G_CONSTANT i32 2
     %shift:_(s32) = G_LSHR %x, %lsb
     %and:_(s32) = G_AND %shift, %not_a_mask
     $w0 = COPY %and
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -134,7 +134,7 @@ body:             |
     ; CHECK: %and:_(s64) = G_AND %shift, %mask
     ; CHECK: %sub:_(s64) = G_SUB %and, %shift
     ; CHECK: $x0 = COPY %sub(s64)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %x:_(s64) = COPY $x0
     %lsb:_(s64) = G_CONSTANT i64 5
     %mask:_(s64) = G_CONSTANT i64 1
@@ -142,7 +142,7 @@ body:             |
     %and:_(s64) = G_AND %shift, %mask
     %sub:_(s64) = G_SUB %and, %shift
     $x0 = COPY %sub
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -163,14 +163,14 @@ body:             |
     ; CHECK: %shift:_(s32) = G_LSHR %x, %negative(s32)
     ; CHECK: %and:_(s32) = G_AND %shift, %mask
     ; CHECK: $w0 = COPY %and(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %x:_(s32) = COPY $w0
     %negative:_(s32) = G_CONSTANT i32 -1
     %mask:_(s32) = G_CONSTANT i32 255
     %shift:_(s32) = G_LSHR %x, %negative
     %and:_(s32) = G_AND %shift, %mask
     $w0 = COPY %and
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -191,14 +191,14 @@ body:             |
     ; CHECK: %shift:_(s32) = G_LSHR %x, %too_large(s32)
     ; CHECK: %and:_(s32) = G_AND %shift, %mask
     ; CHECK: $w0 = COPY %and(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %x:_(s32) = COPY $w0
     %too_large:_(s32) = G_CONSTANT i32 32
     %mask:_(s32) = G_CONSTANT i32 255
     %shift:_(s32) = G_LSHR %x, %too_large
     %and:_(s32) = G_AND %shift, %mask
     $w0 = COPY %and
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -218,7 +218,7 @@ body:             |
     ; CHECK: %shift:_(<2 x s32>) = G_LSHR %x, %lsb(<2 x s32>)
     ; CHECK: %and:_(<2 x s32>) = G_AND %shift, %mask
     ; CHECK: $d0 = COPY %and(<2 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %x:_(<2 x s32>) = COPY $d0
     %lsb_cst:_(s32) = G_CONSTANT i32 5
     %lsb:_(<2 x s32>) = G_BUILD_VECTOR %lsb_cst, %lsb_cst
@@ -227,7 +227,7 @@ body:             |
     %shift:_(<2 x s32>) = G_LSHR %x, %lsb
     %and:_(<2 x s32>) = G_AND %shift, %mask
     $d0 = COPY %and
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -246,14 +246,14 @@ body:             |
     ; CHECK: [[C:%[0-9]+]]:_(s64) = G_CONSTANT i64 63
     ; CHECK: %and:_(s64) = G_UBFX %x, %lsb(s64), [[C]]
     ; CHECK: $x0 = COPY %and(s64)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %x:_(s64) = COPY $x0
     %lsb:_(s64) = G_CONSTANT i64 0
     %mask:_(s64) = G_CONSTANT i64 9223372036854775807
     %shift:_(s64) = G_LSHR %x, %lsb
     %and:_(s64) = G_AND %shift, %mask
     $x0 = COPY %and
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -272,11 +272,11 @@ body:             |
     ; CHECK: [[C:%[0-9]+]]:_(s64) = G_CONSTANT i64 64
     ; CHECK: %and:_(s64) = G_UBFX %x, %lsb(s64), [[C]]
     ; CHECK: $x0 = COPY %and(s64)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %x:_(s64) = COPY $x0
     %lsb:_(s64) = G_CONSTANT i64 5
     %mask:_(s64) = G_CONSTANT i64 18446744073709551615
     %shift:_(s64) = G_LSHR %x, %lsb
     %and:_(s64) = G_AND %shift, %mask
     $x0 = COPY %and
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0

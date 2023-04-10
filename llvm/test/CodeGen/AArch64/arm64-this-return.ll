@@ -62,7 +62,7 @@ define %struct.C* @C_ctor_base_nothisret(%struct.C* %this, i32 %x) {
   ; GISEL-MIR:   [[COPY3:%[0-9]+]]:_(p0) = COPY $x0
   ; GISEL-MIR:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
   ; GISEL-MIR:   $x0 = COPY [[COPY]](p0)
-  ; GISEL-MIR:   RET_ReallyLR 0, implicit $x0
+  ; GISEL-MIR:   RET_ReallyLR implicit $x0
 entry:
 ; CHECK-LABEL: C_ctor_base_nothisret:
 ; CHECK: mov [[SAVETHIS:x[0-9]+]], x0
@@ -105,7 +105,7 @@ define %struct.C* @C_ctor_complete_nothisret(%struct.C* %this, i32 %x) {
   ; GISEL-MIR:   [[COPY2:%[0-9]+]]:_(p0) = COPY $x0
   ; GISEL-MIR:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
   ; GISEL-MIR:   $x0 = COPY [[COPY]](p0)
-  ; GISEL-MIR:   RET_ReallyLR 0, implicit $x0
+  ; GISEL-MIR:   RET_ReallyLR implicit $x0
 entry:
 ; CHECK-LABEL: C_ctor_complete_nothisret:
 ; CHECK-NOT: b {{_?C_ctor_base_nothisret}}
@@ -161,7 +161,7 @@ define %struct.E* @E_ctor_base(%struct.E* %this, i32 %x) {
   ; GISEL-MIR:   [[COPY3:%[0-9]+]]:_(p0) = COPY [[PTR_ADD]](p0)
   ; GISEL-MIR:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
   ; GISEL-MIR:   $x0 = COPY [[COPY]](p0)
-  ; GISEL-MIR:   RET_ReallyLR 0, implicit $x0
+  ; GISEL-MIR:   RET_ReallyLR implicit $x0
 entry:
 ; CHECK-LABEL: E_ctor_base:
 ; CHECK-NOT: b {{_?B_ctor_complete}}

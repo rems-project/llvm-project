@@ -48,7 +48,7 @@ body:             |
   bb.1.then.8:
     %0:gpr32all = PHI %1, %bb.0, %4, %bb.2
     $w0 = COPY %0
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
   bb.2.else.8:
     successors: %bb.3, %bb.1
@@ -61,5 +61,5 @@ body:             |
   bb.3.else.11:
     %6:gpr32all = IMPLICIT_DEF
     $w0 = COPY %6
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...

@@ -15,11 +15,11 @@ body:             |
     ; CHECK: %fpr:fpr(s64) = COPY $d0
     ; CHECK: %lround:gpr(s64) = G_LROUND %fpr(s64)
     ; CHECK: $d0 = COPY %lround(s64)
-    ; CHECK: RET_ReallyLR 0, implicit $s0
+    ; CHECK: RET_ReallyLR implicit $s0
     %fpr:_(s64) = COPY $d0
     %lround:_(s64) = G_LROUND %fpr
     $d0 = COPY %lround:_(s64)
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
 ...
 ---
 name:            source_needs_copy
@@ -35,11 +35,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr(s64) = COPY %gpr(s64)
     ; CHECK: %lround:gpr(s64) = G_LROUND [[COPY]](s64)
     ; CHECK: $d0 = COPY %lround(s64)
-    ; CHECK: RET_ReallyLR 0, implicit $s0
+    ; CHECK: RET_ReallyLR implicit $s0
     %gpr:_(s64) = COPY $x0
     %lround:_(s64) = G_LROUND %gpr
     $d0 = COPY %lround:_(s64)
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
 ...
 ---
 name:            load_gets_fpr
@@ -55,11 +55,11 @@ body:             |
     ; CHECK: %load:fpr(s32) = G_LOAD %ptr(p0) :: (load (s32))
     ; CHECK: %lround:gpr(s64) = G_LROUND %load(s32)
     ; CHECK: $d0 = COPY %lround(s64)
-    ; CHECK: RET_ReallyLR 0, implicit $s0
+    ; CHECK: RET_ReallyLR implicit $s0
     %ptr:_(p0) = COPY $x0
     %load:_(s32) = G_LOAD %ptr(p0) :: (load (s32))
     %lround:_(s64) = G_LROUND %load
     $d0 = COPY %lround:_(s64)
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
 
 ...

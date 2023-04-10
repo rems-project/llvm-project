@@ -65,7 +65,7 @@ body:             |
     ; CHECK-NEXT: renamable $z0 = LDNF1D_IMM renamable $p0, $sp, 7 :: (load (s64) from %ir.object)
     ; CHECK-NEXT: $sp = frame-destroy ADDVL_XXI $sp, 4
     ; CHECK-NEXT: early-clobber $sp, $fp = frame-destroy LDRXpost $sp, 16 :: (load (s64) from %stack.2)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $z0
+    ; CHECK-NEXT: RET_ReallyLR implicit $z0
     renamable $z0 = LDNF1B_IMM renamable $p0, %stack.1.object, 7 :: (load 1 from %ir.object, align 2)
     renamable $z0 = LDNF1B_H_IMM renamable $p0, %stack.1.object, 7 :: (load 1 from %ir.object, align 2)
     renamable $z0 = LDNF1B_S_IMM renamable $p0, %stack.1.object, 7 :: (load 1 from %ir.object, align 2)
@@ -82,7 +82,7 @@ body:             |
     renamable $z0 = LDNF1W_D_IMM renamable $p0, %stack.1.object, 7 :: (load 4 from %ir.object, align 8)
     renamable $z0 = LDNF1SW_D_IMM renamable $p0, %stack.1.object, 7 :: (load 4 from %ir.object, align 8)
     renamable $z0 = LDNF1D_IMM renamable $p0, %stack.1.object, 7 :: (load 8 from %ir.object, align 8)
-    RET_ReallyLR 0, implicit $z0
+    RET_ReallyLR implicit $z0
 ...
 
 ---
@@ -120,7 +120,7 @@ body:             |
     ; CHECK-NEXT: renamable $z0 = LDNF1D_IMM renamable $p0, $sp, -8 :: (load (s64) from %ir.object)
     ; CHECK-NEXT: $sp = frame-destroy ADDVL_XXI $sp, 4
     ; CHECK-NEXT: early-clobber $sp, $fp = frame-destroy LDRXpost $sp, 16 :: (load (s64) from %stack.2)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $z0
+    ; CHECK-NEXT: RET_ReallyLR implicit $z0
     renamable $z0 = LDNF1B_IMM renamable $p0, %stack.1.object, -8 :: (load 1 from %ir.object, align 2)
     renamable $z0 = LDNF1B_H_IMM renamable $p0, %stack.1.object, -8 :: (load 1 from %ir.object, align 2)
     renamable $z0 = LDNF1B_S_IMM renamable $p0, %stack.1.object, -8 :: (load 1 from %ir.object, align 2)
@@ -137,7 +137,7 @@ body:             |
     renamable $z0 = LDNF1W_D_IMM renamable $p0, %stack.1.object, -8 :: (load 4 from %ir.object, align 8)
     renamable $z0 = LDNF1SW_D_IMM renamable $p0, %stack.1.object, -8 :: (load 4 from %ir.object, align 8)
     renamable $z0 = LDNF1D_IMM renamable $p0, %stack.1.object, -8 :: (load 8 from %ir.object, align 8)
-    RET_ReallyLR 0, implicit $z0
+    RET_ReallyLR implicit $z0
 ...
 
 ---
@@ -189,7 +189,7 @@ body:             |
     ; CHECK-NEXT: renamable $z0 = LDNF1SW_D_IMM renamable $p0, killed $x8, 7 :: (load (s32) from %ir.object, align 8)
     ; CHECK-NEXT: $sp = frame-destroy ADDVL_XXI $sp, 4
     ; CHECK-NEXT: early-clobber $sp, $fp = frame-destroy LDRXpost $sp, 16 :: (load (s64) from %stack.2)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $z0
+    ; CHECK-NEXT: RET_ReallyLR implicit $z0
     renamable $z0 = LDNF1B_IMM renamable $p0, %stack.1.object, 8 :: (load 1 from %ir.object, align 2)
     renamable $z0 = LDNF1B_H_IMM renamable $p0, %stack.1.object, 8 :: (load 1 from %ir.object, align 2)
     renamable $z0 = LDNF1B_S_IMM renamable $p0, %stack.1.object, 8 :: (load 1 from %ir.object, align 2)
@@ -205,7 +205,7 @@ body:             |
     renamable $z0 = LDNF1W_IMM renamable $p0, %stack.1.object, 8 :: (load 4 from %ir.object, align 8)
     renamable $z0 = LDNF1W_D_IMM renamable $p0, %stack.1.object, 8 :: (load 4 from %ir.object, align 8)
     renamable $z0 = LDNF1SW_D_IMM renamable $p0, %stack.1.object, 8 :: (load 4 from %ir.object, align 8)
-    RET_ReallyLR 0, implicit $z0
+    RET_ReallyLR implicit $z0
 ...
 
 ---
@@ -257,7 +257,7 @@ body:             |
     ; CHECK-NEXT: renamable $z0 = LDNF1SW_D_IMM renamable $p0, killed $x8, -8 :: (load (s32) from %ir.object, align 8)
     ; CHECK-NEXT: $sp = frame-destroy ADDVL_XXI $sp, 4
     ; CHECK-NEXT: early-clobber $sp, $fp = frame-destroy LDRXpost $sp, 16 :: (load (s64) from %stack.2)
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $z0
+    ; CHECK-NEXT: RET_ReallyLR implicit $z0
     renamable $z0 = LDNF1B_IMM renamable $p0, %stack.1.object, -9 :: (load 1 from %ir.object, align 2)
     renamable $z0 = LDNF1B_H_IMM renamable $p0, %stack.1.object, -9 :: (load 1 from %ir.object, align 2)
     renamable $z0 = LDNF1B_S_IMM renamable $p0, %stack.1.object, -9 :: (load 1 from %ir.object, align 2)
@@ -273,5 +273,5 @@ body:             |
     renamable $z0 = LDNF1W_IMM renamable $p0, %stack.1.object, -9 :: (load 4 from %ir.object, align 8)
     renamable $z0 = LDNF1W_D_IMM renamable $p0, %stack.1.object, -9 :: (load 4 from %ir.object, align 8)
     renamable $z0 = LDNF1SW_D_IMM renamable $p0, %stack.1.object, -9 :: (load 4 from %ir.object, align 8)
-    RET_ReallyLR 0, implicit $z0
+    RET_ReallyLR implicit $z0
 ...

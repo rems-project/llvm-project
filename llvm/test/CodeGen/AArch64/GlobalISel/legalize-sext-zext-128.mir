@@ -20,7 +20,7 @@ body:             |
     %1:_(p0) = COPY $x1
     %2:_(s128) = G_SEXT %0(s64)
     G_STORE %2(s128), %1(p0) :: (store (s128))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -42,7 +42,7 @@ body:             |
     %1:_(p0) = COPY $x1
     %2:_(s128) = G_ZEXT %0(s64)
     G_STORE %2(s128), %1(p0) :: (store (s128))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -66,7 +66,7 @@ body:             |
     %1:_(p0) = COPY $x1
     %2:_(s128) = G_ZEXT %0(s32)
     G_STORE %2(s128), %1(p0) :: (store (s128))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -92,6 +92,6 @@ body:             |
     G_STORE %3, %1(p0) :: (store (s64))
     G_STORE %4, %1(p0) :: (store (s64))
     G_STORE %5, %1(p0) :: (store (s64))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
