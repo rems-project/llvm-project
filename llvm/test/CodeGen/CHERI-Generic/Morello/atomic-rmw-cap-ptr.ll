@@ -14,79 +14,66 @@
 ; RUN: llc -mtriple=aarch64 --relocation-model=pic -target-abi aapcs -mattr=+morello,-c64 %s -o - | FileCheck %s --check-prefix=HYBRID
 
 define i64 @atomic_cap_ptr_xchg(i64 addrspace(200)* %ptr, i64 %val) nounwind {
-bb:
   %tmp = atomicrmw xchg i64 addrspace(200)* %ptr, i64 %val seq_cst
   ret i64 %tmp
 }
 
 define i64 @atomic_cap_ptr_add(i64 addrspace(200)* %ptr, i64 %val) nounwind {
-bb:
   %tmp = atomicrmw add i64 addrspace(200)* %ptr, i64 %val seq_cst
   ret i64 %tmp
 }
 
 define i64 @atomic_cap_ptr_sub(i64 addrspace(200)* %ptr, i64 %val) nounwind {
-bb:
   %tmp = atomicrmw sub i64 addrspace(200)* %ptr, i64 %val seq_cst
   ret i64 %tmp
 }
 
 define i64 @atomic_cap_ptr_and(i64 addrspace(200)* %ptr, i64 %val) nounwind {
-bb:
   %tmp = atomicrmw and i64 addrspace(200)* %ptr, i64 %val seq_cst
   ret i64 %tmp
 }
 
 define i64 @atomic_cap_ptr_nand(i64 addrspace(200)* %ptr, i64 %val) nounwind {
-bb:
   %tmp = atomicrmw nand i64 addrspace(200)* %ptr, i64 %val seq_cst
   ret i64 %tmp
 }
 
 define i64 @atomic_cap_ptr_or(i64 addrspace(200)* %ptr, i64 %val) nounwind {
-bb:
   %tmp = atomicrmw or i64 addrspace(200)* %ptr, i64 %val seq_cst
   ret i64 %tmp
 }
 
 define i64 @atomic_cap_ptr_xor(i64 addrspace(200)* %ptr, i64 %val) nounwind {
-bb:
   %tmp = atomicrmw xor i64 addrspace(200)* %ptr, i64 %val seq_cst
   ret i64 %tmp
 }
 
 define i64 @atomic_cap_ptr_max(i64 addrspace(200)* %ptr, i64 %val) nounwind {
-bb:
   %tmp = atomicrmw max i64 addrspace(200)* %ptr, i64 %val seq_cst
   ret i64 %tmp
 }
 
 define i64 @atomic_cap_ptr_min(i64 addrspace(200)* %ptr, i64 %val) nounwind {
-bb:
   %tmp = atomicrmw min i64 addrspace(200)* %ptr, i64 %val seq_cst
   ret i64 %tmp
 }
 
 define i64 @atomic_cap_ptr_umax(i64 addrspace(200)* %ptr, i64 %val) nounwind {
-bb:
   %tmp = atomicrmw umax i64 addrspace(200)* %ptr, i64 %val seq_cst
   ret i64 %tmp
 }
 
 define i64 @atomic_cap_ptr_umin(i64 addrspace(200)* %ptr, i64 %val) nounwind {
-bb:
   %tmp = atomicrmw umin i64 addrspace(200)* %ptr, i64 %val seq_cst
   ret i64 %tmp
 }
 
 define float @atomic_cap_ptr_fadd(float addrspace(200)* %ptr, float %val) nounwind {
-bb:
   %tmp = atomicrmw fadd float addrspace(200)* %ptr, float %val seq_cst
   ret float %tmp
 }
 
 define float @atomic_cap_ptr_fsub(float addrspace(200)* %ptr, float %val) nounwind {
-bb:
   %tmp = atomicrmw fsub float addrspace(200)* %ptr, float %val seq_cst
   ret float %tmp
 }

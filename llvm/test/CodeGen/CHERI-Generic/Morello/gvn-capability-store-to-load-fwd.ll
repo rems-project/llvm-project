@@ -27,11 +27,8 @@ define i32 @first_i32_store_to_load_fwd(i8 addrspace(200)* %arg) local_unnamed_a
 ; ASM:       .Lfunc_begin0:
 ; ASM-NEXT:  // %bb.0:
 ; ASM-NEXT:    sub csp, csp, #80
-; ASM-NEXT:    mov c1, c0
-; ASM-NEXT:    mov c0, csp
-; ASM-NEXT:    scbnds c0, c0, #5, lsl #4 // =80
-; ASM-NEXT:    str c1, [c0, #0]
-; ASM-NEXT:    ldr w0, [c0]
+; ASM-NEXT:    str c0, [csp, #0]
+; ASM-NEXT:    ldr w0, [csp]
 ; ASM-NEXT:    add csp, csp, #80
 ; ASM-NEXT:    ret c30
 ; CHECK-LABEL: define {{[^@]+}}@first_i32_store_to_load_fwd
@@ -56,11 +53,8 @@ define i32 @second_i32_store_to_load_fwd(i8 addrspace(200)* %arg) local_unnamed_
 ; ASM:       .Lfunc_begin1:
 ; ASM-NEXT:  // %bb.0:
 ; ASM-NEXT:    sub csp, csp, #80
-; ASM-NEXT:    mov c1, c0
-; ASM-NEXT:    mov c0, csp
-; ASM-NEXT:    scbnds c0, c0, #5, lsl #4 // =80
-; ASM-NEXT:    str c1, [c0, #0]
-; ASM-NEXT:    ldr w0, [c0, #4]
+; ASM-NEXT:    str c0, [csp, #0]
+; ASM-NEXT:    ldr w0, [csp, #4]
 ; ASM-NEXT:    add csp, csp, #80
 ; ASM-NEXT:    ret c30
 ; CHECK-LABEL: define {{[^@]+}}@second_i32_store_to_load_fwd
@@ -85,11 +79,8 @@ define i32 @third_i32_store_to_load_fwd(i8 addrspace(200)* %arg) local_unnamed_a
 ; ASM:       .Lfunc_begin2:
 ; ASM-NEXT:  // %bb.0:
 ; ASM-NEXT:    sub csp, csp, #80
-; ASM-NEXT:    mov c1, c0
-; ASM-NEXT:    mov c0, csp
-; ASM-NEXT:    scbnds c0, c0, #5, lsl #4 // =80
-; ASM-NEXT:    str c1, [c0, #0]
-; ASM-NEXT:    ldr w0, [c0, #8]
+; ASM-NEXT:    str c0, [csp, #0]
+; ASM-NEXT:    ldr w0, [csp, #8]
 ; ASM-NEXT:    add csp, csp, #80
 ; ASM-NEXT:    ret c30
 ; CHECK-LABEL: define {{[^@]+}}@third_i32_store_to_load_fwd
@@ -114,11 +105,8 @@ define i32 @fourth_i32_store_to_load_fwd(i8 addrspace(200)* %arg) local_unnamed_
 ; ASM:       .Lfunc_begin3:
 ; ASM-NEXT:  // %bb.0:
 ; ASM-NEXT:    sub csp, csp, #80
-; ASM-NEXT:    mov c1, c0
-; ASM-NEXT:    mov c0, csp
-; ASM-NEXT:    scbnds c0, c0, #5, lsl #4 // =80
-; ASM-NEXT:    str c1, [c0, #0]
-; ASM-NEXT:    ldr w0, [c0, #12]
+; ASM-NEXT:    str c0, [csp, #0]
+; ASM-NEXT:    ldr w0, [csp, #12]
 ; ASM-NEXT:    add csp, csp, #80
 ; ASM-NEXT:    ret c30
 ; CHECK-LABEL: define {{[^@]+}}@fourth_i32_store_to_load_fwd

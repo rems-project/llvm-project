@@ -5,7 +5,7 @@
 
 target datalayout = "e-m:e-pf200:128:128:128:64-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128"
 
-declare void @extern_fn() #0
+declare void @extern_fn()
 @extern_data = external global i8, align 1
 
 ; TODO: should the inttoptr ones be tagged -> emit a constructor?
@@ -138,3 +138,26 @@ declare void @extern_fn() #0
 ; ASM-NEXT:  [[PTR_DIRECTIVE]] extern_fn+2
 ; ASM-NEXT:  [[PTR_DIRECTIVE]] 0
 ; ASM-NEXT:  .size global_fncap_nullgep_plus_two, 16
+
+
+; RELOCS-LABEL: RELOCATION RECORDS FOR [.{{s?}}data]:
+; RELOCS-NEXT:   OFFSET   TYPE       VALUE
+; RELOCS-NEXT:  [[INTEGER_RELOC]]    extern_data
+; RELOCS-NEXT:  [[INTEGER_RELOC]]    extern_data+0x1
+; RELOCS-NEXT:  [[INTEGER_RELOC]]    extern_data+0x2
+; RELOCS-NEXT:  [[CAPABILITY_RELOC]] extern_data
+; RELOCS-NEXT:  [[CAPABILITY_RELOC]] extern_data+0x1
+; RELOCS-NEXT:  [[CAPABILITY_RELOC]] extern_data+0x2
+; RELOCS-NEXT:  [[INTEGER_RELOC]]    extern_data
+; RELOCS-NEXT:  [[INTEGER_RELOC]]    extern_data+0x1
+; RELOCS-NEXT:  [[INTEGER_RELOC]]    extern_data+0x2
+; RELOCS-NEXT:  [[INTEGER_RELOC]]    extern_fn
+; RELOCS-NEXT:  [[CAPABILITY_RELOC]] extern_fn
+; RELOCS-NEXT:  [[CAPABILITY_RELOC]] extern_fn
+; RELOCS-NEXT:  [[INTEGER_RELOC]]    extern_fn
+; RELOCS-NEXT:  [[CAPABILITY_RELOC]] extern_fn+0x2
+; RELOCS-NEXT:  [[INTEGER_RELOC]]    extern_fn+0x2
+
+; Don't use .sdata for RISC-V, to allow re-using the same RELOCS lines.
+!llvm.module.flags = !{!0}
+!0 = !{i32 1, !"SmallDataLimit", i32 0}

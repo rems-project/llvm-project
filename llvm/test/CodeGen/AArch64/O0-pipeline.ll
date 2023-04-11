@@ -25,10 +25,8 @@
 ; CHECK-NEXT:       Scalarize Masked Memory Intrinsics
 ; CHECK-NEXT:       Expand reduction intrinsics
 ; CHECK-NEXT:       AArch64 Stack Tagging
-; CHECK-NEXT:       Dominator Tree Construction
-; CHECK-NEXT:       Natural Loop Information
-; CHECK-NEXT:       Scalar Evolution Analysis
-; CHECK-NEXT:       AArch64 sandbox setup
+; CHECK-NEXT:     CHERI bound stack allocations
+; CHECK-NEXT:     FunctionPass Manager
 ; CHECK-NEXT:       Exception handling preparation
 ; CHECK-NEXT:       AArch64 sandbox memory operation lowering
 ; CHECK-NEXT:       Safe Stack instrumentation pass

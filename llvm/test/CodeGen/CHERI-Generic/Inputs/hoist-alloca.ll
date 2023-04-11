@@ -31,31 +31,56 @@
 ; RUN: llc @PURECAP_HARDFLOAT_ARGS@ -run-pass=early-machinelicm -debug-only=machinelicm %t.mir -o /dev/null 2>%t.dbg
 ; RUN: FileCheck --input-file=%t.dbg --check-prefix=MACHINELICM-DBG %s
 ; Check that MachineLICM hoists the CheriBoundedStackPseudoImm (MIPS) / IncOffset+SetBoundsImm (RISCV) instructions
-; For Morello there is no setbounds inside the loop due to the different alloca bunding pass, so there is nothing to hoist here.
 ; MACHINELICM-DBG-LABEL: ******** Pre-regalloc Machine LICM: hoist_alloca_uncond
-@IF-MORELLO@; MACHINELICM-DBG-NOT: Hoisting
+@IF-MORELLO@; MACHINELICM-DBG: Hoisting [[LEN32:%[0-9]+]]:gpr32 = MOVi32imm 492
+@IF-MORELLO@; MACHINELICM-DBG-NEXT:  from %bb.2 to %bb.0
+@IF-MORELLO@; MACHINELICM-DBG: Hoisting [[LEN:%[0-9]+]]:gpr64 = SUBREG_TO_REG 0, [[LEN32]]:gpr32, %subreg.sub_32
+@IF-MORELLO@; MACHINELICM-DBG-NEXT:  from %bb.2 to %bb.0
 @IF-MIPS@; MACHINELICM-DBG: Hoisting %{{[0-9]+}}:cherigpr = CheriBoundedStackPseudoImm %stack.0.buf1, 0, 492
+@IF-MORELLO@; MACHINELICM-DBG: Hoisting [[INC:%[0-9]+]]:capsp = CapAddImm %stack.0.buf1, 0, 0
 @IF-RISCV@; MACHINELICM-DBG: Hoisting [[INC:%[0-9]+]]:gpcr = CIncOffsetImm %stack.0.buf1, 0
-@IFNOT-MORELLO@; MACHINELICM-DBG-NEXT:  from %bb.2 to %bb.0
+; MACHINELICM-DBG-NEXT:  from %bb.2 to %bb.0
+@IF-MORELLO@; MACHINELICM-DBG: Hoisting [[BOUNDS:%[0-9]+]]:capsp = CapSetBounds [[INC]]:capsp, [[LEN]]:gpr64
+@IF-MORELLO@; MACHINELICM-DBG-NEXT:  from %bb.2 to %bb.0
 @IF-RISCV32@; MACHINELICM-DBG: Hoisting [[BOUNDS:%[0-9]+]]:gpcr = CSetBoundsImm [[INC]]:gpcr, 512
 @IF-RISCV64@; MACHINELICM-DBG: Hoisting [[BOUNDS:%[0-9]+]]:gpcr = CSetBoundsImm [[INC]]:gpcr, 492
 @IF-RISCV@; MACHINELICM-DBG-NEXT:  from %bb.2 to %bb.0
+@IF-MORELLO@; MACHINELICM-DBG: Hoisting [[LEN32:%[0-9]+]]:gpr32 = MOVi32imm 88
+@IF-MORELLO@; MACHINELICM-DBG-NEXT:  from %bb.2 to %bb.0
+@IF-MORELLO@; MACHINELICM-DBG: Hoisting [[LEN:%[0-9]+]]:gpr64 = SUBREG_TO_REG 0, [[LEN32]]:gpr32, %subreg.sub_32
+@IF-MORELLO@; MACHINELICM-DBG-NEXT:  from %bb.2 to %bb.0
 @IF-MIPS@; MACHINELICM-DBG: Hoisting %{{[0-9]+}}:cherigpr = CheriBoundedStackPseudoImm %stack.1.buf2, 0, 88
+@IF-MORELLO@; MACHINELICM-DBG: Hoisting [[INC:%[0-9]+]]:capsp = CapAddImm %stack.1.buf2, 0, 0
 @IF-RISCV@; MACHINELICM-DBG: Hoisting [[INC:%[0-9]+]]:gpcr = CIncOffsetImm %stack.1.buf2, 0
-@IFNOT-MORELLO@; MACHINELICM-DBG-NEXT:  from %bb.2 to %bb.0
+; MACHINELICM-DBG-NEXT:  from %bb.2 to %bb.0
+@IF-MORELLO@; MACHINELICM-DBG: Hoisting [[BOUNDS:%[0-9]+]]:capsp = CapSetBounds [[INC]]:capsp, [[LEN]]:gpr64
+@IF-MORELLO@; MACHINELICM-DBG-NEXT:  from %bb.2 to %bb.0
 @IF-RISCV@; MACHINELICM-DBG: Hoisting [[BOUNDS:%[0-9]+]]:gpcr = CSetBoundsImm [[INC]]:gpcr, 88
 @IF-RISCV@; MACHINELICM-DBG-NEXT:  from %bb.2 to %bb.0
 ; MACHINELICM-DBG-LABEL: ******** Pre-regalloc Machine LICM: hoist_alloca_cond
-@IF-MORELLO@; MACHINELICM-DBG-NOT: Hoisting
+@IF-MORELLO@; MACHINELICM-DBG: Hoisting [[LEN32:%[0-9]+]]:gpr32 = MOVi32imm 492
+@IF-MORELLO@; MACHINELICM-DBG-NEXT:  from %bb.3 to %bb.0
+@IF-MORELLO@; MACHINELICM-DBG: Hoisting [[LEN:%[0-9]+]]:gpr64 = SUBREG_TO_REG 0, [[LEN32]]:gpr32, %subreg.sub_32
+@IF-MORELLO@; MACHINELICM-DBG-NEXT:  from %bb.3 to %bb.0
 @IF-MIPS@; MACHINELICM-DBG: Hoisting %{{[0-9]+}}:cherigpr = CheriBoundedStackPseudoImm %stack.0.buf1, 0, 492
+@IF-MORELLO@; MACHINELICM-DBG: Hoisting [[INC:%[0-9]+]]:capsp = CapAddImm %stack.0.buf1, 0, 0
 @IF-RISCV@; MACHINELICM-DBG: Hoisting [[INC:%[0-9]+]]:gpcr = CIncOffsetImm %stack.0.buf1, 0
-@IFNOT-MORELLO@; MACHINELICM-DBG-NEXT:  from %bb.3 to %bb.0
+; MACHINELICM-DBG-NEXT:  from %bb.3 to %bb.0
+@IF-MORELLO@; MACHINELICM-DBG: Hoisting [[BOUNDS:%[0-9]+]]:capsp = CapSetBounds [[INC]]:capsp, [[LEN]]:gpr64
+@IF-MORELLO@; MACHINELICM-DBG-NEXT:  from %bb.3 to %bb.0
 @IF-RISCV32@; MACHINELICM-DBG: Hoisting [[BOUNDS:%[0-9]+]]:gpcr = CSetBoundsImm [[INC]]:gpcr, 512
 @IF-RISCV64@; MACHINELICM-DBG: Hoisting [[BOUNDS:%[0-9]+]]:gpcr = CSetBoundsImm [[INC]]:gpcr, 492
 @IF-RISCV@; MACHINELICM-DBG-NEXT:  from %bb.3 to %bb.0
+@IF-MORELLO@; MACHINELICM-DBG: Hoisting [[LEN32:%[0-9]+]]:gpr32 = MOVi32imm 88
+@IF-MORELLO@; MACHINELICM-DBG-NEXT:  from %bb.3 to %bb.0
+@IF-MORELLO@; MACHINELICM-DBG: Hoisting [[LEN:%[0-9]+]]:gpr64 = SUBREG_TO_REG 0, [[LEN32]]:gpr32, %subreg.sub_32
+@IF-MORELLO@; MACHINELICM-DBG-NEXT:  from %bb.3 to %bb.0
 @IF-MIPS@; MACHINELICM-DBG: Hoisting %{{[0-9]+}}:cherigpr = CheriBoundedStackPseudoImm %stack.1.buf2, 0, 88
+@IF-MORELLO@; MACHINELICM-DBG: Hoisting [[INC:%[0-9]+]]:capsp = CapAddImm %stack.1.buf2, 0, 0
 @IF-RISCV@; MACHINELICM-DBG: Hoisting [[INC:%[0-9]+]]:gpcr = CIncOffsetImm %stack.1.buf2, 0
-@IFNOT-MORELLO@; MACHINELICM-DBG-NEXT:  from %bb.3 to %bb.0
+; MACHINELICM-DBG-NEXT:  from %bb.3 to %bb.0
+@IF-MORELLO@; MACHINELICM-DBG: Hoisting [[BOUNDS:%[0-9]+]]:capsp = CapSetBounds [[INC]]:capsp, [[LEN]]:gpr64
+@IF-MORELLO@; MACHINELICM-DBG-NEXT:  from %bb.3 to %bb.0
 @IF-RISCV@; MACHINELICM-DBG: Hoisting [[BOUNDS:%[0-9]+]]:gpcr = CSetBoundsImm [[INC]]:gpcr, 88
 @IF-RISCV@; MACHINELICM-DBG-NEXT:  from %bb.3 to %bb.0
 

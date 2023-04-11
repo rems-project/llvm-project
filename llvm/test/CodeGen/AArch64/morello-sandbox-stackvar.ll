@@ -1,5 +1,5 @@
 ; RUN: llc -mtriple=arm64 -mattr=+c64,+morello,+use-16-cap-regs -target-abi purecap \
-; RUN:     -opt-safe-stack-ldst=false -o - %s | FileCheck %s
+; RUN:     -cheri-stack-bounds=all-uses -o - %s | FileCheck %s
 
 target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128-pf200:128:128:128:64-A200-P200-G200"
 
@@ -41,40 +41,40 @@ entry:
 ; CHECK-NEXT: stp c25, c24, [csp, #112]
 ; CHECK-NEXT: str x19, [csp, #144]
 
-; CHECK: 	add	c0, csp, #152
-; CHECK-NEXT:	add	c1, csp, #28
-; CHECK-NEXT:	scbnds	c26, c0, #8
-; CHECK-NEXT:	scbnds	c25, c1, #4
-; CHECK-NEXT:	add	c0, csp, #24
-; CHECK-NEXT:	add	c1, csp, #20
-; CHECK-NEXT:	scbnds	c24, c0, #2
-; CHECK-NEXT:	scbnds	c27, c1, #1
-; CHECK-NEXT:	add	c0, csp, #8
-; CHECK-NEXT:	add	c1, csp, #4
-; CHECK-NEXT:	scbnds	c28, c0, #8
-; CHECK-NEXT:	scbnds	c29, c1, #4
+; CHECK:        bl      foo
+; CHECK-NEXT:   add     c0, csp, #152
+; CHECK-NEXT:   add     c1, csp, #28
+; CHECK-NEXT:   scbnds  c24, c0, #8
+; CHECK-NEXT:   add     c0, csp, #24
+; CHECK-NEXT:   scbnds  c26, c0, #2
+; CHECK-NEXT:   add     c0, csp, #20
+; CHECK-NEXT:   scbnds  c27, c0, #1
+; CHECK-NEXT:   add     c0, csp, #8
+; CHECK-NEXT:   scbnds  c28, c0, #8
+; CHECK-NEXT:   add     c0, csp, #4
+; CHECK-NEXT:   scbnds  c25, c1, #4
+; CHECK-NEXT:   scbnds  c29, c0, #4
 
-; CHECK-NEXT:	bl	foo
-; CHECK-DAG:	mov	c0, c26
+; CHECK-DAG:	mov	c0, c24
 ; CHECK-DAG:	mov	c1, c25
-; CHECK-DAG:	mov	c2, c24
+; CHECK-DAG:	mov	c2, c26
 ; CHECK-DAG:	mov	c3, c27
 ; CHECK-DAG:	mov	c4, c28
 ; CHECK-DAG:	mov	c5, c29
-; CHECK:  	str	xzr, [c26]
+; CHECK:  	str	xzr, [c24]
 ; CHECK-DAG:	str	wzr, [c25]
-; CHECK-DAG:	strh	wzr, [c24]
+; CHECK-DAG:	strh	wzr, [c26]
 ; CHECK-DAG:	strb	wzr, [c27]
 ; CHECK-DAG:	str	xzr, [c28]
 ; CHECK-DAG:	str	wzr, [c29]
 
 ; CHECK:   	bl	bar
-; CHECK-DAG:	ldr	x0, [c26]
+; CHECK-DAG:	ldr	x0, [c24]
 ; CHECK-DAG:	ldr	w1, [c25]
 ; CHECK-DAG:	ldr	d0, [c28]
 ; CHECK-DAG:	ldr	s1, [c29]
 ; CHECK-DAG:	ldrb	w3, [c27]
-; CHECK-DAG:	ldrh	w2, [c24]
+; CHECK-DAG:	ldrh	w2, [c26]
 
 ; CHECK:	bl	baz
 

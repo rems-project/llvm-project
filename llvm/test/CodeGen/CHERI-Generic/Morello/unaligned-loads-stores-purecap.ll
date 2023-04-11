@@ -2,8 +2,6 @@
 ; DO NOT EDIT -- This file was generated from test/CodeGen/CHERI-Generic/Inputs/unaligned-loads-stores-purecap.ll
 ; RUN: llc -mtriple=aarch64 --relocation-model=pic -target-abi purecap -mattr=+morello,+c64 %s -o - | FileCheck %s
 
-; ModuleID = 'global.c'
-
 @a1 = addrspace(200) global i64 0, align 1
 @a2 = addrspace(200) global i64 0, align 2
 @a4 = addrspace(200) global i64 0, align 4
@@ -12,12 +10,11 @@
 define i64 @load_global_i64_align_1(i64 %y) addrspace(200) nounwind {
 ; CHECK-LABEL: load_global_i64_align_1:
 ; CHECK:       .Lfunc_begin0:
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:  // %bb.0:
 ; CHECK-NEXT:    adrp c0, :got:a1
 ; CHECK-NEXT:    ldr c0, [c0, :got_lo12:a1]
 ; CHECK-NEXT:    ldr x0, [c0]
 ; CHECK-NEXT:    ret c30
-entry:
   %ret = load i64, i64 addrspace(200)* @a1, align 1
   ret i64 %ret
 }
@@ -25,12 +22,11 @@ entry:
 define i64 @load_global_i64_align_2(i64 %y) addrspace(200) nounwind {
 ; CHECK-LABEL: load_global_i64_align_2:
 ; CHECK:       .Lfunc_begin1:
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:  // %bb.0:
 ; CHECK-NEXT:    adrp c0, :got:a2
 ; CHECK-NEXT:    ldr c0, [c0, :got_lo12:a2]
 ; CHECK-NEXT:    ldr x0, [c0]
 ; CHECK-NEXT:    ret c30
-entry:
   %ret = load i64, i64 addrspace(200)* @a2, align 2
   ret i64 %ret
 }
@@ -38,12 +34,11 @@ entry:
 define i64 @load_global_i64_align_4(i64 %y) addrspace(200) nounwind {
 ; CHECK-LABEL: load_global_i64_align_4:
 ; CHECK:       .Lfunc_begin2:
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:  // %bb.0:
 ; CHECK-NEXT:    adrp c0, :got:a4
 ; CHECK-NEXT:    ldr c0, [c0, :got_lo12:a4]
 ; CHECK-NEXT:    ldr x0, [c0]
 ; CHECK-NEXT:    ret c30
-entry:
   %ret = load i64, i64 addrspace(200)* @a4, align 4
   ret i64 %ret
 }
@@ -51,12 +46,11 @@ entry:
 define i64 @load_global_i64_align_8(i64 %y) addrspace(200) nounwind {
 ; CHECK-LABEL: load_global_i64_align_8:
 ; CHECK:       .Lfunc_begin3:
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:  // %bb.0:
 ; CHECK-NEXT:    adrp c0, :got:a8
 ; CHECK-NEXT:    ldr c0, [c0, :got_lo12:a8]
 ; CHECK-NEXT:    ldr x0, [c0]
 ; CHECK-NEXT:    ret c30
-entry:
   %ret = load i64, i64 addrspace(200)* @a8, align 8
   ret i64 %ret
 }
@@ -64,26 +58,23 @@ entry:
 define void @store_global_i64_align_1(i64 %y) addrspace(200) nounwind {
 ; CHECK-LABEL: store_global_i64_align_1:
 ; CHECK:       .Lfunc_begin4:
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:  // %bb.0:
 ; CHECK-NEXT:    adrp c1, :got:a1
 ; CHECK-NEXT:    ldr c1, [c1, :got_lo12:a1]
 ; CHECK-NEXT:    str x0, [c1]
 ; CHECK-NEXT:    ret c30
-entry:
   store i64 %y, i64 addrspace(200)* @a1, align 1
   ret void
 }
 
-; Function Attrs: nounwind
 define void @store_global_i64_align_2(i64 %y) addrspace(200) nounwind {
 ; CHECK-LABEL: store_global_i64_align_2:
 ; CHECK:       .Lfunc_begin5:
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:  // %bb.0:
 ; CHECK-NEXT:    adrp c1, :got:a2
 ; CHECK-NEXT:    ldr c1, [c1, :got_lo12:a2]
 ; CHECK-NEXT:    str x0, [c1]
 ; CHECK-NEXT:    ret c30
-entry:
   store i64 %y, i64 addrspace(200)* @a2, align 2
   ret void
 }
@@ -91,12 +82,11 @@ entry:
 define void @store_global_i64_align_4(i64 %y) addrspace(200) nounwind {
 ; CHECK-LABEL: store_global_i64_align_4:
 ; CHECK:       .Lfunc_begin6:
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:  // %bb.0:
 ; CHECK-NEXT:    adrp c1, :got:a4
 ; CHECK-NEXT:    ldr c1, [c1, :got_lo12:a4]
 ; CHECK-NEXT:    str x0, [c1]
 ; CHECK-NEXT:    ret c30
-entry:
   store i64 %y, i64 addrspace(200)* @a4, align 4
   ret void
 }
@@ -104,12 +94,11 @@ entry:
 define void @store_global_i64_align_8(i64 %y) addrspace(200) nounwind {
 ; CHECK-LABEL: store_global_i64_align_8:
 ; CHECK:       .Lfunc_begin7:
-; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:  // %bb.0:
 ; CHECK-NEXT:    adrp c1, :got:a8
 ; CHECK-NEXT:    ldr c1, [c1, :got_lo12:a8]
 ; CHECK-NEXT:    str x0, [c1]
 ; CHECK-NEXT:    ret c30
-entry:
   store i64 %y, i64 addrspace(200)* @a8, align 8
   ret void
 }
