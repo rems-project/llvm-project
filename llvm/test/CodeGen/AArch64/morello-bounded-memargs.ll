@@ -194,3 +194,38 @@ entry:
 }
 
 declare i32 @fiz(i32, i32, i32, i32, i32, i32, i32, i32, i32, i32 addrspace(200)*, ...) addrspace(200)
+
+define i32 @f(i32 %0, i32 %1, i32 %2, i32 %3, i32 %4, i32 %5, i32 %6, i32 %7, i32 %8, ...) local_unnamed_addr addrspace(200) #0 {
+; CHECK-LABEL: f:
+; CHECK:       .Lfunc_begin4:
+; CHECK-NEXT:    .cfi_startproc purecap
+; CHECK-NEXT:  // %bb.0:
+; CHECK-NEXT:    sub csp, csp, #32 // =32
+; CHECK-NEXT:    .cfi_def_cfa_offset 32
+; CHECK-NEXT:    ldr w8, [c9], #8
+; CHECK-NEXT:    add c0, csp, #16 // =16
+; CHECK-NEXT:    scbnds c0, c0, #16 // =16
+; CHECK-NEXT:    clrperm c1, c9, wx
+; CHECK-NEXT:    str c1, [c0, #0]
+; CHECK-NEXT:    ldr c0, [csp, #16]
+; CHECK-NEXT:    add c1, c0, #16 // =16
+; CHECK-NEXT:    stp c9, c1, [csp], #32
+; CHECK-NEXT:    ldr w9, [c0]
+; CHECK-NEXT:    add w0, w9, w8
+; CHECK-NEXT:    ret c30
+  %10 = alloca i8 addrspace(200)*, align 16, addrspace(200)
+  %11 = bitcast i8 addrspace(200)* addrspace(200)* %10 to i8 addrspace(200)*
+  call void @llvm.lifetime.start.p200i8(i64 16, i8 addrspace(200)* nonnull %11) #3
+  call void @llvm.va_start.p200i8(i8 addrspace(200)* nonnull %11)
+  %12 = load i8 addrspace(200)*, i8 addrspace(200)* addrspace(200)* %10, align 16
+  %13 = bitcast i8 addrspace(200)* %12 to i32 addrspace(200)*
+  %14 = getelementptr inbounds i8, i8 addrspace(200)* %12, i64 16
+  store i8 addrspace(200)* %14, i8 addrspace(200)* addrspace(200)* %10, align 16
+  %15 = load i32, i32 addrspace(200)* %13, align 16
+  call void @llvm.va_end.p200i8(i8 addrspace(200)* %11)
+  %16 = add nsw i32 %15, %8
+  call void @llvm.lifetime.end.p200i8(i64 16, i8 addrspace(200)* nonnull %11) #3
+  ret i32 %16
+}
+
+declare void @llvm.va_end.p200i8(i8 addrspace(200)*) addrspace(200)
