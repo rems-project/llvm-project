@@ -202,7 +202,7 @@ define i32 @f(i32 %0, i32 %1, i32 %2, i32 %3, i32 %4, i32 %5, i32 %6, i32 %7, i3
 ; CHECK-NEXT:  // %bb.0:
 ; CHECK-NEXT:    sub csp, csp, #32 // =32
 ; CHECK-NEXT:    .cfi_def_cfa_offset 32
-; CHECK-NEXT:    ldr w8, [c9], #8
+; CHECK-NEXT:    ldr w8, [c9], #16
 ; CHECK-NEXT:    add c0, csp, #16 // =16
 ; CHECK-NEXT:    scbnds c0, c0, #16 // =16
 ; CHECK-NEXT:    clrperm c1, c9, wx

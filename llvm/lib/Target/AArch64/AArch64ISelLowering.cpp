@@ -5793,6 +5793,15 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
   // varargs
   AArch64FunctionInfo *FuncInfo = MF.getInfo<AArch64FunctionInfo>();
   if (isVarArg) {
+    // This will point to the next argument passed via stack.
+    unsigned StackOffset = CCInfo.getNextStackOffset();
+    // We currently pass all varargs at 8-byte alignment, or 4 for ILP32
+    unsigned Alignment = Subtarget->hasPureCap() ? 16 : 8;
+    if (Subtarget->isTargetILP32())
+      Alignment = 4;
+    StackOffset = alignTo(StackOffset, Alignment);
+    FuncInfo->setVarArgsStackIndex(MFI.CreateFixedObject(4, StackOffset, true));
+
     bool UseBoundedVarArgs =
         Subtarget->hasPureCap() && Subtarget->hasMorelloNewVarArg();
     if (UseBoundedVarArgs) {
@@ -5802,7 +5811,7 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
       SDValue FIN = DAG.getFrameIndex(FI, MVT::iFATPTR128);
       SDValue VarArgPtr = C9Args;
       if (Subtarget->hasMorelloBoundedMemArgs())
-        VarArgPtr = DAG.getPointerAdd(DL, C9Args, CCInfo.getNextStackOffset());
+        VarArgPtr = DAG.getPointerAdd(DL, C9Args, StackOffset);
       Chain = DAG.getStore(C9Args.getValue(1), DL, VarArgPtr, FIN,
                MachinePointerInfo::getStack(DAG.getMachineFunction(), 0));
       FuncInfo->setPureCapVarArgsIndex(FI);
@@ -5815,15 +5824,6 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
       // arguments are passed in integer registers.
       saveVarArgRegisters(CCInfo, DAG, DL, Chain);
     }
-
-    // This will point to the next argument passed via stack.
-    unsigned StackOffset = CCInfo.getNextStackOffset();
-    // We currently pass all varargs at 8-byte alignment, or 4 for ILP32
-    unsigned Alignment = Subtarget->hasPureCap() ? 16 : 8;
-    if (Subtarget->isTargetILP32())
-      Alignment = 4;
-    StackOffset = alignTo(StackOffset, Alignment);
-    FuncInfo->setVarArgsStackIndex(MFI.CreateFixedObject(4, StackOffset, true));
 
     if (MFI.hasMustTailInVarArgFunc()) {
       SmallVector<MVT, 2> RegParmTypes;
