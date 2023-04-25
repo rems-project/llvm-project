@@ -220,7 +220,7 @@ def hasAnyLocale(config, locales):
     return False
   program = """
     #include <stddef.h>
-    #if defined(_LIBCPP_HAS_NO_LOCALIZATION)
+    #if defined(_LIBCPP_HAS_NO_LOCALIZATION) || defined(_LIBCPP_HAS_NEWLIB)
       int main(int, char**) { return 1; }
     #else
       #include <locale.h>
@@ -240,21 +240,6 @@ def hasAnyLocale(config, locales):
   except ConfigurationRuntimeError:
     return False
   return True
-
-def hasNewLocale(config):
-  """
-  Return whether the runtime execution environment supports newlocale.
-  Some C libraries (e.g. some verision of newlib) don't.
-  """
-  program = """
-    #include <locale.h>
-    int main() {
-      if (::newlocale(LC_ALL_MASK, "C", 0) != NULL) return 0;
-      return 1;
-    }
-  """
-  return programOutput(config, program) != None
-
 
 @_memoizeExpensiveOperation(lambda c, flags='': (c.substitutions, c.environment, flags))
 def compilerMacros(config, flags=''):

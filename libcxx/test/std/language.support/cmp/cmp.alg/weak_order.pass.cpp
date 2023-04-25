@@ -500,13 +500,17 @@ int main(int, char**)
     test_1_2();
     test_1_3<float>();
     test_1_3<double>();
+#ifndef _LIBCPP_HAS_NEWLIB
     test_1_3<long double>();
+#endif
     test_1_4();
     test_1_5();
 
     static_assert(test_1_3<float>());
     static_assert(test_1_3<double>());
+#ifndef _LIBCPP_HAS_NEWLIB
     static_assert(test_1_3<long double>());
+#endif
     static_assert(test_1_4());
     static_assert(test_1_5());
 

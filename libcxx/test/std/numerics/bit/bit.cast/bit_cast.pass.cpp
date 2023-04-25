@@ -217,6 +217,7 @@ bool tests() {
         test_roundtrip_through<long long>(i);
     }
 
+#ifndef _LIBCPP_HAS_NEWLIB
     for (long double i : {0.0l, 1.0l, -1.0l, 10.0l, -10.0l, 1e10l, 1e-10l, 1e100l, 1e-100l,
                           2.718281828459045l,
                           3.141592653589793238462643383279502884197169399375105820974944l,
@@ -235,6 +236,7 @@ bool tests() {
         test_roundtrip_through<__uint128_t, false>(i);
 #endif
     }
+#endif
 
     return true;
 }

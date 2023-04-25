@@ -87,7 +87,9 @@
 # define __pre NASTY_MACRO
 #endif
 
+#ifndef _LIBCPP_HAS_NEWLIB
 #define __input NASTY_MACRO
+#endif
 #define __output NASTY_MACRO
 
 #define __acquire NASTY_MACRO
@@ -151,7 +153,9 @@
 #include <ccomplex>
 #include <cctype>
 #include <cerrno>
+#ifndef _LIBCPP_HAS_NEWLIB
 #include <cfenv>
+#endif
 #include <cfloat>
 #include <charconv>
 #include <chrono>
@@ -195,7 +199,9 @@
 #include <errno.h>
 #include <exception>
 #include <execution>
+#ifndef _LIBCPP_HAS_NEWLIB
 #include <fenv.h>
+#endif
 #ifndef _LIBCPP_HAS_NO_FILESYSTEM_LIBRARY
 #    include <filesystem>
 #endif

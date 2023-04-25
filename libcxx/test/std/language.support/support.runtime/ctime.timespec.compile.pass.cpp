@@ -10,6 +10,7 @@
 // std::timespec and std::timespec_get
 
 // UNSUPPORTED: c++03, c++11, c++14
+// UNSUPPORTED: libcpp-has-newlib
 
 // XFAIL: LIBCXX-AIX-FIXME
 
