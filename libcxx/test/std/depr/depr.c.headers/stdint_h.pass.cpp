@@ -247,6 +247,8 @@ int main(int, char**)
 
     // WCHAR_MAX
     assert(WCHAR_MAX == std::numeric_limits<wchar_t>::max());
+#endif
+
 #if !defined(_NEWLIB_VERSION)
     // newlib always defines WINT as unsigned
     // WINT_MIN
