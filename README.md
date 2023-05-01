@@ -16,7 +16,7 @@ CSA performs inter-procedural path-sensitive analysis in the boundary of one tra
 * Fires a warning when the `(u)intptr_t` value obtained from the ambiguous-provenance-operation is cast to pointer type
 * Fires a warning when `NULL`-derived `(u)intptr_t` capability is cast to pointer type
 
-### CapabilityCopyChecker (WIP)
+### CapabilityCopyChecker
 
 Detects tag-stripping loads and stores that may be used to copy or swap capabilities
 
@@ -51,11 +51,12 @@ cheribuild.py morello-csa
 #### Using scan-build directly
 
 ```
-~/cheri/output/morello-csa/bin/scan-build --keep-cc \
-  -enable-checker alpha.cheri.ProvenanceSourceChecker,alpha.cheri.CapabilityCopyChecker \
-  --use-cc ~/cheri/output/sdk/bin/clang \
-  --use-c++ ~/cheri/output/sdk/bin/clang++ \
-  BUILD_COMMAND
+$ ~/cheri/output/morello-csa/bin/scan-build --keep-cc \
+    -enable-checker alpha.cheri.ProvenanceSourceChecker,alpha.cheri.CapabilityCopyChecker \
+    --use-cc ~/cheri/output/sdk/bin/clang \
+    --use-c++ ~/cheri/output/sdk/bin/clang++ \
+    BUILD_COMMAND
+$ ~/cheri/output/morello-csa/bin/scan-view /tmp/scan-build-<timestamp>
 ```
 
 The idea is to trick the build system into calling the ccc-analyser wrapper instead of the original compiler. ccc-analyser, in turn, invokes the original compiler (provided by ``--use-cc``) and its own clang for static analysis, passing all the compiler options provided by the build system to both[^2].
@@ -69,6 +70,11 @@ Therefore BUILD_COMMAND should either
 #### Analysing with cherbuild
 
 ``use-csa`` flag was added to the fork of cheribuild [here](https://github.ckm/rems-project/cheribuild/commits/use-csa) to support analysing projects that can be built with cheribuild.
+
+```
+$ cheribuild.py <project>-morello-purecap --<project>/use-csa --skip-install --clean
+$ ~/cheri/output/morello-csa/bin/scan-view /tmp/scan-build-<timestamp>
+```
 
 ##### To add ``use-csa`` option to the project:
 
