@@ -153,7 +153,8 @@ protected:
   bool Use16CapRegs = false;
   bool HasMorello = false;
   bool HasMorelloLegacyVarArg = false;
-  bool HasMorelloBoundedMemArgs = false;
+  bool HasMorelloBoundedMemArgsCaller = false;
+  bool HasMorelloBoundedMemArgsCallee = false;
   bool HasPureCap = false;
   bool HasC64 = false;
 
@@ -472,8 +473,11 @@ public:
   bool hasPureCap() const { return HasMorello && HasPureCap; }
   bool hasMorello() const { return HasMorello; }
   bool hasMorelloNewVarArg() const { return !HasMorelloLegacyVarArg; }
-  bool hasMorelloBoundedMemArgs() const {
-    return hasPureCap() && HasMorelloBoundedMemArgs;
+  bool hasMorelloBoundedMemArgsCaller() const {
+    return hasPureCap() && HasMorelloBoundedMemArgsCaller;
+  }
+  bool hasMorelloBoundedMemArgsCallee() const {
+    return hasPureCap() && HasMorelloBoundedMemArgsCallee;
   }
   bool hasC64() const { return HasMorello && HasC64; }
   bool hasPerfMon() const { return HasPerfMon; }

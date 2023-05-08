@@ -4403,7 +4403,11 @@ static bool ParseTargetArgs(TargetOptions &Opts, ArgList &Args,
 
     if (Args.hasFlag(options::OPT_morello_bounded_memargs,
                      options::OPT_morello_no_bounded_memargs, false))
-      Opts.FeaturesAsWritten.push_back("+bounded-morello-memargs");
+      Opts.FeaturesAsWritten.push_back("+bounded-morello-memargs-callee");
+
+    if (Args.hasFlag(options::OPT_morello_bounded_memargs_caller_only,
+                     options::OPT_morello_no_bounded_memargs, false))
+      Opts.FeaturesAsWritten.push_back("+bounded-morello-memargs-caller");
   }
 
   if (Arg *A = Args.getLastArg(options::OPT_target_sdk_version_EQ)) {

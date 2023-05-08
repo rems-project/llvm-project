@@ -589,6 +589,8 @@ def morello_vararg_legacy : Flag<["-"], "morello-vararg=legacy">, Flags<[CC1Opti
 
 def morello_bounded_memargs : Flag<["-"], "morello-bounded-memargs">, Flags<[CC1Option]>, Group<cheri_Group>,
   HelpText<"Use C9 for passing arguments in memory">;
+def morello_bounded_memargs_caller_only : Flag<["-"], "morello-bounded-memargs=caller-only">, Flags<[CC1Option]>, Group<cheri_Group>,
+  HelpText<"Use CSP for passing arguments in memory but set C9 to cover the memory arguments">;
 def morello_no_bounded_memargs : Flag<["-"], "no-morello-bounded-memargs">, Flags<[CC1Option]>, Group<cheri_Group>,
   HelpText<"Use CSP for passing arguments in memory (default)">;
 

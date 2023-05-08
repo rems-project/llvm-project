@@ -74,9 +74,13 @@ def FeatureMorelloNewVarArg : SubtargetFeature<"legacy-morello-vararg",
   "HasMorelloLegacyVarArg", "true",
   "Use legacy PCS for morello varargs">;
 
-def FeatureMorelloBoundedMemArgs : SubtargetFeature<"bounded-morello-memargs",
-  "HasMorelloBoundedMemArgs", "true",
-  "Use c9 to pass arguments through memory">;
+def FeatureMorelloBoundedMemArgsCaller : SubtargetFeature<"bounded-morello-memargs-caller",
+  "HasMorelloBoundedMemArgsCaller", "true",
+  "Set c9 to point to memory arguments">;
+
+def FeatureMorelloBoundedMemArgsCallee : SubtargetFeature<"bounded-morello-memargs-callee",
+  "HasMorelloBoundedMemArgsCallee", "true",
+  "Use c9 to access memory arguments", [FeatureMorelloBoundedMemArgsCaller]>;
 
 def FeatureC64 : SubtargetFeature<"c64", "HasC64", "true",
   "Enable C64 mode", [FeatureMorello]>;

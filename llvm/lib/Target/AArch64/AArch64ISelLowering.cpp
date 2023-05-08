@@ -5574,7 +5574,7 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
     (void)Res;
   }
   bool HasMemArgs = false;
-  if (Subtarget->hasMorelloBoundedMemArgs()) {
+  if (Subtarget->hasMorelloBoundedMemArgsCallee()) {
     // Find out if we're passing anythinng on the stack.
     for (unsigned i = 0, e = Ins.size(); i != e; ++i) {
       CCValAssign &VA = ArgLocs[i];
@@ -5593,7 +5593,7 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
 
   bool UseC9 = Subtarget->hasPureCap() &&
       ((isVarArg && Subtarget->hasMorelloNewVarArg()) ||
-       (HasMemArgs && Subtarget->hasMorelloBoundedMemArgs()));
+       (HasMemArgs && Subtarget->hasMorelloBoundedMemArgsCallee()));
   SDValue C9Args;
   if (UseC9) {
     unsigned VReg = MF.addLiveIn(AArch64::C9, &AArch64::CapRegClass);
@@ -5613,7 +5613,7 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
       int Size = Ins[i].Flags.getByValSize();
       unsigned NumRegs = (Size + 7) / 8;
 
-      if (Subtarget->hasMorelloBoundedMemArgs()) {
+      if (Subtarget->hasMorelloBoundedMemArgsCallee()) {
 	SDValue ArgLoc = DAG.getPointerAdd(DL, C9Args, VA.getLocMemOffset());
         InVals.push_back(ArgLoc);
 	continue;
@@ -5703,7 +5703,7 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
 
       SDValue FIN;
       int FI;
-      if (Subtarget->hasMorelloBoundedMemArgs()) {
+      if (Subtarget->hasMorelloBoundedMemArgsCallee()) {
 	FIN = DAG.getPointerAdd(DL, C9Args, ArgOffset + BEAlign);
       } else {
         FI = MFI.CreateFixedObject(ArgSize, ArgOffset + BEAlign, true);
@@ -5742,7 +5742,7 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
 
       ArgValue = DAG.getExtLoad(
           ExtType, DL, VA.getLocVT(), Chain, FIN,
-          Subtarget->hasMorelloBoundedMemArgs() ?
+          Subtarget->hasMorelloBoundedMemArgsCallee() ?
 	      MachinePointerInfo() :
 	      MachinePointerInfo::getFixedStack(DAG.getMachineFunction(), FI),
           MemVT);
@@ -5810,7 +5810,7 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
       int FI = MFI.CreateStackObject(16, Align(16), false);
       SDValue FIN = DAG.getFrameIndex(FI, MVT::iFATPTR128);
       SDValue VarArgPtr = C9Args;
-      if (Subtarget->hasMorelloBoundedMemArgs())
+      if (Subtarget->hasMorelloBoundedMemArgsCallee())
         VarArgPtr = DAG.getPointerAdd(DL, C9Args, StackOffset);
       Chain = DAG.getStore(C9Args.getValue(1), DL, VarArgPtr, FIN,
                MachinePointerInfo::getStack(DAG.getMachineFunction(), 0));
@@ -6662,7 +6662,7 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
                                                LocMemOffset);
       }
 
-      if (Subtarget->hasMorelloBoundedMemArgs()) {
+      if (Subtarget->hasMorelloBoundedMemArgsCaller()) {
         if (FirstArgAddr == SDValue()) {
           FirstArgAddr = DstAddr;
           MemArgStartOffset = Offset;
@@ -6705,7 +6705,7 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
     }
   }
 
-  if (IsVarArg && UseBoundedVarArgs && !Subtarget->hasMorelloBoundedMemArgs()) {
+  if (IsVarArg && UseBoundedVarArgs && !Subtarget->hasMorelloBoundedMemArgsCaller()) {
     if (FirstAddr != SDValue()) {
       std::string BoundsDetails = "varargs call bounds setting";
       SDValue VarArgs = DAG.getCSetBounds(
@@ -6729,7 +6729,7 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
     }
   }
 
-  if (Subtarget->hasMorelloBoundedMemArgs()) {
+  if (Subtarget->hasMorelloBoundedMemArgsCaller()) {
     if (FirstArgAddr != SDValue()) {
       std::string BoundsDetails = "memargs call bounds setting";
       SDValue MemArgs = DAG.getCSetBounds(
@@ -6737,11 +6737,18 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
           "AArch64 memory argument passing",
           cheri::SetBoundsPointerSource::Stack, BoundsDetails);
       RegsToPass.push_back(std::make_pair(AArch64::C9, MemArgs));
-    } else if (IsVarArg) {
-      // If no arguments are passed in memory and the callee is variadic
-      // set C9 to null.
-      RegsToPass.push_back(
-          std::make_pair(AArch64::C9, DAG.getNullCapability(DL)));
+    } else {
+      bool ShouldClearC9 = IsVarArg;
+      if (!ShouldClearC9 && !Subtarget->hasMorelloBoundedMemArgsCallee()) {
+          auto *G = dyn_cast<GlobalAddressSDNode>(Callee);
+          ShouldClearC9 = !G || !G->getGlobal()->hasInternalLinkage();
+      }
+      if (ShouldClearC9) {
+          // If no arguments are passed in memory and the callee is variadic,
+	  // or if the callee might be in another DSO, set C9 to null.
+          RegsToPass.push_back(
+              std::make_pair(AArch64::C9, DAG.getNullCapability(DL)));
+      }
     }
   }
 
@@ -8782,7 +8789,7 @@ SDValue AArch64TargetLowering::LowerAAPCScap_VASTART(SDValue Op,
   SDValue VarPtr = DAG.getLoad(MVT::iFATPTR128, DL, Op.getOperand(0), FR,
       MachinePointerInfo::getStack(DAG.getMachineFunction(), 0), 16);
   SDValue Chain = VarPtr.getOperand(0);
-  if (Subtarget->hasMorelloBoundedMemArgs()) {
+  if (Subtarget->hasMorelloBoundedMemArgsCallee()) {
     uint64_t PermMask = -1UL & ~((1UL << 16) | (1UL << 15));
     VarPtr = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, DL, MVT::iFATPTR128,
         DAG.getConstant(Intrinsic::cheri_cap_perms_and, DL, MVT::i64),
