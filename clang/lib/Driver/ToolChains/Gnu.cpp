@@ -1721,22 +1721,28 @@ static bool findBiarchMultilibs(const Driver &D,
                        .includeSuffix(Suff64)
                        .flag("-m32")
                        .flag("+m64")
-                       .flag("-mx32");
+                       .flag("-mx32")
+                       .flag("-mabi=purecap");
   Multilib Alt32 = Multilib()
                        .gccSuffix("/32")
                        .includeSuffix("/32")
                        .flag("+m32")
                        .flag("-m64")
-                       .flag("-mx32");
+                       .flag("-mx32")
+                       .flag("-mabi=purecap");
   Multilib Altx32 = Multilib()
                         .gccSuffix("/x32")
                         .includeSuffix("/x32")
                         .flag("-m32")
                         .flag("-m64")
-                        .flag("+mx32");
+                        .flag("+mx32")
+                        .flag("-mabi=purecap");
   Multilib Alt64c = Multilib()
                         .gccSuffix("/purecap/c64")
                         .includeSuffix("/purecap/c64")
+                        .flag("-m32")
+                        .flag("-m64")
+                        .flag("-mx32")
                         .flag("+mabi=purecap");
 
   // GCC toolchain for IAMCU doesn't have crtbegin.o, so look for libgcc.a.
@@ -1750,7 +1756,7 @@ static bool findBiarchMultilibs(const Driver &D,
   if (TargetTriple.isArch32Bit() && !NonExistent(Alt32))
     Want = WANT64;
   else if (TargetTriple.isArch64Bit() && IsPurecap && !NonExistent(Alt64c))
-    Want = WANT64C;
+    Want = WANT64;
   else if (TargetTriple.isArch64Bit() && IsX32 && !NonExistent(Altx32))
     Want = WANT64;
   else if (TargetTriple.isArch64Bit() && !IsX32 && !NonExistent(Alt64))
@@ -1760,18 +1766,20 @@ static bool findBiarchMultilibs(const Driver &D,
       Want = NeedsBiarchSuffix ? WANT64 : WANT32;
     else if (IsX32)
       Want = NeedsBiarchSuffix ? WANT64 : WANTX32;
+    else if (IsPurecap)
+      Want = NeedsBiarchSuffix ? WANT64 : WANT64C;
     else
       Want = NeedsBiarchSuffix ? WANT32 : WANT64;
   }
 
   if (Want == WANT32)
-    Default.flag("+m32").flag("-m64").flag("-mx32");
+    Default.flag("+m32").flag("-m64").flag("-mx32").flag("-mabi=purecap");
   else if (Want == WANT64)
-    Default.flag("-m32").flag("+m64").flag("-mx32");
+    Default.flag("-m32").flag("+m64").flag("-mx32").flag("-mabi=purecap");
   else if (Want == WANTX32)
-    Default.flag("-m32").flag("-m64").flag("+mx32");
+    Default.flag("-m32").flag("-m64").flag("+mx32").flag("-mabi=purecap");
   else if (Want == WANT64C)
-    Default.flag("-mabi=purecap");
+    Default.flag("-m32").flag("-m64").flag("-mx32").flag("+mabi=purecap");
   else
     return false;
 
@@ -1784,7 +1792,8 @@ static bool findBiarchMultilibs(const Driver &D,
   Result.Multilibs.FilterOut(NonExistent);
 
   Multilib::flags_list Flags;
-  addMultilibFlag(TargetTriple.isArch64Bit() && !IsX32, "m64", Flags);
+  addMultilibFlag(TargetTriple.isArch64Bit() && !IsX32 && !IsPurecap,
+                  "m64", Flags);
   addMultilibFlag(TargetTriple.isArch32Bit(), "m32", Flags);
   addMultilibFlag(TargetTriple.isArch64Bit() && IsX32, "mx32", Flags);
   addMultilibFlag(TargetTriple.isArch64Bit() && IsPurecap, "mabi=purecap", Flags);
