@@ -128,11 +128,6 @@ static bool isARMBareMetal(const llvm::Triple &Triple) {
 
 /// Is the triple aarch64-none-elf?
 static bool isAArch64BareMetal(const llvm::Triple &Triple) {
-  // We provide a separate aarch64 baremetal driver for morello.
-  // Ideally we should not do this, however we need multilib
-  // support first.
-  return false;
-
   if (Triple.getArch() != llvm::Triple::aarch64)
     return false;
 

@@ -5678,9 +5678,6 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
       case llvm::Triple::xcore:
         TC = std::make_unique<toolchains::XCoreToolChain>(*this, Target, Args);
         break;
-      case llvm::Triple::aarch64:
-        TC = std::make_unique<toolchains::AArch64BareMetalToolChain>(*this, Target, Args);
-        break;
       case llvm::Triple::wasm32:
       case llvm::Triple::wasm64:
         TC = std::make_unique<toolchains::WebAssembly>(*this, Target, Args);
@@ -5711,6 +5708,15 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
         if (Target.getVendor() == llvm::Triple::Myriad)
           TC = std::make_unique<toolchains::MyriadToolChain>(*this, Target,
                                                               Args);
+        else if (toolchains::BareMetal::handlesTarget(Target) &&
+                 Target.getArch() == llvm::Triple::aarch64)
+          // We provide a separate aarch64 baremetal driver for morello.
+          // Ideally we should not do this, however we need multilib
+          // support first.
+          TC =
+              std::make_unique<toolchains::AArch64BareMetalToolChain>(*this,
+                                                                      Target,
+                                                                      Args);
         else if (toolchains::BareMetal::handlesTarget(Target))
           TC = std::make_unique<toolchains::BareMetal>(*this, Target, Args);
         else if (Target.isOSBinFormatELF())
