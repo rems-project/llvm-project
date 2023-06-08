@@ -146,7 +146,9 @@ public:
                      std::unique_ptr<MCCodeEmitter> Emitter)
       : MCELFStreamer(Context, std::move(TAB), std::move(OW),
                       std::move(Emitter)),
-        MappingSymbolCounter(0), LastEMS(EMS_None) {}
+        MappingSymbolCounter(0), LastEMS(EMS_None) {
+    IsC64 = Context.getSubtargetInfo()->getFeatureBits()[AArch64::FeatureC64];
+  }
 
   void changeSection(MCSection *Section, const MCExpr *Subsection) override {
     // We have to keep track of the mapping symbol state of any sections we
@@ -154,9 +156,6 @@ public:
     // default constructor by DenseMap::lookup.
     LastMappingSymbols[getPreviousSection().first] = LastEMS;
     LastEMS = LastMappingSymbols.lookup(Section);
-
-    LastLabels[getPreviousSection().first] = std::move(CurrentLabels);
-    CurrentLabels = std::move(LastLabels[Section]);
 
     MCELFStreamer::changeSection(Section, Subsection);
   }
@@ -175,7 +174,6 @@ public:
   void emitInstruction(const MCInst &Inst,
                        const MCSubtargetInfo &STI) override {
     emitCodeMappingSymbol(STI);
-    adjustCurrentLabels(STI);
     MCELFStreamer::emitInstruction(Inst, STI);
   }
 
@@ -193,7 +191,6 @@ public:
     }
 
     emitCodeMappingSymbol(STI);
-    adjustCurrentLabels(STI);
     MCELFStreamer::emitBytes(StringRef(Buffer, 4));
   }
 
@@ -201,7 +198,6 @@ public:
   /// AArch64 streamer overrides it to add the appropriate mapping symbol ($d)
   /// if necessary.
   void emitBytes(StringRef Data) override {
-    CurrentLabels.clear();
     emitDataMappingSymbol();
     MCELFStreamer::emitBytes(Data);
   }
@@ -210,13 +206,22 @@ public:
   /// AArch64 streamer overrides it to add the appropriate mapping symbol ($d)
   /// if necessary.
   void emitValueImpl(const MCExpr *Value, unsigned Size, SMLoc Loc) override {
-    CurrentLabels.clear();
     emitDataMappingSymbol();
     MCELFStreamer::emitValueImpl(Value, Size, Loc);
   }
 
-  void SetCurrentLabel(MCSymbol *Label) {
-    CurrentLabels.push_back(Label);
+  void emitAssemblerFlag(MCAssemblerFlag Flag) override {
+    MCELFStreamer::emitAssemblerFlag(Flag);
+
+    switch (Flag) {
+    default: return;
+    case MCAF_Code32:
+      IsC64 = false;
+      return;
+    case MCAF_CodeCap:
+      IsC64 = true;
+      return;
+    }
   }
 
   void emitFill(const MCExpr &NumBytes, uint64_t FillValue,
@@ -224,6 +229,28 @@ public:
     emitDataMappingSymbol();
     MCObjectStreamer::emitFill(NumBytes, FillValue, Loc);
   }
+
+  /// If a label is defined before the .type directive sets the label's type
+  /// then the label can't be recorded as a C64 function when the label is
+  /// defined. We override emitSymbolAttribute() which is called as part of the
+  /// parsing of .type so that if the symbol has already been defined we can
+  /// record the label as Thumb. FIXME: there is a corner case where the state
+  /// is changed in between the label definition and the .type directive, this
+  /// is not expected to occur in practice and handling it would require the
+  /// backend to track IsC64 for every label.
+  bool emitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute) override {
+    bool Val = MCELFStreamer::emitSymbolAttribute(Symbol, Attribute);
+
+    if (!IsC64)
+      return Val;
+
+    unsigned Type = cast<MCSymbolELF>(Symbol)->getType();
+    if ((Type == ELF::STT_FUNC || Type == ELF::STT_GNU_IFUNC) &&
+        Symbol->isDefined() && !MCTargetOptions::integerBranches())
+      getAssembler().setIsThumbFunc(Symbol);
+
+    return Val;
+  };
 
 protected:
   void EmitCheriCapabilityImpl(const MCSymbol *Symbol, const MCExpr *Addend,
@@ -263,17 +290,7 @@ private:
   void emitThumbFunc(MCSymbol *Func) override {
     if (!MCTargetOptions::integerBranches())
       getAssembler().setIsThumbFunc(Func);
-  }
-
-  void adjustCurrentLabels(const MCSubtargetInfo &STI) {
-    if (!STI.getFeatureBits()[AArch64::FeatureC64]) {
-      CurrentLabels.clear();
-      return;
-    }
-    for (MCSymbol *Symb : CurrentLabels) {
-      emitThumbFunc(Symb);
-    }
-    CurrentLabels.clear();
+    emitSymbolAttribute(Func, MCSA_ELF_TypeFunction);
   }
 
   void emitCodeMappingSymbol(const MCSubtargetInfo &STI) {
@@ -295,9 +312,11 @@ private:
   int64_t MappingSymbolCounter;
 
   DenseMap<const MCSection *, ElfMappingSymbol> LastMappingSymbols;
-  DenseMap<const MCSection *, SmallVector<MCSymbol *, 3> > LastLabels;
   ElfMappingSymbol LastEMS;
-  SmallVector<MCSymbol *, 3> CurrentLabels;
+  bool IsC64;
+public:
+  bool getIsC64() { return IsC64; }
+  void setC64FuncSymbol(MCSymbol *Sym) { emitThumbFunc(Sym); }
 };
 
 void AArch64ELFStreamer::EmitCheriCapabilityImpl(const MCSymbol *Symbol,
@@ -352,8 +371,10 @@ void AArch64TargetELFStreamer::emitLabel(MCSymbol *Symbol) {
   AArch64ELFStreamer &Streamer = getStreamer();
 
   unsigned Type = cast<MCSymbolELF>(Symbol)->getType();
-  if (Type == ELF::STT_FUNC || Type == ELF::STT_GNU_IFUNC)
-    Streamer.SetCurrentLabel(Symbol);
+  if (Type == ELF::STT_FUNC || Type == ELF::STT_GNU_IFUNC) {
+    if (Streamer.getIsC64())
+      Streamer.setC64FuncSymbol(Symbol);
+  }
 }
 
 void AArch64TargetELFStreamer::emitDirectiveVariantPCS(MCSymbol *Symbol) {

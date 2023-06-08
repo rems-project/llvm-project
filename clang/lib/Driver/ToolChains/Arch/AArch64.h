@@ -23,7 +23,8 @@ namespace aarch64 {
 void getAArch64TargetFeatures(const Driver &D, const llvm::Triple &Triple,
                               const llvm::opt::ArgList &Args,
                               std::vector<llvm::StringRef> &Features,
-                              bool ForAS);
+                              bool ForAS,
+                              bool WarnOnDeprecatedFeature);
 
 std::string getAArch64TargetCPU(const llvm::opt::ArgList &Args,
                                 const llvm::Triple &Triple, llvm::opt::Arg *&A);

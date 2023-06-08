@@ -97,6 +97,7 @@ void MCWinCOFFStreamer::emitAssemblerFlag(MCAssemblerFlag Flag) {
   case MCAF_Code16:
   case MCAF_Code32:
   case MCAF_Code64:
+  case MCAF_CodeCap:
     break;
   case MCAF_SubsectionsViaSymbols:
     llvm_unreachable("COFF doesn't support .subsections_via_symbols");

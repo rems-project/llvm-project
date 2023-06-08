@@ -63,6 +63,9 @@ using namespace llvm;
 
 namespace {
 
+static cl::opt<bool> WarnOnDeprecatedArch("aarch64-warn-on-deprecated-arch",
+                                          cl::init(false));
+
 enum class RegKind {
   Scalar,
   NeonVector,
@@ -196,6 +199,9 @@ private:
 
   bool parseDirectiveVariantPCS(SMLoc L);
 
+  void FixModeAfterArchChange(bool WasC64, SMLoc Loc);
+  bool parseDirectiveCode(SMLoc L);
+
   bool parseDirectiveSEHAllocStack(SMLoc L);
   bool parseDirectiveSEHPrologEnd(SMLoc L);
   bool parseDirectiveSEHSaveR19R20X(SMLoc L);
@@ -269,6 +275,12 @@ private:
     return Error(SecondLoc, "expected second register to be of "
                             "the same size as the first in a "
                             "register pair");
+  }
+
+  void SwitchMode() {
+    MCSubtargetInfo &STI = copySTI();
+    auto FB = ComputeAvailableFeatures(STI.ToggleFeature(AArch64::FeatureC64));
+    setAvailableFeatures(FB);
   }
 
 /// @name Auto-generated Match Functions
@@ -6590,6 +6602,8 @@ bool AArch64AsmParser::ParseDirective(AsmToken DirectiveID) {
     parseDirectiveArchExtension(Loc);
   else if (IDVal == ".variant_pcs")
     parseDirectiveVariantPCS(Loc);
+  else if (IDVal == ".code")
+    parseDirectiveCode(Loc);
   else if (IsMachO) {
     if (IDVal == MCLOHDirectiveName())
       parseDirectiveLOH(IDVal, Loc);
@@ -6706,11 +6720,54 @@ static void ExpandCryptoAEK(AArch64::ArchKind ArchKind,
   }
 }
 
+/// parseDirectiveCode
+///  ::= .code a64|c64
+bool AArch64AsmParser::parseDirectiveCode(SMLoc L) {
+  MCAsmParser &Parser = getParser();
+  const AsmToken &Tok = Parser.getTok();
+  bool HasMorello = getSTI().getFeatureBits()[AArch64::FeatureMorello];
+
+  if (Parser.getTok().isNot(AsmToken::Identifier))
+    return Error(L, "unexpected input in code directive.");
+  StringRef Name(Parser.getTok().getIdentifier());
+  Parser.Lex();
+
+  bool SetC64;
+  SMLoc NameLoc = Parser.getTok().getLoc();
+  if (Name.lower() == "c64")
+    SetC64 = true;
+  else if (Name.lower() == "a64")
+    SetC64 = false;
+  else {
+    Error(NameLoc, "Expected a64 or c64.");
+    return true;
+  }
+
+  if (parseToken(AsmToken::EndOfStatement, "unexpected token in directive"))
+    return true;
+
+  if (!HasMorello && SetC64) {
+    Error(NameLoc, "cannot enable c64 without capabilities support");
+    return true;
+  }
+
+  if (SetC64 && !getSTI().getFeatureBits()[AArch64::FeatureC64]) {
+    SwitchMode();
+  } else if (!SetC64 && getSTI().getFeatureBits()[AArch64::FeatureC64])
+    SwitchMode();
+
+  getParser().getStreamer().emitAssemblerFlag(SetC64 ? MCAF_CodeCap
+                                                     : MCAF_Code32);
+
+  return false;
+}
+
 /// parseDirectiveArch
 ///   ::= .arch token
 bool AArch64AsmParser::parseDirectiveArch(SMLoc L) {
   SMLoc ArchLoc = getLoc();
 
+  bool WasC64 = getSTI().getFeatureBits()[AArch64::FeatureC64] != 0;
   StringRef Arch, ExtensionString;
   std::tie(Arch, ExtensionString) =
       getParser().parseStringToEndOfStatement().trim().split('+');
@@ -6733,14 +6790,39 @@ bool AArch64AsmParser::parseDirectiveArch(SMLoc L) {
   STI.setDefaultFeatures("generic", /*TuneCPU*/ "generic",
                          join(ArchFeatures.begin(), ArchFeatures.end(), ","));
 
-  return parseFeatures(ExtensionString, STI, ID, ArchLoc);
+  bool Ret = parseFeatures(ExtensionString, STI, ID, ArchLoc);
+  FixModeAfterArchChange(WasC64, L);
+
+  return Ret;
+}
+
+void AArch64AsmParser::FixModeAfterArchChange(bool WasC64, SMLoc Loc) {
+  bool IsC64 = getSTI().getFeatureBits()[AArch64::FeatureC64] != 0;
+  // Allow mode changes while changing arch for now, but warn so users can avoid this.
+  // In the future we will want to keep the mode on arch changes.
+  if (WasC64 != IsC64) {
+    if (WarnOnDeprecatedArch)
+      Warning(Loc, "Changing state with arch directive is deprecated");
+    if (WasC64)
+      getParser().getStreamer().emitAssemblerFlag(MCAF_Code32);
+    else
+      getParser().getStreamer().emitAssemblerFlag(MCAF_CodeCap);
+  }
+}
+
+bool isDeprecatedArchExtension(StringRef Name) {
+  return Name.lower() == "c64";
+}
+
+static std::string warnOnDeprecatedExtension(StringRef Name) {
+  return ("Using deprecated arch extension " + Name + ". Use .code c64 "
+          "or .code a64 to change the CPU mode instead").str();
 }
 
 bool AArch64AsmParser::parseFeatures(StringRef ExtensionString,
                                      MCSubtargetInfo &STI,
                                      AArch64::ArchKind ID,
                                      SMLoc &CurLoc) {
-
   setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
 
   SmallVector<StringRef, 4> RequestedExtensions;
@@ -6761,6 +6843,9 @@ bool AArch64AsmParser::parseFeatures(StringRef ExtensionString,
       EnableFeature = false;
       Name = Name.substr(2);
     }
+
+    if (isDeprecatedArchExtension(Name) && WarnOnDeprecatedArch)
+      Warning(CurLoc, warnOnDeprecatedExtension(Name));
 
     if (Name == "a64c") {
       HasA64C = true;
@@ -6854,11 +6939,15 @@ bool AArch64AsmParser::parseDirectiveArchExtension(SMLoc L) {
                  "unexpected token in '.arch_extension' directive"))
     return true;
 
+  bool WasC64 = getSTI().getFeatureBits()[AArch64::FeatureC64] != 0;
   bool EnableFeature = true;
   if (Name.startswith_insensitive("no")) {
     EnableFeature = false;
     Name = Name.substr(2);
   }
+
+  if (isDeprecatedArchExtension(Name) && WarnOnDeprecatedArch)
+    Warning(ExtLoc, warnOnDeprecatedExtension(Name));
 
   MCSubtargetInfo &STI = copySTI();
   FeatureBitset Features = STI.getFeatureBits();
@@ -6875,6 +6964,7 @@ bool AArch64AsmParser::parseDirectiveArchExtension(SMLoc L) {
     FeatureBitset Features =
         ComputeAvailableFeatures(STI.ToggleFeature(ToggleFeatures));
     setAvailableFeatures(Features);
+    FixModeAfterArchChange(WasC64, L);
     return false;
   }
 
@@ -6900,12 +6990,15 @@ bool AArch64AsmParser::parseDirectiveCPU(SMLoc L) {
     return false;
   }
 
+  bool WasC64 = getSTI().getFeatureBits()[AArch64::FeatureC64] != 0;
   MCSubtargetInfo &STI = copySTI();
   STI.setDefaultFeatures(CPU, /*TuneCPU*/ CPU, "");
   CurLoc = incrementLoc(CurLoc, CPU.size());
 
-  return parseFeatures(ExtensionString, STI,
-                       llvm::AArch64::getCPUArchKind(CPU), CurLoc);
+  bool Ret = parseFeatures(ExtensionString, STI,
+                           llvm::AArch64::getCPUArchKind(CPU), CurLoc);
+  FixModeAfterArchChange(WasC64, L);
+  return Ret;
 }
 
 /// parseDirectiveInst

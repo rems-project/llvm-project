@@ -124,13 +124,13 @@ _start:
 // CHECK-NEXT:   Relocation {
 // CHECK-NEXT:     Location: 0x230030
 // CHECK-NEXT:     Base: small (0x2001A0)
-// CHECK-NEXT:     Offset: 130656
+// CHECK-NEXT:     Offset: 130657
 // CHECK-NEXT:     Length: 130656
 // CHECK-NEXT:     Permissions: (FUNC) (0x8000000000013DBC)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Relocation {
 // CHECK-NEXT:     Location: 0x230040
-// CHECK-NEXT:     Base: _start (0x220000)
+// CHECK-NEXT:     Base: $d.2 (0x220000)
 // CHECK-NEXT:     Offset: 8
 // CHECK-NEXT:     Length: 32784
 // CHECK-NEXT:     Permissions: (RODATA) (0x1BFBE)

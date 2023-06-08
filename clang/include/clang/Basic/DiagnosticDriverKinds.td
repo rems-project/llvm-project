@@ -265,6 +265,9 @@ def err_ambiguous_arch : Error<"Can only use one of +a64c and +c64 in arch strin
 def err_ambiguous_a64c_arch : Error<"Ambiguous use of +a64c in arch string">;
 def err_ambiguous_c64_arch : Error<"Ambiguous use +c64 in arch string">;
 def err_invalid_c64_abi_combination : Error<"Cannot use '%0' encoding mode with '%1' ABI">;
+def warn_deprecated_c64_usage : Warning<
+  "Using c64 in the arch string is deprecated. The CPU mode should be inferred "
+  "from the ABI.">, InGroup<Deprecated>;
 def err_drv_invalid_omp_target : Error<"OpenMP target is invalid: '%0'">;
 def err_drv_incompatible_omp_arch : Error<"OpenMP target architecture '%0' pointer size is incompatible with host '%1'">;
 def err_drv_omp_host_ir_file_not_found : Error<

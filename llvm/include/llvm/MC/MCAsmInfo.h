@@ -190,6 +190,7 @@ protected:
   const char *Code16Directive;
   const char *Code32Directive;
   const char *Code64Directive;
+  const char *CodeCapDirective;
 
   /// Which dialect of an assembler variant to use.  Defaults to 0
   unsigned AssemblerDialect = 0;
@@ -675,6 +676,7 @@ public:
   const char *getCode16Directive() const { return Code16Directive; }
   const char *getCode32Directive() const { return Code32Directive; }
   const char *getCode64Directive() const { return Code64Directive; }
+  const char *getCodeCapDirective() const { return CodeCapDirective; }
   unsigned getAssemblerDialect() const { return AssemblerDialect; }
   bool doesAllowAtInName() const { return AllowAtInName; }
   bool doesAllowQuestionAtStartOfIdentifier() const {

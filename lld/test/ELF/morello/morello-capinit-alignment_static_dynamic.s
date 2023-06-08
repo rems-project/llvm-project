@@ -130,7 +130,7 @@ _start:
 // CHECK-NEXT:     Offset: 0x230030
 // CHECK-NEXT:     Type: R_MORELLO_RELATIVE
 // CHECK-NEXT:     Symbol: - (0)
-// CHECK-NEXT:     Addend: 0x1FE60
+// CHECK-NEXT:     Addend: 0x1FE61
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Relocation {
 // CHECK-NEXT:     Offset: 0x230040
@@ -205,7 +205,7 @@ _start:
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: _start
-// CHECK-NEXT:     Value: 0x220000
+// CHECK-NEXT:     Value: 0x220001
 // CHECK-NEXT:     Size: 4
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: Function
