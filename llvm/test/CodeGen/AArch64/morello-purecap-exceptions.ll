@@ -109,7 +109,7 @@ attributes #2 = { nounwind }
 ; IND-NEXT:	.byte	0                               //   On action: cleanup
 ; IND-NEXT: .Lcst_end0:
 
-; IND:	.section	.data.rel.ro,"aw",@progbits
+; IND: .section	.data.rel.ro,"aGw",@progbits,_ZNKSt3__17num_getIwNS_19istreambuf_iteratorIwNS_11char_traitsIwEEEEE6do_getES4_S4_QRNS_8ios_baseEQRjQRb,comdat
 ; IND-NEXT:	.p2align	4
 ; IND-NEXT: .Ltmp3:
 ; IND-NEXT:	.chericap	.L_ZNKSt3__17num_getIwNS_19istreambuf_iteratorIwNS_11char_traitsIwEEEEE6do_getES4_S4_QRNS_8ios_baseEQRjQRb$eh_alias+(.Ltmp2-.Lfunc_begin0)

@@ -1868,19 +1868,29 @@ bool AsmPrinter::doFinalization(Module &M) {
     // Output stubs for landing pads.
     MachineModuleInfoELF::ExprListTy LPStubs = MMIELF.GetLPStubList();
     if (!LPStubs.empty()) {
-      OutStreamer->SwitchSection(TLOF.getDataRelROSection());
       const DataLayout &DL = M.getDataLayout();
       unsigned AS = DL.getProgramAddressSpace();
       unsigned Size = DL.getPointerSize(AS);
 
-      emitAlignment(Align(Size));
       for (auto &Stub : LPStubs) {
+        auto Flags = ELF::SHF_ALLOC | ELF::SHF_WRITE;
+        MCSectionELF *SymSec =
+            cast<MCSectionELF>(&Stub.second.first->getSection());
+        StringRef GroupName;
+        if (SymSec->isComdat()) {
+          Flags |= ELF::SHF_GROUP;
+          GroupName = SymSec->getGroup()->getName();
+        }
+        MCSection *StubSection = OutContext.getELFSection(".data.rel.ro",
+            ELF::SHT_PROGBITS, Flags, 0, GroupName, SymSec->isComdat());
+        OutStreamer->SwitchSection(StubSection);
+
+        emitAlignment(Align(Size));
         OutStreamer->emitLabel(Stub.first);
         OutStreamer->EmitCheriCapability(Stub.second.first, Stub.second.second,
                                          Size);
       }
     }
-
   }
 
   if (TM.getTargetTriple().isOSBinFormatCOFF()) {
