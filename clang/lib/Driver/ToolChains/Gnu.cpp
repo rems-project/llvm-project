@@ -3121,4 +3121,18 @@ void Generic_ELF::addClangTargetOptions(const ArgList &DriverArgs,
   if (!DriverArgs.hasFlag(options::OPT_fuse_init_array,
                           options::OPT_fno_use_init_array, true))
     CC1Args.push_back("-fno-use-init-array");
+  if (getTriple().isAArch64() && getTriple().isGNUEnvironment() &&
+      isPurecap(getTriple(), DriverArgs)) {
+    bool HasLPEncoding = false;
+    for (const Arg *A : DriverArgs.filtered(options::OPT_mllvm)) {
+      if (StringRef(A->getValue(0)).startswith("-cheri-landing-pad-encoding=")) {
+        HasLPEncoding = true;
+        break;
+      }
+    }
+    if (!HasLPEncoding) {
+      CC1Args.push_back("-mllvm");
+      CC1Args.push_back("-cheri-landing-pad-encoding=indirect");
+    }
+  }
 }
