@@ -309,6 +309,8 @@ void MCELFStreamer::emitCommonSymbol(MCSymbol *S, uint64_t Size,
   auto *Symbol = cast<MCSymbolELF>(S);
   getAssembler().registerSymbol(*Symbol);
 
+  Size = Size + static_cast<uint64_t>(TailPadding);
+
   if (!Symbol->isBindingSet())
     Symbol->setBinding(ELF::STB_GLOBAL);
 
@@ -322,12 +324,11 @@ void MCELFStreamer::emitCommonSymbol(MCSymbol *S, uint64_t Size,
 
     emitValueToAlignment(ByteAlignment, 0, 1, 0);
     emitLabel(Symbol);
-    emitZeros(Size + static_cast<uint64_t>(TailPadding));
+    emitZeros(Size);
 
     SwitchSection(P.first, P.second);
   } else {
-    if (Symbol->declareCommon(Size + static_cast<uint64_t>(TailPadding),
-                              ByteAlignment))
+    if (Symbol->declareCommon(Size, ByteAlignment))
       report_fatal_error("Symbol: " + Symbol->getName() +
                          " redeclared as different type");
   }

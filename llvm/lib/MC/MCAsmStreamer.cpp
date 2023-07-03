@@ -956,13 +956,6 @@ void MCAsmStreamer::emitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
       OS << ',' << Log2_32(ByteAlignment);
   }
   EmitEOL();
-  if (TailPadding != TailPaddingAmount::None) {
-    // If we added padding, we need to emit an explicit symbol size directive
-    AddComment("explicit size directive required due to " +
-               Twine(static_cast<uint64_t>(TailPadding)) +
-               " bytes of tail padding for precise bounds.");
-    emitELFSize(Symbol, MCConstantExpr::create(Size, getContext()));
-  }
 
   // Print symbol's rename (original name contains invalid character(s)) if
   // there is one.
@@ -997,13 +990,6 @@ void MCAsmStreamer::emitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
     }
   }
   EmitEOL();
-  if (TailPadding != TailPaddingAmount::None) {
-    // If we added padding, we need to emit an explicit symbol size directive
-    AddComment("explicit size directive required due to " +
-               Twine(static_cast<uint64_t>(TailPadding)) +
-               " bytes of tail padding for precise bounds.");
-    emitELFSize(Symbol, MCConstantExpr::create(Size, getContext()));
-  }
 }
 
 void MCAsmStreamer::emitZerofill(MCSection *Section, MCSymbol *Symbol,
@@ -1034,13 +1020,6 @@ void MCAsmStreamer::emitZerofill(MCSection *Section, MCSymbol *Symbol,
       OS << ',' << Log2_32(ByteAlignment);
   }
   EmitEOL();
-  if (TailPadding != TailPaddingAmount::None) {
-    // If we added padding, we need to emit an explicit symbol size directive
-    AddComment("explicit size directive required due to " +
-               Twine(static_cast<uint64_t>(TailPadding)) +
-               " bytes of tail padding for precise bounds.");
-    emitELFSize(Symbol, MCConstantExpr::create(Size, getContext()));
-  }
 }
 
 // .tbss sym, size, align
@@ -1070,13 +1049,6 @@ void MCAsmStreamer::emitTBSSSymbol(MCSection *Section, MCSymbol *Symbol,
   if (ByteAlignment > 1) OS << ", " << Log2_32(ByteAlignment);
 
   EmitEOL();
-  if (TailPadding != TailPaddingAmount::None) {
-    // If we added padding, we need to emit an explicit symbol size directive
-    AddComment("explicit size directive required due to " +
-               Twine(static_cast<uint64_t>(TailPadding)) +
-               " bytes of tail padding for precise bounds.");
-    emitELFSize(Symbol, MCConstantExpr::create(Size, getContext()));
-  }
 }
 
 static inline bool isPrintableString(StringRef Data) {
