@@ -288,19 +288,13 @@ void aarch64::getMorelloMode(const Driver &D, const llvm::Triple &Triple,
                              const ArgList &Args, bool &A64C,
                              bool &C64, bool &PureCap,
                              bool &ReducedCapRegs) {
-  bool ForcePureCap = false;
-  bool ForceNoPureCap = false;
-
   A64C = false;
   C64 = false;
   PureCap = false;
   ReducedCapRegs = false;
 
-  if (Triple.isPurecap()) {
+  if (Triple.isPurecap())
     PureCap = true;
-    ForcePureCap = false;
-    ForceNoPureCap = false;
-  }
 
   if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ)) {
     StringRef Abi = A->getValue();
