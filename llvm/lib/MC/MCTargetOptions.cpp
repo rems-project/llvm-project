@@ -48,21 +48,6 @@ bool MCTargetOptions::useTLSGDForPurecap() {
   return MorelloUseGDForTLS;
 }
 
-static cl::opt<bool> IntegerBranches(
-    "morello-integer-branches", cl::desc("use integers for indirect branches"),
-    cl::init(false));
-
-static cl::opt<bool> IntegerReturns(
-    "morello-integer-returns", cl::desc("use integers for returns"),
-    cl::init(false));
-
-bool MCTargetOptions::integerBranches() {
-  return IntegerBranches;
-}
-bool MCTargetOptions::integerReturns() {
-  return IntegerReturns;
-}
-
 MCTargetOptions::MCTargetOptions()
     : MCRelaxAll(false), MCNoExecStack(false), MCFatalWarnings(false),
       MCNoWarn(false), MCNoDeprecatedWarn(false),

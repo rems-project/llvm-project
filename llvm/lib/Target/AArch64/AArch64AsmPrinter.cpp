@@ -1289,7 +1289,7 @@ void AArch64AsmPrinter::emitInstruction(const MachineInstr *MI) {
   }
   case AArch64::CTCRETURNr: {
     MCInst TmpInst;
-    if (MCTargetOptions::integerBranches()) {
+    if (STI->hasPurecapBenchmarkABI()) {
       TmpInst.setOpcode(AArch64::BR);
       TmpInst.addOperand(MCOperand::createReg(
           STI->getRegisterInfo()->getSubReg(MI->getOperand(0).getReg(),

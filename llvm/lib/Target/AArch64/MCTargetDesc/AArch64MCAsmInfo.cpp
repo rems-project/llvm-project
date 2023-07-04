@@ -65,8 +65,10 @@ const MCExpr *AArch64MCAsmInfoDarwin::getExprForPersonalitySymbol(
   return MCBinaryExpr::createSub(Res, PC, Context);
 }
 
-AArch64MCAsmInfoELF::AArch64MCAsmInfoELF(const Triple &T, bool IsPureCap) {
+AArch64MCAsmInfoELF::AArch64MCAsmInfoELF(const Triple &T, bool IsPureCap,
+                                         bool IsPurecapBenchmark) {
   IsCheriPurecapABI = IsPureCap;
+  IsPurecapBenchmarkABI = IsPurecapBenchmark;
   NeedsLocalForSize = IsPureCap;
   if (T.getArch() == Triple::aarch64_be)
     IsLittleEndian = false;

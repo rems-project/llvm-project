@@ -52,6 +52,7 @@ public:
 
   bool IsMorello() const { return isMorello; }
   bool IsPureCap() const { return isPureCap; }
+  bool IsPurecapBenchmark() const { return isPurecapBenchmark; }
   bool IsC64() const { return isC64; }
   bool padGlobalsForCheriCapabilities() const override {
     return IsPureCap();
@@ -77,6 +78,7 @@ public:
 private:
   bool isLittle;
   bool isPureCap;
+  bool isPurecapBenchmark;
   bool isMorello;
   bool isC64;
 };

@@ -12,6 +12,7 @@
 
 #include "MCTargetDesc/AArch64AddressingModes.h"
 #include "MCTargetDesc/AArch64FixupKinds.h"
+#include "MCTargetDesc/AArch64MCAsmInfo.h"
 #include "MCTargetDesc/AArch64MCExpr.h"
 #include "Utils/AArch64BaseInfo.h"
 #include "llvm/ADT/SmallVector.h"
@@ -351,9 +352,13 @@ uint32_t AArch64MCCodeEmitter::getCondBranchTargetOpValue(
   assert(MO.isExpr() && "Unexpected target type!");
 
   bool HasC64 = STI.getFeatureBits()[AArch64::FeatureC64];
+  const AArch64MCAsmInfoELF *MAI =
+      static_cast<const AArch64MCAsmInfoELF *>(Ctx.getAsmInfo());
+  bool HasPurecapBenchmarkABI = MAI->isPurecapBenchmarkABI();
   MCFixupKind Kind = MCFixupKind(
-      HasC64 ? AArch64::fixup_morello_pcrel_branch19
-             : AArch64::fixup_aarch64_pcrel_branch19);
+      HasC64 && !HasPurecapBenchmarkABI
+          ? AArch64::fixup_morello_pcrel_branch19
+          : AArch64::fixup_aarch64_pcrel_branch19);
   Fixups.push_back(MCFixup::create(0, MO.getExpr(), Kind, MI.getLoc()));
 
   ++MCNumFixups;
@@ -436,9 +441,13 @@ uint32_t AArch64MCCodeEmitter::getTestBranchTargetOpValue(
   assert(MO.isExpr() && "Unexpected ADR target type!");
 
   bool HasC64 = STI.getFeatureBits()[AArch64::FeatureC64];
+  const AArch64MCAsmInfoELF *MAI =
+      static_cast<const AArch64MCAsmInfoELF *>(Ctx.getAsmInfo());
+  bool HasPurecapBenchmarkABI = MAI->isPurecapBenchmarkABI();
   MCFixupKind Kind = MCFixupKind(
-      HasC64 ? AArch64::fixup_morello_pcrel_branch14
-             : AArch64::fixup_aarch64_pcrel_branch14);
+      HasC64 && !HasPurecapBenchmarkABI
+          ? AArch64::fixup_morello_pcrel_branch14
+          : AArch64::fixup_aarch64_pcrel_branch14);
   Fixups.push_back(MCFixup::create(0, MO.getExpr(), Kind, MI.getLoc()));
 
   ++MCNumFixups;
@@ -461,7 +470,10 @@ AArch64MCCodeEmitter::getBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
   assert(MO.isExpr() && "Unexpected ADR target type!");
 
   MCFixupKind Kind;
-  if (!STI.getFeatureBits()[AArch64::FeatureC64])
+  const AArch64MCAsmInfoELF *MAI =
+      static_cast<const AArch64MCAsmInfoELF *>(Ctx.getAsmInfo());
+  if (!STI.getFeatureBits()[AArch64::FeatureC64] ||
+      MAI->isPurecapBenchmarkABI())
     Kind = MI.getOpcode() == AArch64::BL
                          ? MCFixupKind(AArch64::fixup_aarch64_pcrel_call26)
                          : MCFixupKind(AArch64::fixup_aarch64_pcrel_branch26);

@@ -203,7 +203,9 @@ AArch64Subtarget::AArch64Subtarget(const Triple &TT, const std::string &CPU,
                                    unsigned MinSVEVectorSizeInBitsOverride,
                                    unsigned MaxSVEVectorSizeInBitsOverride)
     : AArch64GenSubtargetInfo(TT, CPU, /*TuneCPU*/ CPU, FS),
-      HasPureCap(static_cast<const AArch64TargetMachine&>(TM).IsPureCap()),
+      HasPureCap(static_cast<const AArch64TargetMachine &>(TM).IsPureCap()),
+      HasPurecapBenchmarkABI(
+          static_cast<const AArch64TargetMachine &>(TM).IsPurecapBenchmark()),
       ReserveXRegister(AArch64::GPR64commonRegClass.getNumRegs()),
       ReserveCRegister(AArch64::CapcommonRegClass.getNumRegs()),
       CustomCallSavedXRegs(AArch64::GPR64commonRegClass.getNumRegs()),

@@ -260,8 +260,9 @@ static std::string computeDataLayout(const Triple &TT, StringRef FS,
   if (FS.find("+c64") != StringRef::npos ||
       FS.find("+morello") != StringRef::npos)
     Cap = "-pf200:128:128:128:64";
-  std::string PurecapAS = (Options.getABIName() == "purecap") ? "-A200-P200-G200"
-                                                              : "";
+  bool IsPurecap = Options.getABIName() == "purecap" ||
+                   Options.getABIName() == "purecap-benchmark";
+  std::string PurecapAS = IsPurecap ? "-A200-P200-G200" : "";
   return Endian + "-m:e" + Cap + Ptr32 +
          "-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128" + PurecapAS;
 }
@@ -332,7 +333,9 @@ AArch64TargetMachine::AArch64TargetMachine(const Target &T, const Triple &TT,
                         getEffectiveRelocModel(TT, RM),
                         getEffectiveAArch64CodeModel(TT, CM, JIT), OL),
       TLOF(createTLOF(getTargetTriple())), isLittle(LittleEndian),
-      isPureCap(Options.MCOptions.getABIName() == "purecap"),
+      isPureCap(Options.MCOptions.getABIName() == "purecap" ||
+                Options.MCOptions.getABIName() == "purecap-benchmark"),
+      isPurecapBenchmark(Options.MCOptions.getABIName() == "purecap-benchmark"),
       isMorello(FS.find("+morello") != StringRef::npos),
       isC64(FS.find("+c64") != StringRef::npos) {
   initAsmInfo();

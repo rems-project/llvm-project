@@ -224,13 +224,11 @@ unsigned AArch64ELFObjectWriter::getRelocType(MCContext &Ctx,
     case AArch64::fixup_morello_pcrel_branch26:
       return IsDescABI
           ? ELF::R_MORELLO_DESC_GLOBAL_JUMP26
-          : (MCTargetOptions::integerBranches() ? ELF::R_AARCH64_JUMP26
-                                                : ELF::R_MORELLO_JUMP26);
+          : ELF::R_MORELLO_JUMP26;
     case AArch64::fixup_morello_pcrel_call26:
       return IsDescABI
           ? ELF::R_MORELLO_DESC_GLOBAL_CALL26
-          : (MCTargetOptions::integerBranches() ? ELF::R_AARCH64_CALL26
-                                                : ELF::R_MORELLO_CALL26);
+          : ELF::R_MORELLO_CALL26;
     case AArch64::fixup_aarch64_ldr_pcrel_imm17_scale16:
       if (SymLoc == AArch64MCExpr::VK_GOTTPREL ||
           SymLoc == AArch64MCExpr::VK_GOT) {
@@ -248,13 +246,11 @@ unsigned AArch64ELFObjectWriter::getRelocType(MCContext &Ctx,
     case AArch64::fixup_aarch64_pcrel_branch14:
       return R_CLS(TSTBR14);
     case AArch64::fixup_morello_pcrel_branch14:
-      return MCTargetOptions::integerBranches() ? ELF::R_AARCH64_TSTBR14
-                                                : ELF::R_MORELLO_TSTBR14;
+      return ELF::R_MORELLO_TSTBR14;
     case AArch64::fixup_aarch64_pcrel_branch19:
       return R_CLS(CONDBR19);
     case AArch64::fixup_morello_pcrel_branch19:
-      return MCTargetOptions::integerBranches() ? ELF::R_AARCH64_CONDBR19
-                                                : ELF::R_MORELLO_CONDBR19;
+      return ELF::R_MORELLO_CONDBR19;
     default:
       Ctx.reportError(Fixup.getLoc(), "Unsupported pc-relative fixup kind");
       return ELF::R_AARCH64_NONE;

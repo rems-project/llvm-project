@@ -157,6 +157,7 @@ protected:
   bool HasMorelloBoundedMemArgsCallee = false;
   bool HasPureCap = false;
   bool HasC64 = false;
+  bool HasPurecapBenchmarkABI = false;
 
   // Armv8.5-A Extensions
   bool HasAlternativeNZCV = false;
@@ -480,6 +481,9 @@ public:
     return hasPureCap() && HasMorelloBoundedMemArgsCallee;
   }
   bool hasC64() const { return HasMorello && HasC64; }
+  bool hasPurecapBenchmarkABI() const {
+    return HasMorello && HasPurecapBenchmarkABI;
+  }
   bool hasPerfMon() const { return HasPerfMon; }
   bool hasFullFP16() const { return HasFullFP16; }
   bool hasFP16FML() const { return HasFP16FML; }
