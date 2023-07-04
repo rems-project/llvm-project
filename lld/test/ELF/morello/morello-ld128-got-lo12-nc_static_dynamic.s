@@ -38,15 +38,15 @@ bar:
 foo:
  .xword 10
 
-// DIS: 0000000000210268 <_start>:
-// DIS-NEXT: 210268:  adrp c0, 0x220000
-// DIS-NEXT: 21026c:  ldr c0, [c0, #0x290]
-// DIS-NEXT: 210270:  adrp c1, 0x220000
-// DIS-NEXT: 210274:  ldr c1, [c1, #0x2a0]
-// DIS-NEXT: 210278:  adrp c1, 0x220000
-// DIS-NEXT: 21027c:  ldr c1, [c1, #0x2a0]
-// DIS-NEXT: 210280:  adrp c2, 0x220000
-// DIS-NEXT: 210284:  ldr c2, [c1, #0x2b0]
+// DIS: 0000000000210288 <_start>:
+// DIS-NEXT: 210288:  adrp c0, 0x220000
+// DIS-NEXT: 21028c:  ldr c0, [c0, #0x2b0]
+// DIS-NEXT: 210290:  adrp c1, 0x220000
+// DIS-NEXT: 210294:  ldr c1, [c1, #0x2c0]
+// DIS-NEXT: 210298:  adrp c1, 0x220000
+// DIS-NEXT: 21029c:  ldr c1, [c1, #0x2c0]
+// DIS-NEXT: 2102a0:  adrp c2, 0x220000
+// DIS-NEXT: 2102a4:  ldr c2, [c1, #0x2d0]
 
 /// .rodata is the start of the executable capability range
 
@@ -55,7 +55,7 @@ foo:
 // CHECK-NEXT:     Flags [
 // CHECK-NEXT:       SHF_ALLOC
 // CHECK-NEXT:     ]
-// CHECK-NEXT:     Address: 0x200260
+// CHECK-NEXT:     Address: 0x200280
 
 /// Check that .got exists, has 16-byte entries and is 16-byte aligned.
 /// The executable capability should extend to the end of the .got
@@ -65,9 +65,9 @@ foo:
 // CHECK-NEXT:       SHF_ALLOC
 // CHECK-NEXT:       SHF_WRITE
 // CHECK-NEXT:     ]
-// CHECK-NEXT:     Address: 0x220290
-// CHECK-NEXT:     Offset: 0x290
-// CHECK-NEXT:     Size: 48
+// CHECK-NEXT:     Address: 0x2202B0
+// CHECK-NEXT:     Offset: 0x2B0
+// CHECK-NEXT:     Size: 80
 // CHECK-NEXT:     Link: 0
 // CHECK-NEXT:     Info: 0
 // CHECK-NEXT:     AddressAlignment: 16
@@ -78,19 +78,19 @@ foo:
 // CHECK: Relocations [
 // CHECK-NEXT:   .rela.dyn {
 // CHECK-NEXT:     Relocation {
-// CHECK-NEXT:       Offset: 0x220290
+// CHECK-NEXT:       Offset: 0x2202B0
 // CHECK-NEXT:       Type: R_MORELLO_RELATIVE
 // CHECK-NEXT:       Symbol: - (0)
-// CHECK-NEXT:       Addend: 0x10069
+// CHECK-NEXT:       Addend: 0x10089
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
-// CHECK-NEXT:       Offset: 0x2202A0
+// CHECK-NEXT:       Offset: 0x2202C0
 // CHECK-NEXT:       Type: R_MORELLO_RELATIVE
 // CHECK-NEXT:       Symbol: - (0)
 // CHECK-NEXT:       Addend: 0x0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
-// CHECK-NEXT:       Offset: 0x2202B0
+// CHECK-NEXT:       Offset: 0x2202D0
 // CHECK-NEXT:       Type: R_MORELLO_RELATIVE
 // CHECK-NEXT:       Symbol: - (0)
 // CHECK-NEXT:       Addend: 0x0
@@ -99,7 +99,7 @@ foo:
 // CHECK-NEXT: ]
 
 // CHECK:          Name: foo
-// CHECK-NEXT:     Value: 0x2302C0
+// CHECK-NEXT:     Value: 0x230300
 // CHECK-NEXT:     Size: 8
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: None (0x0)
@@ -107,7 +107,7 @@ foo:
 // CHECK-NEXT:     Section: .data
 
 // CHECK:          Name: _start
-// CHECK-NEXT:     Value: 0x210269
+// CHECK-NEXT:     Value: 0x210289
 // CHECK-NEXT:     Size: 16
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: Function
@@ -115,7 +115,7 @@ foo:
 // CHECK-NEXT:     Section: .text
 
 // CHECK:          Name: bar
-// CHECK-NEXT:     Value: 0x200260
+// CHECK-NEXT:     Value: 0x200280
 // CHECK-NEXT:     Size: 8
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: None (0x0)
@@ -125,11 +125,11 @@ foo:
 /// Check the fragments in .got match
 // CHECK:      Hex dump of section '.got':
 
-/// _start: address: 0x210259, size = 16 (0x10), perms = exec(0x4)
-// CHECK-NEXT: 0x00220290 00022000 00000000 c0000200 00000004
+/// _start: address: 0x210289, size = 16 (0x10), perms = exec(0x4)
+// CHECK-NEXT: 0x002202b0 00022000 00000000 00010200 00000004
 
-/// foo: address: 0x2302C0, size = 8 (0x8), perms = RW(0x2)
-// CHECK-NEXT: 0x002202a0 c0022300 00000000 08000000 00000002
+/// foo: address: 0x230300, size = 8 (0x8), perms = RW(0x2)
+// CHECK-NEXT: 0x002202c0 00032300 00000000 08000000 00000002
 
-/// bar: address: 0x200250, size = 8 (0x8), perms = RO(0x1)
-// CHECK-NEXT: 0x002202b0 60022000 00000000 08000000 00000001
+/// bar: address: 0x200280, size = 8 (0x8), perms = RO(0x1)
+// CHECK-NEXT: 0x002202d0 80022000 00000000 08000000 00000001

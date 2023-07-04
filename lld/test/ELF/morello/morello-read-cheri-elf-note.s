@@ -22,23 +22,35 @@
 // NT-PCREL: NoteSection {
 // NT-PCREL-NEXT:   Name: .note.cheri
 // NT-PCREL-NEXT:   Offset:
-// NT-PCREL-NEXT:   Size: 0x18
+// NT-PCREL-NEXT:   Size: 0x30
 // NT-PCREL-NEXT:   Note {
 // NT-PCREL-NEXT:     Owner: CHERI
 // NT-PCREL-NEXT:     Data size: 0x4
 // NT-PCREL-NEXT:     Type: NT_CHERI_GLOBALS_ABI (CHERI globals ABI)
 // NT-PCREL-NEXT:     Globals ABI: CHERI_GLOBALS_ABI_PCREL (PC-relative)
 // NT-PCREL-NEXT:   }
+// NT-PCREL-NEXT:   Note {
+// NT-PCREL-NEXT:     Owner: CHERI
+// NT-PCREL-NEXT:     Data size: 0x4
+// NT-PCREL-NEXT:     Type: NT_CHERI_MORELLO_PURECAP_BENCHMARK_ABI (Morello purecap benchmark ABI)
+// NT-PCREL-NEXT:     Purecap benchmark ABI enabled: 0 (no)
+// NT-PCREL-NEXT:   }
 // NT-PCREL-NEXT: }
 // NT-FDESC: NoteSection {
 // NT-FDESC-NEXT:   Name: .note.cheri
 // NT-FDESC-NEXT:   Offset:
-// NT-FDESC-NEXT:   Size: 0x18
+// NT-FDESC-NEXT:   Size: 0x30
 // NT-FDESC-NEXT:   Note {
 // NT-FDESC-NEXT:     Owner: CHERI
 // NT-FDESC-NEXT:     Data size: 0x4
 // NT-FDESC-NEXT:     Type: NT_CHERI_GLOBALS_ABI (CHERI globals ABI)
 // NT-FDESC-NEXT:     Globals ABI: CHERI_GLOBALS_ABI_FDESC (function descriptor-based)
+// NT-FDESC-NEXT:   }
+// NT-FDESC-NEXT:   Note {
+// NT-FDESC-NEXT:     Owner: CHERI
+// NT-FDESC-NEXT:     Data size: 0x4
+// NT-FDESC-NEXT:     Type: NT_CHERI_MORELLO_PURECAP_BENCHMARK_ABI (Morello purecap benchmark ABI)
+// NT-FDESC-NEXT:     Purecap benchmark ABI enabled: 0 (no)
 // NT-FDESC-NEXT:   }
 // NT-FDESC-NEXT: }
 

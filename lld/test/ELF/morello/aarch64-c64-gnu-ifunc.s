@@ -24,38 +24,38 @@ _start:
  add x2, x2, :lo12:__rela_iplt_end
 
 // Contents of section .got.plt:
-// CHECK:      220240 c0012000 00000000 c0000200 00000004
-// CHECK-NEXT: 220250 c0012000 00000000 c0000200 00000004
+// CHECK:      220260 c0012000 00000000 c0000200 00000004
+// CHECK-NEXT: 220270 c0012000 00000000 c0000200 00000004
 
 // CHECK-LABEL: <foo>:
-// CHECK-NEXT:   210209:        <unknown>
+// CHECK-NEXT:   210221:        <unknown>
 
 // CHECK-LABEL: <bar>:
-// CHECK-NEXT:   21020d:        <unknown>
+// CHECK-NEXT:   210225:        <unknown>
 
 // CHECK-LABEL: <_start>:
-// CHECK-NEXT:   210210:  bl      0x210220
-// CHECK-NEXT:            bl      0x210230
-// CHECK-NEXT:            add     x2, x2, #0x1d8
-// CHECK-NEXT:            add     x2, x2, #0x208
+// CHECK-NEXT:   210228:  bl      0x210240
+// CHECK-NEXT:            bl      0x210250
+// CHECK-NEXT:            add     x2, x2, #0x1f0
+// CHECK-NEXT:            add     x2, x2, #0x220
 
 // CHECK-LABEL: <.iplt>:
-// CHECK-NEXT:   210220:  adrp c16, 0x220000
-// CHECK-NEXT:            add  c16, c16, #0x240
+// CHECK-NEXT:   210240:  adrp c16, 0x220000
+// CHECK-NEXT:            add  c16, c16, #0x260
 // CHECK-NEXT:            ldr  c17, [c16, #0x0]
 // CHECK-NEXT:            br   c17
 // CHECK-NEXT:            adrp c16, 0x220000
-// CHECK-NEXT:            add  c16, c16, #0x250
+// CHECK-NEXT:            add  c16, c16, #0x270
 // CHECK-NEXT:            ldr  c17, [c16, #0x0]
 // CHECK-NEXT:            br   c17
 
 // RELANDSYM: Relocations [
 // RELANDSYM-NEXT:   Section {{.*}} .rela.dyn {
-// RELANDSYM-NEXT:     0x220240 R_MORELLO_IRELATIVE - 0x10049
-// RELANDSYM-NEXT:     0x220250 R_MORELLO_IRELATIVE - 0x1004D
+// RELANDSYM-NEXT:     0x220260 R_MORELLO_IRELATIVE - 0x10061
+// RELANDSYM-NEXT:     0x220270 R_MORELLO_IRELATIVE - 0x10065
 
 // RELANDSYM:          Name: __rela_iplt_start
-// RELANDSYM-NEXT:     Value: 0x2001D8
+// RELANDSYM-NEXT:     Value: 0x2001F0
 // RELANDSYM-NEXT:     Size: 48
 // RELANDSYM-NEXT:     Binding: Local (0x0)
 // RELANDSYM-NEXT:     Type: None (0x0)
@@ -66,7 +66,7 @@ _start:
 // RELANDSYM-NEXT:   }
 // RELANDSYM-NEXT:   Symbol {
 // RELANDSYM-NEXT:     Name: __rela_iplt_end
-// RELANDSYM-NEXT:     Value: 0x200208
+// RELANDSYM-NEXT:     Value: 0x200220
 // RELANDSYM-NEXT:     Size: 0
 // RELANDSYM-NEXT:     Binding: Local (0x0)
 // RELANDSYM-NEXT:     Type: None (0x0)

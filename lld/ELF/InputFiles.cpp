@@ -909,8 +909,30 @@ static void readCheriVariants(const InputSection &sec,
                                  " variant: 0x" + Twine::utohexstr(variant));
         }
         break;
-      default:
-        reportFatal(place, "unknown type: 0x" + Twine::utohexstr(type));
+      default: {
+        bool knownType = false;
+        switch (config->emachine) {
+        case EM_AARCH64:
+          switch (type) {
+          case NT_CHERI_MORELLO_PURECAP_BENCHMARK_ABI:
+            knownType = true;
+            switch (variant) {
+            case 0:
+            case 1:
+              break;
+            default:
+              reportFatal(place, "unknown " +
+                                     getELFCheriAbiType(config->emachine, type) +
+                                     " variant: 0x" + Twine::utohexstr(variant));
+              break;
+            }
+            break;
+          }
+          break;
+        }
+        if (!knownType)
+          reportFatal(place, "unknown type: 0x" + Twine::utohexstr(type));
+      }
       }
       if (variantMap.count(type) && variantMap[type] != variant)
         reportFatal(

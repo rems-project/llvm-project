@@ -905,6 +905,7 @@ public:
   void relaxTlsIeToLe(uint8_t *loc, const Relocation &rel,
                       uint64_t val) const override;
 private:
+  const uint8_t *getPltBranchR17() const;
 };
 } // namespace
 
@@ -918,13 +919,28 @@ AArch64C64::AArch64C64() {
   tlsGotRel = R_MORELLO_TLS_TPREL128;
 }
 
+const uint8_t *AArch64C64::getPltBranchR17() const {
+  static const uint8_t brX17[] = {
+      0x20, 0x02, 0x1f, 0xd6, // br x17
+  };
+  static const uint8_t brC17[] = {
+      0x20, 0x12, 0xc2, 0xc2, // br c17
+  };
+
+  if (config->morelloPurecapBenchmarkABI)
+    return brX17;
+  else
+    return brC17;
+}
+
 void AArch64C64::writePltHeader(uint8_t *buf) const {
+  const uint8_t *b = getPltBranchR17();
   const uint8_t pltData[] = {
       0xf0, 0x7b, 0xbf, 0x62, // stp  c16, c30, [csp, #-32]!
       0x10, 0x00, 0x80, 0x90, // adrp c16, Page(&(.plt.got[2]))
       0x11, 0x02, 0x40, 0xc2, // ldr  c17, [c16, Offset(&(.plt.got[2]))]
       0x10, 0x02, 0x00, 0x02, // add  c16, c16, Offset(&(.plt.got[2]))
-      0x20, 0x12, 0xc2, 0xc2, // br c17
+      b[0], b[1], b[2], b[3], // br   [xc]17
       0x1f, 0x20, 0x03, 0xd5, // nop
       0x1f, 0x20, 0x03, 0xd5, // nop
       0x1f, 0x20, 0x03, 0xd5, // nop
@@ -941,11 +957,12 @@ void AArch64C64::writePltHeader(uint8_t *buf) const {
 
 void AArch64C64::writePlt(uint8_t *buf, const Symbol &sym,
                           uint64_t pltEntryAddr) const {
+  const uint8_t *b = getPltBranchR17();
   const uint8_t pltData[] = {
       0x10, 0x00, 0x80, 0x90, // adrp c16, PLTGOT + n * 16
       0x10, 0x02, 0x00, 0x02, // add  c16, c16, Offset(&(.plt.got[n]))
       0x11, 0x02, 0x40, 0xc2, // ldr  c17, [c16]
-      0x20, 0x12, 0xc2, 0xc2, // br   c17
+      b[0], b[1], b[2], b[3], // br   [xc]17
   };
   memcpy(buf, pltData, sizeof(pltData));
 
@@ -958,7 +975,10 @@ void AArch64C64::writePlt(uint8_t *buf, const Symbol &sym,
 void AArch64C64::writeGotPlt(uint8_t *buf, const Symbol &) const {
   // The PLT header is C64 and we transfer control to it via an indirect jump
   // so we must set the bottom bit.
-  writeFragmentAddress(buf, in.plt->getVA() | 0x1);
+  uint64_t va = in.plt->getVA();
+  if (!config->morelloPurecapBenchmarkABI)
+    va |= 1;
+  writeFragmentAddress(buf, va);
 }
 
 void AArch64C64::relaxTlsGdToLe(uint8_t *loc, const Relocation &rel,

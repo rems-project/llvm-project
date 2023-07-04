@@ -73,16 +73,16 @@ appdata: .xword 8
 // CHECK-PIE-NEXT:  304c0 08000000 00000000
 
 // CHECK-LABEL: <_start>:
-// CHECK-NEXT:   210380:        ret
+// CHECK-NEXT:   210398:        ret
 
 // CHECK-LABEL: <from_app>:
-// CHECK-NEXT:   210384:        ret
+// CHECK-NEXT:   21039c:        ret
 
 // CHECK-PIE-LABEL: <_start>:
-// CHECK-PIE-NEXT:    10380:            ret
+// CHECK-PIE-NEXT:    10398:            ret
 
 // CHECK-PIE-LABEL: <from_app>:
-// CHECK-PIE-NEXT:    10384:            ret
+// CHECK-PIE-NEXT:    1039c:            ret
 
 /// Check that the dynamic table holds the correct number of RELATIVE relocs
 // RELS: DynamicSection [
@@ -93,7 +93,7 @@ appdata: .xword 8
 /// .capinit appdata
 // RELS-NEXT:     0x2203C0 R_MORELLO_RELATIVE - 0x0
 /// .capinit from_app (strictly speaking don't need symbol here)
-// RELS-NEXT:     0x2203D0 R_MORELLO_RELATIVE from_app 0x10145
+// RELS-NEXT:     0x2203D0 R_MORELLO_RELATIVE from_app 0x1015D
 /// .capinit rodata
 // RELS-NEXT:     0x2203A0 R_MORELLO_CAPINIT rodata 0x0
 /// .capinit data
@@ -109,7 +109,7 @@ appdata: .xword 8
 /// .capinit appdata
 // RELS-PIE-NEXT:     0x203C0 R_MORELLO_RELATIVE - 0x0
 /// .capinit from_app (strictly speaking don't need symbol here)
-// RELS-PIE-NEXT:     0x203D0 R_MORELLO_RELATIVE from_app 0x10145
+// RELS-PIE-NEXT:     0x203D0 R_MORELLO_RELATIVE from_app 0x1015D
 /// .capinit rodata
 // RELS-PIE-NEXT:     0x203A0 R_MORELLO_CAPINIT rodata 0x0
 /// .capinit data

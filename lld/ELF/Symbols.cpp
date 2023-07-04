@@ -275,7 +275,7 @@ uint64_t Symbol::getPltVA() const {
   // When we are in pure capability mode the address of the Plt is a
   // capability. At present getSymVA() has this already for non-linker
   // generated symbols.
-  if (config->morelloC64Plt)
+  if (config->morelloC64Plt && !config->morelloPurecapBenchmarkABI)
     outVA |= 1;
   return outVA;
 }

@@ -2287,6 +2287,11 @@ template <class ELFT> static void readCheriVariants() {
     // TODO: warn/error if missing
     applyDefault(NT_CHERI_GLOBALS_ABI, CHERI_GLOBALS_ABI_PCREL);
     // TODO: Set TLS default once LLVM emits it
+    switch (config->emachine) {
+    case EM_AARCH64:
+      applyDefault(NT_CHERI_MORELLO_PURECAP_BENCHMARK_ABI, 0);
+      break;
+    }
 
     for (auto &entry : variantMap) {
       unsigned type = entry.first;
@@ -2557,6 +2562,9 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &args) {
   config->eflags = target->calcEFlags();
   config->isCheriAbi = target->calcIsCheriAbi();
   readCheriVariants<ELFT>();
+  if (config->emachine == EM_AARCH64)
+    config->morelloPurecapBenchmarkABI = static_cast<bool>(
+        config->cheriVariants.lookup(NT_CHERI_MORELLO_PURECAP_BENCHMARK_ABI));
   // maxPageSize (sometimes called abi page size) is the maximum page size that
   // the output can be run on. For example if the OS can use 4k or 64k page
   // sizes then maxPageSize must be 64k for the output to be useable on both.

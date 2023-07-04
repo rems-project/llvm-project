@@ -150,6 +150,7 @@ struct Configuration {
   bool armHasMovtMovw = false;
   bool armJ1J2BranchEncoding = false;
   bool morelloC64Plt = false;
+  bool morelloPurecapBenchmarkABI = false;
   bool forceMorelloC64Plt = false;
   llvm::DenseMap<unsigned, unsigned> cheriVariants;
   bool asNeeded = false;
