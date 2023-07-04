@@ -277,8 +277,10 @@ getAArch64EncodingModeFromAbi(const Driver &D, const ArgList &Args,
 bool aarch64::isPurecap(const llvm::opt::ArgList &Args, const llvm::Triple &Triple) {
   if (Triple.isPurecap())
     return true;
-  if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ))
-    return strcmp(A->getValue(), "purecap") == 0;
+  if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ)) {
+    StringRef Abi = A->getValue();
+    return Abi == "purecap";
+  }
   return false;
 }
 
@@ -301,10 +303,8 @@ void aarch64::getMorelloMode(const Driver &D, const llvm::Triple &Triple,
   }
 
   if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ)) {
-    PureCap = strcmp(A->getValue(), "purecap") == 0;
-    // Something got passed with mabi, so force either aapcs or purecap.
-    ForcePureCap = PureCap;
-    ForceNoPureCap = !PureCap;
+    StringRef Abi = A->getValue();
+    PureCap = Abi == "purecap";
   }
 
   if (Arg *A = Args.getLastArg(options::OPT_m16_cap_regs))
