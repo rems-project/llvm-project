@@ -1181,9 +1181,11 @@ tools::ParsePICArgs(const ToolChain &ToolChain, const ArgList &Args) {
   // XXX: this will only work with the explicit triple, not if the ABI name
   if (Triple.getEnvironment() == llvm::Triple::CheriPurecap)
     PIC = true;
-  if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ))
-    if (StringRef(A->getValue()) == "purecap")
+  if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ)) {
+    StringRef Abi = A->getValue();
+    if (Abi == "purecap" || Abi == "purecap-benchmark")
       PIC = true;
+  }
 
   // The last argument relating to either PIC or PIE wins, and no
   // other argument is used. If the last argument is any flavor of the

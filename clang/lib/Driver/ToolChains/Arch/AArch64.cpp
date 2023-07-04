@@ -238,7 +238,7 @@ getAArch64EncodingModeFromAbi(const Driver &D, const ArgList &Args,
   // If Morello support has not been enabled, validate that a purecap ABI has
   // not been requested.
   if ((ItExtFeature == Features.rend() || *ItExtFeature == "-morello") &&
-      Abi == "purecap") {
+      (Abi == "purecap" || Abi == "purecap-benchmark")) {
       D.Diag(clang::diag::err_target_feature_unsupported_abi)
           << Abi << "morello";
       return false;
@@ -254,7 +254,8 @@ getAArch64EncodingModeFromAbi(const Driver &D, const ArgList &Args,
   if (ItModeFeature != Features.rend()) {
     if (WarnOnDeprecatedFeature)
       D.Diag(clang::diag::warn_deprecated_c64_usage);
-    if ((*ItModeFeature == "+c64") != (Abi == "purecap")) {
+    if ((*ItModeFeature == "+c64") !=
+        (Abi == "purecap" || Abi == "purecap-benchmark")) {
       StringRef Mode = *ItModeFeature == "+c64" ? "C64" : "A64";
       D.Diag(clang::diag::err_invalid_c64_abi_combination) << Mode << Abi;
       return false;
@@ -265,7 +266,7 @@ getAArch64EncodingModeFromAbi(const Driver &D, const ArgList &Args,
   // If we don't have an explicit mode set, infer it if an explicit ABI is
   // requested.
   if (MabiArg || Triple.isPurecap()) {
-    if (Abi == "purecap")
+    if (Abi == "purecap" || Abi == "purecap-benchmark")
       Features.push_back("+c64");
     else
       Features.push_back("-c64");
@@ -274,12 +275,18 @@ getAArch64EncodingModeFromAbi(const Driver &D, const ArgList &Args,
   return true;
 }
 
-bool aarch64::isPurecap(const llvm::opt::ArgList &Args, const llvm::Triple &Triple) {
-  if (Triple.isPurecap())
+bool aarch64::isPurecap(const llvm::opt::ArgList &Args, const llvm::Triple &Triple,
+                        bool *IsPurecapBenchmarkABI) {
+  if (Triple.isPurecap()) {
+    if (IsPurecapBenchmarkABI)
+      *IsPurecapBenchmarkABI = false;
     return true;
+  }
   if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ)) {
     StringRef Abi = A->getValue();
-    return Abi == "purecap";
+    if (IsPurecapBenchmarkABI)
+      *IsPurecapBenchmarkABI = Abi == "purecap-benchmark";
+    return Abi == "purecap" || Abi == "purecap-benchmark";
   }
   return false;
 }
@@ -298,7 +305,7 @@ void aarch64::getMorelloMode(const Driver &D, const llvm::Triple &Triple,
 
   if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ)) {
     StringRef Abi = A->getValue();
-    PureCap = Abi == "purecap";
+    PureCap = Abi == "purecap" || Abi == "purecap-benchmark";
   }
 
   if (Arg *A = Args.getLastArg(options::OPT_m16_cap_regs))

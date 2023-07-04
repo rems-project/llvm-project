@@ -36,6 +36,9 @@
 // RUN: %clang -target aarch64-none-elf -march=morello+c64 -mabi=purecap %s -### -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-32CAPREGS %s
 
+// RUN: %clang -target aarch64-none-elf -march=morello -mabi=purecap-benchmark %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-BENCHMARK %s
+
 // CHECK-A64C-NOT: "-target-abi" "purecap"
 // CHECK-A64C: "-target-feature" "+morello"
 
@@ -86,3 +89,14 @@
 
 // CHECK-32CAPREGS-NOT: "use-16-cap-regs"
 // CHECK-32CAPREGS: "-target-feature" "+morello"
+
+// CHECK-BENCHMARK: "-target-feature" "+v8.2a"
+// CHECK-BENCHMARK: "-target-feature" "+fp-armv8"
+// CHECK-BENCHMARK: "-target-feature" "+dotprod"
+// CHECK-BENCHMARK: "-target-feature" "+fullfp16"
+// CHECK-BENCHMARK: "-target-feature" "+spe"
+// CHECK-BENCHMARK: "-target-feature" "+ssbs"
+// CHECK-BENCHMARK: "-target-feature" "+rcpc"
+// CHECK-BENCHMARK: "-target-feature" "+morello"
+// CHECK-BENCHMARK: "-target-feature" "+c64"
+// CHECK-BENCHMARK: "-target-abi" "purecap-benchmark"

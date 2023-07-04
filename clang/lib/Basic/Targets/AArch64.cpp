@@ -112,16 +112,19 @@ AArch64TargetInfo::AArch64TargetInfo(const llvm::Triple &Triple,
 StringRef AArch64TargetInfo::getABI() const { return ABI; }
 
 bool AArch64TargetInfo::setABI(const std::string &Name) {
-  if (Name != "aapcs" && Name != "darwinpcs" && Name != "purecap")
+  if (Name != "aapcs" && Name != "darwinpcs" && Name != "purecap" &&
+      Name != "purecap-benchmark")
     return false;
 
-  if (Name == "purecap") {
+  if (Name.rfind("purecap", 0) == 0) {
     CapabilityABI = true;
     IntPtrType = TargetInfo::SignedIntCap;
   } else {
     CapabilityABI = false;
     IntPtrType = TargetInfo::SignedLong;
   }
+
+  PurecapBenchmarkABI = Name == "purecap-benchmark";
 
   ABI = Name;
   return true;
@@ -332,6 +335,9 @@ void AArch64TargetInfo::getTargetDefines(const LangOptions &Opts,
   if (Morello) {
     if (C64)
       Builder.defineMacro("__ARM_FEATURE_C64", "1");
+
+    if (PurecapBenchmarkABI)
+      Builder.defineMacro("__ARM_MORELLO_PURECAP_BENCHMARK_ABI", "1");
 
     if (CapabilityABI) {
       Builder.defineMacro("__CHERI_SANDBOX__", Twine(4));

@@ -441,10 +441,11 @@ FreeBSD::FreeBSD(const Driver &D, const llvm::Triple &Triple,
   // XXX: For backwards-compatibility we have an extra '/usr/libcheri' fallback
   // for purecap; remove this once it is no longer needed.
   std::string CompatLib = (Twine("lib") + (Triple.isArch32Bit() ? "32" : "64") +
-                           (IsCheriPurecap ? "c" : "")).str();
+                           (IsCheriPurecap ? Twine("c") +
+                            (IsPurecapBenchmarkABI ? "b" : "") : "")).str();
   if (D.getVFS().exists(getDriver().SysRoot + "/usr/" + CompatLib + "/crt1.o"))
     getFilePaths().push_back(getDriver().SysRoot + "/usr/" + CompatLib);
-  else if (IsCheriPurecap &&
+  else if (IsCheriPurecap && !IsPurecapBenchmarkABI &&
            D.getVFS().exists(getDriver().SysRoot + "/usr/libcheri/crt1.o"))
     getFilePaths().push_back(getDriver().SysRoot + "/usr/libcheri");
   else
