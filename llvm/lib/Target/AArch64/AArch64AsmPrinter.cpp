@@ -1382,8 +1382,13 @@ void AArch64AsmPrinter::emitInstruction(const MachineInstr *MI) {
     EmitToStreamer(*OutStreamer, TLSDescCall);
 
     MCInst Blr;
-    Blr.setOpcode(AArch64::CapBranchLink);
-    Blr.addOperand(MCOperand::createReg(AArch64::C1));
+    if (STI->hasPurecapBenchmarkABI()) {
+      Blr.setOpcode(AArch64::BLR);
+      Blr.addOperand(MCOperand::createReg(AArch64::X1));
+    } else {
+      Blr.setOpcode(AArch64::CapBranchLink);
+      Blr.addOperand(MCOperand::createReg(AArch64::C1));
+    }
     EmitToStreamer(*OutStreamer, Blr);
 
     return;
