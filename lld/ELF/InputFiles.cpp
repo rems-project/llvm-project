@@ -849,6 +849,85 @@ template <class ELFT> static uint32_t readAndFeatures(const InputSection &sec) {
   return featuresSet;
 }
 
+// Reads the ABI Variant from an entry in a SHT_NOTE Section.
+// Returns a non-empty error string on failure.
+template <class ELFT>
+static void readCheriVariants(const InputSection &sec,
+                              DenseMap<unsigned, unsigned> &variantMap) {
+  using Elf_Nhdr = typename ELFT::Nhdr;
+  auto reportFatal = [&](const uint8_t *place, Twine msg) {
+    fatal(toString(sec.file) + ":(" + sec.name + "+0x" +
+          Twine::utohexstr(place - sec.data().data()) + "): " + msg);
+  };
+  ArrayRef<uint8_t> contents = sec.data();
+  while (!contents.empty()) {
+    const uint8_t *place = contents.data();
+    if (contents.size() < sizeof(Elf_Nhdr)) {
+      reportFatal(place, "header size too short: 0x" +
+                             Twine::utohexstr(contents.size()));
+      break;
+    }
+
+    const Elf_Nhdr *header = reinterpret_cast<const Elf_Nhdr *>(place);
+    if (contents.size() < header->getSize()) {
+      reportFatal(place, "data size too short. Expected: 0x" +
+                             Twine::utohexstr(header->getSize()) +
+                             " Actual: 0x" + Twine::utohexstr(contents.size()));
+      break;
+    }
+    typename ELFT::Note note(*header);
+    StringRef name = note.getName();
+    if (name == "CHERI") {
+      // Each entry is a 4-byte word.
+      ArrayRef<uint8_t> desc = note.getDesc();
+      if (desc.size() != 4)
+        reportFatal(place,
+                    "invalid desc size: 0x" + Twine::utohexstr(desc.size()));
+
+      unsigned type = note.getType();
+      uint32_t variant = read32<ELFT::TargetEndianness>(desc.data());
+      switch (type) {
+      case NT_CHERI_GLOBALS_ABI:
+        switch (variant) {
+        case CHERI_GLOBALS_ABI_PCREL:
+        case CHERI_GLOBALS_ABI_PLT_FPTR:
+        case CHERI_GLOBALS_ABI_FDESC:
+          break;
+        default:
+          reportFatal(place, "unknown " +
+                                 getELFCheriAbiType(config->emachine, type) +
+                                 " variant: 0x" + Twine::utohexstr(variant));
+        }
+        break;
+      case NT_CHERI_TLS_ABI:
+        switch (variant) {
+        case CHERI_TLS_ABI_TRAD:
+          break;
+        default:
+          reportFatal(place, "unknown " +
+                                 getELFCheriAbiType(config->emachine, type) +
+                                 " variant: 0x" + Twine::utohexstr(variant));
+        }
+        break;
+      default:
+        reportFatal(place, "unknown type: 0x" + Twine::utohexstr(type));
+      }
+      if (variantMap.count(type) && variantMap[type] != variant)
+        reportFatal(
+            place,
+            ": " + getELFCheriAbiType(config->emachine, type) +
+                " variant mismatch: " +
+                getELFCheriVariant(config->emachine, type, variantMap[type]) +
+                " vs " + getELFCheriVariant(config->emachine, type, variant));
+
+      variantMap[type] = variant;
+    } else
+      reportFatal(place, "unexpected name " + name);
+
+    contents = contents.drop_front(header->getSize());
+  }
+}
+
 template <class ELFT>
 InputSectionBase *ObjFile<ELFT>::getRelocTarget(const Elf_Shdr &sec) {
   uint32_t idx = sec.sh_info;
@@ -1068,6 +1147,12 @@ InputSectionBase *ObjFile<ELFT>::createInputSection(const Elf_Shdr &sec) {
   // "ld.{bfd,gold,lld} -r --build-id", and we want to guard against it.
   if (name == ".note.gnu.build-id" && config->buildId != BuildIdKind::None)
     return &InputSection::discarded;
+
+  if (name == ".note.cheri" && sec.sh_type == SHT_NOTE) {
+    readCheriVariants<ELFT>(InputSection(*this, sec, name),
+                            this->cheriVariants);
+    return &InputSection::discarded;
+  }
 
   // The linker merges EH (exception handling) frames and creates a
   // .eh_frame_hdr section for runtime. So we handle them with a special

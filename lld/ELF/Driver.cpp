@@ -2272,6 +2272,27 @@ template <class ELFT> static uint32_t getAndFeatures() {
   return ret;
 }
 
+template <class ELFT> static void readCheriVariants() {
+  if (!config->isCheriAbi)
+    return;
+
+  for (InputFile *f : objectFiles) {
+    for (auto &entry : cast<ObjFile<ELFT>>(f)->cheriVariants) {
+      unsigned type = entry.first;
+      unsigned variant = entry.second;
+      if (config->cheriVariants.count(type) &&
+          config->cheriVariants[type] != variant)
+        error(toString(f) + ": " + getELFCheriAbiType(config->emachine, type) +
+              " variant mismatch: " +
+              getELFCheriVariant(config->emachine, type, variant) + " vs " +
+              getELFCheriVariant(config->emachine, type,
+                                 config->cheriVariants[type]));
+      else
+        config->cheriVariants[type] = variant;
+    }
+  }
+}
+
 // Do actual linking. Note that when this function is called,
 // all linker scripts have already been parsed.
 template <class ELFT> void LinkerDriver::link(opt::InputArgList &args) {
@@ -2524,6 +2545,7 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &args) {
 
   config->eflags = target->calcEFlags();
   config->isCheriAbi = target->calcIsCheriAbi();
+  readCheriVariants<ELFT>();
   // maxPageSize (sometimes called abi page size) is the maximum page size that
   // the output can be run on. For example if the OS can use 4k or 64k page
   // sizes then maxPageSize must be 64k for the output to be useable on both.

@@ -242,6 +242,8 @@ public:
 
   uint32_t andFeatures = 0;
 
+  llvm::DenseMap<unsigned, unsigned> cheriVariants;
+
   // Name of source file obtained from STT_FILE symbol value,
   // or empty string if there is no such symbol in object file
   // symbol table.
