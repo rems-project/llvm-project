@@ -674,6 +674,35 @@ ELFFile<ELFT>::decodeBBAddrMap(const Elf_Shdr &Sec) const {
   return FunctionEntries;
 }
 
+StringRef llvm::object::getELFCheriAbiType(uint32_t Machine, unsigned Type) {
+  switch (Type) {
+    STRINGIFY_ENUM_CASE(ELF, NT_CHERI_GLOBALS_ABI);
+    STRINGIFY_ENUM_CASE(ELF, NT_CHERI_TLS_ABI);
+  default:
+    return "Unknown";
+  }
+}
+
+StringRef llvm::object::getELFCheriVariant(uint32_t Machine, unsigned Type,
+                                           unsigned Variant) {
+  switch (Type) {
+  case ELF::NT_CHERI_GLOBALS_ABI:
+    switch (Variant) {
+      STRINGIFY_ENUM_CASE(ELF, CHERI_GLOBALS_ABI_PCREL);
+      STRINGIFY_ENUM_CASE(ELF, CHERI_GLOBALS_ABI_PLT_FPTR);
+      STRINGIFY_ENUM_CASE(ELF, CHERI_GLOBALS_ABI_FDESC);
+    }
+    break;
+  case ELF::NT_CHERI_TLS_ABI:
+    switch (Variant) { STRINGIFY_ENUM_CASE(ELF, CHERI_TLS_ABI_TRAD); }
+    break;
+  default:
+    llvm_unreachable("unknown ABI Type");
+    break;
+  }
+  return "Unknown";
+}
+
 template class llvm::object::ELFFile<ELF32LE>;
 template class llvm::object::ELFFile<ELF32BE>;
 template class llvm::object::ELFFile<ELF64LE>;

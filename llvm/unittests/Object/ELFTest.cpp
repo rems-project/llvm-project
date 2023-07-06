@@ -87,3 +87,23 @@ TEST(ELFTest, DataRegionTest) {
   EXPECT_THAT_ERROR(Region[3].takeError(), FailedWithMessage(ErrMsg2));
   EXPECT_THAT_ERROR(Region[4].takeError(), FailedWithMessage(ErrMsg2));
 }
+
+TEST(ELFTest, getELFCheriAbiType) {
+  EXPECT_EQ("NT_CHERI_GLOBALS_ABI",
+            getELFCheriAbiType(EM_NONE, NT_CHERI_GLOBALS_ABI));
+  EXPECT_EQ("NT_CHERI_TLS_ABI", getELFCheriAbiType(EM_NONE, NT_CHERI_TLS_ABI));
+}
+
+TEST(ELFTest, getELFCheriVariant) {
+  EXPECT_EQ("CHERI_GLOBALS_ABI_PCREL",
+            getELFCheriVariant(EM_NONE, NT_CHERI_GLOBALS_ABI,
+                               CHERI_GLOBALS_ABI_PCREL));
+  EXPECT_EQ("CHERI_GLOBALS_ABI_PLT_FPTR",
+            getELFCheriVariant(EM_NONE, NT_CHERI_GLOBALS_ABI,
+                               CHERI_GLOBALS_ABI_PLT_FPTR));
+  EXPECT_EQ("CHERI_GLOBALS_ABI_FDESC",
+            getELFCheriVariant(EM_NONE, NT_CHERI_GLOBALS_ABI,
+                               CHERI_GLOBALS_ABI_FDESC));
+  EXPECT_EQ("CHERI_TLS_ABI_TRAD",
+            getELFCheriVariant(EM_NONE, NT_CHERI_TLS_ABI, CHERI_TLS_ABI_TRAD));
+}
