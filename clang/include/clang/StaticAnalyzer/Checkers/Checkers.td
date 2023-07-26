@@ -1718,4 +1718,8 @@ def CapabilityCopyChecker : Checker<"CapabilityCopyChecker">,
   HelpText<"Check tag-stripping memory copy.">,
   Documentation<NotDocumented>;
 
+def CapabilityAlignmentChecker : Checker<"CapabilityAlignmentChecker">,
+  HelpText<"Check underaligned pointers.">,
+  Documentation<NotDocumented>;
+
 } // end alpha.cheri
