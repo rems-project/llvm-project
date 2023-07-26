@@ -125,11 +125,6 @@ const MemRegion *stripNonCapShift(const MemRegion *R, ASTContext &ASTCtx) {
   return ER->getSuperRegion();
 }
 
-bool isGenericPointerType(const QualType T) {
-  return T->isVoidPointerType() ||
-         (T->isPointerType() && T->getPointeeType()->isCharType());
-}
-
 bool isVoidOrCharPtrArgRegion(const MemRegion *Reg) {
   if (!Reg)
     return false;
@@ -179,14 +174,6 @@ CHERITagState getTagState(SVal Val, CheckerContext &C,
   }
 
   return CHERITagState::getUnknown();
-}
-
-CharUnits getCapabilityTypeSize(ASTContext &ASTCtx) {
-  return ASTCtx.getTypeSizeInChars(ASTCtx.VoidPtrTy);
-}
-
-CharUnits getCapabilityTypeAlign(ASTContext &ASTCtx) {
-  return ASTCtx.getTypeAlignInChars(ASTCtx.VoidPtrTy);
 }
 
 bool isCapabilityStorage(CheckerContext &C, const MemRegion *R,
