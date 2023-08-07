@@ -2173,8 +2173,15 @@ void CodeGenFunction::EmitAggregateCopy(LValue Dest, LValue Src, QualType Ty,
     }
   }
 
+  auto PreserveTags = llvm::PreserveCheriTags::TODO;
+  ASTContext &Ctx = CGM.getContext();
+  if (!Ctx.getTargetInfo().areAllPointersCapabilities() &&
+      Ctx.getTargetInfo().SupportsCapabilities() &&
+      Ctx.getBuiltinVaListType().getDesugaredType(Ctx) == Ty)
+    PreserveTags = llvm::PreserveCheriTags::Unnecessary;
+
   auto Inst = Builder.CreateMemCpy(DestPtr, SrcPtr, SizeVal,
-                                   llvm::PreserveCheriTags::TODO, isVolatile);
+                                   PreserveTags, isVolatile);
 
   // Determine the metadata to describe the position of any padding in this
   // memcpy, as well as the TBAA tags for the members of the struct, in case
