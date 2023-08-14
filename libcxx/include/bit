@@ -165,6 +165,15 @@ int __countr_zero(_Tp __t) _NOEXCEPT
     }
 }
 
+#if __has_feature(capabilities)
+template<>
+_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
+int __countr_zero(__uintcap_t __t) _NOEXCEPT
+{
+    return __countr_zero(static_cast<ptraddr_t>(__t));
+}
+#endif
+
 template<class _Tp>
 _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
 int __countl_zero(_Tp __t) _NOEXCEPT
@@ -196,6 +205,15 @@ int __countl_zero(_Tp __t) _NOEXCEPT
         return __ret + __iter;
     }
 }
+
+#if __has_feature(capabilities)
+template<>
+_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
+int __countl_zero(__uintcap_t __t) _NOEXCEPT
+{
+    return __countl_zero(static_cast<ptraddr_t>(__t));
+}
+#endif
 
 template<class _Tp>
 _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
@@ -239,6 +257,15 @@ int __popcount(_Tp __t) _NOEXCEPT
         return __ret;
     }
 }
+
+#if __has_feature(capabilities)
+template<>
+_LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
+int __popcount(__uintcap_t __t) _NOEXCEPT
+{
+    return __popcount(static_cast<ptraddr_t>(__t));
+}
+#endif
 
 // integral log base 2
 template<class _Tp>
