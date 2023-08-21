@@ -225,8 +225,7 @@ getAArch64MicroArchFeaturesFromMcpu(const Driver &D, StringRef Mcpu,
 static bool
 getAArch64EncodingModeFromAbi(const Driver &D, const ArgList &Args,
                               const llvm::Triple &Triple,
-                              std::vector<StringRef> &Features,
-                              bool WarnOnDeprecatedFeature) {
+                              std::vector<StringRef> &Features) {
   const std::array<StringRef, 2> ExtFeatures = { "-morello", "+morello" };
   const auto ItExtFeature =
       std::find_first_of(Features.rbegin(), Features.rend(),
@@ -252,8 +251,6 @@ getAArch64EncodingModeFromAbi(const Driver &D, const ArgList &Args,
   // If we have an explicit mode set, validate the ABI against it and leave the
   // feature string untouched.
   if (ItModeFeature != Features.rend()) {
-    if (WarnOnDeprecatedFeature)
-      D.Diag(clang::diag::warn_deprecated_c64_usage);
     if ((*ItModeFeature == "+c64") != (Abi == "purecap")) {
       StringRef Mode = *ItModeFeature == "+c64" ? "C64" : "A64";
       D.Diag(clang::diag::err_invalid_c64_abi_combination) << Mode << Abi;
@@ -311,7 +308,7 @@ void aarch64::getMorelloMode(const Driver &D, const llvm::Triple &Triple,
     ReducedCapRegs = true;
 
   std::vector<StringRef> Features;
-  getAArch64TargetFeatures(D, Triple, Args, Features, false, false);
+  getAArch64TargetFeatures(D, Triple, Args, Features, false);
 
   // Look through all the features to take what into account what's coming from
   // -march.
@@ -328,8 +325,7 @@ void aarch64::getAArch64TargetFeatures(const Driver &D,
                                        const llvm::Triple &Triple,
                                        const ArgList &Args,
                                        std::vector<StringRef> &Features,
-                                       bool ForAS,
-                                       bool WarnOnDeprecatedFeature) {
+                                       bool ForAS) {
   Arg *A;
   bool success = true;
   // Enable NEON by default.
@@ -368,8 +364,7 @@ void aarch64::getAArch64TargetFeatures(const Driver &D,
   if (!success)
     D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
 
-  (void)getAArch64EncodingModeFromAbi(D, Args, Triple, Features,
-                                      WarnOnDeprecatedFeature);
+  (void)getAArch64EncodingModeFromAbi(D, Args, Triple, Features);
 
   if (Args.getLastArg(options::OPT_mgeneral_regs_only)) {
     Features.push_back("-fp-armv8");

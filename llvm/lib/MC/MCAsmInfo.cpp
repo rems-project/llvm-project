@@ -50,7 +50,6 @@ MCAsmInfo::MCAsmInfo() {
   Code16Directive = ".code16";
   Code32Directive = ".code32";
   Code64Directive = ".code64";
-  CodeCapDirective = ".code c64";
   ZeroDirective = "\t.zero\t";
   AsciiDirective = "\t.ascii\t";
   AscizDirective = "\t.asciz\t";
