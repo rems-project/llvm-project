@@ -153,11 +153,12 @@ void call_capstruct(struct capstruct);
 // CHECK-NEXT:    [[AP1:%.*]] = bitcast i8 addrspace(200)* addrspace(200)* [[AP]] to i8 addrspace(200)*
 // CHECK-NEXT:    call void @llvm.va_start.p200i8(i8 addrspace(200)* [[AP1]])
 // CHECK-NEXT:    [[STACK:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)* addrspace(200)* [[AP]], align 16
-// CHECK-NEXT:    [[TMP0:%.*]] = bitcast i8 addrspace(200)* [[STACK]] to [[STRUCT_CAPSTRUCT]] addrspace(200)*
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast i8 addrspace(200)* [[STACK]] to [[STRUCT_CAPSTRUCT]] addrspace(200)* addrspace(200)*
 // CHECK-NEXT:    [[NEW_STACK:%.*]] = getelementptr inbounds i8, i8 addrspace(200)* [[STACK]], i64 16
 // CHECK-NEXT:    store i8 addrspace(200)* [[NEW_STACK]], i8 addrspace(200)* addrspace(200)* [[AP]], align 16
+// CHECK-NEXT:    [[VAARG_ADDR:%.*]] = load [[STRUCT_CAPSTRUCT]] addrspace(200)*, [[STRUCT_CAPSTRUCT]] addrspace(200)* addrspace(200)* [[TMP0]], align 16
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast [[STRUCT_CAPSTRUCT]] addrspace(200)* [[ARG]] to i8 addrspace(200)*
-// CHECK-NEXT:    [[TMP2:%.*]] = bitcast [[STRUCT_CAPSTRUCT]] addrspace(200)* [[TMP0]] to i8 addrspace(200)*
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast [[STRUCT_CAPSTRUCT]] addrspace(200)* [[VAARG_ADDR]] to i8 addrspace(200)*
 // CHECK-NEXT:    call void @llvm.memcpy.p200i8.p200i8.i64(i8 addrspace(200)* align 16 [[TMP1]], i8 addrspace(200)* align 16 [[TMP2]], i64 32, i1 false)
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast [[STRUCT_CAPSTRUCT]] addrspace(200)* [[ARG]] to { i8 addrspace(200)*, i8 addrspace(200)* } addrspace(200)*
 // CHECK-NEXT:    [[TMP4:%.*]] = load { i8 addrspace(200)*, i8 addrspace(200)* }, { i8 addrspace(200)*, i8 addrspace(200)* } addrspace(200)* [[TMP3]], align 16

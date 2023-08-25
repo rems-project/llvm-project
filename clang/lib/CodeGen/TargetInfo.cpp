@@ -6389,8 +6389,12 @@ bool AArch64ABIInfo::isHomogeneousAggregateSmallEnough(const Type *Base,
 Address AArch64ABIInfo::EmitAAPCScapVAArg(Address VAListAddr,
                                           QualType Ty,
                                           CodeGenFunction &CGF) const {
+  ABIArgInfo AI = classifyArgumentType(Ty, /*IsVariadic=*/true,
+                                       CGF.CurFnInfo->getCallingConvention());
   llvm::Type *BaseTy = CGF.ConvertType(Ty);
   BaseTy = CGF.CGM.getPointerInDefaultAS(BaseTy);
+  if (AI.isIndirect())
+    BaseTy = CGF.CGM.getPointerInDefaultAS(BaseTy);
 
   llvm::Value *OnStackPtr = CGF.Builder.CreateLoad(VAListAddr, "stack");
   llvm::Value *ArgPtr = CGF.Builder.CreateBitCast(OnStackPtr, BaseTy);
@@ -6408,6 +6412,11 @@ Address AArch64ABIInfo::EmitAAPCScapVAArg(Address VAListAddr,
       CGF.Builder.CreateInBoundsGEP(CGF.Int8Ty, OnStackPtr, StackSizeC,
                                     "new_stack");
   CGF.Builder.CreateStore(NewStack, VAListAddr);
+  if (AI.isIndirect()) {
+    CharUnits TyAlign = getContext().getTypeUnadjustedAlignInChars(Ty);
+    return Address(CGF.Builder.CreateLoad(OnStackAddr, "vaarg.addr"),
+                   TyAlign);
+  }
   return OnStackAddr;
 }
 

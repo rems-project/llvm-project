@@ -1666,12 +1666,20 @@ static void findRISCVMultilibs(const Driver &D,
     Result.Multilibs = RISCVMultilibs;
 }
 
+static bool isPurecap(const llvm::Triple &Triple,
+                      const ArgList &Args) {
+  if (Triple.isAArch64() && tools::aarch64::isPurecap(Args, Triple))
+    return true;
+  return false;
+}
+
 static bool findBiarchMultilibs(const Driver &D,
                                 const llvm::Triple &TargetTriple,
                                 StringRef Path, const ArgList &Args,
                                 bool NeedsBiarchSuffix,
                                 DetectedMultilibs &Result) {
   Multilib Default;
+  bool IsPurecap = isPurecap(TargetTriple, Args);
 
   // Some versions of SUSE and Fedora on ppc64 put 32-bit libs
   // in what would normally be GCCInstallPath and put the 64-bit
@@ -1702,19 +1710,29 @@ static bool findBiarchMultilibs(const Driver &D,
                        .includeSuffix(Suff64)
                        .flag("-m32")
                        .flag("+m64")
-                       .flag("-mx32");
+                       .flag("-mx32")
+                       .flag("-mabi=purecap");
   Multilib Alt32 = Multilib()
                        .gccSuffix("/32")
                        .includeSuffix("/32")
                        .flag("+m32")
                        .flag("-m64")
-                       .flag("-mx32");
+                       .flag("-mx32")
+                       .flag("-mabi=purecap");
   Multilib Altx32 = Multilib()
                         .gccSuffix("/x32")
                         .includeSuffix("/x32")
                         .flag("-m32")
                         .flag("-m64")
-                        .flag("+mx32");
+                        .flag("+mx32")
+                        .flag("-mabi=purecap");
+  Multilib Alt64c = Multilib()
+                        .gccSuffix("/purecap/c64")
+                        .includeSuffix("/purecap/c64")
+                        .flag("-m32")
+                        .flag("-m64")
+                        .flag("-mx32")
+                        .flag("+mabi=purecap");
 
   // GCC toolchain for IAMCU doesn't have crtbegin.o, so look for libgcc.a.
   FilterNonExistent NonExistent(
@@ -1722,9 +1740,11 @@ static bool findBiarchMultilibs(const Driver &D,
 
   // Determine default multilib from: 32, 64, x32
   // Also handle cases such as 64 on 32, 32 on 64, etc.
-  enum { UNKNOWN, WANT32, WANT64, WANTX32 } Want = UNKNOWN;
+  enum { UNKNOWN, WANT32, WANT64, WANTX32, WANT64C } Want = UNKNOWN;
   const bool IsX32 = TargetTriple.isX32();
   if (TargetTriple.isArch32Bit() && !NonExistent(Alt32))
+    Want = WANT64;
+  else if (TargetTriple.isArch64Bit() && IsPurecap && !NonExistent(Alt64c))
     Want = WANT64;
   else if (TargetTriple.isArch64Bit() && IsX32 && !NonExistent(Altx32))
     Want = WANT64;
@@ -1735,16 +1755,20 @@ static bool findBiarchMultilibs(const Driver &D,
       Want = NeedsBiarchSuffix ? WANT64 : WANT32;
     else if (IsX32)
       Want = NeedsBiarchSuffix ? WANT64 : WANTX32;
+    else if (IsPurecap)
+      Want = NeedsBiarchSuffix ? WANT64 : WANT64C;
     else
       Want = NeedsBiarchSuffix ? WANT32 : WANT64;
   }
 
   if (Want == WANT32)
-    Default.flag("+m32").flag("-m64").flag("-mx32");
+    Default.flag("+m32").flag("-m64").flag("-mx32").flag("-mabi=purecap");
   else if (Want == WANT64)
-    Default.flag("-m32").flag("+m64").flag("-mx32");
+    Default.flag("-m32").flag("+m64").flag("-mx32").flag("-mabi=purecap");
   else if (Want == WANTX32)
-    Default.flag("-m32").flag("-m64").flag("+mx32");
+    Default.flag("-m32").flag("-m64").flag("+mx32").flag("-mabi=purecap");
+  else if (Want == WANT64C)
+    Default.flag("-m32").flag("-m64").flag("-mx32").flag("+mabi=purecap");
   else
     return false;
 
@@ -1752,19 +1776,22 @@ static bool findBiarchMultilibs(const Driver &D,
   Result.Multilibs.push_back(Alt64);
   Result.Multilibs.push_back(Alt32);
   Result.Multilibs.push_back(Altx32);
+  Result.Multilibs.push_back(Alt64c);
 
   Result.Multilibs.FilterOut(NonExistent);
 
   Multilib::flags_list Flags;
-  addMultilibFlag(TargetTriple.isArch64Bit() && !IsX32, "m64", Flags);
+  addMultilibFlag(TargetTriple.isArch64Bit() && !IsX32 && !IsPurecap,
+                  "m64", Flags);
   addMultilibFlag(TargetTriple.isArch32Bit(), "m32", Flags);
   addMultilibFlag(TargetTriple.isArch64Bit() && IsX32, "mx32", Flags);
+  addMultilibFlag(TargetTriple.isArch64Bit() && IsPurecap, "mabi=purecap", Flags);
 
   if (!Result.Multilibs.select(Flags, Result.SelectedMultilib))
     return false;
 
   if (Result.SelectedMultilib == Alt64 || Result.SelectedMultilib == Alt32 ||
-      Result.SelectedMultilib == Altx32)
+      Result.SelectedMultilib == Altx32 || Result.SelectedMultilib == Alt64c)
     Result.BiarchSibling = Default;
 
   return true;
@@ -1896,7 +1923,8 @@ void Generic_GCC::GCCInstallationDetector::init(
   SmallVector<StringRef, 16> CandidateBiarchTripleAliases;
   CollectLibDirsAndTriples(TargetTriple, BiarchVariantTriple, CandidateLibDirs,
                            CandidateTripleAliases, CandidateBiarchLibDirs,
-                           CandidateBiarchTripleAliases);
+                           CandidateBiarchTripleAliases,
+                           isPurecap(TargetTriple, Args));
 
   // Compute the set of prefixes for our search.
   SmallVector<std::string, 8> Prefixes;
@@ -2061,7 +2089,8 @@ void Generic_GCC::GCCInstallationDetector::AddDefaultGCCPrefixes(
     SmallVectorImpl<StringRef> &LibDirs,
     SmallVectorImpl<StringRef> &TripleAliases,
     SmallVectorImpl<StringRef> &BiarchLibDirs,
-    SmallVectorImpl<StringRef> &BiarchTripleAliases) {
+    SmallVectorImpl<StringRef> &BiarchTripleAliases,
+    bool IsPurecap) {
   // Declare a bunch of static data sets that we'll select between below. These
   // are specifically designed to always refer to string literals to avoid any
   // lifetime or initialization issues.
@@ -2297,7 +2326,7 @@ void Generic_GCC::GCCInstallationDetector::AddDefaultGCCPrefixes(
 
   switch (TargetTriple.getArch()) {
   case llvm::Triple::aarch64:
-    if (TargetTriple.isPurecap()) {
+    if (IsPurecap) {
       LibDirs.append(begin(AArch64PurecapLibDirs), end(AArch64PurecapLibDirs));
       TripleAliases.append(begin(AArch64PurecapTriples),
                            end(AArch64PurecapTriples));
@@ -3083,4 +3112,18 @@ void Generic_ELF::addClangTargetOptions(const ArgList &DriverArgs,
   if (!DriverArgs.hasFlag(options::OPT_fuse_init_array,
                           options::OPT_fno_use_init_array, true))
     CC1Args.push_back("-fno-use-init-array");
+  if (getTriple().isAArch64() && getTriple().isGNUEnvironment() &&
+      isPurecap(getTriple(), DriverArgs)) {
+    bool HasLPEncoding = false;
+    for (const Arg *A : DriverArgs.filtered(options::OPT_mllvm)) {
+      if (StringRef(A->getValue(0)).startswith("-cheri-landing-pad-encoding=")) {
+        HasLPEncoding = true;
+        break;
+      }
+    }
+    if (!HasLPEncoding) {
+      CC1Args.push_back("-mllvm");
+      CC1Args.push_back("-cheri-landing-pad-encoding=indirect");
+    }
+  }
 }

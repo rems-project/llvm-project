@@ -164,7 +164,8 @@ let mayLoad = 0, hasSideEffects = 1, mayStore = 0 in
   def CapGetSys : CapGetSysFmt<(outs Cap:$Ct), (ins cap_sysreg_op:$csreg), "mrs", "\t$Ct, $csreg", []>;
 def CapGetTag : CapGetTagFmt<(outs GPR64:$Rd), (ins Capsp:$Cn), "gctag", "\t$Rd, $Cn", []>;
 def CapGetType : CapGetTypeFmt<(outs GPR64:$Rd), (ins Capsp:$Cn), "gctype", "\t$Rd, $Cn", []>;
-def CapGetValue : CapGetValueFmt<(outs GPR64:$Rd), (ins Capsp:$Cn), "gcvalue", "\t$Rd, $Cn", []>;
+let hasSideEffects = 0, isReMaterializable = 1, isAsCheapAsAMove = 1 in
+  def CapGetValue : CapGetValueFmt<(outs GPR64:$Rd), (ins Capsp:$Cn), "gcvalue", "\t$Rd, $Cn", []>;
 }
 let Predicates = [HasMorello, HasNotC64], DecoderNamespace = "AArch64Morello" in {
 let mayLoad = 1, hasSideEffects = 0, mayStore = 0 in
@@ -312,12 +313,14 @@ let isSelect = 1, Uses = [NZCV] in
                                  [(set Cap:$Cd, (AArch64csel Cap:$Cn, Cap:$Cm, (i32 imm:$cond), NZCV))]>;
 
   // Add/Sub Immediate
-  def CapAddImm : CapAddImmFmt<(outs Capsp:$Cd),
-                               (ins Capsp:$Cn, addsub_shifted_imm64:$imm),
-                               "add", "\t$Cd, $Cn, $imm", []>;
-  def CapSubImm : CapSubImmFmt<(outs Capsp:$Cd),
-                               (ins Capsp:$Cn, neg_addsub_shifted_imm64:$imm),
-                               "sub", "\t$Cd, $Cn, $imm", []>;
+  let hasSideEffects = 0, isReMaterializable = 1, isAsCheapAsAMove = 1 in {
+    def CapAddImm : CapAddImmFmt<(outs Capsp:$Cd),
+                                 (ins Capsp:$Cn, addsub_shifted_imm64:$imm),
+                                 "add", "\t$Cd, $Cn, $imm", []>;
+    def CapSubImm : CapSubImmFmt<(outs Capsp:$Cd),
+                                 (ins Capsp:$Cn, neg_addsub_shifted_imm64:$imm),
+                                 "sub", "\t$Cd, $Cn, $imm", []>;
+  }
 
   // Add/Sub register extended
   def CapAddRegX : CapAddRegBaseXFmt<(outs Capsp:$Cd),

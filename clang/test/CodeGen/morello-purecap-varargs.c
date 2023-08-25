@@ -67,11 +67,12 @@ void call2(struct hfa, struct comp);
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast [[STRUCT_HFA]] addrspace(200)* [[TMP0]] to i8 addrspace(200)*
 // CHECK-NEXT:    call void @llvm.memcpy.p200i8.p200i8.i64(i8 addrspace(200)* align 4 [[TMP1]], i8 addrspace(200)* align 16 [[TMP2]], i64 12, i1 false)
 // CHECK-NEXT:    [[STACK2:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)* addrspace(200)* [[ARGS]], align 16
-// CHECK-NEXT:    [[TMP3:%.*]] = bitcast i8 addrspace(200)* [[STACK2]] to [[STRUCT_COMP]] addrspace(200)*
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast i8 addrspace(200)* [[STACK2]] to [[STRUCT_COMP]] addrspace(200)* addrspace(200)*
 // CHECK-NEXT:    [[NEW_STACK3:%.*]] = getelementptr inbounds i8, i8 addrspace(200)* [[STACK2]], i64 16
 // CHECK-NEXT:    store i8 addrspace(200)* [[NEW_STACK3]], i8 addrspace(200)* addrspace(200)* [[ARGS]], align 16
+// CHECK-NEXT:    [[VAARG_ADDR:%.*]] = load [[STRUCT_COMP]] addrspace(200)*, [[STRUCT_COMP]] addrspace(200)* addrspace(200)* [[TMP3]], align 16
 // CHECK-NEXT:    [[TMP4:%.*]] = bitcast [[STRUCT_COMP]] addrspace(200)* [[NUM1]] to i8 addrspace(200)*
-// CHECK-NEXT:    [[TMP5:%.*]] = bitcast [[STRUCT_COMP]] addrspace(200)* [[TMP3]] to i8 addrspace(200)*
+// CHECK-NEXT:    [[TMP5:%.*]] = bitcast [[STRUCT_COMP]] addrspace(200)* [[VAARG_ADDR]] to i8 addrspace(200)*
 // CHECK-NEXT:    call void @llvm.memcpy.p200i8.p200i8.i64(i8 addrspace(200)* align 16 [[TMP4]], i8 addrspace(200)* align 16 [[TMP5]], i64 32, i1 false)
 // CHECK-NEXT:    [[ARGS4:%.*]] = bitcast i8 addrspace(200)* addrspace(200)* [[ARGS]] to i8 addrspace(200)*
 // CHECK-NEXT:    call void @llvm.va_end.p200i8(i8 addrspace(200)* [[ARGS4]])

@@ -51,7 +51,6 @@ enum class StackBoundsMethod {
   ForAllUsesIfOneNeedsBounds, // This is not particularly useful, just for
                               // comparison
   IfNeeded,
-  AllUses,
 };
 
 static cl::opt<StackBoundsMethod> BoundsSettingMode(
@@ -66,10 +65,28 @@ static cl::opt<StackBoundsMethod> BoundsSettingMode(
                           "least one use neededs bounds, otherwise omit"),
                clEnumValN(StackBoundsMethod::IfNeeded, "if-needed",
                           "Set stack allocation bounds for all uses except for "
-                          "loads/stores to statically known in-bounds offsets"),
-               clEnumValN(StackBoundsMethod::AllUses, "all-uses",
-                          "Set stack allocation bounds even for loads/stores "
-                          "to statically known in-bounds offset")));
+                          "loads/stores to statically known in-bounds offsets")));
+
+enum class StackBoundsAnalysis {
+  Default,
+  None,
+  Simple,
+  Full,
+};
+
+static cl::opt<StackBoundsAnalysis> BoundsSettingAnalysis(
+    "cheri-stack-bounds-analysis",
+    cl::desc("Strategy for analysing bounds for stack capabilities:"),
+    cl::init(StackBoundsAnalysis::Default),
+    cl::values(clEnumValN(StackBoundsAnalysis::Default, "default",
+                          "Use the default strategy (simple for "
+                          "-O0/optnone, full otherwise)"),
+               clEnumValN(StackBoundsAnalysis::None, "none",
+                          "Assume all uses require bounds"),
+               clEnumValN(StackBoundsAnalysis::Simple, "simple",
+                          "Perform a simplified analysis for whether bounds are required"),
+               clEnumValN(StackBoundsAnalysis::Full, "full",
+                          "Fully analyse whether bounds are required")));
 
 STATISTIC(NumProcessed,  "Number of allocas that were analyzed for CHERI bounds");
 STATISTIC(NumDynamicAllocas,  "Number of dyanmic allocas that were analyzed"); // TODO: skip them
@@ -131,6 +148,10 @@ public:
 
     const DataLayout &DL = M->getDataLayout();
     StackBoundsMethod BoundsMode = BoundsSettingMode;
+    StackBoundsAnalysis BoundsAnalysis = BoundsSettingAnalysis;
+    if (BoundsAnalysis == StackBoundsAnalysis::Default)
+      BoundsAnalysis = IsOptNone ? StackBoundsAnalysis::Simple
+                                 : StackBoundsAnalysis::Full;
 
     // This intrinsic both helps for rematerialising and acts as a marker so
     // isIntrinsicReturningPointerAliasingArgumentWithoutCapturing can safely
@@ -193,16 +214,15 @@ public:
       // and we can't insert anything before. Theoretically we could still
       // use separate intrinsics for the other users but if we are already
       // saving a bounded stack slot we might as well reuse it.
-      bool MustUseSingleIntrinsic = false;
       if (BoundsMode == StackBoundsMethod::Never) {
         NeedBounds = false;
       } else {
         CheriNeedBoundsChecker BoundsChecker(AI, DL);
-        // With -O0 or =always we set bounds on every stack allocation even
-        // if it is not necessary
-        bool BoundAll = IsOptNone || BoundsMode == StackBoundsMethod::AllUses;
+        // With None we assume bounds are needed on every stack allocation use
+        bool BoundAll = BoundsAnalysis == StackBoundsAnalysis::None;
+        bool Simple = BoundsAnalysis == StackBoundsAnalysis::Simple;
         BoundsChecker.findUsesThatNeedBounds(&UsesThatNeedBounds, BoundAll,
-                                             &MustUseSingleIntrinsic);
+                                             Simple);
         NeedBounds = !UsesThatNeedBounds.empty();
         NumUsesProcessed += TotalUses;
         DBG_MESSAGE(F.getName()
@@ -219,7 +239,7 @@ public:
 
           BoundsChecker.findUsesThatNeedBounds(&UsesThatNeedBounds,
                                                /*BoundAllUses=*/true,
-                                               &MustUseSingleIntrinsic);
+                                               Simple);
         }
       }
       if (!NeedBounds) {
@@ -228,6 +248,7 @@ public:
         continue;
       }
 
+      bool MustUseSingleIntrinsic = false;
       if (!AI->isStaticAlloca()) {
         NumDynamicAllocas++;
         // TODO: skip bounds on dynamic allocas (maybe add a TLI hook to check
