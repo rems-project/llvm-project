@@ -480,7 +480,7 @@ private:
 
   bool SelectCMP_SWAP(SDNode *N);
 
-  bool SelectCapabilityBranch(SDNode *N, bool Clear, bool Tail);
+  bool SelectCapabilityBranch(SDNode *N, bool Clear, bool Tail, bool DescCall);
 
   bool SelectSVE8BitLslImm(SDValue N, SDValue &Imm, SDValue &Shift);
 
@@ -4204,7 +4204,7 @@ bool AArch64DAGToDAGISel::SelectCMP_SWAP(SDNode *N) {
 }
 
 bool AArch64DAGToDAGISel::
-SelectCapabilityBranch(SDNode *N, bool Clear, bool Tail) {
+SelectCapabilityBranch(SDNode *N, bool Clear, bool Tail, bool DescCall) {
   SDLoc dl(N);
   SDValue CalleeNode = N->getOperand(1);
   bool IsDescABI =
@@ -4221,7 +4221,8 @@ SelectCapabilityBranch(SDNode *N, bool Clear, bool Tail) {
 
   if (CalleeNode.getOpcode() == ISD::TargetGlobalAddress ||
       CalleeNode.getOpcode() == ISD::TargetExternalSymbol)
-    Opcode = Clear ? AArch64::PBLClear : AArch64::BL;
+    Opcode = Clear ? AArch64::PBLClear : (DescCall ? AArch64::DescBL
+                                                   : AArch64::BL);
 
   if (Tail) {
     Opcode = Clear ?
@@ -5223,13 +5224,15 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
   case AArch64ISD::CTC_RETURN:
   case AArch64ISD::ClearCTC_RETURN: {
     bool Clear = (Node->getOpcode() == AArch64ISD::ClearCTC_RETURN);
-    SelectCapabilityBranch(Node, Clear, /*Tail=*/true);
+    SelectCapabilityBranch(Node, Clear, /*Tail=*/true, /*DescCall=*/false);
     return;
   }
   case AArch64ISD::CCALL:
-  case AArch64ISD::ClearCCALL: {
+  case AArch64ISD::ClearCCALL:
+  case AArch64ISD::DescCALL: {
     bool Clear = (Node->getOpcode() == AArch64ISD::ClearCCALL);
-    SelectCapabilityBranch(Node, Clear, /*Tail=*/false);
+    bool DescCall = (Node->getOpcode() == AArch64ISD::DescCALL);
+    SelectCapabilityBranch(Node, Clear, /*Tail=*/false, DescCall);
     return;
   }
   case AArch64ISD::SVE_LD2_MERGE_ZERO: {

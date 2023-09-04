@@ -710,7 +710,7 @@ def CSR_AArch64_AAPCS_32Cap_DescABI_Regs :
                          (sequence "D%u",  8, 15))>;
 
 def CSR_AArch64_AAPCS_32Cap_DescABI_Caller_Regs :
-    CalleeSavedRegs<(add (sequence "C%u", 21, 27), CLR, C17,
+    CalleeSavedRegs<(add (sequence "C%u", 19, 27), CLR, C17,
                          (sequence "D%u",  8, 15))>;
 
 // C24 is used for passing the indirect function result, so we can't make it

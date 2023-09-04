@@ -2097,6 +2097,7 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
     MAKE_CASE(AArch64ISD::CCALL)
     MAKE_CASE(AArch64ISD::ClearCALL)
     MAKE_CASE(AArch64ISD::ClearCCALL)
+    MAKE_CASE(AArch64ISD::DescCALL)
     MAKE_CASE(AArch64ISD::ADRP)
     MAKE_CASE(AArch64ISD::ADRPC)
     MAKE_CASE(AArch64ISD::ADR)
@@ -6462,10 +6463,6 @@ static bool canGuaranteeTCO(CallingConv::ID CC, bool GuaranteeTailCalls) {
 
 /// Return true if we might ever do TCO for calls with this calling convention.
 static bool mayTailCallThisCC(CallingConv::ID CC) {
-  if (MCTargetOptions::cheriCapabilityTableABI() ==
-      CheriCapabilityTableABI::FunctionDescriptor)
-    return false;
-
   switch (CC) {
   case CallingConv::C:
   case CallingConv::AArch64_SVE_VectorCall:
@@ -6492,8 +6489,6 @@ bool AArch64TargetLowering::isEligibleForTailCallOptimization(
       CheriCapabilityTableABI::FunctionDescriptor) {
     // If the callee is not DSO-local the call will clobber some callee-saved
     // registers.
-    // FIXME: this doesn't do anything at the moment since the CSR mask
-    // prevents this from being a tail call anyway.
     bool IsLocal = false;
     if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee.getNode()))
       IsLocal = G->getGlobal()->isDSOLocal();
@@ -7305,11 +7300,33 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
     return Ret;
   }
 
+  bool IsDescABI =
+     (MCTargetOptions::cheriCapabilityTableABI() ==
+      CheriCapabilityTableABI::FunctionDescriptor);
+  bool IsLocal = false;
+  if (IsDescABI) {
+    if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(CLI.Callee))
+      IsLocal = G->getGlobal()->isDSOLocal();
+
+    if (!IsLocal) {
+      AArch64FunctionInfo *FI =
+          DAG.getMachineFunction().getInfo<AArch64FunctionInfo>();
+      FI->setHasNonLocalCall(true);
+    }
+  }
+
   unsigned CallOpc = AArch64ISD::CALL;
   if (IsCapabilityCall)
     CallOpc = ClearRegs ? AArch64ISD::ClearCCALL : AArch64ISD::CCALL;
   else
     CallOpc = ClearRegs ? AArch64ISD::ClearCALL : AArch64ISD::CALL;
+
+  if (IsDescABI) {
+    assert(!ClearRegs && "Register clearing not supported");
+    CallOpc = (IsDescABI && !IsLocal) ? AArch64ISD::DescCALL
+                                      : AArch64ISD::CCALL;
+  }
+  
   // Calls with operand bundle "clang.arc.attachedcall" are special. They should
   // be expanded to the call, directly followed by a special marker sequence and
   // a call to an ObjC library function.  Use CALL_RVMARKER to do that.

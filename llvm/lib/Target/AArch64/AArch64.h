@@ -57,6 +57,7 @@ FunctionPass *createFalkorHWPFFixPass();
 FunctionPass *createFalkorMarkStridedAccessesPass();
 FunctionPass *createAArch64BranchTargetsPass();
 FunctionPass *createAArch64MIPeepholeOptPass();
+FunctionPass *createAArch64DescSetupPass();
 
 FunctionPass *createAArch64CleanupLocalDynamicTLSPass();
 
@@ -103,6 +104,7 @@ void initializeFalkorMarkStridedAccessesLegacyPass(PassRegistry&);
 void initializeLDTLSCleanupPass(PassRegistry&);
 void initializeSVEIntrinsicOptsPass(PassRegistry&);
 void initializeAArch64StackTaggingPass(PassRegistry&);
+void initializeAArch64DescSetupPass(PassRegistry&);
 void initializeAArch64SandboxPass(PassRegistry&);
 void initializeMorelloRangeCheckerPass(PassRegistry &);
 void initializeAArch64SandboxGlobalsOptPass(PassRegistry&);

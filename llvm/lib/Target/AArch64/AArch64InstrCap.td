@@ -10,6 +10,11 @@
 //
 //==------------------------------------------------------------------------==//
 
+def AArch64desccall         : SDNode<"AArch64ISD::CCALL",
+                                SDTypeProfile<0, -1, [SDTCisFatPtrTy<0>]>,
+                                [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue,
+                                 SDNPVariadic]>;
+
 let isCall = 1, Defs = [LR], Uses = [SP] in {
   def CBranchLinkClear : Pseudo<(outs), (ins Cap:$Cn), []>;
   def CFnDescBranchLink : Pseudo<(outs), (ins Cap:$Cn), []>;
@@ -32,8 +37,16 @@ let isCall = 1, isTerminator = 1, isReturn = 1,
 
   def CTCRETURNDescr : Pseudo<(outs), (ins tcCapDesc:$dst, i32imm:$FPDiff), []>;
   def ClearCTCRETURNDescr : Pseudo<(outs), (ins tcCapDesc:$dst, i32imm:$FPDiff), []>;
-
 }
+
+let hasSideEffects = 1 in {
+  def BaseRegSetup : Pseudo<(outs), (ins Cap:$src), []>;
+  def BaseRegRestore : Pseudo<(outs), (ins), []>;
+}
+
+let isCall = 1, Defs = [LR], Uses = [SP] in {
+def DescBL : Pseudo<(outs), (ins i64imm:$addr), []>;
+} // isCall
 
 // This models the case where DDC is assumed to be time invariant, like when we
 // need to construct a capability from global variable address.
@@ -115,15 +128,6 @@ def stlxr_fatptr : PatFrag<(ops node:$val, node:$ptr),
                      (int_aarch64_cstlxr node:$val, node:$ptr), [{
   return cast<MemIntrinsicSDNode>(N)->getMemoryVT() == MVT::iFATPTR128;
 }]>;
-
-let hasSideEffects = 1 in {
-def DESCCALL : Pseudo<(outs), (ins i64imm:$sym), []>, Sched<[]> {
-  let AsmString = ".desccall $sym";
-}
-def DESCTCALL : Pseudo<(outs), (ins i64imm:$sym), []>, Sched<[]> {
-  let AsmString = ".desctcall $sym";
-}
-}
 
 //===------------------------------------
 // Atomic infrastructure for capabilities

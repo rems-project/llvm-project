@@ -2608,6 +2608,7 @@ bool AArch64FrameLowering::spillCalleeSavedRegisters(
       MF.getSubtarget().getRegisterInfo());
   const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
   bool NeedsWinCFI = needsWinCFI(MF);
+  AArch64FunctionInfo *AFI = MF.getInfo<AArch64FunctionInfo>();
   DebugLoc DL;
   SmallVector<RegPairInfo, 8> RegPairs;
 
@@ -2776,6 +2777,14 @@ bool AArch64FrameLowering::spillCalleeSavedRegisters(
       MFI.setStackID(RPI.FrameIdx, TargetStackID::ScalableVector);
 
   }
+
+  if (AFI->getBaseReg() != AArch64::NoRegister)
+    BuildMI(MBB, MI, DL, TII.get(AArch64::BaseRegSetup), AFI->getBaseReg());
+  if (AFI->hasBaseRegisterSpill())
+    TII.storeRegToStackSlot(MBB, MI, AArch64::C28, false,
+                            AFI->getBaseRegisterFI(), &AArch64::CapRegClass,
+                            TRI);
+
   return true;
 }
 
@@ -2967,6 +2976,19 @@ void AArch64FrameLowering::determineCalleeSaves(MachineFunction &MF,
       SavedRegs.set(Reg);
 
     bool RegUsed = SavedRegs.test(Reg);
+
+    if (IsDescABI &&
+        (AFI->hasNonLocalCall() || !MF.getLandingPads().empty()) &&
+        !RegUsed && AArch64::CapRegClass.contains(Reg) &&
+        AFI->getBaseReg() == AArch64::NoRegister &&
+        !RegInfo->isReservedReg(MF, Reg)) {
+      if (!MF.getRegInfo().isPhysRegUsed(Reg)) {
+        SavedRegs.set(Reg);
+        RegUsed = true;
+        AFI->setBaseReg(Reg);
+      }
+    }
+
     unsigned PairedReg = AArch64::NoRegister;
     if (AArch64::GPR64RegClass.contains(Reg) ||
         AArch64::FPR64RegClass.contains(Reg) ||
@@ -3077,6 +3099,16 @@ void AArch64FrameLowering::determineCalleeSaves(MachineFunction &MF,
   // The CSR spill slots have not been allocated yet, so estimateStackSize
   // won't include them.
   unsigned EstimatedStackSizeLimit = estimateRSStackSizeLimit(MF);
+
+  if (IsDescABI && (AFI->hasNonLocalCall() || !MF.getLandingPads().empty()) &&
+      AFI->getBaseReg() == AArch64::NoRegister) {
+    const TargetRegisterClass &RC = AArch64::CapRegClass;
+    unsigned Size = TRI->getSpillSize(RC);
+    Align Alignment = TRI->getSpillAlign(RC);
+    int FI = MFI.CreateStackObject(Size, Alignment, false);
+    AFI->setHasBaseRegisterSpill(true);
+    AFI->setBaseRegisterFI(FI);
+  }
 
   // Conservatively always assume BigStack when there are SVE spills.
   bool BigStack = SVEStackSize ||

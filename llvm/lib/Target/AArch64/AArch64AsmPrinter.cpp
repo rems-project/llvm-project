@@ -196,6 +196,8 @@ private:
   MCSymbol *GetCPISymbol(unsigned CPID) const override;
   void emitEndOfAsmFile(Module &M) override;
 
+  void RestoreBaseReg();
+
   AArch64FunctionInfo *AArch64FI = nullptr;
 
   /// Emit the LOHs contained in AArch64FI.
@@ -1169,6 +1171,47 @@ void AArch64AsmPrinter::LowerFAULTING_OP(const MachineInstr &FaultingMI) {
   OutStreamer->emitInstruction(MI, getSubtargetInfo());
 }
 
+// For the descriptor ABI this restores c28 after a call or when reaching a
+// landing pad.
+void AArch64AsmPrinter::RestoreBaseReg() {
+  if (AArch64FI->getBaseReg() != AArch64::NoRegister) {
+     // If the base register for this function was saved to a CSR restore from
+     // that.
+     MCInst Copy;
+     Copy.setOpcode(AArch64::CapCopy);
+     Copy.addOperand(MCOperand::createReg(AArch64::C28));
+     Copy.addOperand(MCOperand::createReg(AArch64FI->getBaseReg()));
+     EmitToStreamer(*OutStreamer, Copy);
+     return;
+   }
+   // If the base register was spilled to a stack slot load from the stack slot.
+   // Note that the stack slot should always be reachable. The offset is always
+   // the same in the function so we could in theory cache the immediate value.
+   assert(AArch64FI->hasBaseRegisterSpill() &&
+          "Expected spill slot for c28");
+   int FI = AArch64FI->getBaseRegisterFI();
+   const AArch64FrameLowering *TFI = STI->getFrameLowering();
+   Register FrameReg;
+   StackOffset Offset = TFI->resolveFrameIndexReference(
+       *MF, FI, FrameReg, /*PreferFP=*/false, /*ForSimm=*/true);
+
+   int Imm = Offset.getFixed();
+   assert(((Imm < 0 && Imm >= -256) ||
+           (Imm >= 0 && Imm % 16 == 0 && Imm < 65536)) &&
+          "Unrepresentable immediate");
+   unsigned Opcode = Imm < 0 ? AArch64::PCapLoadUnscaledImm
+                             : AArch64::PCapLoadImmPre;
+   int Scale = Imm < 0 ? 1 : 16;
+   Imm = Imm / Scale;
+
+   MCInst Load;
+   Load.setOpcode(Opcode);
+   Load.addOperand(MCOperand::createReg(AArch64::C28));
+   Load.addOperand(MCOperand::createReg(FrameReg));
+   Load.addOperand(MCOperand::createImm(Imm));
+   EmitToStreamer(*OutStreamer, Load);
+}
+
 void AArch64AsmPrinter::emitFMov0(const MachineInstr &MI) {
   Register DestReg = MI.getOperand(0).getReg();
   if (STI->hasZeroCycleZeroingFP() && !STI->hasZeroCycleZeroingFPWorkaround()) {
@@ -1353,6 +1396,37 @@ void AArch64AsmPrinter::emitInstruction(const MachineInstr *MI) {
     TmpInst.setOpcode(AArch64::CapBranch);
     TmpInst.addOperand(MCOperand::createReg(MI->getOperand(0).getReg()));
     EmitToStreamer(*OutStreamer, TmpInst);
+    return;
+  }
+  case AArch64::BaseRegSetup: {
+    MCInst Copy;
+    Copy.setOpcode(AArch64::CapCopy);
+    Copy.addOperand(MCOperand::createReg(MI->getOperand(0).getReg()));
+    Copy.addOperand(MCOperand::createReg(AArch64::C28));
+    EmitToStreamer(*OutStreamer, Copy);
+    return;
+  }
+  case AArch64::BaseRegRestore: {
+    RestoreBaseReg();
+    return;
+  }
+  case AArch64::CFnDescBranchLink:
+  case AArch64::DescBL: {
+    if (MI->getOpcode() == AArch64::DescBL) {
+      MCOperand Dest;
+      MCInstLowering.lowerOperand(MI->getOperand(0), Dest);
+      MCInst TmpInst;
+      TmpInst.setOpcode(AArch64::BL);
+      TmpInst.addOperand(Dest);
+      EmitToStreamer(*OutStreamer, TmpInst);
+    } else {
+      MCInst TmpInst;
+      TmpInst.setOpcode(AArch64::CapLoadPairBranchLink);
+      TmpInst.addOperand(MCOperand::createReg(AArch64::CFP));
+      TmpInst.addOperand(MCOperand::createReg(MI->getOperand(0).getReg()));
+      EmitToStreamer(*OutStreamer, TmpInst);
+    }
+    RestoreBaseReg();
     return;
   }
   case AArch64::TCRETURNdi: {

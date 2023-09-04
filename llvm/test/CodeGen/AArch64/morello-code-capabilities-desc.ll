@@ -7,6 +7,7 @@ define i8 addrspace(200)* @fun1() addrspace(200) nounwind {
 ; CHECK-LABEL: fun1:
 ; CHECK:       .Lfunc_begin0:
 ; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    mov c28, c29
 ; CHECK-NEXT:    adrp c0, :got:fun1
 ; CHECK-NEXT:    ldr c0, [c0, :got_lo12:fun1]
 ; CHECK-NEXT:    ret c30
@@ -19,6 +20,7 @@ define internal i8 addrspace(200)* @fun2() addrspace(200) nounwind {
 ; CHECK-LABEL: fun2:
 ; CHECK:       .Lfunc_begin1:
 ; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    mov c28, c29
 ; CHECK-NEXT:    adrp c0, .LCPI1_0
 ; CHECK-NEXT:    ldr c0, [c0, :lo12:.LCPI1_0]
 ; CHECK-NEXT:    ret c30

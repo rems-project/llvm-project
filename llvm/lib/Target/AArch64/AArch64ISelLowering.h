@@ -53,6 +53,7 @@ enum NodeType : unsigned {
   CCALL,        // Function call thru capability.
   ClearCALL,    // Function call, clear unused registers.
   ClearCCALL,   // Function call thru capability, clear unused registers.
+  DescCALL,    // Descriptor ABI non-DSO localFunction call.
 
   CapTagGet,   // Legalised int_cheri_cap_tag_get
   CapSealedGet, // Legalised int_cheri_cap_sealed_get
@@ -952,7 +953,7 @@ private:
                           const SmallVectorImpl<ISD::InputArg> &Ins,
                           const SDLoc &DL, SelectionDAG &DAG,
                           SmallVectorImpl<SDValue> &InVals, bool isThisReturn,
-                          SDValue ThisVal) const;
+                          SDValue ThisVal)  const;
 
   SDValue LowerLOAD(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSTORE(SDValue Op, SelectionDAG &DAG) const;
