@@ -26,10 +26,8 @@
 // NT-PCREL-NEXT:   Note {
 // NT-PCREL-NEXT:     Owner: CHERI
 // NT-PCREL-NEXT:     Data size: 0x4
-// NT-PCREL-NEXT:     Type: Unknown (0x00000000)
-// NT-PCREL-NEXT:     Description data (
-// NT-PCREL-NEXT:       0000: 00000000
-// NT-PCREL-NEXT:     )
+// NT-PCREL-NEXT:     Type: NT_CHERI_GLOBALS_ABI (CHERI globals ABI)
+// NT-PCREL-NEXT:     Globals ABI: CHERI_GLOBALS_ABI_PCREL (PC-relative)
 // NT-PCREL-NEXT:   }
 // NT-PCREL-NEXT: }
 // NT-FDESC: NoteSection {
@@ -39,10 +37,8 @@
 // NT-FDESC-NEXT:   Note {
 // NT-FDESC-NEXT:     Owner: CHERI
 // NT-FDESC-NEXT:     Data size: 0x4
-// NT-FDESC-NEXT:     Type: Unknown (0x00000000)
-// NT-FDESC-NEXT:     Description data (
-// NT-FDESC-NEXT:       0000: 02000000
-// NT-FDESC-NEXT:     )
+// NT-FDESC-NEXT:     Type: NT_CHERI_GLOBALS_ABI (CHERI globals ABI)
+// NT-FDESC-NEXT:     Globals ABI: CHERI_GLOBALS_ABI_FDESC (function descriptor-based)
 // NT-FDESC-NEXT:   }
 // NT-FDESC-NEXT: }
 

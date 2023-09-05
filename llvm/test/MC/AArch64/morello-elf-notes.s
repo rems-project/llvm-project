@@ -8,10 +8,10 @@ foo:
 
 // CHECK: Displaying notes found in: .note.cheri
 // CHECK-NEXT:  Owner                Data size 	Description
-// CHECK-NEXT:  CHERI                0x00000004	Unknown note type: (0x00000000)
-// PCREL:   description data: 00 00 00 00
-// PLT:   description data: 01 00 00 00
-// FDESC:   description data: 02 00 00 00
+// CHECK-NEXT:  CHERI                0x00000004	NT_CHERI_GLOBALS_ABI (CHERI globals ABI)
+// PCREL-NEXT:    Globals ABI: CHERI_GLOBALS_ABI_PCREL (PC-relative)
+// PLT-NEXT:      Globals ABI: CHERI_GLOBALS_ABI_PLT_FPTR (PLT-based)
+// FDESC-NEXT:    Globals ABI: CHERI_GLOBALS_ABI_FDESC (function descriptor-based)
 
 // RUN: llvm-mc -filetype=obj -triple aarch64 %s -o - | llvm-readelf --notes - | FileCheck %s --allow-empty --check-prefixes=NONOTES
 // NONOTES-NOT: Displaying notes found in: .note.cheri

@@ -5622,6 +5622,51 @@ static AMDGPUNote getAMDGPUNote(uint32_t NoteType, ArrayRef<uint8_t> Desc) {
   }
 }
 
+struct CHERINote {
+  std::string Type;
+  std::string Value;
+};
+
+template <typename ELFT>
+static Optional<CHERINote> getCHERINote(uint32_t NoteType,
+                                        ArrayRef<uint8_t> Desc) {
+  if (Desc.size() != 4)
+    return None;
+
+  StringRef TypeDesc;
+  StringRef VariantDesc;
+  uint32_t Variant =
+      support::endian::read32<ELFT::TargetEndianness>(Desc.data());
+
+#define CHERI_VARIANT_CASE(Variant, Desc)                                      \
+  case Variant:                                                                \
+    VariantDesc = #Variant " (" Desc ")";                                      \
+    break;
+  switch (NoteType) {
+  case NT_CHERI_GLOBALS_ABI:
+    TypeDesc = "Globals ABI";
+    switch (Variant) {
+      CHERI_VARIANT_CASE(CHERI_GLOBALS_ABI_PCREL, "PC-relative");
+      CHERI_VARIANT_CASE(CHERI_GLOBALS_ABI_PLT_FPTR, "PLT-based");
+      CHERI_VARIANT_CASE(CHERI_GLOBALS_ABI_FDESC, "function descriptor-based");
+    default:
+      return None;
+    }
+    break;
+  case NT_CHERI_TLS_ABI:
+    TypeDesc = "TLS ABI";
+    switch (Variant) {
+      CHERI_VARIANT_CASE(CHERI_TLS_ABI_TRAD, "traditional");
+    default:
+      return None;
+    }
+    break;
+  default:
+    return None;
+  }
+  return CHERINote{TypeDesc.str(), VariantDesc.str()};
+}
+
 struct CoreFileMapping {
   uint64_t Start, End, Offset;
   StringRef Filename;
@@ -5750,6 +5795,12 @@ static const NoteType AMDGPUNoteTypes[] = {
     {ELF::NT_AMDGPU_METADATA, "NT_AMDGPU_METADATA (AMDGPU Metadata)"},
 };
 
+static const NoteType CHERINoteTypes[] = {
+    {ELF::NT_CHERI_GLOBALS_ABI, "NT_CHERI_GLOBALS_ABI (CHERI globals ABI)"},
+    {ELF::NT_CHERI_TLS_ABI,
+     "NT_CHERI_TLS_ABI (CHERI thread-local storage ABI)"},
+};
+
 static const NoteType CoreNoteTypes[] = {
     {ELF::NT_PRSTATUS, "NT_PRSTATUS (prstatus structure)"},
     {ELF::NT_FPREGSET, "NT_FPREGSET (floating point registers)"},
@@ -5843,6 +5894,8 @@ StringRef getNoteTypeName(const typename ELFT::Note &Note, unsigned ELFType) {
     return FindNote(AMDNoteTypes);
   if (Name == "AMDGPU")
     return FindNote(AMDGPUNoteTypes);
+  if (Name == "CHERI")
+    return FindNote(CHERINoteTypes);
 
   if (ELFType == ELF::ET_CORE)
     return FindNote(CoreNoteTypes);
@@ -5976,6 +6029,11 @@ template <class ELFT> void GNUELFDumper<ELFT>::printNotes() {
       const AMDGPUNote N = getAMDGPUNote<ELFT>(Type, Descriptor);
       if (!N.Type.empty()) {
         OS << "    " << N.Type << ":\n        " << N.Value << '\n';
+        return Error::success();
+      }
+    } else if (Name == "CHERI") {
+      if (Optional<CHERINote> N = getCHERINote<ELFT>(Type, Descriptor)) {
+        OS << "    " << N->Type << ": " << N->Value << '\n';
         return Error::success();
       }
     } else if (Name == "CORE") {
@@ -7418,6 +7476,11 @@ template <class ELFT> void LLVMELFDumper<ELFT>::printNotes() {
       const AMDGPUNote N = getAMDGPUNote<ELFT>(Type, Descriptor);
       if (!N.Type.empty()) {
         W.printString(N.Type, N.Value);
+        return Error::success();
+      }
+    } else if (Name == "CHERI") {
+      if (Optional<CHERINote> N = getCHERINote<ELFT>(Type, Descriptor)) {
+        W.printString(N->Type, N->Value);
         return Error::success();
       }
     } else if (Name == "CORE") {
