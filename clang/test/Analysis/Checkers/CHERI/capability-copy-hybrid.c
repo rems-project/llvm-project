@@ -1,5 +1,6 @@
-// RUN: %cheri_cc1 -analyze -analyzer-checker=core,alpha.cheri.CapabilityCopyChecker -verify %s
-// RUN: %clang_cc1 -triple aarch64-none-elf -target-feature +morello -target-feature +c64 -target-abi aapcs -analyze -analyzer-checker=core,alpha.cheri.CapabilityCopyChecker -verify %s
+// RUN: %cheri_cc1 -analyze -analyzer-checker=core,cheri.CapabilityCopy -verify %s
+// RUN: %clang_cc1 -triple aarch64-none-elf -target-feature +morello -target-feature +c64 -target-abi aapcs \
+// RUN:            -analyze -analyzer-checker=core,cheri.CapabilityCopy -verify %s
 
 
 // Don't emit anywarnings fot hybrid mode
