@@ -1,6 +1,11 @@
 // RUN: %cheri_purecap_cc1 -analyze -analyzer-checker=core,cheri.ProvenanceSource -verify %s
 // RUN: %clang_cc1 -triple aarch64-none-elf -target-feature +morello -target-feature +c64 -target-abi purecap \
 // RUN:            -analyze -analyzer-checker=core,cheri.ProvenanceSource -verify %s
+// RUN: %check_analyzer_fixit %s %t \
+// RUN:   -triple aarch64-none-elf -target-feature +morello -target-feature +c64 -target-abi purecap \
+// RUN:   -analyzer-checker=core,cheri.ProvenanceSource \
+// RUN:   -analyzer-config cheri.ProvenanceSource:ShowFixIts=true \
+// RUN:   -verify=non-nested,nested
 
 typedef __intcap_t intptr_t;
 typedef __uintcap_t uintptr_t;
@@ -13,6 +18,9 @@ char left_prov(int d, char *p) {
 
   intptr_t s = b + a; // expected-warning{{Result of '+' on capability type '__intcap'; it is unclear which side should be used as the source of provenance; consider indicating the provenance-carrying argument explicitly by casting the other argument to 'ptrdiff_t'. Note: along this path, LHS was derived from pointer, RHS was derived from NULL}}
                       // expected-warning@-1{{binary expression on capability types 'intptr_t' (aka '__intcap') and 'intptr_t'; it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side}}
+
+  // CHECK-FIXES:      intptr_t s = b + (ptrdiff_t)(a);
+
   return *(char*)s;// expected-warning{{Capability with ambiguous provenance is used as pointer}}
 }
 
@@ -22,6 +30,9 @@ char right_prov(unsigned d, char *p) {
 
   uintptr_t s = a + b; // expected-warning{{Result of '+' on capability type 'unsigned __intcap'; it is unclear which side should be used as the source of provenance; consider indicating the provenance-carrying argument explicitly by casting the other argument to 'size_t'. Note: along this path, LHS was derived from NULL, RHS was derived from pointer}}
                       // expected-warning@-1{{binary expression on capability types 'uintptr_t' (aka 'unsigned __intcap') and 'uintptr_t'; it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side}}
+
+  // CHECK-FIXES:      intptr_t s = (ptrdiff_t)(a) + b;
+
   return *(char*)s;// expected-warning{{Capability with ambiguous provenance is used as pointer}}
 }
 
@@ -56,6 +67,7 @@ char right_prov_cond(int d, char *p, int x) {
   intptr_t s = a + b; // expected-warning{{Result of '+' on capability type '__intcap'; it is unclear which side should be used as the source of provenance; consider indicating the provenance-carrying argument explicitly by casting the other argument to 'ptrdiff_t'. Note: along this path, LHS and RHS were derived from NULL}}
                       // expected-warning@-1{{Result of '+' on capability type '__intcap'; it is unclear which side should be used as the source of provenance; consider indicating the provenance-carrying argument explicitly by casting the other argument to 'ptrdiff_t'. Note: along this path, LHS was derived from NULL, RHS was derived from pointer}}
                       // expected-warning@-2{{binary expression on capability types 'intptr_t' (aka '__intcap') and 'intptr_t'; it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side}}
+
   return *(char*)s;// expected-warning{{Capability with ambiguous provenance is used as pointer}}
 }
 
@@ -76,6 +88,9 @@ char add_const(int *p, int x) {
 
   intptr_t s =  a | b; // expected-warning{{Result of '|' on capability type '__intcap'; it is unclear which side should be used as the source of provenance; consider indicating the provenance-carrying argument explicitly by casting the other argument to 'ptrdiff_t'. Note: along this path, LHS was derived from pointer, RHS was derived from NULL}}
                        // expected-warning@-1{{binary expression on capability types 'intptr_t' (aka '__intcap') and 'intptr_t'; it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side}}
+
+  // CHECK-FIXES:      intptr_t s =  a | (ptrdiff_t)(b);
+
   return *(char*)s; // expected-warning{{Capability with ambiguous provenance is used as pointer}}
 }
 
@@ -85,6 +100,9 @@ char add_var(int *p, int x, int c) {
 
   intptr_t s =  a | b; // expected-warning{{Result of '|' on capability type '__intcap'; it is unclear which side should be used as the source of provenance; consider indicating the provenance-carrying argument explicitly by casting the other argument to 'ptrdiff_t'. Note: along this path, LHS was derived from pointer, RHS was derived from NULL}}
                        // expected-warning@-1{{binary expression on capability types 'intptr_t' (aka '__intcap') and 'intptr_t'; it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side}}
+
+  // CHECK-FIXES:      intptr_t s =  a | (ptrdiff_t)(b);
+
   return *(char*)s; // expected-warning{{Capability with ambiguous provenance is used as pointer}}
 }
 
@@ -99,6 +117,8 @@ uintptr_t fn1(char *str, int f) {
     return ((intptr_t)str & x);
     // expected-warning@-1{{Result of '&' on capability type '__intcap'; it is unclear which side should be used as the source of provenance; consider indicating the provenance-carrying argument explicitly by casting the other argument to 'ptrdiff_t'. Note: along this path, LHS was derived from pointer, RHS was derived from NULL}}
     // expected-warning@-2{{binary expression on capability types 'intptr_t' (aka '__intcap') and 'intptr_t'; it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side}}
+
+    // CHECK-FIXES:     return ((intptr_t)str & (ptrdiff_t)(x));
 }
 
 uintptr_t align_down(void *p, size_t alignment) {
@@ -106,6 +126,8 @@ uintptr_t align_down(void *p, size_t alignment) {
     uintptr_t mask = alignment - 1;
     return (sz & ~mask); // expected-warning{{Result of '&' on capability type 'unsigned __intcap'; it is unclear which side should be used as the source of provenance; consider indicating the provenance-carrying argument explicitly by casting the other argument to 'size_t'. Note: along this path, LHS was derived from pointer, RHS was derived from NULL}}
     // expected-warning@-1{{binary expression on capability types 'uintptr_t' (aka 'unsigned __intcap') and 'uintptr_t'; it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side}}
+
+    // CHECK-FIXES:      return (sz & (size_t)(~mask));
 }
 
 char* ptr_diff(char *s1, char *s2) {
@@ -183,11 +205,15 @@ intptr_t foo(int d) {
 
   return b + a; // expected-warning{{Result of '+' on capability type '__intcap'; it is unclear which side should be used as the source of provenance; consider indicating the provenance-carrying argument explicitly by casting the other argument to 'ptrdiff_t'. Note: along this path, LHS was derived from pointer, RHS was derived from NULL}}
                 // expected-warning@-1{{binary expression on capability types 'intptr_t' (aka '__intcap') and 'intptr_t'; it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side}}
+
+  // CHECK-FIXES:     return b + (ptrdiff_t)(a);
 }
 
 intptr_t add(intptr_t a, intptr_t b) {
   return a + b; // expected-warning{{Result of '+' on capability type '__intcap'; it is unclear which side should be used as the source of provenance; consider indicating the provenance-carrying argument explicitly by casting the other argument to 'ptrdiff_t'. Note: along this path, LHS was derived from NULL, RHS was derived from pointer}}
                 // expected-warning@-1{{binary expression on capability types 'intptr_t' (aka '__intcap') and 'intptr_t'; it is not clear which should be used as the source of provenance; currently provenance is inherited from the left-hand side}}
+
+  // CHECK-FIXES:     return (ptrdiff_t)(a) + b;
 }
 
 intptr_t bar(int d) {
