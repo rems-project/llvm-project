@@ -5628,7 +5628,7 @@ struct CHERINote {
 };
 
 template <typename ELFT>
-static Optional<CHERINote> getCHERINote(uint32_t NoteType,
+static Optional<CHERINote> getCHERINote(unsigned Machine, uint32_t NoteType,
                                         ArrayRef<uint8_t> Desc) {
   if (Desc.size() != 4)
     return None;
@@ -5662,7 +5662,25 @@ static Optional<CHERINote> getCHERINote(uint32_t NoteType,
     }
     break;
   default:
-    return None;
+    switch (Machine) {
+    case ELF::EM_AARCH64:
+      switch (NoteType) {
+      case NT_CHERI_MORELLO_PURECAP_BENCHMARK_ABI:
+        TypeDesc = "Purecap benchmark ABI enabled";
+        switch (Variant) {
+          CHERI_VARIANT_CASE(0, "no");
+          CHERI_VARIANT_CASE(1, "yes");
+        default:
+          return None;
+        }
+        break;
+      default:
+        return None;
+      }
+      break;
+    default:
+      return None;
+    }
   }
   return CHERINote{TypeDesc.str(), VariantDesc.str()};
 }
@@ -5801,6 +5819,11 @@ static const NoteType CHERINoteTypes[] = {
      "NT_CHERI_TLS_ABI (CHERI thread-local storage ABI)"},
 };
 
+static const NoteType AArch64CHERINoteTypes[] = {
+    {ELF::NT_CHERI_MORELLO_PURECAP_BENCHMARK_ABI,
+     "NT_CHERI_MORELLO_PURECAP_BENCHMARK_ABI (Morello purecap benchmark ABI)"},
+};
+
 static const NoteType CoreNoteTypes[] = {
     {ELF::NT_PRSTATUS, "NT_PRSTATUS (prstatus structure)"},
     {ELF::NT_FPREGSET, "NT_FPREGSET (floating point registers)"},
@@ -5867,7 +5890,8 @@ static const NoteType CoreNoteTypes[] = {
 };
 
 template <class ELFT>
-StringRef getNoteTypeName(const typename ELFT::Note &Note, unsigned ELFType) {
+StringRef getNoteTypeName(const typename ELFT::Note &Note, unsigned ELFType,
+                          unsigned Machine) {
   uint32_t Type = Note.getType();
   auto FindNote = [&](ArrayRef<NoteType> V) -> StringRef {
     for (const NoteType &N : V)
@@ -5894,8 +5918,17 @@ StringRef getNoteTypeName(const typename ELFT::Note &Note, unsigned ELFType) {
     return FindNote(AMDNoteTypes);
   if (Name == "AMDGPU")
     return FindNote(AMDGPUNoteTypes);
-  if (Name == "CHERI")
+  if (Name == "CHERI") {
+    StringRef Result;
+    switch (Machine) {
+    case ELF::EM_AARCH64:
+      Result = FindNote(AArch64CHERINoteTypes);
+      break;
+    }
+    if (!Result.empty())
+      return Result;
     return FindNote(CHERINoteTypes);
+  }
 
   if (ELFType == ELF::ET_CORE)
     return FindNote(CoreNoteTypes);
@@ -6002,7 +6035,8 @@ template <class ELFT> void GNUELFDumper<ELFT>::printNotes() {
        << format_hex(Descriptor.size(), 10) << '\t';
 
     StringRef NoteType =
-        getNoteTypeName<ELFT>(Note, this->Obj.getHeader().e_type);
+        getNoteTypeName<ELFT>(Note, this->Obj.getHeader().e_type,
+                              this->Obj.getHeader().e_machine);
     if (!NoteType.empty())
       OS << NoteType << '\n';
     else
@@ -6032,7 +6066,8 @@ template <class ELFT> void GNUELFDumper<ELFT>::printNotes() {
         return Error::success();
       }
     } else if (Name == "CHERI") {
-      if (Optional<CHERINote> N = getCHERINote<ELFT>(Type, Descriptor)) {
+      unsigned Machine = this->Obj.getHeader().e_machine;
+      if (Optional<CHERINote> N = getCHERINote<ELFT>(Machine, Type, Descriptor)) {
         OS << "    " << N->Type << ": " << N->Value << '\n';
         return Error::success();
       }
@@ -7448,7 +7483,8 @@ template <class ELFT> void LLVMELFDumper<ELFT>::printNotes() {
     W.printHex("Data size", Descriptor.size());
 
     StringRef NoteType =
-        getNoteTypeName<ELFT>(Note, this->Obj.getHeader().e_type);
+        getNoteTypeName<ELFT>(Note, this->Obj.getHeader().e_type,
+                              this->Obj.getHeader().e_machine);
     if (!NoteType.empty())
       W.printString("Type", NoteType);
     else
@@ -7479,7 +7515,8 @@ template <class ELFT> void LLVMELFDumper<ELFT>::printNotes() {
         return Error::success();
       }
     } else if (Name == "CHERI") {
-      if (Optional<CHERINote> N = getCHERINote<ELFT>(Type, Descriptor)) {
+      unsigned Machine = this->Obj.getHeader().e_machine;
+      if (Optional<CHERINote> N = getCHERINote<ELFT>(Machine, Type, Descriptor)) {
         W.printString(N->Type, N->Value);
         return Error::success();
       }

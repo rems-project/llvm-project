@@ -1540,9 +1540,11 @@ enum {
 };
 
 // CHERI-specific notes.
-enum {
+enum : unsigned {
   NT_CHERI_GLOBALS_ABI = 0,
   NT_CHERI_TLS_ABI = 1,
+
+  NT_CHERI_MORELLO_PURECAP_BENCHMARK_ABI = 0x80000000,
 };
 
 // ABI variants used in NT_CHERI_GLOBALS_ABI notes.
