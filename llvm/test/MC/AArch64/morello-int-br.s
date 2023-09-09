@@ -20,7 +20,7 @@ bat:
   bl baz
 
 
-// CHECK: Relocation section '.rela.text' at offset 0x150 contains 8 entries:
+// CHECK: Relocation section '.rela.text' at offset {{.*}} contains 8 entries:
 // CHECK-NEXT:    Offset             Info             Type               Symbol's Value  Symbol's Name + Addend
 // CHECK-NEXT: 0000000000000000  000000050000011a R_AARCH64_JUMP26       0000000000000000 foo + 0
 // CHECK-NEXT: 0000000000000004  000000060000011a R_AARCH64_JUMP26       0000000000000000 baz + 0

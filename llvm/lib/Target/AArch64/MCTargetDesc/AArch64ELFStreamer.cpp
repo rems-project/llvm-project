@@ -301,6 +301,15 @@ private:
   DenseMap<const MCSection *, SmallVector<MCSymbol *, 3> > LastLabels;
   ElfMappingSymbol LastEMS;
   SmallVector<MCSymbol *, 3> CurrentLabels;
+
+  void emitCHERINotes() override {
+    MCELFStreamer::emitCHERINotes();
+    const AArch64MCAsmInfoELF *MAI =
+        static_cast<const AArch64MCAsmInfoELF *>(getContext().getAsmInfo());
+    if (MAI->isCheriPurecapABI())
+      emitCHERINote(ELF::NT_CHERI_MORELLO_PURECAP_BENCHMARK_ABI,
+                    MAI->isPurecapBenchmarkABI());
+  }
 };
 
 void AArch64ELFStreamer::EmitCheriCapabilityImpl(const MCSymbol *Symbol,
