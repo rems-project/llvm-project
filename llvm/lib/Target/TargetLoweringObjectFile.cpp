@@ -161,14 +161,54 @@ static bool isCapabilityType(const Type* T, const DataLayout& DL) {
   return false;
 }
 
+static bool needsCapabilityRelocationHelper(const DataLayout &DL,
+                                            const Constant *C) {
+  if (isa<ConstantPointerNull>(C) || isa<ConstantAggregateZero>(C) ||
+      C->isNullValue())
+    return false;
+
+  if ((isa<GlobalValue>(C) || isa<BlockAddress>(C)) &&
+      DL.isFatPointer(C->getType()))
+    return true;
+
+  if (isa<ConstantAggregate>(C) || isa<ConstantData>(C)) {
+    for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i)
+      if (needsCapabilityRelocationHelper(DL, cast<Constant>(C->getOperand(i))))
+        return true;
+    return false;
+  }
+
+  if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
+    if (DL.isFatPointer(CE->getType())) {
+      switch (CE->getOpcode()) {
+      case Instruction::BitCast:
+      case Instruction::GetElementPtr:
+        return needsCapabilityRelocationHelper(DL, CE->getOperand(0));
+      case Instruction::IntToPtr:
+      case Instruction::AddrSpaceCast:
+        return CE->getOperand(0)->needsRelocation();
+      default:
+        break;
+      }
+      return true;
+    }
+  }
+
+  return DL.isFatPointer(C->getType());;
+}
+
 /// Check whether the global variable needs a capability relocation (such as
 /// setting the tag bit on startup). This is needed to check whether the
 /// variable can be placed into the read only section
 static bool needsCapabilityRelocation(const GlobalVariable* GV,
-                                      const DataLayout& DL) {
-  // TODO: make it dependent on the initializer
-  return isCapabilityType(GV->getValueType(), DL);
+                                      const DataLayout& DL,
+                                      const Constant *C) {
+  if (!isCapabilityType(GV->getValueType(), DL))
+    return false;
+
+  return needsCapabilityRelocationHelper(DL, C);
 }
+
 void TargetLoweringObjectFile::emitCGProfileMetadata(MCStreamer &Streamer,
                                                      Module &M) const {
   MCContext &C = getContext();
@@ -313,7 +353,7 @@ SectionKind TargetLoweringObjectFile::getKindForGlobal(const GlobalObject *GO,
       // Even with a static relocation model the startup code will have to
       // modify capabilities to initialize them because we can't store tag bits
       // in the ELF file
-      if (needsCapabilityRelocation(GVar, GVar->getParent()->getDataLayout()))
+      if (needsCapabilityRelocation(GVar, GVar->getParent()->getDataLayout(), C))
         return SectionKind::getReadOnlyWithRel();
       // In static, ROPI and RWPI relocation models, the linker will resolve
       // all addresses, so the relocation entries will actually be constants by

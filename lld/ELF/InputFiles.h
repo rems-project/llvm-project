@@ -261,6 +261,8 @@ public:
   llvm::Optional<llvm::DILineInfo> getDILineInfo(const InputSectionBase *, uint64_t);
   llvm::Optional<std::pair<std::string, unsigned>> getVariableLoc(StringRef name);
 
+  llvm::DenseMap<unsigned, unsigned> cheriVariants;
+
   // Name of source file obtained from STT_FILE symbol value,
   // or empty string if there is no such symbol in object file
   // symbol table.

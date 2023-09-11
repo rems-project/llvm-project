@@ -38,15 +38,15 @@ bar:
 foo:
  .xword 10
 
-// DIS: 0000000000210208 <_start>:
-// DIS-NEXT:   210208:        adrp    c0, 0x220000 <_start+0x40>
-// DIS-NEXT:   21020c:        ldr     c0, [c0, #688]
-// DIS-NEXT:   210210:        adrp    c1, 0x220000 <_start+0x48>
-// DIS-NEXT:   210214:        ldr     c1, [c1, #672]
-// DIS-NEXT:   210218:        adrp    c1, 0x220000 <_start+0x50>
-// DIS-NEXT:   21021c:        ldr     c1, [c1, #672]
-// DIS-NEXT:   210220:        adrp    c2, 0x220000 <_start+0x58>
-// DIS-NEXT:   210224:        ldr     c2, [c1, #704]
+// DIS: 0000000000210228 <_start>:
+// DIS-NEXT:   210228:        adrp    c0, 0x220000 <_start+0x40>
+// DIS-NEXT:   21022c:        ldr     c0, [c0, #720]
+// DIS-NEXT:   210230:        adrp    c1, 0x220000 <_start+0x48>
+// DIS-NEXT:   210234:        ldr     c1, [c1, #704]
+// DIS-NEXT:   210238:        adrp    c1, 0x220000 <_start+0x50>
+// DIS-NEXT:   21023c:        ldr     c1, [c1, #704]
+// DIS-NEXT:   210240:        adrp    c2, 0x220000 <_start+0x58>
+// DIS-NEXT:   210244:        ldr     c2, [c1, #736]
 
 /// .rodata is the start of the executable capability range
 
@@ -55,7 +55,7 @@ foo:
 // CHECK-NEXT:     Flags [ (0x2)
 // CHECK-NEXT:       SHF_ALLOC (0x2)
 // CHECK-NEXT:     ]
-// CHECK-NEXT:     Address: 0x200200
+// CHECK-NEXT:     Address: 0x200220
 
 /// Check that .got exists, has 16-byte entries and is 16-byte aligned.
 /// The executable capability should extend to the end of the .got
@@ -65,9 +65,9 @@ foo:
 // CHECK-NEXT:       SHF_ALLOC (0x2)
 // CHECK-NEXT:       SHF_WRITE (0x1)
 // CHECK-NEXT:     ]
-// CHECK-NEXT:     Address: 0x2202A0
-// CHECK-NEXT:     Offset: 0x2A0
-// CHECK-NEXT:     Size: 96
+// CHECK-NEXT:     Address: 0x2202C0
+// CHECK-NEXT:     Offset: 0x2C0
+// CHECK-NEXT:     Size: 64
 // CHECK-NEXT:     Link: 0
 // CHECK-NEXT:     Info: 0
 // CHECK-NEXT:     AddressAlignment: 16
@@ -77,22 +77,22 @@ foo:
 /// aligned base of .rodata.
 // CHECK: CHERI __cap_relocs [
 // CHECK-NEXT:   Relocation {
-// CHECK-NEXT:     Location: 0x2202A0
+// CHECK-NEXT:     Location: 0x2202C0
 // CHECK-NEXT:     Base: foo (0x230300)
 // CHECK-NEXT:     Offset: 0
 // CHECK-NEXT:     Length: 8
 // CHECK-NEXT:     Permissions: (RWDATA) (0x8FBE)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Relocation {
-// CHECK-NEXT:     Location: 0x2202B0
-// CHECK-NEXT:     Base: bar (0x200200)
-// CHECK-NEXT:     Offset: 65545
+// CHECK-NEXT:     Location: 0x2202D0
+// CHECK-NEXT:     Base: {{.*}} (0x200200)
+// CHECK-NEXT:     Offset: 65577
 // CHECK-NEXT:     Length: 131328
 // CHECK-NEXT:     Permissions: (FUNC) (0x8000000000013DBC)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Relocation {
-// CHECK-NEXT:     Location: 0x2202C0
-// CHECK-NEXT:     Base: bar (0x200200)
+// CHECK-NEXT:     Location: 0x2202E0
+// CHECK-NEXT:     Base: bar (0x200220)
 // CHECK-NEXT:     Offset: 0
 // CHECK-NEXT:     Length: 8
 // CHECK-NEXT:     Permissions: (RODATA) (0x1BFBE)

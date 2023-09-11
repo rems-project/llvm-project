@@ -707,6 +707,9 @@ void MCELFStreamer::finishImpl() {
                             DummyAttributeSection, GNUAttributes);
   }
 
+  if (getContext().getAsmInfo()->isCheriPurecapABI())
+    createCHERINotesSection();
+
   // Ensure the last section gets aligned if necessary.
   MCSection *CurSection = getCurrentSectionOnly();
   setSectionAlignmentForBundling(getAssembler(), CurSection);
@@ -885,6 +888,38 @@ void MCELFStreamer::createAttributesSection(
   }
 
   AttrsVec.clear();
+}
+
+void MCELFStreamer::createCHERINotesSection() {
+  MCContext &Ctx = getContext();
+  assert(Ctx.getAsmInfo()->isCheriPurecapABI() &&
+         ".note.cheri sections valid only for purecap objects");
+  unsigned Type = llvm::ELF::NT_CHERI_GLOBALS_ABI;
+  unsigned Variant;
+  switch (MCTargetOptions::cheriCapabilityTableABI()) {
+  case CheriCapabilityTableABI::Pcrel:
+    Variant = llvm::ELF::CHERI_GLOBALS_ABI_PCREL;
+    break;
+  case CheriCapabilityTableABI::PLT:
+    Variant = llvm::ELF::CHERI_GLOBALS_ABI_PLT_FPTR;
+    break;
+  case CheriCapabilityTableABI::FunctionDescriptor:
+    Variant = llvm::ELF::CHERI_GLOBALS_ABI_FDESC;
+    break;
+  }
+  MCSection *Nt =
+      Ctx.getELFSection(".note.cheri", ELF::SHT_NOTE, ELF::SHF_ALLOC);
+  PushSection();
+  Nt->setAlignment(llvm::Align(4));
+  SwitchSection(Nt);
+  emitInt32(6);                     // data size for "CHERI\0"
+  emitInt32(4);                     // descz
+  emitInt32(Type);                  // type
+  emitBytes(StringRef("CHERI", 6)); // note name
+  emitInt16(0);                     // padding
+  emitInt32(Variant);               // ABI variant
+  endSection(Nt);
+  PopSection();
 }
 
 MCStreamer *llvm::createELFStreamer(MCContext &Context,

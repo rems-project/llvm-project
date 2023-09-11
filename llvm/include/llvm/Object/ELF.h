@@ -70,6 +70,8 @@ struct VersionEntry {
 StringRef getELFRelocationTypeName(uint32_t Machine, uint32_t Type);
 uint32_t getELFRelativeRelocationType(uint32_t Machine);
 StringRef getELFSectionTypeName(uint32_t Machine, uint32_t Type);
+StringRef getELFCheriAbiType(uint32_t Machine, unsigned Type);
+StringRef getELFCheriVariant(uint32_t Machine, unsigned Type, unsigned Variant);
 
 // Subclasses of ELFFile may need this for template instantiation
 inline std::pair<unsigned char, unsigned char>

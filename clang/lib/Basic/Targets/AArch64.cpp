@@ -911,7 +911,7 @@ bool AArch64TargetInfo::validateAsmConstraint(
 
 bool AArch64TargetInfo::validateConstraintModifier(
     StringRef Constraint, char Modifier, unsigned Size,
-    std::string &SuggestedModifier) const {
+    bool IsCHERICap, std::string &SuggestedModifier) const {
   // Strip off constraint modifiers.
   while (Constraint[0] == '=' || Constraint[0] == '+' || Constraint[0] == '&')
     Constraint = Constraint.substr(1);
@@ -928,9 +928,9 @@ bool AArch64TargetInfo::validateConstraintModifier(
       // doing with the modifier.
       return true;
     default:
-      // By default an 'r' constraint will be in the 'x'
+      // By default an 'r' constraint will be in the 'x' or 'c'
       // registers.
-      if (Size == 64)
+      if (Size == 64 || IsCHERICap)
         return true;
 
       if (Size == 512)

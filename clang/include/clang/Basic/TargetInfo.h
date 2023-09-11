@@ -1164,6 +1164,7 @@ public:
   validateConstraintModifier(StringRef /*Constraint*/,
                              char /*Modifier*/,
                              unsigned /*Size*/,
+                             bool IsCHERICap,
                              std::string &/*SuggestedModifier*/) const {
     return true;
   }

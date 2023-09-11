@@ -5965,9 +5965,9 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
       unsigned NumRegs = (Size + 7) / 8;
 
       if (Subtarget->hasMorelloBoundedMemArgsCallee()) {
-	SDValue ArgLoc = DAG.getPointerAdd(DL, C9Args, VA.getLocMemOffset());
+        SDValue ArgLoc = DAG.getPointerAdd(DL, C9Args, VA.getLocMemOffset());
         InVals.push_back(ArgLoc);
-	continue;
+        continue;
       }
 
       // FIXME: This works on big-endian for composite byvals, which are the common
@@ -6055,7 +6055,7 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
       SDValue FIN;
       int FI;
       if (Subtarget->hasMorelloBoundedMemArgsCallee()) {
-	FIN = DAG.getPointerAdd(DL, C9Args, ArgOffset + BEAlign);
+        FIN = DAG.getPointerAdd(DL, C9Args, ArgOffset + BEAlign);
       } else {
         FI = MFI.CreateFixedObject(ArgSize, ArgOffset + BEAlign, true);
 
@@ -6614,6 +6614,18 @@ bool AArch64TargetLowering::isEligibleForTailCallOptimization(
   if (CCInfo.getNextStackOffset() > FuncInfo->getBytesInStackArgArea())
     return false;
 
+  if (Subtarget->hasMorelloBoundedMemArgsCaller()) {
+    unsigned NumBytes = CCInfo.getNextStackOffset();
+    auto ReqAlign = getAlignmentForPreciseBounds(NumBytes);
+    uint64_t ReqSize = NumBytes +
+        static_cast<uint64_t>(getTailPaddingForPreciseBounds(NumBytes));
+    // Disable tail calls with very large number of memory arguments.
+    // This is rare enough that adding the extra complexity to support this is not
+    // worth it.
+    if (ReqAlign > Align(16) || ReqSize != NumBytes)
+      return false;
+  }
+
   const MachineRegisterInfo &MRI = MF.getRegInfo();
   if (!parametersInCSRMatch(MRI, CallerPreserved, ArgLocs, OutVals))
     return false;
@@ -6796,6 +6808,32 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
     NumBytes = alignTo(NumBytes, 16);
   }
 
+  int BoundedMemArgsFI;
+  bool HasBoundedMemArgsFI = false;
+  uint64_t BoundedMemArgsOff;
+  if (Subtarget->hasMorelloBoundedMemArgsCaller()) {
+    // Check if the required alignment is greater than 16.
+    // Note it's always ok to use NumBytes here.
+    auto ReqAlign = getAlignmentForPreciseBounds(NumBytes);
+    uint64_t ReqSize = NumBytes +
+        static_cast<uint64_t>(getTailPaddingForPreciseBounds(NumBytes));
+    if (ReqAlign > Align(16) || ReqSize != NumBytes) {
+      assert(!IsTailCall && "Unexpected tail call");
+      IsSibCall = false;
+      HasBoundedMemArgsFI = true;
+      MachineFrameInfo &MFI = DAG.getMachineFunction().getFrameInfo();
+      BoundedMemArgsFI = MFI.CreateStackObject(ReqSize, ReqAlign, false);
+      if (!MFI.hasVarSizedObjects()) {
+        // Create a dummy variable sized object just to mark the function
+        // as having variable sized objects. Without this we can have issues
+        // with reaching the emergency spill slot.
+        MFI.CreateVariableSizedObject(ReqAlign, NULL);
+        assert(MFI.hasVarSizedObjects());
+      }
+      BoundedMemArgsOff = ReqSize - alignTo(NumBytes, 16);
+    }
+  }
+
   if (IsSibCall) {
     // Since we're not changing the ABI to make this a tail call, the memory
     // operands are already available in the caller's incoming argument space.
@@ -6837,13 +6875,20 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
   // Adjust the stack pointer for the new arguments...
   // These operations are automatically eliminated by the prolog/epilog pass
   if (!IsSibCall)
-    Chain = DAG.getCALLSEQ_START(Chain, IsTailCall ? 0 : NumBytes, 0, DL);
+    Chain = DAG.getCALLSEQ_START(Chain,
+        (IsTailCall || HasBoundedMemArgsFI) ? 0 : NumBytes, 0, DL);
 
   const DataLayout &TDL = DAG.getDataLayout();
   const AArch64RegisterInfo *TRI = Subtarget->getRegisterInfo();
   SDValue StackPtr =
       DAG.getCopyFromReg(Chain, DL, TRI->getStackPointerRegister(MF),
                          getPointerTy(TDL, TDL.getAllocaAddrSpace()));
+
+  if (HasBoundedMemArgsFI) {
+    StackPtr = DAG.getFrameIndex(BoundedMemArgsFI,
+        DAG.getTargetLoweringInfo().getFrameIndexTy(DAG.getDataLayout()));
+    StackPtr = DAG.getPointerAdd(DL, StackPtr, BoundedMemArgsOff);
+  }
 
   SmallVector<std::pair<unsigned, SDValue>, 8> RegsToPass;
   SmallSet<unsigned, 8> RegsUsed;
@@ -7038,6 +7083,9 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
         // are loaded before this eventual operation. Otherwise they'll be
         // clobbered.
         Chain = addTokenForArgument(Chain, DAG, MF.getFrameInfo(), FI);
+      } else if (HasBoundedMemArgsFI) {
+        DstAddr = DAG.getPointerAdd(DL, StackPtr, Offset);
+        DstInfo = MachinePointerInfo::getUnknownStack(DAG.getMachineFunction());
       } else {
         DstAddr = DAG.getPointerAdd(DL, StackPtr, Offset);
         DstInfo = MachinePointerInfo::getStack(MF, LocMemOffset);
@@ -7126,7 +7174,7 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
       }
       if (ShouldClearC9) {
           // If no arguments are passed in memory and the callee is variadic,
-	  // or if the callee might be in another DSO, set C9 to null.
+          // or if the callee might be in another DSO, set C9 to null.
           RegsToPass.push_back(
               std::make_pair(AArch64::C9, DAG.getNullCapability(DL)));
       }
