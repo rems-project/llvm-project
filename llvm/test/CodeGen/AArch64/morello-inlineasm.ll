@@ -12,7 +12,7 @@ define dso_local i32 @foo(i32 addrspace(200)* %p) local_unnamed_addr {
 ; CHECK-NEXT:    //NO_APP
 ; CHECK-NEXT:    ret
 entry:
-  %0 = tail call i32 asm sideeffect "ldr ${0:w}, $1", "=r,*Q"(i32 addrspace(200)* %p)
+  %0 = tail call i32 asm sideeffect "ldr ${0:w}, $1", "=r,*Q"(i32 addrspace(200)* elementtype(i32) %p)
   ret i32 %0
 }
 
@@ -24,7 +24,7 @@ define dso_local i32 @bar(i32 addrspace(200)* %p) local_unnamed_addr {
 ; CHECK-NEXT:    //NO_APP
 ; CHECK-NEXT:    ret
 entry:
-  %0 = tail call i32 asm sideeffect "ldr ${0:w}, $1", "=r,*m"(i32 addrspace(200)* %p)
+  %0 = tail call i32 asm sideeffect "ldr ${0:w}, $1", "=r,*m"(i32 addrspace(200)* elementtype(i32) %p)
   ret i32 %0
 }
 
