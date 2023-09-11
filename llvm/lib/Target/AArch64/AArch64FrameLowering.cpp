@@ -898,7 +898,7 @@ static MachineBasicBlock::iterator convertCalleeSaveRestoreToSPPrePostIncDec(
   const AArch64RegisterInfo *MRI = static_cast<const AArch64RegisterInfo *>(
       MF.getSubtarget().getRegisterInfo());
   unsigned SP = MRI->getStackPointerRegister(MF);
-  const bool HasCap = MF.getSubtarget<AArch64Subtarget>().hasMorello();
+  const bool HasPurecap = MF.getSubtarget<AArch64Subtarget>().hasPureCap();
   // Ignore instructions that do not operate on SP, i.e. shadow call stack
   // instructions and associated CFI instruction.
   while (MBBI->getOpcode() == AArch64::STRXpost ||
@@ -906,7 +906,7 @@ static MachineBasicBlock::iterator convertCalleeSaveRestoreToSPPrePostIncDec(
          MBBI->getOpcode() == AArch64::CFI_INSTRUCTION) {
     if (MBBI->getOpcode() != AArch64::CFI_INSTRUCTION) {
       assert(MBBI->getOperand(0).getReg() != AArch64::SP);
-      assert(!HasCap && "shadow call stack not supported with capabilities");
+      assert(!HasPurecap && "shadow call stack not supported for pure-capability ABI");
     }
     ++MBBI;
   }
