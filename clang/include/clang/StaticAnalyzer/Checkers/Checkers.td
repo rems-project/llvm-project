@@ -1606,6 +1606,10 @@ def UnixAPIPortabilityChecker : Checker<"UnixAPI">,
   HelpText<"Finds implementation-defined behavior in UNIX/Posix functions">,
   Documentation<NotDocumented>;
 
+def PointerAlignmentChecker : Checker<"PointerAlignment">,
+  HelpText<"Check underaligned pointers.">,
+  Documentation<NotDocumented>;
+
 } // end optin.portability
 
 //===----------------------------------------------------------------------===//
@@ -1696,10 +1700,6 @@ def ProvenanceSourceChecker : Checker<"ProvenanceSource">,
 
 def CapabilityCopyChecker : Checker<"CapabilityCopy">,
   HelpText<"Check tag-stripping memory copy.">,
-  Documentation<NotDocumented>;
-
-def CapabilityAlignmentChecker : Checker<"CapabilityAlignmentChecker">,
-  HelpText<"Check underaligned pointers.">,
   Documentation<NotDocumented>;
 
 } // end cheri
