@@ -3116,6 +3116,7 @@ static void RenderAnalyzerOptions(const ArgList &Args, ArgStringList &CmdArgs,
         (Triple.isRISCV() && tools::riscv::isCheriPurecap(Args, Triple)) ||
         (Triple.isAArch64() && tools::aarch64::isPurecap(Args, Triple))) {
       CmdArgs.push_back("-analyzer-checker=cheri");
+      CmdArgs.push_back("-analyzer-checker=optin.portability.PointerAlignment");
     }
 
     // Default nullability checks.

@@ -1,5 +1,6 @@
-// RUN: %cheri_purecap_cc1 -analyze -analyzer-checker=core,cheri.CapabilityAlignmentChecker -verify %s
-// RUN: %clang_cc1 -triple aarch64-none-elf -target-feature +morello -target-feature +c64 -target-abi purecap -analyze -analyzer-checker=core,cheri.CapabilityAlignmentChecker -verify %s
+// RUN: %cheri_purecap_cc1 -analyze -analyzer-checker=core,optin.portability.PointerAlignment -verify %s
+// RUN: %clang_cc1 -triple aarch64-none-elf -target-feature +morello -target-feature +c64 -target-abi purecap \
+// RUN:            -analyze -analyzer-checker=core,optin.portability.PointerAlignment -verify %s
 
 typedef __uintcap_t uintptr_t;
 typedef __intcap_t intptr_t;
