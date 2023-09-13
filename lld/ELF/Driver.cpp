@@ -2277,7 +2277,18 @@ template <class ELFT> static void readCheriVariants() {
     return;
 
   for (InputFile *f : objectFiles) {
-    for (auto &entry : cast<ObjFile<ELFT>>(f)->cheriVariants) {
+    auto variantMap = cast<ObjFile<ELFT>>(f)->cheriVariants;
+
+    auto applyDefault = [&](unsigned type, unsigned variant) {
+      if (!variantMap.count(type))
+        variantMap[type] = variant;
+    };
+
+    // TODO: warn/error if missing
+    applyDefault(NT_CHERI_GLOBALS_ABI, CHERI_GLOBALS_ABI_PCREL);
+    // TODO: Set TLS default once LLVM emits it
+
+    for (auto &entry : variantMap) {
       unsigned type = entry.first;
       unsigned variant = entry.second;
       if (config->cheriVariants.count(type) &&
