@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AArch64ELFStreamer.h"
+#include "AArch64MCAsmInfo.h"
 #include "AArch64MCTargetDesc.h"
 #include "AArch64TargetStreamer.h"
 #include "AArch64MCExpr.h"
@@ -261,12 +262,14 @@ private:
   }
 
   void emitThumbFunc(MCSymbol *Func) override {
-    if (!MCTargetOptions::integerBranches())
-      getAssembler().setIsThumbFunc(Func);
+    getAssembler().setIsThumbFunc(Func);
   }
 
   void adjustCurrentLabels(const MCSubtargetInfo &STI) {
-    if (!STI.getFeatureBits()[AArch64::FeatureC64]) {
+    const AArch64MCAsmInfoELF *MAI =
+        static_cast<const AArch64MCAsmInfoELF *>(getContext().getAsmInfo());
+    if (!STI.getFeatureBits()[AArch64::FeatureC64] ||
+        MAI->isPurecapBenchmarkABI()) {
       CurrentLabels.clear();
       return;
     }
@@ -298,6 +301,15 @@ private:
   DenseMap<const MCSection *, SmallVector<MCSymbol *, 3> > LastLabels;
   ElfMappingSymbol LastEMS;
   SmallVector<MCSymbol *, 3> CurrentLabels;
+
+  void emitCHERINotes() override {
+    MCELFStreamer::emitCHERINotes();
+    const AArch64MCAsmInfoELF *MAI =
+        static_cast<const AArch64MCAsmInfoELF *>(getContext().getAsmInfo());
+    if (MAI->isCheriPurecapABI())
+      emitCHERINote(ELF::NT_CHERI_MORELLO_PURECAP_BENCHMARK_ABI,
+                    MAI->isPurecapBenchmarkABI());
+  }
 };
 
 void AArch64ELFStreamer::EmitCheriCapabilityImpl(const MCSymbol *Symbol,

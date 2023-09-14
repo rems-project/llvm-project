@@ -94,7 +94,8 @@ ToolChain::ToolChain(const Driver &D, const llvm::Triple &T,
     IsCheriPurecap = true;
   if (Triple.isRISCV() && tools::riscv::isCheriPurecap(Args, Triple))
     IsCheriPurecap = true;
-  if (Triple.isAArch64() && tools::aarch64::isPurecap(Args, Triple))
+  if (Triple.isAArch64() &&
+      tools::aarch64::isPurecap(Args, Triple, &IsPurecapBenchmarkABI))
     IsCheriPurecap = true;
 
   // FIXME: Should we update triple enviroment to purecap? Or will that break RISCV?

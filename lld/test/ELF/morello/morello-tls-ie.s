@@ -14,9 +14,9 @@
 # RELOC-NEXT:     SHF_ALLOC
 # RELOC-NEXT:     SHF_WRITE
 # RELOC-NEXT:   ]
-# RELOC-NEXT:   Address: 0x220390
-# RELOC-NEXT:   Offset: 0x390
-# RELOC-NEXT:   Size: 48
+# RELOC-NEXT:   Address: 0x2203B0
+# RELOC-NEXT:   Offset: 0x3B0
+# RELOC-NEXT:   Size: 80
 # RELOC-NEXT:   Link: 0
 # RELOC-NEXT:   Info: 0
 # RELOC-NEXT:   AddressAlignment: 16
@@ -24,23 +24,23 @@
 # RELOC-NEXT: }
 # RELOC:      Relocations [
 # RELOC-NEXT:  Section ({{.*}}) .rela.dyn {
-# RELOC-NEXT:    0x220390 R_MORELLO_TLS_TPREL128 foo 0x0
-# RELOC-NEXT:    0x2203A0 R_MORELLO_TLS_TPREL128 bar 0x0
+# RELOC-NEXT:    0x2203B0 R_MORELLO_TLS_TPREL128 foo 0x0
+# RELOC-NEXT:    0x2203C0 R_MORELLO_TLS_TPREL128 bar 0x0
 # RELOC-NEXT:  }
 # RELOC-NEXT:]
 
-## Page(0x220390) - Page(0x2102b0) = 0x10000 = 65536
-## 0x220390 & 0xfff = 0x390 = 912
-## Page(0x220380) - Page(0x2102bc) = 0x10000 = 65536
-## 0x220380 & 0xfff = 0x380 = 896
+## Page(0x2203b0) - Page(0x2102b0) = 0x10000 = 65536
+## 0x2203b0 & 0xfff = 0x3b0 = 944
+## Page(0x2203c0) - Page(0x2102bc) = 0x10000 = 65536
+## 0x2203c0 & 0xfff = 0x3c0 = 960
 
 # CHECK:     <_start>:
-# CHECK-NEXT: 2102c8: adrp c0, 0x220000 <_start+0x40>
-# CHECK-NEXT: 2102cc: add  c0, c0, #912
-# CHECK-NEXT: 2102d0: ldp  x0, x1, [c0]
-# CHECK-NEXT: 2102d4: adrp c0, 0x220000 <_start+0x4c>
-# CHECK-NEXT: 2102d8: add  c0, c0, #928
-# CHECK-NEXT: 2102dc: ldp  x0, x1, [c0]
+# CHECK-NEXT: 2102e0: adrp c0, 0x220000 <_start+0x40>
+# CHECK-NEXT: 2102e4: add  c0, c0, #944
+# CHECK-NEXT: 2102e8: ldp  x0, x1, [c0]
+# CHECK-NEXT: 2102ec: adrp c0, 0x220000 <_start+0x4c>
+# CHECK-NEXT: 2102f0: add  c0, c0, #960
+# CHECK-NEXT: 2102f4: ldp  x0, x1, [c0]
 
 
 .globl _start

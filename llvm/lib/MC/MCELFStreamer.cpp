@@ -708,6 +708,9 @@ void MCELFStreamer::finishImpl() {
   }
 
   if (getContext().getAsmInfo()->isCheriPurecapABI())
+    emitCHERINotes();
+
+  if (!CHERINotes.empty())
     createCHERINotesSection();
 
   // Ensure the last section gets aligned if necessary.
@@ -890,10 +893,7 @@ void MCELFStreamer::createAttributesSection(
   AttrsVec.clear();
 }
 
-void MCELFStreamer::createCHERINotesSection() {
-  MCContext &Ctx = getContext();
-  assert(Ctx.getAsmInfo()->isCheriPurecapABI() &&
-         ".note.cheri sections valid only for purecap objects");
+void MCELFStreamer::emitCHERINotes() {
   unsigned Type = llvm::ELF::NT_CHERI_GLOBALS_ABI;
   unsigned Variant;
   switch (MCTargetOptions::cheriCapabilityTableABI()) {
@@ -907,19 +907,31 @@ void MCELFStreamer::createCHERINotesSection() {
     Variant = llvm::ELF::CHERI_GLOBALS_ABI_FDESC;
     break;
   }
+  emitCHERINote(Type, Variant);
+}
+
+void MCELFStreamer::createCHERINotesSection() {
+  MCContext &Ctx = getContext();
+  assert(Ctx.getAsmInfo()->isCheriPurecapABI() &&
+         ".note.cheri sections valid only for purecap objects");
+
   MCSection *Nt =
       Ctx.getELFSection(".note.cheri", ELF::SHT_NOTE, ELF::SHF_ALLOC);
   PushSection();
   Nt->setAlignment(llvm::Align(4));
   SwitchSection(Nt);
-  emitInt32(6);                     // data size for "CHERI\0"
-  emitInt32(4);                     // descz
-  emitInt32(Type);                  // type
-  emitBytes(StringRef("CHERI", 6)); // note name
-  emitInt16(0);                     // padding
-  emitInt32(Variant);               // ABI variant
+  for (const auto &Note : CHERINotes) {
+    emitInt32(6);                     // data size for "CHERI\0"
+    emitInt32(4);                     // descz
+    emitInt32(Note.Type);             // type
+    emitBytes(StringRef("CHERI", 6)); // note name
+    emitInt16(0);                     // padding
+    emitInt32(Note.Variant);          // ABI variant
+  }
   endSection(Nt);
   PopSection();
+
+  CHERINotes.clear();
 }
 
 MCStreamer *llvm::createELFStreamer(MCContext &Context,

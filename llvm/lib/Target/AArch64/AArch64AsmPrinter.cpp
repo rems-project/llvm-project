@@ -1341,7 +1341,7 @@ void AArch64AsmPrinter::emitInstruction(const MachineInstr *MI) {
   }
   case AArch64::CTCRETURNr: {
     MCInst TmpInst;
-    if (MCTargetOptions::integerBranches()) {
+    if (STI->hasPurecapBenchmarkABI()) {
       TmpInst.setOpcode(AArch64::BR);
       TmpInst.addOperand(MCOperand::createReg(
           STI->getRegisterInfo()->getSubReg(MI->getOperand(0).getReg(),
@@ -1434,8 +1434,13 @@ void AArch64AsmPrinter::emitInstruction(const MachineInstr *MI) {
     EmitToStreamer(*OutStreamer, TLSDescCall);
 
     MCInst Blr;
-    Blr.setOpcode(AArch64::CapBranchLink);
-    Blr.addOperand(MCOperand::createReg(AArch64::C1));
+    if (STI->hasPurecapBenchmarkABI()) {
+      Blr.setOpcode(AArch64::BLR);
+      Blr.addOperand(MCOperand::createReg(AArch64::X1));
+    } else {
+      Blr.setOpcode(AArch64::CapBranchLink);
+      Blr.addOperand(MCOperand::createReg(AArch64::C1));
+    }
     EmitToStreamer(*OutStreamer, Blr);
 
     return;

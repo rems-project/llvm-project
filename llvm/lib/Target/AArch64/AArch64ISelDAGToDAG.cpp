@@ -4210,8 +4210,8 @@ SelectCapabilityBranch(SDNode *N, bool Clear, bool Tail) {
 
   unsigned Opcode =
       Clear ? AArch64::CBranchLinkClear
-            : (MCTargetOptions::integerBranches() ? AArch64::FakeCapBranchLink
-                                                  : AArch64::CapBranchLink);
+            : (Subtarget->hasPurecapBenchmarkABI() ? AArch64::FakeCapBranchLink
+                                                   : AArch64::CapBranchLink);
   if (CalleeNode.getOpcode() == ISD::TargetGlobalAddress ||
       CalleeNode.getOpcode() == ISD::TargetExternalSymbol)
     Opcode = Clear ? AArch64::PBLClear : AArch64::BL;

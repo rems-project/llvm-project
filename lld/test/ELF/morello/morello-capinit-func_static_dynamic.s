@@ -76,8 +76,8 @@ bss:
 // CHECK-NEXT:     Flags [
 // CHECK-NEXT:       SHF_ALLOC
 // CHECK-NEXT:     ]
-// CHECK-NEXT:     Address: 0x200218
-// CHECK-NEXT:     Offset: 0x218
+// CHECK-NEXT:     Address: 0x200230
+// CHECK-NEXT:     Offset: 0x230
 // CHECK-NEXT:     Size: 144
 // CHECK-NEXT:     Link: 0
 // CHECK-NEXT:     Info: 0

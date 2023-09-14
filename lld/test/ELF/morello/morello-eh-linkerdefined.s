@@ -64,27 +64,27 @@ _start: ret
 // CHECK-NEXT: Relocation {
 // CHECK-NEXT:   Location: 0x25AC80 ($d.2)
 // CHECK-NEXT:   Base: <unknown symbol> (0x213A80)
-// CHECK-NEXT:   Offset: 36
-// CHECK-NEXT:   Length: 160064
+// CHECK-NEXT:   Offset: 60
+// CHECK-NEXT:   Length: 160128
 // CHECK-NEXT:   Permissions: (RODATA) (0x1BFBE)
 // CHECK-NEXT: }
 // CHECK-NEXT: Relocation {
 // CHECK-NEXT:   Location: 0x25AC90
-// CHECK-NEXT:   Base: __eh_frame_end (0x23ABB8)
+// CHECK-NEXT:   Base: __eh_frame_end (0x23ABD0)
 // CHECK-NEXT:   Offset: 0
 // CHECK-NEXT:   Length: 0
 // CHECK-NEXT:   Permissions: (RODATA) (0x1BFBE)
 // CHECK-NEXT: }
 // CHECK-NEXT: Relocation {
 // CHECK-NEXT:   Location: 0x25ACA0
-// CHECK-NEXT:   Base: {{.*}} (0x200200)
-// CHECK-NEXT:   Offset: 24
-// CHECK-NEXT:   Length: 80064
+// CHECK-NEXT:   Base: {{.*}} (0x200220)
+// CHECK-NEXT:   Offset: 16
+// CHECK-NEXT:   Length: 80032
 // CHECK-NEXT:   Permissions: (RODATA) (0x1BFBE)
 // CHECK-NEXT: }
 // CHECK-NEXT: Relocation {
 // CHECK-NEXT:   Location: 0x25ACB0
-// CHECK-NEXT:   Base: __eh_frame_start (0x213AA4)
+// CHECK-NEXT:   Base: __eh_frame_start (0x213ABC)
 // CHECK-NEXT:   Offset: 0
 // CHECK-NEXT:   Length: 0
 // CHECK-NEXT:   Permissions: (RODATA) (0x1BFBE)

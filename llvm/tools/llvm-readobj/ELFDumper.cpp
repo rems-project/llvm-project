@@ -5696,6 +5696,69 @@ static AMDGPUNote getAMDGPUNote(uint32_t NoteType, ArrayRef<uint8_t> Desc) {
   }
 }
 
+struct CHERINote {
+  std::string Type;
+  std::string Value;
+};
+
+template <typename ELFT>
+static Optional<CHERINote> getCHERINote(unsigned Machine, uint32_t NoteType,
+                                        ArrayRef<uint8_t> Desc) {
+  if (Desc.size() != 4)
+    return None;
+
+  StringRef TypeDesc;
+  StringRef VariantDesc;
+  uint32_t Variant =
+      support::endian::read32<ELFT::TargetEndianness>(Desc.data());
+
+#define CHERI_VARIANT_CASE(Variant, Desc)                                      \
+  case Variant:                                                                \
+    VariantDesc = #Variant " (" Desc ")";                                      \
+    break;
+  switch (NoteType) {
+  case NT_CHERI_GLOBALS_ABI:
+    TypeDesc = "Globals ABI";
+    switch (Variant) {
+      CHERI_VARIANT_CASE(CHERI_GLOBALS_ABI_PCREL, "PC-relative");
+      CHERI_VARIANT_CASE(CHERI_GLOBALS_ABI_PLT_FPTR, "PLT-based");
+      CHERI_VARIANT_CASE(CHERI_GLOBALS_ABI_FDESC, "function descriptor-based");
+    default:
+      return None;
+    }
+    break;
+  case NT_CHERI_TLS_ABI:
+    TypeDesc = "TLS ABI";
+    switch (Variant) {
+      CHERI_VARIANT_CASE(CHERI_TLS_ABI_TRAD, "traditional");
+    default:
+      return None;
+    }
+    break;
+  default:
+    switch (Machine) {
+    case ELF::EM_AARCH64:
+      switch (NoteType) {
+      case NT_CHERI_MORELLO_PURECAP_BENCHMARK_ABI:
+        TypeDesc = "Purecap benchmark ABI enabled";
+        switch (Variant) {
+          CHERI_VARIANT_CASE(0, "no");
+          CHERI_VARIANT_CASE(1, "yes");
+        default:
+          return None;
+        }
+        break;
+      default:
+        return None;
+      }
+      break;
+    default:
+      return None;
+    }
+  }
+  return CHERINote{TypeDesc.str(), VariantDesc.str()};
+}
+
 struct CoreFileMapping {
   uint64_t Start, End, Offset;
   StringRef Filename;
@@ -5848,6 +5911,17 @@ const NoteType LLVMOMPOFFLOADNoteTypes[] = {
      "NT_LLVM_OPENMP_OFFLOAD_PRODUCER_VERSION (producing toolchain version)"},
 };
 
+static const NoteType CHERINoteTypes[] = {
+    {ELF::NT_CHERI_GLOBALS_ABI, "NT_CHERI_GLOBALS_ABI (CHERI globals ABI)"},
+    {ELF::NT_CHERI_TLS_ABI,
+     "NT_CHERI_TLS_ABI (CHERI thread-local storage ABI)"},
+};
+
+static const NoteType AArch64CHERINoteTypes[] = {
+    {ELF::NT_CHERI_MORELLO_PURECAP_BENCHMARK_ABI,
+     "NT_CHERI_MORELLO_PURECAP_BENCHMARK_ABI (Morello purecap benchmark ABI)"},
+};
+
 const NoteType CoreNoteTypes[] = {
     {ELF::NT_PRSTATUS, "NT_PRSTATUS (prstatus structure)"},
     {ELF::NT_FPREGSET, "NT_FPREGSET (floating point registers)"},
@@ -5914,7 +5988,8 @@ const NoteType CoreNoteTypes[] = {
 };
 
 template <class ELFT>
-StringRef getNoteTypeName(const typename ELFT::Note &Note, unsigned ELFType) {
+StringRef getNoteTypeName(const typename ELFT::Note &Note, unsigned ELFType,
+                          unsigned Machine) {
   uint32_t Type = Note.getType();
   auto FindNote = [&](ArrayRef<NoteType> V) -> StringRef {
     for (const NoteType &N : V)
@@ -5956,6 +6031,17 @@ StringRef getNoteTypeName(const typename ELFT::Note &Note, unsigned ELFType) {
     return FindNote(AMDGPUNoteTypes);
   if (Name == "LLVMOMPOFFLOAD")
     return FindNote(LLVMOMPOFFLOADNoteTypes);
+  if (Name == "CHERI") {
+    StringRef Result;
+    switch (Machine) {
+    case ELF::EM_AARCH64:
+      Result = FindNote(AArch64CHERINoteTypes);
+      break;
+    }
+    if (!Result.empty())
+      return Result;
+    return FindNote(CHERINoteTypes);
+  }
 
   if (ELFType == ELF::ET_CORE)
     return FindNote(CoreNoteTypes);
@@ -6062,7 +6148,8 @@ template <class ELFT> void GNUELFDumper<ELFT>::printNotes() {
        << format_hex(Descriptor.size(), 10) << '\t';
 
     StringRef NoteType =
-        getNoteTypeName<ELFT>(Note, this->Obj.getHeader().e_type);
+        getNoteTypeName<ELFT>(Note, this->Obj.getHeader().e_type,
+                              this->Obj.getHeader().e_machine);
     if (!NoteType.empty())
       OS << NoteType << '\n';
     else
@@ -6094,6 +6181,12 @@ template <class ELFT> void GNUELFDumper<ELFT>::printNotes() {
     } else if (Name == "LLVMOMPOFFLOAD") {
       if (printLLVMOMPOFFLOADNote<ELFT>(OS, Type, Descriptor))
         return Error::success();
+    } else if (Name == "CHERI") {
+      unsigned Machine = this->Obj.getHeader().e_machine;
+      if (Optional<CHERINote> N = getCHERINote<ELFT>(Machine, Type, Descriptor)) {
+        OS << "    " << N->Type << ": " << N->Value << '\n';
+        return Error::success();
+      }
     } else if (Name == "CORE") {
       if (Type == ELF::NT_FILE) {
         DataExtractor DescExtractor(Descriptor,
@@ -7531,7 +7624,8 @@ template <class ELFT> void LLVMELFDumper<ELFT>::printNotes() {
     W.printHex("Data size", Descriptor.size());
 
     StringRef NoteType =
-        getNoteTypeName<ELFT>(Note, this->Obj.getHeader().e_type);
+        getNoteTypeName<ELFT>(Note, this->Obj.getHeader().e_type,
+                              this->Obj.getHeader().e_machine);
     if (!NoteType.empty())
       W.printString("Type", NoteType);
     else
@@ -7564,6 +7658,12 @@ template <class ELFT> void LLVMELFDumper<ELFT>::printNotes() {
     } else if (Name == "LLVMOMPOFFLOAD") {
       if (printLLVMOMPOFFLOADNoteLLVMStyle<ELFT>(Type, Descriptor, W))
         return Error::success();
+    } else if (Name == "CHERI") {
+      unsigned Machine = this->Obj.getHeader().e_machine;
+      if (Optional<CHERINote> N = getCHERINote<ELFT>(Machine, Type, Descriptor)) {
+        W.printString(N->Type, N->Value);
+        return Error::success();
+      }
     } else if (Name == "CORE") {
       if (Type == ELF::NT_FILE) {
         DataExtractor DescExtractor(Descriptor,

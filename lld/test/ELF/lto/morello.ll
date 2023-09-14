@@ -8,7 +8,7 @@
 ; RUN: ld.lld %t/morello-crtbegin.o %t/morello-main.o -o %t/main.exe -plugin-opt=-emulated-tls
 
 ; RUN: llvm-readobj -h %t/main.exe | FileCheck %s --check-prefix=PURECAP-EFLAGS
-; RUN: llvm-objdump -d %t/main.exe | FileCheck %s --check-prefix=DISASM
+; RUN: llvm-objdump -d --no-leading-addr %t/main.exe | FileCheck %s --check-prefix=DISASM
 
 ; PURECAP-EFLAGS: Flags [
 ; PURECAP-EFLAGS-NEXT: EF_AARCH64_CHERI_PURECAP
@@ -16,11 +16,11 @@
 ;; Check that the purecap ABI was inferred for LTO and we generated a purecap return instruction:
 ; DISASM: Disassembly of section .text:
 ; DISASM-EMPTY:
-; DISASM-NEXT: 0000000000210178 <_start>:
-; DISASM-NEXT:   210178: 01 00 00 94  	bl	0x21017c <main>
+; DISASM-NEXT: <_start>:
+; DISASM-NEXT:   01 00 00 94  	bl	{{.*}} <main>
 ; DISASM-EMPTY:
-; DISASM-NEXT: 000000000021017c <main>:
-; DISASM-NEXT:   21017c: c0 53 c2 c2  	ret	c30
+; DISASM-NEXT: <main>:
+; DISASM-NEXT:   c0 53 c2 c2  	ret	c30
 
 
 

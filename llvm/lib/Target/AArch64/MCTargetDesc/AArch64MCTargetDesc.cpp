@@ -264,7 +264,8 @@ static MCAsmInfo *createAArch64MCAsmInfo(const MCRegisterInfo &MRI,
   else {
     assert(TheTriple.isOSBinFormatELF() && "Invalid target");
     bool HasPureCap = Options.getABIName().startswith("purecap");
-    MAI = new AArch64MCAsmInfoELF(TheTriple, HasPureCap);
+    bool IsPurecapBenchmark = Options.getABIName() == "purecap-benchmark";
+    MAI = new AArch64MCAsmInfoELF(TheTriple, HasPureCap, IsPurecapBenchmark);
   }
 
   // Initial state of the frame pointer is SP, or CSP in the purecap mode.

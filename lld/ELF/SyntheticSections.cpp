@@ -331,7 +331,16 @@ bool CheriNotesSection::isNeeded() const {
 }
 
 void CheriNotesSection::writeTo(uint8_t *buf) {
-  for (auto &entry : config->cheriVariants) {
+  std::vector<std::pair<unsigned, unsigned>> cheriVariants;
+
+  for (auto &entry : config->cheriVariants)
+    cheriVariants.emplace_back(entry.first, entry.second);
+
+  llvm::sort(cheriVariants, [](const auto &a, const auto &b) {
+    return a.first < b.first;
+  });
+
+  for (auto &entry : cheriVariants) {
     write32(buf, 6);                 // Name size
     write32(buf + 4, 4);             // Content size
     write32(buf + 8, entry.first);   // ABI

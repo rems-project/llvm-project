@@ -1414,10 +1414,12 @@ bool AArch64ExpandPseudo::expandMI(MachineBasicBlock &MBB,
 
     bool CapRet = (Opcode == AArch64::CRET_ReallyLR ||
                    Opcode == AArch64::CRET_ReallyLRClear);
+    const AArch64Subtarget &STI =
+        static_cast<const AArch64Subtarget &>(MBB.getParent()->getSubtarget());
     unsigned Opc =
         CapRet
-            ? (MCTargetOptions::integerReturns() ? AArch64::FakeCapReturn
-                                                 : AArch64::CapReturn)
+            ? (STI.hasPurecapBenchmarkABI()  ? AArch64::FakeCapReturn
+                                             : AArch64::CapReturn)
             : AArch64::RET;
     // Hiding the LR use with RET_ReallyLR may lead to extra kills in the
     // function and missing live-ins. We are fine in practice because callee

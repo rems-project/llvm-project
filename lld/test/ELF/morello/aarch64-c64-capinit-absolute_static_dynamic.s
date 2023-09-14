@@ -34,7 +34,7 @@ _start:
 // CHECK-NEXT:     SHF_ALLOC
 // CHECK-NEXT:     SHF_WRITE
 // CHECK-NEXT:   ]
-// CHECK-NEXT:   Address: 0x220288
+// CHECK-NEXT:   Address: 0x2202A0
 // CHECK-NEXT:   Offset:
 // CHECK-NEXT:   Size: 32
 // CHECK-NEXT:   Link: 0
@@ -50,7 +50,7 @@ _start:
 // CHECK-NEXT:     SHF_ALLOC
 // CHECK-NEXT:     SHF_WRITE
 // CHECK-NEXT:   ]
-// CHECK-NEXT:   Address: 0x2202B0
+// CHECK-NEXT:   Address: 0x2202C0
 // CHECK-NEXT:   Offset:
 // CHECK-NEXT:   Size:
 // CHECK-NEXT:   Link: 0
@@ -61,25 +61,25 @@ _start:
 
 // CHECK:        .rela.dyn {
 // CHECK-NEXT:     Relocation {
-// CHECK-NEXT:       Offset: 0x220288
+// CHECK-NEXT:       Offset: 0x2202A0
 // CHECK-NEXT:       Type: R_MORELLO_RELATIVE
 // CHECK-NEXT:       Symbol: - (0)
 // CHECK-NEXT:       Addend: 0x17E01
-// CHECK-NEXT:     }
-// CHECK-NEXT:     Relocation {
-// CHECK-NEXT:       Offset: 0x220298
-// CHECK-NEXT:       Type: R_MORELLO_RELATIVE
-// CHECK-NEXT:       Symbol: - (0)
-// CHECK-NEXT:       Addend: 0x0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x2202B0
 // CHECK-NEXT:       Type: R_MORELLO_RELATIVE
 // CHECK-NEXT:       Symbol: - (0)
-// CHECK-NEXT:       Addend: 0x17E01
+// CHECK-NEXT:       Addend: 0x0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x2202C0
+// CHECK-NEXT:       Type: R_MORELLO_RELATIVE
+// CHECK-NEXT:       Symbol: - (0)
+// CHECK-NEXT:       Addend: 0x17E01
+// CHECK-NEXT:     }
+// CHECK-NEXT:     Relocation {
+// CHECK-NEXT:       Offset: 0x2202D0
 // CHECK-NEXT:       Type: R_MORELLO_RELATIVE
 // CHECK-NEXT:       Symbol: - (0)
 // CHECK-NEXT:       Addend: 0x0
@@ -107,12 +107,12 @@ _start:
 
 // CHECK:      Hex dump of section '.data.rel.ro':
 /// foo: address: 0x218001, size = 4, perms = EXEC(0x4)
-// CHECK-NEXT: 0x00220288 00022000 00000000 00010200 00000004
+// CHECK-NEXT: 0x002202a0 00022000 00000000 00010200 00000004
 /// bar: address: 0x400000, size = 8, perms = RW(0x2)
-// CHECK-NEXT: 0x00220298 00004000 00000000 08000000 00000002
+// CHECK-NEXT: 0x002202b0 00004000 00000000 08000000 00000002
 
 // CHECK:      Hex dump of section '.got':
 /// foo: address: 0x218001, size = 4, perms = EXEC(0x4)
-// CHECK-NEXT: 0x002202b0 00022000 00000000 00010200 00000004
+// CHECK-NEXT: 0x002202c0 00022000 00000000 00010200 00000004
 /// bar: address: 0x400000, size = 8, perms = RW(0x2)
-// CHECK-NEXT: 0x002202c0 00004000 00000000 08000000 00000002
+// CHECK-NEXT: 0x002202d0 00004000 00000000 08000000 00000002

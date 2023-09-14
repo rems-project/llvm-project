@@ -676,6 +676,17 @@ ELFFile<ELFT>::decodeBBAddrMap(const Elf_Shdr &Sec) const {
 }
 
 StringRef llvm::object::getELFCheriAbiType(uint32_t Machine, unsigned Type) {
+  switch (Machine) {
+  case ELF::EM_AARCH64:
+    switch (Type) {
+      STRINGIFY_ENUM_CASE(ELF, NT_CHERI_MORELLO_PURECAP_BENCHMARK_ABI);
+    default:
+      break;
+    }
+    break;
+  default:
+    break;
+  }
   switch (Type) {
     STRINGIFY_ENUM_CASE(ELF, NT_CHERI_GLOBALS_ABI);
     STRINGIFY_ENUM_CASE(ELF, NT_CHERI_TLS_ABI);
@@ -686,6 +697,26 @@ StringRef llvm::object::getELFCheriAbiType(uint32_t Machine, unsigned Type) {
 
 StringRef llvm::object::getELFCheriVariant(uint32_t Machine, unsigned Type,
                                            unsigned Variant) {
+  switch (Machine) {
+  case ELF::EM_AARCH64:
+    switch (Type) {
+    case ELF::NT_CHERI_MORELLO_PURECAP_BENCHMARK_ABI:
+      switch (Variant) {
+      case 0:
+        return "no";
+      case 1:
+        return "yes";
+      default:
+        break;
+      }
+      return "Unknown";
+    default:
+      break;
+    }
+    break;
+  default:
+    break;
+  }
   switch (Type) {
   case ELF::NT_CHERI_GLOBALS_ABI:
     switch (Variant) {

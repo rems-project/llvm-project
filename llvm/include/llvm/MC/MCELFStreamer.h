@@ -99,6 +99,11 @@ public:
     std::string StringValue;
   };
 
+  struct CHERINoteItem {
+    unsigned Type;
+    unsigned Variant;
+  };
+
   // Attributes that are added and managed entirely by target.
   SmallVector<AttributeItem, 64> Contents;
   void setAttributeItem(unsigned Attribute, unsigned Value,
@@ -123,12 +128,22 @@ private:
   // GNU attributes that will get emitted at the end of the asm file.
   SmallVector<AttributeItem, 64> GNUAttributes;
 
+  // CHERI notes that will get emitted at the end of the asm file.
+  SmallVector<CHERINoteItem, 4> CHERINotes;
+
 public:
   void emitGNUAttribute(unsigned Tag, unsigned Value) override {
     AttributeItem Item = {AttributeItem::NumericAttribute, Tag, Value,
                           std::string(StringRef(""))};
     GNUAttributes.push_back(Item);
   }
+
+  void emitCHERINote(unsigned Type, unsigned Variant) {
+    CHERINoteItem Item = {Type, Variant};
+    CHERINotes.push_back(Item);
+  };
+
+  virtual void emitCHERINotes();
 
 private:
   bool isBundleLocked() const;

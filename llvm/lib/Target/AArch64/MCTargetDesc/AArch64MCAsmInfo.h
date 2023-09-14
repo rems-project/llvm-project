@@ -29,7 +29,15 @@ struct AArch64MCAsmInfoDarwin : public MCAsmInfoDarwin {
 };
 
 struct AArch64MCAsmInfoELF : public MCAsmInfoELF {
-  explicit AArch64MCAsmInfoELF(const Triple &T, bool IsPureCap);
+  explicit AArch64MCAsmInfoELF(const Triple &T, bool IsPureCap,
+                               bool IsPurecapBenchmark);
+
+  bool isPurecapBenchmarkABI() const {
+    return IsPurecapBenchmarkABI;
+  }
+
+private:
+  bool IsPurecapBenchmarkABI;
 };
 
 struct AArch64MCAsmInfoMicrosoftCOFF : public MCAsmInfoMicrosoft {
