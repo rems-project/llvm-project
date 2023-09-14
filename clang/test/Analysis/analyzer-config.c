@@ -31,6 +31,7 @@
 // CHECK-NEXT: cfg-rich-constructors = true
 // CHECK-NEXT: cfg-scopes = false
 // CHECK-NEXT: cfg-temporary-dtors = true
+// CHECK-NEXT: cheri.CapabilityCopy:ReportForCharPtr = true
 // CHECK-NEXT: cheri.ProvenanceSource:ShowFixIts = false
 // CHECK-NEXT: core.CallAndMessage:ArgInitializedness = true
 // CHECK-NEXT: core.CallAndMessage:ArgPointeeInitializedness = false
