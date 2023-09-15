@@ -3215,6 +3215,7 @@ static void RenderAnalyzerOptions(const ArgList &Args, ArgStringList &CmdArgs,
         (Triple.isAArch64() && tools::aarch64::isPurecap(Args, Triple))) {
       CmdArgs.push_back("-analyzer-checker=cheri");
       CmdArgs.push_back("-analyzer-checker=optin.portability.PointerAlignment");
+      CmdArgs.push_back("-analyzer-checker=alpha.core.PointerSub");
     }
 
     // Default nullability checks.
