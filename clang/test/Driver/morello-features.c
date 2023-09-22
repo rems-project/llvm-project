@@ -39,6 +39,9 @@
 // RUN: %clang -target aarch64-none-elf -march=morello -mabi=purecap-benchmark %s -### -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-BENCHMARK %s
 
+// RUN: %clang -target aarch64-none-elf -march=morello -mabi=purecap-desc %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-DESC %s
+
 // CHECK-A64C-NOT: "-target-abi" "purecap"
 // CHECK-A64C: "-target-feature" "+morello"
 
@@ -100,3 +103,15 @@
 // CHECK-BENCHMARK: "-target-feature" "+morello"
 // CHECK-BENCHMARK: "-target-feature" "+c64"
 // CHECK-BENCHMARK: "-target-abi" "purecap-benchmark"
+
+// CHECK-DESC: "-target-feature" "+v8.2a"
+// CHECK-DESC: "-target-feature" "+fp-armv8"
+// CHECK-DESC: "-target-feature" "+dotprod"
+// CHECK-DESC: "-target-feature" "+fullfp16"
+// CHECK-DESC: "-target-feature" "+spe"
+// CHECK-DESC: "-target-feature" "+ssbs"
+// CHECK-DESC: "-target-feature" "+rcpc"
+// CHECK-DESC: "-target-feature" "+morello"
+// CHECK-DESC: "-target-feature" "+c64"
+// CHECK-DESC: "-target-abi" "purecap"
+// CHECK-DESC: "-cheri-cap-table-abi=fn-desc"

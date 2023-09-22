@@ -1809,6 +1809,15 @@ void Clang::RenderTargetOptions(const llvm::Triple &EffectiveTriple,
 
 static void addMorelloFlags(const ArgList &Args, ArgStringList &CmdArgs,
                           StringRef ABIName) {
+  if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ)) {
+    StringRef ABI = A->getValue();
+    if (ABI == "purecap-desc") {
+      CmdArgs.push_back("-mllvm");
+      CmdArgs.push_back(Args.MakeArgString("-cheri-cap-table-abi=fn-desc"));
+      return;
+    }
+  }
+
   CmdArgs.push_back("-mllvm");
   CmdArgs.push_back(Args.MakeArgString("-cheri-cap-table-abi=pcrel"));
 }
@@ -1817,9 +1826,13 @@ namespace {
 StringRef RenderAArch64ABI(const llvm::Triple &Triple, const ArgList &Args,
                       ArgStringList &CmdArgs) {
   const char *ABIName = nullptr;
-  if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ))
+  if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ)) {
     ABIName = A->getValue();
-  else if (Triple.isOSDarwin())
+    StringRef ABIStr = ABIName;
+
+    if (ABIStr == "purecap-desc")
+      ABIName = "purecap";
+  } else if (Triple.isOSDarwin())
     ABIName = "darwinpcs";
   else
     ABIName = "aapcs";
@@ -7922,14 +7935,16 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
 
   case llvm::Triple::aarch64:
   case llvm::Triple::aarch64_32:
-  case llvm::Triple::aarch64_be:
+  case llvm::Triple::aarch64_be: {
     if (Args.hasArg(options::OPT_mmark_bti_property)) {
       CmdArgs.push_back("-mllvm");
       CmdArgs.push_back("-aarch64-mark-bti-property");
     }
     RenderAArch64ABI(Triple, Args, CmdArgs);
+    StringRef ABI = RenderAArch64ABI(Triple, Args, CmdArgs);
+    addMorelloFlags(Args, CmdArgs, ABI);
     break;
-
+  }
   case llvm::Triple::riscv32:
   case llvm::Triple::riscv64:
     AddRISCVTargetArgs(Args, CmdArgs);

@@ -134,7 +134,7 @@ StringRef AArch64TargetInfo::getABI() const { return ABI; }
 
 bool AArch64TargetInfo::setABI(const std::string &Name) {
   if (Name != "aapcs" && Name != "darwinpcs" && Name != "purecap" &&
-      Name != "purecap-benchmark")
+      Name != "purecap-benchmark" && Name != "purecap-desc")
     return false;
 
   if (Name.rfind("purecap", 0) == 0) {
