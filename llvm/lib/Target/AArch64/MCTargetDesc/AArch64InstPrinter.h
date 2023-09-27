@@ -185,6 +185,8 @@ protected:
                         const MCSubtargetInfo &STI, raw_ostream &O);
   void printAdrpLabel(const MCInst *MI, uint64_t Address, unsigned OpNum,
                       const MCSubtargetInfo &STI, raw_ostream &O);
+  void printAdrdpLabel(const MCInst *MI, unsigned OpNum,
+                       const MCSubtargetInfo &STI, raw_ostream &O);
   void printBarrierOption(const MCInst *MI, unsigned OpNum,
                           const MCSubtargetInfo &STI, raw_ostream &O);
   void printBarriernXSOption(const MCInst *MI, unsigned OpNum,

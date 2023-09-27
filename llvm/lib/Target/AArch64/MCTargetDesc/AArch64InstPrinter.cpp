@@ -1967,6 +1967,25 @@ void AArch64InstPrinter::printAdrpLabel(const MCInst *MI, uint64_t Address,
   MI->getOperand(OpNum).getExpr()->print(O, &MAI);
 }
 
+void AArch64InstPrinter::printAdrdpLabel(const MCInst *MI,
+                                        unsigned OpNum,
+                                        const MCSubtargetInfo &STI,
+                                        raw_ostream &O) {
+  const MCOperand &Op = MI->getOperand(OpNum);
+
+  if (Op.isImm()) {
+    const uint64_t Offset = Op.getImm() * 4096;
+    if (PrintBranchImmAsAddress)
+      O << formatHex(Offset);
+    else
+      O << "#" << Offset;
+    return;
+  }
+
+  // Otherwise, just print the expression.
+  MI->getOperand(OpNum).getExpr()->print(O, &MAI);
+}
+
 void AArch64InstPrinter::printBarrierOption(const MCInst *MI, unsigned OpNo,
                                             const MCSubtargetInfo &STI,
                                             raw_ostream &O) {

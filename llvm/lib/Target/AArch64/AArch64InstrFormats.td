@@ -11843,9 +11843,8 @@ def AdrdpOperandUImm20 : AsmOperandClass {
 
 def adrdplabel_uimm20 : Operand<iPTR> {
   let EncoderMethod = "getAdrLabelOpValue";
-  let PrintMethod = "printAdrpLabel";
+  let PrintMethod = "printAdrdpLabel";
   let ParserMatchClass = AdrdpOperandUImm20;
-  let OperandType = "OPERAND_PCREL";
 }
 
 def AdrpOperandSImm20 : AsmOperandClass {
