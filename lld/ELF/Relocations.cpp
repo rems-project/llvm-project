@@ -209,7 +209,7 @@ static bool needsPlt(RelExpr expr) {
 static bool needsGot(RelExpr expr) {
   return oneof<R_GOT, R_GOT_OFF, R_MIPS_GOT_LOCAL_PAGE, R_MIPS_GOT_OFF,
                R_MIPS_GOT_OFF32, R_AARCH64_GOT_PAGE_PC, R_GOT_PC, R_GOTPLT,
-               R_AARCH64_GOT_PAGE>(expr);
+               R_AARCH64_GOT_PAGE, R_MORELLO_DESC_GOT_PAGE_PC>(expr);
 }
 
 // True if this expression is of the form Sym - X, where X is a position in the
@@ -218,7 +218,7 @@ static bool isRelExpr(RelExpr expr) {
   return oneof<R_PC, R_GOTREL, R_GOTPLTREL, R_MIPS_GOTREL, R_PPC64_CALL,
                R_PPC64_RELAX_TOC, R_AARCH64_PAGE_PC, R_RELAX_GOT_PC,
                R_RISCV_PC_INDIRECT, R_PPC64_RELAX_GOT_PC, R_MORELLO_VADREF,
-               R_CHERI_CAPABILITY_TABLE_REL>(expr);
+               R_CHERI_CAPABILITY_TABLE_REL, R_MORELLO_DESC_PAGE_PC>(expr);
 }
 
 static RelExpr toPlt(RelExpr expr) {
@@ -1003,7 +1003,7 @@ bool RelocationScanner::isStaticLinkTimeConstant(RelExpr e, RelType type,
             R_AARCH64_GOT_PAGE_PC, R_GOT_PC, R_GOTONLY_PC, R_GOTPLTONLY_PC,
             R_PLT_PC, R_PLT_GOTPLT, R_PPC32_PLTREL, R_PPC64_CALL_PLT,
             R_PPC64_RELAX_TOC, R_RISCV_ADD, R_AARCH64_GOT_PAGE,
-            R_MORELLO_TLSDESC_PAGE>(e))
+            R_MORELLO_TLSDESC_PAGE, R_MORELLO_DESC_GOT_PAGE_PC>(e))
     return true;
 
   // Cheri capability relocations are never static link time constants since
@@ -1524,6 +1524,23 @@ template <class ELFT, class RelTy> void RelocationScanner::scanOne(RelTy *&i) {
     return;
   }
 
+  if (expr == R_MORELLO_DESC_PAGE_PC) {
+    // We have checked that sym is defined so OutputSection cannot be null.
+    // Switch to adrdp if sym is in a . For adrp, this will have the function of
+    // R_MORELLO_ADR_PREL_PG_HI20.
+    if ((sym.getOutputSection()->getPhdrFlags() & PF_W) != 0 &&
+        isMorelloDescSection(sym.getOutputSection()) &&
+        !sym.getOutputSection()->name.startswith(".gcc_except_table"))
+      sec.relocations.push_back({expr, type, offset, addend, &sym});
+    else
+      sec.relocations.push_back({R_AARCH64_PAGE_PC, R_MORELLO_ADR_PREL_PG_HI20,
+                                 offset, addend, &sym});
+    return;
+  }
+
+  if (expr == R_MORELLO_DESC_CAPABILITY)
+    expr = R_CHERI_CAPABILITY;
+
   if (oneof<R_CHERI_CAPABILITY_TABLE_INDEX,
             R_CHERI_CAPABILITY_TABLE_INDEX_SMALL_IMMEDIATE,
             R_CHERI_CAPABILITY_TABLE_INDEX_CALL,
@@ -1537,7 +1554,8 @@ template <class ELFT, class RelTy> void RelocationScanner::scanOne(RelTy *&i) {
   if (config->emachine == EM_AARCH64 && !config->morelloC64Plt &&
       (needsGot(expr) || needsPlt(expr)) &&
       (type == R_MORELLO_CALL26 || type == R_MORELLO_JUMP26 ||
-       type == R_MORELLO_LD128_GOT_LO12_NC)) {
+       type == R_MORELLO_LD128_GOT_LO12_NC ||
+       type == R_MORELLO_DESC_LD128_GOT_LO12_NC)) {
     // We require 16-byte GOT entries and a different PLT sequence.
     error("Morello PLT/GOT generating relocation " + toString(type) +
           " requires the purecap ABI" + getLocation(sec, sym, offset));

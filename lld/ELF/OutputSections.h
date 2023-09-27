@@ -135,11 +135,14 @@ SmallVector<InputSection *, 0> getInputSections(const OutputSection &os);
 struct Out {
   static uint8_t *bufferStart;
   static PhdrEntry *tlsPhdr;
+  static PhdrEntry *descPhdr;
   static OutputSection *elfHeader;
   static OutputSection *programHeaders;
   static OutputSection *preinitArray;
   static OutputSection *initArray;
   static OutputSection *finiArray;
+  static OutputSection *descROStart;
+  static OutputSection *descROEnd;
 };
 
 uint64_t getHeaderSize();

@@ -2344,7 +2344,7 @@ static uint32_t getAndFeatures() {
 }
 
 template <class ELFT> static void readCheriVariants() {
-  if (!config->isCheriAbi)
+  if (!config->isCheriAbi && !config->morelloC64Plt)
     return;
 
   for (InputFile *f : objectFiles) {
@@ -2629,6 +2629,15 @@ void LinkerDriver::link(opt::InputArgList &args) {
   // contain a hint to tweak linker's and loader's behaviors.
   config->andFeatures = getAndFeatures();
 
+  if (config->morelloC64Plt) {
+    // We need to read the Cheri notes in order to properly create the target.
+    invokeELFT(readCheriVariants);
+    config->isCheriFnDesc =
+        (config->cheriVariants.lookup(NT_CHERI_GLOBALS_ABI) == CHERI_GLOBALS_ABI_FDESC);
+    if (config->isCheriFnDesc)
+      config->localCapRelocsMode = CapRelocsMode::ElfReloc;
+  }
+
   // The Target instance handles target-specific stuff, such as applying
   // relocations or writing a PLT section. It also contains target-dependent
   // values such as a default image base address.
@@ -2636,10 +2645,16 @@ void LinkerDriver::link(opt::InputArgList &args) {
 
   config->eflags = target->calcEFlags();
   config->isCheriAbi = target->calcIsCheriAbi();
-  invokeELFT(readCheriVariants);
-  if (config->emachine == EM_AARCH64)
+  if (!config->morelloC64Plt)
+    invokeELFT(readCheriVariants);
+  if (config->isCheriAbi)
+    config->isCheriFnDesc =
+        (config->cheriVariants.lookup(NT_CHERI_GLOBALS_ABI) == CHERI_GLOBALS_ABI_FDESC);
+  if (config->emachine == EM_AARCH64) {
     config->morelloPurecapBenchmarkABI = static_cast<bool>(
         config->cheriVariants.lookup(NT_CHERI_MORELLO_PURECAP_BENCHMARK_ABI));
+  }
+
   // maxPageSize (sometimes called abi page size) is the maximum page size that
   // the output can be run on. For example if the OS can use 4k or 64k page
   // sizes then maxPageSize must be 64k for the output to be useable on both.

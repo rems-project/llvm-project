@@ -945,16 +945,42 @@ static void addCapDynamicRelocation(RelType dynType, Symbol *sym,
                                     int64_t addend) {
   bool isExecRel =
       (sym->isFunc() || sym->isGnuIFunc()) &&
-      (dynType == R_MORELLO_RELATIVE || dynType == R_MORELLO_IRELATIVE);
+      (dynType == R_MORELLO_RELATIVE || dynType == target->iRelativeRel);
+
+  RelType realDynType = dynType;
+
+  if (dynType == R_MORELLO_RELATIVE && config->isCheriFnDesc) {
+    bool isDescSym = false;
+    if (sym->getOutputSection())
+      isDescSym =
+          (sym->getOutputSection()->getPhdrFlags() & PF_W) != 0 &&
+          !sym->getOutputSection()->name.startswith(".data.rel.ro") &&
+          !sym->getOutputSection()->name.startswith(".gcc_except_table");
+    bool isDescFragment = (sec->flags & SHF_WRITE) &&
+                          !sec->name.startswith(".data.rel.ro") &&
+                          !sec->name.startswith(".gcc_except_table");
+    realDynType = R_MORELLO_RELATIVE;
+    if ((sym->isFunc() || sym->isGnuIFunc()) && addend == 0) {
+      realDynType = R_MORELLO_DESC_FUNC_RELATIVE;
+      assert(isDescFragment && "invalid function relocation");
+    } else if (isDescSym && isDescFragment) {
+      realDynType = R_MORELLO_DESC_DAT_RELATIVE;
+    } else if (isDescFragment && !isDescSym) {
+      realDynType = R_MORELLO_DESC_RELATIVE;
+    } else if (isDescSym & !isDescFragment) {
+      llvm_unreachable("invalid relocation");
+    }
+  }
+
   if (dynType == R_MORELLO_RELATIVE && !sym->includeInDynsym() &&
       config->localCapRelocsMode == CapRelocsMode::ElfReloc) {
     in.relaDyn->addReloc(
-        {dynType, sec, offset,
+        {realDynType, sec, offset,
          isExecRel ? DynamicReloc::AArch64ExecRel : DynamicReloc::AgainstSymbol,
          *sym, addend, R_ABS});
   } else {
     mainPart->relaDyn->addReloc(
-        {dynType, sec, offset,
+        {realDynType, sec, offset,
          isExecRel ? DynamicReloc::AArch64ExecRel : DynamicReloc::AgainstSymbol,
          *sym, addend, R_ABS});
   }
@@ -970,7 +996,7 @@ void addMorelloC64GotRelocation(RelType dynType, Symbol *sym,
   // If there is a Dynamic Symbol Table, there cannot be a caprelocs section.
   // R_MORELLO_IRELATIVE can be present even without a Dynamic Symbol Table
   // being present.
-  if (config->hasDynSymTab || dynType == R_MORELLO_IRELATIVE ||
+  if (config->hasDynSymTab || dynType == target->iRelativeRel ||
       config->localCapRelocsMode == CapRelocsMode::ElfReloc) {
     addCapDynamicRelocation(dynType, sym, sec, offset, addend);
   } else {
