@@ -1734,6 +1734,10 @@ def CapabilityCopyChecker : Checker<"CapabilityCopy">,
     ]>,
   Documentation<NotDocumented>;
 
+def PointerSizeAssumptionsChecker : Checker<"PointerSizeAssumptions">,
+  HelpText<"Detect hardcoded expectations on pointer sizes">,
+  Documentation<NotDocumented>;
+
 } // end cheri
 
 let ParentPackage = CHERIAlpha in {
