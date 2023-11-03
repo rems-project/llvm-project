@@ -56,14 +56,14 @@ See _CHERI C/C++ Programming Guide_ §4.2.2.
 ### Install
 
 ```
-$ pkg64 install llvm-csa-0.0.0.pkg
+$ pkg64 install llvm-morello-csa-13.0.d20231102.pkg
 ```
 
 ### Usage
 
 #### Single compilation
 
-1. Compile with `clang-csa`
+1. Compile with `clang-morello-csa`
 2. Add ``--analyze`` to clang options.
 
 #### Analysing with ``scan-build``
@@ -71,7 +71,7 @@ $ pkg64 install llvm-csa-0.0.0.pkg
 Assuming `llvm-base` is installed:
 
 ```
-$ scan-build-csa --use-cc=cc --use-c++=c++ --keep-cc BUILD_COMMAND
+$ scan-build-morello-csa --use-cc=cc --use-c++=c++ --keep-cc BUILD_COMMAND
 ```
 
 See [below](#notes-on-using-scan-build) for notes on using `scan-build`.
