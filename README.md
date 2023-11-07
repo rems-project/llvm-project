@@ -2,79 +2,45 @@
 
 This is the fork of [The CHERI LLVM Compiler Infrastructure](https://git.morello-project.org/morello/llvm-project) for CHERI-related Clang Static Analyzer development.
 
-CSA performs inter-procedural path-sensitive analysis in the boundary of one translation unit (via inlining). Cross Translation Unit analysis exists, but I'm unsure about its status[^1].
+CSA performs inter-procedural path-sensitive analysis in the boundary of one translation unit (via inlining).
 
-[^1]:https://clang.llvm.org/docs/analyzer/user-docs/CrossTranslationUnit.html
+See Wiki for:
+- [List of detected issues](https://github.com/rems-project/llvm-project/wiki/List-of-detected-issues)
+- [Description of new CHERI-related checkers](https://github.com/rems-project/llvm-project/wiki/CHERI-CSA-Checkers)
 
-
-## CHERI-related checkers
-
-### ProvenanceSource
-
-* Tracks integers and pointers stored as `(u)intptr_t` type
-* Fires a warning for `(u)intptr_t` binary operations with ambiguous provenance source (same as clang) and tells which side carries (or not) the provenance along the path
-* Fires a warning when the `(u)intptr_t` value obtained from the ambiguous-provenance-operation is cast to pointer type
-* Fires a warning when `NULL`-derived `(u)intptr_t` capability is cast to pointer type
-
-See _CHERI C/C++ Programming Guide_ §4.2.3.
-
-### CapabilityCopy
-
-Detects tag-stripping loads and stores that may be used to copy or swap capabilities
-
-```c
-void memcpy_impl(void* src0, void *dst0, size_t len) {
-  char *src = src0;
-  char *dst = dst0;
-
-  while (len--)
-    *dst++ = *src++; // Tag-stripping store of a capability
-}
-```
-
-See _CHERI C/C++ Programming Guide_ §4.2.
-
-### PointerAlignment
-Reports pointer casts of underaligned values to types with strict alignment requirements.
-
-Special case for CHERI: casts to pointer to capability. Storing capabilities at not capability-aligned addressed will result in stored capability losing its tag.
-
-```c
-double a[2048];
-void** foo(void) {
-  char *p0 = (char*)a;
-  // Pointer p0 is aligned to a 8 byte boundary;
-  // type 'void **' requires capability alignment (16 bytes)
-  return (void**)p0; 
-}
-```
-
-See _CHERI C/C++ Programming Guide_ §4.2.2.
+# Usage
 
 ## Using with CheriBSD package
 
-### Install
+### Install package
 
 ```
 $ pkg64 install llvm-morello-csa-13.0.d20231102.pkg
 ```
 
-### Usage
+### Run analyzer
+
+#### Analysing with ``scan-build``
+
+Assuming `llvm-base` is installed:
+
+```bash
+$ scan-build-morello-csa --use-cc=cc --use-c++=c++ <OTHER_SCAN_BUILD_OPTIONS> BUILD_COMMAND
+```
+
+**Example:**
+```bash
+$ scan-build-morello-csa --use-cc=cc --use-c++=c++ --keep-cc make configure
+$ scan-build-morello-csa --use-cc=cc --use-c++=c++ --keep-cc make build
+```
+
+See [below](#notes-on-using-scan-build) for notes on using `scan-build`.
 
 #### Single compilation
 
 1. Compile with `clang-morello-csa`
 2. Add ``--analyze`` to clang options.
 
-#### Analysing with ``scan-build``
-
-Assuming `llvm-base` is installed:
-
-```
-$ scan-build-morello-csa --use-cc=cc --use-c++=c++ --keep-cc BUILD_COMMAND
-```
-
-See [below](#notes-on-using-scan-build) for notes on using `scan-build`.
 
 ## Using with ``cheribuild``
 
