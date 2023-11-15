@@ -25,6 +25,7 @@
 #include "clang/Basic/CLWarnings.h"
 #include "clang/Basic/CharInfo.h"
 #include "clang/Basic/CodeGenOptions.h"
+#include <clang/Basic/DiagnosticSema.h>
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/ObjCRuntime.h"
 #include "clang/Basic/Version.h"
@@ -3155,7 +3156,8 @@ static void RenderFloatingPointOptions(const ToolChain &TC, const Driver &D,
 
 static void RenderAnalyzerOptions(const ArgList &Args, ArgStringList &CmdArgs,
                                   const llvm::Triple &Triple,
-                                  const InputInfo &Input) {
+                                  const InputInfo &Input,
+                                  DiagnosticsEngine &Diags) {
   // Enable region store model by default.
   CmdArgs.push_back("-analyzer-store=region");
 
@@ -3214,6 +3216,16 @@ static void RenderAnalyzerOptions(const ArgList &Args, ArgStringList &CmdArgs,
         (Triple.isRISCV() && tools::riscv::isCheriPurecap(Args, Triple)) ||
         (Triple.isAArch64() && tools::aarch64::isPurecap(Args, Triple))) {
       CmdArgs.push_back("-analyzer-checker=cheri");
+
+      // disable AmbiguousProvenance war if [-Wcheri-provenance] is disabled
+      if (Diags.getDiagnosticLevel(
+              diag::warn_ambiguous_provenance_capability_binop,
+              SourceLocation()) < DiagnosticsEngine::Warning) {
+        CmdArgs.push_back("-analyzer-config");
+        CmdArgs.push_back(
+            "cheri.ProvenanceSource:ReportForAmbiguousProvenance=false");
+      }
+
       CmdArgs.push_back("-analyzer-checker=optin.portability.PointerAlignment");
       CmdArgs.push_back("-analyzer-checker=alpha.core.PointerSub");
     }
@@ -4902,7 +4914,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-DUNICODE");
 
   if (isa<AnalyzeJobAction>(JA))
-    RenderAnalyzerOptions(Args, CmdArgs, Triple, Input);
+    RenderAnalyzerOptions(Args, CmdArgs, Triple, Input, D.getDiags());
 
   if (isa<AnalyzeJobAction>(JA) ||
       (isa<PreprocessJobAction>(JA) && Args.hasArg(options::OPT__analyze)))
