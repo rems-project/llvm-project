@@ -75,13 +75,13 @@ void static_var() {
 int voidptr_cast(int *ip1, int *ip2) {
   intptr_t w = (intptr_t)(ip2) | 1;
   int b1 = (ip1 == (int*)w);  // expected-warning{{Pointer value aligned to a 1 byte boundary cast to type 'int * __capability' with required alignment 4 bytes}}
-  int b2 = (ip1 == (void*)w); // no-warn
+  int b2 = (ip1 == (void*)w); // expected-warning{{Pointer value aligned to a 1 byte boundary cast to type 'void * __capability'. This memory may be used to hold capabilities, for which capability alignment 16 bytes will be required}}
   return b1 || b2;
 }
 
 typedef struct B {
   long *ptr;
-  long flex[1]; // expected-note{{Original allocation}}
+  long flex[1]; // expected-note{{Original allocation}} expected-note{{Original allocation}} expected-note{{Original allocation}}
 } B;
 
 B* blob(size_t n) {
@@ -94,6 +94,14 @@ B* flex(size_t n) {
   size_t s = sizeof(B) + (n-1) * sizeof(long) + n * sizeof(B);
   B *p = malloc(s);
   return (B*)(&p->flex[n]); // expected-warning{{Pointer value aligned to a 8 byte boundary cast to type 'B * __capability' with required capability alignment 16 bytes}}
+}
+
+B* implicit_cap_storage(size_t n, void **impl_cap_ptr) {
+  size_t s = sizeof(B) + (n-1) * sizeof(long) + n * sizeof(B);
+  B *b = malloc(s);
+  *impl_cap_ptr = &b->flex[0]; // expected-warning{{Pointer value aligned to a 8 byte boundary cast to type 'void * __capability'. This memory may be used to hold capabilities, for which capability alignment 16 bytes will be required}}
+  // expected-warning@-1{{Pointer value aligned to a 8 byte boundary stored as type 'void * __capability'. This memory may be used to hold capabilities, for which capability alignment 16 bytes will be required}}
+  return b;
 }
 
 

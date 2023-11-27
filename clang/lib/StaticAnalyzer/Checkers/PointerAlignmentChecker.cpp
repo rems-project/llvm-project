@@ -43,10 +43,12 @@ using namespace cheri;
 namespace {
 class PointerAlignmentChecker
     : public Checker<check::PreStmt<CastExpr>, check::PostStmt<CastExpr>,
-                     check::PostStmt<BinaryOperator>, check::DeadSymbols> {
+                     check::PostStmt<BinaryOperator>, check::Bind,
+                     check::DeadSymbols> {
   std::unique_ptr<BugType> CastAlignBug;
   std::unique_ptr<BugType> CapCastAlignBug;
-
+  std::unique_ptr<BugType> GenPtrCastAlignBug;
+  std::unique_ptr<BugType> GenPtrEscapeAlignBug;
 
 public:
   PointerAlignmentChecker();
@@ -54,6 +56,7 @@ public:
   void checkPostStmt(const BinaryOperator *BO, CheckerContext &C) const;
   void checkPostStmt(const CastExpr *BO, CheckerContext &C) const;
   void checkPreStmt(const CastExpr *BO, CheckerContext &C) const;
+  void checkBind(SVal L, SVal V, const Stmt *S, CheckerContext &C) const;
   void checkDeadSymbols(SymbolReaper &SymReaper, CheckerContext &C) const;
 
 
@@ -90,6 +93,12 @@ PointerAlignmentChecker::PointerAlignmentChecker() {
       "Type Error"));
   CapCastAlignBug.reset(new BugType(this,
       "Cast increases required alignment to capability alignment",
+      "CHERI portability"));
+  GenPtrCastAlignBug.reset(new BugType(this,
+      "NOISY WARN: Cast to 'void*' (capability alignment may be required)",
+      "CHERI portability"));
+  GenPtrEscapeAlignBug.reset(new BugType(this,
+      "Underaligned pointer stored as 'void*' (capability alignment may be required)",
       "CHERI portability"));
 }
 
@@ -214,25 +223,32 @@ void PointerAlignmentChecker::checkPreStmt(const CastExpr *CE,
   if (isImplicitConversionFromVoidPtr(CE, C))
     return;
 
+  ASTContext &ASTCtx = C.getASTContext();
   const QualType &DstType = CE->getType();
   if (!DstType->isPointerType())
     return;
+
+  /* Calculate required alignment */
+  unsigned DstReqAlign = 0;
   const QualType &DstPointeeTy = DstType->getPointeeType();
-  if (DstPointeeTy->isIncompleteType())
+  if (!DstPointeeTy->isIncompleteType()) {
+    DstReqAlign = ASTCtx.getTypeAlignInChars(DstPointeeTy).getQuantity();
+  } else if(isGenericPointerType(DstType, false)) {
+    DstReqAlign = getCapabilityTypeAlign(ASTCtx).getQuantity();
+  } else
     return;
 
+  /* Calculate actual alignment */
   const SVal &SrcVal = C.getSVal(CE->getSubExpr());
   if (SrcVal.isConstant())
     return; // special value
-  int SrcTZC = getTrailingZerosCount(SrcVal, C.getState(), C.getASTContext());
+  int SrcTZC = getTrailingZerosCount(SrcVal, C.getState(), ASTCtx);
   if (SrcTZC < 0)
     return;
-  if ((unsigned)SrcTZC >= sizeof(unsigned int)*8)
+  if ((unsigned)SrcTZC >= sizeof(unsigned int) * 8)
     return; // Too aligned, probably a Zero
   unsigned SrcAlign = (1U << SrcTZC);
 
-  ASTContext &ASTCtx = C.getASTContext();
-  unsigned DstReqAlign = ASTCtx.getTypeAlignInChars(DstPointeeTy).getQuantity();
   if (SrcAlign < DstReqAlign) {
     emitCastAlignWarn(C, SrcAlign, DstReqAlign, CE);
   }
@@ -461,16 +477,22 @@ PointerAlignmentChecker::emitCastAlignWarn(
   ASTContext &ASTCtx = C.getASTContext();
   const QualType &DstTy = CE->getType();
   bool DstAlignIsCap = hasCapability(DstTy->getPointeeType(), ASTCtx);
+  bool DstIsGenPtr = !DstAlignIsCap && isGenericPointerType(DstTy, false);
 
   SmallString<350> ErrorMessage;
   llvm::raw_svector_ostream OS(ErrorMessage);
   OS << "Pointer value aligned to a " << SrcAlign << " byte boundary";
   OS << " cast to type '" << DstTy.getAsString() << "'";
-  OS << " with required";
-  if (DstAlignIsCap)
-    OS << " capability";
-  OS << " alignment " << DstReqAlign;
-  OS << " bytes";
+  if (!DstIsGenPtr) {
+    OS << " with required";
+    if (DstAlignIsCap)
+      OS << " capability";
+    OS << " alignment " << DstReqAlign << " bytes";
+  } else {
+    OS << ". This memory may be used to hold capabilities,"
+          " for which capability alignment " << DstReqAlign
+       << " bytes will be required";
+  }
 
   const SVal &SrcVal = C.getSVal(CE->getSubExpr());
   const ValueDecl *MRDecl = nullptr;
@@ -483,7 +505,9 @@ PointerAlignmentChecker::emitCastAlignWarn(
   }
 
   auto W = std::make_unique<PathSensitiveBugReport>(
-      DstAlignIsCap ? *CapCastAlignBug : *CastAlignBug,
+      DstAlignIsCap ? *CapCastAlignBug
+      : DstIsGenPtr ? *GenPtrCastAlignBug
+                    : *CastAlignBug,
       ErrorMessage, ErrNode,
       MRDeclLoc, MRDecl);
 
@@ -497,6 +521,72 @@ PointerAlignmentChecker::emitCastAlignWarn(
 
   C.emitReport(std::move(W));
   return ErrNode;
+}
+
+void PointerAlignmentChecker::checkBind(SVal L, SVal V, const Stmt *S,
+                                        CheckerContext &C) const {
+
+  ASTContext &ASTCtx = C.getASTContext();
+  if (!isPureCapMode(ASTCtx))
+    return;
+
+  const MemRegion *MR = L.getAsRegion();
+  if (!MR)
+    return;
+
+  const QualType &PointeeTy = L.getType(ASTCtx)->getPointeeType();
+  if (!isGenericPointerType(PointeeTy, false))
+    return;
+
+  /* Calculate actual alignment */
+  if (V.isConstant())
+    return; // special value
+  int SrcTZC = getTrailingZerosCount(V, C.getState(), ASTCtx);
+  if (SrcTZC < 0)
+    return;
+  if ((unsigned)SrcTZC >= sizeof(unsigned int) * 8)
+    return; // Too aligned, probably a Zero
+  unsigned SrcAlign = (1U << SrcTZC);
+
+  unsigned DstReqAlign = getCapabilityTypeAlign(ASTCtx).getQuantity();
+  if (SrcAlign >= DstReqAlign)
+    return;
+
+  ExplodedNode *ErrNode = C.generateNonFatalErrorNode();
+  if (!ErrNode)
+    return;
+
+  SmallString<350> ErrorMessage;
+  llvm::raw_svector_ostream OS(ErrorMessage);
+  OS << "Pointer value aligned to a " << SrcAlign << " byte boundary";
+  OS << " stored as type '" << PointeeTy.getAsString() << "'";
+  OS << ". This memory may be used to hold capabilities,"
+        " for which capability alignment " << DstReqAlign
+     << " bytes will be required";
+
+  const ValueDecl *MRDecl = nullptr;
+  PathDiagnosticLocation MRDeclLoc;
+  if (const MemRegion *MR = V.getAsRegion()) {
+    if (const DeclRegion *OriginalAlloc = getOriginalAllocation(MR)) {
+      MRDecl = OriginalAlloc->getDecl();
+      MRDeclLoc = PathDiagnosticLocation::create(MRDecl, C.getSourceManager());
+    }
+  }
+
+  auto W = std::make_unique<PathSensitiveBugReport>(
+      *GenPtrEscapeAlignBug,
+      ErrorMessage, ErrNode,
+      MRDeclLoc, MRDecl);
+
+  W->markInteresting(V);
+  if (SymbolRef S = V.getAsSymbol())
+    W->addVisitor(std::make_unique<AlignmentBugVisitor>(S));
+
+  if (MRDecl) {
+    describeOriginalAllocation(MRDecl, MRDeclLoc, *W, C.getASTContext());
+  }
+
+  C.emitReport(std::move(W));
 }
 
 PathDiagnosticPieceRef PointerAlignmentChecker::AlignmentBugVisitor::VisitNode(
