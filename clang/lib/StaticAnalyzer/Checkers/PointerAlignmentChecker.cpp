@@ -61,9 +61,9 @@ public:
 
 
 private:
-  ExplodedNode *emitCastAlignWarn(CheckerContext &C, unsigned SrcAlign,
-                                  unsigned DstReqAlign,
-                                  const CastExpr *CE) const;
+  ExplodedNode *emitAlignmentWarning(CheckerContext &C, const SVal &SrcVal,
+                                  const BugType &BT,
+                                  StringRef ErrorMessage) const;
 
   class AlignmentBugVisitor : public BugReporterVisitor {
   public:
@@ -94,11 +94,8 @@ PointerAlignmentChecker::PointerAlignmentChecker() {
   CapCastAlignBug.reset(new BugType(this,
       "Cast increases required alignment to capability alignment",
       "CHERI portability"));
-  GenPtrCastAlignBug.reset(new BugType(this,
-      "NOISY WARN: Cast to 'void*' (capability alignment may be required)",
-      "CHERI portability"));
   GenPtrEscapeAlignBug.reset(new BugType(this,
-      "Underaligned pointer stored as 'void*' (capability alignment may be required)",
+      "Not capability-aligned pointer stored as 'void*'",
       "CHERI portability"));
 }
 
@@ -213,6 +210,37 @@ bool isImplicitConversionFromVoidPtr(const Stmt *S, CheckerContext &C) {
   return !M.empty();
 }
 
+bool hasCapability(const QualType OrigTy, ASTContext &Ctx) {
+  QualType Ty = OrigTy.getCanonicalType();
+  if (Ty->isCHERICapabilityType(Ctx, true))
+    return true;
+  if (const auto *Record = dyn_cast<RecordType>(Ty)) {
+    for (const auto *Field : Record->getDecl()->fields()) {
+        if (hasCapability(Field->getType(), Ctx))
+        return true;
+    }
+    return false;
+  }
+  if (const auto *Array = dyn_cast<ArrayType>(Ty)) {
+    return hasCapability(Array->getElementType(), Ctx);
+  }
+  return false;
+}
+
+Optional<unsigned> getSrcAlignment(CheckerContext &C, const SVal &SrcVal) {
+  if (SrcVal.isConstant()) // special value
+    return llvm::None;
+  
+  ASTContext &ASTCtx = C.getASTContext();
+  int SrcTZC = getTrailingZerosCount(SrcVal, C.getState(), ASTCtx);
+  if (SrcTZC < 0)
+    return llvm::None;
+  
+  if ((unsigned)SrcTZC >= sizeof(unsigned int) * 8)
+    return llvm::None; // Too aligned, probably a Zero
+  return (1U << SrcTZC);
+}
+
 } // namespace
 
 void PointerAlignmentChecker::checkPreStmt(const CastExpr *CE,
@@ -231,27 +259,67 @@ void PointerAlignmentChecker::checkPreStmt(const CastExpr *CE,
   /* Calculate required alignment */
   unsigned DstReqAlign = 0;
   const QualType &DstPointeeTy = DstType->getPointeeType();
-  if (!DstPointeeTy->isIncompleteType()) {
-    DstReqAlign = ASTCtx.getTypeAlignInChars(DstPointeeTy).getQuantity();
-  } else if(isGenericPointerType(DstType, false)) {
-    DstReqAlign = getCapabilityTypeAlign(ASTCtx).getQuantity();
-  } else
+  if (DstPointeeTy->isIncompleteType())
     return;
+  DstReqAlign = ASTCtx.getTypeAlignInChars(DstPointeeTy).getQuantity();
 
   /* Calculate actual alignment */
   const SVal &SrcVal = C.getSVal(CE->getSubExpr());
-  if (SrcVal.isConstant())
-    return; // special value
-  int SrcTZC = getTrailingZerosCount(SrcVal, C.getState(), ASTCtx);
-  if (SrcTZC < 0)
+  const Optional<unsigned int> &SrcAlign = getSrcAlignment(C, SrcVal);
+  if (!SrcAlign.hasValue() || SrcAlign >= DstReqAlign)
     return;
-  if ((unsigned)SrcTZC >= sizeof(unsigned int) * 8)
-    return; // Too aligned, probably a Zero
-  unsigned SrcAlign = (1U << SrcTZC);
 
-  if (SrcAlign < DstReqAlign) {
-    emitCastAlignWarn(C, SrcAlign, DstReqAlign, CE);
-  }
+  /* Emit warning */
+  const QualType &DstTy = CE->getType();
+  bool DstAlignIsCap = hasCapability(DstTy->getPointeeType(), ASTCtx);
+  const BugType &BT= DstAlignIsCap ? *CapCastAlignBug : *CastAlignBug;
+
+  SmallString<350> ErrorMessage;
+  llvm::raw_svector_ostream OS(ErrorMessage);
+  OS << "Pointer value aligned to a " << SrcAlign << " byte boundary"
+     << " cast to type '" << DstTy.getAsString() << "'"
+     << " with required";
+  if (DstAlignIsCap)
+    OS << " capability";
+  OS << " alignment " << DstReqAlign << " bytes";
+
+  emitAlignmentWarning(C, SrcVal, BT, ErrorMessage);
+}
+
+void PointerAlignmentChecker::checkBind(SVal L, SVal V, const Stmt *S,
+                                        CheckerContext &C) const {
+  ASTContext &ASTCtx = C.getASTContext();
+  if (!isPureCapMode(ASTCtx))
+    return;
+
+  const BinaryOperator *BO = dyn_cast<BinaryOperator>(S);
+  if (!BO || !BO->isAssignmentOp())
+    return;
+  const QualType &DstTy = BO->getLHS()->getType();
+  if (!isGenericPointerType(DstTy, false))
+    return;
+
+  const MemRegion *MR = L.getAsRegion();
+  if (!MR)
+    return;
+
+  unsigned CapAlign = getCapabilityTypeAlign(ASTCtx).getQuantity();
+
+  /* Calculate actual alignment */
+  const Optional<unsigned int> &SrcAlign = getSrcAlignment(C, V);
+  if (!SrcAlign.hasValue() || SrcAlign >= CapAlign)
+    return;
+
+  /* Emit warning */
+  SmallString<350> ErrorMessage;
+  llvm::raw_svector_ostream OS(ErrorMessage);
+  OS << "Pointer value aligned to a " << SrcAlign << " byte boundary";
+  OS << " stored as type '" << DstTy.getAsString() << "'";
+  OS << ". This memory may be used to hold capabilities,"
+        " for which capability alignment "
+     << CapAlign << " bytes will be required";
+
+  emitAlignmentWarning(C, V, *GenPtrEscapeAlignBug, ErrorMessage);
 }
 
 void PointerAlignmentChecker::checkPostStmt(const CastExpr *CE,
@@ -415,23 +483,6 @@ void PointerAlignmentChecker::checkDeadSymbols(SymbolReaper &SymReaper,
 
 namespace {
 
-bool hasCapability(const QualType OrigTy, ASTContext &Ctx) {
-  QualType Ty = OrigTy.getCanonicalType();
-  if (Ty->isCHERICapabilityType(Ctx, true))
-    return true;
-  if (const auto *Record = dyn_cast<RecordType>(Ty)) {
-    for (const auto *Field : Record->getDecl()->fields()) {
-      if (hasCapability(Field->getType(), Ctx))
-        return true;
-    }
-    return false;
-  }
-  if (const auto *Array = dyn_cast<ArrayType>(Ty)) {
-    return hasCapability(Array->getElementType(), Ctx);
-  }
-  return false;
-}
-
 void printAlign(raw_ostream &OS, unsigned TZC) {
   OS << "aligned(";
   if (TZC < sizeof(unsigned long)*8)
@@ -467,34 +518,15 @@ void describeOriginalAllocation(const ValueDecl *SrcDecl,
 } // namespace
 
 ExplodedNode *
-PointerAlignmentChecker::emitCastAlignWarn(
-    CheckerContext &C, unsigned SrcAlign, unsigned DstReqAlign,
-    const CastExpr *CE) const {
+PointerAlignmentChecker::emitAlignmentWarning(
+    CheckerContext &C,
+    const SVal &SrcVal,
+    const BugType &BT,
+    StringRef ErrorMessage) const {
   ExplodedNode *ErrNode = C.generateNonFatalErrorNode();
   if (!ErrNode)
     return nullptr;
 
-  ASTContext &ASTCtx = C.getASTContext();
-  const QualType &DstTy = CE->getType();
-  bool DstAlignIsCap = hasCapability(DstTy->getPointeeType(), ASTCtx);
-  bool DstIsGenPtr = !DstAlignIsCap && isGenericPointerType(DstTy, false);
-
-  SmallString<350> ErrorMessage;
-  llvm::raw_svector_ostream OS(ErrorMessage);
-  OS << "Pointer value aligned to a " << SrcAlign << " byte boundary";
-  OS << " cast to type '" << DstTy.getAsString() << "'";
-  if (!DstIsGenPtr) {
-    OS << " with required";
-    if (DstAlignIsCap)
-      OS << " capability";
-    OS << " alignment " << DstReqAlign << " bytes";
-  } else {
-    OS << ". This memory may be used to hold capabilities,"
-          " for which capability alignment " << DstReqAlign
-       << " bytes will be required";
-  }
-
-  const SVal &SrcVal = C.getSVal(CE->getSubExpr());
   const ValueDecl *MRDecl = nullptr;
   PathDiagnosticLocation MRDeclLoc;
   if (const MemRegion *MR = SrcVal.getAsRegion()) {
@@ -504,12 +536,8 @@ PointerAlignmentChecker::emitCastAlignWarn(
     }
   }
 
-  auto W = std::make_unique<PathSensitiveBugReport>(
-      DstAlignIsCap ? *CapCastAlignBug
-      : DstIsGenPtr ? *GenPtrCastAlignBug
-                    : *CastAlignBug,
-      ErrorMessage, ErrNode,
-      MRDeclLoc, MRDecl);
+  auto W = std::make_unique<PathSensitiveBugReport>(BT, ErrorMessage, ErrNode,
+                                                    MRDeclLoc, MRDecl);
 
   W->markInteresting(SrcVal);
   if (SymbolRef S = SrcVal.getAsSymbol())
@@ -521,72 +549,6 @@ PointerAlignmentChecker::emitCastAlignWarn(
 
   C.emitReport(std::move(W));
   return ErrNode;
-}
-
-void PointerAlignmentChecker::checkBind(SVal L, SVal V, const Stmt *S,
-                                        CheckerContext &C) const {
-
-  ASTContext &ASTCtx = C.getASTContext();
-  if (!isPureCapMode(ASTCtx))
-    return;
-
-  const MemRegion *MR = L.getAsRegion();
-  if (!MR)
-    return;
-
-  const QualType &PointeeTy = L.getType(ASTCtx)->getPointeeType();
-  if (!isGenericPointerType(PointeeTy, false))
-    return;
-
-  /* Calculate actual alignment */
-  if (V.isConstant())
-    return; // special value
-  int SrcTZC = getTrailingZerosCount(V, C.getState(), ASTCtx);
-  if (SrcTZC < 0)
-    return;
-  if ((unsigned)SrcTZC >= sizeof(unsigned int) * 8)
-    return; // Too aligned, probably a Zero
-  unsigned SrcAlign = (1U << SrcTZC);
-
-  unsigned DstReqAlign = getCapabilityTypeAlign(ASTCtx).getQuantity();
-  if (SrcAlign >= DstReqAlign)
-    return;
-
-  ExplodedNode *ErrNode = C.generateNonFatalErrorNode();
-  if (!ErrNode)
-    return;
-
-  SmallString<350> ErrorMessage;
-  llvm::raw_svector_ostream OS(ErrorMessage);
-  OS << "Pointer value aligned to a " << SrcAlign << " byte boundary";
-  OS << " stored as type '" << PointeeTy.getAsString() << "'";
-  OS << ". This memory may be used to hold capabilities,"
-        " for which capability alignment " << DstReqAlign
-     << " bytes will be required";
-
-  const ValueDecl *MRDecl = nullptr;
-  PathDiagnosticLocation MRDeclLoc;
-  if (const MemRegion *MR = V.getAsRegion()) {
-    if (const DeclRegion *OriginalAlloc = getOriginalAllocation(MR)) {
-      MRDecl = OriginalAlloc->getDecl();
-      MRDeclLoc = PathDiagnosticLocation::create(MRDecl, C.getSourceManager());
-    }
-  }
-
-  auto W = std::make_unique<PathSensitiveBugReport>(
-      *GenPtrEscapeAlignBug,
-      ErrorMessage, ErrNode,
-      MRDeclLoc, MRDecl);
-
-  W->markInteresting(V);
-  if (SymbolRef S = V.getAsSymbol())
-    W->addVisitor(std::make_unique<AlignmentBugVisitor>(S));
-
-  if (MRDecl) {
-    describeOriginalAllocation(MRDecl, MRDeclLoc, *W, C.getASTContext());
-  }
-
-  C.emitReport(std::move(W));
 }
 
 PathDiagnosticPieceRef PointerAlignmentChecker::AlignmentBugVisitor::VisitNode(
