@@ -750,7 +750,7 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
           if (UPDLoc.isValid()) {
             FullSourceLoc UFunL(
                 SM.getExpansionLoc(
-                    D->getUniqueingDecl()->getBody()->getBeginLoc()),
+                    D->getUniqueingDecl()->getBeginLoc()),
                 SM);
             o << "  <key>issue_hash_function_offset</key><string>"
               << L.getExpansionLineNumber() - UFunL.getExpansionLineNumber()
