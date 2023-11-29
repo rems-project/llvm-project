@@ -81,7 +81,7 @@ int voidptr_cast(int *ip1, int *ip2) {
 
 typedef struct B {
   long *ptr;
-  long flex[1]; // expected-note{{Original allocation}} expected-note{{Original allocation}}
+  long flex[1]; // expected-note{{Original allocation}}
 } B;
 
 B* blob(size_t n) {
@@ -96,12 +96,18 @@ B* flex(size_t n) {
   return (B*)(&p->flex[n]); // expected-warning{{Pointer value aligned to a 8 byte boundary cast to type 'B * __capability' with required capability alignment 16 bytes}}
 }
 
-B* implicit_cap_storage(size_t n, void **impl_cap_ptr) {
-  size_t s = sizeof(B) + (n-1) * sizeof(long) + n * sizeof(B);
-  B *b = malloc(s);
-  *impl_cap_ptr = &b->flex[0];
-  // expected-warning@-1{{Pointer value aligned to a 8 byte boundary stored as type 'void * __capability'. This memory may be used to hold capabilities, for which capability alignment 16 bytes will be required}}
-  return b;
+char c_buf[100]; // expected-note{{Original allocation}} expected-note{{Original allocation}} expected-note{{Original allocation}}
+void implicit_cap_storage(size_t n, void **impl_cap_ptr) {
+  *impl_cap_ptr = &c_buf[0];
+  // expected-warning@-1{{Pointer value aligned to a 1 byte boundary stored as type 'void * __capability'. This memory may be used to hold capabilities, for which capability alignment 16 bytes will be required}}
+}
+
+extern void *memcpy(void *dest, const void *src, size_t n);
+void copy_through_unaligned(intptr_t *src, intptr_t *dst, size_t n) {
+  memcpy(c_buf, src, n * sizeof(intptr_t));
+  // expected-warning@-1{{Memory object that requires 16 bytes alignment is copied to memory aligned to a 1 byte boundary}}
+  memcpy(dst, c_buf, n * sizeof(intptr_t));
+  // expected-warning@-1{{Object stored with 1 bytes alignment is copied to memory object that must be aligned to a 16 byte boundary}}
 }
 
 

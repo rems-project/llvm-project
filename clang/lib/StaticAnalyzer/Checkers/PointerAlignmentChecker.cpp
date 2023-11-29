@@ -44,11 +44,18 @@ namespace {
 class PointerAlignmentChecker
     : public Checker<check::PreStmt<CastExpr>, check::PostStmt<CastExpr>,
                      check::PostStmt<BinaryOperator>, check::Bind,
-                     check::DeadSymbols> {
+                     check::PreCall, check::DeadSymbols> {
   std::unique_ptr<BugType> CastAlignBug;
   std::unique_ptr<BugType> CapCastAlignBug;
-  std::unique_ptr<BugType> GenPtrCastAlignBug;
   std::unique_ptr<BugType> GenPtrEscapeAlignBug;
+  std::unique_ptr<BugType> MemcpyAlignBug;
+
+
+  const CallDescriptionMap<std::pair<int, int>> MemCpyFn {
+    {{"memcpy", 3}, {0, 1}},
+    {{"mempcpy", 3}, {0, 1}},
+    {{"memmove", 3}, {0, 1}},
+  };
 
 public:
   PointerAlignmentChecker();
@@ -57,6 +64,7 @@ public:
   void checkPostStmt(const CastExpr *BO, CheckerContext &C) const;
   void checkPreStmt(const CastExpr *BO, CheckerContext &C) const;
   void checkBind(SVal L, SVal V, const Stmt *S, CheckerContext &C) const;
+  void checkPreCall(const CallEvent &Call, CheckerContext &C) const;
   void checkDeadSymbols(SymbolReaper &SymReaper, CheckerContext &C) const;
 
 
@@ -96,6 +104,9 @@ PointerAlignmentChecker::PointerAlignmentChecker() {
       "CHERI portability"));
   GenPtrEscapeAlignBug.reset(new BugType(this,
       "Not capability-aligned pointer stored as 'void*'",
+      "CHERI portability"));
+  MemcpyAlignBug.reset(new BugType(this,
+      "Memcpy through underaligned memory",
       "CHERI portability"));
 }
 
@@ -227,7 +238,7 @@ bool hasCapability(const QualType OrigTy, ASTContext &Ctx) {
   return false;
 }
 
-Optional<unsigned> getSrcAlignment(CheckerContext &C, const SVal &SrcVal) {
+Optional<unsigned> getActualAlignment(CheckerContext &C, const SVal &SrcVal) {
   if (SrcVal.isConstant()) // special value
     return llvm::None;
   
@@ -241,6 +252,19 @@ Optional<unsigned> getSrcAlignment(CheckerContext &C, const SVal &SrcVal) {
   return (1U << SrcTZC);
 }
 
+Optional<unsigned> getRequiredAlignment(ASTContext &ASTCtx,
+                                        const QualType &PtrTy,
+                                        bool AssumeCapAlignForVoidPtr) {
+  if (!PtrTy->isPointerType())
+    return llvm::None;
+  const QualType &PointeeTy = PtrTy->getPointeeType();
+  if (!PointeeTy->isIncompleteType())
+    return ASTCtx.getTypeAlignInChars(PointeeTy).getQuantity();
+  else if (AssumeCapAlignForVoidPtr && isGenericPointerType(PtrTy, false))
+    return getCapabilityTypeAlign(ASTCtx).getQuantity();
+  return llvm::None;
+}
+
 } // namespace
 
 void PointerAlignmentChecker::checkPreStmt(const CastExpr *CE,
@@ -252,21 +276,20 @@ void PointerAlignmentChecker::checkPreStmt(const CastExpr *CE,
     return;
 
   ASTContext &ASTCtx = C.getASTContext();
-  const QualType &DstType = CE->getType();
-  if (!DstType->isPointerType())
-    return;
 
   /* Calculate required alignment */
-  unsigned DstReqAlign = 0;
-  const QualType &DstPointeeTy = DstType->getPointeeType();
-  if (DstPointeeTy->isIncompleteType())
+  const Optional<unsigned int> &DstReqAlign =
+      getRequiredAlignment(ASTCtx, CE->getType(), false);
+  if (!DstReqAlign.hasValue())
     return;
-  DstReqAlign = ASTCtx.getTypeAlignInChars(DstPointeeTy).getQuantity();
 
   /* Calculate actual alignment */
   const SVal &SrcVal = C.getSVal(CE->getSubExpr());
-  const Optional<unsigned int> &SrcAlign = getSrcAlignment(C, SrcVal);
-  if (!SrcAlign.hasValue() || SrcAlign >= DstReqAlign)
+  const Optional<unsigned int> &SrcAlign = getActualAlignment(C, SrcVal);
+  if (!SrcAlign.hasValue())
+    return;
+
+  if (SrcAlign >= DstReqAlign) // OK
     return;
 
   /* Emit warning */
@@ -306,7 +329,7 @@ void PointerAlignmentChecker::checkBind(SVal L, SVal V, const Stmt *S,
   unsigned CapAlign = getCapabilityTypeAlign(ASTCtx).getQuantity();
 
   /* Calculate actual alignment */
-  const Optional<unsigned int> &SrcAlign = getSrcAlignment(C, V);
+  const Optional<unsigned int> &SrcAlign = getActualAlignment(C, V);
   if (!SrcAlign.hasValue() || SrcAlign >= CapAlign)
     return;
 
@@ -320,6 +343,54 @@ void PointerAlignmentChecker::checkBind(SVal L, SVal V, const Stmt *S,
      << CapAlign << " bytes will be required";
 
   emitAlignmentWarning(C, V, *GenPtrEscapeAlignBug, ErrorMessage);
+}
+
+void PointerAlignmentChecker::checkPreCall(const CallEvent &Call,
+                                         CheckerContext &C) const {
+  if (!Call.isGlobalCFunction())
+    return;
+
+  const std::pair<int, int> *MemCpyParamPair = MemCpyFn.lookup(Call);
+  if (!MemCpyParamPair)
+    return;
+
+  ASTContext &ASTCtx = C.getASTContext();
+
+  /* Destination alignment */
+  const Expr *DstExpr = Call.getArgExpr(MemCpyParamPair->first);
+  const QualType &DstTy = DstExpr->IgnoreImplicit()->getType();
+  const Optional<unsigned> &DstReqAlign =
+      getRequiredAlignment(ASTCtx, DstTy, true);
+  const SVal &DstVal = C.getSVal(DstExpr);
+  const Optional<unsigned> &DstCurAlign = getActualAlignment(C, DstVal);
+
+  /* Source alignment */
+  const Expr *SrcExpr = Call.getArgExpr(MemCpyParamPair->second);
+  const QualType &SrcTy = SrcExpr->IgnoreImplicit()->getType();
+  const Optional<unsigned> &SrcReqAlign =
+      getRequiredAlignment(ASTCtx, SrcTy, true);
+  const SVal &SrcVal = C.getSVal(SrcExpr);
+  const Optional<unsigned> &SrcCurAlign = getActualAlignment(C, SrcVal);
+
+  if (DstCurAlign < SrcReqAlign) {
+    SmallString<350> ErrorMessage;
+    llvm::raw_svector_ostream OS(ErrorMessage);
+    OS << "Memory object that requires " << SrcReqAlign << " bytes alignment"
+       << " is copied to memory aligned to a " << DstCurAlign << " byte boundary";
+
+    emitAlignmentWarning(C, DstVal, *MemcpyAlignBug, ErrorMessage);
+  }
+  
+  if (SrcCurAlign < DstReqAlign) {
+    SmallString<350> ErrorMessage;
+    llvm::raw_svector_ostream OS(ErrorMessage);
+    OS << "Object stored with " << SrcCurAlign << " bytes alignment"
+       << " is copied to memory object that must be aligned to a "
+       << DstReqAlign << " byte boundary";
+    
+    emitAlignmentWarning(C, SrcVal, *MemcpyAlignBug, ErrorMessage);
+  }
+
 }
 
 void PointerAlignmentChecker::checkPostStmt(const CastExpr *CE,
