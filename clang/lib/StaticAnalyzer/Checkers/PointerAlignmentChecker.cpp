@@ -106,7 +106,7 @@ PointerAlignmentChecker::PointerAlignmentChecker() {
       "Not capability-aligned pointer stored as 'void*'",
       "CHERI portability"));
   MemcpyAlignBug.reset(new BugType(this,
-      "Memcpy through underaligned memory",
+      "Copying capabilities through underaligned memory",
       "CHERI portability"));
 }
 
@@ -301,10 +301,10 @@ void PointerAlignmentChecker::checkPreStmt(const CastExpr *CE,
   llvm::raw_svector_ostream OS(ErrorMessage);
   OS << "Pointer value aligned to a " << SrcAlign << " byte boundary"
      << " cast to type '" << DstTy.getAsString() << "'"
-     << " with required";
+     << " with " << DstReqAlign << "-byte";
   if (DstAlignIsCap)
     OS << " capability";
-  OS << " alignment " << DstReqAlign << " bytes";
+  OS << " alignment";
 
   emitAlignmentWarning(C, SrcVal, BT, ErrorMessage);
 }
@@ -338,15 +338,18 @@ void PointerAlignmentChecker::checkBind(SVal L, SVal V, const Stmt *S,
   llvm::raw_svector_ostream OS(ErrorMessage);
   OS << "Pointer value aligned to a " << SrcAlign << " byte boundary";
   OS << " stored as type '" << DstTy.getAsString() << "'";
-  OS << ". This memory may be used to hold capabilities,"
-        " for which capability alignment "
-     << CapAlign << " bytes will be required";
+  OS << ". Memory pointed by it may be used to hold capabilities, for which "
+     << CapAlign << "-byte capability alignment will be required";
 
   emitAlignmentWarning(C, V, *GenPtrEscapeAlignBug, ErrorMessage);
 }
 
 void PointerAlignmentChecker::checkPreCall(const CallEvent &Call,
                                          CheckerContext &C) const {
+  ASTContext &ASTCtx = C.getASTContext();
+  if (!isPureCapMode(ASTCtx))
+    return;
+
   if (!Call.isGlobalCFunction())
     return;
 
@@ -354,7 +357,7 @@ void PointerAlignmentChecker::checkPreCall(const CallEvent &Call,
   if (!MemCpyParamPair)
     return;
 
-  ASTContext &ASTCtx = C.getASTContext();
+  unsigned CapAlign = getCapabilityTypeAlign(ASTCtx).getQuantity();
 
   /* Destination alignment */
   const Expr *DstExpr = Call.getArgExpr(MemCpyParamPair->first);
@@ -372,22 +375,44 @@ void PointerAlignmentChecker::checkPreCall(const CallEvent &Call,
   const SVal &SrcVal = C.getSVal(SrcExpr);
   const Optional<unsigned> &SrcCurAlign = getActualAlignment(C, SrcVal);
 
-  if (DstCurAlign < SrcReqAlign) {
+  if (DstCurAlign.hasValue() && SrcReqAlign.hasValue()
+      && SrcReqAlign >= CapAlign
+      && DstCurAlign < SrcReqAlign) {
     SmallString<350> ErrorMessage;
     llvm::raw_svector_ostream OS(ErrorMessage);
-    OS << "Memory object that requires " << SrcReqAlign << " bytes alignment"
-       << " is copied to memory aligned to a " << DstCurAlign << " byte boundary";
+    OS << "Copied memory object pointed by '";
+    SrcTy.print(OS, PrintingPolicy(ASTCtx.getLangOpts()));
+    OS << "' pointer";
+    if (isGenericPointerType(SrcTy, false))
+        OS << " may contain";
+    else
+        OS << " contains";
+    OS << " capabilities that require "
+       << SrcReqAlign << "-byte capability alignment.";
+    OS << " Destination address alignment is " << DstCurAlign << "."
+       << " Storing a capability at an underaligned address"
+          " leads to tag stripping.";
 
     emitAlignmentWarning(C, DstVal, *MemcpyAlignBug, ErrorMessage);
   }
   
-  if (SrcCurAlign < DstReqAlign) {
+  if (SrcCurAlign.hasValue() && DstReqAlign.hasValue()
+      && SrcCurAlign < DstReqAlign) {
     SmallString<350> ErrorMessage;
     llvm::raw_svector_ostream OS(ErrorMessage);
-    OS << "Object stored with " << SrcCurAlign << " bytes alignment"
-       << " is copied to memory object that must be aligned to a "
-       << DstReqAlign << " byte boundary";
-    
+    OS << "Destination memory is pointed by '";
+    DstTy.print(OS, PrintingPolicy(ASTCtx.getLangOpts()));
+    OS << "' pointer and";
+    if (isGenericPointerType(DstTy, false))
+        OS << " may";
+    else
+        OS << " is supposed to";
+    OS << " contain capabilities that require "
+       << DstReqAlign << "-byte capability alignment.";
+    OS << " Source address alignment is " << SrcCurAlign << ", which means"
+        " that copied object may have its capabilities tags"
+        " stripped earlier due to underaligned storage.";
+
     emitAlignmentWarning(C, SrcVal, *MemcpyAlignBug, ErrorMessage);
   }
 

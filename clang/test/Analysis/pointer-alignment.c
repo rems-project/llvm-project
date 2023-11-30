@@ -18,15 +18,15 @@ uintptr_t *u;
 
 void foo(void *v, int *pi, void *pv) {
   char *p0 = (char*)a;
-  *(void**)p0 = v; // expected-warning{{Pointer value aligned to a 8 byte boundary cast to type 'void * __capability * __capability' with required capability alignment 16 bytes}}
+  *(void**)p0 = v; // expected-warning{{Pointer value aligned to a 8 byte boundary cast to type 'void * __capability * __capability' with 16-byte capability alignment}}
   char *p1 = (char*)roundup2((uintptr_t)p0, sizeof(void*));
   *(void**)p1 = v; // no warning
   char *p2 = p1 + 5*sizeof(double);
-  *(void**)p2 = v; // expected-warning{{Pointer value aligned to a 8 byte boundary cast to type 'void * __capability * __capability' with required capability alignment 16 bytes}}
+  *(void**)p2 = v; // expected-warning{{Pointer value aligned to a 8 byte boundary cast to type 'void * __capability * __capability' with 16-byte capability alignment}}
 
-  *(void**)pi = v; // expected-warning{{Pointer value aligned to a 4 byte boundary cast to type 'void * __capability * __capability' with required capability alignment 16 bytes}}
+  *(void**)pi = v; // expected-warning{{Pointer value aligned to a 4 byte boundary cast to type 'void * __capability * __capability' with 16-byte capability alignment}}
   *(void**)pv = v; // no warning
-  *(void**)next = v; // expected-warning{{Pointer value aligned to a 8 byte boundary cast to type 'void * __capability * __capability' with required capability alignment 16 bytes}}
+  *(void**)next = v; // expected-warning{{Pointer value aligned to a 8 byte boundary cast to type 'void * __capability * __capability' with 16-byte capability alignment}}
 
   if (u == NULL || u == MINUS_ONE) // no warning
     return;
@@ -50,8 +50,8 @@ struct S {
 };
 int struct_field(struct S *s) {
   uintptr_t* p1 = (uintptr_t*)&s->u[3];  // no warning
-  uintptr_t* p2 = (uintptr_t*)&s->i[8];  // expected-warning{{Pointer value aligned to a 4 byte boundary cast to type 'uintptr_t * __capability' with required capability alignment 16 bytes}}
-  uintptr_t* p3 = (uintptr_t*)&s->i_aligned[6];  // expected-warning{{Pointer value aligned to a 8 byte boundary cast to type 'uintptr_t * __capability' with required capability alignment 16 bytes}}
+  uintptr_t* p2 = (uintptr_t*)&s->i[8];  // expected-warning{{Pointer value aligned to a 4 byte boundary cast to type 'uintptr_t * __capability' with 16-byte capability alignment}}
+  uintptr_t* p3 = (uintptr_t*)&s->i_aligned[6];  // expected-warning{{Pointer value aligned to a 8 byte boundary cast to type 'uintptr_t * __capability' with 16-byte capability alignment}}
   uintptr_t* p4 = (uintptr_t*)&s->i_aligned[4];  // no warning
   return (p4 - p3) + (p2 - p1);
 }
@@ -60,21 +60,21 @@ void local_var() {
   char buf[4]; // expected-note{{Original allocation}}
   char buf_underaligned[4] __attribute__((aligned(2))); // expected-note{{Original allocation}}
   char buf_aligned[4] __attribute__((aligned(4)));
-  *(int*)buf = 42; // expected-warning{{Pointer value aligned to a 1 byte boundary cast to type 'int * __capability' with required alignment 4 bytes}}
-  *(int*)buf_underaligned = 42; // expected-warning{{Pointer value aligned to a 2 byte boundary cast to type 'int * __capability' with required alignment 4 bytes}}
+  *(int*)buf = 42; // expected-warning{{Pointer value aligned to a 1 byte boundary cast to type 'int * __capability' with 4-byte alignment}}
+  *(int*)buf_underaligned = 42; // expected-warning{{Pointer value aligned to a 2 byte boundary cast to type 'int * __capability' with 4-byte alignment}}
   *(int*)buf_aligned = 42; // no warning
 }
 
 char st_buf[4]; // expected-note{{Original allocation}}
 char st_buf_aligned[4] __attribute__((aligned(_Alignof(int*))));
 void static_var() {
-  *(int*)st_buf = 42; // expected-warning{{Pointer value aligned to a 1 byte boundary cast to type 'int * __capability' with required alignment 4 bytes}}
+  *(int*)st_buf = 42; // expected-warning{{Pointer value aligned to a 1 byte boundary cast to type 'int * __capability' with 4-byte alignment}}
   *(int*)st_buf_aligned = 42; // no warning
 }
 
 int voidptr_cast(int *ip1, int *ip2) {
   intptr_t w = (intptr_t)(ip2) | 1;
-  int b1 = (ip1 == (int*)w);  // expected-warning{{Pointer value aligned to a 1 byte boundary cast to type 'int * __capability' with required alignment 4 bytes}}
+  int b1 = (ip1 == (int*)w);  // expected-warning{{Pointer value aligned to a 1 byte boundary cast to type 'int * __capability' with 4-byte alignment}}
   int b2 = (ip1 == (void*)w); // no-warn
   return b1 || b2;
 }
@@ -88,26 +88,26 @@ B* blob(size_t n) {
   size_t s = sizeof(B) + n * sizeof(long) + n * sizeof(B);
   B *p = malloc(s);
   p->ptr = (long*)&p[1];
-  return (B*)(&p->ptr[n]); // expected-warning{{Pointer value aligned to a 8 byte boundary cast to type 'B * __capability' with required capability alignment 16 bytes}}
+  return (B*)(&p->ptr[n]); // expected-warning{{Pointer value aligned to a 8 byte boundary cast to type 'B * __capability' with 16-byte capability alignment}}
 }
 B* flex(size_t n) {
   size_t s = sizeof(B) + (n-1) * sizeof(long) + n * sizeof(B);
   B *p = malloc(s);
-  return (B*)(&p->flex[n]); // expected-warning{{Pointer value aligned to a 8 byte boundary cast to type 'B * __capability' with required capability alignment 16 bytes}}
+  return (B*)(&p->flex[n]); // expected-warning{{Pointer value aligned to a 8 byte boundary cast to type 'B * __capability' with 16-byte capability alignment}}
 }
 
 char c_buf[100]; // expected-note{{Original allocation}} expected-note{{Original allocation}} expected-note{{Original allocation}}
 void implicit_cap_storage(size_t n, void **impl_cap_ptr) {
   *impl_cap_ptr = &c_buf[0];
-  // expected-warning@-1{{Pointer value aligned to a 1 byte boundary stored as type 'void * __capability'. This memory may be used to hold capabilities, for which capability alignment 16 bytes will be required}}
+  // expected-warning@-1{{Pointer value aligned to a 1 byte boundary stored as type 'void * __capability'. Memory pointed by it may be used to hold capabilities, for which 16-byte capability alignment will be required}}
 }
 
 extern void *memcpy(void *dest, const void *src, size_t n);
 void copy_through_unaligned(intptr_t *src, intptr_t *dst, size_t n) {
   memcpy(c_buf, src, n * sizeof(intptr_t));
-  // expected-warning@-1{{Memory object that requires 16 bytes alignment is copied to memory aligned to a 1 byte boundary}}
+  // expected-warning@-1{{Copied memory object pointed by 'intptr_t * __capability' pointer contains capabilities that require 16-byte capability alignment. Destination address alignment is 1. Storing a capability at an underaligned address leads to tag stripping}}
   memcpy(dst, c_buf, n * sizeof(intptr_t));
-  // expected-warning@-1{{Object stored with 1 bytes alignment is copied to memory object that must be aligned to a 16 byte boundary}}
+  // expected-warning@-1{{Destination memory is pointed by 'intptr_t * __capability' pointer and is supposed to contain capabilities that require 16-byte capability alignment. Source address alignment is 1, which means that copied object may have its capabilities tags stripped earlier due to underaligned storage}}
 }
 
 
