@@ -104,10 +104,11 @@ void implicit_cap_storage(size_t n, void **impl_cap_ptr) {
 
 extern void *memcpy(void *dest, const void *src, size_t n);
 void copy_through_unaligned(intptr_t *src, intptr_t *dst, size_t n) {
-  memcpy(c_buf, src, n * sizeof(intptr_t));
-  // expected-warning@-1{{Copied memory object pointed by 'intptr_t * __capability' pointer contains capabilities that require 16-byte capability alignment. Destination address alignment is 1. Storing a capability at an underaligned address leads to tag stripping}}
-  memcpy(dst, c_buf, n * sizeof(intptr_t));
-  // expected-warning@-1{{Destination memory is pointed by 'intptr_t * __capability' pointer and is supposed to contain capabilities that require 16-byte capability alignment. Source address alignment is 1, which means that copied object may have its capabilities tags stripped earlier due to underaligned storage}}
+  void *s = src, *d = dst;
+  memcpy(c_buf, s, n * sizeof(intptr_t));
+  // expected-warning@-1{{Copied memory object pointed by 'void * __capability' pointer may contain capabilities that require 16-byte capability alignment. Destination address alignment is 1. Storing a capability at an underaligned address leads to tag stripping}}
+  memcpy(d, c_buf, n * sizeof(intptr_t));
+  // expected-warning@-1{{Destination memory is pointed by 'void * __capability' pointer and may contain capabilities that require 16-byte capability alignment. Source address alignment is 1, which means that copied object may have its capabilities tags stripped earlier due to underaligned storage}}
 }
 
 
