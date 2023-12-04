@@ -94,7 +94,7 @@ private:
 } // namespace
 
 REGISTER_MAP_WITH_PROGRAMSTATE(TrailingZerosMap, SymbolRef, int)
-REGISTER_SET_WITH_PROGRAMSTATE(CapStorageSet, SymbolRef)
+REGISTER_SET_WITH_PROGRAMSTATE(CapStorageSet, const MemRegion*)
 
 PointerAlignmentChecker::PointerAlignmentChecker() {
   CastAlignBug.reset(new BugType(this,
@@ -227,8 +227,6 @@ int getTrailingZerosCount(const Expr *E, CheckerContext &C) {
 
 bool isCapabilityStorage(SymbolRef Sym, ProgramStateRef State,
                          ASTContext &ASTCtx) {
-  if (State->contains<CapStorageSet>(Sym))
-    return true;
   const Optional<QualType> GlobalPointeeTy = globalOrParamPointeeType(Sym);
   if (GlobalPointeeTy.hasValue())
     return hasCapability(GlobalPointeeTy.getValue(), ASTCtx);
@@ -238,6 +236,9 @@ bool isCapabilityStorage(SymbolRef Sym, ProgramStateRef State,
 bool isCapabilityStorage(const MemRegion *R, ProgramStateRef State,
                          ASTContext &ASTCtx) {
   R = R->StripCasts();
+
+  if (State->contains<CapStorageSet>(R))
+    return true;
 
   if (const SymbolicRegion *SR = R->getAs<SymbolicRegion>())
     return isCapabilityStorage(SR->getSymbol(), State, ASTCtx);
@@ -297,6 +298,33 @@ bool isImplicitConversionFromVoidPtr(const Stmt *S, CheckerContext &C) {
                                 hasCastKind(CK_BitCast), hasParent(CmpM));
   auto M = match(expr(CastM), *S, C.getASTContext());
   return !M.empty();
+}
+
+bool isGenericStorage(CheckerContext &C, const Expr *E) {
+  if (!isGenericPointerType(E->IgnoreImpCasts()->getType(), false))
+    return false;
+
+  if (SymbolRef Sym = C.getSVal(E).getAsSymbol()) {
+    return isGenericPointerType(Sym->getType(), false);
+  }
+
+  if (const MemRegion *R = C.getSVal(E).getAsRegion()) {
+    return !(R->getAs<TypedValueRegion>());
+  }
+  return true;
+}
+
+static void describeObjectType(raw_ostream &OS, const QualType &Ty,
+                         const LangOptions &LangOpts) {
+  if (Ty->isPointerType()) {
+    OS << " pointed by '";
+    Ty.print(OS, PrintingPolicy(LangOpts));
+    OS << "' pointer";
+  } else {
+    OS << " of type '";
+    Ty.print(OS, PrintingPolicy(LangOpts));
+    OS << "'";
+  }
 }
 
 } // namespace
@@ -399,6 +427,7 @@ void PointerAlignmentChecker::checkPreCall(const CallEvent &Call,
   const SVal &DstVal = C.getSVal(DstExpr);
   const Optional<unsigned> &DstCurAlign = getActualAlignment(C, DstVal);
   bool DstIsCapStorage = isCapabilityStorage(DstVal, C.getState(), ASTCtx);
+  bool DstIsGenStorage =  isGenericStorage(C, DstExpr);
 
   /* Source alignment */
   const Expr *SrcExpr = Call.getArgExpr(MemCpyParamPair->second);
@@ -406,14 +435,15 @@ void PointerAlignmentChecker::checkPreCall(const CallEvent &Call,
   const SVal &SrcVal = C.getSVal(SrcExpr);
   const Optional<unsigned> &SrcCurAlign = getActualAlignment(C, SrcVal);
   bool SrcIsCapStorage = isCapabilityStorage(SrcVal, C.getState(), ASTCtx);
+  bool SrcIsGenStorage = isGenericStorage(C, SrcExpr);
 
-  if (SrcIsCapStorage && DstCurAlign.hasValue() && DstCurAlign < CapAlign) {
+  if ((SrcIsCapStorage || SrcIsGenStorage)
+      && DstCurAlign.hasValue() && DstCurAlign < CapAlign) {
     SmallString<350> ErrorMessage;
     llvm::raw_svector_ostream OS(ErrorMessage);
-    OS << "Copied memory object pointed by '";
-    SrcTy.print(OS, PrintingPolicy(ASTCtx.getLangOpts()));
-    OS << "' pointer";
-    if (isGenericPointerType(SrcTy, false))
+    OS << "Copied memory object";
+    describeObjectType(OS, SrcTy, ASTCtx.getLangOpts());
+    if (!SrcIsCapStorage)
         OS << " may contain";
     else
         OS << " contains";
@@ -424,15 +454,16 @@ void PointerAlignmentChecker::checkPreCall(const CallEvent &Call,
           " leads to tag stripping.";
 
     emitAlignmentWarning(C, DstVal, *MemcpyAlignBug, ErrorMessage);
+    return;
   }
   
-  if (DstIsCapStorage && SrcCurAlign.hasValue() && SrcCurAlign < CapAlign) {
+  if ((DstIsCapStorage  || DstIsGenStorage)
+      && SrcCurAlign.hasValue() && SrcCurAlign < CapAlign) {
     SmallString<350> ErrorMessage;
     llvm::raw_svector_ostream OS(ErrorMessage);
-    OS << "Destination memory is pointed by '";
-    DstTy.print(OS, PrintingPolicy(ASTCtx.getLangOpts()));
-    OS << "' pointer and";
-    if (isGenericPointerType(DstTy, false))
+    OS << "Destination memory object";
+    describeObjectType(OS, DstTy, ASTCtx.getLangOpts());
+    if (!DstIsCapStorage)
         OS << " may";
     else
         OS << " is supposed to";
@@ -443,6 +474,28 @@ void PointerAlignmentChecker::checkPreCall(const CallEvent &Call,
         " stripped earlier due to underaligned storage.";
 
     emitAlignmentWarning(C, SrcVal, *MemcpyAlignBug, ErrorMessage);
+    return;
+  }
+
+  /* Propagate CapStorage flag */
+  if (SrcIsCapStorage && !DstIsCapStorage) {
+    if (const MemRegion *R = DstVal.getAsRegion()) {
+        const ProgramStateRef State =
+            C.getState()->add<CapStorageSet>(R->StripCasts());
+        const NoteTag *Tag =
+            C.getNoteTag("Copied memory object contains capabilities");
+        C.addTransition(State, C.getPredecessor(), Tag);
+    }
+  }
+
+  if (!SrcIsCapStorage && DstIsCapStorage) {
+    if (const MemRegion *R = SrcVal.getAsRegion()) {
+        const ProgramStateRef State =
+            C.getState()->add<CapStorageSet>(R->StripCasts());
+        const NoteTag *Tag =
+            C.getNoteTag("Copied memory object should contain capabilities");
+        C.addTransition(State, C.getPredecessor(), Tag);
+    }
   }
 }
 
@@ -493,8 +546,8 @@ void PointerAlignmentChecker::checkPostStmt(const CastExpr *CE,
   /* Update CapStorageSet */
   if ((isCapabilityStorage(SrcVal, State, ASTCtx) || DstIsCapStorage)
       && !isCapabilityStorage(DstVal, State, ASTCtx)) {
-    if (SymbolRef Sym = DstVal.getAsSymbol()) {
-        State = State->add<CapStorageSet>(Sym);
+    if (const MemRegion *R = DstVal.getAsRegion()) {
+        State = State->add<CapStorageSet>(R->StripCasts());
         Updated = true;
     }
   }
@@ -617,15 +670,6 @@ void PointerAlignmentChecker::checkDeadSymbols(SymbolReaper &SymReaper,
                                     I != E; ++I) {
     if (SymReaper.isDead(I->first)) {
       State = State->remove<TrailingZerosMap>(I->first);
-      Updated = true;
-    }
-  }
-
-  CapStorageSetTy CapStSet = State->get<CapStorageSet>();
-  for (CapStorageSetTy::iterator I = CapStSet.begin(), E = CapStSet.end();
-                                 I != E; ++I) {
-    if (SymReaper.isDead(*I)) {
-      State = State->remove<CapStorageSet>(*I);
       Updated = true;
     }
   }
