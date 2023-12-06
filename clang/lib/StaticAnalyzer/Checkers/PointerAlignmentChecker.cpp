@@ -69,9 +69,10 @@ public:
 
 
 private:
-  ExplodedNode *emitAlignmentWarning(CheckerContext &C, const SVal &SrcVal,
+  ExplodedNode *emitAlignmentWarning(CheckerContext &C, const SVal &UnderalignedPtrVal,
                                   const BugType &BT,
-                                  StringRef ErrorMessage) const;
+                                  StringRef ErrorMessage,
+                                  const ValueDecl *CapSrcDecl = nullptr) const;
 
   class AlignmentBugVisitor : public BugReporterVisitor {
   public:
@@ -122,7 +123,7 @@ Optional<QualType> globalOrParamPointeeType(SymbolRef Sym) {
     return llvm::None;
 
   const QualType &SymTy = Sym->getType();
-  if (SymTy->isPointerType() && !isGenericPointerType(SymTy)) {
+  if (SymTy->isPointerType()) {
     const QualType &PT = SymTy->getPointeeType();
     if (!PT->isIncompleteType()) {
       return PT;
@@ -225,8 +226,7 @@ int getTrailingZerosCount(const Expr *E, CheckerContext &C) {
   return getTrailingZerosCount(V, C.getState(), C.getASTContext());
 }
 
-bool isCapabilityStorage(SymbolRef Sym, ProgramStateRef State,
-                         ASTContext &ASTCtx) {
+bool isCapabilityStorage(SymbolRef Sym, ASTContext &ASTCtx) {
   const Optional<QualType> GlobalPointeeTy = globalOrParamPointeeType(Sym);
   if (GlobalPointeeTy.hasValue())
     return hasCapability(GlobalPointeeTy.getValue(), ASTCtx);
@@ -241,7 +241,7 @@ bool isCapabilityStorage(const MemRegion *R, ProgramStateRef State,
     return true;
 
   if (const SymbolicRegion *SR = R->getAs<SymbolicRegion>())
-    return isCapabilityStorage(SR->getSymbol(), State, ASTCtx);
+    return isCapabilityStorage(SR->getSymbol(), ASTCtx);
 
   if (const TypedValueRegion *TR = R->getAs<TypedValueRegion>()) {
     const QualType PT = TR->getDesugaredValueType(ASTCtx);
@@ -253,11 +253,11 @@ bool isCapabilityStorage(const MemRegion *R, ProgramStateRef State,
 
 bool isCapabilityStorage(const SVal &V, ProgramStateRef State,
                          ASTContext &ASTCtx) {
-  if (SymbolRef Sym = V.getAsSymbol()) {
-    return isCapabilityStorage(Sym, State, ASTCtx);
-  }
   if (const MemRegion *MR = V.getAsRegion()) {
     return isCapabilityStorage(MR, State, ASTCtx);
+  }
+  if (SymbolRef Sym = V.getAsSymbol()) {
+    return isCapabilityStorage(Sym, ASTCtx);
   }
   return false;
 }
@@ -272,7 +272,7 @@ Optional<unsigned> getActualAlignment(CheckerContext &C, const SVal &SrcVal) {
     return llvm::None;
 
   if ((unsigned)SrcTZC >= sizeof(unsigned int) * 8)
-    return llvm::None; // Too aligned, probably a Zero
+    return llvm::None; // Too aligned, probably zero
   return (1U << SrcTZC);
 }
 
@@ -305,13 +305,20 @@ bool isGenericStorage(CheckerContext &C, const Expr *E) {
     return false;
 
   if (SymbolRef Sym = C.getSVal(E).getAsSymbol()) {
-    return isGenericPointerType(Sym->getType(), false);
+    if (!isGenericPointerType(Sym->getType(), false))
+        return false;
+    if (const MemRegion *BaseRegOrigin = Sym->getOriginRegion()) {
+      if (const MemSpaceRegion *MS = BaseRegOrigin->getMemorySpace()) {
+        if (isa<GlobalsSpaceRegion>(MS))
+          return true; // global variable
+        if (auto SR = dyn_cast<StackArgumentsSpaceRegion>(MS))
+          return SR->getStackFrame()->inTopFrame(); // top-level argument
+      }
+      if (isa<FieldRegion>(BaseRegOrigin))
+        return true; // struct field
+    }
   }
-
-  if (const MemRegion *R = C.getSVal(E).getAsRegion()) {
-    return !(R->getAs<TypedValueRegion>());
-  }
-  return true;
+  return false;
 }
 
 static void describeObjectType(raw_ostream &OS, const QualType &Ty,
@@ -325,6 +332,14 @@ static void describeObjectType(raw_ostream &OS, const QualType &Ty,
     Ty.print(OS, PrintingPolicy(LangOpts));
     OS << "'";
   }
+}
+
+const DeclRegion *getOriginalAllocation(const MemRegion *MR) {
+  if (const DeclRegion *DR = MR->getAs<DeclRegion>())
+    return DR;
+  if (const ElementRegion *ER = MR->getAs<ElementRegion>())
+    return getOriginalAllocation(ER->getSuperRegion());
+  return nullptr;
 }
 
 } // namespace
@@ -427,7 +442,7 @@ void PointerAlignmentChecker::checkPreCall(const CallEvent &Call,
   const SVal &DstVal = C.getSVal(DstExpr);
   const Optional<unsigned> &DstCurAlign = getActualAlignment(C, DstVal);
   bool DstIsCapStorage = isCapabilityStorage(DstVal, C.getState(), ASTCtx);
-  bool DstIsGenStorage =  isGenericStorage(C, DstExpr);
+  bool DstIsGenStorage = isGenericStorage(C, DstExpr);
 
   /* Source alignment */
   const Expr *SrcExpr = Call.getArgExpr(MemCpyParamPair->second);
@@ -453,7 +468,13 @@ void PointerAlignmentChecker::checkPreCall(const CallEvent &Call,
        << " Storing a capability at an underaligned address"
           " leads to tag stripping.";
 
-    emitAlignmentWarning(C, DstVal, *MemcpyAlignBug, ErrorMessage);
+    const ValueDecl *CapSrcDecl = nullptr;
+    if (const MemRegion *SR = SrcVal.getAsRegion()) {
+        if (const DeclRegion *D = getOriginalAllocation(SR))
+          CapSrcDecl = D->getDecl();
+    }
+
+    emitAlignmentWarning(C, DstVal, *MemcpyAlignBug, ErrorMessage, CapSrcDecl);
     return;
   }
   
@@ -473,7 +494,14 @@ void PointerAlignmentChecker::checkPreCall(const CallEvent &Call,
         " that copied object may have its capabilities tags"
         " stripped earlier due to underaligned storage.";
 
-    emitAlignmentWarning(C, SrcVal, *MemcpyAlignBug, ErrorMessage);
+
+    const ValueDecl *CapSrcDecl = nullptr;
+    if (const MemRegion *SR = DstVal.getAsRegion()) {
+        if (const DeclRegion *D = getOriginalAllocation(SR))
+          CapSrcDecl = D->getDecl();
+    }
+
+    emitAlignmentWarning(C, SrcVal, *MemcpyAlignBug, ErrorMessage, CapSrcDecl);
     return;
   }
 
@@ -544,16 +572,19 @@ void PointerAlignmentChecker::checkPostStmt(const CastExpr *CE,
   }
 
   /* Update CapStorageSet */
+  const ProgramPointTag *Tag = nullptr;
   if ((isCapabilityStorage(SrcVal, State, ASTCtx) || DstIsCapStorage)
       && !isCapabilityStorage(DstVal, State, ASTCtx)) {
     if (const MemRegion *R = DstVal.getAsRegion()) {
         State = State->add<CapStorageSet>(R->StripCasts());
         Updated = true;
+        if (DstIsCapStorage)
+          Tag = C.getNoteTag("Cast to capability-containing type");
     }
   }
 
   if (Updated)
-    C.addTransition(State);
+    C.addTransition(State, Tag);
 }
 
 bool valueIsLTPow2(const Expr *E, unsigned P, CheckerContext &C) {
@@ -689,14 +720,6 @@ void printAlign(raw_ostream &OS, unsigned TZC) {
   OS << ")";
 }
 
-const DeclRegion *getOriginalAllocation(const MemRegion *MR) {
-  if (const DeclRegion *DR = MR->getAs<DeclRegion>())
-    return DR;
-  if (const ElementRegion *ER = MR->getAs<ElementRegion>())
-    return getOriginalAllocation(ER->getSuperRegion());
-  return nullptr;
-}
-
 void describeOriginalAllocation(const ValueDecl *SrcDecl,
                                 PathDiagnosticLocation SrcLoc,
                                 PathSensitiveBugReport &W,
@@ -712,21 +735,34 @@ void describeOriginalAllocation(const ValueDecl *SrcDecl,
     W.addNote(Note, SrcLoc);
 }
 
+void describeCapabilityStorage(const ValueDecl *CapDecl,
+                                PathDiagnosticLocation SrcLoc,
+                                PathSensitiveBugReport &W,
+                                ASTContext &ASTCtx) {
+    SmallString<350> Note;
+    llvm::raw_svector_ostream OS2(Note);
+    const QualType &AllocType = CapDecl->getType().getCanonicalType();
+    OS2 << "Capabilities stored in ";
+    OS2 << "'" << AllocType.getAsString() << "'";
+    W.addNote(Note, SrcLoc);
+}
+
 } // namespace
 
 ExplodedNode *
 PointerAlignmentChecker::emitAlignmentWarning(
     CheckerContext &C,
-    const SVal &SrcVal,
+    const SVal &UnderalignedPtrVal,
     const BugType &BT,
-    StringRef ErrorMessage) const {
+    StringRef ErrorMessage,
+    const ValueDecl *CapSrcDecl) const {
   ExplodedNode *ErrNode = C.generateNonFatalErrorNode();
   if (!ErrNode)
     return nullptr;
 
   const ValueDecl *MRDecl = nullptr;
   PathDiagnosticLocation MRDeclLoc;
-  if (const MemRegion *MR = SrcVal.getAsRegion()) {
+  if (const MemRegion *MR = UnderalignedPtrVal.getAsRegion()) {
     if (const DeclRegion *OriginalAlloc = getOriginalAllocation(MR)) {
       MRDecl = OriginalAlloc->getDecl();
       MRDeclLoc = PathDiagnosticLocation::create(MRDecl, C.getSourceManager());
@@ -736,12 +772,18 @@ PointerAlignmentChecker::emitAlignmentWarning(
   auto W = std::make_unique<PathSensitiveBugReport>(BT, ErrorMessage, ErrNode,
                                                     MRDeclLoc, MRDecl);
 
-  W->markInteresting(SrcVal);
-  if (SymbolRef S = SrcVal.getAsSymbol())
+  W->markInteresting(UnderalignedPtrVal);
+  if (SymbolRef S = UnderalignedPtrVal.getAsSymbol())
     W->addVisitor(std::make_unique<AlignmentBugVisitor>(S));
 
   if (MRDecl) {
     describeOriginalAllocation(MRDecl, MRDeclLoc, *W, C.getASTContext());
+  }
+
+  if (CapSrcDecl) {
+    auto CapSrcDeclLoc =
+        PathDiagnosticLocation::create(CapSrcDecl, C.getSourceManager());
+    describeCapabilityStorage(CapSrcDecl, CapSrcDeclLoc, *W, C.getASTContext());
   }
 
   C.emitReport(std::move(W));
