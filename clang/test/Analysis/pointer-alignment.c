@@ -113,4 +113,11 @@ void copy_through_unaligned(intptr_t *src, void *dst, size_t n) {
   // expected-warning@-1{{Destination memory object pointed by 'void * __capability' pointer may contain capabilities that require 16-byte capability alignment. Source address alignment is 1, which means that copied object may have its capabilities tags stripped earlier due to underaligned storage}}
 }
 
+void after_cap_data(int n, int D, int j) {
+  int **p = malloc(100);
+  p[0] = &((int*)&p[D])[0];  // 2D matrix
+  memcpy(c_buf, p[0], n); // no warn
+}
+
+
 
