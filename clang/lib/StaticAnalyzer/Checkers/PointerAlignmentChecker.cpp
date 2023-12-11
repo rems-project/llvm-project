@@ -300,25 +300,28 @@ bool isImplicitConversionFromVoidPtr(const Stmt *S, CheckerContext &C) {
   return !M.empty();
 }
 
-bool isGenericStorage(CheckerContext &C, const Expr *E) {
-  if (!isGenericPointerType(E->IgnoreImpCasts()->getType(), false))
-    return false;
-
-  if (SymbolRef Sym = C.getSVal(E).getAsSymbol()) {
+bool isGenericStorage(CheckerContext &C, const SVal &V) {
+  if (SymbolRef Sym = V.getAsSymbol()) {
     if (!isGenericPointerType(Sym->getType(), false))
-        return false;
-    if (const MemRegion *BaseRegOrigin = Sym->getOriginRegion()) {
-      if (const MemSpaceRegion *MS = BaseRegOrigin->getMemorySpace()) {
-        if (isa<GlobalsSpaceRegion>(MS))
-          return true; // global variable
-        if (auto SR = dyn_cast<StackArgumentsSpaceRegion>(MS))
-          return SR->getStackFrame()->inTopFrame(); // top-level argument
-      }
-      if (isa<FieldRegion>(BaseRegOrigin))
+      return false;
+    if (const MemRegion *R = Sym->getOriginRegion()) {
+      const MemSpaceRegion *MS = R->getMemorySpace();
+      if (isa<GlobalsSpaceRegion>(MS))
+        return true; // global variable
+      if (auto SR = dyn_cast<StackArgumentsSpaceRegion>(MS))
+        return SR->getStackFrame()->inTopFrame(); // top-level argument
+
+      if (isa<FieldRegion>(R))
         return true; // struct field
     }
   }
   return false;
+}
+
+bool isGenericStorage(CheckerContext &C, const Expr *E) {
+  if (!isGenericPointerType(E->IgnoreImpCasts()->getType(), false))
+    return false;
+  return isGenericStorage(C, C.getSVal(E));
 }
 
 static void describeObjectType(raw_ostream &OS, const QualType &Ty,
@@ -395,17 +398,46 @@ void PointerAlignmentChecker::checkBind(SVal L, SVal V, const Stmt *S,
   const BinaryOperator *BO = dyn_cast<BinaryOperator>(S);
   if (!BO || !BO->isAssignmentOp())
     return;
+
   const QualType &DstTy = BO->getLHS()->getType();
-  if (!isGenericPointerType(DstTy, false))
+  if (!DstTy->isCHERICapabilityType(ASTCtx, true))
     return;
+  
+  bool DstIsCapStorage = false, DstIsGenericStorage = false;
 
-  const MemRegion *MR = L.getAsRegion();
-  if (!MR)
+  if (DstTy->isPointerType() && hasCapability(DstTy->getPointeeType(), ASTCtx))
+    DstIsCapStorage = true;
+
+  if (const MemRegion *MR = L.getAsRegion()) {
+    if (const TypedValueRegion *TR = MR->getAs<TypedValueRegion>()) {
+      const QualType &Ty = TR->getValueType();
+      DstIsCapStorage |= Ty->isPointerType() && hasCapability(Ty->getPointeeType(), ASTCtx);
+      DstIsGenericStorage |= isGenericPointerType(Ty, false) &&
+                             (isa<GlobalsSpaceRegion>(TR->getMemorySpace()) || isa<FieldRegion>(TR->StripCasts()));
+    }
+  }
+
+  if (SymbolRef Sym = L.getAsSymbol()) {
+    const QualType &SymTy = Sym->getType();
+    if (SymTy->isPointerType()) {
+      const QualType &CopyTy = SymTy->getPointeeType();
+      DstIsCapStorage |= CopyTy->isPointerType() && hasCapability(CopyTy->getPointeeType(), ASTCtx);
+      if (const MemRegion *R = Sym->getOriginRegion()) {
+        const MemSpaceRegion *MS = R->getMemorySpace();
+        bool TopLevelArg = false;
+        if (auto SS = dyn_cast<StackArgumentsSpaceRegion>(MS))
+          TopLevelArg = SS->getStackFrame()->inTopFrame();
+        DstIsGenericStorage |= isGenericPointerType(CopyTy, false) &&
+                               (TopLevelArg || isa<GlobalsSpaceRegion>(MS) || isa<FieldRegion>(R->StripCasts()));
+      }
+    }
+  }
+
+  if (!DstIsCapStorage && !DstIsGenericStorage)
     return;
-
-  unsigned CapAlign = getCapabilityTypeAlign(ASTCtx).getQuantity();
 
   /* Calculate actual alignment */
+  unsigned CapAlign = getCapabilityTypeAlign(ASTCtx).getQuantity();
   const Optional<unsigned int> &SrcAlign = getActualAlignment(C, V);
   if (!SrcAlign.hasValue() || SrcAlign >= CapAlign)
     return;
@@ -414,11 +446,22 @@ void PointerAlignmentChecker::checkBind(SVal L, SVal V, const Stmt *S,
   SmallString<350> ErrorMessage;
   llvm::raw_svector_ostream OS(ErrorMessage);
   OS << "Pointer value aligned to a " << SrcAlign << " byte boundary";
-  OS << " stored as type '" << DstTy.getAsString() << "'";
-  OS << ". Memory pointed by it may be used to hold capabilities, for which "
-     << CapAlign << "-byte capability alignment will be required";
+  OS << " stored as type '" << BO->getLHS()->getType().getAsString() << "'";
+  OS << ". Memory pointed by it";
+  if (DstIsCapStorage)
+    OS << " is supposed to";
+  else
+    OS << " may be used to";
+  OS << " hold capabilities, for which " << CapAlign
+     << "-byte capability alignment will be required";
 
-  emitAlignmentWarning(C, V, *GenPtrEscapeAlignBug, ErrorMessage);
+  const ValueDecl *CapDstDecl = nullptr;
+  if (const MemRegion *SR = L.getAsRegion()) {
+    if (const DeclRegion *D = getOriginalAllocation(SR))
+      CapDstDecl = D->getDecl();
+  }
+
+  emitAlignmentWarning(C, V, *GenPtrEscapeAlignBug, ErrorMessage, CapDstDecl);
 }
 
 void PointerAlignmentChecker::checkPreCall(const CallEvent &Call,
