@@ -99,7 +99,7 @@ define void @sve_signature_arg_pred_caller_fastcc(<vscale x 4 x i1> %arg) nounwi
 ; CHECK-LABEL: name: sve_signature_many_arg_vec
 ; CHECK: [[RES:%[0-9]+]]:zpr = COPY $z7
 ; CHECK: $z0 = COPY [[RES]]
-; CHECK: RET_ReallyLR 0, implicit $z0
+; CHECK: RET_ReallyLR implicit $z0
 define <vscale x 4 x i32> @sve_signature_many_arg_vec(<vscale x 4 x i32> %arg1, <vscale x 4 x i32> %arg2, <vscale x 4 x i32> %arg3, <vscale x 4 x i32> %arg4, <vscale x 4 x i32> %arg5, <vscale x 4 x i32> %arg6, <vscale x 4 x i32> %arg7, <vscale x 4 x i32> %arg8) nounwind {
   ret <vscale x 4 x i32> %arg8
 }
@@ -107,7 +107,7 @@ define <vscale x 4 x i32> @sve_signature_many_arg_vec(<vscale x 4 x i32> %arg1, 
 ; CHECK-LABEL: name: sve_signature_many_arg_pred
 ; CHECK: [[RES:%[0-9]+]]:ppr = COPY $p3
 ; CHECK: $p0 = COPY [[RES]]
-; CHECK: RET_ReallyLR 0, implicit $p0
+; CHECK: RET_ReallyLR implicit $p0
 define <vscale x 4 x i1> @sve_signature_many_arg_pred(<vscale x 4 x i1> %arg1, <vscale x 4 x i1> %arg2, <vscale x 4 x i1> %arg3, <vscale x 4 x i1> %arg4) nounwind {
   ret <vscale x 4 x i1> %arg4
 }
@@ -115,7 +115,7 @@ define <vscale x 4 x i1> @sve_signature_many_arg_pred(<vscale x 4 x i1> %arg1, <
 ; CHECK-LABEL: name: sve_signature_vec
 ; CHECK: [[RES:%[0-9]+]]:zpr = COPY $z1
 ; CHECK: $z0 = COPY [[RES]]
-; CHECK: RET_ReallyLR 0, implicit $z0
+; CHECK: RET_ReallyLR implicit $z0
 define <vscale x 4 x i32> @sve_signature_vec(<vscale x 4 x i32> %arg1, <vscale x 4 x i32> %arg2) nounwind {
  ret <vscale x 4 x i32> %arg2
 }
@@ -123,7 +123,7 @@ define <vscale x 4 x i32> @sve_signature_vec(<vscale x 4 x i32> %arg1, <vscale x
 ; CHECK-LABEL: name: sve_signature_pred
 ; CHECK: [[RES:%[0-9]+]]:ppr = COPY $p1
 ; CHECK: $p0 = COPY [[RES]]
-; CHECK: RET_ReallyLR 0, implicit $p0
+; CHECK: RET_ReallyLR implicit $p0
 define <vscale x 4 x i1> @sve_signature_pred(<vscale x 4 x i1> %arg1, <vscale x 4 x i1> %arg2) nounwind {
   ret <vscale x 4 x i1> %arg2
 }
@@ -136,7 +136,7 @@ define <vscale x 4 x i1> @sve_signature_pred(<vscale x 4 x i1> %arg1, <vscale x 
 ; CHECK-NEXT: BL @sve_signature_vec, csr_aarch64_sve_aapcs
 ; CHECK: [[RES:%[0-9]+]]:zpr = COPY $z0
 ; CHECK: $z0 = COPY [[RES]]
-; CHECK: RET_ReallyLR 0, implicit $z0
+; CHECK: RET_ReallyLR implicit $z0
 define <vscale x 4 x i32> @sve_signature_vec_caller(<vscale x 4 x i32> %arg1, <vscale x 4 x i32> %arg2) nounwind {
   %res = call <vscale x 4 x i32> @sve_signature_vec(<vscale x 4 x i32> %arg2, <vscale x 4 x i32> %arg1)
   ret <vscale x 4 x i32> %res
@@ -150,7 +150,7 @@ define <vscale x 4 x i32> @sve_signature_vec_caller(<vscale x 4 x i32> %arg1, <v
 ; CHECK-NEXT: BL @sve_signature_pred, csr_aarch64_sve_aapcs
 ; CHECK: [[RES:%[0-9]+]]:ppr = COPY $p0
 ; CHECK: $p0 = COPY [[RES]]
-; CHECK: RET_ReallyLR 0, implicit $p0
+; CHECK: RET_ReallyLR implicit $p0
 define <vscale x 4 x i1> @sve_signature_pred_caller(<vscale x 4 x i1> %arg1, <vscale x 4 x i1> %arg2) nounwind {
   %res = call <vscale x 4 x i1> @sve_signature_pred(<vscale x 4 x i1> %arg2, <vscale x 4 x i1> %arg1)
   ret <vscale x 4 x i1> %res

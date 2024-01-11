@@ -7,7 +7,7 @@ fixedStack:
 body: |
   bb.0:
     $x0 = LDURXi %fixed-stack.0, -264
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 # CHECK:      name:            framelayout_offset_immediate_change
 # CHECK:      body:             |

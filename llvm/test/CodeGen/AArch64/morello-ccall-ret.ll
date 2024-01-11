@@ -1,4 +1,4 @@
-target datalayout = "e-m:e-pf200:128:128-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"
+target datalayout = "e-m:e-pf200:128:128:128:64-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"
 target triple = "aarch64-none-linux-gnu"
 
 ; RUN: llc -march=arm64 -mattr=+morello,+c64 -target-abi purecap -o - %s | FileCheck %s
@@ -33,8 +33,8 @@ entry:
 ; CHECK-LABEL: bar
 define void @bar(i32 %a, i32 %b) addrspace(200) {
 entry:
-; CHECK: adrp c[[ADDR:[0-9]+]], :got:__cheri_method.cls.foo
-; CHECK: ldr c[[ADDR]], [c[[ADDR]], :got_lo12:__cheri_method.cls.foo]
+; CHECK-DAG: adrp c[[ADDR:[0-9]+]], :got:__cheri_method.cls.foo
+; CHECK-DAG: ldr c[[ADDR]], [c[[ADDR]], :got_lo12:__cheri_method.cls.foo]
 ; CHECK-DAG: ldr x11, [c[[ADDR]]]
 ; CHECK-DAG: ldp c9, c10
 ; CHECK-DAG: mov x2, xzr

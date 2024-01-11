@@ -26,10 +26,10 @@ define i32 @first_i32_store_to_load_fwd(i8 addrspace(200)* %arg) local_unnamed_a
 ; ASM-LABEL: first_i32_store_to_load_fwd:
 ; ASM:       .Lfunc_begin0:
 ; ASM-NEXT:  // %bb.0:
-; ASM-NEXT:    sub csp, csp, #80 // =80
+; ASM-NEXT:    sub csp, csp, #80
 ; ASM-NEXT:    str c0, [csp, #0]
 ; ASM-NEXT:    ldr w0, [csp]
-; ASM-NEXT:    add csp, csp, #80 // =80
+; ASM-NEXT:    add csp, csp, #80
 ; ASM-NEXT:    ret c30
 ; CHECK-LABEL: define {{[^@]+}}@first_i32_store_to_load_fwd
 ; CHECK-SAME: (i8 addrspace(200)* [[ARG:%.*]]) local_unnamed_addr addrspace(200) #[[ATTR0:[0-9]+]] {
@@ -52,10 +52,10 @@ define i32 @second_i32_store_to_load_fwd(i8 addrspace(200)* %arg) local_unnamed_
 ; ASM-LABEL: second_i32_store_to_load_fwd:
 ; ASM:       .Lfunc_begin1:
 ; ASM-NEXT:  // %bb.0:
-; ASM-NEXT:    sub csp, csp, #80 // =80
+; ASM-NEXT:    sub csp, csp, #80
 ; ASM-NEXT:    str c0, [csp, #0]
 ; ASM-NEXT:    ldr w0, [csp, #4]
-; ASM-NEXT:    add csp, csp, #80 // =80
+; ASM-NEXT:    add csp, csp, #80
 ; ASM-NEXT:    ret c30
 ; CHECK-LABEL: define {{[^@]+}}@second_i32_store_to_load_fwd
 ; CHECK-SAME: (i8 addrspace(200)* [[ARG:%.*]]) local_unnamed_addr addrspace(200) #[[ATTR0]] {
@@ -78,10 +78,10 @@ define i32 @third_i32_store_to_load_fwd(i8 addrspace(200)* %arg) local_unnamed_a
 ; ASM-LABEL: third_i32_store_to_load_fwd:
 ; ASM:       .Lfunc_begin2:
 ; ASM-NEXT:  // %bb.0:
-; ASM-NEXT:    sub csp, csp, #80 // =80
+; ASM-NEXT:    sub csp, csp, #80
 ; ASM-NEXT:    str c0, [csp, #0]
 ; ASM-NEXT:    ldr w0, [csp, #8]
-; ASM-NEXT:    add csp, csp, #80 // =80
+; ASM-NEXT:    add csp, csp, #80
 ; ASM-NEXT:    ret c30
 ; CHECK-LABEL: define {{[^@]+}}@third_i32_store_to_load_fwd
 ; CHECK-SAME: (i8 addrspace(200)* [[ARG:%.*]]) local_unnamed_addr addrspace(200) #[[ATTR0]] {
@@ -104,10 +104,10 @@ define i32 @fourth_i32_store_to_load_fwd(i8 addrspace(200)* %arg) local_unnamed_
 ; ASM-LABEL: fourth_i32_store_to_load_fwd:
 ; ASM:       .Lfunc_begin3:
 ; ASM-NEXT:  // %bb.0:
-; ASM-NEXT:    sub csp, csp, #80 // =80
+; ASM-NEXT:    sub csp, csp, #80
 ; ASM-NEXT:    str c0, [csp, #0]
 ; ASM-NEXT:    ldr w0, [csp, #12]
-; ASM-NEXT:    add csp, csp, #80 // =80
+; ASM-NEXT:    add csp, csp, #80
 ; ASM-NEXT:    ret c30
 ; CHECK-LABEL: define {{[^@]+}}@fourth_i32_store_to_load_fwd
 ; CHECK-SAME: (i8 addrspace(200)* [[ARG:%.*]]) local_unnamed_addr addrspace(200) #[[ATTR0]] {

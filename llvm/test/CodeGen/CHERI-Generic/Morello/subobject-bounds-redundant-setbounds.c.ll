@@ -55,15 +55,15 @@ define signext i32 @stack_array() local_unnamed_addr addrspace(200) nounwind {
 ; ASM-LABEL: stack_array:
 ; ASM:       .Lfunc_begin1:
 ; ASM-NEXT:  // %bb.0:
-; ASM-NEXT:    sub csp, csp, #80 // =80
-; ASM-NEXT:    add c0, csp, #8 // =8
+; ASM-NEXT:    sub csp, csp, #80
+; ASM-NEXT:    add c0, csp, #8
 ; ASM-NEXT:    stp c30, c19, [csp, #48] // 32-byte Folded Spill
 ; ASM-NEXT:    scbnds c19, c0, #40 // =40
 ; ASM-NEXT:    mov c0, c19
 ; ASM-NEXT:    bl use
 ; ASM-NEXT:    ldr w0, [c19, #20]
 ; ASM-NEXT:    ldp c30, c19, [csp, #48] // 32-byte Folded Reload
-; ASM-NEXT:    add csp, csp, #80 // =80
+; ASM-NEXT:    add csp, csp, #80
 ; ASM-NEXT:    ret c30
 ; CHECK-LABEL: define {{[^@]+}}@stack_array
 ; CHECK-SAME: () local_unnamed_addr addrspace(200) #[[ATTR1:[0-9]+]] {
@@ -112,16 +112,16 @@ define signext i32 @stack_int() local_unnamed_addr addrspace(200) nounwind {
 ; ASM-LABEL: stack_int:
 ; ASM:       .Lfunc_begin2:
 ; ASM-NEXT:  // %bb.0:
-; ASM-NEXT:    sub csp, csp, #32 // =32
-; ASM-NEXT:    add c0, csp, #12 // =12
+; ASM-NEXT:    sub csp, csp, #32
 ; ASM-NEXT:    mov w8, #1
+; ASM-NEXT:    add c0, csp, #12
 ; ASM-NEXT:    scbnds c0, c0, #4 // =4
 ; ASM-NEXT:    str c30, [csp, #16] // 16-byte Folded Spill
 ; ASM-NEXT:    str w8, [csp, #12]
 ; ASM-NEXT:    bl use
-; ASM-NEXT:    ldr w0, [csp, #12]
 ; ASM-NEXT:    ldr c30, [csp, #16] // 16-byte Folded Reload
-; ASM-NEXT:    add csp, csp, #32 // =32
+; ASM-NEXT:    ldr w0, [csp, #12]
+; ASM-NEXT:    add csp, csp, #32
 ; ASM-NEXT:    ret c30
 ; CHECK-LABEL: define {{[^@]+}}@stack_int
 ; CHECK-SAME: () local_unnamed_addr addrspace(200) #[[ATTR1]] {
@@ -166,15 +166,15 @@ define signext i32 @stack_int_inlined() local_unnamed_addr addrspace(200) nounwi
 ; ASM-LABEL: stack_int_inlined:
 ; ASM:       .Lfunc_begin3:
 ; ASM-NEXT:  // %bb.0:
-; ASM-NEXT:    sub csp, csp, #16 // =16
+; ASM-NEXT:    sub csp, csp, #16
 ; ASM-NEXT:    mov w8, #1
-; ASM-NEXT:    add c0, csp, #12 // =12
-; ASM-NEXT:    str w8, [csp, #12]
+; ASM-NEXT:    mov w9, #2
+; ASM-NEXT:    add c0, csp, #12
 ; ASM-NEXT:    scbnds c0, c0, #4 // =4
-; ASM-NEXT:    mov w8, #2
-; ASM-NEXT:    str w8, [c0]
+; ASM-NEXT:    str w8, [csp, #12]
+; ASM-NEXT:    str w9, [c0]
 ; ASM-NEXT:    ldr w0, [csp, #12]
-; ASM-NEXT:    add csp, csp, #16 // =16
+; ASM-NEXT:    add csp, csp, #16
 ; ASM-NEXT:    ret c30
 ; CHECK-LABEL: define {{[^@]+}}@stack_int_inlined
 ; CHECK-SAME: () local_unnamed_addr addrspace(200) #[[ATTR1]] {
@@ -221,14 +221,14 @@ define signext i32 @out_of_bounds_setbounds() local_unnamed_addr addrspace(200) 
 ; ASM-LABEL: out_of_bounds_setbounds:
 ; ASM:       .Lfunc_begin4:
 ; ASM-NEXT:  // %bb.0:
-; ASM-NEXT:    sub csp, csp, #16 // =16
-; ASM-NEXT:    add c0, csp, #12 // =12
+; ASM-NEXT:    sub csp, csp, #16
+; ASM-NEXT:    add c0, csp, #12
+; ASM-NEXT:    mov w8, #2
 ; ASM-NEXT:    scbnds c0, c0, #4 // =4
 ; ASM-NEXT:    scbnds c0, c0, #5 // =5
-; ASM-NEXT:    mov w8, #2
 ; ASM-NEXT:    str w8, [c0]
 ; ASM-NEXT:    ldr w0, [csp, #12]
-; ASM-NEXT:    add csp, csp, #16 // =16
+; ASM-NEXT:    add csp, csp, #16
 ; ASM-NEXT:    ret c30
 ; CHECK-LABEL: define {{[^@]+}}@out_of_bounds_setbounds
 ; CHECK-SAME: () local_unnamed_addr addrspace(200) #[[ATTR1]] {
@@ -269,16 +269,16 @@ define signext i32 @setbounds_escapes() local_unnamed_addr addrspace(200) nounwi
 ; ASM-LABEL: setbounds_escapes:
 ; ASM:       .Lfunc_begin5:
 ; ASM-NEXT:  // %bb.0:
-; ASM-NEXT:    sub csp, csp, #32 // =32
-; ASM-NEXT:    add c0, csp, #12 // =12
-; ASM-NEXT:    scbnds c0, c0, #4 // =4
+; ASM-NEXT:    sub csp, csp, #32
 ; ASM-NEXT:    mov w8, #2
+; ASM-NEXT:    add c0, csp, #12
+; ASM-NEXT:    scbnds c0, c0, #4 // =4
 ; ASM-NEXT:    str c30, [csp, #16] // 16-byte Folded Spill
 ; ASM-NEXT:    str w8, [c0]
 ; ASM-NEXT:    bl use
-; ASM-NEXT:    ldr w0, [csp, #12]
 ; ASM-NEXT:    ldr c30, [csp, #16] // 16-byte Folded Reload
-; ASM-NEXT:    add csp, csp, #32 // =32
+; ASM-NEXT:    ldr w0, [csp, #12]
+; ASM-NEXT:    add csp, csp, #32
 ; ASM-NEXT:    ret c30
 ; CHECK-LABEL: define {{[^@]+}}@setbounds_escapes
 ; CHECK-SAME: () local_unnamed_addr addrspace(200) #[[ATTR1]] {
@@ -318,10 +318,10 @@ define void @assume_aligned() local_unnamed_addr addrspace(200) nounwind {
 ; ASM-LABEL: assume_aligned:
 ; ASM:       .Lfunc_begin6:
 ; ASM-NEXT:  // %bb.0:
-; ASM-NEXT:    sub csp, csp, #16 // =16
+; ASM-NEXT:    sub csp, csp, #16
 ; ASM-NEXT:    mov w8, #1
 ; ASM-NEXT:    str w8, [csp, #12]
-; ASM-NEXT:    add csp, csp, #16 // =16
+; ASM-NEXT:    add csp, csp, #16
 ; ASM-NEXT:    ret c30
 ; CHECK-LABEL: define {{[^@]+}}@assume_aligned
 ; CHECK-SAME: () local_unnamed_addr addrspace(200) #[[ATTR1]] {

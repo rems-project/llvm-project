@@ -21,7 +21,7 @@ stack:
   - { id: 2, stack-id: noalloc, size: 8, alignment: 8, offset: 0 }
 body:             |
   bb.0.entry:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ---
 ...
 # Ensure MaxAlignment becomes '32' even though we also have an object
@@ -39,7 +39,7 @@ stack:
   - { id: 1, stack-id: noalloc, size: 16, alignment: 64 }
 body:             |
   bb.0.entry:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ---
 ...
 # CHECK: name: test_maxalign_fixedstack
@@ -52,5 +52,5 @@ fixedStack:
   - { id: 1, stack-id: noalloc, size: 16, alignment: 64 }
 body:             |
   bb.0.entry:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ---

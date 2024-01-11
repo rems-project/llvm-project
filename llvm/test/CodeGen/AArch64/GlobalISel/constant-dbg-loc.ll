@@ -27,7 +27,7 @@ define i32 @main() #0 !dbg !14 {
   ; CHECK:   G_STORE [[C2]](s32), [[GV1]](p0), debug-location !21 :: (store (s32) into @var2)
   ; CHECK: bb.3.if.end:
   ; CHECK:   $w0 = COPY [[C]](s32), debug-location !24
-  ; CHECK:   RET_ReallyLR 0, implicit $w0, debug-location !24
+  ; CHECK:   RET_ReallyLR implicit $w0, debug-location !24
 entry:
   %retval = alloca i32, align 4
   store i32 0, i32* %retval, align 4

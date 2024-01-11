@@ -35,6 +35,7 @@ void types_offset(char * __capability c) {
   long x5 = (__cheri_offset short)c; // expected-warning {{target type 'short' is smaller than the type 'long int' of the capability offset field}}
   short x6 = (__cheri_offset long)c;
   char *x7 = (__cheri_offset char*)c; // expected-error {{invalid target type 'char *' for __cheri_offset}}
+  __intcap x8 = (__cheri_offset __intcap)c; // expected-error {{invalid target type '__intcap' for __cheri_offset}}
 }
 
 void types_addr(char * __capability c) {
@@ -49,6 +50,7 @@ void types_addr(char * __capability c) {
   char *x7 = (__cheri_addr char *)c;
   // hybrid-error@-1 {{integral pointer type 'char *' is not a valid target type for __cheri_addr}}
   // purecap-error@-2 {{capability type 'char *' is not a valid target type for __cheri_addr}}
+  __intcap x8 = (__cheri_addr __intcap)c; // expected-error {{invalid target type '__intcap' for __cheri_addr}}
 }
 
 struct foo { char* x; };
@@ -76,11 +78,11 @@ void decay(void) {
   // PURECAP-AST: -FunctionDecl {{.*}} line:[[@LINE-3]]:6 referenced decay 'void (void)'
   // PURECAP-AST: CStyleCastExpr {{.*}} <col:13, col:33> 'long' <CHERICapabilityToAddress>{{$}}
   // PURECAP-AST-NEXT: ImplicitCastExpr {{.*}} <col:33> 'char *' <ArrayToPointerDecay> part_of_explicit_cast{{$}}
-  // PURECAP-AST-NEXT: -DeclRefExpr {{.*}} 'char [1]' lvalue Var {{.*}} 'buf' 'char [1]'{{$}}
+  // PURECAP-AST-NEXT: -DeclRefExpr {{.*}} 'char[1]' lvalue Var {{.*}} 'buf' 'char[1]'{{$}}
   long x2 = (__cheri_offset long) buf;
   // PURECAP-AST: CStyleCastExpr {{.*}} <col:13, col:35> 'long' <CHERICapabilityToOffset>{{$}}
   // PURECAP-AST-NEXT: ImplicitCastExpr {{.*}} <col:35> 'char *' <ArrayToPointerDecay> part_of_explicit_cast{{$}}
-  // PURECAP-AST-NEXT: -DeclRefExpr {{.*}} 'char [1]' lvalue Var {{.*}} 'buf' 'char [1]'{{$}}
+  // PURECAP-AST-NEXT: -DeclRefExpr {{.*}} 'char[1]' lvalue Var {{.*}} 'buf' 'char[1]'{{$}}
 
   // Also check function-to-pointer decay:
   long x3 = (__cheri_addr long) decay;

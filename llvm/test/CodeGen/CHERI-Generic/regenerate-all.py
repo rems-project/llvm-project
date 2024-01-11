@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import copy
 import math
 import re
 import subprocess
@@ -11,7 +12,7 @@ from pathlib import Path
 LLVM_SRC_PATH = Path(__file__).parent.parent.parent.parent
 
 CHERI_GENERIC_UTC_KEY = 'CHERI-GENERIC-UTC:'
-CHERI_GENERIC_UTC_CMD = re.compile((r'.*' + CHERI_GENERIC_UTC_KEY + '\s*(?P<cmd>.*)\s*$').encode("utf-8"))
+CHERI_GENERIC_UTC_CMD = re.compile((r'.*' + CHERI_GENERIC_UTC_KEY + r'\s*(?P<cmd>.*)\s*$').encode("utf-8"))
 
 
 class ArchSpecificValues(object):
@@ -76,6 +77,15 @@ ALL_ARCHITECTURE_IFNOT_STRS = set(
     [b"@IFNOT-" + arch_def.base_name.encode().upper() + b"@" for arch_def in ALL_ARCHITECTURES])
 
 
+class UtcCommand:
+    def __init__(self, base_command: "list[str]", extra_args: "list[str]"):
+        self.base_command = base_command
+        self.extra_args = extra_args
+
+    def command(self):
+        return self.base_command + self.extra_args
+
+
 class CmdArgs(object):
     def __init__(self):
         parser = argparse.ArgumentParser()
@@ -110,7 +120,7 @@ def update_one_test(test_name: str, input_file: typing.BinaryIO,
     current_arch_base_if = b"@IF-" + arch_def.base_name.encode().upper() + b"@"
     current_arch_ifnot = b"@IFNOT-" + arch_def.name.encode().upper() + b"@"
     current_arch_base_ifnot = b"@IFNOT-" + arch_def.base_name.encode().upper() + b"@"
-    cheri_generic_utcs = None
+    cheri_generic_utcs = []
 
     update_scripts_dir = LLVM_SRC_PATH / "utils"
     llc_checks_cmd = [sys.executable, str(update_scripts_dir / "update_llc_test_checks.py"),
@@ -123,13 +133,14 @@ def update_one_test(test_name: str, input_file: typing.BinaryIO,
                       "--llc-binary", str(args.llc_cmd),
                       str(output_path)]
     opt_checks_cmd = [sys.executable, str(update_scripts_dir / "update_test_checks.py"),
-                      "--function-signature", "--scrub-attributes", "--force-update",
+                      "--force-update",
                       "--opt-binary", str(args.opt_cmd),
                       str(output_path)]
     utc_cmds = {
-        b'llc': llc_checks_cmd,
-        b'mir': mir_checks_cmd,
-        b'opt': opt_checks_cmd,
+        'llc': UtcCommand(llc_checks_cmd, []),
+        'mir': UtcCommand(mir_checks_cmd, []),
+        'opt': UtcCommand(opt_checks_cmd, ["--function-signature",
+                                           "--scrub-attributes"]),
     }
 
     with output_path.open("wb") as output_file:
@@ -149,7 +160,7 @@ def update_one_test(test_name: str, input_file: typing.BinaryIO,
                     continue
                 else:
                     sys.exit("Invalid @IF- directive: " + line.decode("utf-8"))
-            if line.startswith(b"@IFNOT-"):
+            elif line.startswith(b"@IFNOT-"):
                 if line.startswith(current_arch_ifnot):
                     print("Skipping", current_arch_ifnot, "line: ", line)
                     continue
@@ -172,16 +183,20 @@ def update_one_test(test_name: str, input_file: typing.BinaryIO,
 
             m = CHERI_GENERIC_UTC_CMD.match(line)
             if m:
-                if cheri_generic_utcs is None:
-                    cheri_generic_utcs = []
-                for s in m.group(1).split(b','):
-                    s = s.strip()
-                    if s not in utc_cmds:
-                        sys.exit("Unknown '" + s.decode("utf-8") + "' in CHERI-GENERIC-UTC directive: " +
-                                 line.decode("utf-8"))
-                    cheri_generic_utcs.append(s)
-                if not cheri_generic_utcs:
+                utc_cmd = m.group(1).strip()
+                if not utc_cmd:
                     sys.exit("Empty CHERI-GENERIC-UTC directive: " + line.decode("utf-8"))
+                utc_cmd = list(map(lambda s: s.decode("utf-8"), utc_cmd.split(maxsplit=1)))
+                if utc_cmd[0] not in utc_cmds:
+                    sys.exit("Unknown '" + utc_cmd[0] +
+                             "' in CHERI-GENERIC-UTC directive: " +
+                             line.decode("utf-8"))
+                new_utc_cmd = copy.deepcopy(utc_cmds[utc_cmd[0]])
+                if len(utc_cmd) > 1:
+                    print("Changing", utc_cmd[0], "extra args from",
+                          new_utc_cmd.extra_args, "to", utc_cmd[1].split())
+                    new_utc_cmd.extra_args = utc_cmd[1].split()
+                cheri_generic_utcs.append(new_utc_cmd)
 
             converted_line = line.replace(b"iCAPRANGE", b"i" + str(
                 arch_def.cap_range).encode("utf-8"))
@@ -219,16 +234,13 @@ def update_one_test(test_name: str, input_file: typing.BinaryIO,
         return
 
     # TODO: Always be explicit?
-    if cheri_generic_utcs is None:
-        cheri_generic_utcs = [b'llc', b'opt']
+    if not cheri_generic_utcs:
+        cheri_generic_utcs = [utc_cmds['llc'], utc_cmds['opt']]
     # Generate the check lines using update_*_test_checks.py
-    for update_cmd in [utc_cmds[k] for k in cheri_generic_utcs]:
+    for update_cmd in cheri_generic_utcs:
         # if args.verbose:
-        print("Running", " ".join(update_cmd))
-        subprocess.check_call(update_cmd)
-    #/Users/alex/cheri/llvm-project/llvm/utils/update_llc_test_checks.py --verbose --llc-binary /Users/alex/cheri/llvm-project/cmake-build-debug/bin/llc /Users/alex/cheri/llvm-project/llvm/test/CodeGen/CHERI-Generic/MIPS/cheri-csub.ll
-
-    # TODO: run update_test_checks.py
+        print("Running", " ".join(update_cmd.command()))
+        subprocess.check_call(update_cmd.command())
 
 
 def main():

@@ -10,20 +10,19 @@ body:             |
     liveins: $w0
     ; CHECK-LABEL: name: s8
     ; CHECK: liveins: $w0
-    ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
-    ; CHECK: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 256
-    ; CHECK: [[OR:%[0-9]+]]:_(s32) = G_OR [[C]], [[C1]]
+    ; CHECK: [[DEF:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
+    ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 256
+    ; CHECK: [[OR:%[0-9]+]]:_(s32) = G_OR [[DEF]], [[C]]
     ; CHECK: [[BITREVERSE:%[0-9]+]]:_(s32) = G_BITREVERSE [[OR]]
     ; CHECK: [[CTLZ:%[0-9]+]]:_(s32) = G_CTLZ [[BITREVERSE]](s32)
     ; CHECK: [[COPY:%[0-9]+]]:_(s32) = COPY [[CTLZ]](s32)
-    ; CHECK: %ext:_(s32) = COPY [[COPY]](s32)
-    ; CHECK: $w0 = COPY %ext(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: $w0 = COPY [[COPY]](s32)
+    ; CHECK: RET_ReallyLR implicit $w0
     %val:_(s8) = G_IMPLICIT_DEF
     %cttz:_(s8) = G_CTTZ_ZERO_UNDEF %val(s8)
     %ext:_(s32) = G_ANYEXT %cttz(s8)
     $w0 = COPY %ext(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -34,20 +33,19 @@ body:             |
     liveins: $w0
     ; CHECK-LABEL: name: s16
     ; CHECK: liveins: $w0
-    ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
-    ; CHECK: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 65536
-    ; CHECK: [[OR:%[0-9]+]]:_(s32) = G_OR [[C]], [[C1]]
+    ; CHECK: [[DEF:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
+    ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 65536
+    ; CHECK: [[OR:%[0-9]+]]:_(s32) = G_OR [[DEF]], [[C]]
     ; CHECK: [[BITREVERSE:%[0-9]+]]:_(s32) = G_BITREVERSE [[OR]]
     ; CHECK: [[CTLZ:%[0-9]+]]:_(s32) = G_CTLZ [[BITREVERSE]](s32)
     ; CHECK: [[COPY:%[0-9]+]]:_(s32) = COPY [[CTLZ]](s32)
-    ; CHECK: %ext:_(s32) = COPY [[COPY]](s32)
-    ; CHECK: $w0 = COPY %ext(s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: $w0 = COPY [[COPY]](s32)
+    ; CHECK: RET_ReallyLR implicit $w0
     %val:_(s16) = G_IMPLICIT_DEF
     %cttz:_(s16) = G_CTTZ_ZERO_UNDEF %val(s16)
     %ext:_(s32) = G_ANYEXT %cttz(s16)
     $w0 = COPY %ext(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -64,11 +62,11 @@ body:             |
     ; CHECK: [[BITREVERSE:%[0-9]+]]:_(s32) = G_BITREVERSE %val
     ; CHECK: [[CTLZ:%[0-9]+]]:_(s32) = G_CTLZ [[BITREVERSE]](s32)
     ; CHECK: $w0 = COPY [[CTLZ]](s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %val:_(s32) = COPY $w0
     %1:_(s32) = G_CTTZ_ZERO_UNDEF %val(s32)
     $w0 = COPY %1(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -85,10 +83,10 @@ body:             |
     ; CHECK: [[BITREVERSE:%[0-9]+]]:_(s64) = G_BITREVERSE %val
     ; CHECK: [[CTLZ:%[0-9]+]]:_(s64) = G_CTLZ [[BITREVERSE]](s64)
     ; CHECK: $x0 = COPY [[CTLZ]](s64)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %val:_(s64) = COPY $x0
     %1:_(s64) = G_CTTZ_ZERO_UNDEF %val(s64)
     $x0 = COPY %1(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...

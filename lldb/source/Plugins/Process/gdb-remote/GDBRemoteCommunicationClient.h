@@ -65,6 +65,7 @@ public:
   // we are communicating with it.
   bool HandshakeWithServer(Status *error_ptr);
 
+  // FIXME: only used for Morello, this needs to migrate to ReadExtFeature
   //------------------------------------------------------------------
   /// Obtain a complete response for a packet type that specifies a
   /// range of data to be returned. The result is gathered via a
@@ -104,6 +105,7 @@ public:
       llvm::StringRef payload_prefix, std::string &response_string,
       llvm::StringRef payload_suffix = llvm::StringRef());
 
+  // FIXME: only used for Morello, this needs to migrate to ReadExtFeature
   //------------------------------------------------------------------
   /// Obtain a complete response for a packet type that specifies a
   /// range of data to be returned, without acquiring a packet
@@ -117,6 +119,7 @@ public:
       llvm::StringRef payload_prefix, std::string &response_string,
       llvm::StringRef payload_suffix = llvm::StringRef());
 
+  // FIXME: only used for Morello, this needs to migrate to ReadExtFeature
   //------------------------------------------------------------------
   /// Obtain a complete response for a packet type that specifies a
   /// range of data to be returned and is thread-specific.
@@ -200,21 +203,6 @@ public:
   int SendLaunchEventDataPacket(const char *data,
                                 bool *was_supported = nullptr);
 
-  /// Sends a "vAttach:PID" where PID is in hex.
-  ///
-  /// \param[in] pid
-  ///     A process ID for the remote gdb server to attach to.
-  ///
-  /// \param[out] response
-  ///     The response received from the gdb server. If the return
-  ///     value is zero, \a response will contain a stop reply
-  ///     packet.
-  ///
-  /// \return
-  ///     Zero if the attach was successful, or an error indicating
-  ///     an error code.
-  int SendAttach(lldb::pid_t pid, StringExtractorGDBRemote &response);
-
   /// Sends a GDB remote protocol 'I' packet that delivers stdin
   /// data to the remote process.
   ///
@@ -288,7 +276,7 @@ public:
 
   bool DeallocateMemory(lldb::addr_t addr);
 
-  Status Detach(bool keep_stopped);
+  Status Detach(bool keep_stopped, lldb::pid_t pid = LLDB_INVALID_PROCESS_ID);
 
   Status GetMemoryRegionInfo(lldb::addr_t addr, MemoryRegionInfo &range_info);
 
@@ -305,6 +293,9 @@ public:
   std::chrono::seconds GetHostDefaultPacketTimeout();
 
   const ArchSpec &GetProcessArchitecture();
+
+  bool GetProcessStandaloneBinary(UUID &uuid, lldb::addr_t &value,
+                                  bool &value_is_offset);
 
   void GetRemoteQSupported();
 
@@ -328,9 +319,9 @@ public:
 
   llvm::VersionTuple GetMacCatalystVersion();
 
-  bool GetOSBuildString(std::string &s);
+  llvm::Optional<std::string> GetOSBuildString();
 
-  bool GetOSKernelDescription(std::string &s);
+  llvm::Optional<std::string> GetOSKernelDescription();
 
   ArchSpec GetSystemArchitecture();
 
@@ -385,8 +376,6 @@ public:
       uint32_t length,       // Byte Size of breakpoint or watchpoint
       std::chrono::seconds interrupt_timeout); // Time to wait for an interrupt
 
-  bool SetNonStopMode(const bool enable);
-
   void TestPacketSpeed(const uint32_t num_packets, uint32_t max_send,
                        uint32_t max_recv, uint64_t recv_amount, bool json,
                        Stream &strm);
@@ -415,8 +404,6 @@ public:
 
   bool GetQXferLibrariesSVR4ReadSupported();
 
-  bool GetQXferSigInfoReadSupported();
-
   bool GetQXferCapaReadSupported();
 
   uint64_t GetRemoteMaxPacketSize();
@@ -430,6 +417,8 @@ public:
   bool GetQXferFeaturesReadSupported();
 
   bool GetQXferMemoryMapReadSupported();
+
+  bool GetQXferSigInfoReadSupported();
 
   LazyBool SupportsAllocDeallocMemory() // const
   {
@@ -449,6 +438,12 @@ public:
                            mode_t mode, Status &error);
 
   bool CloseFile(lldb::user_id_t fd, Status &error);
+
+  llvm::Optional<GDBRemoteFStatData> FStat(lldb::user_id_t fd);
+
+  // NB: this is just a convenience wrapper over open() + fstat().  It does not
+  // work if the file cannot be opened.
+  llvm::Optional<GDBRemoteFStatData> Stat(const FileSpec &file_spec);
 
   lldb::user_id_t GetFileSize(const FileSpec &file_spec);
 
@@ -524,6 +519,8 @@ public:
 
   bool GetMemoryTaggingSupported();
 
+  bool UsesNativeSignals();
+
   lldb::DataBufferSP ReadMemoryTags(lldb::addr_t addr, size_t len,
                                     int32_t type);
 
@@ -542,9 +539,8 @@ public:
   GetModulesInfo(llvm::ArrayRef<FileSpec> module_file_specs,
                  const llvm::Triple &triple);
 
-  bool ReadExtFeature(const lldb_private::ConstString object,
-                      const lldb_private::ConstString annex, std::string &out,
-                      lldb_private::Status &err);
+  llvm::Expected<std::string> ReadExtFeature(llvm::StringRef object,
+                                             llvm::StringRef annex);
 
   void ServeSymbolLookups(lldb_private::Process *process);
 
@@ -606,6 +602,8 @@ public:
   SendTraceGetBinaryData(const TraceGetBinaryDataRequest &request,
                          std::chrono::seconds interrupt_timeout);
 
+  bool GetSaveCoreSupported() const;
+
 protected:
   LazyBool m_supports_not_sending_acks = eLazyBoolCalculate;
   LazyBool m_supports_thread_suffix = eLazyBoolCalculate;
@@ -635,9 +633,9 @@ protected:
   LazyBool m_supports_qXfer_libraries_read = eLazyBoolCalculate;
   LazyBool m_supports_qXfer_libraries_svr4_read = eLazyBoolCalculate;
   LazyBool m_supports_qXfer_features_read = eLazyBoolCalculate;
-  LazyBool m_supports_qXfer_siginfo_read = eLazyBoolCalculate;
   LazyBool m_supports_qXfer_capa_read = eLazyBoolCalculate;
   LazyBool m_supports_qXfer_memory_map_read = eLazyBoolCalculate;
+  LazyBool m_supports_qXfer_siginfo_read = eLazyBoolCalculate;
   LazyBool m_supports_augmented_libraries_svr4_read = eLazyBoolCalculate;
   LazyBool m_supports_jThreadExtendedInfo = eLazyBoolCalculate;
   LazyBool m_supports_jLoadedDynamicLibrariesInfos = eLazyBoolCalculate;
@@ -646,6 +644,8 @@ protected:
   LazyBool m_supports_error_string_reply = eLazyBoolCalculate;
   LazyBool m_supports_multiprocess = eLazyBoolCalculate;
   LazyBool m_supports_memory_tagging = eLazyBoolCalculate;
+  LazyBool m_supports_qSaveCore = eLazyBoolCalculate;
+  LazyBool m_uses_native_signals = eLazyBoolCalculate;
 
   bool m_supports_qProcessInfoPID : 1, m_supports_qfProcessInfo : 1,
       m_supports_qUserName : 1, m_supports_qGroupName : 1,
@@ -654,7 +654,9 @@ protected:
       m_supports_QEnvironment : 1, m_supports_QEnvironmentHexEncoded : 1,
       m_supports_qSymbol : 1, m_qSymbol_requests_done : 1,
       m_supports_qModuleInfo : 1, m_supports_jThreadsInfo : 1,
-      m_supports_jModulesInfo : 1;
+      m_supports_jModulesInfo : 1, m_supports_vFileSize : 1,
+      m_supports_vFileMode : 1, m_supports_vFileExists : 1,
+      m_supports_vRun : 1;
 
   /// Current gdb remote protocol process identifier for all other operations
   lldb::pid_t m_curr_pid = LLDB_INVALID_PROCESS_ID;
@@ -670,6 +672,9 @@ protected:
 
   ArchSpec m_host_arch;
   ArchSpec m_process_arch;
+  UUID m_process_standalone_uuid;
+  lldb::addr_t m_process_standalone_value = LLDB_INVALID_ADDRESS;
+  bool m_process_standalone_value_is_offset = false;
   llvm::VersionTuple m_os_version;
   llvm::VersionTuple m_maccatalyst_version;
   std::string m_os_build;

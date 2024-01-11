@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/IR/Function.h"
 #include "llvm/MC/MCLinkerOptimizationHint.h"
+#include "MCTargetDesc/AArch64MCTargetDesc.h"
 #include <cassert>
 
 namespace llvm {
@@ -64,6 +65,11 @@ class AArch64FunctionInfo final : public MachineFunctionInfo {
   /// HasStackFrame - True if this function has a stack frame. Set by
   /// determineCalleeSaves().
   bool HasStackFrame = false;
+
+  bool HasNonLocalCall = false;
+  Register BaseReg = AArch64::NoRegister;
+  bool HasBaseRegisterSpill = false;
+  int BaseRegisterFI = 0;
 
   /// Amount of stack frame size, not including callee-saved registers.
   uint64_t LocalStackSize = 0;
@@ -240,6 +246,18 @@ public:
 
   void setLocalStackSize(uint64_t Size) { LocalStackSize = Size; }
   uint64_t getLocalStackSize() const { return LocalStackSize; }
+
+  bool hasNonLocalCall() const { return HasNonLocalCall; }
+  void setHasNonLocalCall(bool s) { HasNonLocalCall = s; }
+
+  Register getBaseReg() const { return BaseReg; }
+  void setBaseReg(Register r) { BaseReg = r; }
+
+  bool hasBaseRegisterSpill() const { return HasBaseRegisterSpill; }
+  void setHasBaseRegisterSpill(bool s) { HasBaseRegisterSpill = s; }
+
+  int getBaseRegisterFI() const { return BaseRegisterFI; }
+  void setBaseRegisterFI(int s) { BaseRegisterFI = s; }
 
   void setOutliningStyle(std::string Style) { OutliningStyle = Style; }
   Optional<std::string> getOutliningStyle() const { return OutliningStyle; }
@@ -457,6 +475,7 @@ struct AArch64FunctionInfo final : public yaml::MachineFunctionInfo {
 
   void mappingImpl(yaml::IO &YamlIO) override;
   ~AArch64FunctionInfo() = default;
+
 };
 
 template <> struct MappingTraits<AArch64FunctionInfo> {

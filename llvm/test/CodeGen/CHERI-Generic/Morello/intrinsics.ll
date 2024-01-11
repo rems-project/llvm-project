@@ -83,14 +83,14 @@ define i64 @tag_get(i8 addrspace(200)* %cap) nounwind {
 ; PURECAP:       .Lfunc_begin4:
 ; PURECAP-NEXT:  // %bb.0:
 ; PURECAP-NEXT:    gctag x8, c0
-; PURECAP-NEXT:    cmp x8, #0 // =0
+; PURECAP-NEXT:    cmp x8, #0
 ; PURECAP-NEXT:    cset w0, ne
 ; PURECAP-NEXT:    ret c30
 ;
 ; HYBRID-LABEL: tag_get:
 ; HYBRID:       // %bb.0:
 ; HYBRID-NEXT:    gctag x8, c0
-; HYBRID-NEXT:    cmp x8, #0 // =0
+; HYBRID-NEXT:    cmp x8, #0
 ; HYBRID-NEXT:    cset w0, ne
 ; HYBRID-NEXT:    ret
   %tag = call i1 @llvm.cheri.cap.tag.get(i8 addrspace(200)* %cap)
@@ -103,14 +103,14 @@ define i64 @sealed_get(i8 addrspace(200)* %cap) nounwind {
 ; PURECAP:       .Lfunc_begin5:
 ; PURECAP-NEXT:  // %bb.0:
 ; PURECAP-NEXT:    gcseal x8, c0
-; PURECAP-NEXT:    cmp x8, #0 // =0
+; PURECAP-NEXT:    cmp x8, #0
 ; PURECAP-NEXT:    cset w0, ne
 ; PURECAP-NEXT:    ret c30
 ;
 ; HYBRID-LABEL: sealed_get:
 ; HYBRID:       // %bb.0:
 ; HYBRID-NEXT:    gcseal x8, c0
-; HYBRID-NEXT:    cmp x8, #0 // =0
+; HYBRID-NEXT:    cmp x8, #0
 ; HYBRID-NEXT:    cset w0, ne
 ; HYBRID-NEXT:    ret
   %sealed = call i1 @llvm.cheri.cap.sealed.get(i8 addrspace(200)* %cap)

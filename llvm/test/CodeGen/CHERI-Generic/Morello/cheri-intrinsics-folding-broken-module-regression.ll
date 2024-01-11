@@ -2,9 +2,8 @@
 ; DO NOT EDIT -- This file was generated from test/CodeGen/CHERI-Generic/Inputs/cheri-intrinsics-folding-broken-module-regression.ll
 ; This used to create a broken function.
 ; FIXME: the getoffset+add sequence should be folded to an increment
-; REQUIRES: mips-registered-target
-; RUN: opt -mtriple=aarch64 --relocation-model=pic -target-abi purecap -mattr=+morello,+c64 -S -instcombine -O3 %s -o - | FileCheck %s
-; RUN: opt -mtriple=aarch64 --relocation-model=pic -target-abi purecap -mattr=+morello,+c64 -S -O3 %s | llc -mtriple=aarch64 --relocation-model=pic -target-abi purecap -mattr=+morello,+c64 -O3 -o - | FileCheck %s --check-prefix ASM
+; RUN: opt -mtriple=aarch64 --relocation-model=pic -target-abi purecap -mattr=+morello,+c64 -S -passes=instcombine %s -o - | FileCheck %s
+; RUN: opt -mtriple=aarch64 --relocation-model=pic -target-abi purecap -mattr=+morello,+c64 -S '-passes=default<O3>' %s | llc -mtriple=aarch64 --relocation-model=pic -target-abi purecap -mattr=+morello,+c64 -O3 -o - | FileCheck %s --check-prefix ASM
 target datalayout = "e-m:e-pf200:128:128:128:64-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"
 
 @d = common addrspace(200) global i64 0, align 4
@@ -22,21 +21,21 @@ define void @g(i64 %x, i64 %y) addrspace(200) nounwind {
 ; ASM:       .Lfunc_begin0:
 ; ASM-NEXT:  // %bb.0:
 ; ASM-NEXT:    adrp c2, :got:d
+; ASM-NEXT:    add x9, x1, x0
 ; ASM-NEXT:    ldr c2, [c2, :got_lo12:d]
-; ASM-NEXT:    add x8, x1, x0
-; ASM-NEXT:    adrp c1, :got:e
-; ASM-NEXT:    ldr c1, [c1, :got_lo12:e]
-; ASM-NEXT:    gcoff x9, c2
-; ASM-NEXT:    add x8, x8, x9
-; ASM-NEXT:    scoff c0, c2, x8
-; ASM-NEXT:    str c0, [c1, #0]
+; ASM-NEXT:    adrp c0, :got:e
+; ASM-NEXT:    ldr c0, [c0, :got_lo12:e]
+; ASM-NEXT:    gcoff x8, c2
+; ASM-NEXT:    add x8, x9, x8
+; ASM-NEXT:    scoff c1, c2, x8
+; ASM-NEXT:    str c1, [c0, #0]
 ; ASM-NEXT:    ret c30
 ; CHECK-LABEL: define {{[^@]+}}@g
-; CHECK-SAME: (i64 [[X:%.*]], i64 [[Y:%.*]]) local_unnamed_addr addrspace(200) #[[ATTR0:[0-9]+]] {
-; CHECK-NEXT:    [[TMP3:%.*]] = tail call i64 @llvm.cheri.cap.offset.get.i64(i8 addrspace(200)* bitcast (i64 addrspace(200)* @d to i8 addrspace(200)*))
-; CHECK-NEXT:    [[ADD:%.*]] = add i64 [[Y]], [[X]]
-; CHECK-NEXT:    [[ADD1:%.*]] = add i64 [[ADD]], [[TMP3]]
-; CHECK-NEXT:    [[TMP11:%.*]] = tail call i8 addrspace(200)* @llvm.cheri.cap.offset.set.i64(i8 addrspace(200)* bitcast (i64 addrspace(200)* @d to i8 addrspace(200)*), i64 [[ADD1]])
+; CHECK-SAME: (i64 [[X:%.*]], i64 [[Y:%.*]]) addrspace(200) #[[ATTR0:[0-9]+]] {
+; CHECK-NEXT:    [[TMP3:%.*]] = call i64 @llvm.cheri.cap.offset.get.i64(i8 addrspace(200)* bitcast (i64 addrspace(200)* @d to i8 addrspace(200)*))
+; CHECK-NEXT:    [[ADD:%.*]] = add i64 [[TMP3]], [[X]]
+; CHECK-NEXT:    [[ADD1:%.*]] = add i64 [[ADD]], [[Y]]
+; CHECK-NEXT:    [[TMP11:%.*]] = call i8 addrspace(200)* @llvm.cheri.cap.offset.set.i64(i8 addrspace(200)* bitcast (i64 addrspace(200)* @d to i8 addrspace(200)*), i64 [[ADD1]])
 ; CHECK-NEXT:    store i8 addrspace(200)* [[TMP11]], i8 addrspace(200)* addrspace(200)* @e, align 32
 ; CHECK-NEXT:    ret void
 ;

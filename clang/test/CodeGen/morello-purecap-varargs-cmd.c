@@ -1,17 +1,12 @@
 // RUN: %clang_cc1 -triple arm64-linux-gnu -target-feature +morello \
 // RUN:    -target-feature +c64 -target-abi purecap -morello-vararg=new \
-// RUN:    -emit-llvm -o - %s | FileCheck  %s --check-prefix=NEW
-
-// RUN: %clang_cc1 -triple arm64-linux-gnu -target-feature +morello \
-// RUN:    -target-feature +c64 -target-abi purecap -morello-vararg=legacy \
-// RUN:    -emit-llvm -o - %s | FileCheck  %s --check-prefix=LEGACY
+// RUN:    -emit-llvm -o - %s | FileCheck %s
 
 // RUN: %clang_cc1 -triple arm64-linux-gnu -target-feature +morello \
 // RUN:    -target-feature +c64 -target-abi purecap \
-// RUN:    -emit-llvm -o - %s | FileCheck  %s --check-prefix=NEW
+// RUN:    -emit-llvm -o - %s | FileCheck %s
 
-// NEW-NOT: %struct.__va_list
-// LEGACY: %struct.__va_list = type { i8 addrspace(200)*, i8 addrspace(200)*, i8 addrspace(200)*, i32, i32 }
+// CHECK-NOT: %struct.__va_list
 
 #include <stdarg.h>
 

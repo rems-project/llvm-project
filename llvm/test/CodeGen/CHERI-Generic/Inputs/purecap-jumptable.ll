@@ -1,4 +1,5 @@
 ; RUN: llc @PURECAP_HARDFLOAT_ARGS@ < %s -o - | FileCheck %s
+@IFNOT-MIPS@; RUN: llc @PURECAP_HARDFLOAT_ARGS@ -relocation-model=static < %s -o - | FileCheck %s
 ; Check that we can generate jump tables for switch statements.
 ; TODO: this is currently not implemented for CHERI-RISC-V
 
@@ -44,6 +45,14 @@ exit:
   ret void
 }
 
+; UTC_ARGS: --disable
+@IF-MIPS@; CHECK-LABEL: .LJTI1_0:
+@IF-MIPS@; CHECK-NEXT:    .4byte .LBB1_2-.LJTI1_0
+@IF-MIPS@; CHECK-NEXT:    .4byte .LBB1_3-.LJTI1_0
+@IF-MIPS@; CHECK-NEXT:    .4byte .LBB1_4-.LJTI1_0
+@IF-MIPS@; CHECK-NEXT:    .4byte .LBB1_5-.LJTI1_0
+; UTC_ARGS: --enable
+
 define void @above_threshold_all(i32 %in, i32 addrspace(200)* %out) nounwind {
 entry:
   switch i32 %in, label %exit [
@@ -75,3 +84,20 @@ bb6:
 exit:
   ret void
 }
+
+; UTC_ARGS: --disable
+@IF-MIPS@; CHECK-LABEL: .LJTI2_0:
+@IF-MIPS@; CHECK-NEXT:    .4byte .LBB2_2-.LJTI2_0
+@IF-MIPS@; CHECK-NEXT:    .4byte .LBB2_3-.LJTI2_0
+@IF-MIPS@; CHECK-NEXT:    .4byte .LBB2_4-.LJTI2_0
+@IF-MIPS@; CHECK-NEXT:    .4byte .LBB2_5-.LJTI2_0
+@IF-MIPS@; CHECK-NEXT:    .4byte .LBB2_6-.LJTI2_0
+@IF-MIPS@; CHECK-NEXT:    .4byte .LBB2_7-.LJTI2_0
+@IF-RISCV@; CHECK-LABEL: .LJTI2_0:
+@IF-RISCV@; CHECK-NEXT:    .word .LBB2_2-.Labove_threshold_all$jump_table_base
+@IF-RISCV@; CHECK-NEXT:    .word .LBB2_3-.Labove_threshold_all$jump_table_base
+@IF-RISCV@; CHECK-NEXT:    .word .LBB2_4-.Labove_threshold_all$jump_table_base
+@IF-RISCV@; CHECK-NEXT:    .word .LBB2_5-.Labove_threshold_all$jump_table_base
+@IF-RISCV@; CHECK-NEXT:    .word .LBB2_6-.Labove_threshold_all$jump_table_base
+@IF-RISCV@; CHECK-NEXT:    .word .LBB2_7-.Labove_threshold_all$jump_table_base
+; UTC_ARGS: --enable

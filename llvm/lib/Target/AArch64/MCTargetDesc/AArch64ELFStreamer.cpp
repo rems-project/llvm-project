@@ -176,6 +176,7 @@ public:
   void emitInstruction(const MCInst &Inst,
                        const MCSubtargetInfo &STI) override {
     emitCodeMappingSymbol(STI);
+    checkDescABIFuncStart(Inst);
     adjustCurrentLabels(STI);
     MCELFStreamer::emitInstruction(Inst, STI);
   }
@@ -188,8 +189,8 @@ public:
     // We can't just use EmitIntValue here, as that will emit a data mapping
     // symbol, and swap the endianness on big-endian systems (instructions are
     // always little-endian).
-    for (unsigned I = 0; I < 4; ++I) {
-      Buffer[I] = uint8_t(Inst);
+    for (char &C : Buffer) {
+      C = uint8_t(Inst);
       Inst >>= 8;
     }
 
@@ -259,6 +260,22 @@ private:
       return;
     emitMappingSymbol("$c");
     LastEMS = EMS_C64;
+  }
+
+  void checkDescABIFuncStart(const MCInst &Inst) {
+    if (MCTargetOptions::cheriCapabilityTableABI() !=
+        CheriCapabilityTableABI::FunctionDescriptor)
+      return;
+
+    if (Inst.getOpcode() == AArch64::CapCopy &&
+        Inst.getOperand(0).getReg() == AArch64::C28 &&
+        Inst.getOperand(1).getReg() == AArch64::CFP)
+      return;
+
+    if (llvm::any_of(CurrentLabels, [](MCSymbol *Symb) {
+            return cast<MCSymbolELF>(Symb)->getType() == ELF::STT_FUNC; }))
+      getContext().reportWarning(Inst.getLoc(),
+          "Function should start with mov c28, c29");
   }
 
   void emitThumbFunc(MCSymbol *Func) override {

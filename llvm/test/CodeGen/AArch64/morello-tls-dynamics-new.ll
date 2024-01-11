@@ -5,7 +5,7 @@
 ; RUN: llc -mtriple=arm64-none-linux-gnu -mattr=+c64 -target-abi purecap -verify-machineinstrs < %s \
 ; RUN:        -aarch64-elf-ldtls-generation=true | FileCheck %s --check-prefix=NOPIC
 
-target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128-pf200:128:128-A200-P200-G200"
+target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128-pf200:128:128:128:64-A200-P200-G200"
 
 @general_dynamic_var = external thread_local addrspace(200) global i32
 
@@ -88,8 +88,8 @@ define i32 @test_localdynamic() {
 ; PIC-NEXT:    str c30, [csp, #-16]! // 16-byte Folded Spill
 ; PIC-NEXT:    .cfi_def_cfa_offset 16
 ; PIC-NEXT:    .cfi_offset c30, -16
-; PIC-NEXT:    movz x8, #:size_g1:local_dynamic_var
 ; PIC-NEXT:    mrs c2, CTPIDR_EL0
+; PIC-NEXT:    movz x8, #:size_g1:local_dynamic_var
 ; PIC-NEXT:    movk x8, #:size_g0_nc:local_dynamic_var
 ; PIC-NEXT:    adrp c0, :tlsdesc:_TLS_MODULE_BASE_
 ; PIC-NEXT:    ldr c1, [c0, :tlsdesc_lo12:_TLS_MODULE_BASE_]
@@ -128,8 +128,8 @@ define i32 addrspace(200)* @test_localdynamic_addr() {
 ; PIC-NEXT:    str c30, [csp, #-16]! // 16-byte Folded Spill
 ; PIC-NEXT:    .cfi_def_cfa_offset 16
 ; PIC-NEXT:    .cfi_offset c30, -16
-; PIC-NEXT:    movz x8, #:size_g1:local_dynamic_var
 ; PIC-NEXT:    mrs c2, CTPIDR_EL0
+; PIC-NEXT:    movz x8, #:size_g1:local_dynamic_var
 ; PIC-NEXT:    movk x8, #:size_g0_nc:local_dynamic_var
 ; PIC-NEXT:    adrp c0, :tlsdesc:_TLS_MODULE_BASE_
 ; PIC-NEXT:    ldr c1, [c0, :tlsdesc_lo12:_TLS_MODULE_BASE_]
@@ -167,8 +167,8 @@ define i32 @test_localdynamic_deduplicate() {
 ; PIC-NEXT:    str c30, [csp, #-16]! // 16-byte Folded Spill
 ; PIC-NEXT:    .cfi_def_cfa_offset 16
 ; PIC-NEXT:    .cfi_offset c30, -16
-; PIC-NEXT:    movz x8, #:size_g1:local_dynamic_var
 ; PIC-NEXT:    mrs c2, CTPIDR_EL0
+; PIC-NEXT:    movz x8, #:size_g1:local_dynamic_var
 ; PIC-NEXT:    movk x8, #:size_g0_nc:local_dynamic_var
 ; PIC-NEXT:    adrp c0, :tlsdesc:_TLS_MODULE_BASE_
 ; PIC-NEXT:    ldr c1, [c0, :tlsdesc_lo12:_TLS_MODULE_BASE_]
@@ -176,14 +176,14 @@ define i32 @test_localdynamic_deduplicate() {
 ; PIC-NEXT:    nop
 ; PIC-NEXT:    .tlsdesccall _TLS_MODULE_BASE_
 ; PIC-NEXT:    blr c1
+; PIC-NEXT:    movz x9, #:size_g1:local_dynamic_var2
 ; PIC-NEXT:    add c1, c0, :dtprel_hi12:local_dynamic_var
-; PIC-NEXT:    add c1, c1, :dtprel_lo12_nc:local_dynamic_var
-; PIC-NEXT:    scbnds c1, c1, x8
-; PIC-NEXT:    movz x8, #:size_g1:local_dynamic_var2
+; PIC-NEXT:    movk x9, #:size_g0_nc:local_dynamic_var2
 ; PIC-NEXT:    add c0, c0, :dtprel_hi12:local_dynamic_var2
-; PIC-NEXT:    movk x8, #:size_g0_nc:local_dynamic_var2
+; PIC-NEXT:    add c1, c1, :dtprel_lo12_nc:local_dynamic_var
 ; PIC-NEXT:    add c0, c0, :dtprel_lo12_nc:local_dynamic_var2
-; PIC-NEXT:    scbnds c0, c0, x8
+; PIC-NEXT:    scbnds c1, c1, x8
+; PIC-NEXT:    scbnds c0, c0, x9
 ; PIC-NEXT:    ldr w8, [c1]
 ; PIC-NEXT:    ldr w9, [c0]
 ; PIC-NEXT:    add w0, w8, w9
@@ -197,14 +197,14 @@ define i32 @test_localdynamic_deduplicate() {
 ; NOPIC-NEXT:    adrp c0, :gottprel:local_dynamic_var
 ; NOPIC-NEXT:    add c0, c0, :gottprel_lo12:local_dynamic_var
 ; NOPIC-NEXT:    ldp x0, x8, [c0]
-; NOPIC-NEXT:    mrs c1, CTPIDR_EL0
-; NOPIC-NEXT:    adrp c2, :gottprel:local_dynamic_var2
-; NOPIC-NEXT:    add c2, c2, :gottprel_lo12:local_dynamic_var2
-; NOPIC-NEXT:    ldp x2, x9, [c2]
-; NOPIC-NEXT:    add c0, c1, x0, uxtx
+; NOPIC-NEXT:    adrp c1, :gottprel:local_dynamic_var2
+; NOPIC-NEXT:    add c1, c1, :gottprel_lo12:local_dynamic_var2
+; NOPIC-NEXT:    ldp x1, x9, [c1]
+; NOPIC-NEXT:    mrs c2, CTPIDR_EL0
+; NOPIC-NEXT:    add c0, c2, x0, uxtx
+; NOPIC-NEXT:    add c1, c2, x1, uxtx
 ; NOPIC-NEXT:    scbnds c0, c0, x8
 ; NOPIC-NEXT:    ldr w8, [c0]
-; NOPIC-NEXT:    add c1, c1, x2, uxtx
 ; NOPIC-NEXT:    scbnds c1, c1, x9
 ; NOPIC-NEXT:    ldr w9, [c1]
 ; NOPIC-NEXT:    add w0, w8, w9

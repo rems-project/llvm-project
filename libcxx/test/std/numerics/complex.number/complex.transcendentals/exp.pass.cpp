@@ -102,6 +102,10 @@ void test_edges()
             assert(!std::signbit(r.real()));
             assert(std::signbit(r.imag()) == std::signbit(testcases[i].imag()));
         }
+        else if (std::isinf(r.real()) && testcases[i].imag() == 0) {
+            assert(r.imag() == 0);
+            assert(std::signbit(testcases[i].imag()) == std::signbit(r.imag()));
+        }
     }
 }
 
@@ -114,5 +118,5 @@ int main(int, char**)
 #endif // ! _LIBCPP_HAS_NEWLIB
     test_edges();
 
-  return 0;
+    return 0;
 }

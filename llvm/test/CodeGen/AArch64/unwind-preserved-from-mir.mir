@@ -99,7 +99,7 @@ body:             |
   ; CHECK:   $q21, $q20 = frame-destroy LDPQi $sp, 4 :: (load (s128) from %stack.17), (load (s128) from %stack.16)
   ; CHECK:   $q23, $q22 = frame-destroy LDPQi $sp, 2 :: (load (s128) from %stack.19), (load (s128) from %stack.18)
   ; CHECK:   $sp = frame-destroy ADDXri $sp, 304, 0
-  ; CHECK:   RET_ReallyLR 0, implicit killed $q0
+  ; CHECK:   RET_ReallyLR implicit killed $q0
   ; CHECK: bb.2..Lunwind (landing-pad):
   ; CHECK:   liveins: $x0, $x1
   ; CHECK:   EH_LABEL <mcsymbol .Ltmp2>
@@ -114,7 +114,7 @@ body:             |
   ; CHECK:   $q21, $q20 = frame-destroy LDPQi $sp, 4 :: (load (s128) from %stack.17), (load (s128) from %stack.16)
   ; CHECK:   $q23, $q22 = frame-destroy LDPQi $sp, 2 :: (load (s128) from %stack.19), (load (s128) from %stack.18)
   ; CHECK:   $sp = frame-destroy ADDXri $sp, 304, 0
-  ; CHECK:   RET_ReallyLR 0, implicit killed $q0
+  ; CHECK:   RET_ReallyLR implicit killed $q0
   bb.0 (%ir-block.0):
     successors: %bb.1, %bb.2
     liveins: $q0
@@ -131,13 +131,13 @@ body:             |
 
   bb.1..Lcontinue:
     $q0 = COPY %1
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
   bb.2..Lunwind (landing-pad):
     liveins: $x0, $x1
 
     EH_LABEL <mcsymbol .Ltmp2>
     $q0 = COPY %0
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...

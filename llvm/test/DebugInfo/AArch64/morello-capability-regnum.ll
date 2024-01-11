@@ -17,7 +17,7 @@
 ; CHECK-NEXT: DW_AT_name [DW_FORM_strp]     ( .debug_str[0x{{[0-9a-f]+}}] = "bar")
 ; CHECK-NOT: DW_TAG_formal_parameter
 
-target datalayout = "e-m:e-pf200:128:128-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128"
+target datalayout = "e-m:e-pf200:128:128:128:64-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128"
 target triple = "aarch64-none--elf"
 
 define i8 addrspace(200)* @foo(i8 addrspace(200)* readnone returned %bar) local_unnamed_addr !dbg !6 {

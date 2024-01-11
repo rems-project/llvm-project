@@ -20,7 +20,7 @@ body: |
     Bcc 9, %bb.0, implicit $nzcv
 
   bb.1:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 # CHECK-LABEL: name: hwpf2
@@ -41,7 +41,7 @@ body: |
     Bcc 9, %bb.0, implicit $nzcv
 
   bb.1:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 # CHECK-LABEL: name: hwpf3
@@ -62,7 +62,7 @@ body: |
     Bcc 9, %bb.0, implicit $nzcv
 
   bb.1:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 # CHECK-LABEL: name: hwpf4
@@ -83,7 +83,7 @@ body: |
     Bcc 9, %bb.0, implicit $nzcv
 
   bb.1:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 # CHECK-LABEL: name: hwpf5
@@ -104,7 +104,7 @@ body: |
     Bcc 9, %bb.0, implicit $nzcv
 
   bb.1:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 # CHECK-LABEL: name: hwpf6
@@ -125,7 +125,7 @@ body: |
     Bcc 9, %bb.0, implicit $nzcv
 
   bb.1:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 # CHECK-LABEL: name: hwpf7
@@ -146,7 +146,7 @@ body: |
     Bcc 9, %bb.0, implicit $nzcv
 
   bb.1:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 # Verify that the tag collision between the loads is resolved and written back
@@ -171,7 +171,7 @@ body: |
     Bcc 9, %bb.0, implicit $nzcv
 
   bb.1:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 # CHECK-LABEL: name: hwpfinc2
@@ -193,7 +193,7 @@ body: |
     Bcc 9, %bb.0, implicit $nzcv
 
   bb.1:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 # CHECK-LABEL: name: hwpfinc3
@@ -215,7 +215,7 @@ body: |
     Bcc 9, %bb.0, implicit $nzcv
 
   bb.1:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 # CHECK-LABEL: name: hwpfinc4
@@ -237,7 +237,7 @@ body: |
     Bcc 9, %bb.0, implicit $nzcv
 
   bb.1:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 # CHECK-LABEL: name: hwpfinc5
@@ -259,7 +259,7 @@ body: |
     Bcc 9, %bb.0, implicit $nzcv
 
   bb.1:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 # CHECK-LABEL: name: hwpfinc6
@@ -281,7 +281,7 @@ body: |
     Bcc 9, %bb.0, implicit $nzcv
 
   bb.1:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 # CHECK-LABEL: name: hwpfinc7
@@ -303,7 +303,7 @@ body: |
     Bcc 9, %bb.0, implicit $nzcv
 
   bb.1:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 # Check that we handle case of strided load with no HW prefetcher tag correctly.
@@ -328,7 +328,7 @@ body: |
     Bcc 9, %bb.0, implicit $nzcv
 
   bb.1:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 # Check that we treat sp based loads as non-prefetching.
@@ -351,7 +351,7 @@ body: |
     Bcc 9, %bb.0, implicit $nzcv
 
   bb.1:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 # Check that non-base registers are considered live when finding a
@@ -376,5 +376,5 @@ body: |
     Bcc 9, %bb.0, implicit $nzcv
 
   bb.1:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...

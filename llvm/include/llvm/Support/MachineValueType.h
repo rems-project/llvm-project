@@ -270,7 +270,9 @@ namespace llvm {
       funcref        = 175,    // WebAssembly's funcref type
       externref      = 176,    // WebAssembly's externref type
       x86amx         = 177,    // This is an X86 AMX value
-      iFATPTR64      = x86amx + 1,     // 64-bit fat pointer type
+      i64x8          = 178,    // 8 Consecutive GPRs (AArch64)
+
+      iFATPTR64      = i64x8 + 1,     // 64-bit fat pointer type
       iFATPTR128     = iFATPTR64 + 1,  // 128-bit fat pointer type
       iFATPTR256     = iFATPTR128 + 1, // 256-bit fat pointer type
       iFATPTR512     = iFATPTR256 + 1, // 512-bit fat pointer type
@@ -284,9 +286,9 @@ namespace llvm {
       FIRST_FAT_POINTER_VECTOR_VALUETYPE = v1iFATPTR128,
       LAST_FAT_POINTER_VECTOR_VALUETYPE = v1iFATPTR128,
 
-      FIRST_VALUETYPE = 1, // This is always the beginning of the list.
+      FIRST_VALUETYPE =  1,    // This is always the beginning of the list.
       LAST_VALUETYPE =
-          v1iFATPTR128, // This always remains at the end of the list.
+          v1iFATPTR128,  // This always remains at the end of the list.
       VALUETYPE_SIZE = LAST_VALUETYPE + 1,
 
       // This is the current maximum for LAST_VALUETYPE.
@@ -873,7 +875,11 @@ namespace llvm {
     }
 
     unsigned getVectorNumElements() const {
-      // TODO: Check that this isn't a scalable vector.
+      if (isScalableVector())
+        llvm::reportInvalidSizeRequest(
+            "Possible incorrect use of MVT::getVectorNumElements() for "
+            "scalable vector. Scalable flag may be dropped, use "
+            "MVT::getVectorElementCount() instead");
       return getVectorMinNumElements();
     }
 
@@ -1019,6 +1025,7 @@ namespace llvm {
       case nxv16f16:
       case nxv8f32:
       case nxv4f64: return TypeSize::Scalable(256);
+      case i64x8:
       case v512i1:
       case v64i8:
       case v32i16:
@@ -1453,51 +1460,61 @@ namespace llvm {
     /// SimpleValueType Iteration
     /// @{
     static auto all_valuetypes() {
-      return seq_inclusive(MVT::FIRST_VALUETYPE, MVT::LAST_VALUETYPE);
+      return enum_seq_inclusive(MVT::FIRST_VALUETYPE, MVT::LAST_VALUETYPE,
+                                force_iteration_on_noniterable_enum);
     }
 
     static auto integer_valuetypes() {
-      return seq_inclusive(MVT::FIRST_INTEGER_VALUETYPE,
-                           MVT::LAST_INTEGER_VALUETYPE);
+      return enum_seq_inclusive(MVT::FIRST_INTEGER_VALUETYPE,
+                                MVT::LAST_INTEGER_VALUETYPE,
+                                force_iteration_on_noniterable_enum);
     }
 
     static auto fp_valuetypes() {
-      return seq_inclusive(MVT::FIRST_FP_VALUETYPE, MVT::LAST_FP_VALUETYPE);
+      return enum_seq_inclusive(MVT::FIRST_FP_VALUETYPE, MVT::LAST_FP_VALUETYPE,
+                                force_iteration_on_noniterable_enum);
     }
 
     static auto vector_valuetypes() {
-      return seq_inclusive(MVT::FIRST_VECTOR_VALUETYPE,
-                           MVT::LAST_VECTOR_VALUETYPE);
+      return enum_seq_inclusive(MVT::FIRST_VECTOR_VALUETYPE,
+                                MVT::LAST_VECTOR_VALUETYPE,
+                                force_iteration_on_noniterable_enum);
     }
 
     static auto fixedlen_vector_valuetypes() {
-      return seq_inclusive(MVT::FIRST_FIXEDLEN_VECTOR_VALUETYPE,
-                           MVT::LAST_FIXEDLEN_VECTOR_VALUETYPE);
+      return enum_seq_inclusive(MVT::FIRST_FIXEDLEN_VECTOR_VALUETYPE,
+                                MVT::LAST_FIXEDLEN_VECTOR_VALUETYPE,
+                                force_iteration_on_noniterable_enum);
     }
 
     static auto scalable_vector_valuetypes() {
-      return seq_inclusive(MVT::FIRST_SCALABLE_VECTOR_VALUETYPE,
-                           MVT::LAST_SCALABLE_VECTOR_VALUETYPE);
+      return enum_seq_inclusive(MVT::FIRST_SCALABLE_VECTOR_VALUETYPE,
+                                MVT::LAST_SCALABLE_VECTOR_VALUETYPE,
+                                force_iteration_on_noniterable_enum);
     }
 
     static auto integer_fixedlen_vector_valuetypes() {
-      return seq_inclusive(MVT::FIRST_INTEGER_FIXEDLEN_VECTOR_VALUETYPE,
-                           MVT::LAST_INTEGER_FIXEDLEN_VECTOR_VALUETYPE);
+      return enum_seq_inclusive(MVT::FIRST_INTEGER_FIXEDLEN_VECTOR_VALUETYPE,
+                                MVT::LAST_INTEGER_FIXEDLEN_VECTOR_VALUETYPE,
+                                force_iteration_on_noniterable_enum);
     }
 
     static auto fp_fixedlen_vector_valuetypes() {
-      return seq_inclusive(MVT::FIRST_FP_FIXEDLEN_VECTOR_VALUETYPE,
-                           MVT::LAST_FP_FIXEDLEN_VECTOR_VALUETYPE);
+      return enum_seq_inclusive(MVT::FIRST_FP_FIXEDLEN_VECTOR_VALUETYPE,
+                                MVT::LAST_FP_FIXEDLEN_VECTOR_VALUETYPE,
+                                force_iteration_on_noniterable_enum);
     }
 
     static auto integer_scalable_vector_valuetypes() {
-      return seq_inclusive(MVT::FIRST_INTEGER_SCALABLE_VECTOR_VALUETYPE,
-                           MVT::LAST_INTEGER_SCALABLE_VECTOR_VALUETYPE);
+      return enum_seq_inclusive(MVT::FIRST_INTEGER_SCALABLE_VECTOR_VALUETYPE,
+                                MVT::LAST_INTEGER_SCALABLE_VECTOR_VALUETYPE,
+                                force_iteration_on_noniterable_enum);
     }
 
     static auto fp_scalable_vector_valuetypes() {
-      return seq_inclusive(MVT::FIRST_FP_SCALABLE_VECTOR_VALUETYPE,
-                           MVT::LAST_FP_SCALABLE_VECTOR_VALUETYPE);
+      return enum_seq_inclusive(MVT::FIRST_FP_SCALABLE_VECTOR_VALUETYPE,
+                                MVT::LAST_FP_SCALABLE_VECTOR_VALUETYPE,
+                                force_iteration_on_noniterable_enum);
     }
     /// @}
   };

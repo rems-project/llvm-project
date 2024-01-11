@@ -17,11 +17,11 @@ body:             |
     ; CHECK: liveins: $w0, $w1
     ; CHECK: %copy:gpr32all = COPY $w0
     ; CHECK: $w1 = COPY %copy
-    ; CHECK: RET_ReallyLR 0, implicit $w1
+    ; CHECK: RET_ReallyLR implicit $w1
     %copy:gpr(s32) = COPY $w0
     %copy_assert_zext:gpr(s32) = G_ASSERT_ZEXT %copy, 16
     $w1 = COPY %copy_assert_zext(s32)
-    RET_ReallyLR 0, implicit $w1
+    RET_ReallyLR implicit $w1
 
 ...
 ---
@@ -37,11 +37,11 @@ body:             |
     ; CHECK: liveins: $s0, $s1
     ; CHECK: %copy:fpr32 = COPY $s0
     ; CHECK: $s1 = COPY %copy
-    ; CHECK: RET_ReallyLR 0, implicit $s1
+    ; CHECK: RET_ReallyLR implicit $s1
     %copy:fpr(s32) = COPY $s0
     %copy_assert_zext:fpr(s32) = G_ASSERT_ZEXT %copy, 16
     $s1 = COPY %copy_assert_zext(s32)
-    RET_ReallyLR 0, implicit $s1
+    RET_ReallyLR implicit $s1
 
 ...
 ---
@@ -57,11 +57,11 @@ body:             |
     ; CHECK: liveins: $s0, $w1
     ; CHECK: %copy:fpr32 = COPY $s0
     ; CHECK: $w1 = COPY %copy
-    ; CHECK: RET_ReallyLR 0, implicit $w1
+    ; CHECK: RET_ReallyLR implicit $w1
     %copy:fpr(s32) = COPY $s0
     %copy_assert_zext:fpr(s32) = G_ASSERT_ZEXT %copy, 16
     $w1 = COPY %copy_assert_zext(s32)
-    RET_ReallyLR 0, implicit $w1
+    RET_ReallyLR implicit $w1
 
 ...
 ---
@@ -80,12 +80,12 @@ body:             |
     ; CHECK: liveins: $w0, $w1, $w2
     ; CHECK: %copy_with_rc:gpr32sp = COPY $w2
     ; CHECK: $w1 = COPY %copy_with_rc
-    ; CHECK: RET_ReallyLR 0, implicit $w1
+    ; CHECK: RET_ReallyLR implicit $w1
     %copy:gpr(s32) = COPY $w0
     %copy_assert_zext:gpr(s32) = G_ASSERT_ZEXT %copy, 16
     %copy_with_rc:gpr32sp(s32) = COPY $w2
     $w1 = COPY %copy_with_rc(s32)
-    RET_ReallyLR 0, implicit $w1
+    RET_ReallyLR implicit $w1
 
 ...
 ---
@@ -101,11 +101,11 @@ body:             |
     ; CHECK: liveins: $w0, $w1
     ; CHECK: %copy:gpr32all = COPY $w0
     ; CHECK: $w1 = COPY %copy
-    ; CHECK: RET_ReallyLR 0, implicit $w1
+    ; CHECK: RET_ReallyLR implicit $w1
     %copy:gpr(s32) = COPY $w0
     %copy_assert_sext:gpr(s32) = G_ASSERT_SEXT %copy, 16
     $w1 = COPY %copy_assert_sext(s32)
-    RET_ReallyLR 0, implicit $w1
+    RET_ReallyLR implicit $w1
 
 ...
 ---
@@ -121,11 +121,11 @@ body:             |
     ; CHECK: liveins: $s0, $s1
     ; CHECK: %copy:fpr32 = COPY $s0
     ; CHECK: $s1 = COPY %copy
-    ; CHECK: RET_ReallyLR 0, implicit $s1
+    ; CHECK: RET_ReallyLR implicit $s1
     %copy:fpr(s32) = COPY $s0
     %copy_assert_sext:fpr(s32) = G_ASSERT_SEXT %copy, 16
     $s1 = COPY %copy_assert_sext(s32)
-    RET_ReallyLR 0, implicit $s1
+    RET_ReallyLR implicit $s1
 
 ...
 ---
@@ -141,11 +141,11 @@ body:             |
     ; CHECK: liveins: $s0, $w1
     ; CHECK: %copy:fpr32 = COPY $s0
     ; CHECK: $w1 = COPY %copy
-    ; CHECK: RET_ReallyLR 0, implicit $w1
+    ; CHECK: RET_ReallyLR implicit $w1
     %copy:fpr(s32) = COPY $s0
     %copy_assert_sext:fpr(s32) = G_ASSERT_SEXT %copy, 16
     $w1 = COPY %copy_assert_sext(s32)
-    RET_ReallyLR 0, implicit $w1
+    RET_ReallyLR implicit $w1
 
 ...
 ---
@@ -164,9 +164,9 @@ body:             |
     ; CHECK: liveins: $w0, $w1, $w2
     ; CHECK: %copy_with_rc:gpr32sp = COPY $w2
     ; CHECK: $w1 = COPY %copy_with_rc
-    ; CHECK: RET_ReallyLR 0, implicit $w1
+    ; CHECK: RET_ReallyLR implicit $w1
     %copy:gpr(s32) = COPY $w0
     %copy_assert_sext:gpr(s32) = G_ASSERT_SEXT %copy, 16
     %copy_with_rc:gpr32sp(s32) = COPY $w2
     $w1 = COPY %copy_with_rc(s32)
-    RET_ReallyLR 0, implicit $w1
+    RET_ReallyLR implicit $w1

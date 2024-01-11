@@ -1,6 +1,6 @@
 ; RUN: llc -march=arm64 -mattr=+c64,+morello -target-abi purecap -o - %s | FileCheck %s
 
-target datalayout = "e-m:e-pf200:128:128-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"
+target datalayout = "e-m:e-pf200:128:128:128:64-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"
 target triple = "aarch64-none--elf"
 
 ; CHECK-LABEL: fun1
@@ -69,9 +69,10 @@ for.cond.cleanup:
 define i32 @fun2() addrspace(200) {
 entry:
 ; CHECK: mov w[[SIZE:[0-9]+]], #6784
-; CHECK: movk w[[SIZE]], #6, lsl #16
-; CHECK: mov c[[TMPADDR:[0-9]+]], csp
-; CHECK: scbnds c[[ADDR:[0-9]+]], c[[TMPADDR]], x[[SIZE]]
+; CHECK-DAG: movk w[[SIZE]], #6, lsl #16
+; CHECK-DAG: mov c[[TMPADDR:[0-9]+]], csp
+; CHECK-DAG: scbnds c0, c[[TMPADDR]], x[[SIZE]]
+; CHECK: bl foo
 ; CHECK: ldr w0, [csp, #8]
   %a = alloca [100000 x i32], align 4, addrspace(200)
   %0 = bitcast [100000 x i32] addrspace(200)* %a to i8 addrspace(200)*

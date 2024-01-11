@@ -41,7 +41,7 @@ body:             |
     ; NO-FP16: [[FPTRUNC3:%[0-9]+]]:_(s16) = G_FPTRUNC [[FMA3]](s32)
     ; NO-FP16: [[BUILD_VECTOR:%[0-9]+]]:_(<4 x s16>) = G_BUILD_VECTOR [[FPTRUNC]](s16), [[FPTRUNC1]](s16), [[FPTRUNC2]](s16), [[FPTRUNC3]](s16)
     ; NO-FP16: $d0 = COPY [[BUILD_VECTOR]](<4 x s16>)
-    ; NO-FP16: RET_ReallyLR 0, implicit $d0
+    ; NO-FP16: RET_ReallyLR implicit $d0
     ; FP16-LABEL: name: test_v4f16.fma
     ; FP16: liveins: $d0, $d1, $d2
     ; FP16: [[COPY:%[0-9]+]]:_(<4 x s16>) = COPY $d0
@@ -49,13 +49,13 @@ body:             |
     ; FP16: [[COPY2:%[0-9]+]]:_(<4 x s16>) = COPY $d2
     ; FP16: [[FMA:%[0-9]+]]:_(<4 x s16>) = G_FMA [[COPY]], [[COPY1]], [[COPY2]]
     ; FP16: $d0 = COPY [[FMA]](<4 x s16>)
-    ; FP16: RET_ReallyLR 0, implicit $d0
+    ; FP16: RET_ReallyLR implicit $d0
     %0:_(<4 x s16>) = COPY $d0
     %1:_(<4 x s16>) = COPY $d1
     %2:_(<4 x s16>) = COPY $d2
     %3:_(<4 x s16>) = G_FMA %0, %1, %2
     $d0 = COPY %3(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -117,7 +117,7 @@ body:             |
     ; NO-FP16: [[FPTRUNC7:%[0-9]+]]:_(s16) = G_FPTRUNC [[FMA7]](s32)
     ; NO-FP16: [[BUILD_VECTOR:%[0-9]+]]:_(<8 x s16>) = G_BUILD_VECTOR [[FPTRUNC]](s16), [[FPTRUNC1]](s16), [[FPTRUNC2]](s16), [[FPTRUNC3]](s16), [[FPTRUNC4]](s16), [[FPTRUNC5]](s16), [[FPTRUNC6]](s16), [[FPTRUNC7]](s16)
     ; NO-FP16: $q0 = COPY [[BUILD_VECTOR]](<8 x s16>)
-    ; NO-FP16: RET_ReallyLR 0, implicit $q0
+    ; NO-FP16: RET_ReallyLR implicit $q0
     ; FP16-LABEL: name: test_v8f16.fma
     ; FP16: liveins: $q0, $q1, $q2
     ; FP16: [[COPY:%[0-9]+]]:_(<8 x s16>) = COPY $q0
@@ -125,13 +125,13 @@ body:             |
     ; FP16: [[COPY2:%[0-9]+]]:_(<8 x s16>) = COPY $q2
     ; FP16: [[FMA:%[0-9]+]]:_(<8 x s16>) = G_FMA [[COPY]], [[COPY1]], [[COPY2]]
     ; FP16: $q0 = COPY [[FMA]](<8 x s16>)
-    ; FP16: RET_ReallyLR 0, implicit $q0
+    ; FP16: RET_ReallyLR implicit $q0
     %0:_(<8 x s16>) = COPY $q0
     %1:_(<8 x s16>) = COPY $q1
     %2:_(<8 x s16>) = COPY $q2
     %3:_(<8 x s16>) = G_FMA %0, %1, %2
     $q0 = COPY %3(<8 x s16>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -150,7 +150,7 @@ body:             |
     ; NO-FP16: [[COPY2:%[0-9]+]]:_(<2 x s32>) = COPY $d2
     ; NO-FP16: [[FMA:%[0-9]+]]:_(<2 x s32>) = G_FMA [[COPY]], [[COPY1]], [[COPY2]]
     ; NO-FP16: $d0 = COPY [[FMA]](<2 x s32>)
-    ; NO-FP16: RET_ReallyLR 0, implicit $d0
+    ; NO-FP16: RET_ReallyLR implicit $d0
     ; FP16-LABEL: name: test_v2f32.fma
     ; FP16: liveins: $d0, $d1, $d2
     ; FP16: [[COPY:%[0-9]+]]:_(<2 x s32>) = COPY $d0
@@ -158,13 +158,13 @@ body:             |
     ; FP16: [[COPY2:%[0-9]+]]:_(<2 x s32>) = COPY $d2
     ; FP16: [[FMA:%[0-9]+]]:_(<2 x s32>) = G_FMA [[COPY]], [[COPY1]], [[COPY2]]
     ; FP16: $d0 = COPY [[FMA]](<2 x s32>)
-    ; FP16: RET_ReallyLR 0, implicit $d0
+    ; FP16: RET_ReallyLR implicit $d0
     %0:_(<2 x s32>) = COPY $d0
     %1:_(<2 x s32>) = COPY $d1
     %2:_(<2 x s32>) = COPY $d2
     %3:_(<2 x s32>) = G_FMA %0, %1, %2
     $d0 = COPY %3(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -183,7 +183,7 @@ body:             |
     ; NO-FP16: [[COPY2:%[0-9]+]]:_(<4 x s32>) = COPY $q2
     ; NO-FP16: [[FMA:%[0-9]+]]:_(<4 x s32>) = G_FMA [[COPY]], [[COPY1]], [[COPY2]]
     ; NO-FP16: $q0 = COPY [[FMA]](<4 x s32>)
-    ; NO-FP16: RET_ReallyLR 0, implicit $q0
+    ; NO-FP16: RET_ReallyLR implicit $q0
     ; FP16-LABEL: name: test_v4f32.fma
     ; FP16: liveins: $q0, $q1, $q2
     ; FP16: [[COPY:%[0-9]+]]:_(<4 x s32>) = COPY $q0
@@ -191,13 +191,13 @@ body:             |
     ; FP16: [[COPY2:%[0-9]+]]:_(<4 x s32>) = COPY $q2
     ; FP16: [[FMA:%[0-9]+]]:_(<4 x s32>) = G_FMA [[COPY]], [[COPY1]], [[COPY2]]
     ; FP16: $q0 = COPY [[FMA]](<4 x s32>)
-    ; FP16: RET_ReallyLR 0, implicit $q0
+    ; FP16: RET_ReallyLR implicit $q0
     %0:_(<4 x s32>) = COPY $q0
     %1:_(<4 x s32>) = COPY $q1
     %2:_(<4 x s32>) = COPY $q2
     %3:_(<4 x s32>) = G_FMA %0, %1, %2
     $q0 = COPY %3(<4 x s32>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -216,7 +216,7 @@ body:             |
     ; NO-FP16: [[COPY2:%[0-9]+]]:_(<2 x s64>) = COPY $q2
     ; NO-FP16: [[FMA:%[0-9]+]]:_(<2 x s64>) = G_FMA [[COPY]], [[COPY1]], [[COPY2]]
     ; NO-FP16: $q0 = COPY [[FMA]](<2 x s64>)
-    ; NO-FP16: RET_ReallyLR 0, implicit $q0
+    ; NO-FP16: RET_ReallyLR implicit $q0
     ; FP16-LABEL: name: test_v2f64.fma
     ; FP16: liveins: $q0, $q1, $q2
     ; FP16: [[COPY:%[0-9]+]]:_(<2 x s64>) = COPY $q0
@@ -224,10 +224,10 @@ body:             |
     ; FP16: [[COPY2:%[0-9]+]]:_(<2 x s64>) = COPY $q2
     ; FP16: [[FMA:%[0-9]+]]:_(<2 x s64>) = G_FMA [[COPY]], [[COPY1]], [[COPY2]]
     ; FP16: $q0 = COPY [[FMA]](<2 x s64>)
-    ; FP16: RET_ReallyLR 0, implicit $q0
+    ; FP16: RET_ReallyLR implicit $q0
     %0:_(<2 x s64>) = COPY $q0
     %1:_(<2 x s64>) = COPY $q1
     %2:_(<2 x s64>) = COPY $q2
     %3:_(<2 x s64>) = G_FMA %0, %1, %2
     $q0 = COPY %3(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0

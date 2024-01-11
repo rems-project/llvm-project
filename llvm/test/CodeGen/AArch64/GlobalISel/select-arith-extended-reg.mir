@@ -17,13 +17,13 @@ body:             |
     ; CHECK: %add_lhs:gpr64sp = COPY $x2
     ; CHECK: %res:gpr64sp = ADDXrx %add_lhs, [[COPY]], 48
     ; CHECK: $x3 = COPY %res
-    ; CHECK: RET_ReallyLR 0, implicit $x3
+    ; CHECK: RET_ReallyLR implicit $x3
     %1:gpr(s32) = COPY $w1
     %ext:gpr(s64) = G_SEXT %1(s32)
     %add_lhs:gpr(s64) = COPY $x2
     %res:gpr(s64) = G_ADD %add_lhs, %ext
     $x3 = COPY %res(s64)
-    RET_ReallyLR 0, implicit $x3
+    RET_ReallyLR implicit $x3
 ...
 ---
 name:            add_and_s32_to_s64
@@ -43,14 +43,14 @@ body:             |
     ; CHECK: %add_lhs:gpr64sp = COPY $x2
     ; CHECK: %res:gpr64sp = ADDXrx %add_lhs, [[COPY2]], 16
     ; CHECK: $x3 = COPY %res
-    ; CHECK: RET_ReallyLR 0, implicit $x3
+    ; CHECK: RET_ReallyLR implicit $x3
     %1:gpr(s64) = COPY $x1
     %mask:gpr(s64) = G_CONSTANT i64 4294967295 ; 0xffff
     %ext:gpr(s64) = G_AND %1(s64), %mask
     %add_lhs:gpr(s64) = COPY $x2
     %res:gpr(s64) = G_ADD %add_lhs, %ext
     $x3 = COPY %res(s64)
-    RET_ReallyLR 0, implicit $x3
+    RET_ReallyLR implicit $x3
 ...
 ---
 name:            add_sext_s16_to_s32
@@ -68,14 +68,14 @@ body:             |
     ; CHECK: %add_lhs:gpr32sp = COPY $w2
     ; CHECK: %res:gpr32sp = ADDWrx %add_lhs, %wide_1, 40
     ; CHECK: $w3 = COPY %res
-    ; CHECK: RET_ReallyLR 0, implicit $w3
+    ; CHECK: RET_ReallyLR implicit $w3
     %wide_1:gpr(s32) = COPY $w1
     %1:gpr(s16) = G_TRUNC %wide_1
     %ext:gpr(s32) = G_SEXT %1(s16)
     %add_lhs:gpr(s32) = COPY $w2
     %res:gpr(s32) = G_ADD %add_lhs, %ext
     $w3 = COPY %res(s32)
-    RET_ReallyLR 0, implicit $w3
+    RET_ReallyLR implicit $w3
 ...
 ---
 name:            add_zext_s16_to_s32
@@ -93,14 +93,14 @@ body:             |
     ; CHECK: %add_lhs:gpr32sp = COPY $w2
     ; CHECK: %res:gpr32sp = ADDWrx %add_lhs, %wide_1, 8
     ; CHECK: $w3 = COPY %res
-    ; CHECK: RET_ReallyLR 0, implicit $w3
+    ; CHECK: RET_ReallyLR implicit $w3
     %wide_1:gpr(s32) = COPY $w1
     %1:gpr(s16) = G_TRUNC %wide_1
     %ext:gpr(s32) = G_ZEXT %1(s16)
     %add_lhs:gpr(s32) = COPY $w2
     %res:gpr(s32) = G_ADD %add_lhs, %ext
     $w3 = COPY %res(s32)
-    RET_ReallyLR 0, implicit $w3
+    RET_ReallyLR implicit $w3
 ...
 ---
 name:            add_anyext_s16_to_s32
@@ -118,14 +118,14 @@ body:             |
     ; CHECK: %add_lhs:gpr32sp = COPY $w2
     ; CHECK: %res:gpr32sp = ADDWrx %add_lhs, %wide_1, 8
     ; CHECK: $w3 = COPY %res
-    ; CHECK: RET_ReallyLR 0, implicit $w3
+    ; CHECK: RET_ReallyLR implicit $w3
     %wide_1:gpr(s32) = COPY $w1
     %1:gpr(s16) = G_TRUNC %wide_1
     %ext:gpr(s32) = G_ANYEXT %1(s16)
     %add_lhs:gpr(s32) = COPY $w2
     %res:gpr(s32) = G_ADD %add_lhs, %ext
     $w3 = COPY %res(s32)
-    RET_ReallyLR 0, implicit $w3
+    RET_ReallyLR implicit $w3
 ...
 ---
 name:            add_and_s16_to_s32_uxtb
@@ -143,14 +143,14 @@ body:             |
     ; CHECK: %add_lhs:gpr32sp = COPY $w2
     ; CHECK: %res:gpr32sp = ADDWrx %add_lhs, [[COPY]], 0
     ; CHECK: $w3 = COPY %res
-    ; CHECK: RET_ReallyLR 0, implicit $w3
+    ; CHECK: RET_ReallyLR implicit $w3
     %1:gpr(s32) = COPY $w1
     %mask:gpr(s32) = G_CONSTANT i32 255 ; 0xff
     %ext:gpr(s32) = G_AND %1(s32), %mask
     %add_lhs:gpr(s32) = COPY $w2
     %res:gpr(s32) = G_ADD %add_lhs, %ext
     $w3 = COPY %res(s32)
-    RET_ReallyLR 0, implicit $w3
+    RET_ReallyLR implicit $w3
 ...
 ---
 name:            add_and_s16_to_s32_uxth
@@ -168,14 +168,14 @@ body:             |
     ; CHECK: %add_lhs:gpr32sp = COPY $w2
     ; CHECK: %res:gpr32sp = ADDWrx %add_lhs, [[COPY]], 8
     ; CHECK: $w3 = COPY %res
-    ; CHECK: RET_ReallyLR 0, implicit $w3
+    ; CHECK: RET_ReallyLR implicit $w3
     %1:gpr(s32) = COPY $w1
     %mask:gpr(s32) = G_CONSTANT i32 65535 ; 0xffff
     %ext:gpr(s32) = G_AND %1(s32), %mask
     %add_lhs:gpr(s32) = COPY $w2
     %res:gpr(s32) = G_ADD %add_lhs, %ext
     $w3 = COPY %res(s32)
-    RET_ReallyLR 0, implicit $w3
+    RET_ReallyLR implicit $w3
 ...
 ---
 name:            add_sext_s8_to_s32
@@ -193,14 +193,14 @@ body:             |
     ; CHECK: %add_lhs:gpr32sp = COPY $w2
     ; CHECK: %res:gpr32sp = ADDWrx %add_lhs, %wide_1, 32
     ; CHECK: $w3 = COPY %res
-    ; CHECK: RET_ReallyLR 0, implicit $w3
+    ; CHECK: RET_ReallyLR implicit $w3
     %wide_1:gpr(s32) = COPY $w1
     %1:gpr(s8) = G_TRUNC %wide_1
     %ext:gpr(s32) = G_SEXT %1(s8)
     %add_lhs:gpr(s32) = COPY $w2
     %res:gpr(s32) = G_ADD %add_lhs, %ext
     $w3 = COPY %res(s32)
-    RET_ReallyLR 0, implicit $w3
+    RET_ReallyLR implicit $w3
 ...
 ---
 name:            add_zext_s8_to_s32
@@ -218,14 +218,14 @@ body:             |
     ; CHECK: %add_lhs:gpr32sp = COPY $w2
     ; CHECK: %res:gpr32sp = ADDWrx %add_lhs, %wide_1, 0
     ; CHECK: $w3 = COPY %res
-    ; CHECK: RET_ReallyLR 0, implicit $w3
+    ; CHECK: RET_ReallyLR implicit $w3
     %wide_1:gpr(s32) = COPY $w1
     %1:gpr(s8) = G_TRUNC %wide_1
     %ext:gpr(s32) = G_ZEXT %1(s8)
     %add_lhs:gpr(s32) = COPY $w2
     %res:gpr(s32) = G_ADD %add_lhs, %ext
     $w3 = COPY %res(s32)
-    RET_ReallyLR 0, implicit $w3
+    RET_ReallyLR implicit $w3
 ...
 ---
 name:            add_anyext_s8_to_s32
@@ -243,14 +243,14 @@ body:             |
     ; CHECK: %add_lhs:gpr32sp = COPY $w2
     ; CHECK: %res:gpr32sp = ADDWrx %add_lhs, %wide_1, 0
     ; CHECK: $w3 = COPY %res
-    ; CHECK: RET_ReallyLR 0, implicit $w3
+    ; CHECK: RET_ReallyLR implicit $w3
     %wide_1:gpr(s32) = COPY $w1
     %1:gpr(s8) = G_TRUNC %wide_1
     %ext:gpr(s32) = G_ANYEXT %1(s8)
     %add_lhs:gpr(s32) = COPY $w2
     %res:gpr(s32) = G_ADD %add_lhs, %ext
     $w3 = COPY %res(s32)
-    RET_ReallyLR 0, implicit $w3
+    RET_ReallyLR implicit $w3
 ...
 ---
 name:            add_sext_with_shl
@@ -268,7 +268,7 @@ body:             |
     ; CHECK: %add_lhs:gpr32sp = COPY $w2
     ; CHECK: %res:gpr32sp = ADDWrx %add_lhs, %wide_1, 43
     ; CHECK: $w3 = COPY %res
-    ; CHECK: RET_ReallyLR 0, implicit $w3
+    ; CHECK: RET_ReallyLR implicit $w3
     %wide_1:gpr(s32) = COPY $w1
     %1:gpr(s16) = G_TRUNC %wide_1
     %ext:gpr(s32) = G_SEXT %1(s16)
@@ -277,7 +277,7 @@ body:             |
     %add_lhs:gpr(s32) = COPY $w2
     %res:gpr(s32) = G_ADD %add_lhs, %shl
     $w3 = COPY %res(s32)
-    RET_ReallyLR 0, implicit $w3
+    RET_ReallyLR implicit $w3
 ...
 ---
 name:            add_and_with_shl
@@ -295,7 +295,7 @@ body:             |
     ; CHECK: %add_lhs:gpr32sp = COPY $w2
     ; CHECK: %res:gpr32sp = ADDWrx %add_lhs, [[COPY]], 3
     ; CHECK: $w3 = COPY %res
-    ; CHECK: RET_ReallyLR 0, implicit $w3
+    ; CHECK: RET_ReallyLR implicit $w3
     %1:gpr(s32) = COPY $w1
     %mask:gpr(s32) = G_CONSTANT i32 255 ; 0xff
     %ext:gpr(s32) = G_AND %1(s32), %mask
@@ -304,7 +304,7 @@ body:             |
     %add_lhs:gpr(s32) = COPY $w2
     %res:gpr(s32) = G_ADD %add_lhs, %shl
     $w3 = COPY %res(s32)
-    RET_ReallyLR 0, implicit $w3
+    RET_ReallyLR implicit $w3
 ...
 ---
 name:            dont_fold_invalid_mask
@@ -325,14 +325,14 @@ body:             |
     ; CHECK: %add_lhs:gpr32 = COPY $w2
     ; CHECK: %res:gpr32 = ADDWrr %add_lhs, %ext
     ; CHECK: $w3 = COPY %res
-    ; CHECK: RET_ReallyLR 0, implicit $w3
+    ; CHECK: RET_ReallyLR implicit $w3
     %1:gpr(s32) = COPY $w1
     %mask:gpr(s32) = G_CONSTANT i32 42
     %ext:gpr(s32) = G_AND %1(s32), %mask
     %add_lhs:gpr(s32) = COPY $w2
     %res:gpr(s32) = G_ADD %add_lhs, %ext
     $w3 = COPY %res(s32)
-    RET_ReallyLR 0, implicit $w3
+    RET_ReallyLR implicit $w3
 ...
 ---
 name:            dont_fold_invalid_shl
@@ -351,7 +351,7 @@ body:             |
     ; CHECK: %add_lhs:gpr32 = COPY $w2
     ; CHECK: %res:gpr32 = ADDWrs %add_lhs, %ext, 5
     ; CHECK: $w3 = COPY %res
-    ; CHECK: RET_ReallyLR 0, implicit $w3
+    ; CHECK: RET_ReallyLR implicit $w3
     %wide_1:gpr(s32) = COPY $w1
     %1:gpr(s16) = G_TRUNC %wide_1
     %ext:gpr(s32) = G_SEXT %1(s16)
@@ -360,7 +360,7 @@ body:             |
     %add_lhs:gpr(s32) = COPY $w2
     %res:gpr(s32) = G_ADD %add_lhs, %shl
     $w3 = COPY %res(s32)
-    RET_ReallyLR 0, implicit $w3
+    RET_ReallyLR implicit $w3
 ...
 ---
 name:            sub_sext_s32_to_s64
@@ -378,13 +378,13 @@ body:             |
     ; CHECK: %sub_lhs:gpr64sp = COPY $x2
     ; CHECK: %res:gpr64 = SUBSXrx %sub_lhs, [[COPY]], 48, implicit-def $nzcv
     ; CHECK: $x3 = COPY %res
-    ; CHECK: RET_ReallyLR 0, implicit $x3
+    ; CHECK: RET_ReallyLR implicit $x3
     %1:gpr(s32) = COPY $w1
     %ext:gpr(s64) = G_SEXT %1(s32)
     %sub_lhs:gpr(s64) = COPY $x2
     %res:gpr(s64) = G_SUB %sub_lhs, %ext
     $x3 = COPY %res(s64)
-    RET_ReallyLR 0, implicit $x3
+    RET_ReallyLR implicit $x3
 ...
 ---
 name:            sub_sext_s16_to_s32
@@ -402,14 +402,14 @@ body:             |
     ; CHECK: %sub_lhs:gpr32sp = COPY $w2
     ; CHECK: %res:gpr32 = SUBSWrx %sub_lhs, %wide_1, 40, implicit-def $nzcv
     ; CHECK: $w3 = COPY %res
-    ; CHECK: RET_ReallyLR 0, implicit $w3
+    ; CHECK: RET_ReallyLR implicit $w3
     %wide_1:gpr(s32) = COPY $w1
     %1:gpr(s16) = G_TRUNC %wide_1
     %ext:gpr(s32) = G_SEXT %1(s16)
     %sub_lhs:gpr(s32) = COPY $w2
     %res:gpr(s32) = G_SUB %sub_lhs, %ext
     $w3 = COPY %res(s32)
-    RET_ReallyLR 0, implicit $w3
+    RET_ReallyLR implicit $w3
 ...
 ---
 name:            sub_zext_s16_to_s32
@@ -427,14 +427,14 @@ body:             |
     ; CHECK: %sub_lhs:gpr32sp = COPY $w2
     ; CHECK: %res:gpr32 = SUBSWrx %sub_lhs, %wide_1, 8, implicit-def $nzcv
     ; CHECK: $w3 = COPY %res
-    ; CHECK: RET_ReallyLR 0, implicit $w3
+    ; CHECK: RET_ReallyLR implicit $w3
     %wide_1:gpr(s32) = COPY $w1
     %1:gpr(s16) = G_TRUNC %wide_1
     %ext:gpr(s32) = G_ZEXT %1(s16)
     %sub_lhs:gpr(s32) = COPY $w2
     %res:gpr(s32) = G_SUB %sub_lhs, %ext
     $w3 = COPY %res(s32)
-    RET_ReallyLR 0, implicit $w3
+    RET_ReallyLR implicit $w3
 ...
 ---
 name:            sub_anyext_s16_to_s32
@@ -452,14 +452,14 @@ body:             |
     ; CHECK: %sub_lhs:gpr32sp = COPY $w2
     ; CHECK: %res:gpr32 = SUBSWrx %sub_lhs, %wide_1, 8, implicit-def $nzcv
     ; CHECK: $w3 = COPY %res
-    ; CHECK: RET_ReallyLR 0, implicit $w3
+    ; CHECK: RET_ReallyLR implicit $w3
     %wide_1:gpr(s32) = COPY $w1
     %1:gpr(s16) = G_TRUNC %wide_1
     %ext:gpr(s32) = G_ANYEXT %1(s16)
     %sub_lhs:gpr(s32) = COPY $w2
     %res:gpr(s32) = G_SUB %sub_lhs, %ext
     $w3 = COPY %res(s32)
-    RET_ReallyLR 0, implicit $w3
+    RET_ReallyLR implicit $w3
 ...
 ---
 name:            sub_and_s16_to_s32_uxtb
@@ -477,14 +477,14 @@ body:             |
     ; CHECK: %sub_lhs:gpr32sp = COPY $w2
     ; CHECK: %res:gpr32 = SUBSWrx %sub_lhs, [[COPY]], 0, implicit-def $nzcv
     ; CHECK: $w3 = COPY %res
-    ; CHECK: RET_ReallyLR 0, implicit $w3
+    ; CHECK: RET_ReallyLR implicit $w3
     %1:gpr(s32) = COPY $w1
     %mask:gpr(s32) = G_CONSTANT i32 255 ; 0xff
     %ext:gpr(s32) = G_AND %1(s32), %mask
     %sub_lhs:gpr(s32) = COPY $w2
     %res:gpr(s32) = G_SUB %sub_lhs, %ext
     $w3 = COPY %res(s32)
-    RET_ReallyLR 0, implicit $w3
+    RET_ReallyLR implicit $w3
 ...
 ---
 name:            sub_and_s16_to_s32_uxth
@@ -502,14 +502,14 @@ body:             |
     ; CHECK: %sub_lhs:gpr32sp = COPY $w2
     ; CHECK: %res:gpr32 = SUBSWrx %sub_lhs, [[COPY]], 8, implicit-def $nzcv
     ; CHECK: $w3 = COPY %res
-    ; CHECK: RET_ReallyLR 0, implicit $w3
+    ; CHECK: RET_ReallyLR implicit $w3
     %1:gpr(s32) = COPY $w1
     %mask:gpr(s32) = G_CONSTANT i32 65535 ; 0xffff
     %ext:gpr(s32) = G_AND %1(s32), %mask
     %sub_lhs:gpr(s32) = COPY $w2
     %res:gpr(s32) = G_SUB %sub_lhs, %ext
     $w3 = COPY %res(s32)
-    RET_ReallyLR 0, implicit $w3
+    RET_ReallyLR implicit $w3
 ---
 name:            sub_sext_s8_to_s32
 alignment:       4
@@ -526,7 +526,7 @@ body:             |
     %sub_lhs:gpr(s32) = COPY $w2
     %res:gpr(s32) = G_SUB %sub_lhs, %ext
     $w3 = COPY %res(s32)
-    RET_ReallyLR 0, implicit $w3
+    RET_ReallyLR implicit $w3
 ...
 ---
 name:            sub_zext_s8_to_s32
@@ -544,14 +544,14 @@ body:             |
     ; CHECK: %sub_lhs:gpr32sp = COPY $w2
     ; CHECK: %res:gpr32 = SUBSWrx %sub_lhs, %wide_1, 0, implicit-def $nzcv
     ; CHECK: $w3 = COPY %res
-    ; CHECK: RET_ReallyLR 0, implicit $w3
+    ; CHECK: RET_ReallyLR implicit $w3
     %wide_1:gpr(s32) = COPY $w1
     %1:gpr(s8) = G_TRUNC %wide_1
     %ext:gpr(s32) = G_ZEXT %1(s8)
     %sub_lhs:gpr(s32) = COPY $w2
     %res:gpr(s32) = G_SUB %sub_lhs, %ext
     $w3 = COPY %res(s32)
-    RET_ReallyLR 0, implicit $w3
+    RET_ReallyLR implicit $w3
 ...
 ---
 name:            sub_anyext_s8_to_s32
@@ -569,14 +569,14 @@ body:             |
     ; CHECK: %sub_lhs:gpr32sp = COPY $w2
     ; CHECK: %res:gpr32 = SUBSWrx %sub_lhs, %wide_1, 0, implicit-def $nzcv
     ; CHECK: $w3 = COPY %res
-    ; CHECK: RET_ReallyLR 0, implicit $w3
+    ; CHECK: RET_ReallyLR implicit $w3
     %wide_1:gpr(s32) = COPY $w1
     %1:gpr(s8) = G_TRUNC %wide_1
     %ext:gpr(s32) = G_ANYEXT %1(s8)
     %sub_lhs:gpr(s32) = COPY $w2
     %res:gpr(s32) = G_SUB %sub_lhs, %ext
     $w3 = COPY %res(s32)
-    RET_ReallyLR 0, implicit $w3
+    RET_ReallyLR implicit $w3
 ---
 ...
 ---
@@ -595,7 +595,7 @@ body:             |
     ; CHECK: %sub_lhs:gpr32sp = COPY $w2
     ; CHECK: %res:gpr32 = SUBSWrx %sub_lhs, %wide_1, 43, implicit-def $nzcv
     ; CHECK: $w3 = COPY %res
-    ; CHECK: RET_ReallyLR 0, implicit $w3
+    ; CHECK: RET_ReallyLR implicit $w3
     %wide_1:gpr(s32) = COPY $w1
     %1:gpr(s16) = G_TRUNC %wide_1
     %ext:gpr(s32) = G_SEXT %1(s16)
@@ -604,7 +604,7 @@ body:             |
     %sub_lhs:gpr(s32) = COPY $w2
     %res:gpr(s32) = G_SUB %sub_lhs, %shl
     $w3 = COPY %res(s32)
-    RET_ReallyLR 0, implicit $w3
+    RET_ReallyLR implicit $w3
 ...
 ---
 name:            sub_and_with_shl
@@ -622,7 +622,7 @@ body:             |
     ; CHECK: %sub_lhs:gpr32sp = COPY $w2
     ; CHECK: %res:gpr32 = SUBSWrx %sub_lhs, [[COPY]], 3, implicit-def $nzcv
     ; CHECK: $w3 = COPY %res
-    ; CHECK: RET_ReallyLR 0, implicit $w3
+    ; CHECK: RET_ReallyLR implicit $w3
     %1:gpr(s32) = COPY $w1
     %mask:gpr(s32) = G_CONSTANT i32 255 ; 0xff
     %ext:gpr(s32) = G_AND %1(s32), %mask
@@ -631,7 +631,7 @@ body:             |
     %sub_lhs:gpr(s32) = COPY $w2
     %res:gpr(s32) = G_SUB %sub_lhs, %shl
     $w3 = COPY %res(s32)
-    RET_ReallyLR 0, implicit $w3
+    RET_ReallyLR implicit $w3
 ...
 ---
 name:            store_16b_zext
@@ -666,7 +666,7 @@ body:             |
     %shl:gpr(s64) = G_SHL %zext, %cst(s64)
     %gep:gpr(p0) = G_PTR_ADD %0, %shl(s64)
     G_STORE %2(p0), %gep(p0) :: (store (p0))
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 name:            store_8b_zext
@@ -701,7 +701,7 @@ body:             |
     %shl:gpr(s64) = G_SHL %zext, %cst(s64)
     %gep:gpr(p0) = G_PTR_ADD %0, %shl(s64)
     G_STORE %2(p0), %gep(p0) :: (store (p0))
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 name:            store_16b_sext
@@ -736,7 +736,7 @@ body:             |
     %shl:gpr(s64) = G_SHL %zext, %cst(s64)
     %gep:gpr(p0) = G_PTR_ADD %0, %shl(s64)
     G_STORE %2(p0), %gep(p0) :: (store (p0))
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 name:            store_8b_sext
@@ -771,5 +771,5 @@ body:             |
     %shl:gpr(s64) = G_SHL %zext, %cst(s64)
     %gep:gpr(p0) = G_PTR_ADD %0, %shl(s64)
     G_STORE %2(p0), %gep(p0) :: (store (p0))
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...

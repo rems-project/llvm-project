@@ -82,7 +82,7 @@ body:             |
     ; CHECK: [[LDRWui1:%[0-9]+]]:gpr32 = LDRWui [[COPY]], 1 :: (load (s32) from %ir.q1, !alias.scope !3, !noalias !0)
     ; CHECK: [[ADDWrr:%[0-9]+]]:gpr32 = ADDWrr killed [[LDRWui]], killed [[LDRWui1]]
     ; CHECK: $w0 = COPY [[ADDWrr]]
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %1:gpr64common = COPY $x1
     %0:gpr64common = COPY $x0
     %2:fpr128 = LDRQui %0, 1 :: (load (s128) from %ir.p1, align 4, !alias.scope !5, !noalias !8)
@@ -91,7 +91,7 @@ body:             |
     %4:gpr32 = LDRWui %1, 1 :: (load (s32) from %ir.q1, !alias.scope !3, !noalias !0)
     %5:gpr32 = ADDWrr killed %3, killed %4
     $w0 = COPY %5
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -117,7 +117,7 @@ body:             |
     ; CHECK: [[LDRWui1:%[0-9]+]]:gpr32 = LDRWui [[COPY]], 1 :: (load (s32) from %ir.q1, !alias.scope !3, !noalias !0)
     ; CHECK: [[ADDWrr:%[0-9]+]]:gpr32 = ADDWrr killed [[LDRWui]], killed [[LDRWui1]]
     ; CHECK: $w0 = COPY [[ADDWrr]]
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %1:gpr64common = COPY $x1
     %0:gpr64common = COPY $x0
     %2:fpr128 = LDRQui %0, 1 :: (load (s128) from %ir.p1, align 4, !alias.scope !5, !noalias !8)
@@ -126,7 +126,7 @@ body:             |
     %4:gpr32 = LDRWui %1, 1 :: (load (s32) from %ir.q1, !alias.scope !3, !noalias !0)
     %5:gpr32 = ADDWrr killed %3, killed %4
     $w0 = COPY %5
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -152,7 +152,7 @@ body:             |
     ; CHECK: [[LDRWui1:%[0-9]+]]:gpr32 = LDRWui [[COPY]], 1 :: (load (s32) from %ir.q1, !alias.scope !3, !noalias !0)
     ; CHECK: [[ADDWrr:%[0-9]+]]:gpr32 = ADDWrr killed [[LDRWui]], killed [[LDRWui1]]
     ; CHECK: $w0 = COPY [[ADDWrr]]
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %1:gpr64common = COPY $x1
     %0:gpr64common = COPY $x0
     %2:fpr128 = LDRQui %0, 1 :: (load (s128) from %ir.p1, align 1, !alias.scope !5, !noalias !8)
@@ -161,6 +161,6 @@ body:             |
     %4:gpr32 = LDRWui %1, 1 :: (load (s32) from %ir.q1, !alias.scope !3, !noalias !0)
     %5:gpr32 = ADDWrr killed %3, killed %4
     $w0 = COPY %5
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...

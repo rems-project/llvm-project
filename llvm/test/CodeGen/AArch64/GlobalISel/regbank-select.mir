@@ -20,14 +20,14 @@ body:             |
     ; CHECK: [[COPY2:%[0-9]+]]:fpr(s32) = COPY $s1
     ; CHECK: [[SELECT:%[0-9]+]]:fpr(s32) = G_SELECT [[TRUNC]](s1), [[COPY1]], [[COPY2]]
     ; CHECK: $s0 = COPY [[SELECT]](s32)
-    ; CHECK: RET_ReallyLR 0, implicit $s0
+    ; CHECK: RET_ReallyLR implicit $s0
     %3:_(s32) = COPY $w0
     %0:_(s1) = G_TRUNC %3(s32)
     %1:_(s32) = COPY $s0
     %2:_(s32) = COPY $s1
     %4:_(s32) = G_SELECT %0(s1), %1, %2
     $s0 = COPY %4(s32)
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
 
 ...
 ---
@@ -48,14 +48,14 @@ body:             |
     ; CHECK: [[COPY2:%[0-9]+]]:fpr(s64) = COPY $d1
     ; CHECK: [[SELECT:%[0-9]+]]:fpr(s64) = G_SELECT [[TRUNC]](s1), [[COPY1]], [[COPY2]]
     ; CHECK: $d0 = COPY [[SELECT]](s64)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %3:_(s32) = COPY $w0
     %0:_(s1) = G_TRUNC %3(s32)
     %1:_(s64) = COPY $d0
     %2:_(s64) = COPY $d1
     %4:_(s64) = G_SELECT %0(s1), %1, %2
     $d0 = COPY %4(s64)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -75,7 +75,7 @@ body:             |
     ; CHECK: [[COPY2:%[0-9]+]]:fpr(s64) = COPY $d1
     ; CHECK: [[SELECT:%[0-9]+]]:fpr(s64) = G_SELECT [[TRUNC]](s1), [[COPY1]], [[COPY2]]
     ; CHECK: $x0 = COPY [[SELECT]](s64)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
 
     ; Verify that the G_SELECT only has FPRs.
     ; The only difference between fcsel and csel are the register banks. So,
@@ -89,7 +89,7 @@ body:             |
     %2:_(s64) = COPY $d1
     %4:_(s64) = G_SELECT %0(s1), %1, %2
     $x0 = COPY %4(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -110,7 +110,7 @@ body:             |
     ; CHECK: [[COPY3:%[0-9]+]]:fpr(s64) = COPY [[COPY2]](s64)
     ; CHECK: [[SELECT:%[0-9]+]]:fpr(s64) = G_SELECT [[TRUNC]](s1), [[COPY1]], [[COPY3]]
     ; CHECK: $d0 = COPY [[SELECT]](s64)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
 
     ; Same idea as the above test. If the output is an FPR, and one of the
     ; inputs is an FPR, then it's fewer copies to just do a FCSEL.
@@ -121,7 +121,7 @@ body:             |
     %2:_(s64) = COPY $x1
     %4:_(s64) = G_SELECT %0(s1), %1, %2
     $d0 = COPY %4(s64)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -142,7 +142,7 @@ body:             |
     ; CHECK: [[COPY3:%[0-9]+]]:gpr(s64) = COPY [[COPY1]](s64)
     ; CHECK: [[SELECT:%[0-9]+]]:gpr(s64) = G_SELECT [[TRUNC]](s1), [[COPY3]], [[COPY2]]
     ; CHECK: $x0 = COPY [[SELECT]](s64)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
 
     ; Now we have more GPR registers on the G_SELECT. It's cheaper here to put
     ; everything on GPR.
@@ -153,7 +153,7 @@ body:             |
     %2:_(s64) = COPY $x1
     %4:_(s64) = G_SELECT %0(s1), %1, %2
     $x0 = COPY %4(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -173,7 +173,7 @@ body:             |
     ; CHECK: [[COPY2:%[0-9]+]]:gpr(s64) = COPY $x1
     ; CHECK: [[SELECT:%[0-9]+]]:gpr(s64) = G_SELECT [[TRUNC]](s1), [[COPY1]], [[COPY2]]
     ; CHECK: $d0 = COPY [[SELECT]](s64)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
 
     ; Same as above. The G_SELECT should get all GPRS.
 
@@ -183,4 +183,4 @@ body:             |
     %2:_(s64) = COPY $x1
     %4:_(s64) = G_SELECT %0(s1), %1, %2
     $d0 = COPY %4(s64)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0

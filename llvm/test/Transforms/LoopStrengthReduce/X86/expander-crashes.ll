@@ -17,7 +17,7 @@ define i64 @blam(%struct.hoge* %start, %struct.hoge* %end, %struct.hoge* %ptr.2)
 ; CHECK-NEXT:    [[LSR_IV4:%.*]] = phi i64 [ [[LSR_IV_NEXT5:%.*]], [[LOOP_1_HEADER]] ], [ [[START1]], [[ENTRY:%.*]] ]
 ; CHECK-NEXT:    [[IV:%.*]] = phi %struct.hoge* [ [[IV_NEXT:%.*]], [[LOOP_1_HEADER]] ], [ [[START]], [[ENTRY]] ]
 ; CHECK-NEXT:    [[IV_NEXT]] = getelementptr inbounds [[STRUCT_HOGE:%.*]], %struct.hoge* [[IV]], i64 1
-; CHECK-NEXT:    [[LSR_IV_NEXT5]] = add nuw i64 [[LSR_IV4]], 16
+; CHECK-NEXT:    [[LSR_IV_NEXT5]] = add i64 [[LSR_IV4]], 16
 ; CHECK-NEXT:    [[EC:%.*]] = icmp eq %struct.hoge* [[IV_NEXT]], [[END:%.*]]
 ; CHECK-NEXT:    br i1 [[EC]], label [[LOOP_2_PH:%.*]], label [[LOOP_1_HEADER]]
 ; CHECK:       loop.2.ph:

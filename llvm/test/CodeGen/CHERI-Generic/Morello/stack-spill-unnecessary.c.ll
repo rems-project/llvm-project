@@ -19,9 +19,9 @@ define void @use_after_call() addrspace(200) nounwind {
 ; CHECK-LABEL: use_after_call:
 ; CHECK:       .Lfunc_begin0:
 ; CHECK-NEXT:  // %bb.0:
-; CHECK-NEXT:    sub csp, csp, #48 // =48
-; CHECK-NEXT:    add c0, csp, #12 // =12
+; CHECK-NEXT:    sub csp, csp, #48
 ; CHECK-NEXT:    mov w8, #123
+; CHECK-NEXT:    add c0, csp, #12
 ; CHECK-NEXT:    stp c30, c19, [csp, #16] // 32-byte Folded Spill
 ; CHECK-NEXT:    scbnds c19, c0, #4 // =4
 ; CHECK-NEXT:    str w8, [csp, #12]
@@ -29,7 +29,7 @@ define void @use_after_call() addrspace(200) nounwind {
 ; CHECK-NEXT:    mov c0, c19
 ; CHECK-NEXT:    bl one_arg
 ; CHECK-NEXT:    ldp c30, c19, [csp, #16] // 32-byte Folded Reload
-; CHECK-NEXT:    add csp, csp, #48 // =48
+; CHECK-NEXT:    add csp, csp, #48
 ; CHECK-NEXT:    ret c30
 ;
 ; HYBRID-LABEL: use_after_call:
@@ -38,7 +38,7 @@ define void @use_after_call() addrspace(200) nounwind {
 ; HYBRID-NEXT:    mov w8, #123
 ; HYBRID-NEXT:    str w8, [sp, #12]
 ; HYBRID-NEXT:    bl foo
-; HYBRID-NEXT:    add x0, sp, #12 // =12
+; HYBRID-NEXT:    add x0, sp, #12
 ; HYBRID-NEXT:    bl one_arg
 ; HYBRID-NEXT:    ldr x30, [sp], #16 // 8-byte Folded Reload
 ; HYBRID-NEXT:    ret
@@ -53,9 +53,9 @@ define void @use_after_call_no_store() addrspace(200) nounwind {
 ; CHECK-LABEL: use_after_call_no_store:
 ; CHECK:       .Lfunc_begin1:
 ; CHECK-NEXT:  // %bb.0:
-; CHECK-NEXT:    sub csp, csp, #64 // =64
-; CHECK-NEXT:    add c0, csp, #12 // =12
-; CHECK-NEXT:    add c1, csp, #8 // =8
+; CHECK-NEXT:    sub csp, csp, #64
+; CHECK-NEXT:    add c0, csp, #12
+; CHECK-NEXT:    add c1, csp, #8
 ; CHECK-NEXT:    str c30, [csp, #16] // 16-byte Folded Spill
 ; CHECK-NEXT:    stp c20, c19, [csp, #32] // 32-byte Folded Spill
 ; CHECK-NEXT:    scbnds c19, c0, #4 // =4
@@ -67,16 +67,16 @@ define void @use_after_call_no_store() addrspace(200) nounwind {
 ; CHECK-NEXT:    bl one_arg
 ; CHECK-NEXT:    ldp c20, c19, [csp, #32] // 32-byte Folded Reload
 ; CHECK-NEXT:    ldr c30, [csp, #16] // 16-byte Folded Reload
-; CHECK-NEXT:    add csp, csp, #64 // =64
+; CHECK-NEXT:    add csp, csp, #64
 ; CHECK-NEXT:    ret c30
 ;
 ; HYBRID-LABEL: use_after_call_no_store:
 ; HYBRID:       // %bb.0:
 ; HYBRID-NEXT:    str x30, [sp, #-16]! // 8-byte Folded Spill
 ; HYBRID-NEXT:    bl foo
-; HYBRID-NEXT:    add x0, sp, #12 // =12
+; HYBRID-NEXT:    add x0, sp, #12
 ; HYBRID-NEXT:    bl one_arg
-; HYBRID-NEXT:    add x0, sp, #8 // =8
+; HYBRID-NEXT:    add x0, sp, #8
 ; HYBRID-NEXT:    bl one_arg
 ; HYBRID-NEXT:    ldr x30, [sp], #16 // 8-byte Folded Reload
 ; HYBRID-NEXT:    ret
@@ -92,16 +92,16 @@ define void @multi_use() addrspace(200) nounwind {
 ; CHECK-LABEL: multi_use:
 ; CHECK:       .Lfunc_begin2:
 ; CHECK-NEXT:  // %bb.0:
-; CHECK-NEXT:    sub csp, csp, #64 // =64
-; CHECK-NEXT:    add c0, csp, #12 // =12
-; CHECK-NEXT:    add c1, csp, #8 // =8
+; CHECK-NEXT:    sub csp, csp, #64
+; CHECK-NEXT:    add c0, csp, #12
+; CHECK-NEXT:    add c1, csp, #8
 ; CHECK-NEXT:    str c30, [csp, #16] // 16-byte Folded Spill
 ; CHECK-NEXT:    stp c20, c19, [csp, #32] // 32-byte Folded Spill
 ; CHECK-NEXT:    scbnds c19, c0, #4 // =4
 ; CHECK-NEXT:    scbnds c20, c1, #4 // =4
 ; CHECK-NEXT:    bl foo
-; CHECK-NEXT:    add c1, c20, #4 // =4
-; CHECK-NEXT:    add c2, c20, #1 // =1
+; CHECK-NEXT:    add c1, c20, #4
+; CHECK-NEXT:    add c2, c20, #1
 ; CHECK-NEXT:    mov c0, c20
 ; CHECK-NEXT:    bl multi_arg
 ; CHECK-NEXT:    mov c0, c19
@@ -110,21 +110,21 @@ define void @multi_use() addrspace(200) nounwind {
 ; CHECK-NEXT:    bl one_arg
 ; CHECK-NEXT:    ldp c20, c19, [csp, #32] // 32-byte Folded Reload
 ; CHECK-NEXT:    ldr c30, [csp, #16] // 16-byte Folded Reload
-; CHECK-NEXT:    add csp, csp, #64 // =64
+; CHECK-NEXT:    add csp, csp, #64
 ; CHECK-NEXT:    ret c30
 ;
 ; HYBRID-LABEL: multi_use:
 ; HYBRID:       // %bb.0:
 ; HYBRID-NEXT:    str x30, [sp, #-16]! // 8-byte Folded Spill
 ; HYBRID-NEXT:    bl foo
-; HYBRID-NEXT:    add x8, sp, #8 // =8
-; HYBRID-NEXT:    add x1, x8, #4 // =4
+; HYBRID-NEXT:    add x8, sp, #8
+; HYBRID-NEXT:    add x0, sp, #8
+; HYBRID-NEXT:    add x1, x8, #4
 ; HYBRID-NEXT:    orr x2, x8, #0x1
-; HYBRID-NEXT:    add x0, sp, #8 // =8
 ; HYBRID-NEXT:    bl multi_arg
-; HYBRID-NEXT:    add x0, sp, #12 // =12
+; HYBRID-NEXT:    add x0, sp, #12
 ; HYBRID-NEXT:    bl one_arg
-; HYBRID-NEXT:    add x0, sp, #8 // =8
+; HYBRID-NEXT:    add x0, sp, #8
 ; HYBRID-NEXT:    bl one_arg
 ; HYBRID-NEXT:    ldr x30, [sp], #16 // 8-byte Folded Reload
 ; HYBRID-NEXT:    ret

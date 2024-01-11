@@ -14,7 +14,7 @@ define void @test_phi(i1 %cond) addrspace(200) nounwind {
 ; ASM-LABEL: test_phi:
 ; ASM:       .Lfunc_begin0:
 ; ASM-NEXT:  // %bb.0: // %entry
-; ASM-NEXT:    sub csp, csp, #48 // =48
+; ASM-NEXT:    sub csp, csp, #48
 ; ASM-NEXT:    stp c30, c19, [csp, #16] // 32-byte Folded Spill
 ; ASM-NEXT:    tbz w0, #0, .LBB0_2
 ; ASM-NEXT:  // %bb.1: // %block1
@@ -22,14 +22,14 @@ define void @test_phi(i1 %cond) addrspace(200) nounwind {
 ; ASM-NEXT:    mov w9, #2
 ; ASM-NEXT:    mov w10, #3
 ; ASM-NEXT:    mov x0, xzr
-; ASM-NEXT:    add c1, csp, #8 // =8
+; ASM-NEXT:    add c1, csp, #8
 ; ASM-NEXT:    b .LBB0_3
 ; ASM-NEXT:  .LBB0_2: // %block2
-; ASM-NEXT:    add c0, csp, #12 // =12
 ; ASM-NEXT:    mov w8, #4
 ; ASM-NEXT:    mov w9, #5
 ; ASM-NEXT:    mov w10, #6
-; ASM-NEXT:    add c1, csp, #4 // =4
+; ASM-NEXT:    add c0, csp, #12
+; ASM-NEXT:    add c1, csp, #4
 ; ASM-NEXT:    scbnds c0, c0, #4 // =4
 ; ASM-NEXT:  .LBB0_3: // %phi_block
 ; ASM-NEXT:    stp w9, w8, [csp, #8]
@@ -39,7 +39,7 @@ define void @test_phi(i1 %cond) addrspace(200) nounwind {
 ; ASM-NEXT:    mov c0, c19
 ; ASM-NEXT:    bl foo
 ; ASM-NEXT:    ldp c30, c19, [csp, #16] // 32-byte Folded Reload
-; ASM-NEXT:    add csp, csp, #48 // =48
+; ASM-NEXT:    add csp, csp, #48
 ; ASM-NEXT:    ret c30
 ; CHECK-LABEL: define {{[^@]+}}@test_phi
 ; CHECK-SAME: (i1 [[COND:%.*]]) addrspace(200) #[[ATTR1:[0-9]+]] {
@@ -105,23 +105,23 @@ define void @test_only_created_in_predecessor_block(i1 %cond) addrspace(200) nou
 ; ASM-LABEL: test_only_created_in_predecessor_block:
 ; ASM:       .Lfunc_begin1:
 ; ASM-NEXT:  // %bb.0: // %entry
-; ASM-NEXT:    sub csp, csp, #32 // =32
+; ASM-NEXT:    sub csp, csp, #32
 ; ASM-NEXT:    str c30, [csp, #16] // 16-byte Folded Spill
 ; ASM-NEXT:    tbz w0, #0, .LBB1_2
 ; ASM-NEXT:  // %bb.1: // %block1
 ; ASM-NEXT:    mov w8, #1
-; ASM-NEXT:    add c0, csp, #12 // =12
+; ASM-NEXT:    add c0, csp, #12
 ; ASM-NEXT:    str w8, [csp, #12]
 ; ASM-NEXT:    b .LBB1_3
 ; ASM-NEXT:  .LBB1_2: // %block2
 ; ASM-NEXT:    mov w8, #5
-; ASM-NEXT:    add c0, csp, #8 // =8
+; ASM-NEXT:    add c0, csp, #8
 ; ASM-NEXT:    str w8, [csp, #8]
 ; ASM-NEXT:  .LBB1_3: // %phi_block
 ; ASM-NEXT:    scbnds c0, c0, #4 // =4
 ; ASM-NEXT:    bl foo
 ; ASM-NEXT:    ldr c30, [csp, #16] // 16-byte Folded Reload
-; ASM-NEXT:    add csp, csp, #32 // =32
+; ASM-NEXT:    add csp, csp, #32
 ; ASM-NEXT:    ret c30
 ; CHECK-LABEL: define {{[^@]+}}@test_only_created_in_predecessor_block
 ; CHECK-SAME: (i1 [[COND:%.*]]) addrspace(200) #[[ATTR1]] {

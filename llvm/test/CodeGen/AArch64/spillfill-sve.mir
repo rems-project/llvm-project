@@ -56,7 +56,7 @@ body:             |
     $p15 = IMPLICIT_DEF
 
     $p0 = COPY %0
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 name: spills_fills_stack_id_zpr
@@ -91,7 +91,7 @@ body:             |
     $z28_z29_z30_z31 = IMPLICIT_DEF
 
     $z0 = COPY %0
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 name: spills_fills_stack_id_zpr2
@@ -128,7 +128,7 @@ body:             |
     $z28_z29_z30_z31 = IMPLICIT_DEF
 
     $z0_z1 = COPY %0
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 name: spills_fills_stack_id_zpr3
@@ -167,7 +167,7 @@ body:             |
     $z28_z29_z30_z31 = IMPLICIT_DEF
 
     $z0_z1_z2 = COPY %0
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 name: spills_fills_stack_id_zpr4
@@ -208,5 +208,5 @@ body:             |
     $z28_z29_z30_z31 = IMPLICIT_DEF
 
     $z0_z1_z2_z3 = COPY %0
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...

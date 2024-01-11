@@ -14,12 +14,12 @@ body:             |
     ; CHECK: %rhs:fpr128 = COPY $q1
     ; CHECK: %fcmp:fpr128 = FCMEQv2f64 %lhs, %rhs
     ; CHECK: $q0 = COPY %fcmp
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %lhs:fpr(<2 x s64>) = COPY $q0
     %rhs:fpr(<2 x s64>) = COPY $q1
     %fcmp:fpr(<2 x s64>) = G_FCMEQ %lhs, %rhs(<2 x s64>)
     $q0 = COPY %fcmp(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -34,12 +34,12 @@ body:             |
     ; CHECK: %rhs:fpr128 = COPY $q1
     ; CHECK: %fcmp:fpr128 = FCMGEv2f64 %lhs, %rhs
     ; CHECK: $q0 = COPY %fcmp
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %lhs:fpr(<2 x s64>) = COPY $q0
     %rhs:fpr(<2 x s64>) = COPY $q1
     %fcmp:fpr(<2 x s64>) = G_FCMGE %lhs, %rhs(<2 x s64>)
     $q0 = COPY %fcmp(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -54,12 +54,12 @@ body:             |
     ; CHECK: %rhs:fpr128 = COPY $q1
     ; CHECK: %fcmp:fpr128 = FCMGTv2f64 %lhs, %rhs
     ; CHECK: $q0 = COPY %fcmp
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %lhs:fpr(<2 x s64>) = COPY $q0
     %rhs:fpr(<2 x s64>) = COPY $q1
     %fcmp:fpr(<2 x s64>) = G_FCMGT %lhs, %rhs(<2 x s64>)
     $q0 = COPY %fcmp(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -73,13 +73,13 @@ body:             |
     ; CHECK: %lhs:fpr128 = COPY $q0
     ; CHECK: %fcmp:fpr128 = FCMEQv2i64rz %lhs
     ; CHECK: $q0 = COPY %fcmp
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %lhs:fpr(<2 x s64>) = COPY $q0
     %zero:gpr(s64) = G_CONSTANT i64 0
     %zero_vec:fpr(<2 x s64>) = G_BUILD_VECTOR %zero(s64), %zero(s64)
     %fcmp:fpr(<2 x s64>) = G_FCMEQZ %lhs
     $q0 = COPY %fcmp(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -93,13 +93,13 @@ body:             |
     ; CHECK: %lhs:fpr128 = COPY $q0
     ; CHECK: %fcmp:fpr128 = FCMGEv2i64rz %lhs
     ; CHECK: $q0 = COPY %fcmp
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %lhs:fpr(<2 x s64>) = COPY $q0
     %zero:gpr(s64) = G_CONSTANT i64 0
     %zero_vec:fpr(<2 x s64>) = G_BUILD_VECTOR %zero(s64), %zero(s64)
     %fcmp:fpr(<2 x s64>) = G_FCMGEZ %lhs
     $q0 = COPY %fcmp(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -113,13 +113,13 @@ body:             |
     ; CHECK: %lhs:fpr128 = COPY $q0
     ; CHECK: %fcmp:fpr128 = FCMGTv2i64rz %lhs
     ; CHECK: $q0 = COPY %fcmp
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %lhs:fpr(<2 x s64>) = COPY $q0
     %zero:gpr(s64) = G_CONSTANT i64 0
     %zero_vec:fpr(<2 x s64>) = G_BUILD_VECTOR %zero(s64), %zero(s64)
     %fcmp:fpr(<2 x s64>) = G_FCMGTZ %lhs
     $q0 = COPY %fcmp(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -133,13 +133,13 @@ body:             |
     ; CHECK: %lhs:fpr128 = COPY $q0
     ; CHECK: %fcmp:fpr128 = FCMLEv2i64rz %lhs
     ; CHECK: $q0 = COPY %fcmp
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %lhs:fpr(<2 x s64>) = COPY $q0
     %zero:gpr(s64) = G_CONSTANT i64 0
     %zero_vec:fpr(<2 x s64>) = G_BUILD_VECTOR %zero(s64), %zero(s64)
     %fcmp:fpr(<2 x s64>) = G_FCMLEZ %lhs
     $q0 = COPY %fcmp(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -153,10 +153,10 @@ body:             |
     ; CHECK: %lhs:fpr128 = COPY $q0
     ; CHECK: %fcmp:fpr128 = FCMLTv2i64rz %lhs
     ; CHECK: $q0 = COPY %fcmp
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %lhs:fpr(<2 x s64>) = COPY $q0
     %zero:gpr(s64) = G_CONSTANT i64 0
     %zero_vec:fpr(<2 x s64>) = G_BUILD_VECTOR %zero(s64), %zero(s64)
     %fcmp:fpr(<2 x s64>) = G_FCMLTZ %lhs
     $q0 = COPY %fcmp(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0

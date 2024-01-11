@@ -6,6 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "OutputSections.h"
 #include "Symbols.h"
 #include "SyntheticSections.h"
 #include "Target.h"
@@ -69,7 +70,6 @@ AArch64::AArch64() {
   relativeRel = R_AARCH64_RELATIVE;
   iRelativeRel = R_AARCH64_IRELATIVE;
   gotRel = R_AARCH64_GLOB_DAT;
-  noneRel = R_AARCH64_NONE;
   pltRel = R_AARCH64_JUMP_SLOT;
   symbolicRel = R_AARCH64_ABS64;
   tlsDescRel = R_AARCH64_TLSDESC;
@@ -78,7 +78,6 @@ AArch64::AArch64() {
   pltEntrySize = 16;
   ipltEntrySize = 16;
   defaultMaxPageSize = 65536;
-  gotBaseSymInGotPlt = false;
 
   // Align to the 2 MiB page size (known as a superpage or huge page).
   // FreeBSD automatically promotes 2 MiB-aligned allocations.
@@ -184,6 +183,10 @@ RelExpr AArch64::getRelExpr(RelType type, const Symbol &s,
   case R_AARCH64_JUMP26:
   case R_AARCH64_TSTBR14:
   case R_AARCH64_PLT32:
+  case R_MORELLO_DESC_GLOBAL_CALL26:
+  case R_MORELLO_DESC_GLOBAL_JUMP26:
+  case R_AARCH64_DESC_GLOBAL_CALL26:
+  case R_AARCH64_DESC_GLOBAL_JUMP26:
     return R_PLT_PC;
   case R_AARCH64_PREL16:
   case R_AARCH64_PREL32:
@@ -203,10 +206,13 @@ RelExpr AArch64::getRelExpr(RelType type, const Symbol &s,
   case R_MORELLO_ADR_PREL_PG_HI20:
   case R_MORELLO_ADR_PREL_PG_HI20_NC:
     return R_AARCH64_PAGE_PC;
+  case R_MORELLO_DESC_ADR_PREL_PG_HI20:
+    return s.isDefined() ? R_MORELLO_DESC_PAGE_PC : R_AARCH64_PAGE_PC;
   case R_AARCH64_LD64_GOT_LO12_NC:
   case R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
   case R_MORELLO_LD128_GOT_LO12_NC:
   case R_MORELLO_TLSIE_ADD_LO12:
+  case R_MORELLO_DESC_LD128_GOT_LO12_NC:
     return R_GOT;
   case R_AARCH64_LD64_GOTPAGE_LO15:
     return R_AARCH64_GOT_PAGE;
@@ -215,10 +221,14 @@ RelExpr AArch64::getRelExpr(RelType type, const Symbol &s,
   case R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
   case R_MORELLO_TLSIE_ADR_GOTTPREL_PAGE20:
     return R_AARCH64_GOT_PAGE_PC;
+  case R_MORELLO_DESC_ADR_GOT_PAGE:
+    return R_MORELLO_DESC_GOT_PAGE_PC;
   case R_AARCH64_NONE:
     return R_NONE;
   case R_MORELLO_CAPINIT:
     return R_CHERI_CAPABILITY;
+  case R_MORELLO_DESC_CAPINIT:
+    return R_MORELLO_DESC_CAPABILITY;
   case R_MORELLO_LD_PREL_LO17:
     return R_MORELLO_VADREF;
   default:
@@ -271,6 +281,7 @@ bool AArch64::usesOnlyLowPageBits(RelType type) const {
   case R_MORELLO_TLSIE_ADD_LO12:
   case R_MORELLO_LD128_GOT_LO12_NC:
   case R_MORELLO_TLSDESC_LD128_LO12:
+  case R_MORELLO_DESC_LD128_GOT_LO12_NC:
     return true;
   }
 }
@@ -484,6 +495,14 @@ void AArch64::relocate(uint8_t *loc, const Relocation &rel,
     checkInt(loc, val, 21, rel);
     write32Addr(loc, val, 0x1FFFFC);
     break;
+  case R_MORELLO_DESC_GLOBAL_CALL26:
+  case R_MORELLO_DESC_GLOBAL_JUMP26:
+  case R_AARCH64_DESC_GLOBAL_CALL26:
+  case R_AARCH64_DESC_GLOBAL_JUMP26:
+    // if not in PLT jump over the first instruction for the desc relocations
+    if (rel.sym && rel.sym->type == STT_FUNC && !rel.sym->needsPlt)
+      val += 4;
+    LLVM_FALLTHROUGH;
   case R_MORELLO_CALL26:
   case R_MORELLO_JUMP26:
     // If bit 0 is clear then our target is in A64 state, interworking thunks
@@ -559,6 +578,7 @@ void AArch64::relocate(uint8_t *loc, const Relocation &rel,
   case R_AARCH64_TLSLE_LDST128_TPREL_LO12_NC:
   case R_MORELLO_LD128_GOT_LO12_NC:
   case R_MORELLO_TLSDESC_LD128_LO12:
+  case R_MORELLO_DESC_LD128_GOT_LO12_NC:
     checkAlignment(loc, val, 16, rel);
     or32AArch64Imm(loc, getBits(val, 4, 11));
     break;
@@ -639,6 +659,13 @@ void AArch64::relocate(uint8_t *loc, const Relocation &rel,
   case R_AARCH64_TLSDESC:
     // For R_AARCH64_TLSDESC the addend is stored in the second 64-bit word.
     write64(loc + 8, val);
+    break;
+  case R_MORELLO_DESC_ADR_PREL_PG_HI20:
+  case R_MORELLO_DESC_ADR_GOT_PAGE:
+    // Reset bit 23 (P) to convert the ADRP to ADRDP
+    write32le(loc, (read32le(loc) & ~(1 << 23)));
+    // Setting the immediate is same as the ADRP
+    relocateNoSym(loc, R_MORELLO_ADR_PREL_PG_HI20, val);
     break;
   default:
     llvm_unreachable("unknown relocation");
@@ -744,6 +771,148 @@ void AArch64::relaxTlsIeToLe(uint8_t *loc, const Relocation &rel,
   llvm_unreachable("invalid relocation for TLS IE to LE relaxation");
 }
 
+AArch64Relaxer::AArch64Relaxer(ArrayRef<Relocation> relocs) {
+  if (!config->relax || config->emachine != EM_AARCH64) {
+    safeToRelaxAdrpLdr = false;
+    return;
+  }
+  // Check if R_AARCH64_ADR_GOT_PAGE and R_AARCH64_LD64_GOT_LO12_NC
+  // always appear in pairs.
+  size_t i = 0;
+  const size_t size = relocs.size();
+  for (; i != size; ++i) {
+    if (relocs[i].type == R_AARCH64_ADR_GOT_PAGE) {
+      if (i + 1 < size && relocs[i + 1].type == R_AARCH64_LD64_GOT_LO12_NC) {
+        ++i;
+        continue;
+      }
+      break;
+    } else if (relocs[i].type == R_AARCH64_LD64_GOT_LO12_NC) {
+      break;
+    }
+  }
+  safeToRelaxAdrpLdr = i == size;
+}
+
+bool AArch64Relaxer::tryRelaxAdrpAdd(const Relocation &adrpRel,
+                                     const Relocation &addRel, uint64_t secAddr,
+                                     uint8_t *buf) const {
+  // When the address of sym is within the range of ADR then
+  // we may relax
+  // ADRP xn, sym
+  // ADD  xn, xn, :lo12: sym
+  // to
+  // NOP
+  // ADR xn, sym
+  if (!config->relax || adrpRel.type != R_AARCH64_ADR_PREL_PG_HI21 ||
+      addRel.type != R_AARCH64_ADD_ABS_LO12_NC)
+    return false;
+  // Check if the relocations apply to consecutive instructions.
+  if (adrpRel.offset + 4 != addRel.offset)
+    return false;
+  if (adrpRel.sym != addRel.sym)
+    return false;
+  if (adrpRel.addend != 0 || addRel.addend != 0)
+    return false;
+
+  uint32_t adrpInstr = read32le(buf + adrpRel.offset);
+  uint32_t addInstr = read32le(buf + addRel.offset);
+  // Check if the first instruction is ADRP and the second instruction is ADD.
+  if ((adrpInstr & 0x9f000000) != 0x90000000 ||
+      (addInstr & 0xffc00000) != 0x91000000)
+    return false;
+  uint32_t adrpDestReg = adrpInstr & 0x1f;
+  uint32_t addDestReg = addInstr & 0x1f;
+  uint32_t addSrcReg = (addInstr >> 5) & 0x1f;
+  if (adrpDestReg != addDestReg || adrpDestReg != addSrcReg)
+    return false;
+
+  Symbol &sym = *adrpRel.sym;
+  // Check if the address difference is within 1MiB range.
+  int64_t val = sym.getVA() - (secAddr + addRel.offset);
+  if (val < -1024 * 1024 || val >= 1024 * 1024)
+    return false;
+
+  Relocation adrRel = {R_ABS, R_AARCH64_ADR_PREL_LO21, addRel.offset,
+                       /*addend=*/0, &sym};
+  // nop
+  write32le(buf + adrpRel.offset, 0xd503201f);
+  // adr x_<dest_reg>
+  write32le(buf + adrRel.offset, 0x10000000 | adrpDestReg);
+  target->relocate(buf + adrRel.offset, adrRel, val);
+  return true;
+}
+
+bool AArch64Relaxer::tryRelaxAdrpLdr(const Relocation &adrpRel,
+                                     const Relocation &ldrRel, uint64_t secAddr,
+                                     uint8_t *buf) const {
+  if (!safeToRelaxAdrpLdr)
+    return false;
+
+  // When the definition of sym is not preemptible then we may
+  // be able to relax
+  // ADRP xn, :got: sym
+  // LDR xn, [ xn :got_lo12: sym]
+  // to
+  // ADRP xn, sym
+  // ADD xn, xn, :lo_12: sym
+
+  if (adrpRel.type != R_AARCH64_ADR_GOT_PAGE ||
+      ldrRel.type != R_AARCH64_LD64_GOT_LO12_NC)
+    return false;
+  // Check if the relocations apply to consecutive instructions.
+  if (adrpRel.offset + 4 != ldrRel.offset)
+    return false;
+  // Check if the relocations reference the same symbol and
+  // skip undefined, preemptible and STT_GNU_IFUNC symbols.
+  if (!adrpRel.sym || adrpRel.sym != ldrRel.sym || !adrpRel.sym->isDefined() ||
+      adrpRel.sym->isPreemptible || adrpRel.sym->isGnuIFunc())
+    return false;
+  // Check if the addends of the both relocations are zero.
+  if (adrpRel.addend != 0 || ldrRel.addend != 0)
+    return false;
+  uint32_t adrpInstr = read32le(buf + adrpRel.offset);
+  uint32_t ldrInstr = read32le(buf + ldrRel.offset);
+  // Check if the first instruction is ADRP and the second instruction is LDR.
+  if ((adrpInstr & 0x9f000000) != 0x90000000 ||
+      (ldrInstr & 0x3b000000) != 0x39000000)
+    return false;
+  // Check the value of the sf bit.
+  if (!(ldrInstr >> 31))
+    return false;
+  uint32_t adrpDestReg = adrpInstr & 0x1f;
+  uint32_t ldrDestReg = ldrInstr & 0x1f;
+  uint32_t ldrSrcReg = (ldrInstr >> 5) & 0x1f;
+  // Check if ADPR and LDR use the same register.
+  if (adrpDestReg != ldrDestReg || adrpDestReg != ldrSrcReg)
+    return false;
+
+  Symbol &sym = *adrpRel.sym;
+  // Check if the address difference is within 4GB range.
+  int64_t val =
+      getAArch64Page(sym.getVA()) - getAArch64Page(secAddr + adrpRel.offset);
+  if (val != llvm::SignExtend64(val, 33))
+    return false;
+
+  Relocation adrpSymRel = {R_AARCH64_PAGE_PC, R_AARCH64_ADR_PREL_PG_HI21,
+                           adrpRel.offset, /*addend=*/0, &sym};
+  Relocation addRel = {R_ABS, R_AARCH64_ADD_ABS_LO12_NC, ldrRel.offset,
+                       /*addend=*/0, &sym};
+
+  // adrp x_<dest_reg>
+  write32le(buf + adrpSymRel.offset, 0x90000000 | adrpDestReg);
+  // add x_<dest reg>, x_<dest reg>
+  write32le(buf + addRel.offset, 0x91000000 | adrpDestReg | (adrpDestReg << 5));
+
+  target->relocate(buf + adrpSymRel.offset, adrpSymRel,
+                   SignExtend64(getAArch64Page(sym.getVA()) -
+                                    getAArch64Page(secAddr + adrpSymRel.offset),
+                                64));
+  target->relocate(buf + addRel.offset, addRel, SignExtend64(sym.getVA(), 64));
+  tryRelaxAdrpAdd(adrpSymRel, addRel, secAddr, buf);
+  return true;
+}
+
 // AArch64 may use security features in variant PLT sequences. These are:
 // Pointer Authentication (PAC), introduced in armv8.3-a and Branch Target
 // Indicator (BTI) introduced in armv8.5-a. The additional instructions used
@@ -788,8 +957,7 @@ public:
                 uint64_t pltEntryAddr) const override;
 
 private:
-  bool btiHeader; // bti instruction needed in PLT Header
-  bool btiEntry;  // bti instruction needed in PLT Entry
+  bool btiHeader; // bti instruction needed in PLT Header and Entry
   bool pacEntry;  // autia1716 instruction needed in PLT Entry
 };
 } // namespace
@@ -800,15 +968,14 @@ AArch64BtiPac::AArch64BtiPac() {
   // address of the PLT entry can be taken by the program, which permits an
   // indirect jump to the PLT entry. This can happen when the address
   // of the PLT entry for a function is canonicalised due to the address of
-  // the function in an executable being taken by a shared library.
-  // FIXME: There is a potential optimization to omit the BTI if we detect
-  // that the address of the PLT entry isn't taken.
+  // the function in an executable being taken by a shared library, or
+  // non-preemptible ifunc referenced by non-GOT-generating, non-PLT-generating
+  // relocations.
   // The PAC PLT entries require dynamic loader support and this isn't known
   // from properties in the objects, so we use the command line flag.
-  btiEntry = btiHeader && !config->shared;
   pacEntry = config->zPacPlt;
 
-  if (btiEntry || pacEntry) {
+  if (btiHeader || pacEntry) {
     pltEntrySize = 24;
     ipltEntrySize = 24;
   }
@@ -868,7 +1035,12 @@ void AArch64BtiPac::writePlt(uint8_t *buf, const Symbol &sym,
   };
   const uint8_t nopData[] = { 0x1f, 0x20, 0x03, 0xd5 }; // nop
 
-  if (btiEntry) {
+  // needsCopy indicates a non-ifunc canonical PLT entry whose address may
+  // escape to shared objects. isInIplt indicates a non-preemptible ifunc. Its
+  // address may escape if referenced by a direct relocation. The condition is
+  // conservative.
+  bool hasBti = btiHeader && (sym.needsCopy || sym.isInIplt);
+  if (hasBti) {
     memcpy(buf, btiData, sizeof(btiData));
     buf += sizeof(btiData);
     pltEntryAddr += sizeof(btiData);
@@ -885,13 +1057,13 @@ void AArch64BtiPac::writePlt(uint8_t *buf, const Symbol &sym,
     memcpy(buf + sizeof(addrInst), pacBr, sizeof(pacBr));
   else
     memcpy(buf + sizeof(addrInst), stdBr, sizeof(stdBr));
-  if (!btiEntry)
+  if (!hasBti)
     // We didn't add the BTI c instruction so round out size with NOP.
     memcpy(buf + sizeof(addrInst) + sizeof(stdBr), nopData, sizeof(nopData));
 }
 
 namespace {
-class AArch64C64 final : public AArch64 {
+class AArch64C64 : public AArch64 {
 public:
   AArch64C64();
   void writePltHeader(uint8_t *buf) const override;
@@ -906,6 +1078,14 @@ public:
                       uint64_t val) const override;
 private:
   const uint8_t *getPltBranchR17() const;
+};
+
+class AArch64C64DescABI final : public AArch64C64 {
+public:
+  AArch64C64DescABI();
+  void writePltHeader(uint8_t *buf) const override;
+  void writePlt(uint8_t *buf, const Symbol &sym,
+                uint64_t pltEntryAddr) const override;
 };
 } // namespace
 
@@ -1074,10 +1254,58 @@ void AArch64C64::relaxTlsIeToLe(uint8_t *loc, const Relocation &rel,
   }
 }
 
+AArch64C64DescABI::AArch64C64DescABI() {
+  pltRel = R_MORELLO_DESC_JUMP_SLOT;
+  gotRel = R_MORELLO_DESC_GLOB_DAT;
+  iRelativeRel = R_MORELLO_DESC_IRELATIVE;
+}
+
+void AArch64C64DescABI::writePltHeader(uint8_t *buf) const {
+  const uint8_t pltData[] = {
+      0xf0, 0x7b, 0xbf, 0x62, // stp  c16, c30, [csp, #-32]!
+      0x10, 0x00, 0x80, 0x90, // adrp c16, Page(&(.plt.got[2]))
+      0x11, 0x02, 0x40, 0xc2, // ldr  c29, [c16, Offset(&(.plt.got[2]))]
+      0x10, 0x02, 0x00, 0x02, // add  c16, c16, Offset(&(.plt.got[2]))
+      0x1d, 0x12, 0xc4, 0xc2, // ldpbr	c29, [c16]
+      0x1f, 0x20, 0x03, 0xd5, // nop
+      0x1f, 0x20, 0x03, 0xd5, // nop
+      0x1f, 0x20, 0x03, 0xd5, // nop
+  };
+
+  memcpy(buf, pltData, sizeof(pltData));
+
+  uint64_t got = in.gotPlt->getVA();
+  relocateNoSym(buf + 4, R_MORELLO_DESC_ADR_PREL_PG_HI20,
+                getAArch64Page(got + 32) - Out::descPhdr->firstSec->addr);
+  relocateNoSym(buf + 8, R_AARCH64_LDST128_ABS_LO12_NC, got + 32);
+  relocateNoSym(buf + 12, R_AARCH64_ADD_ABS_LO12_NC, got + 32);
+}
+
+void AArch64C64DescABI::writePlt(uint8_t *buf, const Symbol &sym,
+                                 uint64_t pltEntryAddr) const {
+  const uint8_t pltData[] = {
+      0x10, 0x00, 0x00, 0x90, // adrdp  c16, :got:foo
+      0x10, 0x02, 0x00, 0x02, // add   c16, c16, :got_lo12:foo
+      0x1d, 0x02, 0x40, 0xc2, // ldr   c29, [c16]
+      0xbd, 0x13, 0xc4, 0xc2, // ldpbr c29, [c29]
+  };
+  memcpy(buf, pltData, sizeof(pltData));
+
+  uint64_t gotPltEntryAddr = sym.getGotPltVA();
+  relocateNoSym(buf + 0, R_MORELLO_DESC_ADR_PREL_PG_HI20,
+                getAArch64Page(gotPltEntryAddr) - Out::descPhdr->firstSec->addr);
+  relocateNoSym(buf + 4, R_AARCH64_ADD_ABS_LO12_NC, gotPltEntryAddr);
+}
+
 static TargetInfo *getTargetInfo() {
   if (config->morelloC64Plt) {
-    static AArch64C64 t;
-    return &t;
+    if (config->isCheriFnDesc) {
+      static AArch64C64DescABI t;
+      return &t;
+    } else {
+      static AArch64C64 t;
+      return &t;
+    }
   }
   if (config->andFeatures & (GNU_PROPERTY_AARCH64_FEATURE_1_BTI |
                              GNU_PROPERTY_AARCH64_FEATURE_1_PAC)) {

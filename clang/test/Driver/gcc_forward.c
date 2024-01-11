@@ -1,9 +1,7 @@
-// The morello baremetal driver uses aarch64-none-elf so these won't
-// be forwared to gcc.
-// RXUN: %clang -### %s -target aarch64-none-elf \
-// RXUN:   --coverage -e _start -fuse-ld=lld --ld-path=ld -nostartfiles \
-// RXUN:   -nostdlib -r -rdynamic -specs=nosys.specs -static -static-pie \
-// RXUN:   2>&1 | FileCheck --check-prefix=FORWARD %s
+// RUN: %clang -### %s -target x86-none-elf \
+// RUN:   --coverage -e _start -fuse-ld=lld --ld-path=ld -nostartfiles \
+// RUN:   -nostdlib -r -rdynamic -specs=nosys.specs -static -static-pie \
+// RUN:   2>&1 | FileCheck --check-prefix=FORWARD %s
 // FORWARD: gcc{{[^"]*}}" "--coverage" "-fuse-ld=lld" "--ld-path=ld" "-nostartfiles" "-nostdlib" "-rdynamic" "-specs=nosys.specs" "-static" "-static-pie" "-o" "a.out" "{{.*}}.o" "-e" "_start" "-r"
 
 // Check that we don't try to forward -Xclang or -mlinker-version to GCC.

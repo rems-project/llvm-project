@@ -1313,7 +1313,7 @@ SDValue XCoreTargetLowering::LowerCCCArguments(
         CFRegNode.push_back(ArgIn.getValue(ArgIn->getNumValues() - 1));
       }
     } else {
-      // sanity check
+      // Only arguments passed on the stack should make it here. 
       assert(VA.isMemLoc());
       // Load the argument to a virtual register
       unsigned ObjSize = VA.getLocVT().getSizeInBits()/8;
@@ -1394,11 +1394,10 @@ SDValue XCoreTargetLowering::LowerCCCArguments(
       int FI = MFI.CreateStackObject(Size, Alignment, false);
       SDValue FIN = DAG.getFrameIndex(FI, MVT::i32);
       InVals.push_back(FIN);
-      MemOps.push_back(DAG.getMemcpy(Chain, dl, FIN, ArgDI->SDV,
-                                     DAG.getConstant(Size, dl, MVT::i32),
-                                     Alignment, false, false, false, false,
-                                     MachinePointerInfo(),
-                                     MachinePointerInfo()));
+      MemOps.push_back(DAG.getMemcpy(
+          Chain, dl, FIN, ArgDI->SDV, DAG.getConstant(Size, dl, MVT::i32),
+          Alignment, false, false, false, PreserveCheriTags::TODO,
+          MachinePointerInfo(), MachinePointerInfo()));
     } else {
       InVals.push_back(ArgDI->SDV);
     }
@@ -1642,7 +1641,7 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
       return DAG.getNode(XCoreISD::LADD, dl, DAG.getVTList(VT, VT), N1, N0, N2);
 
     // fold (ladd 0, 0, x) -> 0, x & 1
-    if (N0C && N0C->isNullValue() && N1C && N1C->isNullValue()) {
+    if (N0C && N0C->isZero() && N1C && N1C->isZero()) {
       SDValue Carry = DAG.getConstant(0, dl, VT);
       SDValue Result = DAG.getNode(ISD::AND, dl, VT, N2,
                                    DAG.getConstant(1, dl, VT));
@@ -1652,7 +1651,7 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
 
     // fold (ladd x, 0, y) -> 0, add x, y iff carry is unused and y has only the
     // low bit set
-    if (N1C && N1C->isNullValue() && N->hasNUsesOfValue(0, 1)) {
+    if (N1C && N1C->isZero() && N->hasNUsesOfValue(0, 1)) {
       APInt Mask = APInt::getHighBitsSet(VT.getSizeInBits(),
                                          VT.getSizeInBits() - 1);
       KnownBits Known = DAG.computeKnownBits(N2);
@@ -1674,7 +1673,7 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
     EVT VT = N0.getValueType();
 
     // fold (lsub 0, 0, x) -> x, -x iff x has only the low bit set
-    if (N0C && N0C->isNullValue() && N1C && N1C->isNullValue()) {
+    if (N0C && N0C->isZero() && N1C && N1C->isZero()) {
       APInt Mask = APInt::getHighBitsSet(VT.getSizeInBits(),
                                          VT.getSizeInBits() - 1);
       KnownBits Known = DAG.computeKnownBits(N2);
@@ -1689,7 +1688,7 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
 
     // fold (lsub x, 0, y) -> 0, sub x, y iff borrow is unused and y has only the
     // low bit set
-    if (N1C && N1C->isNullValue() && N->hasNUsesOfValue(0, 1)) {
+    if (N1C && N1C->isZero() && N->hasNUsesOfValue(0, 1)) {
       APInt Mask = APInt::getHighBitsSet(VT.getSizeInBits(),
                                          VT.getSizeInBits() - 1);
       KnownBits Known = DAG.computeKnownBits(N2);
@@ -1718,7 +1717,7 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
                          N1, N0, N2, N3);
 
     // lmul(x, 0, a, b)
-    if (N1C && N1C->isNullValue()) {
+    if (N1C && N1C->isZero()) {
       // If the high result is unused fold to add(a, b)
       if (N->hasNUsesOfValue(0, 0)) {
         SDValue Lo = DAG.getNode(ISD::ADD, dl, VT, N2, N3);
@@ -1798,11 +1797,11 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
         !LD->isVolatile() && !LD->isIndexed() &&
         Chain.reachesChainWithoutSideEffects(SDValue(LD, 1))) {
         bool isTail = isInTailCallPosition(DAG, ST, Chain);
-        return DAG.getMemmove(Chain, dl, ST->getBasePtr(),
-                              LD->getBasePtr(),
-                              DAG.getConstant(StoreBits/8, dl, MVT::i32),
-                              Align(Alignment), false, isTail, false,
-                              ST->getPointerInfo(), LD->getPointerInfo());
+        return DAG.getMemmove(Chain, dl, ST->getBasePtr(), LD->getBasePtr(),
+                              DAG.getConstant(StoreBits / 8, dl, MVT::i32),
+                              Align(Alignment), false, isTail,
+                              PreserveCheriTags::TODO, ST->getPointerInfo(),
+                              LD->getPointerInfo());
       }
     }
     break;

@@ -61,7 +61,7 @@ body: |
     liveins: $x0
     renamable $d1 = COPY $x0
     $x2 = COPY renamable $d1
-    RET_ReallyLR 0, implicit $x2
+    RET_ReallyLR implicit $x2
 ...
 ---
 # Don't forward if there are overlapping implicit operands.

@@ -1,3 +1,4 @@
+include(GNUInstallDirs)
 include(LLVMDistributionSupport)
 
 function(clang_tablegen)
@@ -100,12 +101,7 @@ macro(add_clang_library name)
       # The Xcode generator doesn't handle object libraries correctly.
       list(APPEND LIBTYPE OBJECT)
     endif()
-    if (NOT EXCLUDE_FROM_ALL)
-      # Only include libraries that don't have EXCLUDE_FROM_ALL set. This
-      # ensure that the clang static analyzer libraries are not compiled
-      # as part of clang-shlib if CLANG_ENABLE_STATIC_ANALYZER=OFF.
-      set_property(GLOBAL APPEND PROPERTY CLANG_STATIC_LIBS ${name})
-    endif()
+    set_property(GLOBAL APPEND PROPERTY CLANG_STATIC_LIBS ${name})
   endif()
   llvm_add_library(${name} ${LIBTYPE} ${ARG_UNPARSED_ARGUMENTS} ${srcs})
 
@@ -115,9 +111,6 @@ macro(add_clang_library name)
   endif()
 
   foreach(lib ${libs})
-    if (EXCLUDE_FROM_ALL)
-      continue()
-    endif()
     if(TARGET ${lib})
       target_link_libraries(${lib} INTERFACE ${LLVM_COMMON_LIBS})
 
@@ -128,7 +121,7 @@ macro(add_clang_library name)
           ${export_to_clangtargets}
           LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
           ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX}
-          RUNTIME DESTINATION bin)
+          RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
 
         if (NOT LLVM_ENABLE_IDE)
           add_llvm_install_targets(install-${lib}
@@ -167,7 +160,7 @@ macro(add_clang_tool name)
     get_target_export_arg(${name} Clang export_to_clangtargets)
     install(TARGETS ${name}
       ${export_to_clangtargets}
-      RUNTIME DESTINATION bin
+      RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
       COMPONENT ${name})
 
     if(NOT LLVM_ENABLE_IDE)

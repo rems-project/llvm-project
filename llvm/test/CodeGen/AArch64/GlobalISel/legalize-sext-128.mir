@@ -19,5 +19,5 @@ body:             |
     %namedVReg1354:_(s1) = G_ICMP intpred(sle), %namedVReg1355(s128), %namedVReg1356
     %namedVReg1353:_(s32) = G_SEXT %namedVReg1354(s1)
     $w0 = COPY %namedVReg1353(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...

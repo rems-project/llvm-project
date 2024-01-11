@@ -24,7 +24,7 @@ body:             |
     ; CHECK: %foo:gpr32 = COPY $w1
     ; CHECK: %load:gpr32 = LDRWroW %base, %foo, 1, 1 :: (load (s32))
     ; CHECK: $w0 = COPY %load
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %base:gpr(p0) = COPY $x0
     %foo:gpr(s32) = COPY $w1
     %ext:gpr(s64) = G_SEXT %foo(s32)
@@ -33,7 +33,7 @@ body:             |
     %ptr:gpr(p0) = G_PTR_ADD %base, %offset(s64)
     %load:gpr(s32) = G_LOAD %ptr(p0) :: (load (s32))
     $w0 = COPY %load(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            shl_gep_zext_ldrwrow
@@ -58,7 +58,7 @@ body:             |
     ; CHECK: %foo:gpr32 = COPY $w1
     ; CHECK: %load:gpr32 = LDRWroW %base, %foo, 0, 1 :: (load (s32))
     ; CHECK: $w0 = COPY %load
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %base:gpr(p0) = COPY $x0
     %foo:gpr(s32) = COPY $w1
     %ext:gpr(s64) = G_ZEXT %foo(s32)
@@ -67,7 +67,7 @@ body:             |
     %ptr:gpr(p0) = G_PTR_ADD %base, %offset(s64)
     %load:gpr(s32) = G_LOAD %ptr(p0) :: (load (s32))
     $w0 = COPY %load(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            shl_gep_anyext_ldrwrow
@@ -92,7 +92,7 @@ body:             |
     ; CHECK: %foo:gpr32 = COPY $w1
     ; CHECK: %load:gpr32 = LDRWroW %base, %foo, 0, 1 :: (load (s32))
     ; CHECK: $w0 = COPY %load
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %base:gpr(p0) = COPY $x0
     %foo:gpr(s32) = COPY $w1
     %ext:gpr(s64) = G_ANYEXT %foo(s32)
@@ -101,7 +101,7 @@ body:             |
     %ptr:gpr(p0) = G_PTR_ADD %base, %offset(s64)
     %load:gpr(s32) = G_LOAD %ptr(p0) :: (load (s32))
     $w0 = COPY %load(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            mul_gep_sext_ldrwrow
@@ -124,7 +124,7 @@ body:             |
     ; CHECK: %foo:gpr32 = COPY $w1
     ; CHECK: %load:gpr32 = LDRWroW %base, %foo, 1, 1 :: (load (s32))
     ; CHECK: $w0 = COPY %load
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %base:gpr(p0) = COPY $x0
     %foo:gpr(s32) = COPY $w1
     %ext:gpr(s64) = G_SEXT %foo(s32)
@@ -133,7 +133,7 @@ body:             |
     %ptr:gpr(p0) = G_PTR_ADD %base, %offset(s64)
     %load:gpr(s32) = G_LOAD %ptr(p0) :: (load (s32))
     $w0 = COPY %load(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            mul_gep_zext_ldrwrow
@@ -156,7 +156,7 @@ body:             |
     ; CHECK: %foo:gpr32 = COPY $w1
     ; CHECK: %load:gpr32 = LDRWroW %base, %foo, 0, 1 :: (load (s32))
     ; CHECK: $w0 = COPY %load
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %base:gpr(p0) = COPY $x0
     %foo:gpr(s32) = COPY $w1
     %ext:gpr(s64) = G_ZEXT %foo(s32)
@@ -165,7 +165,7 @@ body:             |
     %ptr:gpr(p0) = G_PTR_ADD %base, %offset(s64)
     %load:gpr(s32) = G_LOAD %ptr(p0) :: (load (s32))
     $w0 = COPY %load(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            mul_gep_anyext_ldrwrow
@@ -188,7 +188,7 @@ body:             |
     ; CHECK: %foo:gpr32 = COPY $w1
     ; CHECK: %load:gpr32 = LDRWroW %base, %foo, 0, 1 :: (load (s32))
     ; CHECK: $w0 = COPY %load
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %base:gpr(p0) = COPY $x0
     %foo:gpr(s32) = COPY $w1
     %ext:gpr(s64) = G_ANYEXT %foo(s32)
@@ -197,7 +197,7 @@ body:             |
     %ptr:gpr(p0) = G_PTR_ADD %base, %offset(s64)
     %load:gpr(s32) = G_LOAD %ptr(p0) :: (load (s32))
     $w0 = COPY %load(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            ldrdrow
@@ -220,7 +220,7 @@ body:             |
     ; CHECK: %foo:gpr32 = COPY $w1
     ; CHECK: %load:fpr64 = LDRDroW %base, %foo, 1, 1 :: (load (<2 x s32>))
     ; CHECK: $x0 = COPY %load
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %base:gpr(p0) = COPY $x0
     %foo:gpr(s32) = COPY $w1
     %ext:gpr(s64) = G_SEXT %foo(s32)
@@ -229,7 +229,7 @@ body:             |
     %ptr:gpr(p0) = G_PTR_ADD %base, %offset(s64)
     %load:fpr(<2 x s32>) = G_LOAD %ptr(p0) :: (load (<2 x s32>))
     $x0 = COPY %load(<2 x s32>)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...
 ---
 name:            ldrxrow
@@ -252,7 +252,7 @@ body:             |
     ; CHECK: %foo:gpr32 = COPY $w1
     ; CHECK: %load:gpr64 = LDRXroW %base, %foo, 1, 1 :: (load (s64))
     ; CHECK: $x0 = COPY %load
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %base:gpr(p0) = COPY $x0
     %foo:gpr(s32) = COPY $w1
     %ext:gpr(s64) = G_SEXT %foo(s32)
@@ -261,7 +261,7 @@ body:             |
     %ptr:gpr(p0) = G_PTR_ADD %base, %offset(s64)
     %load:gpr(s64) = G_LOAD %ptr(p0) :: (load (s64))
     $x0 = COPY %load(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...
 ---
 name: ldrbbrow
@@ -285,14 +285,14 @@ body:             |
     ; CHECK: %base:gpr64sp = COPY $x0
     ; CHECK: %load:gpr32 = LDRBBroW %base, %val, 1, 0 :: (load (s8))
     ; CHECK: $w0 = COPY %load
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %val:gpr(s32) = COPY $w1
     %base:gpr(p0) = COPY $x0
     %ext:gpr(s64) = G_SEXT %val(s32)
     %ptr:gpr(p0) = G_PTR_ADD %base, %ext(s64)
     %load:gpr(s32) = G_LOAD %ptr(p0) :: (load (s8))
     $w0 = COPY %load(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name: ldrhrow
@@ -315,7 +315,7 @@ body:             |
     ; CHECK: %foo:gpr32 = COPY $w1
     ; CHECK: %load:fpr16 = LDRHroW %base, %foo, 1, 1 :: (load (s16))
     ; CHECK: $h0 = COPY %load
-    ; CHECK: RET_ReallyLR 0, implicit $h0
+    ; CHECK: RET_ReallyLR implicit $h0
     %base:gpr(p0) = COPY $x0
     %foo:gpr(s32) = COPY $w1
     %ext:gpr(s64) = G_SEXT %foo(s32)
@@ -324,7 +324,7 @@ body:             |
     %ptr:gpr(p0) = G_PTR_ADD %base, %offset(s64)
     %load:fpr(s16) = G_LOAD %ptr(p0) :: (load (s16))
     $h0 = COPY %load(s16)
-    RET_ReallyLR 0, implicit $h0
+    RET_ReallyLR implicit $h0
 ...
 ---
 name:            bad_and_mask_1
@@ -348,7 +348,7 @@ body:             |
     ; CHECK: %and:gpr64common = ANDXri %imp, 4103
     ; CHECK: %load:gpr64 = LDRXroX %base, %and, 0, 1 :: (load (s64))
     ; CHECK: $x1 = COPY %load
-    ; CHECK: RET_ReallyLR 0, implicit $x1
+    ; CHECK: RET_ReallyLR implicit $x1
     %base:gpr(p0) = COPY $x0
     %imp:gpr(s64) = G_IMPLICIT_DEF
     %bad_mask:gpr(s64) = G_CONSTANT i64 255
@@ -358,7 +358,7 @@ body:             |
     %ptr:gpr(p0) = G_PTR_ADD %base, %mul(s64)
     %load:gpr(s64) = G_LOAD %ptr(p0) :: (load (s64))
     $x1 = COPY %load(s64)
-    RET_ReallyLR 0, implicit $x1
+    RET_ReallyLR implicit $x1
 ...
 ---
 name:            bad_and_mask_2
@@ -382,7 +382,7 @@ body:             |
     ; CHECK: %and:gpr64common = ANDXri %imp, 4111
     ; CHECK: %load:gpr64 = LDRXroX %base, %and, 0, 1 :: (load (s64))
     ; CHECK: $x1 = COPY %load
-    ; CHECK: RET_ReallyLR 0, implicit $x1
+    ; CHECK: RET_ReallyLR implicit $x1
     %base:gpr(p0) = COPY $x0
     %imp:gpr(s64) = G_IMPLICIT_DEF
     %bad_mask:gpr(s64) = G_CONSTANT i64 65535
@@ -392,7 +392,7 @@ body:             |
     %ptr:gpr(p0) = G_PTR_ADD %base, %mul(s64)
     %load:gpr(s64) = G_LOAD %ptr(p0) :: (load (s64))
     $x1 = COPY %load(s64)
-    RET_ReallyLR 0, implicit $x1
+    RET_ReallyLR implicit $x1
 ...
 ---
 name:            and_uxtw
@@ -416,7 +416,7 @@ body:             |
     ; CHECK: [[COPY1:%[0-9]+]]:gpr32 = COPY [[COPY]]
     ; CHECK: %load:gpr64 = LDRXroW %base, [[COPY1]], 0, 1 :: (load (s64))
     ; CHECK: $x1 = COPY %load
-    ; CHECK: RET_ReallyLR 0, implicit $x1
+    ; CHECK: RET_ReallyLR implicit $x1
     %base:gpr(p0) = COPY $x0
     %imp:gpr(s64) = G_IMPLICIT_DEF
     %mask:gpr(s64) = G_CONSTANT i64 4294967295
@@ -426,7 +426,7 @@ body:             |
     %ptr:gpr(p0) = G_PTR_ADD %base, %mul(s64)
     %load:gpr(s64) = G_LOAD %ptr(p0) :: (load (s64))
     $x1 = COPY %load(s64)
-    RET_ReallyLR 0, implicit $x1
+    RET_ReallyLR implicit $x1
 ...
 ---
 name:            zext_shl_LDRWroW
@@ -450,7 +450,7 @@ body:             |
     ; CHECK: [[ANDWri:%[0-9]+]]:gpr32common = ANDWri [[COPY]], 7
     ; CHECK: [[LDRWroW:%[0-9]+]]:gpr32 = LDRWroW [[COPY1]], [[ANDWri]], 0, 1 :: (load (s32))
     ; CHECK: $w0 = COPY [[LDRWroW]]
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %0:gpr(s32) = COPY $w0
     %1:gpr(p0) = COPY $x1
     %2:gpr(s32) = G_CONSTANT i32 255
@@ -461,6 +461,6 @@ body:             |
     %7:gpr(p0) = G_PTR_ADD %1, %6(s64)
     %9:gpr(s32) = G_LOAD %7(p0) :: (load (s32))
     $w0 = COPY %9(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...

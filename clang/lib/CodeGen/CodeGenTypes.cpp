@@ -97,10 +97,10 @@ llvm::Type *CodeGenTypes::ConvertTypeForMem(QualType T, bool ForBitField) {
 
   llvm::Type *R = ConvertType(T);
 
-  // If this is a bool type, or an ExtIntType in a bitfield representation,
-  // map this integer to the target-specified size.
-  if ((ForBitField && T->isExtIntType()) ||
-      (!T->isExtIntType() && R->isIntegerTy(1)))
+  // If this is a bool type, or a bit-precise integer type in a bitfield
+  // representation, map this integer to the target-specified size.
+  if ((ForBitField && T->isBitIntType()) ||
+      (!T->isBitIntType() && R->isIntegerTy(1)))
     return llvm::IntegerType::get(getLLVMContext(),
                                   (unsigned)Context.getTypeSize(T));
 
@@ -521,6 +521,7 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     case BuiltinType::Double:
     case BuiltinType::LongDouble:
     case BuiltinType::Float128:
+    case BuiltinType::Ibm128:
       ResultType = getTypeForFormat(getLLVMContext(),
                                     Context.getFloatTypeSemantics(T),
                                     /* UseNativeHalf = */ false);
@@ -646,7 +647,7 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     // the underlying type
     unsigned AS = RTy->isCHERICapability()
                       ? CGM.getTargetCodeGenInfo().getCHERICapabilityAS()
-                      : CGM.getTargetAddressSpace(ETy.getQualifiers());
+                      : CGM.getTypes().getTargetAddressSpace(ETy);
     ResultType = llvm::PointerType::get(PointeeType, AS);
     break;
   }
@@ -667,10 +668,7 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     llvm::Type *PointeeType = ConvertTypeForMem(ETy);
     if (PointeeType->isVoidTy())
       PointeeType = llvm::Type::getInt8Ty(getLLVMContext());
-
-    unsigned AS = PointeeType->isFunctionTy()
-                      ? getDataLayout().getProgramAddressSpace()
-                      : CGM.getTargetAddressSpace(ETy.getQualifiers());
+    unsigned AS = CGM.getAddressSpaceForType(ETy);
     // XXXAR: If Pty is a capability, we have to use AS200
     if (PTy->isCHERICapability())
       AS = CGM.getTargetCodeGenInfo().getCHERICapabilityAS();
@@ -774,11 +772,16 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     llvm::Type *PointeeType = CGM.getLangOpts().OpenCL
                                   ? CGM.getGenericBlockLiteralType()
                                   : ConvertTypeForMem(FTy);
-    // XXXAR: If Ty is capability, use AS200 otherwise the same as LangAS as the
-    // underlying type
-    unsigned AS = Ty->isCHERICapabilityType(CGM.getContext())
-                      ? CGM.getTargetCodeGenInfo().getCHERICapabilityAS()
-                      : CGM.getTargetAddressSpace(FTy.getQualifiers());
+    // Block pointers lower to function type. For function type,
+    // getTargetAddressSpace() returns default address space for
+    // function pointer i.e. program address space. Therefore, for block
+    // pointers, it is important to pass qualifiers when calling
+    // getTargetAddressSpace(), to ensure that we get the address space
+    // for data pointers and not function pointers.
+    unsigned AS = Context.getTargetAddressSpace(FTy.getQualifiers());
+   // XXXAR: If Pty is a capability, we have to use AS200
+   if (Ty->isCHERICapabilityType(Context))
+     AS = CGM.getTargetCodeGenInfo().getCHERICapabilityAS();
     ResultType = llvm::PointerType::get(PointeeType, AS);
     break;
   }
@@ -816,8 +819,8 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     ResultType = CGM.getOpenCLRuntime().getPipeType(cast<PipeType>(Ty));
     break;
   }
-  case Type::ExtInt: {
-    const auto &EIT = cast<ExtIntType>(Ty);
+  case Type::BitInt: {
+    const auto &EIT = cast<BitIntType>(Ty);
     ResultType = llvm::Type::getIntNTy(getLLVMContext(), EIT->getNumBits());
     break;
   }
@@ -954,4 +957,22 @@ bool CodeGenTypes::isZeroInitializable(QualType T) {
 
 bool CodeGenTypes::isZeroInitializable(const RecordDecl *RD) {
   return getCGRecordLayout(RD).isZeroInitializable();
+}
+
+unsigned CodeGenTypes::getTargetAddressSpace(QualType PointeeTy) const {
+  // Return the address space for the type. If the type is a
+  // function type without an address space qualifier, the
+  // program address space is used. Otherwise, the target picks
+  // the best address space based on the type information
+  return PointeeTy->isFunctionType() && !PointeeTy.hasAddressSpace()
+             ? getDataLayout().getProgramAddressSpace()
+             : Context.getTargetAddressSpace(PointeeTy.getQualifiers());
+}
+
+bool CodeGenTypes::canMarkAsNonNull(QualType DestTy) const {
+  unsigned AS = getTargetAddressSpace(DestTy);
+  if (AS == 0 || (Context.getTargetInfo().SupportsCapabilities() &&
+                  AS == CGM.getTargetCodeGenInfo().getCHERICapabilityAS()))
+    return true;
+  return false;
 }

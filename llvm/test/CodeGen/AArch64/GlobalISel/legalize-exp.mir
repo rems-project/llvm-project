@@ -52,7 +52,7 @@ body:             |
     %0:_(<4 x s16>) = COPY $d0
     %1:_(<4 x s16>) = G_FEXP %0
     $d0 = COPY %1(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -86,7 +86,7 @@ body:             |
     %0:_(<8 x s16>) = COPY $q0
     %1:_(<8 x s16>) = G_FEXP %0
     $q0 = COPY %1(<8 x s16>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -120,7 +120,7 @@ body:             |
     %0:_(<2 x s32>) = COPY $d0
     %1:_(<2 x s32>) = G_FEXP %0
     $d0 = COPY %1(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -165,7 +165,7 @@ body:             |
     %0:_(<4 x s32>) = COPY $q0
     %1:_(<4 x s32>) = G_FEXP %0
     $q0 = COPY %1(<4 x s32>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -199,7 +199,7 @@ body:             |
     %0:_(<2 x s64>) = COPY $q0
     %1:_(<2 x s64>) = G_FEXP %0
     $q0 = COPY %1(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -224,4 +224,4 @@ body:             |
     %0:_(s16) = COPY $h0
     %1:_(s16) = G_FEXP %0
     $h0 = COPY %1(s16)
-    RET_ReallyLR 0, implicit $h0
+    RET_ReallyLR implicit $h0

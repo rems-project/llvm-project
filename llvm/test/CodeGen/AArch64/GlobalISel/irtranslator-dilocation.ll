@@ -10,7 +10,7 @@
 ; CHECK: Checking DILocation from   store i32 0, i32* %rv, align 4, !dbg !12 was copied to G_STORE debug-location !12; t.cpp:2:5
 ; CHECK: Checking DILocation from   %0 = load i32, i32* %rv, align 4, !dbg !13 was copied to G_LOAD debug-location !13; t.cpp:3:8
 ; CHECK: Checking DILocation from   ret i32 %0, !dbg !14 was copied to COPY debug-location !14; t.cpp:3:1
-; CHECK: Checking DILocation from   ret i32 %0, !dbg !14 was copied to RET_ReallyLR 0, implicit $w0, debug-location !14; t.cpp:3:1
+; CHECK: Checking DILocation from   ret i32 %0, !dbg !14 was copied to RET_ReallyLR implicit $w0, debug-location !14; t.cpp:3:1
 
 source_filename = "t.cpp"
 target datalayout = "e-m:e-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128"

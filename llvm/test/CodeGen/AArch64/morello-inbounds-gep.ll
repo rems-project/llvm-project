@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=arm64-eabi -asm-verbose=false -verify-machineinstrs -mattr=+c64,+morello -target-abi purecap | FileCheck %s
 
-target datalayout = "e-m:e-pf200:128:128-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"
+target datalayout = "e-m:e-pf200:128:128:128:64-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"
 
 @gv = common local_unnamed_addr addrspace(200) global [8 x [64 x i32]] zeroinitializer, align 4
 

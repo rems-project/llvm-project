@@ -14,12 +14,12 @@ body:             |
     ; CHECK: [[C:%[0-9]+]]:gpr(s32) = G_CONSTANT i32 8
     ; CHECK: [[SHL:%[0-9]+]]:gpr(s32) = G_SHL [[COPY]], [[C]](s32)
     ; CHECK: $w0 = COPY [[SHL]](s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %0:_(s32) = COPY $w0
     %1:_(s32) = G_CONSTANT i32 8
     %2:_(s32) = G_SHL %0, %1(s32)
     $w0 = COPY %2(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -36,12 +36,12 @@ body:             |
     ; CHECK: [[C:%[0-9]+]]:gpr(s64) = G_CONSTANT i64 8
     ; CHECK: [[SHL:%[0-9]+]]:gpr(s64) = G_SHL [[COPY]], [[C]](s64)
     ; CHECK: $x0 = COPY [[SHL]](s64)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %0:_(s64) = COPY $x0
     %1:_(s64) = G_CONSTANT i64 8
     %2:_(s64) = G_SHL %0, %1(s64)
     $x0 = COPY %2(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -58,12 +58,12 @@ body:             |
     ; CHECK: [[C:%[0-9]+]]:gpr(s64) = G_CONSTANT i64 8
     ; CHECK: [[LSHR:%[0-9]+]]:gpr(s32) = G_LSHR [[COPY]], [[C]](s64)
     ; CHECK: $w0 = COPY [[LSHR]](s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %0:_(s32) = COPY $w0
     %3:_(s64) = G_CONSTANT i64 8
     %2:_(s32) = G_LSHR %0, %3(s64)
     $w0 = COPY %2(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -80,12 +80,12 @@ body:             |
     ; CHECK: [[C:%[0-9]+]]:gpr(s64) = G_CONSTANT i64 8
     ; CHECK: [[LSHR:%[0-9]+]]:gpr(s64) = G_LSHR [[COPY]], [[C]](s64)
     ; CHECK: $x0 = COPY [[LSHR]](s64)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %0:_(s64) = COPY $x0
     %1:_(s64) = G_CONSTANT i64 8
     %2:_(s64) = G_LSHR %0, %1(s64)
     $x0 = COPY %2(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -102,12 +102,12 @@ body:             |
     ; CHECK: [[C:%[0-9]+]]:gpr(s64) = G_CONSTANT i64 8
     ; CHECK: [[ASHR:%[0-9]+]]:gpr(s32) = G_ASHR [[COPY]], [[C]](s64)
     ; CHECK: $w0 = COPY [[ASHR]](s32)
-    ; CHECK: RET_ReallyLR 0, implicit $w0
+    ; CHECK: RET_ReallyLR implicit $w0
     %0:_(s32) = COPY $w0
     %3:_(s64) = G_CONSTANT i64 8
     %2:_(s32) = G_ASHR %0, %3(s64)
     $w0 = COPY %2(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...
 ---
@@ -124,11 +124,11 @@ body:             |
     ; CHECK: [[C:%[0-9]+]]:gpr(s64) = G_CONSTANT i64 8
     ; CHECK: [[ASHR:%[0-9]+]]:gpr(s64) = G_ASHR [[COPY]], [[C]](s64)
     ; CHECK: $x0 = COPY [[ASHR]](s64)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %0:_(s64) = COPY $x0
     %1:_(s64) = G_CONSTANT i64 8
     %2:_(s64) = G_ASHR %0, %1(s64)
     $x0 = COPY %2(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...

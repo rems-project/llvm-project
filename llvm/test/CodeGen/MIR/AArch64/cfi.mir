@@ -49,4 +49,4 @@ body: |
     ; CHECK: CFI_INSTRUCTION window_save
     CFI_INSTRUCTION negate_ra_sign_state
     ; CHECK: CFI_INSTRUCTION negate_ra_sign_state
-    RET_ReallyLR 0
+    RET_ReallyLR

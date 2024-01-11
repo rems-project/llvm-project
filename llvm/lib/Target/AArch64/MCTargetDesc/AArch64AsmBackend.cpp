@@ -24,9 +24,9 @@
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCTargetOptions.h"
 #include "llvm/MC/MCValue.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/EndianStream.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
 
 namespace {
@@ -72,8 +72,6 @@ public:
         {"fixup_aarch64_pcrel_call26", 0, 26, PCRelFlagVal},
         {"fixup_morello_pcrel_branch26", 0, 26, PCRelFlagVal },
         {"fixup_morello_pcrel_call26", 0, 26, PCRelFlagVal },
-        {"fixup_morello_desc_call", 0, 0, 0},
-        {"fixup_morello_desc_tcall", 0, 0, 0},
         {"fixup_morello_tlsdesc_call", 0, 0, 0},
         {"fixup_morello_pcrel_branch14", 5, 14, PCRelFlagVal},
         {"fixup_morello_pcrel_branch19", 5, 19, PCRelFlagVal}};
@@ -101,7 +99,8 @@ public:
                             const MCAsmLayout &Layout) const override;
   void relaxInstruction(MCInst &Inst,
                         const MCSubtargetInfo &STI) const override;
-  bool writeNopData(raw_ostream &OS, uint64_t Count) const override;
+  bool writeNopData(raw_ostream &OS, uint64_t Count,
+                    const MCSubtargetInfo *STI) const override;
 
   bool shouldClearThumbBitOnReloc() const override { return false; }
 
@@ -118,11 +117,6 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   switch (Kind) {
   default:
     llvm_unreachable("Unknown fixup kind!");
-
-  case AArch64::fixup_morello_tlsdesc_call:
-  case AArch64::fixup_morello_desc_call:
-  case AArch64::fixup_morello_desc_tcall:
-    return 0;
 
   case FK_Data_1:
     return 1;
@@ -181,8 +175,11 @@ static uint64_t adjustFixupValue(const MCFixup &Fixup, const MCValue &Target,
     return AdrImmBits(Value & 0x1fffffULL);
   case AArch64::fixup_aarch64_pcrel_adrp_imm21:
     assert(!IsResolved);
-    if (TheTriple.isOSBinFormatCOFF())
+    if (TheTriple.isOSBinFormatCOFF()) {
+      if (!isInt<21>(SignedValue))
+        Ctx.reportError(Fixup.getLoc(), "fixup value out of range");
       return AdrImmBits(Value & 0x1fffffULL);
+    }
     return AdrImmBits((Value & 0x1fffff000ULL) >> 12);
   case AArch64::fixup_aarch64_ldr_pcrel_imm19:
   case AArch64::fixup_morello_pcrel_branch19:
@@ -390,8 +387,6 @@ unsigned AArch64AsmBackend::getFixupKindContainereSizeInBytes(unsigned Kind) con
     return 8;
 
   case AArch64::fixup_morello_tlsdesc_call:
-  case AArch64::fixup_morello_desc_call:
-  case AArch64::fixup_morello_desc_tcall:
   case AArch64::fixup_aarch64_movw:
   case AArch64::fixup_aarch64_pcrel_branch14:
   case AArch64::fixup_morello_pcrel_branch14:
@@ -491,7 +486,8 @@ void AArch64AsmBackend::relaxInstruction(MCInst &Inst,
   llvm_unreachable("AArch64AsmBackend::relaxInstruction() unimplemented");
 }
 
-bool AArch64AsmBackend::writeNopData(raw_ostream &OS, uint64_t Count) const {
+bool AArch64AsmBackend::writeNopData(raw_ostream &OS, uint64_t Count,
+                                     const MCSubtargetInfo *STI) const {
   // If the count is not 4-byte aligned, we must be writing data into the text
   // section (otherwise we have unaligned instructions, and thus have far
   // bigger problems), so just write zeros instead.

@@ -1389,7 +1389,9 @@ static TryCastResult TryStaticCast(Sema &Self, ExprResult &SrcExpr,
   // lvalue-to-rvalue, array-to-pointer, function-to-pointer, and boolean
   // conversions, subject to further restrictions.
   // Also, C++ 5.2.9p1 forbids casting away constness, which makes reversal
-  // of qualification conversions impossible.
+  // of qualification conversions impossible. (In C++20, adding an array bound
+  // would be the reverse of a qualification conversion, but adding permission
+  // to add an array bound in a static_cast is a wording oversight.)
   // In the CStyle case, the earlier attempt to const_cast should have taken
   // care of reverse qualification conversions.
 
@@ -2335,19 +2337,36 @@ void checkNonCapToCapCast(const SourceRange &OpRange, const Expr *SrcExpr,
     auto IsPurecap = Ctx.getTargetInfo().areAllPointersCapabilities();
     bool ShouldWarn;
     bool IsIntConstant = SrcExpr->isIntegerConstantExpr(Ctx);
-    bool StrictMode =
-        Self.getLangOpts().getCheriIntToCap() == LangOptions::CapInt_Strict;
+    auto IntToCapMode = Self.getLangOpts().getCheriIntToCap();
+    bool StrictMode = IntToCapMode == LangOptions::CapInt_Strict;
     if (IsPurecap) {
       // In purecap mode we warn if the source expression is not a constant
       // expression and emit an error if the int->cap conversion mode is strict.
-      ShouldWarn = StrictMode || !IsIntConstant;
+      if (StrictMode) {
+        // In strict mode the only time we don't warn is for NULL constants.
+        ShouldWarn = !SrcExpr->isNullPointerConstant(
+            Ctx, Expr::NPC_ValueDependentIsNotNull);
+      } else {
+        ShouldWarn = !IsIntConstant;
+      }
     } else {
-      // Only warn in hybrid mode if we are using strict int->cap conversions.
-      // No need to warn in hybrid mode (inside a function) since we will
-      // generate a DDC-relative capability unless we are using the "address"
-      // conversion mode.
-      ShouldWarn =
-          Self.getLangOpts().getCheriIntToCap() == LangOptions::CapInt_Address;
+      // In hybrid mode (inside a function) we will generate a DDC-relative
+      // capability unless we are using the "address" conversion mode (where we
+      // get an invalid capability), so we don't warn in the relative mode.
+      if (IntToCapMode == LangOptions::CapInt_Relative) {
+        ShouldWarn = false;
+      } else {
+        // We warn about casts for non-NULL constants (since integer constants
+        // might be used for fixed memory addresses in the kernel).
+        ShouldWarn = !SrcExpr->isNullPointerConstant(
+            Ctx, Expr::NPC_ValueDependentIsNotNull);
+        if (ShouldWarn && Self.getLangOpts().explicitConversionsToCap() &&
+            SrcExpr->getType()->isPointerType()) {
+          // Don't warn for pointer -> cap conversions, those are already
+          // handled by other warnings/errors in these compilation modes.
+          ShouldWarn = false;
+        }
+      }
     }
     if (ShouldWarn) {
       auto DiagID = StrictMode ? diag::err_capability_no_provenance
@@ -2885,6 +2904,19 @@ bool Sema::ShouldSplatAltivecScalarInCast(const VectorType *VecTy) {
   return false;
 }
 
+bool Sema::CheckAltivecInitFromScalar(SourceRange R, QualType VecTy,
+                                      QualType SrcTy) {
+  bool SrcCompatGCC = this->getLangOpts().getAltivecSrcCompat() ==
+                      LangOptions::AltivecSrcCompatKind::GCC;
+  if (this->getLangOpts().AltiVec && SrcCompatGCC) {
+    this->Diag(R.getBegin(),
+               diag::err_invalid_conversion_between_vector_and_integer)
+        << VecTy << SrcTy << R;
+    return true;
+  }
+  return false;
+}
+
 void CastOperation::CheckCXXCStyleCast(bool FunctionalStyle,
                                        bool ListInitialization) {
   assert(Self.getLangOpts().CPlusPlus);
@@ -2938,7 +2970,12 @@ void CastOperation::CheckCXXCStyleCast(bool FunctionalStyle,
   }
 
   // AltiVec vector initialization with a single literal.
-  if (const VectorType *vecTy = DestType->getAs<VectorType>())
+  if (const VectorType *vecTy = DestType->getAs<VectorType>()) {
+    if (Self.CheckAltivecInitFromScalar(OpRange, DestType,
+                                        SrcExpr.get()->getType())) {
+      SrcExpr = ExprError();
+      return;
+    }
     if (Self.ShouldSplatAltivecScalarInCast(vecTy) &&
         (SrcExpr.get()->getType()->isIntegerType() ||
          SrcExpr.get()->getType()->isFloatingType())) {
@@ -2946,6 +2983,7 @@ void CastOperation::CheckCXXCStyleCast(bool FunctionalStyle,
       SrcExpr = Self.prepareVectorSplat(DestType, SrcExpr.get());
       return;
     }
+  }
 
   // C++ [expr.cast]p5: The conversions performed by
   //   - a const_cast,
@@ -3127,7 +3165,11 @@ void CastOperation::CheckCapabilityConversions() {
   }
 
   if (Kind == CK_PointerToCHERICapability &&
-      Self.getLangOpts().explicitConversionsToCap()) {
+      Self.getLangOpts().explicitConversionsToCap() &&
+      !SrcExpr.get()->isNullPointerConstant(
+          Self.Context, Expr::NPC_ValueDependentIsNotNull)) {
+    // In C the NULL macro expands to ((void*)0), so we have to permit this
+    // CK_PointerToCHERICapability conversion even in the explicit mode.
     Expr *Placeholder = nullptr;
     Self.Diag(
         SrcExpr.get()->getBeginLoc(),
@@ -3304,6 +3346,10 @@ void CastOperation::CheckCStyleCast() {
   }
 
   if (const VectorType *DestVecTy = DestType->getAs<VectorType>()) {
+    if (Self.CheckAltivecInitFromScalar(OpRange, DestType, SrcType)) {
+      SrcExpr = ExprError();
+      return;
+    }
     if (Self.ShouldSplatAltivecScalarInCast(DestVecTy) &&
         (SrcType->isIntegerType() || SrcType->isFloatingType())) {
       Kind = CK_VectorSplat;
@@ -3832,8 +3878,11 @@ ExprResult Sema::BuildCheriOffsetOrAddress(SourceLocation LParenLoc,
       return ExprError();
     }
   }
-  // Otherwise just check that it is a non-enum integer type
-  bool DestIsInt = DestTy->isIntegerType() && !DestTy->isEnumeralType();
+  // Otherwise just check that it is a non-enum integer type (excluding
+  // __intcap, since the semantics of that are unclear, and CodeGen isn't ready
+  // for it regardless).
+  bool DestIsInt = DestTy->isIntegerType() && !DestTy->isEnumeralType() &&
+                   !DestTy->isIntCapType();
   if (!DestIsInt) {
     Diag(SubExpr->getBeginLoc(),
          diag::err_cheri_offset_addr_invalid_target_type)

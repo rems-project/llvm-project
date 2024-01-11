@@ -30,10 +30,10 @@ body:             |
     G_BRCOND %3(s1), %bb.3
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
   bb.3:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -69,10 +69,10 @@ body:             |
     G_BRCOND %3(s1), %bb.3
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
   bb.3:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -99,10 +99,10 @@ body:             |
     G_BRCOND %trunc(s1), %bb.3
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
   bb.3:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -131,10 +131,10 @@ body:             |
     G_BRCOND %trunc(s1), %bb.3
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
   bb.3:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -166,10 +166,10 @@ body:             |
     G_BRCOND %trunc(s1), %bb.3
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
   bb.3:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -200,10 +200,10 @@ body:             |
     G_BRCOND %trunc(s1), %bb.3
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
   bb.3:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -229,7 +229,7 @@ body:             |
     %trunc:gpr(s1) = G_TRUNC %op(s64)
     G_BRCOND %trunc(s1), %bb.3
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
   bb.3:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...

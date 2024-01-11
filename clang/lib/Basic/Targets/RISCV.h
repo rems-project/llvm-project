@@ -17,6 +17,7 @@
 #include "clang/Basic/TargetOptions.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/RISCVISAInfo.h"
 
 namespace clang {
 namespace targets {
@@ -53,34 +54,12 @@ class RISCVTargetInfo : public TargetInfo {
 
 protected:
   std::string ABI, CPU;
+  std::unique_ptr<llvm::RISCVISAInfo> ISAInfo;
   int CapSize = -1;
-
+  bool HasCheri = false;
   void setCapabilityABITypes() {
     IntPtrType = TargetInfo::SignedIntCap;
   }
-
-  bool HasM = false;
-  bool HasA = false;
-  bool HasF = false;
-  bool HasD = false;
-  bool HasC = false;
-  bool HasCheri = false;
-  bool HasB = false;
-  bool HasV = false;
-  bool HasZba = false;
-  bool HasZbb = false;
-  bool HasZbc = false;
-  bool HasZbe = false;
-  bool HasZbf = false;
-  bool HasZbm = false;
-  bool HasZbp = false;
-  bool HasZbproposedc = false;
-  bool HasZbr = false;
-  bool HasZbs = false;
-  bool HasZbt = false;
-  bool HasZfh = false;
-  bool HasZvamo = false;
-  bool HasZvlsseg = false;
 
   static const Builtin::Info BuiltinInfo[];
 
@@ -116,6 +95,11 @@ public:
   }
 
   const char *getClobbers() const override { return ""; }
+
+  StringRef getConstraintRegister(StringRef Constraint,
+                                  StringRef Expression) const override {
+    return Expression;
+  }
 
   ArrayRef<const char *> getGCCRegNames() const override;
 
@@ -168,13 +152,12 @@ public:
 
   bool validateTarget(DiagnosticsEngine &Diags) const override;
 
-  bool hasExtIntType() const override { return true; }
+  bool hasBitIntType() const override { return true; }
 };
 class LLVM_LIBRARY_VISIBILITY RISCV32TargetInfo : public RISCVTargetInfo {
 public:
   RISCV32TargetInfo(const llvm::Triple &Triple, const TargetOptions &Opts)
       : RISCVTargetInfo(Triple, Opts) {
-    ABI = "ilp32";
     IntPtrType = SignedInt;
     PtrDiffType = SignedInt;
     SizeType = UnsignedInt;
@@ -202,7 +185,7 @@ public:
   void setMaxAtomicWidth() override {
     MaxAtomicPromoteWidth = 128;
 
-    if (HasA)
+    if (ISAInfo->hasExtension("a"))
       MaxAtomicInlineWidth = 32;
   }
 
@@ -212,7 +195,6 @@ class LLVM_LIBRARY_VISIBILITY RISCV64TargetInfo : public RISCVTargetInfo {
 public:
   RISCV64TargetInfo(const llvm::Triple &Triple, const TargetOptions &Opts)
       : RISCVTargetInfo(Triple, Opts) {
-    ABI = "lp64";
     LongWidth = LongAlign = PointerWidth = PointerAlign = 64;
     IntMaxType = Int64Type = SignedLong;
   }
@@ -239,7 +221,7 @@ public:
   void setMaxAtomicWidth() override {
     MaxAtomicPromoteWidth = 128;
 
-    if (HasA)
+    if (ISAInfo->hasExtension("a"))
       MaxAtomicInlineWidth = 64;
   }
 

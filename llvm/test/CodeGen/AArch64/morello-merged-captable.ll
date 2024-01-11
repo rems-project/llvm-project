@@ -36,52 +36,52 @@ define i32 @getvals(i8 addrspace(200)* addrspace(200)* nocapture %a) local_unnam
 ; CHECK-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table]
 ; CHECK-NEXT:    adrp c2, .L__cap_merged_table+16
 ; CHECK-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table+16]
-; CHECK-NEXT:    adrp c3, .L__cap_merged_table+32
-; CHECK-NEXT:    ldr c3, [c3, :lo12:.L__cap_merged_table+32]
-; CHECK-NEXT:    adrp c4, .L__cap_merged_table+48
-; CHECK-NEXT:    ldr c4, [c4, :lo12:.L__cap_merged_table+48]
-; CHECK-NEXT:    adrp c5, .L__cap_merged_table+64
-; CHECK-NEXT:    ldr c5, [c5, :lo12:.L__cap_merged_table+64]
-; CHECK-NEXT:    adrp c6, .L__cap_merged_table+80
-; CHECK-NEXT:    ldr c6, [c6, :lo12:.L__cap_merged_table+80]
-; CHECK-NEXT:    adrp c7, .L__cap_merged_table+96
-; CHECK-NEXT:    ldr c7, [c7, :lo12:.L__cap_merged_table+96]
-; CHECK-NEXT:    adrp c8, .L__cap_merged_table+112
-; CHECK-NEXT:    ldr c8, [c8, :lo12:.L__cap_merged_table+112]
-; CHECK-NEXT:    adrp c9, .L__cap_merged_table+128
-; CHECK-NEXT:    ldr c9, [c9, :lo12:.L__cap_merged_table+128]
-; CHECK-NEXT:    adrp c10, .L__cap_merged_table+144
-; CHECK-NEXT:    ldr c10, [c10, :lo12:.L__cap_merged_table+144]
-; CHECK-NEXT:    adrp c11, .L__cap_merged_table+160
-; CHECK-NEXT:    ldr c11, [c11, :lo12:.L__cap_merged_table+160]
 ; CHECK-NEXT:    stp c1, c2, [c0, #0]
-; CHECK-NEXT:    adrp c1, .L__cap_merged_table+176
-; CHECK-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+176]
-; CHECK-NEXT:    stp c3, c4, [c0, #32]
-; CHECK-NEXT:    adrp c2, .L__cap_merged_table+192
-; CHECK-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table+192]
-; CHECK-NEXT:    stp c5, c6, [c0, #64]
-; CHECK-NEXT:    adrp c3, .L__cap_merged_table+208
-; CHECK-NEXT:    ldr c3, [c3, :lo12:.L__cap_merged_table+208]
-; CHECK-NEXT:    stp c7, c8, [c0, #96]
-; CHECK-NEXT:    adrp c4, .L__cap_merged_table+224
-; CHECK-NEXT:    ldr c4, [c4, :lo12:.L__cap_merged_table+224]
-; CHECK-NEXT:    stp c9, c10, [c0, #128]
-; CHECK-NEXT:    adrp c5, .L__cap_merged_table+240
-; CHECK-NEXT:    ldr c5, [c5, :lo12:.L__cap_merged_table+240]
-; CHECK-NEXT:    stp c11, c1, [c0, #160]
-; CHECK-NEXT:    adrp c1, .L__cap_merged_table+256
-; CHECK-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+256]
-; CHECK-NEXT:    stp c2, c3, [c0, #192]
-; CHECK-NEXT:    adrp c2, .L__cap_merged_table+272
-; CHECK-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table+272]
-; CHECK-NEXT:    stp c4, c5, [c0, #224]
-; CHECK-NEXT:    adrp c3, .L__cap_merged_table+288
-; CHECK-NEXT:    ldr c3, [c3, :lo12:.L__cap_merged_table+288]
-; CHECK-NEXT:    stp c1, c2, [c0, #256]
-; CHECK-NEXT:    adrp c1, .L__cap_merged_table+304
-; CHECK-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+304]
-; CHECK-NEXT:    stp c3, c1, [c0, #288]
+; CHECK-NEXT:    adrp c1, .L__cap_merged_table+32
+; CHECK-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+32]
+; CHECK-NEXT:    adrp c2, .L__cap_merged_table+48
+; CHECK-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table+48]
+; CHECK-NEXT:    adrp c3, .L__cap_merged_table+64
+; CHECK-NEXT:    ldr c3, [c3, :lo12:.L__cap_merged_table+64]
+; CHECK-NEXT:    adrp c4, .L__cap_merged_table+80
+; CHECK-NEXT:    ldr c4, [c4, :lo12:.L__cap_merged_table+80]
+; CHECK-NEXT:    adrp c5, .L__cap_merged_table+96
+; CHECK-NEXT:    ldr c5, [c5, :lo12:.L__cap_merged_table+96]
+; CHECK-NEXT:    adrp c6, .L__cap_merged_table+112
+; CHECK-NEXT:    ldr c6, [c6, :lo12:.L__cap_merged_table+112]
+; CHECK-NEXT:    stp c1, c2, [c0, #32]
+; CHECK-NEXT:    stp c3, c4, [c0, #64]
+; CHECK-NEXT:    stp c5, c6, [c0, #96]
+; CHECK-NEXT:    adrp c1, .L__cap_merged_table+128
+; CHECK-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+128]
+; CHECK-NEXT:    adrp c2, .L__cap_merged_table+144
+; CHECK-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table+144]
+; CHECK-NEXT:    adrp c3, .L__cap_merged_table+160
+; CHECK-NEXT:    ldr c3, [c3, :lo12:.L__cap_merged_table+160]
+; CHECK-NEXT:    adrp c4, .L__cap_merged_table+176
+; CHECK-NEXT:    ldr c4, [c4, :lo12:.L__cap_merged_table+176]
+; CHECK-NEXT:    adrp c5, .L__cap_merged_table+192
+; CHECK-NEXT:    ldr c5, [c5, :lo12:.L__cap_merged_table+192]
+; CHECK-NEXT:    adrp c6, .L__cap_merged_table+208
+; CHECK-NEXT:    ldr c6, [c6, :lo12:.L__cap_merged_table+208]
+; CHECK-NEXT:    stp c1, c2, [c0, #128]
+; CHECK-NEXT:    stp c3, c4, [c0, #160]
+; CHECK-NEXT:    stp c5, c6, [c0, #192]
+; CHECK-NEXT:    adrp c1, .L__cap_merged_table+224
+; CHECK-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+224]
+; CHECK-NEXT:    adrp c2, .L__cap_merged_table+240
+; CHECK-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table+240]
+; CHECK-NEXT:    adrp c3, .L__cap_merged_table+256
+; CHECK-NEXT:    ldr c3, [c3, :lo12:.L__cap_merged_table+256]
+; CHECK-NEXT:    adrp c4, .L__cap_merged_table+272
+; CHECK-NEXT:    ldr c4, [c4, :lo12:.L__cap_merged_table+272]
+; CHECK-NEXT:    adrp c5, .L__cap_merged_table+288
+; CHECK-NEXT:    ldr c5, [c5, :lo12:.L__cap_merged_table+288]
+; CHECK-NEXT:    adrp c6, .L__cap_merged_table+304
+; CHECK-NEXT:    ldr c6, [c6, :lo12:.L__cap_merged_table+304]
+; CHECK-NEXT:    stp c1, c2, [c0, #224]
+; CHECK-NEXT:    stp c3, c4, [c0, #256]
+; CHECK-NEXT:    stp c5, c6, [c0, #288]
 ; CHECK-NEXT:    ret c30
 ;
 ; MERGE-LABEL: getvals:
@@ -92,52 +92,52 @@ define i32 @getvals(i8 addrspace(200)* addrspace(200)* nocapture %a) local_unnam
 ; MERGE-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table]
 ; MERGE-NEXT:    adrp c2, .L__cap_merged_table+16
 ; MERGE-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table+16]
-; MERGE-NEXT:    adrp c3, .L__cap_merged_table+32
-; MERGE-NEXT:    ldr c3, [c3, :lo12:.L__cap_merged_table+32]
-; MERGE-NEXT:    adrp c4, .L__cap_merged_table+48
-; MERGE-NEXT:    ldr c4, [c4, :lo12:.L__cap_merged_table+48]
-; MERGE-NEXT:    adrp c5, .L__cap_merged_table+64
-; MERGE-NEXT:    ldr c5, [c5, :lo12:.L__cap_merged_table+64]
-; MERGE-NEXT:    adrp c6, .L__cap_merged_table+80
-; MERGE-NEXT:    ldr c6, [c6, :lo12:.L__cap_merged_table+80]
-; MERGE-NEXT:    adrp c7, .L__cap_merged_table+96
-; MERGE-NEXT:    ldr c7, [c7, :lo12:.L__cap_merged_table+96]
-; MERGE-NEXT:    adrp c8, .L__cap_merged_table+112
-; MERGE-NEXT:    ldr c8, [c8, :lo12:.L__cap_merged_table+112]
-; MERGE-NEXT:    adrp c9, .L__cap_merged_table+128
-; MERGE-NEXT:    ldr c9, [c9, :lo12:.L__cap_merged_table+128]
-; MERGE-NEXT:    adrp c10, .L__cap_merged_table+144
-; MERGE-NEXT:    ldr c10, [c10, :lo12:.L__cap_merged_table+144]
-; MERGE-NEXT:    adrp c11, .L__cap_merged_table+160
-; MERGE-NEXT:    ldr c11, [c11, :lo12:.L__cap_merged_table+160]
 ; MERGE-NEXT:    stp c1, c2, [c0, #0]
-; MERGE-NEXT:    adrp c1, .L__cap_merged_table+176
-; MERGE-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+176]
-; MERGE-NEXT:    stp c3, c4, [c0, #32]
-; MERGE-NEXT:    adrp c2, .L__cap_merged_table+192
-; MERGE-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table+192]
-; MERGE-NEXT:    stp c5, c6, [c0, #64]
-; MERGE-NEXT:    adrp c3, .L__cap_merged_table+208
-; MERGE-NEXT:    ldr c3, [c3, :lo12:.L__cap_merged_table+208]
-; MERGE-NEXT:    stp c7, c8, [c0, #96]
-; MERGE-NEXT:    adrp c4, .L__cap_merged_table+224
-; MERGE-NEXT:    ldr c4, [c4, :lo12:.L__cap_merged_table+224]
-; MERGE-NEXT:    stp c9, c10, [c0, #128]
-; MERGE-NEXT:    adrp c5, .L__cap_merged_table+240
-; MERGE-NEXT:    ldr c5, [c5, :lo12:.L__cap_merged_table+240]
-; MERGE-NEXT:    stp c11, c1, [c0, #160]
-; MERGE-NEXT:    adrp c1, .L__cap_merged_table+256
-; MERGE-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+256]
-; MERGE-NEXT:    stp c2, c3, [c0, #192]
-; MERGE-NEXT:    adrp c2, .L__cap_merged_table+272
-; MERGE-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table+272]
-; MERGE-NEXT:    stp c4, c5, [c0, #224]
-; MERGE-NEXT:    adrp c3, .L__cap_merged_table+288
-; MERGE-NEXT:    ldr c3, [c3, :lo12:.L__cap_merged_table+288]
-; MERGE-NEXT:    stp c1, c2, [c0, #256]
-; MERGE-NEXT:    adrp c1, .L__cap_merged_table+304
-; MERGE-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+304]
-; MERGE-NEXT:    stp c3, c1, [c0, #288]
+; MERGE-NEXT:    adrp c1, .L__cap_merged_table+32
+; MERGE-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+32]
+; MERGE-NEXT:    adrp c2, .L__cap_merged_table+48
+; MERGE-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table+48]
+; MERGE-NEXT:    adrp c3, .L__cap_merged_table+64
+; MERGE-NEXT:    ldr c3, [c3, :lo12:.L__cap_merged_table+64]
+; MERGE-NEXT:    adrp c4, .L__cap_merged_table+80
+; MERGE-NEXT:    ldr c4, [c4, :lo12:.L__cap_merged_table+80]
+; MERGE-NEXT:    adrp c5, .L__cap_merged_table+96
+; MERGE-NEXT:    ldr c5, [c5, :lo12:.L__cap_merged_table+96]
+; MERGE-NEXT:    adrp c6, .L__cap_merged_table+112
+; MERGE-NEXT:    ldr c6, [c6, :lo12:.L__cap_merged_table+112]
+; MERGE-NEXT:    stp c1, c2, [c0, #32]
+; MERGE-NEXT:    stp c3, c4, [c0, #64]
+; MERGE-NEXT:    stp c5, c6, [c0, #96]
+; MERGE-NEXT:    adrp c1, .L__cap_merged_table+128
+; MERGE-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+128]
+; MERGE-NEXT:    adrp c2, .L__cap_merged_table+144
+; MERGE-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table+144]
+; MERGE-NEXT:    adrp c3, .L__cap_merged_table+160
+; MERGE-NEXT:    ldr c3, [c3, :lo12:.L__cap_merged_table+160]
+; MERGE-NEXT:    adrp c4, .L__cap_merged_table+176
+; MERGE-NEXT:    ldr c4, [c4, :lo12:.L__cap_merged_table+176]
+; MERGE-NEXT:    adrp c5, .L__cap_merged_table+192
+; MERGE-NEXT:    ldr c5, [c5, :lo12:.L__cap_merged_table+192]
+; MERGE-NEXT:    adrp c6, .L__cap_merged_table+208
+; MERGE-NEXT:    ldr c6, [c6, :lo12:.L__cap_merged_table+208]
+; MERGE-NEXT:    stp c1, c2, [c0, #128]
+; MERGE-NEXT:    stp c3, c4, [c0, #160]
+; MERGE-NEXT:    stp c5, c6, [c0, #192]
+; MERGE-NEXT:    adrp c1, .L__cap_merged_table+224
+; MERGE-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+224]
+; MERGE-NEXT:    adrp c2, .L__cap_merged_table+240
+; MERGE-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table+240]
+; MERGE-NEXT:    adrp c3, .L__cap_merged_table+256
+; MERGE-NEXT:    ldr c3, [c3, :lo12:.L__cap_merged_table+256]
+; MERGE-NEXT:    adrp c4, .L__cap_merged_table+272
+; MERGE-NEXT:    ldr c4, [c4, :lo12:.L__cap_merged_table+272]
+; MERGE-NEXT:    adrp c5, .L__cap_merged_table+288
+; MERGE-NEXT:    ldr c5, [c5, :lo12:.L__cap_merged_table+288]
+; MERGE-NEXT:    adrp c6, .L__cap_merged_table+304
+; MERGE-NEXT:    ldr c6, [c6, :lo12:.L__cap_merged_table+304]
+; MERGE-NEXT:    stp c1, c2, [c0, #224]
+; MERGE-NEXT:    stp c3, c4, [c0, #256]
+; MERGE-NEXT:    stp c5, c6, [c0, #288]
 ; MERGE-NEXT:    ret c30
 ;
 ; MERGEOPT-LABEL: getvals:
@@ -148,52 +148,52 @@ define i32 @getvals(i8 addrspace(200)* addrspace(200)* nocapture %a) local_unnam
 ; MERGEOPT-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+16]
 ; MERGEOPT-NEXT:    adrp c2, .L__cap_merged_table+32
 ; MERGEOPT-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table+32]
-; MERGEOPT-NEXT:    adrp c3, .L__cap_merged_table+48
-; MERGEOPT-NEXT:    ldr c3, [c3, :lo12:.L__cap_merged_table+48]
-; MERGEOPT-NEXT:    adrp c4, .L__cap_merged_table+64
-; MERGEOPT-NEXT:    ldr c4, [c4, :lo12:.L__cap_merged_table+64]
-; MERGEOPT-NEXT:    adrp c5, .L__cap_merged_table+80
-; MERGEOPT-NEXT:    ldr c5, [c5, :lo12:.L__cap_merged_table+80]
-; MERGEOPT-NEXT:    adrp c6, .L__cap_merged_table+96
-; MERGEOPT-NEXT:    ldr c6, [c6, :lo12:.L__cap_merged_table+96]
-; MERGEOPT-NEXT:    adrp c7, .L__cap_merged_table+112
-; MERGEOPT-NEXT:    ldr c7, [c7, :lo12:.L__cap_merged_table+112]
-; MERGEOPT-NEXT:    adrp c8, .L__cap_merged_table+128
-; MERGEOPT-NEXT:    ldr c8, [c8, :lo12:.L__cap_merged_table+128]
-; MERGEOPT-NEXT:    adrp c9, .L__cap_merged_table+144
-; MERGEOPT-NEXT:    ldr c9, [c9, :lo12:.L__cap_merged_table+144]
-; MERGEOPT-NEXT:    adrp c10, .L__cap_merged_table+160
-; MERGEOPT-NEXT:    ldr c10, [c10, :lo12:.L__cap_merged_table+160]
-; MERGEOPT-NEXT:    adrp c11, .L__cap_merged_table+176
-; MERGEOPT-NEXT:    ldr c11, [c11, :lo12:.L__cap_merged_table+176]
 ; MERGEOPT-NEXT:    stp c1, c2, [c0, #0]
-; MERGEOPT-NEXT:    adrp c1, .L__cap_merged_table+192
-; MERGEOPT-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+192]
-; MERGEOPT-NEXT:    stp c3, c4, [c0, #32]
-; MERGEOPT-NEXT:    adrp c2, .L__cap_merged_table+208
-; MERGEOPT-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table+208]
-; MERGEOPT-NEXT:    stp c5, c6, [c0, #64]
-; MERGEOPT-NEXT:    adrp c3, .L__cap_merged_table+224
-; MERGEOPT-NEXT:    ldr c3, [c3, :lo12:.L__cap_merged_table+224]
-; MERGEOPT-NEXT:    stp c7, c8, [c0, #96]
-; MERGEOPT-NEXT:    adrp c4, .L__cap_merged_table+240
-; MERGEOPT-NEXT:    ldr c4, [c4, :lo12:.L__cap_merged_table+240]
-; MERGEOPT-NEXT:    stp c9, c10, [c0, #128]
-; MERGEOPT-NEXT:    adrp c5, .L__cap_merged_table+256
-; MERGEOPT-NEXT:    ldr c5, [c5, :lo12:.L__cap_merged_table+256]
-; MERGEOPT-NEXT:    stp c11, c1, [c0, #160]
-; MERGEOPT-NEXT:    adrp c1, .L__cap_merged_table+272
-; MERGEOPT-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+272]
-; MERGEOPT-NEXT:    stp c2, c3, [c0, #192]
-; MERGEOPT-NEXT:    adrp c2, .L__cap_merged_table+288
-; MERGEOPT-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table+288]
-; MERGEOPT-NEXT:    stp c4, c5, [c0, #224]
-; MERGEOPT-NEXT:    adrp c3, .L__cap_merged_table+304
-; MERGEOPT-NEXT:    ldr c3, [c3, :lo12:.L__cap_merged_table+304]
-; MERGEOPT-NEXT:    stp c1, c2, [c0, #256]
-; MERGEOPT-NEXT:    adrp c1, .L__cap_merged_table+320
-; MERGEOPT-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+320]
-; MERGEOPT-NEXT:    stp c3, c1, [c0, #288]
+; MERGEOPT-NEXT:    adrp c1, .L__cap_merged_table+48
+; MERGEOPT-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+48]
+; MERGEOPT-NEXT:    adrp c2, .L__cap_merged_table+64
+; MERGEOPT-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table+64]
+; MERGEOPT-NEXT:    adrp c3, .L__cap_merged_table+80
+; MERGEOPT-NEXT:    ldr c3, [c3, :lo12:.L__cap_merged_table+80]
+; MERGEOPT-NEXT:    adrp c4, .L__cap_merged_table+96
+; MERGEOPT-NEXT:    ldr c4, [c4, :lo12:.L__cap_merged_table+96]
+; MERGEOPT-NEXT:    adrp c5, .L__cap_merged_table+112
+; MERGEOPT-NEXT:    ldr c5, [c5, :lo12:.L__cap_merged_table+112]
+; MERGEOPT-NEXT:    adrp c6, .L__cap_merged_table+128
+; MERGEOPT-NEXT:    ldr c6, [c6, :lo12:.L__cap_merged_table+128]
+; MERGEOPT-NEXT:    stp c1, c2, [c0, #32]
+; MERGEOPT-NEXT:    stp c3, c4, [c0, #64]
+; MERGEOPT-NEXT:    stp c5, c6, [c0, #96]
+; MERGEOPT-NEXT:    adrp c1, .L__cap_merged_table+144
+; MERGEOPT-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+144]
+; MERGEOPT-NEXT:    adrp c2, .L__cap_merged_table+160
+; MERGEOPT-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table+160]
+; MERGEOPT-NEXT:    adrp c3, .L__cap_merged_table+176
+; MERGEOPT-NEXT:    ldr c3, [c3, :lo12:.L__cap_merged_table+176]
+; MERGEOPT-NEXT:    adrp c4, .L__cap_merged_table+192
+; MERGEOPT-NEXT:    ldr c4, [c4, :lo12:.L__cap_merged_table+192]
+; MERGEOPT-NEXT:    adrp c5, .L__cap_merged_table+208
+; MERGEOPT-NEXT:    ldr c5, [c5, :lo12:.L__cap_merged_table+208]
+; MERGEOPT-NEXT:    adrp c6, .L__cap_merged_table+224
+; MERGEOPT-NEXT:    ldr c6, [c6, :lo12:.L__cap_merged_table+224]
+; MERGEOPT-NEXT:    stp c1, c2, [c0, #128]
+; MERGEOPT-NEXT:    stp c3, c4, [c0, #160]
+; MERGEOPT-NEXT:    stp c5, c6, [c0, #192]
+; MERGEOPT-NEXT:    adrp c1, .L__cap_merged_table+240
+; MERGEOPT-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+240]
+; MERGEOPT-NEXT:    adrp c2, .L__cap_merged_table+256
+; MERGEOPT-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table+256]
+; MERGEOPT-NEXT:    adrp c3, .L__cap_merged_table+272
+; MERGEOPT-NEXT:    ldr c3, [c3, :lo12:.L__cap_merged_table+272]
+; MERGEOPT-NEXT:    adrp c4, .L__cap_merged_table+288
+; MERGEOPT-NEXT:    ldr c4, [c4, :lo12:.L__cap_merged_table+288]
+; MERGEOPT-NEXT:    adrp c5, .L__cap_merged_table+304
+; MERGEOPT-NEXT:    ldr c5, [c5, :lo12:.L__cap_merged_table+304]
+; MERGEOPT-NEXT:    adrp c6, .L__cap_merged_table+320
+; MERGEOPT-NEXT:    ldr c6, [c6, :lo12:.L__cap_merged_table+320]
+; MERGEOPT-NEXT:    stp c1, c2, [c0, #224]
+; MERGEOPT-NEXT:    stp c3, c4, [c0, #256]
+; MERGEOPT-NEXT:    stp c5, c6, [c0, #288]
 ; MERGEOPT-NEXT:    ret c30
 entry:
   store i8 addrspace(200)* bitcast (i32 addrspace(200)* @x0 to i8 addrspace(200)*), i8 addrspace(200)* addrspace(200)* %a, align 16
@@ -435,12 +435,12 @@ define i32 @bat() local_unnamed_addr addrspace(200) {
 ; CHECK-NEXT:    ldr c0, [c0, :lo12:.L__cap_merged_table]
 ; CHECK-NEXT:    adrp c1, .L__cap_merged_table+304
 ; CHECK-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+304]
+; CHECK-NEXT:    adrp c2, .L__cap_merged_table+128
+; CHECK-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table+128]
 ; CHECK-NEXT:    ldr w8, [c0]
 ; CHECK-NEXT:    ldr w9, [c1]
-; CHECK-NEXT:    adrp c0, .L__cap_merged_table+128
-; CHECK-NEXT:    ldr c0, [c0, :lo12:.L__cap_merged_table+128]
+; CHECK-NEXT:    ldr w10, [c2]
 ; CHECK-NEXT:    add w8, w9, w8
-; CHECK-NEXT:    ldr w10, [c0]
 ; CHECK-NEXT:    add w0, w8, w10
 ; CHECK-NEXT:    ret c30
 ;
@@ -452,12 +452,12 @@ define i32 @bat() local_unnamed_addr addrspace(200) {
 ; MERGE-NEXT:    ldr c0, [c0, :lo12:.L__cap_merged_table]
 ; MERGE-NEXT:    adrp c1, .L__cap_merged_table+304
 ; MERGE-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+304]
+; MERGE-NEXT:    adrp c2, .L__cap_merged_table+128
+; MERGE-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table+128]
 ; MERGE-NEXT:    ldr w8, [c0]
 ; MERGE-NEXT:    ldr w9, [c1]
-; MERGE-NEXT:    adrp c0, .L__cap_merged_table+128
-; MERGE-NEXT:    ldr c0, [c0, :lo12:.L__cap_merged_table+128]
+; MERGE-NEXT:    ldr w10, [c2]
 ; MERGE-NEXT:    add w8, w9, w8
-; MERGE-NEXT:    ldr w10, [c0]
 ; MERGE-NEXT:    add w0, w8, w10
 ; MERGE-NEXT:    ret c30
 ;
@@ -491,12 +491,12 @@ define i32 @bif() local_unnamed_addr addrspace(200) {
 ; CHECK-NEXT:    ldr c0, [c0, :lo12:.L__cap_merged_table+304]
 ; CHECK-NEXT:    adrp c1, .L__cap_merged_table+112
 ; CHECK-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+112]
+; CHECK-NEXT:    adrp c2, .L__cap_merged_table
+; CHECK-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table]
 ; CHECK-NEXT:    ldr w8, [c0]
 ; CHECK-NEXT:    ldr w9, [c1]
-; CHECK-NEXT:    adrp c0, .L__cap_merged_table
-; CHECK-NEXT:    ldr c0, [c0, :lo12:.L__cap_merged_table]
+; CHECK-NEXT:    ldr w10, [c2]
 ; CHECK-NEXT:    add w8, w9, w8
-; CHECK-NEXT:    ldr w10, [c0]
 ; CHECK-NEXT:    add w0, w8, w10
 ; CHECK-NEXT:    ret c30
 ;
@@ -508,12 +508,12 @@ define i32 @bif() local_unnamed_addr addrspace(200) {
 ; MERGE-NEXT:    ldr c0, [c0, :lo12:.L__cap_merged_table+304]
 ; MERGE-NEXT:    adrp c1, .L__cap_merged_table+112
 ; MERGE-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+112]
+; MERGE-NEXT:    adrp c2, .L__cap_merged_table
+; MERGE-NEXT:    ldr c2, [c2, :lo12:.L__cap_merged_table]
 ; MERGE-NEXT:    ldr w8, [c0]
 ; MERGE-NEXT:    ldr w9, [c1]
-; MERGE-NEXT:    adrp c0, .L__cap_merged_table
-; MERGE-NEXT:    ldr c0, [c0, :lo12:.L__cap_merged_table]
+; MERGE-NEXT:    ldr w10, [c2]
 ; MERGE-NEXT:    add w8, w9, w8
-; MERGE-NEXT:    ldr w10, [c0]
 ; MERGE-NEXT:    add w0, w8, w10
 ; MERGE-NEXT:    ret c30
 ;

@@ -16,7 +16,7 @@
 # CHECK-NEXT: early-clobber $sp, $fp, $lr = frame-destroy LDPXpost $sp, 2
 # CHECK-NEXT: frame-destroy SEH_SaveFPLR_X -16
 # CHECK-NEXT: frame-destroy SEH_EpilogEnd
-# CHECK-NEXT: RET_ReallyLR 0, implicit killed $w0
+# CHECK-NEXT: RET_ReallyLR implicit killed $w0
 --- |
   target datalayout = "e-m:w-p:64:64-i32:32-i64:64-i128:128-n32:64-S128"
   target triple = "aarch64-unknown-windows-msvc19.11.0"
@@ -145,6 +145,6 @@ body:             |
     ADJCALLSTACKUP 0, 0, implicit-def dead $sp, implicit $sp
     renamable $w1 = COPY $wzr
     $w0 = COPY killed renamable $w1
-    RET_ReallyLR 0, implicit killed $w0
+    RET_ReallyLR implicit killed $w0
 
 ...

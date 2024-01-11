@@ -2,7 +2,7 @@
 // RUN: %clang_cc1 -triple aarch64-none-elf -target-feature +morello -target-feature +c64 -target-abi purecap -O1 %s -emit-llvm -o - | FileCheck %s
 
 // CHECK-LABEL: define {{[^@]+}}@foo
-// CHECK-SAME: (i8 addrspace(200)* [[A:%.*]]) local_unnamed_addr addrspace(200) [[ATTR0:#.*]] {
+// CHECK-SAME: (i8 addrspace(200)* noundef [[A:%.*]]) local_unnamed_addr addrspace(200) #[[ATTR0:[0-9]+]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[PTRADDR:%.*]] = call i64 @llvm.cheri.cap.address.get.i64(i8 addrspace(200)* [[A]])
 // CHECK-NEXT:    [[TMP0:%.*]] = and i64 [[PTRADDR]], 3
@@ -16,7 +16,7 @@ void *foo(void * a) {
 }
 
 // CHECK-LABEL: define {{[^@]+}}@bar
-// CHECK-SAME: (i8 addrspace(200)* [[A:%.*]]) local_unnamed_addr addrspace(200) [[ATTR0]] {
+// CHECK-SAME: (i8 addrspace(200)* noundef [[A:%.*]]) local_unnamed_addr addrspace(200) #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[PTRADDR:%.*]] = call i64 @llvm.cheri.cap.address.get.i64(i8 addrspace(200)* [[A]])
 // CHECK-NEXT:    [[OVER_BOUNDARY:%.*]] = add i64 [[PTRADDR]], 3
@@ -31,7 +31,7 @@ void *bar(void * a) {
 }
 
 // CHECK-LABEL: define {{[^@]+}}@baz
-// CHECK-SAME: (i8 addrspace(200)* [[A:%.*]]) local_unnamed_addr addrspace(200) [[ATTR0]] {
+// CHECK-SAME: (i8 addrspace(200)* noundef [[A:%.*]]) local_unnamed_addr addrspace(200) #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[PTRADDR:%.*]] = call i64 @llvm.cheri.cap.address.get.i64(i8 addrspace(200)* [[A]])
 // CHECK-NEXT:    [[OVER_BOUNDARY:%.*]] = add i64 [[PTRADDR]], 3
@@ -49,7 +49,7 @@ void *baz(void * a) {
 }
 
 // CHECK-LABEL: define {{[^@]+}}@bat
-// CHECK-SAME: (i8 addrspace(200)* [[X:%.*]]) local_unnamed_addr addrspace(200) [[ATTR3:#.*]] {
+// CHECK-SAME: (i8 addrspace(200)* noundef [[X:%.*]]) local_unnamed_addr addrspace(200) #[[ATTR3:[0-9]+]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = call i64 @llvm.cheri.cap.address.get.i64(i8 addrspace(200)* [[X]])
 // CHECK-NEXT:    [[AND:%.*]] = and i64 [[TMP0]], -4
@@ -61,7 +61,7 @@ __uintcap_t bat(__uintcap_t x) {
 }
 
 // CHECK-LABEL: define {{[^@]+}}@fib
-// CHECK-SAME: (i8 addrspace(200)* [[X:%.*]]) local_unnamed_addr addrspace(200) [[ATTR3]] {
+// CHECK-SAME: (i8 addrspace(200)* noundef [[X:%.*]]) local_unnamed_addr addrspace(200) #[[ATTR3]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = call i64 @llvm.cheri.cap.address.get.i64(i8 addrspace(200)* [[X]])
 // CHECK-NEXT:    [[ADD:%.*]] = add i64 [[TMP0]], 3
@@ -74,7 +74,7 @@ __uintcap_t fib(__uintcap_t x) {
   return (x + 0x3) & ~0x3;
 }
 // CHECK-LABEL: define {{[^@]+}}@fib2
-// CHECK-SAME: (i8 addrspace(200)* [[X:%.*]]) local_unnamed_addr addrspace(200) [[ATTR3]] {
+// CHECK-SAME: (i8 addrspace(200)* noundef [[X:%.*]]) local_unnamed_addr addrspace(200) #[[ATTR3]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = call i64 @llvm.cheri.cap.address.get.i64(i8 addrspace(200)* [[X]])
 // CHECK-NEXT:    [[TMP1:%.*]] = getelementptr i8, i8 addrspace(200)* [[X]], i64 -1

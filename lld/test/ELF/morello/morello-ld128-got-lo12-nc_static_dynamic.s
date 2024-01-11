@@ -40,11 +40,11 @@ foo:
 
 // DIS: 0000000000210288 <_start>:
 // DIS-NEXT: 210288:  adrp c0, 0x220000
-// DIS-NEXT: 21028c:  ldr c0, [c0, #0x2b0]
+// DIS-NEXT: 21028c:  ldr c0, [c0, #0x2c0]
 // DIS-NEXT: 210290:  adrp c1, 0x220000
-// DIS-NEXT: 210294:  ldr c1, [c1, #0x2c0]
+// DIS-NEXT: 210294:  ldr c1, [c1, #0x2b0]
 // DIS-NEXT: 210298:  adrp c1, 0x220000
-// DIS-NEXT: 21029c:  ldr c1, [c1, #0x2c0]
+// DIS-NEXT: 21029c:  ldr c1, [c1, #0x2b0]
 // DIS-NEXT: 2102a0:  adrp c2, 0x220000
 // DIS-NEXT: 2102a4:  ldr c2, [c1, #0x2d0]
 
@@ -81,13 +81,13 @@ foo:
 // CHECK-NEXT:       Offset: 0x2202B0
 // CHECK-NEXT:       Type: R_MORELLO_RELATIVE
 // CHECK-NEXT:       Symbol: - (0)
-// CHECK-NEXT:       Addend: 0x10089
+// CHECK-NEXT:       Addend: 0x0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x2202C0
 // CHECK-NEXT:       Type: R_MORELLO_RELATIVE
 // CHECK-NEXT:       Symbol: - (0)
-// CHECK-NEXT:       Addend: 0x0
+// CHECK-NEXT:       Addend: 0x10089
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x2202D0
@@ -125,11 +125,11 @@ foo:
 /// Check the fragments in .got match
 // CHECK:      Hex dump of section '.got':
 
-/// _start: address: 0x210289, size = 16 (0x10), perms = exec(0x4)
-// CHECK-NEXT: 0x002202b0 00022000 00000000 00010200 00000004
-
 /// foo: address: 0x230300, size = 8 (0x8), perms = RW(0x2)
-// CHECK-NEXT: 0x002202c0 00032300 00000000 08000000 00000002
+// CHECK-NEXT: 0x002202b0 00032300 00000000 08000000 00000002
+
+/// _start: address: 0x210289, size = 16 (0x10), perms = exec(0x4)
+// CHECK-NEXT: 0x002202c0 00022000 00000000 00010200 00000004
 
 /// bar: address: 0x200280, size = 8 (0x8), perms = RO(0x1)
 // CHECK-NEXT: 0x002202d0 80022000 00000000 08000000 00000001

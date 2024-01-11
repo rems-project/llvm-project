@@ -136,6 +136,7 @@ static void EmitDeclDestroy(CodeGenFunction &CGF, const VarDecl &D,
     }
   // Otherwise, the standard logic requires a helper function.
   } else {
+    Addr = Addr.getElementBitCast(CGF.ConvertTypeForMem(Type));
     Func = CodeGenFunction(CGM)
            .generateDestroyHelper(Addr, Type, CGF.getDestroyer(DtorKind),
                                   CGF.needsEHCleanup(DtorKind), &D);
@@ -175,7 +176,7 @@ void CodeGenFunction::EmitInvariantStart(llvm::Constant *Addr, CharUnits Size) {
 }
 
 void CodeGenFunction::EmitCXXGlobalVarDeclInit(const VarDecl &D,
-                                               llvm::Constant *DeclPtr,
+                                               llvm::GlobalVariable *GV,
                                                bool PerformInit) {
 
   const Expr *Init = D.getInit();
@@ -196,21 +197,23 @@ void CodeGenFunction::EmitCXXGlobalVarDeclInit(const VarDecl &D,
   // For example, in the above CUDA code, the static local variable s has a
   // "shared" address space qualifier, but the constructor of StructWithCtor
   // expects "this" in the "generic" address space.
-  ASTContext &Context = getContext();
   // This is not quite right, we don't want an __intcap_t alloca to be AS200
   // unsigned ExpectedAddrSpace = CGM.getAddressSpaceForType(T);
+  ASTContext &Context = getContext();
   unsigned ExpectedAddrSpace =
       Context.getTargetInfo().areAllPointersCapabilities()
           ? CGM.getTargetCodeGenInfo().getCHERICapabilityAS()
-          : CGM.getTargetAddressSpace(T.getAddressSpace());
-  unsigned ActualAddrSpace = DeclPtr->getType()->getPointerAddressSpace();
+          : CGM.getTypes().getTargetAddressSpace(T);
+  unsigned ActualAddrSpace = GV->getAddressSpace();
+  llvm::Constant *DeclPtr = GV;
   if (ActualAddrSpace != ExpectedAddrSpace) {
-    llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(T);
-    llvm::PointerType *PTy = llvm::PointerType::get(LTy, ExpectedAddrSpace);
+    llvm::PointerType *PTy = llvm::PointerType::getWithSamePointeeType(
+        GV->getType(), ExpectedAddrSpace);
     DeclPtr = llvm::ConstantExpr::getAddrSpaceCast(DeclPtr, PTy);
   }
 
-  ConstantAddress DeclAddr(DeclPtr, Context.getDeclAlign(&D));
+  ConstantAddress DeclAddr(DeclPtr, GV->getValueType(),
+                           Context.getDeclAlign(&D));
 
   if (!T->isReferenceType()) {
     if (getLangOpts().OpenMP && !getLangOpts().OpenMPSimd &&
@@ -564,7 +567,8 @@ CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
                                           PrioritizedCXXGlobalInits.size());
     PrioritizedCXXGlobalInits.push_back(std::make_pair(Key, Fn));
   } else if (isTemplateInstantiation(D->getTemplateSpecializationKind()) ||
-             getContext().GetGVALinkageForVariable(D) == GVA_DiscardableODR) {
+             getContext().GetGVALinkageForVariable(D) == GVA_DiscardableODR ||
+             D->hasAttr<SelectAnyAttr>()) {
     // C++ [basic.start.init]p2:
     //   Definitions of explicitly specialized class template static data
     //   members have ordered initialization. Other class template static data
@@ -577,17 +581,28 @@ CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
     // group with the global being initialized.  On most platforms, this is a
     // minor startup time optimization.  In the MS C++ ABI, there are no guard
     // variables, so this COMDAT key is required for correctness.
-    AddGlobalCtor(Fn, 65535, COMDATKey);
-    if (getTarget().getCXXABI().isMicrosoft() && COMDATKey) {
-      // In The MS C++, MS add template static data member in the linker
-      // drective.
-      addUsedGlobal(COMDATKey);
-    }
-  } else if (D->hasAttr<SelectAnyAttr>()) {
+    //
     // SelectAny globals will be comdat-folded. Put the initializer into a
     // COMDAT group associated with the global, so the initializers get folded
     // too.
+
     AddGlobalCtor(Fn, 65535, COMDATKey);
+    if (COMDATKey && (getTriple().isOSBinFormatELF() ||
+                      getTarget().getCXXABI().isMicrosoft())) {
+      // When COMDAT is used on ELF or in the MS C++ ABI, the key must be in
+      // llvm.used to prevent linker GC.
+      addUsedGlobal(COMDATKey);
+    }
+
+    // If we used a COMDAT key for the global ctor, the init function can be
+    // discarded if the global ctor entry is discarded.
+    // FIXME: Do we need to restrict this to ELF and Wasm?
+    llvm::Comdat *C = Addr->getComdat();
+    if (COMDATKey && C &&
+        (getTarget().getTriple().isOSBinFormatELF() ||
+         getTarget().getTriple().isOSBinFormatWasm())) {
+      Fn->setComdat(C);
+    }
   } else {
     I = DelayedCXXInitPosition.find(D); // Re-do lookup in case of re-hash.
     if (I == DelayedCXXInitPosition.end()) {

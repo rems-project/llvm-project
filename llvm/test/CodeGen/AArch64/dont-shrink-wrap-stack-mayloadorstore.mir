@@ -169,7 +169,7 @@ body:             |
     B %bb.6
 
   bb.6.cleanup:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -224,6 +224,6 @@ body:             |
   bb.5.bb16:
     liveins: $w0
 
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...

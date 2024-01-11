@@ -16,7 +16,6 @@ class HandleAbortTestCase(TestBase):
     NO_DEBUG_INFO_TESTCASE = True
 
     @skipIfWindows  # signals do not exist on Windows
-    @skipIfLinux
     @expectedFailureNetBSD
     def test_inferior_handle_sigabrt(self):
         """Inferior calls abort() and handles the resultant SIGABRT.

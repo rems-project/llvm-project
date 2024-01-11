@@ -11,6 +11,7 @@
 
 #include "lld/Common/LLVM.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/STLExtras.h"
 #include <map>
 #include <vector>
 
@@ -45,6 +46,7 @@ enum RelExpr {
   R_PC,
   R_PLT,
   R_PLT_PC,
+  R_PLT_GOTPLT,
   R_RELAX_GOT_PC,
   R_RELAX_GOT_PC_NOPIC,
   R_RELAX_TLS_GD_TO_IE,
@@ -62,6 +64,7 @@ enum RelExpr {
   R_TLSDESC,
   R_TLSDESC_CALL,
   R_TLSDESC_PC,
+  R_TLSDESC_GOTPLT,
   R_TLSGD_GOT,
   R_TLSGD_GOTPLT,
   R_TLSGD_PC,
@@ -123,7 +126,10 @@ enum RelExpr {
   R_MORELLO_RELAX_TLS_GD_TO_LE_ADD_LO12,
   R_MORELLO_RELAX_TLS_GD_TO_LE_PAGE_PC,
   R_MORELLO_RELAX_TLS_IE_TO_LE_ADD_LO12,
-  R_MORELLO_RELAX_TLS_IE_TO_LE_PAGE_PC
+  R_MORELLO_RELAX_TLS_IE_TO_LE_PAGE_PC,
+  R_MORELLO_DESC_PAGE_PC,
+  R_MORELLO_DESC_GOT_PAGE_PC,
+  R_MORELLO_DESC_CAPABILITY
 };
 
 // Architecture-neutral representation of relocation.
@@ -139,8 +145,8 @@ struct Relocation {
 // jump instruction opcodes at basic block boundaries and are particularly
 // useful when basic block sections are enabled.
 struct JumpInstrMod {
-  JumpModType original;
   uint64_t offset;
+  JumpModType original;
   unsigned size;
 };
 
@@ -148,6 +154,7 @@ struct JumpInstrMod {
 // Call reportUndefinedSymbols() after calling scanRelocations() to emit
 // the diagnostics.
 template <class ELFT> void scanRelocations(InputSectionBase &);
+void postScanRelocations();
 
 template <class ELFT> void reportUndefinedSymbols();
 

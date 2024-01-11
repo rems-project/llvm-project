@@ -26,7 +26,6 @@ class AArch64Subtarget;
 class AArch64TargetMachine;
 class FunctionPass;
 class InstructionSelector;
-class MachineFunctionPass;
 class TargetMachine;
 
 FunctionPass *createAArch64DeadRegisterDefinitions();
@@ -57,6 +56,8 @@ FunctionPass *createAArch64SandboxGlobalAddressing();
 FunctionPass *createFalkorHWPFFixPass();
 FunctionPass *createFalkorMarkStridedAccessesPass();
 FunctionPass *createAArch64BranchTargetsPass();
+FunctionPass *createAArch64MIPeepholeOptPass();
+FunctionPass *createAArch64DescSetupPass();
 
 FunctionPass *createAArch64CleanupLocalDynamicTLSPass();
 
@@ -88,6 +89,7 @@ void initializeAArch64SLSHardeningPass(PassRegistry&);
 void initializeAArch64SpeculationHardeningPass(PassRegistry&);
 void initializeAArch64LoadStoreOptPass(PassRegistry&);
 void initializeAArch64LowerHomogeneousPrologEpilogPass(PassRegistry &);
+void initializeAArch64MIPeepholeOptPass(PassRegistry &);
 void initializeAArch64SIMDInstrOptPass(PassRegistry&);
 void initializeAArch64O0PreLegalizerCombinerPass(PassRegistry &);
 void initializeAArch64PreLegalizerCombinerPass(PassRegistry&);
@@ -102,7 +104,9 @@ void initializeFalkorMarkStridedAccessesLegacyPass(PassRegistry&);
 void initializeLDTLSCleanupPass(PassRegistry&);
 void initializeSVEIntrinsicOptsPass(PassRegistry&);
 void initializeAArch64StackTaggingPass(PassRegistry&);
+void initializeAArch64DescSetupPass(PassRegistry&);
 void initializeAArch64SandboxPass(PassRegistry&);
+void initializeMorelloRangeCheckerPass(PassRegistry &);
 void initializeAArch64SandboxGlobalsOptPass(PassRegistry&);
 void initializeAArch64SandboxGlobalAddressingPass(PassRegistry&);
 void initializeAArch64StackTaggingPreRAPass(PassRegistry&);

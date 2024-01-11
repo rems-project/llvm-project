@@ -435,7 +435,7 @@ def : InstAlias<"cspecialw $scr, $cs",
 //===----------------------------------------------------------------------===//
 
 let Predicates = [HasCheri], hasSideEffects = 1 in {
-def Clear   : Cheri_clear<0xd, "clear">;
+def CClear  : Cheri_clear<0xe, "cclear">;
 def FPClear : Cheri_clear<0x10, "fpclear">;
 }
 
@@ -1092,23 +1092,23 @@ def : InstAlias<"c.cincoffsetimm16csp $rd, $imm",
 
 let Predicates = [HasCheri, IsCapMode] in {
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0, isCodeGenOnly = 0,
-    isAsmParserOnly = 1 in
+    isAsmParserOnly = 1, Size = 8 in
 def PseudoCLLC : Pseudo<(outs GPCR:$dst), (ins bare_symbol:$src), [],
                         "cllc", "$dst, $src">;
 
 let hasSideEffects = 0, mayLoad = 1, mayStore = 0, isCodeGenOnly = 0,
-    isAsmParserOnly = 1 in
+    isAsmParserOnly = 1, Size = 8 in
 def PseudoCLGC : Pseudo<(outs GPCR:$dst), (ins bare_symbol:$src), [],
                         "clgc", "$dst, $src">;
 
 let hasSideEffects = 0, mayLoad = 1, mayStore = 0, isCodeGenOnly = 0,
-    isAsmParserOnly = 1 in
+    isAsmParserOnly = 1, Size = 8 in
 def PseudoCLA_TLS_IE : Pseudo<(outs GPR:$dst, GPCR:$tmp),
                               (ins bare_symbol:$src), [],
                               "cla.tls.ie", "$dst, $src, $tmp">;
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0, isCodeGenOnly = 0,
-    isAsmParserOnly = 1 in
+    isAsmParserOnly = 1, Size = 8 in
 def PseudoCLC_TLS_GD : Pseudo<(outs GPCR:$dst), (ins bare_symbol:$src), [],
                               "clc.tls.gd", "$dst, $src">;
 
@@ -1118,6 +1118,26 @@ def PseudoCIncOffsetTPRel : Pseudo<(outs GPCR:$rd),
                                         tprel_cincoffset_symbol:$src), [],
                                    "cincoffset", "$rd, $rs1, $rs2, $src">;
 }
+
+let Predicates = [HasCheri, HasStdExtD, IsRV32] in {
+
+// Stores an FPR via splitting to two GPRs.
+let hasSideEffects = 0, mayLoad = 0, mayStore = 1,
+    Constraints = "@earlyclobber $tmplo,@earlyclobber $tmphi",
+    usesCustomInserter = 1 in
+def SplitStoreF64Pseudo
+    : Pseudo<(outs GPR:$tmplo, GPR:$tmphi, GPR:$tmpdst),
+             (ins FPR64:$src, GPR:$dst), []>;
+
+// Stores an FPR via splitting to two GPRs.
+let hasSideEffects = 0, mayLoad = 0, mayStore = 1,
+    Constraints = "@earlyclobber $tmplo,@earlyclobber $tmphi",
+    usesCustomInserter = 1 in
+def CheriSplitStoreF64Pseudo
+    : Pseudo<(outs GPR:$tmplo, GPR:$tmphi, GPCR:$tmpdst),
+             (ins FPR64:$src, GPCR:$dst), []>;
+
+} // Predicates = [HasCheri, HasStdExtD, IsRV32]
 
 class PatGpcr<SDPatternOperator OpNode, RVInstCheriSrcDst Inst>
     : Pat<(OpNode GPCR:$rs1), (Inst GPCR:$rs1)>;
@@ -1174,6 +1194,11 @@ def : PatGpcrUimm12<int_cheri_bounded_stack_cap, CSetBoundsImm>;
 def : PatGpcrGpr<int_cheri_bounded_stack_cap_dynamic, CSetBounds>;
 def : PatGpcrUimm12<int_cheri_bounded_stack_cap_dynamic, CSetBoundsImm>;
 
+def : Pat<(ptradd CapFI64:$rs1, simm12:$imm12),
+          (CIncOffsetImm CapFI64:$rs1, simm12:$imm12)>;
+def : Pat<(ptradd CapFI128:$rs1, simm12:$imm12),
+          (CIncOffsetImm CapFI128:$rs1, simm12:$imm12)>;
+
 /// Pointer-Arithmetic Instructions
 
 def : Pat<(int_cheri_cap_to_pointer GPCR:$rs1, GPCRC0IsDDC:$rs2),
@@ -1202,7 +1227,7 @@ def : Pat<(int_cheri_cap_from_pointer (CLenVT (int_cheri_ddc_get)), GPR:$rs2),
 
 def : Pat<(int_cheri_cap_from_pointer DDC, (XLenVT 0)), (CLenVT (COPY C0))>;
 def : Pat<(inttoptr (XLenVT 0)), (CLenVT (COPY C0))>;
-def : Pat<(ptrtoint C0), (XLenVT (COPY X0))>;
+def : Pat<(XLenVT (ptrtoint (CLenVT C0))), (XLenVT (COPY (XLenVT X0)))>;
 
 /// Pointer-Comparison Instructions
 
@@ -1359,19 +1384,17 @@ def : PatGpcr<int_cheri_cap_load_tags, CLoadTags>;
 
 multiclass CheriExplicitLdPat<PatFrag LoadOp, RVInst Inst,
                               RegisterClass AddrTy> {
-  let AddedComplexity = -10 in
   def : Pat<(LoadOp AddrTy:$rs1), (Inst AddrTy:$rs1)>;
 }
 
 multiclass CheriExplicitStPat<PatFrag StoreOp, RVInst Inst,
                               RegisterClass StTy, RegisterClass AddrTy> {
-  let AddedComplexity = -10 in
   def : Pat<(StoreOp StTy:$rs2, AddrTy:$rs1), (Inst StTy:$rs2, AddrTy:$rs1)>;
 }
 
 /// DDC-relative loads
 
-let Predicates = [HasCheri] in {
+let Predicates = [HasCheri, IsCapMode] in {
 defm : CheriExplicitLdPat<sextloadi8, LB_DDC, GPR>;
 defm : CheriExplicitLdPat<extloadi8, LB_DDC, GPR>;
 defm : CheriExplicitLdPat<sextloadi16, LH_DDC, GPR>;
@@ -1380,12 +1403,12 @@ defm : CheriExplicitLdPat<zextloadi8, LBU_DDC, GPR>;
 defm : CheriExplicitLdPat<zextloadi16, LHU_DDC, GPR>;
 }
 
-let Predicates = [HasCheri, IsRV32] in {
+let Predicates = [HasCheri, IsCapMode, IsRV32] in {
 defm : CheriExplicitLdPat<load, LW_DDC, GPR>;
 defm : CheriExplicitLdPat<load, LC_DDC_64, GPR>;
 }
 
-let Predicates = [HasCheri, IsRV64] in {
+let Predicates = [HasCheri, IsCapMode, IsRV64] in {
 defm : CheriExplicitLdPat<sextloadi32, LW_DDC, GPR>;
 defm : CheriExplicitLdPat<extloadi32, LW_DDC, GPR>;
 defm : CheriExplicitLdPat<load, LD_DDC, GPR>;
@@ -1393,27 +1416,50 @@ defm : CheriExplicitLdPat<zextloadi32, LWU_DDC, GPR>;
 defm : CheriExplicitLdPat<load, LC_DDC_128, GPR>;
 }
 
+let Predicates = [HasCheri, IsCapMode, HasStdExtF] in
+def : Pat<(load GPR:$rs1), (FMV_W_X (LW_DDC GPR:$rs1))>;
+
+let Predicates = [HasCheri, IsCapMode, HasStdExtD, IsRV32] in
+def : Pat<(load GPR:$rs1),
+          (BuildPairF64Pseudo (LW_DDC GPR:$rs1),
+                              (LW_DDC (ADDI GPR:$rs1, 4)))>;
+
+let Predicates = [HasCheri, IsCapMode, HasStdExtD, IsRV64] in
+def : Pat<(load GPR:$rs1), (FMV_D_X (LD_DDC GPR:$rs1))>;
+
 /// DDC-relative stores
 
-let Predicates = [HasCheri] in {
+let Predicates = [HasCheri, IsCapMode] in {
 defm : CheriExplicitStPat<truncstorei8, SB_DDC, GPR, GPR>;
 defm : CheriExplicitStPat<truncstorei16, SH_DDC, GPR, GPR>;
 }
 
-let Predicates = [HasCheri, IsRV32] in {
+let Predicates = [HasCheri, IsCapMode, IsRV32] in {
 defm : CheriExplicitStPat<store, SW_DDC, GPR, GPR>;
 defm : CheriExplicitStPat<store, SC_DDC_64, GPCR, GPR>;
 }
 
-let Predicates = [HasCheri, IsRV64] in {
+let Predicates = [HasCheri, IsCapMode, IsRV64] in {
 defm : CheriExplicitStPat<truncstorei32, SW_DDC, GPR, GPR>;
 defm : CheriExplicitStPat<store, SD_DDC, GPR, GPR>;
 defm : CheriExplicitStPat<store, SC_DDC_128, GPCR, GPR>;
 }
 
+let Predicates = [HasCheri, IsCapMode, HasStdExtF] in
+def : Pat<(store FPR32:$rs2, GPR:$rs1),
+          (SW_DDC (FMV_X_W FPR32:$rs2), GPR:$rs1)>;
+
+let Predicates = [HasCheri, IsCapMode, HasStdExtD, IsRV32] in
+def : Pat<(store FPR64:$rs2, GPR:$rs1),
+          (KILL (SplitStoreF64Pseudo FPR64:$rs2, GPR:$rs1))>;
+
+let Predicates = [HasCheri, IsCapMode, HasStdExtD, IsRV64] in
+def : Pat<(store FPR64:$rs2, GPR:$rs1),
+          (SD_DDC (FMV_X_D FPR64:$rs2), GPR:$rs1)>;
+
 /// Capability loads
 
-let Predicates = [HasCheri] in {
+let Predicates = [HasCheri, NotCapMode] in {
 defm : CheriExplicitLdPat<sextloadi8, LB_CAP, GPCR>;
 defm : CheriExplicitLdPat<extloadi8, LB_CAP, GPCR>;
 defm : CheriExplicitLdPat<sextloadi16, LH_CAP, GPCR>;
@@ -1422,12 +1468,12 @@ defm : CheriExplicitLdPat<zextloadi8, LBU_CAP, GPCR>;
 defm : CheriExplicitLdPat<zextloadi16, LHU_CAP, GPCR>;
 }
 
-let Predicates = [HasCheri, IsRV32] in {
+let Predicates = [HasCheri, NotCapMode, IsRV32] in {
 defm : CheriExplicitLdPat<load, LW_CAP, GPCR>;
 defm : CheriExplicitLdPat<load, LC_CAP_64, GPCR>;
 }
 
-let Predicates = [HasCheri, IsRV64] in {
+let Predicates = [HasCheri, NotCapMode, IsRV64] in {
 defm : CheriExplicitLdPat<sextloadi32, LW_CAP, GPCR>;
 defm : CheriExplicitLdPat<extloadi32, LW_CAP, GPCR>;
 defm : CheriExplicitLdPat<load, LD_CAP, GPCR>;
@@ -1435,23 +1481,46 @@ defm : CheriExplicitLdPat<zextloadi32, LWU_CAP, GPCR>;
 defm : CheriExplicitLdPat<load, LC_CAP_128, GPCR>;
 }
 
+let Predicates = [HasCheri, NotCapMode, HasStdExtF] in
+def : Pat<(load GPCR:$rs1), (FMV_W_X (LW_CAP GPCR:$rs1))>;
+
+let Predicates = [HasCheri, NotCapMode, HasStdExtD, IsRV32] in
+def : Pat<(load GPCR:$rs1),
+          (BuildPairF64Pseudo (LW_CAP GPCR:$rs1),
+                              (LW_CAP (CIncOffsetImm GPCR:$rs1, 4)))>;
+
+let Predicates = [HasCheri, NotCapMode, HasStdExtD, IsRV64] in
+def : Pat<(load GPCR:$rs1), (FMV_D_X (LD_CAP GPCR:$rs1))>;
+
 /// Capability stores
 
-let Predicates = [HasCheri] in {
+let Predicates = [HasCheri, NotCapMode] in {
 defm : CheriExplicitStPat<truncstorei8, SB_CAP, GPR, GPCR>;
 defm : CheriExplicitStPat<truncstorei16, SH_CAP, GPR, GPCR>;
 }
 
-let Predicates = [HasCheri, IsRV32] in {
+let Predicates = [HasCheri, NotCapMode, IsRV32] in {
 defm : CheriExplicitStPat<store, SW_CAP, GPR, GPCR>;
 defm : CheriExplicitStPat<store, SC_CAP_64, GPCR, GPCR>;
 }
 
-let Predicates = [HasCheri, IsRV64] in {
+let Predicates = [HasCheri, NotCapMode, IsRV64] in {
 defm : CheriExplicitStPat<truncstorei32, SW_CAP, GPR, GPCR>;
 defm : CheriExplicitStPat<store, SD_CAP, GPR, GPCR>;
 defm : CheriExplicitStPat<store, SC_CAP_128, GPCR, GPCR>;
 }
+
+let Predicates = [HasCheri, NotCapMode, HasStdExtF] in
+def : Pat<(store FPR32:$rs2, GPCR:$rs1),
+          (SW_CAP (FMV_X_W FPR32:$rs2), GPCR:$rs1)>;
+
+let Predicates = [HasCheri, NotCapMode, HasStdExtD, IsRV32] in
+def : Pat<(store FPR64:$rs2, GPCR:$rs1),
+          (KILL (CheriSplitStoreF64Pseudo FPR64:$rs2, GPCR:$rs1))>;
+
+let Predicates = [HasCheri, NotCapMode, HasStdExtD, IsRV64] in
+def : Pat<(store FPR64:$rs2, GPCR:$rs1),
+          (SD_CAP (FMV_X_D FPR64:$rs2), GPCR:$rs1)>;
 
 /// Non-Capability Mode Instructions
 
@@ -1493,18 +1562,18 @@ defm : AMOCapPat<"128", "atomic_swap_cap", "AMOSWAP_C">;
 } // Predicates = [HasCheri, HasStdExtA, IsRV64, NotCapMode]
 
 let Predicates = [HasCheri, HasStdExtA] in {
-def PseudoAtomicLoadAddCap : PseudoAMO<GPCR>;
-def PseudoAtomicLoadSubCap : PseudoAMO<GPCR>;
-def PseudoAtomicLoadAndCap : PseudoAMO<GPCR>;
-def PseudoAtomicLoadOrCap : PseudoAMO<GPCR>;
-def PseudoAtomicLoadXorCap : PseudoAMO<GPCR>;
-def PseudoAtomicLoadMaxCap : PseudoAMO<GPCR>;
-def PseudoAtomicLoadMinCap : PseudoAMO<GPCR>;
-def PseudoAtomicLoadUMaxCap : PseudoAMO<GPCR>;
-def PseudoAtomicLoadUMinCap : PseudoAMO<GPCR>;
-def PseudoAtomicLoadNandCap : PseudoAMO<GPCR>;
-def PseudoCmpXchgCap : PseudoCmpXchg<GPCR>;
-} // Predicates = [HasCheri, HasStdExtA]
+def PseudoAtomicLoadAddCap : PseudoAMO<GPCR> { let Size = 16; }
+def PseudoAtomicLoadSubCap : PseudoAMO<GPCR> { let Size = 20; }
+def PseudoAtomicLoadAndCap : PseudoAMO<GPCR> { let Size = 20; }
+def PseudoAtomicLoadOrCap : PseudoAMO<GPCR> { let Size = 20; }
+def PseudoAtomicLoadXorCap : PseudoAMO<GPCR> { let Size = 20; }
+def PseudoAtomicLoadMaxCap : PseudoAMO<GPCR> { let Size = 24; }
+def PseudoAtomicLoadMinCap : PseudoAMO<GPCR> { let Size = 24; }
+def PseudoAtomicLoadUMaxCap : PseudoAMO<GPCR> { let Size = 24; }
+def PseudoAtomicLoadUMinCap : PseudoAMO<GPCR> { let Size = 24; }
+def PseudoAtomicLoadNandCap : PseudoAMO<GPCR> { let Size = 24; }
+def PseudoCmpXchgCap : PseudoCmpXchg<GPCR> { let Size = 16; }
+} // Predicates = [HasCheri, HasStdExtA]f
 
 let Predicates = [HasCheri, HasStdExtA, NotCapMode] in {
 defm : PseudoAMOPat<"atomic_load_add_cap", PseudoAtomicLoadAddCap, GPCR>;
@@ -1635,51 +1704,51 @@ multiclass CheriAMOCapPat<string CLenStr, string AtomicOp, string BaseInst> {
 }
 
 let Predicates = [HasCheri, HasStdExtA] in {
-def PseudoCheriAtomicSwap8 : PseudoCheriAMO;
-def PseudoCheriAtomicLoadAdd8 : PseudoCheriAMO;
-def PseudoCheriAtomicLoadSub8 : PseudoCheriAMO;
-def PseudoCheriAtomicLoadAnd8 : PseudoCheriAMO;
-def PseudoCheriAtomicLoadOr8 : PseudoCheriAMO;
-def PseudoCheriAtomicLoadXor8 : PseudoCheriAMO;
-def PseudoCheriAtomicLoadMax8 : PseudoCheriAMO;
-def PseudoCheriAtomicLoadMin8 : PseudoCheriAMO;
-def PseudoCheriAtomicLoadUMax8 : PseudoCheriAMO;
-def PseudoCheriAtomicLoadUMin8 : PseudoCheriAMO;
-def PseudoCheriAtomicLoadNand8 : PseudoCheriAMO;
-def PseudoCheriCmpXchg8 : PseudoCheriCmpXchg;
+def PseudoCheriAtomicSwap8 : PseudoCheriAMO { let Size = 16; }
+def PseudoCheriAtomicLoadAdd8 : PseudoCheriAMO { let Size = 16; }
+def PseudoCheriAtomicLoadSub8 : PseudoCheriAMO { let Size = 16; }
+def PseudoCheriAtomicLoadAnd8 : PseudoCheriAMO { let Size = 16; }
+def PseudoCheriAtomicLoadOr8 : PseudoCheriAMO { let Size = 16; }
+def PseudoCheriAtomicLoadXor8 : PseudoCheriAMO { let Size = 16; }
+def PseudoCheriAtomicLoadMax8 : PseudoCheriAMO { let Size = 24; }
+def PseudoCheriAtomicLoadMin8 : PseudoCheriAMO { let Size = 24; }
+def PseudoCheriAtomicLoadUMax8 : PseudoCheriAMO { let Size = 24; }
+def PseudoCheriAtomicLoadUMin8 : PseudoCheriAMO { let Size = 24; }
+def PseudoCheriAtomicLoadNand8 : PseudoCheriAMO { let Size = 20; }
+def PseudoCheriCmpXchg8 : PseudoCheriCmpXchg { let Size = 16; }
 
-def PseudoCheriAtomicSwap16 : PseudoCheriAMO;
-def PseudoCheriAtomicLoadAdd16 : PseudoCheriAMO;
-def PseudoCheriAtomicLoadSub16 : PseudoCheriAMO;
-def PseudoCheriAtomicLoadAnd16 : PseudoCheriAMO;
-def PseudoCheriAtomicLoadOr16 : PseudoCheriAMO;
-def PseudoCheriAtomicLoadXor16 : PseudoCheriAMO;
-def PseudoCheriAtomicLoadMax16 : PseudoCheriAMO;
-def PseudoCheriAtomicLoadMin16 : PseudoCheriAMO;
-def PseudoCheriAtomicLoadUMax16 : PseudoCheriAMO;
-def PseudoCheriAtomicLoadUMin16 : PseudoCheriAMO;
-def PseudoCheriAtomicLoadNand16 : PseudoCheriAMO;
-def PseudoCheriCmpXchg16 : PseudoCheriCmpXchg;
+def PseudoCheriAtomicSwap16 : PseudoCheriAMO { let Size = 16; }
+def PseudoCheriAtomicLoadAdd16 : PseudoCheriAMO { let Size = 16; }
+def PseudoCheriAtomicLoadSub16 : PseudoCheriAMO { let Size = 16; }
+def PseudoCheriAtomicLoadAnd16 : PseudoCheriAMO { let Size = 16; }
+def PseudoCheriAtomicLoadOr16 : PseudoCheriAMO { let Size = 16; }
+def PseudoCheriAtomicLoadXor16 : PseudoCheriAMO { let Size = 16; }
+def PseudoCheriAtomicLoadMax16 : PseudoCheriAMO { let Size = 24; }
+def PseudoCheriAtomicLoadMin16 : PseudoCheriAMO { let Size = 24; }
+def PseudoCheriAtomicLoadUMax16 : PseudoCheriAMO { let Size = 24; }
+def PseudoCheriAtomicLoadUMin16 : PseudoCheriAMO { let Size = 24; }
+def PseudoCheriAtomicLoadNand16 : PseudoCheriAMO { let Size = 20; }
+def PseudoCheriCmpXchg16 : PseudoCheriCmpXchg { let Size = 16; }
 
-def PseudoCheriAtomicLoadNand32 : PseudoCheriAMO;
-def PseudoCheriCmpXchg32 : PseudoCheriCmpXchg;
+def PseudoCheriAtomicLoadNand32 : PseudoCheriAMO { let Size = 20; }
+def PseudoCheriCmpXchg32 : PseudoCheriCmpXchg { let Size = 16; }
 
-def PseudoCheriAtomicLoadAddCap : PseudoCheriAMO<GPCR>;
-def PseudoCheriAtomicLoadSubCap : PseudoCheriAMO<GPCR>;
-def PseudoCheriAtomicLoadAndCap : PseudoCheriAMO<GPCR>;
-def PseudoCheriAtomicLoadOrCap : PseudoCheriAMO<GPCR>;
-def PseudoCheriAtomicLoadXorCap : PseudoCheriAMO<GPCR>;
-def PseudoCheriAtomicLoadMaxCap : PseudoCheriAMO<GPCR>;
-def PseudoCheriAtomicLoadMinCap : PseudoCheriAMO<GPCR>;
-def PseudoCheriAtomicLoadUMaxCap : PseudoCheriAMO<GPCR>;
-def PseudoCheriAtomicLoadUMinCap : PseudoCheriAMO<GPCR>;
-def PseudoCheriAtomicLoadNandCap : PseudoCheriAMO<GPCR>;
-def PseudoCheriCmpXchgCap : PseudoCheriCmpXchg<GPCR>;
+def PseudoCheriAtomicLoadAddCap : PseudoCheriAMO<GPCR> { let Size = 16; }
+def PseudoCheriAtomicLoadSubCap : PseudoCheriAMO<GPCR> { let Size = 20; }
+def PseudoCheriAtomicLoadAndCap : PseudoCheriAMO<GPCR> { let Size = 20; }
+def PseudoCheriAtomicLoadOrCap : PseudoCheriAMO<GPCR> { let Size = 20; }
+def PseudoCheriAtomicLoadXorCap : PseudoCheriAMO<GPCR> { let Size = 20; }
+def PseudoCheriAtomicLoadMaxCap : PseudoCheriAMO<GPCR> { let Size = 24; }
+def PseudoCheriAtomicLoadMinCap : PseudoCheriAMO<GPCR> { let Size = 24; }
+def PseudoCheriAtomicLoadUMaxCap : PseudoCheriAMO<GPCR> { let Size = 24; }
+def PseudoCheriAtomicLoadUMinCap : PseudoCheriAMO<GPCR> { let Size = 24; }
+def PseudoCheriAtomicLoadNandCap : PseudoCheriAMO<GPCR> { let Size = 24; }
+def PseudoCheriCmpXchgCap : PseudoCheriCmpXchg<GPCR> { let Size = 16; }
 } // Predicates = [HasCheri, HasStdExtA]
 
 let Predicates = [HasCheri, HasStdExtA, IsRV64] in {
-def PseudoCheriAtomicLoadNand64 : PseudoCheriAMO;
-def PseudoCheriCmpXchg64 : PseudoCheriCmpXchg;
+def PseudoCheriAtomicLoadNand64 : PseudoCheriAMO { let Size = 20; }
+def PseudoCheriCmpXchg64 : PseudoCheriCmpXchg { let Size = 16; }
 } // Predicates = [HasCheri, HasStdExtA, IsRV64]
 
 /// 'I' (Integer) base
@@ -1701,14 +1770,14 @@ def : Pat<(brind (ptradd GPCR:$rs1, simm12:$imm12)),
 
 let Predicates = [HasCheri, IsCapMode],
     isCall = 1, isBarrier = 1, isCodeGenOnly = 0, hasSideEffects = 0,
-    mayStore = 0, mayLoad = 0 in
+    mayStore = 0, mayLoad = 0, Size = 8 in
 def PseudoCCALLReg : Pseudo<(outs GPCR:$rd),
                             (ins cap_call_symbol:$func), []> {
   let AsmString = "ccall\t$rd, $func";
 }
 
 let Predicates = [HasCheri, IsCapMode],
-    isCall = 1, Defs = [C1], isCodeGenOnly = 0 in
+    isCall = 1, Defs = [C1], isCodeGenOnly = 0, Size = 8 in
 def PseudoCCALL : Pseudo<(outs), (ins cap_call_symbol:$func), []> {
   let AsmString = "ccall\t$func";
 }
@@ -1733,7 +1802,7 @@ def PseudoCRET : Pseudo<(outs), (ins), [(riscv_ret_flag)]>,
 
 let Predicates = [HasCheri, IsCapMode],
     isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, Uses = [C2],
-    isCodeGenOnly = 0 in
+    isCodeGenOnly = 0, Size = 8 in
 def PseudoCTAIL : Pseudo<(outs), (ins cap_call_symbol:$dst), []> {
   let AsmString = "ctail\t$dst";
 }
@@ -1752,7 +1821,7 @@ def : Pat<(riscv_cap_tail texternalsym:$dst),
 } // Predicates = [HasCheri, IsCapMode, IsPureCapABI]
 
 let Predicates = [HasCheri, IsCapMode, IsPureCapABI] in
-let isCall = 0, isBarrier = 1, isBranch = 1, isTerminator = 1,
+let isCall = 0, isBarrier = 1, isBranch = 1, isTerminator = 1, Size = 8,
     isCodeGenOnly = 0, hasSideEffects = 0, mayStore = 0, mayLoad = 0 in
 def PseudoCJump : Pseudo<(outs GPCR:$rd),
                          (ins pseudo_cap_jump_symbol:$target), []> {
@@ -1935,12 +2004,6 @@ defm : CheriStPat<store, CFSW, FPR32>;
 
 } // Predicates = [HasCheri, HasStdExtF, IsCapMode]
 
-let Predicates = [HasCheri, HasStdExtF, NotCapMode] in {
-// TODO: We may want to add int<->float patterns for integer pointers in capability mode.
-def : Pat<(load GPCR:$rs1), (FMV_W_X (LW_CAP GPCR:$rs1))>;
-def : Pat<(store FPR32:$rs2, GPCR:$rs1), (SW_CAP (FMV_X_W FPR32:$rs2), GPCR:$rs1)>;
-} // Predicates = [HasCheri, HasStdExtF, NotCapMode]
-
 /// 'D' (Single-Precision Floating-Point) extension
 
 let Predicates = [HasCheri, HasStdExtD, IsCapMode] in {
@@ -1954,12 +2017,6 @@ defm : CheriLdPat<load, CFLD>;
 defm : CheriStPat<store, CFSD, FPR64>;
 
 } // Predicates = [HasCheri, HasStdExtD, IsCapMode]
-
-let Predicates = [HasCheri, HasStdExtD, IsRV64, NotCapMode] in {
-// TODO: double patterns for RV32 (which requires BuildPairF64 and SplitF64)
-def : Pat<(load GPCR:$rs1), (FMV_D_X (LD_CAP GPCR:$rs1))>;
-def : Pat<(store FPR64:$rs2, GPCR:$rs1), (SD_CAP (FMV_X_D FPR64:$rs2), GPCR:$rs1)>;
-} // Predicates = [HasCheri, HasStdExtD, IsRV64, NotCapMode]
 
 /// 'XCheri' extension
 

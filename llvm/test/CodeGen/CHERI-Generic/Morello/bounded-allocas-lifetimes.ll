@@ -19,7 +19,7 @@ define void @static_alloca() {
   ; CHECK-NEXT:   BL @use, csr_aarch64_aapcs_32cap_regs, implicit-def dead $lr, implicit $sp, implicit $c0, implicit-def $sp
   ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def dead $sp, implicit $sp
   ; CHECK-NEXT:   LIFETIME_END %stack.0
-  ; CHECK-NEXT:   CRET_ReallyLR 0
+  ; CHECK-NEXT:   CRET_ReallyLR
   %1 = alloca i32, align 4, addrspace(200)
   %2 = bitcast i32 addrspace(200)* %1 to i8 addrspace(200)*
   call void @llvm.lifetime.start.p200i8(i64 4, i8 addrspace(200)* %2)
@@ -55,7 +55,7 @@ define void @dynamic_alloca(i64 zeroext %n) {
   ; CHECK-NEXT:   $c0 = COPY [[CapSetBounds1]]
   ; CHECK-NEXT:   BL @use, csr_aarch64_aapcs_32cap_regs, implicit-def dead $lr, implicit $sp, implicit $c0, implicit-def $sp
   ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def dead $sp, implicit $sp
-  ; CHECK-NEXT:   CRET_ReallyLR 0
+  ; CHECK-NEXT:   CRET_ReallyLR
   %1 = alloca i32, i64 %n, align 4, addrspace(200)
   %2 = bitcast i32 addrspace(200)* %1 to i8 addrspace(200)*
   call void @llvm.lifetime.start.p200i8(i64 -1, i8 addrspace(200)* %2)

@@ -13,7 +13,7 @@ define hidden fastcc <4 x float> @foo(<4 x i64> %arg) unnamed_addr #0 {
   ; CHECK:   [[CONCAT_VECTORS:%[0-9]+]]:_(<4 x s64>) = G_CONCAT_VECTORS [[COPY]](<2 x s64>), [[COPY1]](<2 x s64>)
   ; CHECK:   [[UITOFP:%[0-9]+]]:_(<4 x s32>) = G_UITOFP [[CONCAT_VECTORS]](<4 x s64>)
   ; CHECK:   $q0 = COPY [[UITOFP]](<4 x s32>)
-  ; CHECK:   RET_ReallyLR 0, implicit $q0
+  ; CHECK:   RET_ReallyLR implicit $q0
 bb:
   %tmp = uitofp <4 x i64> %arg to <4 x float>
   ret <4 x float> %tmp

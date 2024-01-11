@@ -18,17 +18,17 @@
 ; CHECK:      DW_AT_name {{.*}}"FuncVar0"
 ; CHECK-NEXT: DW_AT_decl_file
 ; CHECK-NEXT: DW_AT_decl_line
-; CHECK-NEXT: DW_AT_type [DW_FORM_ref4] (cu + 0x{{[a-f0-9]+}} => {0x[[SPACE0:[a-f0-9]+]]} "int*")
+; CHECK-NEXT: DW_AT_type [DW_FORM_ref4] (cu + 0x{{[a-f0-9]+}} => {0x[[SPACE0:[a-f0-9]+]]} "int *")
 
 ; CHECK:      DW_AT_name {{.*}}"FuncVar1"
 ; CHECK-NEXT: DW_AT_decl_file
 ; CHECK-NEXT: DW_AT_decl_line
-; CHECK-NEXT: DW_AT_type [DW_FORM_ref4] (cu + 0x{{[a-f0-9]+}} => {0x[[SPACE1:[a-f0-9]+]]} "int&")
+; CHECK-NEXT: DW_AT_type [DW_FORM_ref4] (cu + 0x{{[a-f0-9]+}} => {0x[[SPACE1:[a-f0-9]+]]} "int &")
 
 ; CHECK:      DW_AT_name {{.*}}"FuncVar2"
 ; CHECK-NEXT: DW_AT_decl_file
 ; CHECK-NEXT: DW_AT_decl_line
-; CHECK-NEXT: DW_AT_type [DW_FORM_ref4] (cu + 0x{{[a-f0-9]+}} => {0x[[SPACE2:[a-f0-9]+]]} "int&&")
+; CHECK-NEXT: DW_AT_type [DW_FORM_ref4] (cu + 0x{{[a-f0-9]+}} => {0x[[SPACE2:[a-f0-9]+]]} "int &&")
 
 ; CHECK:      0x[[SPACE0]]: DW_TAG_pointer_type
 ; CHECK-NEXT:                 DW_AT_type

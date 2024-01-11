@@ -39,7 +39,7 @@ body:             |
   ; and the add get merged into a post-index ldp.
   ; AFTERLDSTOPT-NEXT: early-clobber $sp, $x26, $x25 = frame-destroy LDPXpost $sp, 8
 
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 name:            bar
@@ -71,7 +71,7 @@ body:             |
   ; CHECK-NEXT: $x22, $x21 = frame-destroy LDPXi $sp, 6
   ; CHECK-NEXT: $x20, $x19 = frame-destroy LDPXi $sp, 8
   ; CHECK-NEXT: $sp = frame-destroy ADDXri $sp, 80, 0
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 # Check that the load from the offset 0 is moved at the end even when hasFP is
@@ -102,5 +102,5 @@ body:             |
    ; BEFORELDSTOPT-NEXT: $sp = frame-destroy ADDXri $sp, 32, 0
 
    ; AFTERLDSTOPT-NEXT: early-clobber $sp, $lr = frame-destroy LDRXpost $sp, 32
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...

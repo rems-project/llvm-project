@@ -8,7 +8,6 @@
 
 // UNSUPPORTED: c++03, c++11, c++14
 // UNSUPPORTED: windows
-// UNSUPPORTED: libcpp-no-if-constexpr
 // UNSUPPORTED: libcpp-has-newlib
 
 // ADDITIONAL_COMPILE_FLAGS: -D_LIBCPP_DEBUG=1

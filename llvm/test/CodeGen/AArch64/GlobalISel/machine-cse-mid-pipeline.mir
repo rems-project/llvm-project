@@ -10,14 +10,14 @@ body:             |
   ; CHECK-NEXT: %[[TWO:[0-9]+]]:_(s32) = G_ADD %[[ONE]], %[[ONE]]
   ; CHECK-NEXT: %[[SUM:[0-9]+]]:_(s32) = G_ADD %[[TWO]], %[[TWO]]
   ; CHECK-NEXT: $[[RET:[wx][0-9]+]] = COPY %[[SUM]](s32)
-  ; CHECK-NEXT: RET_ReallyLR 0, implicit $[[RET]]
+  ; CHECK-NEXT: RET_ReallyLR implicit $[[RET]]
   bb.0:
     %0:_(s32) = G_CONSTANT i32 1
     %1:_(s32) = G_ADD %0, %0
     %2:_(s32) = G_ADD %0, %0
     %3:_(s32) = G_ADD %1, %2
     $w0 = COPY %3(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            regbankselected
@@ -30,14 +30,14 @@ body:             |
   ; CHECK-NEXT: %[[TWO:[0-9]+]]:gpr(s32) = G_ADD %[[ONE]], %[[ONE]]
   ; CHECK-NEXT: %[[SUM:[0-9]+]]:gpr(s32) = G_ADD %[[TWO]], %[[TWO]]
   ; CHECK-NEXT: $[[RET:[wx][0-9]+]] = COPY %[[SUM]](s32)
-  ; CHECK-NEXT: RET_ReallyLR 0, implicit $[[RET]]
+  ; CHECK-NEXT: RET_ReallyLR implicit $[[RET]]
   bb.0:
     %0:gpr(s32) = G_CONSTANT i32 1
     %1:gpr(s32) = G_ADD %0, %0
     %2:gpr(s32) = G_ADD %0, %0
     %3:gpr(s32) = G_ADD %1, %2
     $w0 = COPY %3(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            legalized
@@ -50,14 +50,14 @@ body:             |
   ; CHECK-NEXT: %[[TWO:[0-9]+]]:gpr(s32) = G_ADD %[[ONE]], %[[ONE]]
   ; CHECK-NEXT: %[[SUM:[0-9]+]]:_(s32) = G_ADD %[[TWO]], %[[TWO]]
   ; CHECK-NEXT: $[[RET:[wx][0-9]+]] = COPY %[[SUM]](s32)
-  ; CHECK-NEXT: RET_ReallyLR 0, implicit $[[RET]]
+  ; CHECK-NEXT: RET_ReallyLR implicit $[[RET]]
   bb.0:
     %0:_(s32) = G_CONSTANT i32 1
     %1:_(s32) = G_ADD %0, %0
     %2:gpr(s32) = G_ADD %0, %0
     %3:_(s32) = G_ADD %1, %2
     $w0 = COPY %3(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            legalized_sym
@@ -70,14 +70,14 @@ body:             |
   ; CHECK-NEXT: %[[TWO:[0-9]+]]:gpr(s32) = G_ADD %[[ONE]], %[[ONE]]
   ; CHECK-NEXT: %[[SUM:[0-9]+]]:_(s32) = G_ADD %[[TWO]], %[[TWO]]
   ; CHECK-NEXT: $[[RET:[wx][0-9]+]] = COPY %[[SUM]](s32)
-  ; CHECK-NEXT: RET_ReallyLR 0, implicit $[[RET]]
+  ; CHECK-NEXT: RET_ReallyLR implicit $[[RET]]
   bb.0:
     %0:_(s32) = G_CONSTANT i32 1
     %1:gpr(s32) = G_ADD %0, %0
     %2:_(s32) = G_ADD %0, %0
     %3:_(s32) = G_ADD %1, %2
     $w0 = COPY %3(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            int_extensions
@@ -94,7 +94,7 @@ body:             |
   ; CHECK-NEXT: %[[S32_Z64:[0-9]+]]:_(s64) = G_ZEXT %[[S32]](s32)
   ; CHECK-NEXT: %[[SUM:[0-9]+]]:_(s64) = G_ADD %[[S16_Z64]], %[[S32_Z64]]
   ; CHECK-NEXT: $[[RET:[wx][0-9]+]] = COPY %[[SUM]](s64)
-  ; CHECK-NEXT: RET_ReallyLR 0, implicit $[[RET]]
+  ; CHECK-NEXT: RET_ReallyLR implicit $[[RET]]
   bb.0.entry:
     %0:_(s8) = G_CONSTANT i8 1
     %1:_(s16) = G_SEXT %0(s8)
@@ -103,7 +103,7 @@ body:             |
     %4:_(s64) = G_ZEXT %2(s32)
     %5:_(s64) = G_ADD %3, %4
     $x0 = COPY %5(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...
 ---
 name:            generic
@@ -121,7 +121,7 @@ body:             |
     %3:_(s32) = COPY %2(s32)
     %4:_(s32) = G_ADD %3, %3
     $w0 = COPY %4(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            generic_to_concrete_copy
@@ -139,7 +139,7 @@ body:             |
     %3:gpr32 = COPY %2(s32)
     %4:gpr32 = ADDWrr %3, %3
     $w0 = COPY %4
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            concrete_to_generic_copy
@@ -157,7 +157,7 @@ body:             |
     %3:_(s32) = COPY %2
     %4:_(s32) = G_ADD %3, %3
     $w0 = COPY %4(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            concrete
@@ -175,7 +175,7 @@ body:             |
     %3:gpr32 = COPY %2
     %4:gpr32 = ADDWrr %3, %3
     $w0 = COPY %4
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            variadic_defs_unmerge_vector
@@ -194,7 +194,7 @@ body:             |
   ; CHECK-NEXT: [[ADD1:%[0-9]+]]:_(s32) = G_ADD [[ANYEXT2]], [[ANYEXT3]]
   ; CHECK-NEXT: [[ADD2:%[0-9]+]]:_(s32) = G_ADD [[ADD0]], [[ADD1]]
   ; CHECK-NEXT: $w0 = COPY [[ADD2]](s32)
-  ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+  ; CHECK-NEXT: RET_ReallyLR implicit $w0
   bb.0:
     %0 :_(<4 x s16>) = COPY $d0
     %1 :_(s16), %2 :_(s16), %3 :_(s16), %4 :_(s16) = G_UNMERGE_VALUES %0(<4 x s16>)
@@ -209,7 +209,7 @@ body:             |
     %22:_(s32) = G_ADD %19, %20
     %23:_(s32) = G_ADD %21, %22
     $w0 = COPY %23(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            variadic_defs_unmerge_scalar
@@ -228,7 +228,7 @@ body:             |
   ; CHECK-NEXT: [[ADD1:%[0-9]+]]:_(s32) = G_ADD [[ANYEXT2]], [[ANYEXT3]]
   ; CHECK-NEXT: [[ADD2:%[0-9]+]]:_(s32) = G_ADD [[ADD0]], [[ADD1]]
   ; CHECK-NEXT: $w0 = COPY [[ADD2]](s32)
-  ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+  ; CHECK-NEXT: RET_ReallyLR implicit $w0
   bb.0:
     %0 :_(s64) = COPY $d0
     %1 :_(s16), %2 :_(s16), %3 :_(s16), %4 :_(s16) = G_UNMERGE_VALUES %0(s64)
@@ -243,7 +243,7 @@ body:             |
     %22:_(s32) = G_ADD %19, %20
     %23:_(s32) = G_ADD %21, %22
     $w0 = COPY %23(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            variadic_defs_unmerge_scalar_asym
@@ -261,7 +261,7 @@ body:             |
   ; CHECK-NEXT: [[ADD1:%[0-9]+]]:_(s32) = G_ADD [[UV01]], [[UV23]]
   ; CHECK-NEXT: [[ADD2:%[0-9]+]]:_(s32) = G_ADD [[ADD0]], [[ADD1]]
   ; CHECK-NEXT: $w0 = COPY [[ADD2]](s32)
-  ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+  ; CHECK-NEXT: RET_ReallyLR implicit $w0
   bb.0:
     %0 :_(s64) = COPY $d0
     %1 :_(s16), %2 :_(s16), %3 :_(s16), %4 :_(s16) = G_UNMERGE_VALUES %0(s64)
@@ -274,7 +274,7 @@ body:             |
     %22:_(s32) = G_ADD %9,  %12
     %23:_(s32) = G_ADD %21, %22
     $w0 = COPY %23(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name:            variadic_defs_unmerge_vector_constraints_mix
@@ -289,7 +289,7 @@ body:             |
   ; CHECK-NEXT: [[ADD1:%[0-9]+]]:gpr32(s32) = ADDWrr [[UV2]](s32), [[UV3]](s32)
   ; CHECK-NEXT: [[ADD2:%[0-9]+]]:_(s32) = G_ADD [[ADD0]], [[ADD1]]
   ; CHECK-NEXT: $w0 = COPY [[ADD2]](s32)
-  ; CHECK-NEXT: RET_ReallyLR 0, implicit $w0
+  ; CHECK-NEXT: RET_ReallyLR implicit $w0
   bb.0:
     %0 :_(<4 x s32>) = COPY $q0
     %1 :_(s32), %2 : _ (s32), %3 :_(s32), %4 :  _  (s32) = G_UNMERGE_VALUES %0(<4 x s32>)
@@ -302,5 +302,5 @@ body:             |
     %19:gpr32(s32) = ADDWrr %18, %16
     %20:_(s32) = G_ADD %17, %19
     $w0 = COPY %20(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...

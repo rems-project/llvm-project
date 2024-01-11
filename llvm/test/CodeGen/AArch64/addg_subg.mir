@@ -32,6 +32,6 @@ body:             |
     renamable $x0 = TAGPstack %stack.0, -5, killed renamable $x8, 0
     renamable $x0 = TAGPstack %stack.0, -63, killed renamable $x8, 0
     renamable $x0 = TAGPstack %stack.0, -64, killed renamable $x8, 0
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

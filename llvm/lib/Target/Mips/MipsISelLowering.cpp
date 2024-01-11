@@ -591,6 +591,9 @@ MipsTargetLowering::MipsTargetLowering(const MipsTargetMachine &TM,
     setLibcallName(RTLIB::SHL_I128, nullptr);
     setLibcallName(RTLIB::SRL_I128, nullptr);
     setLibcallName(RTLIB::SRA_I128, nullptr);
+    setLibcallName(RTLIB::MUL_I128, nullptr);
+    setLibcallName(RTLIB::MULO_I64, nullptr);
+    setLibcallName(RTLIB::MULO_I128, nullptr);
   }
 
   setMinFunctionAlignment(Subtarget.isGP64bit() ? Align(8) : Align(4));
@@ -2670,7 +2673,7 @@ SDValue MipsTargetLowering::lowerADDRSPACECAST(SDValue Op, SelectionDAG &DAG)
     assert(Op.getValueType() == CapType);
     bool IsFunction = false;
     if (GlobalAddressSDNode *GN = dyn_cast<GlobalAddressSDNode>(Src)) {
-      IsFunction = isa<Function>(GN->getGlobal()->getBaseObject());
+      IsFunction = isa<Function>(GN->getGlobal()->getAliaseeObject());
     }
     LLVM_DEBUG(dbgs() << "Lowering addrspacecast: "; Op.dump(&DAG));
     // INTTOPTR will lower to a cincoffset on null in the purecap ABI, so we
@@ -2812,7 +2815,7 @@ SDValue MipsTargetLowering::lowerGlobalAddress(SDValue Op,
     const MipsTargetObjectFile *TLOF =
         static_cast<const MipsTargetObjectFile *>(
             getTargetMachine().getObjFileLowering());
-    const GlobalObject *GO = GV->getBaseObject();
+    const GlobalObject *GO = GV->getAliaseeObject();
     if (GO && TLOF->IsGlobalInSmallSection(GO, getTargetMachine()))
       // %gp_rel relocation
       return getAddrGPRel(N, SDLoc(N), Ty, DAG, ABI.IsN64());
@@ -3425,7 +3428,7 @@ SDValue MipsTargetLowering::lowerRETURNADDR(SDValue Op,
   MFI.setReturnAddressIsTaken(true);
 
   // Return RA, which contains the return address. Mark it an implicit live-in.
-  unsigned Reg = MF.addLiveIn(RA, getRegClassFor(VT));
+  Register Reg = MF.addLiveIn(RA, getRegClassFor(VT));
   return DAG.getCopyFromReg(DAG.getEntryNode(), SDLoc(Op), Reg, VT);
 }
 
@@ -3580,7 +3583,7 @@ SDValue MipsTargetLowering::lowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   assert(!MemVT.isFatPointer());
 
   // Return if load is aligned or if MemVT is neither i32 nor i64.
-  if ((LD->getAlignment() >= MemVT.getSizeInBits() / 8)) {
+  if ((LD->getAlign() >= MemVT.getSizeInBits() / 8)) {
     return SDValue();
   } else if (LD->getBasePtr()->getValueType(0).isFatPointer()) {
     // No capability version of LWL/LWR -> fall back to generic code
@@ -3709,7 +3712,7 @@ static SDValue lowerFP_TO_SINT_STORE(StoreSDNode *SD, SelectionDAG &DAG,
   SDValue Tr = DAG.getNode(MipsISD::TruncIntFP, SDLoc(Val), FPTy,
                            Val.getOperand(0));
   return DAG.getStore(SD->getChain(), SDLoc(SD), Tr, SD->getBasePtr(),
-                      SD->getPointerInfo(), SD->getAlignment(),
+                      SD->getPointerInfo(), SD->getAlign(),
                       SD->getMemOperand()->getFlags());
 }
 
@@ -3732,7 +3735,7 @@ SDValue MipsTargetLowering::lowerSTORE(SDValue Op, SelectionDAG &DAG) const {
 
   // Lower unaligned integer stores.
   if (!Subtarget.systemSupportsUnalignedAccess(SD->getAddressSpace()) &&
-      (SD->getAlignment() < MemVT.getSizeInBits() / 8) && MemVT.isInteger())
+      (SD->getAlign() < MemVT.getSizeInBits() / 8) && MemVT.isInteger())
     return lowerUnalignedIntStore(SD, DAG, Subtarget.isLittle(), *this);
 
   return lowerFP_TO_SINT_STORE(SD, DAG, Subtarget.isSingleFloat());
@@ -4078,17 +4081,15 @@ getOpndList(SmallVectorImpl<SDValue> &Ops,
   // stuck together.
   SDValue InFlag;
 
-  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
-    Chain = CLI.DAG.getCopyToReg(Chain, CLI.DL, RegsToPass[i].first,
-                                 RegsToPass[i].second, InFlag);
+  for (auto &R : RegsToPass) {
+    Chain = CLI.DAG.getCopyToReg(Chain, CLI.DL, R.first, R.second, InFlag);
     InFlag = Chain.getValue(1);
   }
 
   // Add argument registers to the end of the list so that they are
   // known live into the call.
-  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i)
-    Ops.push_back(CLI.DAG.getRegister(RegsToPass[i].first,
-                                      RegsToPass[i].second.getValueType()));
+  for (auto &R : RegsToPass)
+    Ops.push_back(CLI.DAG.getRegister(R.first, R.second.getValueType()));
 
   // Add a register mask operand representing the call-preserved registers.
   const TargetRegisterInfo *TRI = Subtarget.getRegisterInfo();
@@ -4947,7 +4948,7 @@ SDValue MipsTargetLowering::LowerFormalArguments(
           LocVT = VA.getValVT();
       }
 
-      // sanity check
+      // Only arguments pased on the stack should make it here. 
       assert(VA.isMemLoc());
 
 
@@ -5441,7 +5442,7 @@ MipsTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
     case 'd': // Address register. Same as 'r' unless generating MIPS16 code.
     case 'y': // Same as 'r'. Exists for compatibility.
     case 'r':
-      if (VT == MVT::i32 || VT == MVT::i16 || VT == MVT::i8) {
+      if (VT == MVT::i32 || VT == MVT::i16 || VT == MVT::i8 || VT == MVT::i1) {
         if (Subtarget.inMips16Mode())
           return std::make_pair(0U, &Mips::CPU16RegsRegClass);
         return std::make_pair(0U, &Mips::GPR32RegClass);
@@ -5668,7 +5669,10 @@ EVT MipsTargetLowering::getOptimalMemOpType(
       // memcpy/memmove call (by returning MVT::isVoid), since it could still
       // contain a capability if sufficiently aligned at runtime. Zeroing
       // memsets can fall back on non-capability loads/stores.
-      return MVT::isVoid;
+      // Note: We can still inline the memcpy if the frontend has marked the
+      // copy as not requiring tag preserving behaviour.
+      if (Op.PreserveTags != PreserveCheriTags::Unnecessary)
+        return MVT::isVoid;
     }
     if (Subtarget.isGP64bit() && Op.isAligned(Align(8)))
       return MVT::i64;
@@ -5861,8 +5865,7 @@ void MipsTargetLowering::passByValArg(
   Chain = DAG.getMemcpy(Chain, DL, Dst, Src,
                         DAG.getIntPtrConstant(MemCpySize, DL), Alignment,
                         /*isVolatile=*/false, /*AlwaysInline=*/false,
-                        /*isTailCall=*/false,
-                        /*MustPreserveCheriCapabilities=*/false,
+                        /*isTailCall=*/false, llvm::PreserveCheriTags::Unknown,
                         MachinePointerInfo(), MachinePointerInfo());
   MemOpChains.push_back(Chain);
 }

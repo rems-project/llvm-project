@@ -13,8 +13,8 @@ define void @memcpy_assume(i8 addrspace(200)* addrspace(200)* %local_cap_ptr, i8
 ; CHECK-LABEL: memcpy_assume:
 ; CHECK:       .Lfunc_begin0:
 ; CHECK-NEXT:  // %bb.0:
-; CHECK-NEXT:    ldp c0, c2, [c0, #0]
-; CHECK-NEXT:    stp c0, c2, [c1, #0]
+; CHECK-NEXT:    ldp c2, c0, [c0, #0]
+; CHECK-NEXT:    stp c2, c0, [c1, #0]
 ; CHECK-NEXT:    ret c30
   %ptrint = ptrtoint i8 addrspace(200)* %align1 to i64
   %maskedptr = and i64 %ptrint, 15
@@ -29,8 +29,8 @@ define void @memmove_assume(i8 addrspace(200)* addrspace(200)* %local_cap_ptr, i
 ; CHECK-LABEL: memmove_assume:
 ; CHECK:       .Lfunc_begin1:
 ; CHECK-NEXT:  // %bb.0:
-; CHECK-NEXT:    ldp c0, c2, [c0, #0]
-; CHECK-NEXT:    stp c0, c2, [c1, #0]
+; CHECK-NEXT:    ldp c2, c0, [c0, #0]
+; CHECK-NEXT:    stp c2, c0, [c1, #0]
 ; CHECK-NEXT:    ret c30
   %ptrint = ptrtoint i8 addrspace(200)* %align1 to i64
   %maskedptr = and i64 %ptrint, 15

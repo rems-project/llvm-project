@@ -35,6 +35,6 @@ body:             |
     %0:_(<4 x s16>) = COPY $d0
     %1:_(p0) = G_INTTOPTR %0(<4 x s16>)
     $x0 = COPY %1(p0)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...

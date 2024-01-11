@@ -14,16 +14,12 @@ body:             |
     ; CHECK: $w0 = COPY [[TRUNC2]](s32)
     ; CHECK: [[TRUNC3:%[0-9]+]]:_(s32) = G_TRUNC [[COPY]](s64)
     ; CHECK: $w0 = COPY [[TRUNC3]](s32)
-    ; CHECK: [[COPY1:%[0-9]+]]:_(s64) = COPY [[COPY]](s64)
-    ; CHECK: $x0 = COPY [[COPY1]](s64)
+    ; CHECK: $x0 = COPY [[COPY]](s64)
     ; CHECK: [[C:%[0-9]+]]:_(s64) = G_CONSTANT i64 255
-    ; CHECK: [[COPY2:%[0-9]+]]:_(s64) = COPY [[COPY]](s64)
-    ; CHECK: [[AND:%[0-9]+]]:_(s64) = G_AND [[COPY2]], [[C]]
+    ; CHECK: [[AND:%[0-9]+]]:_(s64) = G_AND [[COPY]], [[C]]
     ; CHECK: $x0 = COPY [[AND]](s64)
-    ; CHECK: [[COPY3:%[0-9]+]]:_(s64) = COPY [[COPY]](s64)
-    ; CHECK: $x0 = COPY [[COPY3]](s64)
-    ; CHECK: [[COPY4:%[0-9]+]]:_(s64) = COPY [[COPY]](s64)
-    ; CHECK: [[SEXT_INREG:%[0-9]+]]:_(s64) = G_SEXT_INREG [[COPY4]], 32
+    ; CHECK: $x0 = COPY [[COPY]](s64)
+    ; CHECK: [[SEXT_INREG:%[0-9]+]]:_(s64) = G_SEXT_INREG [[COPY]], 32
     ; CHECK: $x0 = COPY [[SEXT_INREG]](s64)
     ; CHECK: [[TRUNC4:%[0-9]+]]:_(s32) = G_TRUNC [[COPY]](s64)
     ; CHECK: [[SEXT_INREG1:%[0-9]+]]:_(s32) = G_SEXT_INREG [[TRUNC4]], 1
@@ -53,8 +49,8 @@ body:             |
     ; CHECK: [[FPEXT:%[0-9]+]]:_(s64) = G_FPEXT [[TRUNC12]](s32)
     ; CHECK: $x0 = COPY [[FPEXT]](s64)
     ; CHECK: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
-    ; CHECK: [[COPY5:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
-    ; CHECK: $w0 = COPY [[COPY5]](s32)
+    ; CHECK: [[COPY1:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK: $w0 = COPY [[COPY1]](s32)
     ; CHECK: $w0 = COPY [[C3]](s32)
     ; CHECK: [[DEF:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
     ; CHECK: $w0 = COPY [[DEF]](s32)
@@ -117,8 +113,7 @@ body:             |
 
     ; CHECK-LABEL: name: test_anyext_anyext
     ; CHECK: [[COPY:%[0-9]+]]:_(s32) = COPY $w0
-    ; CHECK: [[COPY1:%[0-9]+]]:_(s32) = COPY [[COPY]](s32)
-    ; CHECK: $w0 = COPY [[COPY1]](s32)
+    ; CHECK: $w0 = COPY [[COPY]](s32)
     %0:_(s32) = COPY $w0
     %1:_(s1) = G_TRUNC %0(s32)
     %2:_(s8) = G_ANYEXT %1(s1)
@@ -134,8 +129,7 @@ body:             |
 
     ; CHECK-LABEL: name: test_anyext_sext
     ; CHECK: [[COPY:%[0-9]+]]:_(s32) = COPY $w0
-    ; CHECK: [[COPY1:%[0-9]+]]:_(s32) = COPY [[COPY]](s32)
-    ; CHECK: [[SEXT_INREG:%[0-9]+]]:_(s32) = G_SEXT_INREG [[COPY1]], 1
+    ; CHECK: [[SEXT_INREG:%[0-9]+]]:_(s32) = G_SEXT_INREG [[COPY]], 1
     ; CHECK: $w0 = COPY [[SEXT_INREG]](s32)
     %0:_(s32) = COPY $w0
     %1:_(s1) = G_TRUNC %0(s32)
@@ -153,8 +147,7 @@ body:             |
     ; CHECK-LABEL: name: test_anyext_zext
     ; CHECK: [[COPY:%[0-9]+]]:_(s32) = COPY $w0
     ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
-    ; CHECK: [[COPY1:%[0-9]+]]:_(s32) = COPY [[COPY]](s32)
-    ; CHECK: [[AND:%[0-9]+]]:_(s32) = G_AND [[COPY1]], [[C]]
+    ; CHECK: [[AND:%[0-9]+]]:_(s32) = G_AND [[COPY]], [[C]]
     ; CHECK: $w0 = COPY [[AND]](s32)
     %0:_(s32) = COPY $w0
     %1:_(s1) = G_TRUNC %0(s32)
@@ -176,11 +169,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr(<8 x s8>) = COPY $d0
     ; CHECK: [[ZEXT:%[0-9]+]]:_(<8 x s16>) = G_ZEXT [[COPY]](<8 x s8>)
     ; CHECK: $q0 = COPY [[ZEXT]](<8 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %1:fpr(<8 x s8>) = COPY $d0
     %2:_(<8 x s16>) = G_ZEXT %1(<8 x s8>)
     $q0 = COPY %2(<8 x s16>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -196,11 +189,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr(<8 x s8>) = COPY $d0
     ; CHECK: [[SEXT:%[0-9]+]]:_(<8 x s16>) = G_SEXT [[COPY]](<8 x s8>)
     ; CHECK: $q0 = COPY [[SEXT]](<8 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %1:fpr(<8 x s8>) = COPY $d0
     %2:_(<8 x s16>) = G_SEXT %1(<8 x s8>)
     $q0 = COPY %2(<8 x s16>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -216,11 +209,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr(<8 x s8>) = COPY $d0
     ; CHECK: [[ANYEXT:%[0-9]+]]:_(<8 x s16>) = G_ANYEXT [[COPY]](<8 x s8>)
     ; CHECK: $q0 = COPY [[ANYEXT]](<8 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %1:fpr(<8 x s8>) = COPY $d0
     %2:_(<8 x s16>) = G_ANYEXT %1(<8 x s8>)
     $q0 = COPY %2(<8 x s16>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -237,11 +230,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:_(<4 x s16>) = COPY $d0
     ; CHECK: [[ZEXT:%[0-9]+]]:_(<4 x s32>) = G_ZEXT [[COPY]](<4 x s16>)
     ; CHECK: $q0 = COPY [[ZEXT]](<4 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:_(<4 x s16>) = COPY $d0
     %1:_(<4 x s32>) = G_ZEXT %0(<4 x s16>)
     $q0 = COPY %1(<4 x s32>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -258,11 +251,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:_(<4 x s16>) = COPY $d0
     ; CHECK: [[SEXT:%[0-9]+]]:_(<4 x s32>) = G_SEXT [[COPY]](<4 x s16>)
     ; CHECK: $q0 = COPY [[SEXT]](<4 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:_(<4 x s16>) = COPY $d0
     %1:_(<4 x s32>) = G_SEXT %0(<4 x s16>)
     $q0 = COPY %1(<4 x s32>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -279,11 +272,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:_(<4 x s16>) = COPY $d0
     ; CHECK: [[ANYEXT:%[0-9]+]]:_(<4 x s32>) = G_ANYEXT [[COPY]](<4 x s16>)
     ; CHECK: $q0 = COPY [[ANYEXT]](<4 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:_(<4 x s16>) = COPY $d0
     %1:_(<4 x s32>) = G_ANYEXT %0(<4 x s16>)
     $q0 = COPY %1(<4 x s32>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -303,11 +296,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:_(<2 x s32>) = COPY $d0
     ; CHECK: [[ZEXT:%[0-9]+]]:_(<2 x s64>) = G_ZEXT [[COPY]](<2 x s32>)
     ; CHECK: $q0 = COPY [[ZEXT]](<2 x s64>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:_(<2 x s32>) = COPY $d0
     %1:_(<2 x s64>) = G_ZEXT %0(<2 x s32>)
     $q0 = COPY %1(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -327,11 +320,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:_(<2 x s32>) = COPY $d0
     ; CHECK: [[SEXT:%[0-9]+]]:_(<2 x s64>) = G_SEXT [[COPY]](<2 x s32>)
     ; CHECK: $q0 = COPY [[SEXT]](<2 x s64>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:_(<2 x s32>) = COPY $d0
     %1:_(<2 x s64>) = G_SEXT %0(<2 x s32>)
     $q0 = COPY %1(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -351,10 +344,10 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:_(<2 x s32>) = COPY $d0
     ; CHECK: [[ANYEXT:%[0-9]+]]:_(<2 x s64>) = G_ANYEXT [[COPY]](<2 x s32>)
     ; CHECK: $q0 = COPY [[ANYEXT]](<2 x s64>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:_(<2 x s32>) = COPY $d0
     %1:_(<2 x s64>) = G_ANYEXT %0(<2 x s32>)
     $q0 = COPY %1(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...

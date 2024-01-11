@@ -101,8 +101,7 @@ TEST(CommandLineTest, ModifyExisitingOption) {
   StringMap<cl::Option *> &Map =
       cl::getRegisteredOptions(*cl::TopLevelSubCommand);
 
-  ASSERT_TRUE(Map.count("test-option") == 1) <<
-    "Could not find option in map.";
+  ASSERT_EQ(Map.count("test-option"), 1u) << "Could not find option in map.";
 
   cl::Option *Retrieved = Map["test-option"];
   ASSERT_EQ(&TestOption, Retrieved) << "Retrieved wrong option.";
@@ -421,6 +420,14 @@ TEST(CommandLineTest, HideUnrelatedOptionsMulti) {
       << "Hid default option that should be visable.";
 }
 
+TEST(CommandLineTest, SetMultiValues) {
+  StackOption<int> Option("option");
+  const char *args[] = {"prog", "-option=1", "-option=2"};
+  EXPECT_TRUE(cl::ParseCommandLineOptions(array_lengthof(args), args,
+                                          StringRef(), &llvm::nulls()));
+  EXPECT_EQ(Option, 2);
+}
+
 TEST(CommandLineTest, SetValueInSubcategories) {
   cl::ResetCommandLineParser();
 
@@ -701,7 +708,7 @@ TEST(CommandLineTest, DefaultOptions) {
   const char *args0[] = {"prog", "-b", "args0 bar string", "-f"};
   EXPECT_TRUE(cl::ParseCommandLineOptions(sizeof(args0) / sizeof(char *), args0,
                                           StringRef(), &llvm::nulls()));
-  EXPECT_TRUE(Bar == "args0 bar string");
+  EXPECT_EQ(Bar, "args0 bar string");
   EXPECT_TRUE(Foo);
   EXPECT_FALSE(SC1_B);
   EXPECT_TRUE(SC2_Foo.empty());
@@ -711,7 +718,7 @@ TEST(CommandLineTest, DefaultOptions) {
   const char *args1[] = {"prog", "sc1", "-b", "-bar", "args1 bar string", "-f"};
   EXPECT_TRUE(cl::ParseCommandLineOptions(sizeof(args1) / sizeof(char *), args1,
                                           StringRef(), &llvm::nulls()));
-  EXPECT_TRUE(Bar == "args1 bar string");
+  EXPECT_EQ(Bar, "args1 bar string");
   EXPECT_TRUE(Foo);
   EXPECT_TRUE(SC1_B);
   EXPECT_TRUE(SC2_Foo.empty());
@@ -727,10 +734,10 @@ TEST(CommandLineTest, DefaultOptions) {
                          "-f", "-foo", "foo string"};
   EXPECT_TRUE(cl::ParseCommandLineOptions(sizeof(args2) / sizeof(char *), args2,
                                           StringRef(), &llvm::nulls()));
-  EXPECT_TRUE(Bar == "args2 bar string");
+  EXPECT_EQ(Bar, "args2 bar string");
   EXPECT_TRUE(Foo);
   EXPECT_FALSE(SC1_B);
-  EXPECT_TRUE(SC2_Foo == "foo string");
+  EXPECT_EQ(SC2_Foo, "foo string");
   for (auto *S : cl::getRegisteredSubcommands()) {
     if (*S) {
       EXPECT_EQ("sc2", S->getName());
@@ -777,8 +784,8 @@ TEST(CommandLineTest, ResponseFileWindows) {
   EXPECT_TRUE(
       cl::ParseCommandLineOptions(2, args, StringRef(), &llvm::nulls()));
   EXPECT_TRUE(TopLevelOpt);
-  EXPECT_TRUE(InputFilenames[0] == "path\\dir\\file1");
-  EXPECT_TRUE(InputFilenames[1] == "path/dir/file2");
+  EXPECT_EQ(InputFilenames[0], "path\\dir\\file1");
+  EXPECT_EQ(InputFilenames[1], "path/dir/file2");
 }
 
 TEST(CommandLineTest, ResponseFiles) {
@@ -1011,9 +1018,9 @@ TEST(CommandLineTest, SetDefautValue) {
   EXPECT_TRUE(
     cl::ParseCommandLineOptions(2, args, StringRef(), &llvm::nulls()));
 
-  EXPECT_TRUE(Opt1 == "false");
+  EXPECT_EQ(Opt1, "false");
   EXPECT_TRUE(Opt2);
-  EXPECT_TRUE(Opt3 == 3);
+  EXPECT_EQ(Opt3, 3);
 
   Opt2 = false;
   Opt3 = 1;
@@ -1028,9 +1035,9 @@ TEST(CommandLineTest, SetDefautValue) {
     O->setDefault();
   }
 
-  EXPECT_TRUE(Opt1 == "true");
+  EXPECT_EQ(Opt1, "true");
   EXPECT_TRUE(Opt2);
-  EXPECT_TRUE(Opt3 == 3);
+  EXPECT_EQ(Opt3, 3);
   Alias.removeArgument();
 }
 
@@ -1135,12 +1142,17 @@ TEST(CommandLineTest, PositionalEatArgsError) {
 
   cl::ResetAllOptionOccurrences();
   EXPECT_TRUE(cl::ParseCommandLineOptions(6, args4, StringRef(), &OS)); OS.flush();
-  EXPECT_TRUE(PosEatArgs.size() == 1);
-  EXPECT_TRUE(PosEatArgs2.size() == 2);
+  EXPECT_EQ(PosEatArgs.size(), 1u);
+  EXPECT_EQ(PosEatArgs2.size(), 2u);
   EXPECT_TRUE(Errs.empty());
 }
 
 #ifdef _WIN32
+void checkSeparators(StringRef Path) {
+  char UndesiredSeparator = sys::path::get_separator()[0] == '/' ? '\\' : '/';
+  ASSERT_EQ(Path.find(UndesiredSeparator), StringRef::npos);
+}
+
 TEST(CommandLineTest, GetCommandLineArguments) {
   int argc = __argc;
   char **argv = __argv;
@@ -1150,6 +1162,7 @@ TEST(CommandLineTest, GetCommandLineArguments) {
 
   EXPECT_EQ(llvm::sys::path::is_absolute(argv[0]),
             llvm::sys::path::is_absolute(__argv[0]));
+  checkSeparators(argv[0]);
 
   EXPECT_TRUE(
       llvm::sys::path::filename(argv[0]).equals_insensitive("supporttests.exe"))
@@ -1406,8 +1419,8 @@ TEST(CommandLineTest, PrefixOptions) {
   const char *args[] = {"prog", "-I=/usr/include"};
   EXPECT_TRUE(
       cl::ParseCommandLineOptions(2, args, StringRef(), &llvm::nulls()));
-  EXPECT_TRUE(IncludeDirs.size() == 1);
-  EXPECT_TRUE(IncludeDirs.front().compare("/usr/include") == 0);
+  EXPECT_EQ(IncludeDirs.size(), 1u);
+  EXPECT_EQ(IncludeDirs.front().compare("/usr/include"), 0);
 
   IncludeDirs.erase(IncludeDirs.begin());
   cl::ResetAllOptionOccurrences();
@@ -1418,8 +1431,8 @@ TEST(CommandLineTest, PrefixOptions) {
   const char *args2[] = {"prog", "-I", "/usr/include"};
   EXPECT_TRUE(
       cl::ParseCommandLineOptions(3, args2, StringRef(), &llvm::nulls()));
-  EXPECT_TRUE(IncludeDirs.size() == 1);
-  EXPECT_TRUE(IncludeDirs.front().compare("/usr/include") == 0);
+  EXPECT_EQ(IncludeDirs.size(), 1u);
+  EXPECT_EQ(IncludeDirs.front().compare("/usr/include"), 0);
 
   IncludeDirs.erase(IncludeDirs.begin());
   cl::ResetAllOptionOccurrences();
@@ -1429,8 +1442,8 @@ TEST(CommandLineTest, PrefixOptions) {
   const char *args3[] = {"prog", "-I/usr/include"};
   EXPECT_TRUE(
       cl::ParseCommandLineOptions(2, args3, StringRef(), &llvm::nulls()));
-  EXPECT_TRUE(IncludeDirs.size() == 1);
-  EXPECT_TRUE(IncludeDirs.front().compare("/usr/include") == 0);
+  EXPECT_EQ(IncludeDirs.size(), 1u);
+  EXPECT_EQ(IncludeDirs.front().compare("/usr/include"), 0);
 
   StackOption<std::string, cl::list<std::string>> MacroDefs(
       "D", cl::AlwaysPrefix, cl::desc("Define a macro"),
@@ -1444,8 +1457,8 @@ TEST(CommandLineTest, PrefixOptions) {
   const char *args4[] = {"prog", "-D=HAVE_FOO"};
   EXPECT_TRUE(
       cl::ParseCommandLineOptions(2, args4, StringRef(), &llvm::nulls()));
-  EXPECT_TRUE(MacroDefs.size() == 1);
-  EXPECT_TRUE(MacroDefs.front().compare("=HAVE_FOO") == 0);
+  EXPECT_EQ(MacroDefs.size(), 1u);
+  EXPECT_EQ(MacroDefs.front().compare("=HAVE_FOO"), 0);
 
   MacroDefs.erase(MacroDefs.begin());
   cl::ResetAllOptionOccurrences();
@@ -1465,8 +1478,8 @@ TEST(CommandLineTest, PrefixOptions) {
   const char *args6[] = {"prog", "-DHAVE_FOO"};
   EXPECT_TRUE(
       cl::ParseCommandLineOptions(2, args6, StringRef(), &llvm::nulls()));
-  EXPECT_TRUE(MacroDefs.size() == 1);
-  EXPECT_TRUE(MacroDefs.front().compare("HAVE_FOO") == 0);
+  EXPECT_EQ(MacroDefs.size(), 1u);
+  EXPECT_EQ(MacroDefs.front().compare("HAVE_FOO"), 0);
 }
 
 TEST(CommandLineTest, GroupingWithValue) {
@@ -1751,12 +1764,12 @@ TEST(CommandLineTest, OptionErrorMessage) {
 
   OptA.error("custom error", OS);
   OS.flush();
-  EXPECT_FALSE(Errs.find("for the -a option:") == std::string::npos);
+  EXPECT_NE(Errs.find("for the -a option:"), std::string::npos);
   Errs.clear();
 
   OptLong.error("custom error", OS);
   OS.flush();
-  EXPECT_FALSE(Errs.find("for the --long option:") == std::string::npos);
+  EXPECT_NE(Errs.find("for the --long option:"), std::string::npos);
   Errs.clear();
 
   cl::ResetAllOptionOccurrences();
@@ -1779,8 +1792,8 @@ TEST(CommandLineTest, OptionErrorMessageSuggest) {
 
   EXPECT_FALSE(cl::ParseCommandLineOptions(2, args, StringRef(), &OS));
   OS.flush();
-  EXPECT_FALSE(Errs.find("prog: Did you mean '--aluminium'?\n") ==
-               std::string::npos);
+  EXPECT_NE(Errs.find("prog: Did you mean '--aluminium'?\n"),
+            std::string::npos);
   Errs.clear();
 
   cl::ResetAllOptionOccurrences();
@@ -1802,8 +1815,8 @@ TEST(CommandLineTest, OptionErrorMessageSuggestNoHidden) {
 
   EXPECT_FALSE(cl::ParseCommandLineOptions(2, args, StringRef(), &OS));
   OS.flush();
-  EXPECT_FALSE(Errs.find("prog: Did you mean '--aluminium'?\n") ==
-               std::string::npos);
+  EXPECT_NE(Errs.find("prog: Did you mean '--aluminium'?\n"),
+            std::string::npos);
   Errs.clear();
 
   cl::ResetAllOptionOccurrences();
@@ -1834,7 +1847,7 @@ TEST(CommandLineTest, Callback) {
   EXPECT_TRUE(OptA);
   EXPECT_FALSE(OptB);
   EXPECT_FALSE(OptC);
-  EXPECT_TRUE(List.size() == 0);
+  EXPECT_EQ(List.size(), 0u);
   cl::ResetAllOptionOccurrences();
 
   const char *args2[] = {"prog", "-b"};
@@ -1842,7 +1855,7 @@ TEST(CommandLineTest, Callback) {
   EXPECT_TRUE(OptA);
   EXPECT_TRUE(OptB);
   EXPECT_FALSE(OptC);
-  EXPECT_TRUE(List.size() == 0);
+  EXPECT_EQ(List.size(), 0u);
   cl::ResetAllOptionOccurrences();
 
   const char *args3[] = {"prog", "-c"};
@@ -1850,7 +1863,7 @@ TEST(CommandLineTest, Callback) {
   EXPECT_TRUE(OptA);
   EXPECT_TRUE(OptB);
   EXPECT_TRUE(OptC);
-  EXPECT_TRUE(List.size() == 0);
+  EXPECT_EQ(List.size(), 0u);
   cl::ResetAllOptionOccurrences();
 
   const char *args4[] = {"prog", "--list=foo,bar"};
@@ -1858,7 +1871,7 @@ TEST(CommandLineTest, Callback) {
   EXPECT_TRUE(OptA);
   EXPECT_TRUE(OptB);
   EXPECT_TRUE(OptC);
-  EXPECT_TRUE(List.size() == 2);
+  EXPECT_EQ(List.size(), 2u);
   cl::ResetAllOptionOccurrences();
 
   const char *args5[] = {"prog", "--list=bar"};
@@ -1866,7 +1879,7 @@ TEST(CommandLineTest, Callback) {
   EXPECT_FALSE(OptA);
   EXPECT_FALSE(OptB);
   EXPECT_FALSE(OptC);
-  EXPECT_TRUE(List.size() == 1);
+  EXPECT_EQ(List.size(), 1u);
 
   cl::ResetAllOptionOccurrences();
 }
@@ -1893,9 +1906,9 @@ TEST(CommandLineTest, ConsumeAfterOnePositional) {
   EXPECT_TRUE(cl::ParseCommandLineOptions(4, Args, StringRef(), &OS));
   OS.flush();
   EXPECT_EQ("input", Input);
-  EXPECT_TRUE(ExtraArgs.size() == 2);
-  EXPECT_TRUE(ExtraArgs[0] == "arg1");
-  EXPECT_TRUE(ExtraArgs[1] == "arg2");
+  EXPECT_EQ(ExtraArgs.size(), 2u);
+  EXPECT_EQ(ExtraArgs[0], "arg1");
+  EXPECT_EQ(ExtraArgs[1], "arg2");
   EXPECT_TRUE(Errs.empty());
 }
 
@@ -1917,10 +1930,40 @@ TEST(CommandLineTest, ConsumeAfterTwoPositionals) {
   OS.flush();
   EXPECT_EQ("input1", Input1);
   EXPECT_EQ("input2", Input2);
-  EXPECT_TRUE(ExtraArgs.size() == 2);
-  EXPECT_TRUE(ExtraArgs[0] == "arg1");
-  EXPECT_TRUE(ExtraArgs[1] == "arg2");
+  EXPECT_EQ(ExtraArgs.size(), 2u);
+  EXPECT_EQ(ExtraArgs[0], "arg1");
+  EXPECT_EQ(ExtraArgs[1], "arg2");
   EXPECT_TRUE(Errs.empty());
+}
+
+TEST(CommandLineTest, ResetAllOptionOccurrences) {
+  cl::ResetCommandLineParser();
+
+  // -option [sink] input [args]
+  StackOption<bool> Option("option");
+  StackOption<std::string, cl::list<std::string>> Sink(cl::Sink);
+  StackOption<std::string> Input(cl::Positional);
+  StackOption<std::string, cl::list<std::string>> ExtraArgs(cl::ConsumeAfter);
+
+  const char *Args[] = {"prog", "-option", "-unknown", "input", "-arg"};
+
+  std::string Errs;
+  raw_string_ostream OS(Errs);
+  EXPECT_TRUE(cl::ParseCommandLineOptions(5, Args, StringRef(), &OS));
+  EXPECT_TRUE(OS.str().empty());
+
+  EXPECT_TRUE(Option);
+  EXPECT_EQ(1u, Sink.size());
+  EXPECT_EQ("-unknown", Sink[0]);
+  EXPECT_EQ("input", Input);
+  EXPECT_EQ(1u, ExtraArgs.size());
+  EXPECT_EQ("-arg", ExtraArgs[0]);
+
+  cl::ResetAllOptionOccurrences();
+  EXPECT_FALSE(Option);
+  EXPECT_EQ(0u, Sink.size());
+  EXPECT_EQ(0, Input.getNumOccurrences());
+  EXPECT_EQ(0u, ExtraArgs.size());
 }
 
 } // anonymous namespace

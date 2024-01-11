@@ -13,4 +13,4 @@ body:             |
     %copy:_(s32) = COPY $w0
     %ctpop:_(s32) = G_CTPOP %copy(s32)
     $w0 = COPY %ctpop(s32)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0

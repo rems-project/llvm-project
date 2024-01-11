@@ -109,10 +109,10 @@ define i32 addrspace(200)* @f4() nounwind {
 ; CHECK-LABEL: f4:
 ; CHECK:       .Lfunc_begin3:
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mrs c0, CTPIDR_EL0
 ; CHECK-NEXT:    movz x8, #:size_g1:le
-; CHECK-NEXT:    add c0, c0, :tprel_hi12:le
+; CHECK-NEXT:    mrs c0, CTPIDR_EL0
 ; CHECK-NEXT:    movk x8, #:size_g0_nc:le
+; CHECK-NEXT:    add c0, c0, :tprel_hi12:le
 ; CHECK-NEXT:    add c0, c0, :tprel_lo12_nc:le
 ; CHECK-NEXT:    scbnds c0, c0, x8
 ; CHECK-NEXT:    and x30, x30, #0xfffffffffffffffe

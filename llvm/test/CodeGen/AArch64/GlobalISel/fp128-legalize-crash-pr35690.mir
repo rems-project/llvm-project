@@ -40,6 +40,6 @@ body:             |
     %2:_(s128) = G_LOAD %1(p0) :: (load (s128) from %ir.a.addr)
     %3:_(s128) = G_FNEG %2
     $q0 = COPY %3(s128)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...

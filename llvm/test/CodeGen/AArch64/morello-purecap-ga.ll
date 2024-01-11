@@ -45,22 +45,22 @@ define void @foo(i32 %a) local_unnamed_addr addrspace(200) {
 ; CHECK-NEXT:    .cfi_offset c21, -48
 ; CHECK-NEXT:    .cfi_offset c30, -64
 ; CHECK-NEXT:    bl g
-; CHECK-NEXT:    cmp w0, #1 // =1
+; CHECK-NEXT:    cmp w0, #1
 ; CHECK-NEXT:    b.lt .LBB1_3
 ; CHECK-NEXT:  // %bb.1: // %for.body.preheader
 ; CHECK-NEXT:    adrp c20, .L__cap_merged_table+32
+; CHECK-NEXT:    mov x19, xzr
 ; CHECK-NEXT:    ldr c20, [c20, :lo12:.L__cap_merged_table+32]
 ; CHECK-NEXT:    adrp c21, .L__cap_merged_table+48
 ; CHECK-NEXT:    ldr c21, [c21, :lo12:.L__cap_merged_table+48]
-; CHECK-NEXT:    mov x19, xzr
 ; CHECK-NEXT:  .LBB1_2: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    lsl x8, x19, #2
+; CHECK-NEXT:    add x19, x19, #1
 ; CHECK-NEXT:    ldr w9, [c20, x8]
-; CHECK-NEXT:    add x19, x19, #1 // =1
-; CHECK-NEXT:    add w10, w9, #1 // =1
 ; CHECK-NEXT:    str w9, [c21, x8]
-; CHECK-NEXT:    str w10, [c20, x8]
+; CHECK-NEXT:    add w9, w9, #1
+; CHECK-NEXT:    str w9, [c20, x8]
 ; CHECK-NEXT:    bl g
 ; CHECK-NEXT:    cmp x19, w0, sxtw
 ; CHECK-NEXT:    b.lt .LBB1_2
@@ -102,7 +102,7 @@ define void @bar(i32 addrspace(200)* %end) local_unnamed_addr addrspace(200) {
 ; CHECK-NEXT:    .cfi_offset c30, -32
 ; CHECK-NEXT:    mov c19, c0
 ; CHECK-NEXT:    bl g
-; CHECK-NEXT:    cmp w0, #1 // =1
+; CHECK-NEXT:    cmp w0, #1
 ; CHECK-NEXT:    b.lt .LBB2_3
 ; CHECK-NEXT:  // %bb.1: // %for.body.preheader
 ; CHECK-NEXT:    adrp c0, .L__cap_merged_table+48
@@ -112,8 +112,8 @@ define void @bar(i32 addrspace(200)* %end) local_unnamed_addr addrspace(200) {
 ; CHECK-NEXT:  .LBB2_2: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    ldr w8, [c1], #4
-; CHECK-NEXT:    cmp x1, x19
 ; CHECK-NEXT:    str w8, [c0], #4
+; CHECK-NEXT:    cmp x1, x19
 ; CHECK-NEXT:    b.eq .LBB2_2
 ; CHECK-NEXT:  .LBB2_3: // %for.end
 ; CHECK-NEXT:    ldp c30, c19, [csp], #32 // 32-byte Folded Reload
@@ -174,10 +174,10 @@ define void @goo() local_unnamed_addr addrspace(200) {
 ; CHECK-NEXT:    .cfi_startproc purecap
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    adrp c0, .L__cap_merged_table+32
+; CHECK-NEXT:    mov w8, #3
 ; CHECK-NEXT:    ldr c0, [c0, :lo12:.L__cap_merged_table+32]
 ; CHECK-NEXT:    adrp c1, .L__cap_merged_table+48
 ; CHECK-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table+48]
-; CHECK-NEXT:    mov w8, #3
 ; CHECK-NEXT:    str w8, [c0, #804]
 ; CHECK-NEXT:    str w8, [c1, #804]
 ; CHECK-NEXT:    ret c30
@@ -194,10 +194,10 @@ define void @bat() local_unnamed_addr addrspace(200) {
 ; CHECK-NEXT:    .cfi_startproc purecap
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    adrp c0, .L__cap_merged_table+32
+; CHECK-NEXT:    mov w8, #3
 ; CHECK-NEXT:    ldr c0, [c0, :lo12:.L__cap_merged_table+32]
 ; CHECK-NEXT:    adrp c1, .L__cap_merged_table
 ; CHECK-NEXT:    ldr c1, [c1, :lo12:.L__cap_merged_table]
-; CHECK-NEXT:    mov w8, #3
 ; CHECK-NEXT:    str w8, [c0, #804]
 ; CHECK-NEXT:    str w8, [c1, #804]
 ; CHECK-NEXT:    ret c30

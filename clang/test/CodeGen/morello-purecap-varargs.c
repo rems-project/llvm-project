@@ -38,7 +38,7 @@ void call1(double, float);
 // CHECK-NEXT:    [[TMP3:%.*]] = load float, float addrspace(200)* [[TMP2]], align 16
 // CHECK-NEXT:    [[ARGS4:%.*]] = bitcast i8 addrspace(200)* addrspace(200)* [[ARGS]] to i8 addrspace(200)*
 // CHECK-NEXT:    call void @llvm.va_end.p200i8(i8 addrspace(200)* [[ARGS4]])
-// CHECK-NEXT:    call void @call1(double [[TMP1]], float [[TMP3]])
+// CHECK-NEXT:    call void @call1(double noundef [[TMP1]], float noundef [[TMP3]])
 // CHECK-NEXT:    ret void
 //
 void callee_test_scalars(int count, ...) {

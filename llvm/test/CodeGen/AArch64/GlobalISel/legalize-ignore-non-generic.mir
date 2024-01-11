@@ -30,5 +30,5 @@ body: |
 
     ; CHECK-LABEL: name: test_targetspecific
     ; CHECK: RET_ReallyLR
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...

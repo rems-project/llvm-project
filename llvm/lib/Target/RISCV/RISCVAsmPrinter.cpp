@@ -22,12 +22,13 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/Support/TargetRegistry.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -67,6 +68,8 @@ public:
 
   void emitStartOfAsmFile(Module &M) override;
   void emitEndOfAsmFile(Module &M) override;
+
+  void emitFunctionEntryLabel() override;
 
 private:
   void emitAttributes();
@@ -188,6 +191,19 @@ void RISCVAsmPrinter::emitEndOfAsmFile(Module &M) {
 
   if (TM.getTargetTriple().isOSBinFormatELF())
     RTS.finishAttributeSection();
+}
+
+void RISCVAsmPrinter::emitFunctionEntryLabel() {
+  AsmPrinter::emitFunctionEntryLabel();
+
+  auto &Subtarget = MF->getSubtarget<RISCVSubtarget>();
+  const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
+  if (RISCVABI::isCheriPureCapABI(Subtarget.getTargetABI()) &&
+      MJTI && !MJTI->isEmpty()) {
+    MCSymbol *Sym = getSymbolWithGlobalValueBase(&MF->getFunction(),
+                                                 "$jump_table_base");
+    OutStreamer->emitLabel(Sym);
+  }
 }
 
 void RISCVAsmPrinter::emitAttributes() {

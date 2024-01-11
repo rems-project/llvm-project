@@ -15,12 +15,11 @@ namespace lldb_private {
 
 class ArchitectureArm64 : public Architecture {
 public:
-  static ConstString GetPluginNameStatic();
+  static llvm::StringRef GetPluginNameStatic() { return "arm64"; }
   static void Initialize();
   static void Terminate();
 
-  ConstString GetPluginName() override;
-  uint32_t GetPluginVersion() override;
+  llvm::StringRef GetPluginName() override;
 
   void OverrideStopInfo(Thread &thread) const override {}
 

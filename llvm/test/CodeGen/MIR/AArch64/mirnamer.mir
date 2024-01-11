@@ -60,7 +60,7 @@ body:             |
     %17:gpr32 = nsw ADDWrr %14:gpr32, %15:gpr32
     %18:gpr32 = nsw ADDWrr %16:gpr32, %17:gpr32
     $w0 = COPY %18
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 ---
 name: baz
@@ -85,6 +85,6 @@ body:             |
     %2:gpr32 = COPY %1
     %3:gpr32 = COPY %2
     $w0 = COPY %3
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...
 

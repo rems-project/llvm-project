@@ -19,5 +19,5 @@ body: |
     $x8 = ADRP target-flags(aarch64-page) @var_i32
   ; CHECK: [[@LINE+1]]:60: expected the name of the target flag
     $w0 = LDRWui killed $x8, target-flags(aarch64-pageoff, ) @var_i32
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...

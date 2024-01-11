@@ -8,7 +8,7 @@ define i64 @expect_i64(i64 %arg0) {
   ; CHECK:   [[COPY:%[0-9]+]]:_(s64) = COPY $x0
   ; CHECK:   [[COPY1:%[0-9]+]]:_(s64) = COPY [[COPY]](s64)
   ; CHECK:   $x0 = COPY [[COPY1]](s64)
-  ; CHECK:   RET_ReallyLR 0, implicit $x0
+  ; CHECK:   RET_ReallyLR implicit $x0
   %expval = call i64 @llvm.expect.i64(i64 %arg0, i64 1)
   ret i64 %expval
 }
@@ -23,7 +23,7 @@ define i8* @ptr_annotate(i8* %arg0, i8* %arg1, i8* %arg2, i32 %arg3) {
   ; CHECK:   [[COPY3:%[0-9]+]]:_(s32) = COPY $w3
   ; CHECK:   [[COPY4:%[0-9]+]]:_(p0) = COPY [[COPY]](p0)
   ; CHECK:   $x0 = COPY [[COPY4]](p0)
-  ; CHECK:   RET_ReallyLR 0,  implicit $x0
+  ; CHECK:   RET_ReallyLR  implicit $x0
   %call = call i8* @llvm.ptr.annotation.p0i8(i8* %arg0, i8* %arg1, i8* %arg2, i32 %arg3, i8* null)
   ret i8* %call
 }
@@ -38,7 +38,7 @@ define i32 @annotation(i32 %a) {
   ; CHECK:   [[COPY:%[0-9]+]]:_(s32) = COPY $w0
   ; CHECK:   [[COPY1:%[0-9]+]]:_(s32) = COPY [[COPY]](s32)
   ; CHECK:   $w0 = COPY [[COPY1]](s32)
-  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  ; CHECK:   RET_ReallyLR implicit $w0
   %call = call i32 @llvm.annotation.i32(i32 %a, i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str1, i32 0, i32 0), i32 2)
   ret i32 %call
 }
@@ -50,7 +50,7 @@ define i8* @launder_invariant_group(i8* %p) {
   ; CHECK:   [[COPY:%[0-9]+]]:_(p0) = COPY $x0
   ; CHECK:   [[COPY1:%[0-9]+]]:_(p0) = COPY [[COPY]](p0)
   ; CHECK:   $x0 = COPY [[COPY1]](p0)
-  ; CHECK:   RET_ReallyLR 0, implicit $x0
+  ; CHECK:   RET_ReallyLR implicit $x0
   %q = call i8* @llvm.launder.invariant.group.p0i8(i8* %p)
   ret i8* %q
 }
@@ -62,7 +62,7 @@ define i8* @strip_invariant_group(i8* %p) {
   ; CHECK:   [[COPY:%[0-9]+]]:_(p0) = COPY $x0
   ; CHECK:   [[COPY1:%[0-9]+]]:_(p0) = COPY [[COPY]](p0)
   ; CHECK:   $x0 = COPY [[COPY1]](p0)
-  ; CHECK:   RET_ReallyLR 0, implicit $x0
+  ; CHECK:   RET_ReallyLR implicit $x0
   %q = call i8* @llvm.strip.invariant.group.p0i8(i8* %p)
   ret i8* %q
 }

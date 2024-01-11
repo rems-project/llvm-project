@@ -61,8 +61,8 @@ foo:
 
 // CHECK: Relocations [
 // CHECK-NEXT:   .rela.dyn {
-// CHECK-NEXT:     0x220290 R_MORELLO_RELATIVE - 0x0
 // CHECK-NEXT:     0x220274 R_MORELLO_RELATIVE - 0x0
+// CHECK-NEXT:     0x220290 R_MORELLO_RELATIVE - 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   .rela.text {
 // CHECK-NEXT:     0x210260 R_MORELLO_CALL26 target 0x0

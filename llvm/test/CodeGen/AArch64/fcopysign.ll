@@ -95,8 +95,8 @@ entry:
 define float @copysign32(float %a, float %b) {
 ; CHECK-LABEL: copysign32:
 ; CHECK:       // %bb.0: // %entry
-; CHECK-NEXT:    // kill: def $s0 killed $s0 def $q0
 ; CHECK-NEXT:    movi v2.4s, #128, lsl #24
+; CHECK-NEXT:    // kill: def $s0 killed $s0 def $q0
 ; CHECK-NEXT:    // kill: def $s1 killed $s1 def $q1
 ; CHECK-NEXT:    bit v0.16b, v1.16b, v2.16b
 ; CHECK-NEXT:    // kill: def $s0 killed $s0 killed $q0
@@ -106,9 +106,9 @@ define float @copysign32(float %a, float %b) {
 ; CHECK-NONEON:       // %bb.0: // %entry
 ; CHECK-NONEON-NEXT:    fabs s0, s0
 ; CHECK-NONEON-NEXT:    fmov w8, s1
-; CHECK-NONEON-NEXT:    fneg s1, s0
 ; CHECK-NONEON-NEXT:    tst w8, #0x80000000
-; CHECK-NONEON-NEXT:    fcsel s0, s1, s0, ne
+; CHECK-NONEON-NEXT:    fneg s2, s0
+; CHECK-NONEON-NEXT:    fcsel s0, s2, s0, ne
 ; CHECK-NONEON-NEXT:    ret
 entry:
   %c = call float @llvm.copysign.f32(float %a, float %b)
@@ -120,8 +120,8 @@ define double @copysign64(double %a, double %b) {
 ; CHECK:       // %bb.0: // %entry
 ; CHECK-NEXT:    movi v2.2d, #0000000000000000
 ; CHECK-NEXT:    // kill: def $d0 killed $d0 def $q0
-; CHECK-NEXT:    fneg v2.2d, v2.2d
 ; CHECK-NEXT:    // kill: def $d1 killed $d1 def $q1
+; CHECK-NEXT:    fneg v2.2d, v2.2d
 ; CHECK-NEXT:    bit v0.16b, v1.16b, v2.16b
 ; CHECK-NEXT:    // kill: def $d0 killed $d0 killed $q0
 ; CHECK-NEXT:    ret
@@ -130,9 +130,9 @@ define double @copysign64(double %a, double %b) {
 ; CHECK-NONEON:       // %bb.0: // %entry
 ; CHECK-NONEON-NEXT:    fabs d0, d0
 ; CHECK-NONEON-NEXT:    fmov x8, d1
-; CHECK-NONEON-NEXT:    fneg d1, d0
 ; CHECK-NONEON-NEXT:    tst x8, #0x8000000000000000
-; CHECK-NONEON-NEXT:    fcsel d0, d1, d0, ne
+; CHECK-NONEON-NEXT:    fneg d2, d0
+; CHECK-NONEON-NEXT:    fcsel d0, d2, d0, ne
 ; CHECK-NONEON-NEXT:    ret
 entry:
   %c = call double @llvm.copysign.f64(double %a, double %b)
@@ -142,26 +142,26 @@ entry:
 define half @copysign16(half %a, half %b) {
 ; CHECK-LABEL: copysign16:
 ; CHECK:       // %bb.0: // %entry
+; CHECK-NEXT:    movi v2.4s, #128, lsl #24
 ; CHECK-NEXT:    fcvt s1, h1
 ; CHECK-NEXT:    fcvt s0, h0
-; CHECK-NEXT:    movi v2.4s, #128, lsl #24
 ; CHECK-NEXT:    bit v0.16b, v1.16b, v2.16b
 ; CHECK-NEXT:    fcvt h0, s0
 ; CHECK-NEXT:    ret
 ;
 ; CHECK-NONEON-LABEL: copysign16:
 ; CHECK-NONEON:       // %bb.0: // %entry
-; CHECK-NONEON-NEXT:    sub sp, sp, #16 // =16
+; CHECK-NONEON-NEXT:    sub sp, sp, #16
 ; CHECK-NONEON-NEXT:    .cfi_def_cfa_offset 16
+; CHECK-NONEON-NEXT:    fcvt s0, h0
 ; CHECK-NONEON-NEXT:    str h1, [sp, #12]
 ; CHECK-NONEON-NEXT:    ldrb w8, [sp, #13]
-; CHECK-NONEON-NEXT:    fcvt s0, h0
 ; CHECK-NONEON-NEXT:    fabs s0, s0
-; CHECK-NONEON-NEXT:    fneg s1, s0
 ; CHECK-NONEON-NEXT:    tst w8, #0x80
+; CHECK-NONEON-NEXT:    fneg s1, s0
 ; CHECK-NONEON-NEXT:    fcsel s0, s1, s0, ne
 ; CHECK-NONEON-NEXT:    fcvt h0, s0
-; CHECK-NONEON-NEXT:    add sp, sp, #16 // =16
+; CHECK-NONEON-NEXT:    add sp, sp, #16
 ; CHECK-NONEON-NEXT:    ret
 entry:
   %c = call half @llvm.copysign.f16(half %a, half %b)

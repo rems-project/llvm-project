@@ -39,7 +39,6 @@ class ABIInfo;
 class CallArgList;
 class CodeGenFunction;
 class CGBlockInfo;
-class CGFunctionInfo;
 
 /// TargetCodeGenInfo - This class organizes various target-specific
 /// codegeneration issues, like target-specific attributes, builtins and so
@@ -147,6 +146,13 @@ public:
                                           StringRef Constraint,
                                           llvm::Type *Ty) const {
     return Ty;
+  }
+
+  /// Target hook to decide whether an inline asm operand can be passed
+  /// by value.
+  virtual bool isScalarizableAsmOperand(CodeGen::CodeGenFunction &CGF,
+                                        llvm::Type *Ty) const {
+    return false;
   }
 
   /// Adds constraints and types for result registers.
@@ -346,9 +352,6 @@ public:
                                             LangAS DestAddr, llvm::Type *DestTy,
                                             bool IsNonNull = false) const;
 
-  virtual unsigned getAddressSpaceForType(QualType DestTy,
-                                          ASTContext& Context) const;
-  virtual bool canMarkAsNonNull(QualType DestTy, ASTContext& Context) const;
   /// Perform address space cast of a constant expression of pointer type.
   /// \param V is the LLVM constant to be casted to another address space.
   /// \param SrcAddr is the language address space of \p V.

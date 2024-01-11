@@ -526,7 +526,7 @@ body:             |
     %0:fpr(<4 x s16>) = COPY $d0
     %1:gpr(p0) = COPY $x0
     G_STORE %0(<4 x s16>), %1(p0) :: (store (<4 x s16>) into %ir.ptr)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -552,7 +552,7 @@ body:             |
     %0:fpr(<4 x s32>) = COPY $q0
     %1:gpr(p0) = COPY $x0
     G_STORE %0(<4 x s32>), %1(p0) :: (store (<4 x s32>) into %ir.ptr)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -578,7 +578,7 @@ body:             |
     %0:fpr(<8 x s16>) = COPY $q0
     %1:gpr(p0) = COPY $x0
     G_STORE %0(<8 x s16>), %1(p0) :: (store (<8 x s16>) into %ir.ptr)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -604,7 +604,7 @@ body:             |
     %0:fpr(<16 x s8>) = COPY $q0
     %1:gpr(p0) = COPY $x0
     G_STORE %0(<16 x s8>), %1(p0) :: (store (<16 x s8>) into %ir.ptr)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---

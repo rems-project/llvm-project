@@ -1983,7 +1983,7 @@ let Predicates = [HasC64] in {
 def CMOVbaseTLS : Pseudo<(outs Cap:$dst), (ins),
                        [(set Cap:$dst, AArch64cthreadpointer)]>, Sched<[WriteSys]>;
 
-let isCall = 1, Defs = [CLR, C0, X1], Uses = [C2], hasSideEffects = 1,
+let isCall = 1, Defs = [CLR, C0, X1], Uses = [C2], hasSideEffects = 1, Size = 20,
     isCodeGenOnly = 1 in
 def TLSDESC_C64_CALLSEQ
     : Pseudo<(outs), (ins i64imm:$sym),

@@ -38,6 +38,6 @@ body:             |
     %2:_(s64) = G_IMPLICIT_DEF debug-location !DILocation(line: 0, scope: !6)
     G_MEMSET %0(p0), %1(s8), %2(s64), 1, debug-location !11 :: (store (s8))
     DBG_VALUE 0, 0, !9, !DIExpression(), debug-location !12
-    RET_ReallyLR 0, debug-location !12
+    RET_ReallyLR debug-location !12
 
 ...

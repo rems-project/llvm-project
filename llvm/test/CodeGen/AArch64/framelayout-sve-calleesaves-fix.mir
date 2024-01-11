@@ -32,5 +32,5 @@ body:             |
     B %bb.1
 
   bb.1.entry:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ---

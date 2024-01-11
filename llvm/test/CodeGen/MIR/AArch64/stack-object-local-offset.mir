@@ -39,5 +39,5 @@ body: |
     %2 = ADRP @local_addr
     %3 = ADDXri %stack.0.local_var, 0, 0
     STRXui killed %3, killed %2, @local_addr :: (store (s64) into @local_addr)
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...

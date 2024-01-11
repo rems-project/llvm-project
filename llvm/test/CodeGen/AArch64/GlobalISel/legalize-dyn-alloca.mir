@@ -52,7 +52,7 @@ body:             |
     ; CHECK: $sp = COPY [[INTTOPTR]](p0)
     ; CHECK: [[COPY2:%[0-9]+]]:_(p0) = COPY [[INTTOPTR]](p0)
     ; CHECK: $x0 = COPY [[COPY2]](p0)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %0:_(s32) = COPY $w0
     %3:_(s64) = G_CONSTANT i64 1
     %1:_(s64) = G_ZEXT %0(s32)
@@ -63,7 +63,7 @@ body:             |
     %7:_(s64) = G_AND %5, %6
     %8:_(p0) = G_DYN_STACKALLOC %7(s64), 0
     $x0 = COPY %8(p0)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -100,7 +100,7 @@ body:             |
     ; CHECK: $sp = COPY [[INTTOPTR]](p0)
     ; CHECK: [[COPY2:%[0-9]+]]:_(p0) = COPY [[INTTOPTR]](p0)
     ; CHECK: $x0 = COPY [[COPY2]](p0)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %0:_(s32) = COPY $w0
     %3:_(s64) = G_CONSTANT i64 1
     %1:_(s64) = G_ZEXT %0(s32)
@@ -111,7 +111,7 @@ body:             |
     %7:_(s64) = G_AND %5, %6
     %8:_(p0) = G_DYN_STACKALLOC %7(s64), 32
     $x0 = COPY %8(p0)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -146,7 +146,7 @@ body:             |
     ; CHECK: $sp = COPY [[INTTOPTR]](p0)
     ; CHECK: [[COPY2:%[0-9]+]]:_(p0) = COPY [[INTTOPTR]](p0)
     ; CHECK: $x0 = COPY [[COPY2]](p0)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %0:_(s32) = COPY $w0
     %3:_(s64) = G_CONSTANT i64 16
     %1:_(s64) = G_ZEXT %0(s32)
@@ -157,6 +157,6 @@ body:             |
     %7:_(s64) = G_AND %5, %6
     %8:_(p0) = G_DYN_STACKALLOC %7(s64), 0
     $x0 = COPY %8(p0)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...

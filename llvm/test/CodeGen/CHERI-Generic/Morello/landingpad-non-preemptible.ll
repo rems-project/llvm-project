@@ -46,7 +46,7 @@ define dso_local i32 @_Z8do_catchv() local_unnamed_addr addrspace(200) uwtable p
 ; CHECK-NEXT:  .Ltmp2:
 ; CHECK-NEXT:    mov x19, x1
 ; CHECK-NEXT:    bl __cxa_begin_catch
-; CHECK-NEXT:    cmp w19, #2 // =2
+; CHECK-NEXT:    cmp w19, #2
 ; CHECK-NEXT:    b.ne .LBB0_4
 ; CHECK-NEXT:  // %bb.3: // %catch1
 ; CHECK-NEXT:    bl __cxa_end_catch

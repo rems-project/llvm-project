@@ -16,7 +16,7 @@ stack:
 constants:
 body:             |
   bb.0:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -34,7 +34,7 @@ stack:
 constants:
 body:             |
   bb.0:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -52,6 +52,6 @@ stack:
 constants:
 body:             |
   bb.0:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

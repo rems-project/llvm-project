@@ -13,14 +13,14 @@
 define i32 @fn1() local_unnamed_addr #0 {
 ; CHECK-LABEL: fn1:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    daddiu $1, $zero, -[[#STACKFRAME_SIZE:8288]]
+; CHECK-NEXT:    daddiu $1, $zero, -8288
 ; CHECK-NEXT:    cincoffset $c11, $c11, $1
 ; CHECK-NEXT:    daddiu $1, $zero, 8280
 ; CHECK-NEXT:    csd $16, $1, 0($c11) # 8-byte Folded Spill
-; CHECK-NEXT:    csc $c20, $zero, [[#STACKFRAME_SIZE - mul(CAP_SIZE, 2)]]($c11)
-; CHECK-NEXT:    csc $c19, $zero, [[#STACKFRAME_SIZE - mul(CAP_SIZE, 3)]]($c11)
-; CHECK-NEXT:    csc $c18, $zero, [[#STACKFRAME_SIZE - mul(CAP_SIZE, 4)]]($c11)
-; CHECK-NEXT:    csc $c17, $zero, [[#STACKFRAME_SIZE - mul(CAP_SIZE, 5)]]($c11)
+; CHECK-NEXT:    csc $c20, $zero, 8256($c11) # 16-byte Folded Spill
+; CHECK-NEXT:    csc $c19, $zero, 8240($c11) # 16-byte Folded Spill
+; CHECK-NEXT:    csc $c18, $zero, 8224($c11) # 16-byte Folded Spill
+; CHECK-NEXT:    csc $c17, $zero, 8208($c11) # 16-byte Folded Spill
 ; CHECK-NEXT:    lui $1, %pcrel_hi(_CHERI_CAPABILITY_TABLE_-8)
 ; CHECK-NEXT:    daddiu $1, $1, %pcrel_lo(_CHERI_CAPABILITY_TABLE_-4)
 ; CHECK-NEXT:    cgetpccincoffset $c20, $1
@@ -44,13 +44,13 @@ define i32 @fn1() local_unnamed_addr #0 {
 ; CHECK-NEXT:    ori $1, $zero, 65495
 ; CHECK-NEXT:    cjalr $c12, $c17
 ; CHECK-NEXT:    candperm $c13, $c1, $1
-; CHECK-NEXT:    clc $c17, $zero, [[#STACKFRAME_SIZE - mul(CAP_SIZE, 5)]]($c11)
-; CHECK-NEXT:    clc $c18, $zero, [[#STACKFRAME_SIZE - mul(CAP_SIZE, 4)]]($c11)
-; CHECK-NEXT:    clc $c19, $zero, [[#STACKFRAME_SIZE - mul(CAP_SIZE, 3)]]($c11)
-; CHECK-NEXT:    clc $c20, $zero, [[#STACKFRAME_SIZE - mul(CAP_SIZE, 2)]]($c11)
+; CHECK-NEXT:    clc $c17, $zero, 8208($c11) # 16-byte Folded Reload
+; CHECK-NEXT:    clc $c18, $zero, 8224($c11) # 16-byte Folded Reload
+; CHECK-NEXT:    clc $c19, $zero, 8240($c11) # 16-byte Folded Reload
+; CHECK-NEXT:    clc $c20, $zero, 8256($c11) # 16-byte Folded Reload
 ; CHECK-NEXT:    daddiu $1, $zero, 8280
 ; CHECK-NEXT:    cld $16, $1, 0($c11) # 8-byte Folded Reload
-; CHECK-NEXT:    daddiu $1, $zero, [[#STACKFRAME_SIZE]]
+; CHECK-NEXT:    daddiu $1, $zero, 8288
 ; CHECK-NEXT:    cjr $c17
 ; CHECK-NEXT:    cincoffset $c11, $c11, $1
 entry:

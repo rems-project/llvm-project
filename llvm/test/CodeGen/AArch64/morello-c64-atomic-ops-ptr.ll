@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=aarch64-none-elf -mattr=+c64,+morello -target-abi purecap -verify-machineinstrs | FileCheck  %s
 ; RUN: llc < %s -mtriple=aarch64-none-elf -mattr=+c64,+lse,+morello -target-abi purecap -verify-machineinstrs | FileCheck %s
 
-target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128-pf200:128:128"
+target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128-pf200:128:128:128:64"
 
 ; CHECK-LABEL: test_atomic_load_add_ptr
 define i8 addrspace(200)* @test_atomic_load_add_ptr(i8 addrspace(200)* %offset, i8 addrspace(200) * addrspace(200)* %ptr) nounwind {

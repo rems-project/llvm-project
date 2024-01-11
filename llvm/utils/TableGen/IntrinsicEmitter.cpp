@@ -18,7 +18,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
-#include "llvm/TableGen/StringMatcher.h"
 #include "llvm/TableGen/StringToOffsetTable.h"
 #include "llvm/TableGen/TableGenBackend.h"
 #include <algorithm>
@@ -250,11 +249,15 @@ enum IIT_Info {
   IIT_STRUCT9 = 49,
   IIT_V256 = 50,
   IIT_AMX  = 51,
-  IIT_IFATPTR64 = 52,
-  IIT_IFATPTR128 = 53,
-  IIT_IFATPTR256 = 54,
-  IIT_IFATPTR512 = 55,
-  IIT_IFATPTRAny = 56,
+  IIT_PPCF128 = 52,
+  IIT_V3 = 53,
+  IIT_EXTERNREF = 54,
+  IIT_FUNCREF = 55,
+  IIT_IFATPTR64 = 56,
+  IIT_IFATPTR128 = 57,
+  IIT_IFATPTR256 = 58,
+  IIT_IFATPTR512 = 59,
+  IIT_IFATPTRAny = 60,
 };
 
 static void EncodeFixedValueType(MVT::SimpleValueType VT,
@@ -284,6 +287,7 @@ static void EncodeFixedValueType(MVT::SimpleValueType VT,
   case MVT::f32: return Sig.push_back(IIT_F32);
   case MVT::f64: return Sig.push_back(IIT_F64);
   case MVT::f128: return Sig.push_back(IIT_F128);
+  case MVT::ppcf128: return Sig.push_back(IIT_PPCF128);
   case MVT::token: return Sig.push_back(IIT_TOKEN);
   case MVT::Metadata: return Sig.push_back(IIT_METADATA);
   case MVT::x86mmx: return Sig.push_back(IIT_MMX);
@@ -292,6 +296,10 @@ static void EncodeFixedValueType(MVT::SimpleValueType VT,
   case MVT::Other: return Sig.push_back(IIT_EMPTYSTRUCT);
   // MVT::isVoid is used to represent varargs here.
   case MVT::isVoid: return Sig.push_back(IIT_VARARG);
+  case MVT::externref:
+    return Sig.push_back(IIT_EXTERNREF);
+  case MVT::funcref:
+    return Sig.push_back(IIT_FUNCREF);
   }
 }
 
@@ -409,6 +417,7 @@ static void EncodeFixedType(Record *R, std::vector<unsigned char> &ArgCodes,
     default: PrintFatalError("unhandled vector type width in intrinsic!");
     case 1: Sig.push_back(IIT_V1); break;
     case 2: Sig.push_back(IIT_V2); break;
+    case 3: Sig.push_back(IIT_V3); break;
     case 4: Sig.push_back(IIT_V4); break;
     case 8: Sig.push_back(IIT_V8); break;
     case 16: Sig.push_back(IIT_V16); break;

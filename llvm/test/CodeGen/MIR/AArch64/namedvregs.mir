@@ -21,6 +21,6 @@ body:             |
     %2:gpr32 = COPY %foobar
     %baz:gpr32 = COPY %2
     $w0 = COPY %baz
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...

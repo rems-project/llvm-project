@@ -4,8 +4,8 @@
 
 ; CHECK-LABEL: fun
 ; CHECK: mov w[[REG:[0-9]+]], #29540
-; CHECK: movk w[[REG]], #25697, lsl #16
 ; CHECK: strb wzr, [c0, #4]
+; CHECK: movk w[[REG]], #25697, lsl #16
 ; CHECK: str w8, [c0]
 define void @fun(i8 addrspace(200)* nocapture %tt) {
 entry:

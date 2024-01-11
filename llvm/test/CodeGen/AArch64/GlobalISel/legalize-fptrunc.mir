@@ -10,11 +10,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:_(s32) = COPY $s0
     ; CHECK: [[FPTRUNC:%[0-9]+]]:_(s16) = G_FPTRUNC [[COPY]](s32)
     ; CHECK: $h0 = COPY [[FPTRUNC]](s16)
-    ; CHECK: RET_ReallyLR 0, implicit $h0
+    ; CHECK: RET_ReallyLR implicit $h0
     %0:_(s32) = COPY $s0
     %1:_(s16) = G_FPTRUNC %0
     $h0 = COPY %1(s16)
-    RET_ReallyLR 0, implicit $h0
+    RET_ReallyLR implicit $h0
 ...
 ---
 name:            fptrunc_s16_s64
@@ -26,11 +26,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:_(s64) = COPY $d0
     ; CHECK: [[FPTRUNC:%[0-9]+]]:_(s16) = G_FPTRUNC [[COPY]](s64)
     ; CHECK: $h0 = COPY [[FPTRUNC]](s16)
-    ; CHECK: RET_ReallyLR 0, implicit $h0
+    ; CHECK: RET_ReallyLR implicit $h0
     %0:_(s64) = COPY $d0
     %1:_(s16) = G_FPTRUNC %0
     $h0 = COPY %1(s16)
-    RET_ReallyLR 0, implicit $h0
+    RET_ReallyLR implicit $h0
 ...
 ---
 name:            fptrunc_s32_s64
@@ -42,11 +42,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:_(s64) = COPY $d0
     ; CHECK: [[FPTRUNC:%[0-9]+]]:_(s32) = G_FPTRUNC [[COPY]](s64)
     ; CHECK: $s0 = COPY [[FPTRUNC]](s32)
-    ; CHECK: RET_ReallyLR 0, implicit $s0
+    ; CHECK: RET_ReallyLR implicit $s0
     %0:_(s64) = COPY $d0
     %1:_(s32) = G_FPTRUNC %0
     $s0 = COPY %1(s32)
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
 ...
 ---
 name:            fptrunc_v4s16_v4s32
@@ -58,11 +58,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:_(<4 x s32>) = COPY $q0
     ; CHECK: [[FPTRUNC:%[0-9]+]]:_(<4 x s16>) = G_FPTRUNC [[COPY]](<4 x s32>)
     ; CHECK: $d0 = COPY [[FPTRUNC]](<4 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:_(<4 x s32>) = COPY $q0
     %1:_(<4 x s16>) = G_FPTRUNC %0
     $d0 = COPY %1(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 ...
 ---
 name:            fptrunc_v2s16_v2s32
@@ -74,11 +74,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:_(<2 x s32>) = COPY $d0
     ; CHECK: [[FPTRUNC:%[0-9]+]]:_(<2 x s16>) = G_FPTRUNC [[COPY]](<2 x s32>)
     ; CHECK: $s0 = COPY [[FPTRUNC]](<2 x s16>)
-    ; CHECK: RET_ReallyLR 0, implicit $s0
+    ; CHECK: RET_ReallyLR implicit $s0
     %0:_(<2 x s32>) = COPY $d0
     %1:_(<2 x s16>) = G_FPTRUNC %0
     $s0 = COPY %1(<2 x s16>)
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
 ...
 ---
 name:            fptrunc_v4s32_v4s64
@@ -91,11 +91,11 @@ body:             |
     ; CHECK: [[FPTRUNC1:%[0-9]+]]:_(<2 x s32>) = G_FPTRUNC [[DEF]](<2 x s64>)
     ; CHECK: [[CONCAT_VECTORS:%[0-9]+]]:_(<4 x s32>) = G_CONCAT_VECTORS [[FPTRUNC]](<2 x s32>), [[FPTRUNC1]](<2 x s32>)
     ; CHECK: $q0 = COPY [[CONCAT_VECTORS]](<4 x s32>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:_(<4 x s64>) = G_IMPLICIT_DEF
     %1:_(<4 x s32>) = G_FPTRUNC %0
     $q0 = COPY %1(<4 x s32>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 ...
 ---
 name:            fptrunc_v8s32_v8s64
@@ -131,5 +131,5 @@ body:             |
     %6:_(<8 x s32>) = G_FPTRUNC %0(<8 x s64>)
     %7:_(p0) = COPY $x0
     G_STORE %6(<8 x s32>), %7(p0) :: (store (<8 x s32>))
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...

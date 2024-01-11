@@ -17,19 +17,16 @@
 
 define i32 @test_generaldynamic() {
 ; CHECK-LABEL: test_generaldynamic:
-; CHECK-NOLD-LABEL: test_generaldynamic:
 
   %val = load i32, i32* @general_dynamic_var
   ret i32 %val
 
-; CHECK: mrs x[[TP:[0-9]+]], TPIDR_EL0
 ; CHECK: adrp x[[TLSDESC_HI:[0-9]+]], :tlsdesc:general_dynamic_var
 ; CHECK-NEXT: ldr [[CALLEE:x[0-9]+]], [x[[TLSDESC_HI]], :tlsdesc_lo12:general_dynamic_var]
 ; CHECK-NEXT: add x0, x[[TLSDESC_HI]], :tlsdesc_lo12:general_dynamic_var
 ; CHECK-NEXT: .tlsdesccall general_dynamic_var
 ; CHECK-NEXT: blr [[CALLEE]]
 
-; CHECK-NOLD: mrs x[[TP:[0-9]+]], TPIDR_EL0
 ; CHECK-NOLD: adrp x[[TLSDESC_HI:[0-9]+]], :tlsdesc:general_dynamic_var
 ; CHECK-NOLD-NEXT: ldr [[CALLEE:x[0-9]+]], [x[[TLSDESC_HI]], :tlsdesc_lo12:general_dynamic_var]
 ; CHECK-NOLD-NEXT: add x0, x[[TLSDESC_HI]], :tlsdesc_lo12:general_dynamic_var
@@ -37,8 +34,10 @@ define i32 @test_generaldynamic() {
 ; CHECK-NOLD-NEXT: blr [[CALLEE]]
 
 
-; CHECK: ldr w0, [x0, x[[TP]]]
-; CHECK-NOLD: ldr w0, [x0, x[[TP]]]
+; CHECK: mrs x[[TP:[0-9]+]], TPIDR_EL0
+; CHECK: ldr w0, [x[[TP]], x0]
+; CHECK-NOLD: mrs x[[TP:[0-9]+]], TPIDR_EL0
+; CHECK-NOLD: ldr w0, [x[[TP]], x0]
 
 ; CHECK-RELOC: R_AARCH64_TLSDESC_ADR_PAGE21
 ; CHECK-RELOC: R_AARCH64_TLSDESC_LD64_LO12
@@ -54,18 +53,17 @@ define i32 @test_generaldynamic() {
 
 define i32* @test_generaldynamic_addr() {
 ; CHECK-LABEL: test_generaldynamic_addr:
-; CHECK-NOLD-LABEL: test_generaldynamic_addr:
 
   ret i32* @general_dynamic_var
 
-; CHECK: mrs [[TP:x[0-9]+]], TPIDR_EL0
 ; CHECK: adrp x[[TLSDESC_HI:[0-9]+]], :tlsdesc:general_dynamic_var
 ; CHECK-NEXT: ldr [[CALLEE:x[0-9]+]], [x[[TLSDESC_HI]], :tlsdesc_lo12:general_dynamic_var]
 ; CHECK-NEXT: add x0, x[[TLSDESC_HI]], :tlsdesc_lo12:general_dynamic_var
 ; CHECK-NEXT: .tlsdesccall general_dynamic_var
 ; CHECK-NEXT: blr [[CALLEE]]
 
-; CHECK: add x0, x0, [[TP]]
+; CHECK: mrs [[TP:x[0-9]+]], TPIDR_EL0
+; CHECK: add x0, [[TP]], x0
 
 ; CHECK-RELOC: R_AARCH64_TLSDESC_ADR_PAGE21
 ; CHECK-RELOC: R_AARCH64_TLSDESC_LD64_LO12
@@ -83,7 +81,6 @@ define i32* @test_generaldynamic_addr() {
 
 define i32 @test_localdynamic() {
 ; CHECK-LABEL: test_localdynamic:
-; CHECK-NOLD-LABEL: test_localdynamic:
 
   %val = load i32, i32* @local_dynamic_var
   ret i32 %val
@@ -94,17 +91,17 @@ define i32 @test_localdynamic() {
 ; CHECK-NEXT: .tlsdesccall _TLS_MODULE_BASE_
 ; CHECK-NEXT: blr [[CALLEE]]
 ; CHECK-NEXT: add x[[TPOFF:[0-9]+]], x0, :dtprel_hi12:local_dynamic_var
-; CHECK-NEXT: add x[[TPOFF]], x[[TPOFF]], :dtprel_lo12_nc:local_dynamic_var
-; CHECK: mrs x[[TPIDR:[0-9]+]], TPIDR_EL0
-; CHECK: ldr w0, [x[[TPOFF]], x[[TPIDR]]]
+; CHECK-DAG: mrs x[[TPIDR:[0-9]+]], TPIDR_EL0
+; CHECK-DAG: add x[[TPOFF]], x[[TPOFF]], :dtprel_lo12_nc:local_dynamic_var
+; CHECK: ldr w0, [x[[TPIDR]], x[[TPOFF]]]
 
-; CHECK-NOLD: mrs x[[TPIDR:[0-9]+]], TPIDR_EL0
 ; CHECK-NOLD: adrp x[[TLSDESC_HI:[0-9]+]], :tlsdesc:local_dynamic_var
 ; CHECK-NOLD-NEXT: ldr [[CALLEE:x[0-9]+]], [x[[TLSDESC_HI]], :tlsdesc_lo12:local_dynamic_var]
 ; CHECK-NOLD-NEXT: add x0, x[[TLSDESC_HI]], :tlsdesc_lo12:local_dynamic_var
 ; CHECK-NOLD-NEXT: .tlsdesccall local_dynamic_var
 ; CHECK-NOLD-NEXT: blr [[CALLEE]]
-; CHECK-NOLD: ldr w0, [x0, x[[TPIDR]]]
+; CHECK-NOLD: mrs x[[TPIDR:[0-9]+]], TPIDR_EL0
+; CHECK-NOLD: ldr w0, [x[[TPIDR]], x0]
 
 
 ; CHECK-RELOC: R_AARCH64_TLSDESC_ADR_PAGE21
@@ -130,17 +127,17 @@ define i32* @test_localdynamic_addr() {
 ; CHECK-NEXT: .tlsdesccall _TLS_MODULE_BASE_
 ; CHECK-NEXT: blr [[CALLEE]]
 ; CHECK-NEXT: add x[[TPOFF:[0-9]+]], x0, :dtprel_hi12:local_dynamic_var
-; CHECK-NEXT: add x[[TPOFF]], x[[TPOFF]], :dtprel_lo12_nc:local_dynamic_var
-; CHECK: mrs x[[TPIDR:[0-9]+]], TPIDR_EL0
-; CHECK: add x0, x[[TPOFF]], x[[TPIDR]]
+; CHECK-DAG: add x[[TPOFF]], x[[TPOFF]], :dtprel_lo12_nc:local_dynamic_var
+; CHECK-DAG: mrs x[[TPIDR:[0-9]+]], TPIDR_EL0
+; CHECK: add x0, x[[TPIDR]], x[[TPOFF]]
 
-; CHECK-NOLD: mrs x[[TPIDR:[0-9]+]], TPIDR_EL0
 ; CHECK-NOLD: adrp x[[TLSDESC_HI:[0-9]+]], :tlsdesc:local_dynamic_var
 ; CHECK-NOLD-NEXT: ldr [[CALLEE:x[0-9]+]], [x[[TLSDESC_HI]], :tlsdesc_lo12:local_dynamic_var]
 ; CHECK-NOLD-NEXT: add x0, x[[TLSDESC_HI]], :tlsdesc_lo12:local_dynamic_var
 ; CHECK-NOLD-NEXT: .tlsdesccall local_dynamic_var
 ; CHECK-NOLD-NEXT: blr [[CALLEE]]
-; CHECK-NOLD: add x0, x0, x[[TPIDR]]
+; CHECK-NOLD: mrs x[[TPIDR:[0-9]+]], TPIDR_EL0
+; CHECK-NOLD: add x0, x[[TPIDR]], x0
   ret i32* @local_dynamic_var
 
 ; CHECK-RELOC: R_AARCH64_TLSDESC_ADR_PAGE21

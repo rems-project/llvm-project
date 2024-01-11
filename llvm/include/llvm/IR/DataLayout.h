@@ -19,6 +19,7 @@
 #ifndef LLVM_IR_DATALAYOUT_H
 #define LLVM_IR_DATALAYOUT_H
 
+#include "llvm/ADT/APInt.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
@@ -91,15 +92,15 @@ struct LayoutAlignElem {
 struct PointerAlignElem {
   Align ABIAlign;
   Align PrefAlign;
-  uint32_t TypeByteWidth;
+  uint32_t TypeBitWidth;
   uint32_t AddressSpace;
-  uint32_t IndexWidth;
+  uint32_t IndexBitWidth;
   bool IsFatPointer;
 
   /// Initializer
-  static PointerAlignElem get(uint32_t AddressSpace, Align ABIAlign,
-                              Align PrefAlign, uint32_t TypeByteWidth,
-                              uint32_t IndexWidth, bool IsFatPointer);
+  static PointerAlignElem getInBits(uint32_t AddressSpace, Align ABIAlign,
+                                    Align PrefAlign, uint32_t TypeBitWidth,
+                                    uint32_t IndexBitWidth, bool IsFatPointer);
 
   bool operator==(const PointerAlignElem &rhs) const;
 };
@@ -121,6 +122,7 @@ public:
 private:
   /// Defaults to false.
   bool BigEndian;
+  bool HasCheriCapabilities = false;
 
   unsigned AllocaAddrSpace;
   MaybeAlign StackNaturalAlign;
@@ -136,6 +138,7 @@ private:
     MM_MachO,
     MM_WinCOFF,
     MM_WinCOFFX86,
+    MM_GOFF,
     MM_Mips,
     MM_XCOFF
   };
@@ -179,9 +182,9 @@ private:
 
   /// Attempts to set the alignment of a pointer in the given address space.
   /// Returns an error description on failure.
-  Error setPointerAlignment(uint32_t AddrSpace, Align ABIAlign, Align PrefAlign,
-                            uint32_t TypeByteWidth, uint32_t IndexWidth,
-                            bool IsFatPointer);
+  Error setPointerAlignmentInBits(uint32_t AddrSpace, Align ABIAlign,
+                                  Align PrefAlign, uint32_t TypeBitWidth,
+                                  uint32_t IndexBitWidth, bool IsFatPointer);
 
   /// Internal helper to get alignment for integer of given bitwidth.
   Align getIntegerAlignment(uint32_t BitWidth, bool abi_or_pref) const;
@@ -224,6 +227,7 @@ public:
     Alignments = DL.Alignments;
     Pointers = DL.Pointers;
     NonIntegralAddressSpaces = DL.NonIntegralAddressSpaces;
+    HasCheriCapabilities = DL.HasCheriCapabilities;
     return *this;
   }
 
@@ -322,6 +326,7 @@ public:
     switch (ManglingMode) {
     case MM_None:
     case MM_ELF:
+    case MM_GOFF:
     case MM_Mips:
     case MM_WinCOFF:
     case MM_XCOFF:
@@ -340,6 +345,8 @@ public:
     case MM_ELF:
     case MM_WinCOFF:
       return ".L";
+    case MM_GOFF:
+      return "@";
     case MM_Mips:
       return "$";
     case MM_MachO:
@@ -388,6 +395,8 @@ public:
     return Ty->isPointerTy() && isFatPointer(Ty->getPointerAddressSpace());
   }
 
+  bool hasCheriCapabilities() const { return HasCheriCapabilities; }
+
   unsigned getPointerAddrSizeInBits(unsigned AS) const {
     // For CHERI the address range is the same as the IndexSize.
     // For other targets (other than those using non-integral pointers), we
@@ -400,15 +409,17 @@ public:
     return getPointerAddrSizeInBits(Ty->getPointerAddressSpace());
   }
 
-  /// Layout pointer size
+  /// Layout pointer size in bytes, rounded up to a whole
+  /// number of bytes.
   /// FIXME: The defaults need to be removed once all of
   /// the backends/clients are updated.
   unsigned getPointerSize(LLVM_DEFAULT_AS_PARAM(AS)) const;
 
-  /// Returns the maximum pointer size over all address spaces.
-  unsigned getMaxPointerSize() const;
+  /// Returns the maximum index size over all address spaces.
+  unsigned getMaxIndexSize() const;
 
-  // Index size used for address calculation.
+  // Index size in bytes used for address calculation,
+  /// rounded up to a whole number of bytes.
   unsigned getIndexSize(unsigned AS) const;
 
   /// Return the address spaces containing non-integral pointers.  Pointers in
@@ -435,17 +446,17 @@ public:
   /// FIXME: The defaults need to be removed once all of
   /// the backends/clients are updated.
   unsigned getPointerSizeInBits(LLVM_DEFAULT_AS_PARAM(AS)) const {
-    return getPointerSize(AS) * 8;
+    return getPointerAlignElem(AS).TypeBitWidth;
   }
 
-  /// Returns the maximum pointer size over all address spaces.
-  unsigned getMaxPointerSizeInBits() const {
-    return getMaxPointerSize() * 8;
+  /// Returns the maximum index size over all address spaces.
+  unsigned getMaxIndexSizeInBits() const {
+    return getMaxIndexSize() * 8;
   }
 
   /// Size in bits of index used for address calculation in getelementptr.
   unsigned getIndexSizeInBits(unsigned AS) const {
-    return getIndexSize(AS) * 8;
+    return getPointerAlignElem(AS).IndexBitWidth;
   }
 
   /// Layout pointer size, in bits, based on the type.  If this function is
@@ -504,7 +515,7 @@ public:
   /// For example, returns 5 for i36 and 10 for x86_fp80.
   TypeSize getTypeStoreSize(Type *Ty) const {
     TypeSize BaseSize = getTypeSizeInBits(Ty);
-    return { (BaseSize.getKnownMinSize() + 7) / 8, BaseSize.isScalable() };
+    return {divideCeil(BaseSize.getKnownMinSize(), 8), BaseSize.isScalable()};
   }
 
   /// Returns the maximum number of bits that may be overwritten by
@@ -553,7 +564,7 @@ public:
 
   /// Returns the minimum ABI-required alignment for the specified type.
   /// FIXME: Deprecate this function once migration to Align is over.
-  unsigned getABITypeAlignment(Type *Ty) const;
+  uint64_t getABITypeAlignment(Type *Ty) const;
 
   /// Returns the minimum ABI-required alignment for the specified type.
   Align getABITypeAlign(Type *Ty) const;
@@ -576,7 +587,7 @@ public:
   ///
   /// This is always at least as good as the ABI alignment.
   /// FIXME: Deprecate this function once migration to Align is over.
-  unsigned getPrefTypeAlignment(Type *Ty) const;
+  uint64_t getPrefTypeAlignment(Type *Ty) const;
 
   /// Returns the preferred stack/global alignment for the specified
   /// type.
@@ -618,6 +629,16 @@ public:
   /// Note that this takes the element type, not the pointer type.
   /// This is used to implement getelementptr.
   int64_t getIndexedOffsetInType(Type *ElemTy, ArrayRef<Value *> Indices) const;
+
+  /// Get GEP indices to access Offset inside ElemTy. ElemTy is updated to be
+  /// the result element type and Offset to be the residual offset.
+  SmallVector<APInt> getGEPIndicesForOffset(Type *&ElemTy, APInt &Offset) const;
+
+  /// Get single GEP index to access Offset inside ElemTy. Returns None if
+  /// index cannot be computed, e.g. because the type is not an aggregate.
+  /// ElemTy is updated to be the result element type and Offset to be the
+  /// residual offset.
+  Optional<APInt> getGEPIndexForOffset(Type *&ElemTy, APInt &Offset) const;
 
   /// Returns a StructLayout object, indicating the alignment of the
   /// struct, its size, and the offsets of its fields.

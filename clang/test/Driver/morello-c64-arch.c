@@ -13,4 +13,4 @@
 // RUN:     FileCheck %s --check-prefix=nowarn
 
 // warn: warning: Using c64 in the arch string is deprecated. The CPU mode should be inferred from the ABI. [-Wdeprecated]
-// nowarn-NOT: warning
+// nowarn-NOT: warning:

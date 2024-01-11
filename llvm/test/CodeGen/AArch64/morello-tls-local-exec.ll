@@ -22,9 +22,9 @@ define i32 @test_local_exec() addrspace(200) {
 ; CHECK-12:       .Lfunc_begin0:
 ; CHECK-12-NEXT:    .cfi_startproc purecap
 ; CHECK-12-NEXT:  // %bb.0:
+; CHECK-12-NEXT:    movz x8, #:size_g0:local_exec_var
 ; CHECK-12-NEXT:    mrs c0, CTPIDR_EL0
 ; CHECK-12-NEXT:    add c0, c0, :tprel_lo12:local_exec_var
-; CHECK-12-NEXT:    movz x8, #:size_g0:local_exec_var
 ; CHECK-12-NEXT:    scbnds c0, c0, x8
 ; CHECK-12-NEXT:    ldr w0, [c0]
 ; CHECK-12-NEXT:    ret c30
@@ -33,10 +33,10 @@ define i32 @test_local_exec() addrspace(200) {
 ; CHECK-24:       .Lfunc_begin0:
 ; CHECK-24-NEXT:    .cfi_startproc purecap
 ; CHECK-24-NEXT:  // %bb.0:
-; CHECK-24-NEXT:    mrs c0, CTPIDR_EL0
 ; CHECK-24-NEXT:    movz x8, #:size_g1:local_exec_var
-; CHECK-24-NEXT:    add c0, c0, :tprel_hi12:local_exec_var
+; CHECK-24-NEXT:    mrs c0, CTPIDR_EL0
 ; CHECK-24-NEXT:    movk x8, #:size_g0_nc:local_exec_var
+; CHECK-24-NEXT:    add c0, c0, :tprel_hi12:local_exec_var
 ; CHECK-24-NEXT:    add c0, c0, :tprel_lo12_nc:local_exec_var
 ; CHECK-24-NEXT:    scbnds c0, c0, x8
 ; CHECK-24-NEXT:    ldr w0, [c0]
@@ -47,11 +47,11 @@ define i32 @test_local_exec() addrspace(200) {
 ; CHECK-32-NEXT:    .cfi_startproc purecap
 ; CHECK-32-NEXT:  // %bb.0:
 ; CHECK-32-NEXT:    movz x8, #:tprel_g1:local_exec_var
-; CHECK-32-NEXT:    mrs c0, CTPIDR_EL0
 ; CHECK-32-NEXT:    movz x9, #:size_g1:local_exec_var
 ; CHECK-32-NEXT:    movk x8, #:tprel_g0_nc:local_exec_var
-; CHECK-32-NEXT:    add c0, c0, x8, uxtx
 ; CHECK-32-NEXT:    movk x9, #:size_g0_nc:local_exec_var
+; CHECK-32-NEXT:    mrs c0, CTPIDR_EL0
+; CHECK-32-NEXT:    add c0, c0, x8, uxtx
 ; CHECK-32-NEXT:    scbnds c0, c0, x9
 ; CHECK-32-NEXT:    ldr w0, [c0]
 ; CHECK-32-NEXT:    ret c30
@@ -63,11 +63,11 @@ define i32 @test_local_exec() addrspace(200) {
 ; CHECK-48-NEXT:    movz x8, #:tprel_g2:local_exec_var
 ; CHECK-48-NEXT:    movz x9, #:size_g2:local_exec_var
 ; CHECK-48-NEXT:    movk x8, #:tprel_g1_nc:local_exec_var
-; CHECK-48-NEXT:    mrs c0, CTPIDR_EL0
 ; CHECK-48-NEXT:    movk x9, #:size_g1_nc:local_exec_var
 ; CHECK-48-NEXT:    movk x8, #:tprel_g0_nc:local_exec_var
-; CHECK-48-NEXT:    add c0, c0, x8, uxtx
 ; CHECK-48-NEXT:    movk x9, #:size_g0_nc:local_exec_var
+; CHECK-48-NEXT:    mrs c0, CTPIDR_EL0
+; CHECK-48-NEXT:    add c0, c0, x8, uxtx
 ; CHECK-48-NEXT:    scbnds c0, c0, x9
 ; CHECK-48-NEXT:    ldr w0, [c0]
 ; CHECK-48-NEXT:    ret c30
@@ -80,9 +80,9 @@ define i32 addrspace(200)* @test_local_exec_addr() addrspace(200) {
 ; CHECK-12:       .Lfunc_begin1:
 ; CHECK-12-NEXT:    .cfi_startproc purecap
 ; CHECK-12-NEXT:  // %bb.0:
+; CHECK-12-NEXT:    movz x8, #:size_g0:local_exec_var
 ; CHECK-12-NEXT:    mrs c0, CTPIDR_EL0
 ; CHECK-12-NEXT:    add c0, c0, :tprel_lo12:local_exec_var
-; CHECK-12-NEXT:    movz x8, #:size_g0:local_exec_var
 ; CHECK-12-NEXT:    scbnds c0, c0, x8
 ; CHECK-12-NEXT:    ret c30
 ;
@@ -90,10 +90,10 @@ define i32 addrspace(200)* @test_local_exec_addr() addrspace(200) {
 ; CHECK-24:       .Lfunc_begin1:
 ; CHECK-24-NEXT:    .cfi_startproc purecap
 ; CHECK-24-NEXT:  // %bb.0:
-; CHECK-24-NEXT:    mrs c0, CTPIDR_EL0
 ; CHECK-24-NEXT:    movz x8, #:size_g1:local_exec_var
-; CHECK-24-NEXT:    add c0, c0, :tprel_hi12:local_exec_var
+; CHECK-24-NEXT:    mrs c0, CTPIDR_EL0
 ; CHECK-24-NEXT:    movk x8, #:size_g0_nc:local_exec_var
+; CHECK-24-NEXT:    add c0, c0, :tprel_hi12:local_exec_var
 ; CHECK-24-NEXT:    add c0, c0, :tprel_lo12_nc:local_exec_var
 ; CHECK-24-NEXT:    scbnds c0, c0, x8
 ; CHECK-24-NEXT:    ret c30
@@ -103,11 +103,11 @@ define i32 addrspace(200)* @test_local_exec_addr() addrspace(200) {
 ; CHECK-32-NEXT:    .cfi_startproc purecap
 ; CHECK-32-NEXT:  // %bb.0:
 ; CHECK-32-NEXT:    movz x8, #:tprel_g1:local_exec_var
-; CHECK-32-NEXT:    mrs c0, CTPIDR_EL0
 ; CHECK-32-NEXT:    movz x9, #:size_g1:local_exec_var
 ; CHECK-32-NEXT:    movk x8, #:tprel_g0_nc:local_exec_var
-; CHECK-32-NEXT:    add c0, c0, x8, uxtx
 ; CHECK-32-NEXT:    movk x9, #:size_g0_nc:local_exec_var
+; CHECK-32-NEXT:    mrs c0, CTPIDR_EL0
+; CHECK-32-NEXT:    add c0, c0, x8, uxtx
 ; CHECK-32-NEXT:    scbnds c0, c0, x9
 ; CHECK-32-NEXT:    ret c30
 ;
@@ -118,11 +118,11 @@ define i32 addrspace(200)* @test_local_exec_addr() addrspace(200) {
 ; CHECK-48-NEXT:    movz x8, #:tprel_g2:local_exec_var
 ; CHECK-48-NEXT:    movz x9, #:size_g2:local_exec_var
 ; CHECK-48-NEXT:    movk x8, #:tprel_g1_nc:local_exec_var
-; CHECK-48-NEXT:    mrs c0, CTPIDR_EL0
 ; CHECK-48-NEXT:    movk x9, #:size_g1_nc:local_exec_var
 ; CHECK-48-NEXT:    movk x8, #:tprel_g0_nc:local_exec_var
-; CHECK-48-NEXT:    add c0, c0, x8, uxtx
 ; CHECK-48-NEXT:    movk x9, #:size_g0_nc:local_exec_var
+; CHECK-48-NEXT:    mrs c0, CTPIDR_EL0
+; CHECK-48-NEXT:    add c0, c0, x8, uxtx
 ; CHECK-48-NEXT:    scbnds c0, c0, x9
 ; CHECK-48-NEXT:    ret c30
   ret i32 addrspace(200)* @local_exec_var

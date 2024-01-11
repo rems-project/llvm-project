@@ -29,7 +29,6 @@
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Support/Casting.h"
-#include "llvm/Support/MathExtras.h"
 #include <cassert>
 #include <cstdint>
 #include <vector>
@@ -59,24 +58,6 @@ IRBuilderBase::CreateGlobalString(StringRef Str, const Twine &Name,
 Type *IRBuilderBase::getCurrentFunctionReturnType() const {
   assert(BB && BB->getParent() && "No current function!");
   return BB->getParent()->getReturnType();
-}
-
-Value *IRBuilderBase::getCastedInt8PtrValue(Value *Ptr, unsigned TargetAS) {
-  PointerType *PT = cast<PointerType>(Ptr->getType());
-  unsigned AS = PT->getAddressSpace();
-  if (PT->getElementType()->isIntegerTy(8) && AS == TargetAS)
-    return Ptr;
-
-  // Otherwise, we need to insert a bitcast.
-  PT = getInt8PtrTy(TargetAS);
-  Instruction *I;
-  if (TargetAS == AS)
-    I = new BitCastInst(Ptr, PT, "");
-  else
-    I = new AddrSpaceCastInst(Ptr, PT, "");
-  BB->getInstList().insert(InsertPt, I);
-  SetInstDebugLocation(I);
-  return I;
 }
 
 Value *IRBuilderBase::getCastedInt8PtrValue(Value *Ptr) {
@@ -113,11 +94,22 @@ Value *IRBuilderBase::CreateVScale(Constant *Scaling, const Twine &Name) {
 }
 
 Value *IRBuilderBase::CreateStepVector(Type *DstType, const Twine &Name) {
-  if (isa<ScalableVectorType>(DstType))
-    return CreateIntrinsic(Intrinsic::experimental_stepvector, {DstType}, {},
-                           nullptr, Name);
-
   Type *STy = DstType->getScalarType();
+  if (isa<ScalableVectorType>(DstType)) {
+    Type *StepVecType = DstType;
+    // TODO: We expect this special case (element type < 8 bits) to be
+    // temporary - once the intrinsic properly supports < 8 bits this code
+    // can be removed.
+    if (STy->getScalarSizeInBits() < 8)
+      StepVecType =
+          VectorType::get(getInt8Ty(), cast<ScalableVectorType>(DstType));
+    Value *Res = CreateIntrinsic(Intrinsic::experimental_stepvector,
+                                 {StepVecType}, {}, nullptr, Name);
+    if (StepVecType != DstType)
+      Res = CreateTrunc(Res, DstType);
+    return Res;
+  }
+
   unsigned NumEls = cast<FixedVectorType>(DstType)->getNumElements();
 
   // Create a vector of consecutive numbers from zero to VF.
@@ -187,8 +179,9 @@ CallInst *IRBuilderBase::CreateElementUnorderedAtomicMemSet(
 
 CallInst *IRBuilderBase::CreateMemTransferInst(
     Intrinsic::ID IntrID, Value *Dst, MaybeAlign DstAlign, Value *Src,
-    MaybeAlign SrcAlign, Value *Size, bool isVolatile, MDNode *TBAATag,
-    MDNode *TBAAStructTag, MDNode *ScopeTag, MDNode *NoAliasTag) {
+    MaybeAlign SrcAlign, Value *Size, PreserveCheriTags PreserveTags,
+    bool isVolatile, MDNode *TBAATag, MDNode *TBAAStructTag, MDNode *ScopeTag,
+    MDNode *NoAliasTag) {
   Dst = getCastedInt8PtrValue(Dst);
   Src = getCastedInt8PtrValue(Src);
 
@@ -204,6 +197,8 @@ CallInst *IRBuilderBase::CreateMemTransferInst(
   CallInst *CI = createCallHelper(TheFn, Ops, this);
 
   auto* MCI = cast<MemTransferInst>(CI);
+  if (M->getDataLayout().hasCheriCapabilities())
+    MCI->setPreserveCheriTags(PreserveTags, M->getDataLayout());
   if (DstAlign)
     MCI->setDestAlignment(*DstAlign);
   if (SrcAlign)
@@ -228,8 +223,9 @@ CallInst *IRBuilderBase::CreateMemTransferInst(
 
 CallInst *IRBuilderBase::CreateMemCpyInline(
     Value *Dst, MaybeAlign DstAlign, Value *Src, MaybeAlign SrcAlign,
-    Value *Size, bool IsVolatile, MDNode *TBAATag, MDNode *TBAAStructTag,
-    MDNode *ScopeTag, MDNode *NoAliasTag) {
+    Value *Size, PreserveCheriTags PreserveTags, bool IsVolatile,
+    MDNode *TBAATag, MDNode *TBAAStructTag, MDNode *ScopeTag,
+    MDNode *NoAliasTag) {
   Dst = getCastedInt8PtrValue(Dst);
   Src = getCastedInt8PtrValue(Src);
 
@@ -242,6 +238,8 @@ CallInst *IRBuilderBase::CreateMemCpyInline(
   CallInst *CI = createCallHelper(TheFn, Ops, this);
 
   auto *MCI = cast<MemCpyInlineInst>(CI);
+  if (M->getDataLayout().hasCheriCapabilities())
+    MCI->setPreserveCheriTags(PreserveTags, M->getDataLayout());
   if (DstAlign)
     MCI->setDestAlignment(*DstAlign);
   if (SrcAlign)
@@ -266,8 +264,8 @@ CallInst *IRBuilderBase::CreateMemCpyInline(
 
 CallInst *IRBuilderBase::CreateElementUnorderedAtomicMemCpy(
     Value *Dst, Align DstAlign, Value *Src, Align SrcAlign, Value *Size,
-    uint32_t ElementSize, MDNode *TBAATag, MDNode *TBAAStructTag,
-    MDNode *ScopeTag, MDNode *NoAliasTag) {
+    uint32_t ElementSize, PreserveCheriTags PreserveTags, MDNode *TBAATag,
+    MDNode *TBAAStructTag, MDNode *ScopeTag, MDNode *NoAliasTag) {
   assert(DstAlign >= ElementSize &&
          "Pointer alignment must be at least element size");
   assert(SrcAlign >= ElementSize &&
@@ -285,6 +283,8 @@ CallInst *IRBuilderBase::CreateElementUnorderedAtomicMemCpy(
 
   // Set the alignment of the pointer args.
   auto *AMCI = cast<AtomicMemCpyInst>(CI);
+  if (M->getDataLayout().hasCheriCapabilities())
+    AMCI->setPreserveCheriTags(PreserveTags, M->getDataLayout());
   AMCI->setDestAlignment(DstAlign);
   AMCI->setSourceAlignment(SrcAlign);
 
@@ -307,9 +307,10 @@ CallInst *IRBuilderBase::CreateElementUnorderedAtomicMemCpy(
 
 CallInst *IRBuilderBase::CreateMemMove(Value *Dst, MaybeAlign DstAlign,
                                        Value *Src, MaybeAlign SrcAlign,
-                                       Value *Size, bool isVolatile,
-                                       MDNode *TBAATag, MDNode *ScopeTag,
-                                       MDNode *NoAliasTag) {
+                                       Value *Size,
+                                       PreserveCheriTags PreserveTags,
+                                       bool isVolatile, MDNode *TBAATag,
+                                       MDNode *ScopeTag, MDNode *NoAliasTag) {
   Dst = getCastedInt8PtrValue(Dst);
   Src = getCastedInt8PtrValue(Src);
 
@@ -325,6 +326,8 @@ CallInst *IRBuilderBase::CreateMemMove(Value *Dst, MaybeAlign DstAlign,
   CallInst *CI = createCallHelper(TheFn, Ops, this);
 
   auto *MMI = cast<MemMoveInst>(CI);
+  if (M->getDataLayout().hasCheriCapabilities())
+    MMI->setPreserveCheriTags(PreserveTags, M->getDataLayout());
   if (DstAlign)
     MMI->setDestAlignment(*DstAlign);
   if (SrcAlign)
@@ -345,8 +348,8 @@ CallInst *IRBuilderBase::CreateMemMove(Value *Dst, MaybeAlign DstAlign,
 
 CallInst *IRBuilderBase::CreateElementUnorderedAtomicMemMove(
     Value *Dst, Align DstAlign, Value *Src, Align SrcAlign, Value *Size,
-    uint32_t ElementSize, MDNode *TBAATag, MDNode *TBAAStructTag,
-    MDNode *ScopeTag, MDNode *NoAliasTag) {
+    uint32_t ElementSize, PreserveCheriTags PreserveTags, MDNode *TBAATag,
+    MDNode *TBAAStructTag, MDNode *ScopeTag, MDNode *NoAliasTag) {
   assert(DstAlign >= ElementSize &&
          "Pointer alignment must be at least element size");
   assert(SrcAlign >= ElementSize &&
@@ -361,6 +364,9 @@ CallInst *IRBuilderBase::CreateElementUnorderedAtomicMemMove(
       M, Intrinsic::memmove_element_unordered_atomic, Tys);
 
   CallInst *CI = createCallHelper(TheFn, Ops, this);
+  if (M->getDataLayout().hasCheriCapabilities())
+    cast<AtomicMemTransferInst>(CI)->setPreserveCheriTags(PreserveTags,
+                                                          M->getDataLayout());
 
   // Set the alignment of the pointer args.
   CI->addParamAttr(0, Attribute::getWithAlignment(CI->getContext(), DstAlign));
@@ -695,7 +701,7 @@ static CallInst *CreateGCStatepointCallCommon(
     const Twine &Name) {
   // Extract out the type of the callee.
   auto *FuncPtrType = cast<PointerType>(ActualCallee->getType());
-  assert(isa<FunctionType>(FuncPtrType->getElementType()) &&
+  assert(isa<FunctionType>(FuncPtrType->getPointerElementType()) &&
          "actual callee must be a callable value");
 
   Module *M = Builder->GetInsertBlock()->getParent()->getParent();
@@ -752,7 +758,7 @@ static InvokeInst *CreateGCStatepointInvokeCommon(
     ArrayRef<T3> GCArgs, const Twine &Name) {
   // Extract out the type of the callee.
   auto *FuncPtrType = cast<PointerType>(ActualInvokee->getType());
-  assert(isa<FunctionType>(FuncPtrType->getElementType()) &&
+  assert(isa<FunctionType>(FuncPtrType->getPointerElementType()) &&
          "actual callee must be a callable value");
 
   Module *M = Builder->GetInsertBlock()->getParent()->getParent();
@@ -1000,10 +1006,8 @@ CallInst *IRBuilderBase::CreateConstrainedFPCall(
 
 Value *IRBuilderBase::CreateSelect(Value *C, Value *True, Value *False,
                                    const Twine &Name, Instruction *MDFrom) {
-  if (auto *CC = dyn_cast<Constant>(C))
-    if (auto *TC = dyn_cast<Constant>(True))
-      if (auto *FC = dyn_cast<Constant>(False))
-        return Insert(Folder.CreateSelect(CC, TC, FC), Name);
+  if (auto *V = Folder.FoldSelect(C, True, False))
+    return V;
 
   SelectInst *Sel = SelectInst::Create(C, True, False);
   if (MDFrom) {
@@ -1016,16 +1020,17 @@ Value *IRBuilderBase::CreateSelect(Value *C, Value *True, Value *False,
   return Insert(Sel, Name);
 }
 
-Value *IRBuilderBase::CreatePtrDiff(Value *LHS, Value *RHS,
+Value *IRBuilderBase::CreatePtrDiff(Type *ElemTy, Value *LHS, Value *RHS,
                                     const Twine &Name) {
   assert(LHS->getType() == RHS->getType() &&
          "Pointer subtraction operand types must match!");
-  auto *ArgType = cast<PointerType>(LHS->getType());
+  assert(cast<PointerType>(LHS->getType())
+             ->isOpaqueOrPointeeTypeMatches(ElemTy) &&
+         "Pointer type must match element type");
   Value *LHS_int = CreatePtrToInt(LHS, Type::getInt64Ty(Context));
   Value *RHS_int = CreatePtrToInt(RHS, Type::getInt64Ty(Context));
   Value *Difference = CreateSub(LHS_int, RHS_int);
-  return CreateExactSDiv(Difference,
-                         ConstantExpr::getSizeOf(ArgType->getElementType()),
+  return CreateExactSDiv(Difference, ConstantExpr::getSizeOf(ElemTy),
                          Name);
 }
 

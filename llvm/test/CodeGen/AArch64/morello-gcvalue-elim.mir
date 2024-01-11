@@ -50,7 +50,7 @@ body: |
   bb.3:
     %3:gpr32all = PHI %0:gpr32, %bb.0, %0:gpr32, %bb.4, %2:gpr32all, %bb.2, %2:gpr32all, %bb.5
     $w0 = COPY %3:gpr32all
-    CRET_ReallyLR 0, implicit $w0
+    CRET_ReallyLR implicit $w0
 
 ...
 ---
@@ -68,6 +68,6 @@ body: |
     %2:gpr32common = COPY %3.sub_32:gpr64
     INLINEASM &"", 1, 12, implicit-def dead early-clobber $lr, implicit-def $w0, implicit %2
     $w0 = COPY $wzr
-    CRET_ReallyLR 0, implicit $w0
+    CRET_ReallyLR implicit $w0
 
 ...

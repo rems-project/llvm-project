@@ -21,7 +21,7 @@
 ; }
 ; int bar(void) { return 0; }
 
-target datalayout = "e-m:e-pf200:128:128-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200"
+target datalayout = "e-m:e-pf200:128:128:128:64-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200"
 target triple = "aarch64-none--elf"
 
 define i32 @foo() #0 !dbg !6 {

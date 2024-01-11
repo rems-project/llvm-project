@@ -54,7 +54,7 @@ body:             |
     %1:_(p0) = COPY $x1
     %2:_(s64) = G_CONSTANT i64 32
     G_MEMCPY %0(p0), %1(p0), %2(s64), 1 :: (store (s8) into %ir.0, align 4), (load (s8) from %ir.1, align 4)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -81,6 +81,6 @@ body:             |
     %1:_(p0) = COPY $x1
     %2:_(s64) = G_CONSTANT i64 36
     G_MEMCPY %0(p0), %1(p0), %2(s64), 1 :: (store (s8) into %ir.0, align 4), (load (s8) from %ir.1, align 4)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

@@ -851,6 +851,7 @@ bool ConstStructBuilder::Build(const APValue &Val, const RecordDecl *RD,
 }
 
 llvm::Constant *ConstStructBuilder::Finalize(QualType Type) {
+  Type = Type.getNonReferenceType();
   RecordDecl *RD = Type->castAs<RecordType>()->getDecl();
   llvm::Type *ValTy = CGM.getTypes().ConvertType(Type);
   return Builder.build(ValTy, RD->hasFlexibleArrayMember());
@@ -899,7 +900,7 @@ static ConstantAddress tryEmitGlobalCompoundLiteral(CodeGenModule &CGM,
   CharUnits Align = CGM.getContext().getTypeAlignInChars(E->getType());
   if (llvm::GlobalVariable *Addr =
           CGM.getAddrOfConstantCompoundLiteralIfEmitted(E))
-    return ConstantAddress(Addr, Align);
+    return ConstantAddress(Addr, Addr->getValueType(), Align);
 
   LangAS addressSpace = E->getType().getAddressSpace();
 
@@ -917,11 +918,11 @@ static ConstantAddress tryEmitGlobalCompoundLiteral(CodeGenModule &CGM,
                                      llvm::GlobalValue::InternalLinkage,
                                      C, ".compoundliteral", nullptr,
                                      llvm::GlobalVariable::NotThreadLocal,
-                    CGM.getTargetAddressSpace(addressSpace));
+                    CGM.getContext().getTargetAddressSpace(addressSpace));
   emitter.finalize(GV);
   GV->setAlignment(Align.getAsAlign());
   CGM.setAddrOfConstantCompoundLiteral(E, GV);
-  return ConstantAddress(GV, Align);
+  return ConstantAddress(GV, GV->getValueType(), Align);
 }
 
 static llvm::Constant *
@@ -1392,7 +1393,7 @@ llvm::Constant *ConstantEmitter::tryEmitConstantExpr(const ConstantExpr *CE) {
   const Expr *Inner = CE->getSubExpr()->IgnoreImplicit();
   QualType RetType = Inner->getType();
   if (auto *Call = dyn_cast<CallExpr>(Inner))
-    RetType = Call->getCallReturnType(CGF->getContext());
+    RetType = Call->getCallReturnType(CGM.getContext());
   else if (auto *Ctor = dyn_cast<CXXConstructExpr>(Inner))
     RetType = Ctor->getType();
   llvm::Constant *Res =
@@ -1461,7 +1462,7 @@ llvm::GlobalValue *ConstantEmitter::getCurrentAddrPrivate() {
                                          /*name*/ "",
                                          /*before*/ nullptr,
                                          llvm::GlobalVariable::NotThreadLocal,
-                                         CGM.getTargetAddressSpace(DestAddressSpace));
+                                         CGM.getContext().getTargetAddressSpace(DestAddressSpace));
 
   PlaceholderAddresses.push_back(std::make_pair(nullptr, global));
 
@@ -1737,6 +1738,8 @@ llvm::Constant *ConstantEmitter::emitForMemory(CodeGenModule &CGM,
 
 llvm::Constant *ConstantEmitter::tryEmitPrivate(const Expr *E,
                                                 QualType destType) {
+  assert(!destType->isVoidType() && "can't emit a void constant");
+
   Expr::EvalResult Result;
 
   bool Success = false;
@@ -2031,6 +2034,9 @@ ConstantLValueEmitter::VisitAddrLabelExpr(const AddrLabelExpr *E) {
 ConstantLValue
 ConstantLValueEmitter::VisitCallExpr(const CallExpr *E) {
   unsigned builtin = E->getBuiltinCallee();
+  if (builtin == Builtin::BI__builtin_function_start)
+    return CGM.GetFunctionStart(
+        E->getArg(0)->getAsBuiltinConstantDeclRef(CGM.getContext()));
   if (builtin != Builtin::BI__builtin___CFStringMakeConstantString &&
       builtin != Builtin::BI__builtin___NSStringMakeConstantString)
     return nullptr;

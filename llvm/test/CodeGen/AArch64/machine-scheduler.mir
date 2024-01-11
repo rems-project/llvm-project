@@ -30,6 +30,6 @@ body: |
     STRWui killed $w1, $x0, 2 :: (store (s32) into %ir.arrayidx1)
     $w9 = LDRWui killed $x0, 0, implicit-def $x9  :: (load (s32) from %ir.arrayidx19, align 8)
     $x0 = ADDXrr killed $x9, killed $x8
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...
 

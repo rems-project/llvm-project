@@ -22,6 +22,6 @@ body:             |
     renamable $x8 = ADRP target-flags(aarch64-page) @g
     STRWui $wzr, killed renamable $x8, target-flags(aarch64-pageoff, aarch64-nc) @g :: (store (s32) into @g)
     renamable $w0 = LDRWui undef renamable $x8, 0 :: (load (s32) from `i32* undef`)
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...

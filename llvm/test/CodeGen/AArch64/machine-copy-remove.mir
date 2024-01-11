@@ -24,7 +24,7 @@ body:             |
   bb.3:
     liveins: $x0
 
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 # Similar to test1, but with reversed COPY.
@@ -51,7 +51,7 @@ body:             |
   bb.3:
     liveins: $x0
 
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 # Similar to test1, but with a clobber that prevents removal of the XZR COPY.
@@ -79,7 +79,7 @@ body:             |
   bb.3:
     liveins: $x0
 
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 # Similar to test2, but with a clobber that prevents removal of the XZR COPY.
@@ -107,7 +107,7 @@ body:             |
   bb.3:
     liveins: $x0
 
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 # Similar to test2, but with a clobber that prevents removal of the XZR COPY.
@@ -135,7 +135,7 @@ body:             |
   bb.3:
     liveins: $x0
 
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 # Similar to test1, but with two levels of COPYs.
@@ -163,7 +163,7 @@ body:             |
   bb.3:
     liveins: $x0
 
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 # Similar to test1, but with two levels of COPYs and a clobber preventing COPY of XZR removal.
@@ -192,7 +192,7 @@ body:             |
   bb.3:
     liveins: $x0
 
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 # Check that the TargetRegs vector clobber update loop in
@@ -225,7 +225,7 @@ body:             |
   bb.3:
     liveins: $x0
 
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 # Check that copy isn't removed from a block with multiple predecessors.
@@ -256,7 +256,7 @@ body:             |
   bb.3:
     liveins: $x0
 
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 # Eliminate redundant MOVi32imm 7 in bb.1
@@ -283,7 +283,7 @@ body:             |
     STRWui killed $w0, killed $x1, 0
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 # Eliminate redundant MOVi32imm 7 in bb.1
 # Note: 64-bit compare/32-bit move imm w/implicit def
@@ -309,7 +309,7 @@ body:             |
     STRXui killed $x0, killed $x1, 0
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 # Eliminate redundant MOVi32imm 7 in bb.1
 # Note: 64-bit compare/32-bit move imm
@@ -335,7 +335,7 @@ body:             |
     STRWui killed $w0, killed $x1, 0
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 # Don't eliminate MOVi32imm 7 in bb.1 as we don't necessarily know the upper 32-bits.
 # Note: 32-bit compare/32-bit move imm w/implicit def
@@ -361,7 +361,7 @@ body:             |
     STRXui killed $x0, killed $x1, 0
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 # We can't eliminate the MOVi32imm because of the clobbering LDRWui.
 # CHECK-LABEL: name: test14
@@ -386,7 +386,7 @@ body:             |
     STRWui killed $w0, killed $x1, 0
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 # We can't eliminate the MOVi32imm because of the clobbering LDRWui.
 # CHECK-LABEL: name: test15
@@ -411,7 +411,7 @@ body:             |
     STRWui killed $w0, killed $x1, 0
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 # Check that bb.0 COPY is seen through to allow the bb.1 MOVi32imm to be removed.
 # CHECK-LABEL: name: test16
@@ -435,7 +435,7 @@ body:             |
     STRWui killed $w2, killed $x1, 0
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 # Check that bb.1 MOVi32imm is not removed due to self clobbering compare.
 # CHECK-LABEL: name: test17
@@ -458,7 +458,7 @@ body:             |
     STRWui killed $w0, killed $x1, 0
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 # Make sure the MOVi64imm is not removed.  In one version of this patch the
 # MOVi64imm immediate was truncated to 32 bits and incorrectly matched because
@@ -482,7 +482,7 @@ body:             |
     STRXui killed $x0, killed $x1, 0
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 # Eliminate redundant MOVi32imm -1 in bb.1
 # Note: 32-bit compare/32-bit move imm
@@ -508,7 +508,7 @@ body:             |
     STRWui killed $w0, killed $x1, 0
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 # Eliminate redundant MOVi64imm -1 in bb.1
 # Note: 64-bit compare/64-bit move imm
@@ -534,7 +534,7 @@ body:             |
     STRXui killed $x0, killed $x1, 0
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 # Don't eliminate redundant MOVi32imm -1 in bb.1: the upper bits are nonzero.
 # Note: 64-bit compare/32-bit move imm
@@ -560,7 +560,7 @@ body:             |
     STRWui killed $w0, killed $x1, 0
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 # Don't eliminate MOVi64imm -1 in bb.1 as we don't necessarily know the upper 32-bits.
 # Note: 32-bit compare/64-bit move imm
@@ -584,7 +584,7 @@ body:             |
     STRXui killed $x0, killed $x1, 0
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 # Eliminate redundant MOVi32imm 4096 in bb.1 when the compare has a shifted immediate.
 # CHECK-LABEL: name: test23
@@ -607,4 +607,4 @@ body:             |
     STRWui killed $w0, killed $x1, 0
 
   bb.2:
-    RET_ReallyLR 0
+    RET_ReallyLR

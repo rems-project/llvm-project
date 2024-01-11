@@ -13,11 +13,11 @@ body:             |
     ; CHECK: %copy:_(s64) = COPY $x0
     ; CHECK: %inttoptr:_(p0) = G_INTTOPTR %copy(s64)
     ; CHECK: $x0 = COPY %inttoptr(p0)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %copy:_(s64) = COPY $x0
     %inttoptr:_(p0) = G_INTTOPTR %copy(s64)
     $x0 = COPY %inttoptr(p0)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...
 ---
 name:            v2s64_to_v2p0_legal
@@ -33,12 +33,12 @@ body:             |
     ; CHECK: %inttoptr:_(<2 x p0>) = G_INTTOPTR %copy(<2 x s64>)
     ; CHECK: %extract:_(p0) = G_EXTRACT_VECTOR_ELT %inttoptr(<2 x p0>), %idx(s64)
     ; CHECK: $x0 = COPY %extract(p0)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %copy:_(<2 x s64>) = COPY $q0
     %idx:_(s64) = G_CONSTANT i64 0
     %inttoptr:_(<2 x p0>) = G_INTTOPTR %copy(<2 x s64>)
     %extract:_(p0) = G_EXTRACT_VECTOR_ELT %inttoptr(<2 x p0>), %idx(s64)
     $x0 = COPY %extract(p0)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...

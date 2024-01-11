@@ -27,7 +27,7 @@ body:             |
     %2:fpr(s64) = G_FCONSTANT double 1.600000e+01
     %1:fpr(<2 x s64>) = G_BUILD_VECTOR %2(s64), %3(s64)
     G_STORE %1(<2 x s64>), %0(p0) :: (store (<2 x s64>))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -56,7 +56,7 @@ body:             |
     %2:fpr(s32) = G_FCONSTANT float 1.600000e+01
     %1:fpr(<4 x s32>) = G_BUILD_VECTOR %2(s32), %3(s32), %3(s32), %3(s32)
     G_STORE %1(<4 x s32>), %0(p0) :: (store (<4 x s32>))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -85,7 +85,7 @@ body:             |
     %2:gpr(s64) = G_CONSTANT i64 12375
     %1:fpr(<2 x s64>) = G_BUILD_VECTOR %2(s64), %3(s64)
     G_STORE %1(<2 x s64>), %0(p0) :: (store (<2 x s64>))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -114,7 +114,7 @@ body:             |
     %2:gpr(s32) = G_CONSTANT i32 12375
     %1:fpr(<4 x s32>) = G_BUILD_VECTOR %2(s32), %3(s32), %2(s32), %3(s32)
     G_STORE %1(<4 x s32>), %0(p0) :: (store (<4 x s32>))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 
@@ -144,6 +144,6 @@ body:             |
     %2:gpr(s32) = G_CONSTANT i32 12375
     %1:fpr(<2 x s32>) = G_BUILD_VECTOR %2(s32), %3(s32)
     G_STORE %1(<2 x s32>), %0(p0) :: (store (<2 x s32>))
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

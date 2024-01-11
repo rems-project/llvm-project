@@ -18,11 +18,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr64 = COPY $d0
     ; CHECK: [[FRINTADr:%[0-9]+]]:fpr64 = FRINTADr [[COPY]]
     ; CHECK: $d0 = COPY [[FRINTADr]]
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:fpr(s64) = COPY $d0
     %1:fpr(s64) = G_INTRINSIC_ROUND %0
     $d0 = COPY %1(s64)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -41,11 +41,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr32 = COPY $s0
     ; CHECK: [[FRINTASr:%[0-9]+]]:fpr32 = FRINTASr [[COPY]]
     ; CHECK: $s0 = COPY [[FRINTASr]]
-    ; CHECK: RET_ReallyLR 0, implicit $s0
+    ; CHECK: RET_ReallyLR implicit $s0
     %0:fpr(s32) = COPY $s0
     %1:fpr(s32) = G_INTRINSIC_ROUND %0
     $s0 = COPY %1(s32)
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
 
 ...
 ---
@@ -66,11 +66,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr16 = COPY $h0
     ; CHECK: [[FRINTAHr:%[0-9]+]]:fpr16 = FRINTAHr [[COPY]]
     ; CHECK: $h0 = COPY [[FRINTAHr]]
-    ; CHECK: RET_ReallyLR 0, implicit $h0
+    ; CHECK: RET_ReallyLR implicit $h0
     %0:fpr(s16) = COPY $h0
     %1:fpr(s16) = G_INTRINSIC_ROUND %0
     $h0 = COPY %1(s16)
-    RET_ReallyLR 0, implicit $h0
+    RET_ReallyLR implicit $h0
 
 ...
 ---
@@ -91,11 +91,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr64 = COPY $d0
     ; CHECK: [[FRINTAv4f16_:%[0-9]+]]:fpr64 = FRINTAv4f16 [[COPY]]
     ; CHECK: $d0 = COPY [[FRINTAv4f16_]]
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:fpr(<4 x s16>) = COPY $d0
     %1:fpr(<4 x s16>) = G_INTRINSIC_ROUND %0
     $d0 = COPY %1(<4 x s16>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -116,11 +116,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr128 = COPY $q0
     ; CHECK: [[FRINTAv8f16_:%[0-9]+]]:fpr128 = FRINTAv8f16 [[COPY]]
     ; CHECK: $q0 = COPY [[FRINTAv8f16_]]
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:fpr(<8 x s16>) = COPY $q0
     %1:fpr(<8 x s16>) = G_INTRINSIC_ROUND %0
     $q0 = COPY %1(<8 x s16>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -141,11 +141,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr64 = COPY $d0
     ; CHECK: [[FRINTAv2f32_:%[0-9]+]]:fpr64 = FRINTAv2f32 [[COPY]]
     ; CHECK: $d0 = COPY [[FRINTAv2f32_]]
-    ; CHECK: RET_ReallyLR 0, implicit $d0
+    ; CHECK: RET_ReallyLR implicit $d0
     %0:fpr(<2 x s32>) = COPY $d0
     %1:fpr(<2 x s32>) = G_INTRINSIC_ROUND %0
     $d0 = COPY %1(<2 x s32>)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 ---
@@ -166,11 +166,11 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr128 = COPY $q0
     ; CHECK: [[FRINTAv4f32_:%[0-9]+]]:fpr128 = FRINTAv4f32 [[COPY]]
     ; CHECK: $q0 = COPY [[FRINTAv4f32_]]
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:fpr(<4 x s32>) = COPY $q0
     %1:fpr(<4 x s32>) = G_INTRINSIC_ROUND %0
     $q0 = COPY %1(<4 x s32>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 ---
@@ -191,8 +191,8 @@ body:             |
     ; CHECK: [[COPY:%[0-9]+]]:fpr128 = COPY $q0
     ; CHECK: [[FRINTAv2f64_:%[0-9]+]]:fpr128 = FRINTAv2f64 [[COPY]]
     ; CHECK: $q0 = COPY [[FRINTAv2f64_]]
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %0:fpr(<2 x s64>) = COPY $q0
     %1:fpr(<2 x s64>) = G_INTRINSIC_ROUND %0
     $q0 = COPY %1(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0

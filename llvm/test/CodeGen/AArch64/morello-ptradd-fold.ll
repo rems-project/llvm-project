@@ -4,7 +4,7 @@
 ; This example was crashing in the load store optimizer because we were producing
 ; a CAddImm instruction on an undef register operand.
 
-target datalayout = "e-m:e-pf200:128:128-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"
+target datalayout = "e-m:e-pf200:128:128:128:64-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"
 target triple = "aarch64-none--elf"
 
 %"struct.std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::__short.14.29.74.89.119.134.179.224.299.314.329.374.434.509.644.779.794.809.824.839.927" = type { %union.anon.0.13.28.73.88.118.133.178.223.298.313.328.373.433.508.643.778.793.808.823.838.926, [31 x i8] }

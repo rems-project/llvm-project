@@ -43,7 +43,7 @@ class AArch64SandboxMemOpLowering
     MemSet
   } MemxferTy;
 
-  virtual llvm::StringRef getPassName() const {
+  virtual llvm::StringRef getPassName() const override {
     return "AArch64 sandbox memory operation lowering";
   }
 
@@ -51,7 +51,7 @@ public:
   static char ID;
   AArch64SandboxMemOpLowering() : FunctionPass(ID) {}
 
-  virtual bool doInitialization(Module &Mod) {
+  virtual bool doInitialization(Module &Mod) override {
     M = &Mod;
     LLVMContext &C = M->getContext();
     CapTy = Type::getInt8PtrTy(C, 200);
@@ -124,7 +124,7 @@ public:
     }
   }
 
-  virtual bool runOnFunction(Function &F) {
+  virtual bool runOnFunction(Function &F) override {
     // Nothing to do if we are not in sandbox mode.
     const DataLayout &DL = M->getDataLayout();
     if (DL.getAllocaAddrSpace() != 200)

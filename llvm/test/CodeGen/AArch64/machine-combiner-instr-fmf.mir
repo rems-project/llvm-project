@@ -35,7 +35,7 @@ body:             |
     %3:fpr32 = nnan ninf nsz arcp contract afn reassoc FMULSrr %1, %0
     %4:fpr32 = nnan ninf nsz arcp contract afn reassoc FADDSrr killed %3, %2
     $s0 = COPY %4
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
 
 ...
 
@@ -75,7 +75,7 @@ body:             |
     %3:fpr32 = contract FMULSrr %1, %0
     %4:fpr32 = contract FADDSrr killed %3, %2
     $s0 = COPY %4
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
 
 ...
 
@@ -115,7 +115,7 @@ body:             |
     %3:fpr32 = contract FMULSrr %1, %0
     %4:fpr32 = FADDSrr killed %3, %2
     $s0 = COPY %4
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
 
 ...
 
@@ -155,7 +155,7 @@ body:             |
     %3:fpr32 = FMULSrr %1, %0
     %4:fpr32 = contract FADDSrr killed %3, %2
     $s0 = COPY %4
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
 
 ...
 
@@ -196,7 +196,7 @@ body:             |
     %3:fpr32 = nsz FMULSrr %1, %0
     %4:fpr32 = nsz FADDSrr killed %3, %2
     $s0 = COPY %4
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
 
 ...
 
@@ -235,7 +235,7 @@ body:             |
     %3:fpr128 = nnan ninf nsz arcp contract afn reassoc FMULv2f64 %1, %0
     %4:fpr128 = nnan ninf nsz arcp contract afn reassoc FADDv2f64 killed %3, %2
     $q0 = COPY %4
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 
@@ -274,7 +274,7 @@ body:             |
     %3:fpr128 = contract FMULv2f64 %1, %0
     %4:fpr128 = contract FADDv2f64 killed %3, %2
     $q0 = COPY %4
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 
@@ -314,7 +314,7 @@ body:             |
     %3:fpr128 = contract FMULv2f64 %1, %0
     %4:fpr128 = FADDv2f64 killed %3, %2
     $q0 = COPY %4
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 
@@ -354,7 +354,7 @@ body:             |
     %3:fpr128 = FMULv2f64 %1, %0
     %4:fpr128 = contract FADDv2f64 killed %3, %2
     $q0 = COPY %4
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 
@@ -394,6 +394,6 @@ body:             |
     %3:fpr128 = nsz FMULv2f64 %1, %0
     %4:fpr128 = nsz FADDv2f64 killed %3, %2
     $q0 = COPY %4
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...

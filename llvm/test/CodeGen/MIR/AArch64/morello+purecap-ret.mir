@@ -14,7 +14,7 @@ body:             |
   bb.0.entry:
   liveins: $lr, $fp, $lr, $fp
 
-  ; CHECK: CRET_ReallyLR 0
-  CRET_ReallyLR 0
+  ; CHECK: CRET_ReallyLR
+  CRET_ReallyLR
 
 ...

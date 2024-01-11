@@ -60,6 +60,6 @@ body:             |
     $x19 = ADDXrr $x0, $x0
     $x0 = ADDXrr $x0, killed $x19
 
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

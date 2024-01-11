@@ -49,7 +49,7 @@ void do_test() {
   test_good<__intcap>(1);
   test_good<unsigned __intcap>(1);
   // This should decay to const char*:
-  test_good<const char(&)[4], const char *>("foo"); // hybrid-note{{in instantiation of function template specialization 'test_good<char const (&)[4], const char *>' requested here}}
+  test_good<const char(&)[4], const char *>("foo"); // hybrid-note{{in instantiation of function template specialization 'test_good<const char (&)[4], const char *>' requested here}}
   // passing function pointers should also be allowed
   test_good(&do_test);                            // hybrid-note{{in instantiation of function template specialization 'test_good<void (*)(), void (*)()>' requested here}}
   test_good<void(void), void (*)(void)>(do_test); // hybrid-note{{in instantiation of function template specialization 'test_good<void (), void (*)()>' requested here}}
@@ -198,9 +198,9 @@ void cap_from_pointer(struct Incomplete *__capability authcap, const int *intege
   // NULL is error in C++ (hybrid+purecap) since the operand is nullptr_t, and in
   // purecap C it's also an error since NULL is defined as (void*)0.
   (void)__builtin_cheri_cap_from_pointer(authcap, NULL);
-  // purecap-cxx-error@-1{{used type 'nullptr_t' where integer is required}}
+  // purecap-cxx-error@-1{{used type 'std::nullptr_t' where integer is required}}
   // purecap-c-error@-2{{used type 'void * __attribute__((cheri_no_provenance))' where integer is required}}
-  // hybrid-cxx-error@-3{{operand of type 'nullptr_t' where arithmetic or pointer type is required}}
+  // hybrid-cxx-error@-3{{operand of type 'std::nullptr_t' where arithmetic or pointer type is required}}
   // (void*)0 is only an error in purecap mode:
   static_assert(__is_same(__typeof__(__builtin_cheri_cap_from_pointer(authcap, (void *)0)), void *__capability), "");
   // purecap-cxx-error@-1{{used type 'void *' where integer is required}}

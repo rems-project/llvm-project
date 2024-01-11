@@ -1,6 +1,6 @@
 ; RUN: opt -S -mtriple=arm64 -mattr=+c64 -target-abi purecap -instcombine < %s | FileCheck %s
 
-target datalayout = "e-m:e-pf200:128:128-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"
+target datalayout = "e-m:e-pf200:128:128:128:64-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200-P200-G200"
 
 define i1 @test1(i16 addrspace(200) * %x) {
   %load = load i16, i16 addrspace(200) * %x, align 4

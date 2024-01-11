@@ -39,9 +39,9 @@ define void @fetch_and_nand(i128 addrspace(200) * %p, i128 %bits) {
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    ldxp x9, x8, [c0]
 ; CHECK-NEXT:    and x10, x9, x2
+; CHECK-NEXT:    mvn x10, x10
 ; CHECK-NEXT:    and x11, x8, x3
 ; CHECK-NEXT:    mvn x11, x11
-; CHECK-NEXT:    mvn x10, x10
 ; CHECK-NEXT:    stlxp w12, x10, x11, [c0]
 ; CHECK-NEXT:    cbnz w12, .LBB1_1
 ; CHECK-NEXT:  // %bb.2: // %atomicrmw.end
@@ -63,9 +63,9 @@ define void @fetch_and_or(i128 addrspace(200) * %p, i128 %bits) {
 ; CHECK-NEXT:  .LBB2_1: // %atomicrmw.start
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    ldaxp x9, x8, [c0]
-; CHECK-NEXT:    orr x10, x8, x3
-; CHECK-NEXT:    orr x11, x9, x2
-; CHECK-NEXT:    stlxp w12, x11, x10, [c0]
+; CHECK-NEXT:    orr x10, x9, x2
+; CHECK-NEXT:    orr x11, x8, x3
+; CHECK-NEXT:    stlxp w12, x10, x11, [c0]
 ; CHECK-NEXT:    cbnz w12, .LBB2_1
 ; CHECK-NEXT:  // %bb.2: // %atomicrmw.end
 ; CHECK-NEXT:    adrp c0, :got:var
@@ -137,7 +137,7 @@ define void @fetch_and_min(i128 addrspace(200) * %p, i128 %bits) {
 ; CHECK-NEXT:    cmp x8, x3
 ; CHECK-NEXT:    cset w11, le
 ; CHECK-NEXT:    csel w10, w10, w11, eq
-; CHECK-NEXT:    cmp w10, #0 // =0
+; CHECK-NEXT:    cmp w10, #0
 ; CHECK-NEXT:    csel x10, x8, x3, ne
 ; CHECK-NEXT:    csel x11, x9, x2, ne
 ; CHECK-NEXT:    stlxp w12, x11, x10, [c0]
@@ -166,7 +166,7 @@ define void @fetch_and_max(i128 addrspace(200) * %p, i128 %bits) {
 ; CHECK-NEXT:    cmp x8, x3
 ; CHECK-NEXT:    cset w11, gt
 ; CHECK-NEXT:    csel w10, w10, w11, eq
-; CHECK-NEXT:    cmp w10, #0 // =0
+; CHECK-NEXT:    cmp w10, #0
 ; CHECK-NEXT:    csel x10, x8, x3, ne
 ; CHECK-NEXT:    csel x11, x9, x2, ne
 ; CHECK-NEXT:    stlxp w12, x11, x10, [c0]
@@ -195,7 +195,7 @@ define void @fetch_and_umin(i128 addrspace(200) * %p, i128 %bits) {
 ; CHECK-NEXT:    cmp x8, x3
 ; CHECK-NEXT:    cset w11, ls
 ; CHECK-NEXT:    csel w10, w10, w11, eq
-; CHECK-NEXT:    cmp w10, #0 // =0
+; CHECK-NEXT:    cmp w10, #0
 ; CHECK-NEXT:    csel x10, x8, x3, ne
 ; CHECK-NEXT:    csel x11, x9, x2, ne
 ; CHECK-NEXT:    stlxp w12, x11, x10, [c0]
@@ -224,7 +224,7 @@ define void @fetch_and_umax(i128 addrspace(200) * %p, i128 %bits) {
 ; CHECK-NEXT:    cmp x8, x3
 ; CHECK-NEXT:    cset w11, hi
 ; CHECK-NEXT:    csel w10, w10, w11, eq
-; CHECK-NEXT:    cmp w10, #0 // =0
+; CHECK-NEXT:    cmp w10, #0
 ; CHECK-NEXT:    csel x10, x8, x3, ne
 ; CHECK-NEXT:    csel x11, x9, x2, ne
 ; CHECK-NEXT:    stlxp w12, x11, x10, [c0]

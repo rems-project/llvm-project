@@ -70,7 +70,7 @@ define void @multiple_uses_small_constant() addrspace(200) nounwind {
 ; ASM-NEXT:  // %bb.0:
 ; ASM-NEXT:    stp c30, c19, [csp, #-32]! // 32-byte Folded Spill
 ; ASM-NEXT:    mov x0, xzr
-; ASM-NEXT:    add c19, c0, #123 // =123
+; ASM-NEXT:    add c19, c0, #123
 ; ASM-NEXT:    mov c0, c19
 ; ASM-NEXT:    bl check_fold_i8ptr
 ; ASM-NEXT:    mov c0, c19

@@ -227,7 +227,7 @@ def get_function_body(builder, args, filename, clang_args, extra_commands,
   if '-emit-llvm' in clang_args:
     builder.process_run_line(
             common.OPT_FUNCTION_RE, common.scrub_body, raw_tool_output,
-            prefixes)
+            prefixes, False)
   else:
     print('The clang command line should include -emit-llvm as asm tests '
           'are discouraged in Clang testsuite.', file=sys.stderr)
@@ -285,25 +285,26 @@ def main():
       # Remove all -verify arguments since they could cause the IR generation to fail
       clang_args = [x for x in clang_args if not x.startswith("-verify")]
 
-      if '-ast-dump' in clang_args:
-        print('WARNING: Skipping -ast-dump RUN line: ' + l, file=sys.stderr)
-        continue
-      if '-fsynatx-only' in clang_args:
-        print('WARNING: Skipping -fsynatx-only RUN line: ' + l, file=sys.stderr)
-        continue
-
-      # Permit piping the output through opt
-      if not (len(commands) == 2 or
-              (len(commands) == 3 and commands[1].startswith('opt'))):
-        print('WARNING: Skipping non-clang RUN line: ' + l, file=sys.stderr)
-
       # Extract -check-prefix in FileCheck args
       filecheck_cmd = commands[-1]
       common.verify_filecheck_prefixes(filecheck_cmd)
       if not filecheck_cmd.startswith('FileCheck ') and not filecheck_cmd.startswith('%cheri_FileCheck '):
         # Execute non-filechecked clang runline.
+        print('WARNING: Executing but ignoring non-filechecked RUN line: ' + l, file=sys.stderr)
         exe = [ti.args.clang] + clang_args
         run_list.append((None, exe, None, None))
+        continue
+      if '-ast-dump' in clang_args:
+        print('WARNING: Executing but ignoring -ast-dump RUN line: ' + l, file=sys.stderr)
+        run_list.append((None, [ti.args.clang] + clang_args, None, None))
+        continue
+      if '-fsyntax-only' in clang_args:
+        print('WARNING: Executing but ignoring -fsynatx-only RUN line: ' + l, file=sys.stderr)
+        run_list.append((None, [ti.args.clang] + clang_args, None, None))
+        continue
+      if '-emit-llvm' not in clang_args:
+        print('WARNING: Executing but ignoring assembly output RUN line: ' + l, file=sys.stderr)
+        run_list.append((None, [ti.args.clang] + clang_args, None, None))
         continue
 
       check_prefixes = [item for m in common.CHECK_PREFIX_RE.finditer(filecheck_cmd)
@@ -372,11 +373,13 @@ def main():
                                prefixes,
                                func_dict, func, False,
                                ti.args.function_signature,
-                               global_vars_seen_dict)
+                               global_vars_seen_dict,
+                               is_filtered=builder.is_filtered())
         else:
           asm.add_asm_checks(my_output_lines, '//',
                              prefixes,
-                             func_dict, func)
+                             func_dict, func,
+                             is_filtered=builder.is_filtered())
 
       if ti.args.check_globals:
         common.add_global_checks(builder.global_var_dict(), '//', run_list,
@@ -426,7 +429,8 @@ def main():
                 output_lines.append('//')
               added.add(mangled)
               common.add_ir_checks(output_lines, '//', filecheck_run_list, func_dict, mangled,
-                                   False, args.function_signature, global_vars_seen_dict)
+                                   False, args.function_signature, global_vars_seen_dict,
+                                   is_filtered=builder.is_filtered())
               if line.rstrip('\n') == '//':
                 include_line = False
 

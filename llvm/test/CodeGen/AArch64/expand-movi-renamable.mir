@@ -46,7 +46,7 @@ body:             |
     renamable $w8 = MOVi32imm 1234605616436508552
     STRWui killed renamable $w8, $sp, 3
     $sp = frame-destroy ADDXri $sp, 32, 0
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -96,7 +96,7 @@ body:             |
     renamable $x8 = MOVi64imm 1234605616436508552
     STRXui killed renamable $x8, $sp, 3
     $sp = frame-destroy ADDXri $sp, 32, 0
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---

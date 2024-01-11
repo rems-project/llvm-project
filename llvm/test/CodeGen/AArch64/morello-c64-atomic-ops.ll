@@ -76,7 +76,7 @@ define i64 @test_atomic_load_add_i64(i64 %offset) nounwind {
    %old = atomicrmw add i64 addrspace(200)* @var64, i64 %offset monotonic
 ; CHECK-NOT: dmb
 ; CHECK: adrp c[[TMPADDR:[0-9]+]]
-; CHECK-NEXT: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
+; CHECK: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
 
 ; CHECK: .LBB{{[0-9]+}}_1:
 ; CHECK: ldxr x[[OLD:[0-9]+]], [c[[ADDR1]]]
@@ -155,7 +155,7 @@ define i64 @test_atomic_load_sub_i64(i64 %offset) nounwind {
    %old = atomicrmw sub i64 addrspace(200)* @var64, i64 %offset seq_cst
 ; CHECK-NOT: dmb
 ; CHECK: adrp c[[TMPADDR:[0-9]+]]
-; CHECK-NEXT: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
+; CHECK: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
 
 ; CHECK: .LBB{{[0-9]+}}_1:
 ; CHECK: ldaxr x[[OLD:[0-9]+]], [c[[ADDR1]]]
@@ -234,7 +234,7 @@ define i64 @test_atomic_load_and_i64(i64 %offset) nounwind {
    %old = atomicrmw and i64 addrspace(200)* @var64, i64 %offset acquire
 ; CHECK-NOT: dmb
 ; CHECK: adrp c[[TMPADDR:[0-9]+]]
-; CHECK-NEXT: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
+; CHECK: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
 
 ; CHECK: .LBB{{[0-9]+}}_1:
 ; CHECK: ldaxr x[[OLD:[0-9]+]], [c[[ADDR1]]]
@@ -312,7 +312,7 @@ define i64 @test_atomic_load_or_i64(i64 %offset) nounwind {
    %old = atomicrmw or i64 addrspace(200)* @var64, i64 %offset release
 ; CHECK-NOT: dmb
 ; CHECK: adrp c[[TMPADDR:[0-9]+]]
-; CHECK-NEXT: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
+; CHECK: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
 
 ; CHECK: .LBB{{[0-9]+}}_1:
 ; ; CHECK: ldxr x[[OLD:[0-9]+]], [c[[ADDR1]]]
@@ -391,7 +391,7 @@ define i64 @test_atomic_load_xor_i64(i64 %offset) nounwind {
    %old = atomicrmw xor i64 addrspace(200)* @var64, i64 %offset monotonic
 ; CHECK-NOT: dmb
 ; CHECK: adrp c[[TMPADDR:[0-9]+]]
-; CHECK-NEXT: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
+; CHECK: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
 
 ; CHECK: .LBB{{[0-9]+}}_1:
 ; ; CHECK: ldxr x[[OLD:[0-9]+]], [c[[ADDR1]]]
@@ -410,7 +410,7 @@ define i8 @test_atomic_load_xchg_i8(i8 %offset) nounwind {
    %old = atomicrmw xchg i8 addrspace(200)* @var8, i8 %offset monotonic
 ; CHECK-NOT: dmb
 ; CHECK: adrp c[[TMPADDR:[0-9]+]]
-; CHECK-NEXT: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
+; CHECK: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
 
 ; CHECK: .LBB{{[0-9]+}}_1:
 ; ; CHECK: ldxrb [[ARG:w[0-9]+]], [c[[ADDR1]]]
@@ -430,7 +430,7 @@ define i16 @test_atomic_load_xchg_i16(i16 %offset) nounwind {
    %old = atomicrmw xchg i16 addrspace(200)* @var16, i16 %offset seq_cst
 ; CHECK-NOT: dmb
 ; CHECK: adrp c[[TMPADDR:[0-9]+]]
-; CHECK-NEXT: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
+; CHECK: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
 
 ; CHECK: .LBB{{[0-9]+}}_1:
 ; ; CHECK: ldaxrh [[ARG:w[0-9]+]], [c[[ADDR1]]]
@@ -449,9 +449,8 @@ define i32 @test_atomic_load_xchg_i32(i32 %offset) nounwind {
    %old = atomicrmw xchg i32 addrspace(200)* @var32, i32 %offset release
 ; CHECK-NOT: dmb
 ; CHECK: adrp c[[TMPADDR:[0-9]+]]
-; CHECK-NEXT: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
-
 ; CHECK: mov  [[ARG:w[0-9]+]], w0
+; CHECK: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
 
 ; CHECK: .LBB{{[0-9]+}}_1:
 ; CHECK: ldxr w0, [c[[ADDR1]]]
@@ -466,7 +465,7 @@ define i64 @test_atomic_load_xchg_i64(i64 %offset) nounwind {
    %old = atomicrmw xchg i64 addrspace(200)* @var64, i64 %offset acquire
 ; CHECK-NOT: dmb
 ; CHECK: adrp c[[TMPADDR:[0-9]+]]
-; CHECK-NEXT: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
+; CHECK: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
 
 ; CHECK: .LBB{{[0-9]+}}_1:
 ; CHECK: ldaxr x[[OLD:[0-9]+]], [c[[ADDR1]]]
@@ -556,7 +555,7 @@ define i64 @test_atomic_load_min_i64(i64 %offset) nounwind {
    %old = atomicrmw min i64 addrspace(200)* @var64, i64 %offset seq_cst
 ; CHECK-NOT: dmb
 ; CHECK: adrp c[[TMPADDR:[0-9]+]]
-; CHECK-NEXT: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
+; CHECK: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
 
 ; CHECK: .LBB{{[0-9]+}}_1:
 ; CHECK: ldaxr x[[OLD:[0-9]+]], [c[[ADDR1]]]
@@ -652,7 +651,7 @@ define i64 @test_atomic_load_max_i64(i64 %offset) nounwind {
    %old = atomicrmw max i64 addrspace(200)* @var64, i64 %offset monotonic
 ; CHECK-NOT: dmb
 ; CHECK: adrp c[[TMPADDR:[0-9]+]]
-; CHECK-NEXT: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
+; CHECK: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
 
 ; CHECK: .LBB{{[0-9]+}}_1:
 ; CHECK: ldxr x[[OLD:[0-9]+]], [c[[ADDR1]]]
@@ -675,21 +674,16 @@ define i8 @test_atomic_load_umin_i8(i8 %offset) nounwind {
    %old = atomicrmw umin i8 addrspace(200)* @var8, i8 %offset monotonic
 ; CHECK-NOT: dmb
 ; CHECK: adrp c[[TMPADDR:[0-9]+]]
-; CHECK-NEXT: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
+; CHECK: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
 
 ; CHECK: .LBB{{[0-9]+}}_1:
-; CHECK: ldxrb w[[OLD:[0-9]+]], [c[[ADDR1]]]
-  ; w0 below is a reasonable guess but could change: it certainly comes into the
-  ;  function there.
-
-; CHECK-NEXT: cmp w[[OLD]], w0, uxtb
-; CHECK-NEXT: csel w[[NEW:[0-9]+]], w[[OLD]], w0, ls
+; CHECK:      ldxrb w0, [c[[ADDR1]]]
+; CHECK-NEXT: cmp w0, w8
+; CHECK-NEXT: csel w[[NEW:[0-9]+]], w0, w8,  ls
 
 ; CHECK-NEXT: stxrb [[STATUS:w[0-9]+]], w[[NEW]], [c[[ADDR1]]]
 ; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK-NOT: dmb
-
-; CHECK: mov {{[xw]}}0, {{[xw]}}[[OLD]]
    ret i8 %old
 }
 
@@ -698,21 +692,20 @@ define i16 @test_atomic_load_umin_i16(i16 %offset) nounwind {
    %old = atomicrmw umin i16 addrspace(200)* @var16, i16 %offset acquire
 ; CHECK-NOT: dmb
 ; CHECK: adrp c[[TMPADDR:[0-9]+]]
-; CHECK-NEXT: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
+; CHECK: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
 
 ; CHECK: .LBB{{[0-9]+}}_1:
-; CHECK: ldaxrh w[[OLD:[0-9]+]], [c[[ADDR1]]]
+; CHECK: ldaxrh w0, [c[[ADDR1]]]
   ; w0 below is a reasonable guess but could change: it certainly comes into the
   ;  function there.
 
-; CHECK-NEXT: cmp w[[OLD]], w0, uxth
-; CHECK-NEXT: csel w[[NEW:[0-9]+]], w[[OLD]], w0, ls
+; CHECK-NEXT: cmp w0, w8
+; CHECK-NEXT: csel w[[NEW:[0-9]+]], w0, w8, ls
 
 ; CHECK-NEXT: stxrh [[STATUS:w[0-9]+]], w[[NEW]], [c[[ADDR1]]]
 ; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK-NOT: dmb
 
-; CHECK: mov {{[xw]}}0, {{[xw]}}[[OLD]]
    ret i16 %old
 }
 
@@ -745,7 +738,7 @@ define i64 @test_atomic_load_umin_i64(i64 %offset) nounwind {
    %old = atomicrmw umin i64 addrspace(200)* @var64, i64 %offset acq_rel
 ; CHECK-NOT: dmb
 ; CHECK: adrp c[[TMPADDR:[0-9]+]]
-; CHECK-NEXT: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
+; CHECK: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
 
 ; CHECK: .LBB{{[0-9]+}}_1:
 ; CHECK: ldaxr x[[OLD:[0-9]+]], [c[[ADDR1]]]
@@ -768,21 +761,20 @@ define i8 @test_atomic_load_umax_i8(i8 %offset) nounwind {
    %old = atomicrmw umax i8 addrspace(200)* @var8, i8 %offset acq_rel
 ; CHECK-NOT: dmb
 ; CHECK: adrp c[[TMPADDR:[0-9]+]]
-; CHECK-NEXT: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
+; CHECK: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
 
 ; CHECK: .LBB{{[0-9]+}}_1:
 ; CHECK: ldaxrb w[[OLD:[0-9]+]], [c[[ADDR1]]]
   ; w0 below is a reasonable guess but could change: it certainly comes into the
   ;  function there.
 
-; CHECK-NEXT: cmp w[[OLD]], w0, uxtb
-; CHECK-NEXT: csel w[[NEW:[0-9]+]], w[[OLD]], w0, hi
+; CHECK-NEXT: cmp w0, w8
+; CHECK-NEXT: csel w[[NEW:[0-9]+]], w0, w8, hi
 
 ; CHECK-NEXT: stlxrb [[STATUS:w[0-9]+]], w[[NEW]], [c[[ADDR1]]]
 ; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK-NOT: dmb
 
-; CHECK: mov {{[xw]}}0, {{[xw]}}[[OLD]]
    ret i8 %old
 }
 
@@ -791,21 +783,20 @@ define i16 @test_atomic_load_umax_i16(i16 %offset) nounwind {
    %old = atomicrmw umax i16 addrspace(200)* @var16, i16 %offset monotonic
 ; CHECK-NOT: dmb
 ; CHECK: adrp c[[TMPADDR:[0-9]+]]
-; CHECK-NEXT: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
+; CHECK: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
 
 ; CHECK: .LBB{{[0-9]+}}_1:
 ; CHECK: ldxrh w[[OLD:[0-9]+]], [c[[ADDR1]]]
   ; w0 below is a reasonable guess but could change: it certainly comes into the
   ;  function there.
 
-; CHECK-NEXT: cmp w[[OLD]], w0, uxth
-; CHECK-NEXT: csel w[[NEW:[0-9]+]], w[[OLD]], w0, hi
+; CHECK-NEXT: cmp w0, w8
+; CHECK-NEXT: csel w[[NEW:[0-9]+]], w0, w8, hi
 
 ; CHECK-NEXT: stxrh [[STATUS:w[0-9]+]], w[[NEW]], [c[[ADDR1]]]
 ; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK-NOT: dmb
 
-; CHECK: mov {{[xw]}}0, {{[xw]}}[[OLD]]
    ret i16 %old
 }
 
@@ -838,7 +829,7 @@ define i64 @test_atomic_load_umax_i64(i64 %offset) nounwind {
    %old = atomicrmw umax i64 addrspace(200)* @var64, i64 %offset release
 ; CHECK-NOT: dmb
 ; CHECK: adrp c[[TMPADDR:[0-9]+]]
-; CHECK-NEXT: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
+; CHECK: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
 
 ; CHECK: .LBB{{[0-9]+}}_1:
 ; CHECK: ldxr x[[OLD:[0-9]+]], [c[[ADDR1]]]
@@ -863,20 +854,19 @@ define i8 @test_atomic_cmpxchg_i8(i8 %wanted, i8 %new) nounwind {
 
 ; CHECK-NOT: dmb
 ; CHECK: adrp c[[TMPADDR:[0-9]+]]
-; CHECK-NEXT: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
+; CHECK: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
 
 ; CHECK: [[STARTAGAIN:.LBB[0-9]+_[0-9]+]]:
-; CHECK: ldaxrb w[[TMPADDR:[0-9]+]], [c[[ADDR1]]]
+; CHECK: ldaxrb w0, [c[[ADDR1]]]
   ; w0 below is a reasonable guess but could change: it certainly comes into the
   ;  function there.
-; CHECK-NEXT: cmp w[[TMPADDR]], w0
+; CHECK-NEXT: cmp w0, w8
 ; CHECK-NEXT: b.ne [[GET_OUT:.LBB[0-9]+_[0-9]+]]
 ; CHECK: stxrb [[STATUS:w[0-9]+]], w1, [c[[ADDR1]]]
 ; CHECK-NEXT: cbnz [[STATUS]], [[STARTAGAIN]]
 ; CHECK: [[GET_OUT]]:
 ; CHECK: clrex
 ; CHECK-NOT: dmb
-; CHECK: mov w0, w[[TMPADDR]]
 
    ret i8 %old
 }
@@ -888,20 +878,17 @@ define i16 @test_atomic_cmpxchg_i16(i16 %wanted, i16 %new) nounwind {
 
 ; CHECK-NOT: dmb
 ; CHECK: adrp c[[TMPADDR:[0-9]+]]
-; CHECK-NEXT: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
+; CHECK: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
 
 ; CHECK: [[STARTAGAIN:.LBB[0-9]+_[0-9]+]]:
-; CHECK: ldaxrh w[[TMPADDR:[0-9]+]], [c[[ADDR1]]]
-  ; w0 below is a reasonable guess but could change: it certainly comes into the
-  ;  function there.
-; CHECK-NEXT: cmp w[[TMPADDR]], w0
+; CHECK: ldaxrh w0, [c[[ADDR1]]]
+; CHECK-NEXT: cmp w0, w8
 ; CHECK-NEXT: b.ne [[GET_OUT:.LBB[0-9]+_[0-9]+]]
 ; CHECK: stlxrh [[STATUS:w[0-9]+]], w1, [c[[ADDR1]]]
 ; CHECK-NEXT: cbnz [[STATUS]], [[STARTAGAIN]]
 ; CHECK: [[GET_OUT]]:
 ; CHECK: clrex
 ; CHECK-NOT: dmb
-; CHECK: mov w0, w[[TMPADDR]]
 
    ret i16 %old
 }
@@ -913,12 +900,11 @@ define i32 @test_atomic_cmpxchg_i32(i32 %wanted, i32 %new) nounwind {
 
 ; CHECK-NOT: dmb
 ; CHECK: adrp c[[TMPADDR:[0-9]+]]
-; CHECK-NEXT: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
-; CHECK: mov w[[TMPADDR:[0-9]+]], w0
+; CHECK: ldr c[[ADDR1:[0-9]+]], [c[[TMPADDR]], {{#?}}:lo12:{{.*}}]
 
 ; CHECK: [[STARTAGAIN:.LBB[0-9]+_[0-9]+]]:
 ; CHECK: ldxr w0, [c[[ADDR1]]]
-; CHECK-NEXT: cmp w0, w[[TMPADDR]]
+; CHECK-NEXT: cmp w0, w8
 ; CHECK-NEXT: b.ne [[GET_OUT:.LBB[0-9]+_[0-9]+]]
 ; CHECK: stlxr [[STATUS:w[0-9]+]], {{w[0-9]+}}, [c[[ADDR1]]]
 ; CHECK-NEXT: cbnz [[STATUS]], [[STARTAGAIN]]

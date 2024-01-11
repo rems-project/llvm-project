@@ -402,6 +402,9 @@ enum UnhashedControlBlockRecordTypes {
 
   /// Record code for \#pragma diagnostic mappings.
   DIAG_PRAGMA_MAPPINGS,
+
+  /// Record code for the indices of used header search entries.
+  HEADER_SEARCH_ENTRY_USAGE,
 };
 
 /// Record code for extension blocks.
@@ -692,6 +695,9 @@ enum ASTRecordTypes {
 
   /// Record code for \#pragma float_control options.
   FLOAT_CONTROL_PRAGMA_OPTIONS = 65,
+
+  /// Record code for included files.
+  PP_INCLUDED_FILES = 66,
 };
 
 /// Record types used within a source manager block.
@@ -1064,11 +1070,14 @@ enum PredefinedTypeIDs {
   /// \brief The '__bf16' type
   PREDEF_TYPE_BFLOAT16_ID = 73,
 
+  /// \brief The '__ibm128' type
+  PREDEF_TYPE_IBM128_ID = 74,
+
   /// The '__uintcap_t' type.
-  PREDEF_TYPE_UINTCAP_ID = 74,
+  PREDEF_TYPE_UINTCAP_ID = 75,
 
   /// The '__intcap_t' type.
-  PREDEF_TYPE_INTCAP_ID = 75,
+  PREDEF_TYPE_INTCAP_ID = 76,
 
 /// OpenCL image types with auto numeration
 #define IMAGE_TYPE(ImgType, Id, SingletonId, Access, Suffix)                   \
@@ -1899,6 +1908,7 @@ enum StmtCode {
   STMT_SEH_TRY,                     // SEHTryStmt
 
   // OpenMP directives
+  STMT_OMP_META_DIRECTIVE,
   STMT_OMP_CANONICAL_LOOP,
   STMT_OMP_PARALLEL_DIRECTIVE,
   STMT_OMP_SIMD_DIRECTIVE,
@@ -1959,6 +1969,7 @@ enum StmtCode {
   STMT_OMP_INTEROP_DIRECTIVE,
   STMT_OMP_DISPATCH_DIRECTIVE,
   STMT_OMP_MASKED_DIRECTIVE,
+  STMT_OMP_GENERIC_LOOP_DIRECTIVE,
   EXPR_OMP_ARRAY_SECTION,
   EXPR_OMP_ARRAY_SHAPING,
   EXPR_OMP_ITERATOR,

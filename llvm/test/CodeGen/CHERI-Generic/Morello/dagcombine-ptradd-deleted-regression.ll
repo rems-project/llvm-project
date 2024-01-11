@@ -12,8 +12,8 @@ declare i32 @bar(i32 addrspace(200)*)
 define internal i32 @foo(i32 addrspace(200)* %a, i64 addrspace(200)* %b) nounwind {
 ; HYBRID-LABEL: foo:
 ; HYBRID:       // %bb.0: // %entry
-; HYBRID-NEXT:    sub sp, sp, #32 // =32
-; HYBRID-NEXT:    add c0, c0, #4 // =4
+; HYBRID-NEXT:    sub sp, sp, #32
+; HYBRID-NEXT:    add c0, c0, #4
 ; HYBRID-NEXT:    str x30, [sp, #16] // 8-byte Folded Spill
 ; HYBRID-NEXT:    str c0, [sp, #0] // 16-byte Folded Spill
 ; HYBRID-NEXT:  .LBB0_1: // %loop
@@ -26,7 +26,7 @@ define internal i32 @foo(i32 addrspace(200)* %a, i64 addrspace(200)* %b) nounwin
 ; PURECAP:       .Lfunc_begin0:
 ; PURECAP-NEXT:  // %bb.0: // %entry
 ; PURECAP-NEXT:    stp c30, c19, [csp, #-32]! // 32-byte Folded Spill
-; PURECAP-NEXT:    add c19, c0, #4 // =4
+; PURECAP-NEXT:    add c19, c0, #4
 ; PURECAP-NEXT:  .LBB0_1: // %loop
 ; PURECAP-NEXT:    // =>This Inner Loop Header: Depth=1
 ; PURECAP-NEXT:    mov c0, c19

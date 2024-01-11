@@ -11,6 +11,7 @@
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Options.h"
 #include "llvm/Option/ArgList.h"
+#include "llvm/Support/AArch64TargetParser.h"
 #include "llvm/Support/TargetParser.h"
 #include "llvm/Support/Host.h"
 
@@ -111,10 +112,34 @@ static bool DecodeAArch64Features(const Driver &D, StringRef text,
     else
       return false;
 
-    // +sve implies +f32mm if the base architecture is v8.6A or v8.7A
-    // it isn't the case in general that sve implies both f64mm and f32mm
+    if (Feature == "sve2")
+      Features.push_back("+sve");
+    else if (Feature == "sve2-bitperm" || Feature == "sve2-sha3" ||
+             Feature == "sve2-aes" || Feature == "sve2-sm4") {
+      Features.push_back("+sve");
+      Features.push_back("+sve2");
+    } else if (Feature == "nosve") {
+      Features.push_back("-sve2");
+      Features.push_back("-sve2-bitperm");
+      Features.push_back("-sve2-sha3");
+      Features.push_back("-sve2-aes");
+      Features.push_back("-sve2-sm4");
+    } else if (Feature == "nosve2") {
+      Features.push_back("-sve2-bitperm");
+      Features.push_back("-sve2-sha3");
+      Features.push_back("-sve2-aes");
+      Features.push_back("-sve2-sm4");
+    }
+
+    // +sve implies +f32mm if the base architecture is >= v8.6A (except v9A)
+    // It isn't the case in general that sve implies both f64mm and f32mm
     if ((ArchKind == llvm::AArch64::ArchKind::ARMV8_6A ||
-         ArchKind == llvm::AArch64::ArchKind::ARMV8_7A) && Feature == "sve")
+         ArchKind == llvm::AArch64::ArchKind::ARMV8_7A ||
+         ArchKind == llvm::AArch64::ArchKind::ARMV8_8A ||
+         ArchKind == llvm::AArch64::ArchKind::ARMV9_1A ||
+         ArchKind == llvm::AArch64::ArchKind::ARMV9_2A ||
+         ArchKind == llvm::AArch64::ArchKind::ARMV9_3A) &&
+        Feature == "sve")
       Features.push_back("+f32mm");
   }
   if (UseA64C && UseC64)
@@ -167,8 +192,20 @@ getAArch64ArchFeaturesFromMarch(const Driver &D, StringRef March,
 
   llvm::AArch64::ArchKind ArchKind = llvm::AArch64::parseArch(Split.first);
   if (ArchKind == llvm::AArch64::ArchKind::INVALID ||
-      !llvm::AArch64::getArchFeatures(ArchKind, Features) ||
-      (Split.second.size() &&
+      !llvm::AArch64::getArchFeatures(ArchKind, Features))
+    return false;
+
+  // Enable SVE2 by default on Armv9-A.
+  // It can still be disabled if +nosve2 is present.
+  // We must do this early so that DecodeAArch64Features has the correct state
+  if ((ArchKind == llvm::AArch64::ArchKind::ARMV9A ||
+       ArchKind == llvm::AArch64::ArchKind::ARMV9_1A ||
+       ArchKind == llvm::AArch64::ArchKind::ARMV9_2A)) {
+    Features.push_back("+sve");
+    Features.push_back("+sve2");
+  }
+
+  if ((Split.second.size() &&
        !DecodeAArch64Features(D, Split.second, Features, ArchKind)))
     return false;
 
@@ -238,7 +275,8 @@ getAArch64EncodingModeFromAbi(const Driver &D, const ArgList &Args,
   // If Morello support has not been enabled, validate that a purecap ABI has
   // not been requested.
   if ((ItExtFeature == Features.rend() || *ItExtFeature == "-morello") &&
-      (Abi == "purecap" || Abi == "purecap-benchmark")) {
+      (Abi == "purecap" || Abi == "purecap-benchmark" ||
+       Abi == "purecap-desc")) {
       D.Diag(clang::diag::err_target_feature_unsupported_abi)
           << Abi << "morello";
       return false;
@@ -255,7 +293,8 @@ getAArch64EncodingModeFromAbi(const Driver &D, const ArgList &Args,
     if (WarnOnDeprecatedFeature)
       D.Diag(clang::diag::warn_deprecated_c64_usage);
     if ((*ItModeFeature == "+c64") !=
-        (Abi == "purecap" || Abi == "purecap-benchmark")) {
+        (Abi == "purecap" || Abi == "purecap-benchmark" ||
+         Abi == "purecap-desc")) {
       StringRef Mode = *ItModeFeature == "+c64" ? "C64" : "A64";
       D.Diag(clang::diag::err_invalid_c64_abi_combination) << Mode << Abi;
       return false;
@@ -266,7 +305,7 @@ getAArch64EncodingModeFromAbi(const Driver &D, const ArgList &Args,
   // If we don't have an explicit mode set, infer it if an explicit ABI is
   // requested.
   if (MabiArg || Triple.isPurecap()) {
-    if (Abi == "purecap" || Abi == "purecap-benchmark")
+    if (Abi == "purecap" || Abi == "purecap-benchmark" || Abi == "purecap-desc")
       Features.push_back("+c64");
     else
       Features.push_back("-c64");
@@ -286,33 +325,39 @@ bool aarch64::isPurecap(const llvm::opt::ArgList &Args, const llvm::Triple &Trip
     StringRef Abi = A->getValue();
     if (IsPurecapBenchmarkABI)
       *IsPurecapBenchmarkABI = Abi == "purecap-benchmark";
-    return Abi == "purecap" || Abi == "purecap-benchmark";
+    return Abi == "purecap" || Abi == "purecap-benchmark" ||
+           Abi == "purecap-desc";
   }
   return false;
 }
 
 void aarch64::getMorelloMode(const Driver &D, const llvm::Triple &Triple,
-                             const ArgList &Args, bool &A64C,
+                             const ArgList &Args,
+                             bool &A64C,
                              bool &C64, bool &PureCap,
-                             bool &ReducedCapRegs) {
+                             bool &ReducedCapRegs, bool &FnDesc) {
   A64C = false;
   C64 = false;
   PureCap = false;
   ReducedCapRegs = false;
+  FnDesc = false;
 
   if (Triple.isPurecap())
     PureCap = true;
 
   if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ)) {
     StringRef Abi = A->getValue();
-    PureCap = Abi == "purecap" || Abi == "purecap-benchmark";
+    PureCap = Abi == "purecap" || Abi == "purecap-benchmark" ||
+              Abi == "purecap-desc";
+    FnDesc = Abi == "purecap-desc";
   }
 
   if (Arg *A = Args.getLastArg(options::OPT_m16_cap_regs))
     ReducedCapRegs = true;
 
   std::vector<StringRef> Features;
-  getAArch64TargetFeatures(D, Triple, Args, Features, false, false);
+  llvm::opt::ArgStringList CmdArgs;
+  getAArch64TargetFeatures(D, Triple, Args, CmdArgs, Features, false, false);
 
   // Look through all the features to take what into account what's coming from
   // -march.
@@ -328,6 +373,7 @@ void aarch64::getMorelloMode(const Driver &D, const llvm::Triple &Triple,
 void aarch64::getAArch64TargetFeatures(const Driver &D,
                                        const llvm::Triple &Triple,
                                        const ArgList &Args,
+                                       llvm::opt::ArgStringList &CmdArgs,
                                        std::vector<StringRef> &Features,
                                        bool ForAS,
                                        bool WarnOnDeprecatedFeature) {
@@ -335,7 +381,7 @@ void aarch64::getAArch64TargetFeatures(const Driver &D,
   bool success = true;
   // Enable NEON by default.
   Features.push_back("+neon");
-  llvm::StringRef WaMArch = "";
+  llvm::StringRef WaMArch;
   if (ForAS)
     for (const auto *A :
          Args.filtered(options::OPT_Wa_COMMA, options::OPT_Xassembler))
@@ -345,7 +391,7 @@ void aarch64::getAArch64TargetFeatures(const Driver &D,
   // Call getAArch64ArchFeaturesFromMarch only if "-Wa,-march=" or
   // "-Xassembler -march" is detected. Otherwise it may return false
   // and causes Clang to error out.
-  if (WaMArch.size())
+  if (!WaMArch.empty())
     success = getAArch64ArchFeaturesFromMarch(D, WaMArch, Args, Features);
   else if ((A = Args.getLastArg(options::OPT_march_EQ)))
     success = getAArch64ArchFeaturesFromMarch(D, A->getValue(), Args, Features);
@@ -354,6 +400,9 @@ void aarch64::getAArch64TargetFeatures(const Driver &D,
   else if (Args.hasArg(options::OPT_arch) || isCPUDeterminedByTriple(Triple))
     success = getAArch64ArchFeaturesFromMcpu(
         D, getAArch64TargetCPU(Args, Triple, A), Args, Features);
+  else
+    // Default to 'A' profile if the architecture is not specified.
+    success = getAArch64ArchFeaturesFromMarch(D, "armv8-a", Args, Features);
 
   if (success && (A = Args.getLastArg(clang::driver::options::OPT_mtune_EQ)))
     success =
@@ -366,8 +415,15 @@ void aarch64::getAArch64TargetFeatures(const Driver &D,
     success = getAArch64MicroArchFeaturesFromMcpu(
         D, getAArch64TargetCPU(Args, Triple, A), Args, Features);
 
-  if (!success)
-    D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
+  if (!success) {
+    auto Diag = D.Diag(diag::err_drv_clang_unsupported);
+    // If "-Wa,-march=" is used, 'WaMArch' will contain the argument's value,
+    // while 'A' is uninitialized. Only dereference 'A' in the other case.
+    if (!WaMArch.empty())
+      Diag << "-march=" + WaMArch.str();
+    else
+      Diag << A->getAsString(Args);
+  }
 
   (void)getAArch64EncodingModeFromAbi(D, Args, Triple, Features,
                                       WarnOnDeprecatedFeature);
@@ -495,7 +551,12 @@ fp16_fml_fallthrough:
       NoCrypto = true;
   }
 
-  if (std::find(ItBegin, ItEnd, "+v8.4a") != ItEnd) {
+  if (std::find(ItBegin, ItEnd, "+v8.4a") != ItEnd ||
+      std::find(ItBegin, ItEnd, "+v8.8a") != ItEnd ||
+      std::find(ItBegin, ItEnd, "+v9a") != ItEnd ||
+      std::find(ItBegin, ItEnd, "+v9.1a") != ItEnd ||
+      std::find(ItBegin, ItEnd, "+v9.2a") != ItEnd ||
+      std::find(ItBegin, ItEnd, "+v9.3a") != ItEnd) {
     if (HasCrypto && !NoCrypto) {
       // Check if we have NOT disabled an algorithm with something like:
       //   +crypto, -algorithm
@@ -554,16 +615,25 @@ fp16_fml_fallthrough:
     }
   }
 
-  auto V8_6Pos = llvm::find(Features, "+v8.6a");
-  if (V8_6Pos != std::end(Features))
-    V8_6Pos = Features.insert(std::next(V8_6Pos), {"+i8mm", "+bf16"});
+  const char *Archs[] = {"+v8.6a", "+v8.7a", "+v8.8a",
+                         "+v9.1a", "+v9.2a", "+v9.3a"};
+  auto Pos = std::find_first_of(Features.begin(), Features.end(),
+                                std::begin(Archs), std::end(Archs));
+  if (Pos != std::end(Features))
+    Pos = Features.insert(std::next(Pos), {"+i8mm", "+bf16"});
 
   if (Arg *A = Args.getLastArg(options::OPT_mno_unaligned_access,
                                options::OPT_munaligned_access)) {
-    if (A->getOption().matches(options::OPT_mno_unaligned_access))
+    if (A->getOption().matches(options::OPT_mno_unaligned_access)) {
       Features.push_back("+strict-align");
-  } else if (Triple.isOSOpenBSD())
+      if (!ForAS)
+        CmdArgs.push_back("-Wunaligned-access");
+    }
+  } else if (Triple.isOSOpenBSD()) {
     Features.push_back("+strict-align");
+    if (!ForAS)
+      CmdArgs.push_back("-Wunaligned-access");
+  }
 
   if (Args.hasArg(options::OPT_ffixed_x1))
     Features.push_back("+reserve-x1");
@@ -669,4 +739,15 @@ fp16_fml_fallthrough:
 
   if (Args.hasArg(options::OPT_mno_neg_immediates))
     Features.push_back("+no-neg-immediates");
+
+  if (Arg *A = Args.getLastArg(options::OPT_mfix_cortex_a53_835769,
+                               options::OPT_mno_fix_cortex_a53_835769)) {
+    if (A->getOption().matches(options::OPT_mfix_cortex_a53_835769))
+      Features.push_back("+fix-cortex-a53-835769");
+    else
+      Features.push_back("-fix-cortex-a53-835769");
+  } else if (Triple.isAndroid()) {
+    // Enabled A53 errata (835769) workaround by default on android
+    Features.push_back("+fix-cortex-a53-835769");
+  }
 }

@@ -11,7 +11,7 @@ class FooD : public Foo  {};
 
 void FooDCallee(FooD, FooD);
 
-// CHECK: define void @_Z10FooDCaller4FooD(%class.FooD addrspace(200)* %{{.*}})
+// CHECK: define void @_Z10FooDCaller4FooD(%class.FooD addrspace(200)* noundef %{{.*}})
 void FooDCaller(FooD t1) {
   FooDCallee(t1, t1);
 }
@@ -43,7 +43,7 @@ class BazD : public Baz {};
 
 void BazDCallee(BazD, BazD);
 
-// CHECK: define void @_Z10BazDCaller4BazD(%class.BazD addrspace(200)* %{{.*}})
+// CHECK: define void @_Z10BazDCaller4BazD(%class.BazD addrspace(200)* noundef %{{.*}})
 void BazDCaller(BazD t1) {
   BazDCallee(t1, t1);
 }
@@ -58,7 +58,7 @@ class BafD : public Baf {};
 
 void BafDCallee(BafD, BafD);
 
-// CHECK: define void @_Z10BafDCaller4BafD(%class.BafD addrspace(200)* %{{.*}})
+// CHECK: define void @_Z10BafDCaller4BafD(%class.BafD addrspace(200)* noundef %{{.*}})
 void BafDCaller(BafD t1) {
   BafDCallee(t1, t1);
 }

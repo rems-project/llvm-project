@@ -12,11 +12,11 @@ body:             |
     ; CHECK: liveins: $x0
     ; CHECK: %copy:_(s64) = COPY $x0
     ; CHECK: $x0 = COPY %copy(s64)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %copy:_(s64) = COPY $x0
     %or:_(s64) = G_OR %copy, %copy
     $x0 = COPY %or(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -32,11 +32,11 @@ body:             |
     ; CHECK: liveins: $x0
     ; CHECK: %copy:_(s64) = COPY $x0
     ; CHECK: $x0 = COPY %copy(s64)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %copy:_(s64) = COPY $x0
     %and:_(s64) = G_AND %copy, %copy
     $x0 = COPY %and(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -54,14 +54,14 @@ body:             |
     ; CHECK: %copy2:_(s64) = COPY $x1
     ; CHECK: %or:_(s64) = G_OR %copy1, %copy2
     ; CHECK: $x0 = COPY %or(s64)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %copy1:_(s64) = COPY $x0
     %copy2:_(s64) = COPY $x1
     %or:_(s64) = G_OR %copy1, %copy2
     %same_as_or:_(s64) = COPY %or(s64)
     %and:_(s64) = G_AND %or, %same_as_or
     $x0 = COPY %and(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 ---
@@ -83,7 +83,7 @@ body:             |
     ; CHECK: %or2:_(s64) = G_OR %copy1, %copy3
     ; CHECK: %and:_(s64) = G_AND %or1, %or2
     ; CHECK: $x0 = COPY %and(s64)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %copy1:_(s64) = COPY $x0
     %copy2:_(s64) = COPY $x1
     %copy3:_(s64) = COPY $x2
@@ -91,6 +91,6 @@ body:             |
     %or2:_(s64) = G_OR %copy1, %copy3
     %and:_(s64) = G_AND %or1, %or2
     $x0 = COPY %and(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...

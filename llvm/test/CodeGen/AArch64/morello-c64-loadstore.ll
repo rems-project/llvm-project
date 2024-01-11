@@ -123,8 +123,8 @@ define i8 addrspace(200)* addrspace(200)* @ldridxcap_regbase(i8 addrspace(200)* 
 
 define i8 addrspace(200)* addrspace(200)* @ldridxcap_regbase_not(i8 addrspace(200)* addrspace(200)* %src, i8 addrspace(200)* addrspace(200)* %out) {
 ; CHECK-LABEL: ldridxcap_regbase_not:
-; CHECK-NOT: ldr   c[[REG:[0-9]+]], [c0],
-; CHECK: str   c[[REG]], [c1, #0]
+; CHECK-NOT: ldr   c{{.*}}, [c0],
+; CHECK: str   c{{.*}}, [c1, #0]
 ; CHECK: ret
   %ptr = getelementptr inbounds i8 addrspace(200)*, i8 addrspace(200)* addrspace(200)* %src, i64 256
   %tmp = load i8 addrspace(200)*, i8 addrspace(200)* addrspace(200)* %src, align 16

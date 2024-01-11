@@ -7,8 +7,6 @@
 //===----------------------------------------------------------------------===//
 
 // UNSUPPORTED: c++03, c++11, c++14
-// UNSUPPORTED: libcpp-no-deduction-guides
-// UNSUPPORTED: apple-clang-9
 
 // Temporarily disable this test as it fails weirdly. It has nothing to do with
 // newlib, but this is a convenient way to exclude it from the run on our
@@ -18,7 +16,7 @@
 // GCC's implementation of class template deduction is still immature and runs
 // into issues with libc++. However GCC accepts this code when compiling
 // against libstdc++.
-// XFAIL: gcc-5, gcc-6, gcc-7, gcc-8, gcc-9, gcc-10, gcc-11
+// XFAIL: gcc-11
 
 // <tuple>
 

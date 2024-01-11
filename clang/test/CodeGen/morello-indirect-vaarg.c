@@ -21,7 +21,7 @@ void bar(struct S1 arg);
 // CHECK-NEXT:    [[ARG_SROA_0_0_COPYLOAD:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)* addrspace(200)* [[ARG_SROA_0_0__SROA_IDX]], align 16
 // CHECK-NEXT:    [[ARG_SROA_2_0__SROA_IDX1:%.*]] = getelementptr inbounds [[STRUCT_S1]], [[STRUCT_S1]] addrspace(200)* [[VAARG_ADDR]], i64 0, i32 1
 // CHECK-NEXT:    [[ARG_SROA_2_0_COPYLOAD:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)* addrspace(200)* [[ARG_SROA_2_0__SROA_IDX1]], align 16
-// CHECK-NEXT:    [[DOTFCA_0_INSERT:%.*]] = insertvalue { i8 addrspace(200)*, i8 addrspace(200)* } undef, i8 addrspace(200)* [[ARG_SROA_0_0_COPYLOAD]], 0
+// CHECK-NEXT:    [[DOTFCA_0_INSERT:%.*]] = insertvalue { i8 addrspace(200)*, i8 addrspace(200)* } poison, i8 addrspace(200)* [[ARG_SROA_0_0_COPYLOAD]], 0
 // CHECK-NEXT:    [[DOTFCA_1_INSERT:%.*]] = insertvalue { i8 addrspace(200)*, i8 addrspace(200)* } [[DOTFCA_0_INSERT]], i8 addrspace(200)* [[ARG_SROA_2_0_COPYLOAD]], 1
 // CHECK-NEXT:    call void @bar({ i8 addrspace(200)*, i8 addrspace(200)* } [[DOTFCA_1_INSERT]])
 // CHECK-NEXT:    [[LIST2:%.*]] = bitcast i8 addrspace(200)* addrspace(200)* [[LIST]] to i8 addrspace(200)*
@@ -63,7 +63,7 @@ void bat(struct S2 arg);
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast [[STRUCT_S2]] addrspace(200)* [[BYVAL_TEMP]] to i8 addrspace(200)*
 // CHECK-NEXT:    [[TMP4:%.*]] = bitcast [[STRUCT_S2]] addrspace(200)* [[ARG]] to i8 addrspace(200)*
 // CHECK-NEXT:    call void @llvm.memcpy.p200i8.p200i8.i64(i8 addrspace(200)* align 8 [[TMP3]], i8 addrspace(200)* align 8 [[TMP4]], i64 32, i1 false)
-// CHECK-NEXT:    call void @bat([[STRUCT_S2]] addrspace(200)* [[BYVAL_TEMP]])
+// CHECK-NEXT:    call void @bat([[STRUCT_S2]] addrspace(200)* noundef [[BYVAL_TEMP]])
 // CHECK-NEXT:    [[LIST2:%.*]] = bitcast i8 addrspace(200)* addrspace(200)* [[LIST]] to i8 addrspace(200)*
 // CHECK-NEXT:    call void @llvm.va_end.p200i8(i8 addrspace(200)* [[LIST2]])
 // CHECK-NEXT:    ret void

@@ -1416,11 +1416,11 @@ void AArch64InstPrinter::printAddSubImm(const MCInst *MI, unsigned OpNum,
     unsigned Shift =
         AArch64_AM::getShiftValue(MI->getOperand(OpNum + 1).getImm());
     O << '#' << formatImm(Val);
-    if (Shift != 0)
+    if (Shift != 0) {
       printShifter(MI, OpNum + 1, STI, O);
-
-    if (CommentStream)
-      *CommentStream << '=' << formatImm(Val << Shift) << '\n';
+      if (CommentStream)
+        *CommentStream << '=' << formatImm(Val << Shift) << '\n';
+    }
   } else {
     assert(MO.isExpr() && "Unexpected operand type!");
     MO.getExpr()->print(O, &MAI);
@@ -1911,6 +1911,12 @@ void AArch64InstPrinter::printCapLitLabel(const MCInst *MI,
   }
 }
 
+void AArch64InstPrinter::printMatrixIndex(const MCInst *MI, unsigned OpNum,
+                                          const MCSubtargetInfo &STI,
+                                          raw_ostream &O) {
+  O << MI->getOperand(OpNum).getImm();
+}
+
 void AArch64InstPrinter::printAlignedLabel(const MCInst *MI, uint64_t Address,
                                            unsigned OpNum,
                                            const MCSubtargetInfo &STI,
@@ -1961,6 +1967,25 @@ void AArch64InstPrinter::printAdrpLabel(const MCInst *MI, uint64_t Address,
   MI->getOperand(OpNum).getExpr()->print(O, &MAI);
 }
 
+void AArch64InstPrinter::printAdrdpLabel(const MCInst *MI,
+                                        unsigned OpNum,
+                                        const MCSubtargetInfo &STI,
+                                        raw_ostream &O) {
+  const MCOperand &Op = MI->getOperand(OpNum);
+
+  if (Op.isImm()) {
+    const uint64_t Offset = Op.getImm() * 4096;
+    if (PrintBranchImmAsAddress)
+      O << formatHex(Offset);
+    else
+      O << "#" << Offset;
+    return;
+  }
+
+  // Otherwise, just print the expression.
+  MI->getOperand(OpNum).getExpr()->print(O, &MAI);
+}
+
 void AArch64InstPrinter::printBarrierOption(const MCInst *MI, unsigned OpNo,
                                             const MCSubtargetInfo &STI,
                                             raw_ostream &O) {
@@ -2000,6 +2025,28 @@ void AArch64InstPrinter::printBarriernXSOption(const MCInst *MI, unsigned OpNo,
     O << "#" << Val;
 }
 
+static bool isValidSysReg(const AArch64SysReg::SysReg *Reg, bool Read,
+                          const MCSubtargetInfo &STI) {
+  return (Reg && (Read ? Reg->Readable : Reg->Writeable) &&
+          Reg->haveFeatures(STI.getFeatureBits()));
+}
+
+// Looks up a system register either by encoding or by name. Some system
+// registers share the same encoding between different architectures,
+// therefore a tablegen lookup by encoding will return an entry regardless
+// of the register's predication on a specific subtarget feature. To work
+// around this problem we keep an alternative name for such registers and
+// look them up by that name if the first lookup was unsuccessful.
+static const AArch64SysReg::SysReg *lookupSysReg(unsigned Val, bool Read,
+                                                 const MCSubtargetInfo &STI) {
+  const AArch64SysReg::SysReg *Reg = AArch64SysReg::lookupSysRegByEncoding(Val);
+
+  if (Reg && !isValidSysReg(Reg, Read, STI))
+    Reg = AArch64SysReg::lookupSysRegByName(Reg->AltName);
+
+  return Reg;
+}
+
 void AArch64InstPrinter::printMRSSystemRegister(const MCInst *MI, unsigned OpNo,
                                                 const MCSubtargetInfo &STI,
                                                 raw_ostream &O) {
@@ -2025,8 +2072,15 @@ void AArch64InstPrinter::printMRSSystemRegister(const MCInst *MI, unsigned OpNo,
     return;
   }
 
-  const AArch64SysReg::SysReg *Reg = AArch64SysReg::lookupSysRegByEncoding(Val);
-  if (Reg && Reg->Readable && Reg->haveFeatures(STI.getFeatureBits()))
+  bool HasHCX = STI.getFeatureBits()[AArch64::FeatureHCX] != 0;
+  if (HasHCX && Val == AArch64SysReg::HCRX_EL2) {
+    O << "HCRX_EL2";
+    return;
+  }
+
+  const AArch64SysReg::SysReg *Reg = lookupSysReg(Val, true /*Read*/, STI);
+
+  if (isValidSysReg(Reg, true /*Read*/, STI))
     O << Reg->Name;
   else
     O << AArch64SysReg::genericRegisterString(Val);
@@ -2057,8 +2111,15 @@ void AArch64InstPrinter::printMSRSystemRegister(const MCInst *MI, unsigned OpNo,
     return;
   }
 
-  const AArch64SysReg::SysReg *Reg = AArch64SysReg::lookupSysRegByEncoding(Val);
-  if (Reg && Reg->Writeable && Reg->haveFeatures(STI.getFeatureBits()))
+  bool HasHCX = STI.getFeatureBits()[AArch64::FeatureHCX] != 0;
+  if (HasHCX && Val == AArch64SysReg::HCRX_EL2) {
+    O << "HCRX_EL2";
+    return;
+  }
+
+  const AArch64SysReg::SysReg *Reg = lookupSysReg(Val, false /*Read*/, STI);
+
+  if (isValidSysReg(Reg, false /*Read*/, STI))
     O << Reg->Name;
   else
     O << AArch64SysReg::genericRegisterString(Val);

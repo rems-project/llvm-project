@@ -246,7 +246,7 @@ body: |
   bb.2.end:
     %4(s32) = PHI %0, %bb.0.entry, %3, %bb.1.then
     G_STORE killed %4, killed %1 :: (store (s32) into %ir.dst)
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 
 ---
@@ -371,12 +371,12 @@ body: |
     ; CHECK: %0:gpr64 = COPY $x0
     ; CHECK-NEXT: %1:gpr64 = ADDXrr %0, %0
     ; CHECK-NEXT: $x0 = COPY %1
-    ; CHECK-NEXT: RET_ReallyLR 0, implicit $x0
+    ; CHECK-NEXT: RET_ReallyLR implicit $x0
 
     %0 = COPY $x0
     %1 = ADDXrr %0, %0
     $x0 = COPY %1
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...
 
 ---
@@ -582,7 +582,7 @@ body:             |
     %3(s128) = G_MERGE_VALUES %0(s64), %1(s64)
     %2(<2 x s64>) = G_BITCAST %3(s128)
     $q0 = COPY %2(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 
@@ -612,7 +612,7 @@ body:             |
     %4(s128) = COPY %3(s128)
     %2(<2 x s64>) = G_BITCAST %4(s128)
     $q0 = COPY %2(<2 x s64>)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 
@@ -641,7 +641,7 @@ body:             |
     %0 = LDRQui killed $x0, 0
     %1(s128) = COPY %0
     $q0 = COPY %1(s128)
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 
 ...
 
@@ -669,7 +669,7 @@ body:             |
     %0(s32) = COPY $w0
     %1(s16) = G_TRUNC %0(s32)
     $h0 = COPY %1(s16)
-    RET_ReallyLR 0, implicit $h0
+    RET_ReallyLR implicit $h0
 
 ...
 
@@ -699,7 +699,7 @@ registers:
 # GREEDY-NEXT:   %4:gpr(<2 x s32>) = G_OR %2, %3
 # CHECK-NEXT:    %5:gpr(s64) = G_BITCAST %4(<2 x s32>)
 # CHECK-NEXT:    $x0 = COPY %5(s64)
-# CHECK-NEXT:    RET_ReallyLR 0, implicit $x0
+# CHECK-NEXT:    RET_ReallyLR implicit $x0
 body:             |
   bb.0:
     liveins: $x0, $x1
@@ -711,7 +711,7 @@ body:             |
     %4(<2 x s32>) = G_OR %2, %3
     %5(s64) = G_BITCAST %4(<2 x s32>)
     $x0 = COPY %5(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 
@@ -742,7 +742,7 @@ registers:
 # CHECK-NEXT:    %4:fpr(s64) = COPY %0
 # CHECK-NEXT:    %3:fpr(s64) = G_FADD %4, %2
 # CHECK-NEXT:    $x0 = COPY %3(s64)
-# CHECK-NEXT:    RET_ReallyLR 0, implicit $x0
+# CHECK-NEXT:    RET_ReallyLR implicit $x0
 
 body:             |
   bb.0:
@@ -753,7 +753,7 @@ body:             |
     %2(s64) = G_LOAD %1(p0) :: (load (s64) from %ir.addr)
     %3(s64) = G_FADD %0, %2
     $x0 = COPY %3(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...
 
@@ -792,7 +792,7 @@ body:             |
     %1(p0) = COPY $x1
     %2(s64) = G_FADD %0, %0
     G_STORE %2(s64), %1(p0) :: (store (s64) into %ir.addr)
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 
@@ -827,7 +827,7 @@ body:             |
     %0(s16) = G_TRUNC %1(s32)
     %2(s32) = G_FPEXT %0(s16)
     $s0 = COPY %2(s32)
-    RET_ReallyLR 0, implicit $s0
+    RET_ReallyLR implicit $s0
 
 ...
 
@@ -862,7 +862,7 @@ body:             |
     %0(s16) = G_TRUNC %1(s32)
     %2(s64) = G_FPEXT %0(s16)
     $d0 = COPY %2(s64)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 
@@ -892,7 +892,7 @@ body:             |
     %0(s32) = COPY $w0
     %1(s64) = G_FPEXT %0(s32)
     $d0 = COPY %1(s64)
-    RET_ReallyLR 0, implicit $d0
+    RET_ReallyLR implicit $d0
 
 ...
 
@@ -914,7 +914,7 @@ body:             |
 
     %0(s16) = COPY $h0
     $h0 = COPY %0(s16)
-    RET_ReallyLR 0, implicit $h0
+    RET_ReallyLR implicit $h0
 
 ...
 ---
@@ -958,6 +958,6 @@ body:             |
     G_STORE %0(s16), %1(p0) :: (store (s16) into %ir.p.addr)
     %2(s16) = G_LOAD %1(p0) :: (load (s16) from %ir.p.addr)
     $h0 = COPY %2(s16)
-    RET_ReallyLR 0, implicit $h0
+    RET_ReallyLR implicit $h0
 
 ...

@@ -14,11 +14,11 @@ body:             |
     ; CHECK-LABEL: name: shift_of_zero
     ; CHECK: %a:_(s64) = COPY $x0
     ; CHECK: $x0 = COPY %a(s64)
-    ; CHECK: RET_ReallyLR 0, implicit $x0
+    ; CHECK: RET_ReallyLR implicit $x0
     %a:_(s64) = COPY $x0
     %b:_(s64) = G_CONSTANT i64 0
     %res:_(s64) = G_LSHR %a, %b
     $x0 = COPY %res(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...

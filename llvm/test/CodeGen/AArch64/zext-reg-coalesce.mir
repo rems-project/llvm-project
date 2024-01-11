@@ -29,5 +29,5 @@ body:             |
     %8:gpr64all = SUBREG_TO_REG 0, %0, %subreg.sub_32
     $x0 = COPY %8
   ; CHECK: $x0 = COPY
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...

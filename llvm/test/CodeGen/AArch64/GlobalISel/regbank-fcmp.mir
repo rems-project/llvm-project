@@ -17,10 +17,10 @@ body:             |
     ; CHECK: %y:fpr(<2 x s64>) = COPY $q1
     ; CHECK: %fcmp:fpr(<2 x s64>) = G_FCMP floatpred(olt), %x(<2 x s64>), %y
     ; CHECK: $q0 = COPY %fcmp(<2 x s64>)
-    ; CHECK: RET_ReallyLR 0, implicit $q0
+    ; CHECK: RET_ReallyLR implicit $q0
     %x:_(<2 x s64>) = COPY $q0
     %y:_(<2 x s64>) = COPY $q1
     %fcmp:_(<2 x s64>) = G_FCMP floatpred(olt), %x:_(<2 x s64>), %y:_
     $q0 = COPY %fcmp
-    RET_ReallyLR 0, implicit $q0
+    RET_ReallyLR implicit $q0
 ...

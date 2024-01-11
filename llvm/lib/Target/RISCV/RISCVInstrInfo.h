@@ -18,11 +18,28 @@
 #include "llvm/IR/DiagnosticInfo.h"
 
 #define GET_INSTRINFO_HEADER
+#define GET_INSTRINFO_OPERAND_ENUM
 #include "RISCVGenInstrInfo.inc"
 
 namespace llvm {
 
 class RISCVSubtarget;
+
+namespace RISCVCC {
+
+enum CondCode {
+  COND_EQ,
+  COND_NE,
+  COND_LT,
+  COND_GE,
+  COND_LTU,
+  COND_GEU,
+  COND_INVALID
+};
+
+CondCode getOppositeBranchCondition(CondCode);
+
+} // end of namespace RISCVCC
 
 class RISCVInstrInfo : public RISCVGenInstrInfo {
 
@@ -30,6 +47,7 @@ public:
   explicit RISCVInstrInfo(RISCVSubtarget &STI);
 
   MCInst getNop() const override;
+  const MCInstrDesc &getBrCond(RISCVCC::CondCode CC) const;
 
   unsigned isLoadFromStackSlot(const MachineInstr &MI,
                                int &FrameIndex) const override;
@@ -75,10 +93,10 @@ public:
                         const DebugLoc &dl,
                         int *BytesAdded = nullptr) const override;
 
-  unsigned insertIndirectBranch(MachineBasicBlock &MBB,
-                                MachineBasicBlock &NewDestBB,
-                                const DebugLoc &DL, int64_t BrOffset,
-                                RegScavenger *RS = nullptr) const override;
+  void insertIndirectBranch(MachineBasicBlock &MBB,
+                            MachineBasicBlock &NewDestBB,
+                            MachineBasicBlock &RestoreBB, const DebugLoc &DL,
+                            int64_t BrOffset, RegScavenger *RS) const override;
 
   unsigned removeBranch(MachineBasicBlock &MBB,
                         int *BytesRemoved = nullptr) const override;
@@ -127,6 +145,9 @@ public:
   ArrayRef<std::pair<unsigned, const char *>>
   getSerializableDirectMachineOperandTargetFlags() const override;
 
+  ArrayRef<std::pair<unsigned, const char *>>
+  getSerializableBitmaskMachineOperandTargetFlags() const override;
+
   // Return true if the function can safely be outlined from.
   virtual bool
   isFunctionSafeToOutlineFrom(MachineFunction &MF,
@@ -163,9 +184,8 @@ public:
                                        unsigned OpIdx1,
                                        unsigned OpIdx2) const override;
 
-  MachineInstr *convertToThreeAddress(MachineFunction::iterator &MBB,
-                                      MachineInstr &MI,
-                                      LiveVariables *LV) const override;
+  MachineInstr *convertToThreeAddress(MachineInstr &MI, LiveVariables *LV,
+                                      LiveIntervals *LIS) const override;
 
   Register getVLENFactoredAmount(
       MachineFunction &MF, MachineBasicBlock &MBB,
@@ -183,6 +203,15 @@ public:
 protected:
   const RISCVSubtarget &STI;
 };
+
+namespace RISCV {
+
+// Implemented in RISCVGenInstrInfo.inc
+int16_t getNamedOperandIdx(uint16_t Opcode, uint16_t NamedIndex);
+
+// Special immediate for AVL operand of V pseudo instructions to indicate VLMax.
+static constexpr int64_t VLMaxSentinel = -1LL;
+} // namespace RISCV
 
 namespace RISCVVPseudosTable {
 

@@ -2,7 +2,7 @@
 
 ; Don't crash while trying to simplify icmps with vectors of capabilities as operands.
 
-target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128-pf200:128:128-A200-P200-G200"
+target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128-pf200:128:128:128:64-A200-P200-G200"
 
 ; CHECK-LABEL: foo
 define <2 x i32> @foo(i8 addrspace(200)* addrspace(200)* %con0,

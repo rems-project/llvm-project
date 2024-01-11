@@ -18,7 +18,7 @@ body: |
     %val:_(s16) = G_CONSTANT i16 42
     %2:_(<8 x s16>) = G_INSERT_VECTOR_ELT %0(<8 x s16>), %val(s16), %1(s32)
     $q0 = COPY %2(<8 x s16>)
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 name:            v2s32
@@ -37,7 +37,7 @@ body: |
     %val:_(s32) = G_CONSTANT i32 42
     %2:_(<2 x s32>) = G_INSERT_VECTOR_ELT %0(<2 x s32>), %val(s32), %1(s32)
     $d0 = COPY %2(<2 x s32>)
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 name:            v4s32
@@ -56,7 +56,7 @@ body: |
     %val:_(s32) = G_CONSTANT i32 42
     %2:_(<4 x s32>) = G_INSERT_VECTOR_ELT %0(<4 x s32>), %val(s32), %1(s32)
     $q0 = COPY %2(<4 x s32>)
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...
 ---
 name:            v2s64
@@ -75,5 +75,5 @@ body: |
     %val:_(s64) = G_CONSTANT i64 42
     %2:_(<2 x s64>) = G_INSERT_VECTOR_ELT %0(<2 x s64>), %val(s64), %1(s32)
     $q0 = COPY %2(<2 x s64>)
-    RET_ReallyLR 0
+    RET_ReallyLR
 ...

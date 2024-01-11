@@ -31,7 +31,7 @@ body:             |
     G_BRCOND %cmp_trunc(s1), %bb.1
     G_BR %bb.0
   bb.1:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -58,7 +58,7 @@ body:             |
     G_BRCOND %cmp_trunc(s1), %bb.1
     G_BR %bb.0
   bb.1:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -86,7 +86,7 @@ body:             |
     G_BRCOND %cmp_trunc(s1), %bb.1
     G_BR %bb.0
   bb.1:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -117,7 +117,7 @@ body:             |
     G_BRCOND %cmp_trunc(s1), %bb.1
     G_BR %bb.0
   bb.1:
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -146,4 +146,4 @@ body:             |
     G_BRCOND %cmp_trunc(s1), %bb.1
     G_BR %bb.0
   bb.1:
-    RET_ReallyLR 0
+    RET_ReallyLR

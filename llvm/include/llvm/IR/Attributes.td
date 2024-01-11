@@ -86,6 +86,9 @@ def Dereferenceable : IntAttr<"dereferenceable", [ParamAttr, RetAttr]>;
 def DereferenceableOrNull : IntAttr<"dereferenceable_or_null",
                                     [ParamAttr, RetAttr]>;
 
+/// Do not instrument function with sanitizers.
+def DisableSanitizerInstrumentation: EnumAttr<"disable_sanitizer_instrumentation", [FnAttr]>;
+
 /// Provide pointer element type to intrinsic.
 def ElementType : TypeAttr<"elementtype", [ParamAttr]>;
 
@@ -290,6 +293,10 @@ def ZExt : EnumAttr<"zeroext", [ParamAttr, RetAttr]>;
 // This MemTransferInst may transfer capabilities and must not be
 // split into smaller loads/stores that would break this property
 def MustPreserveCheriTags : EnumAttr<"must_preserve_cheri_tags", [FnAttr]>;
+// This MemTransferInst will never transfer capabilities and can
+// therefore be split into smaller loads/stores and/or be lowered to
+// copy instructions/functions that do not retain CHERI tags.
+def NoPreserveCheriTags : EnumAttr<"no_preserve_cheri_tags", [FnAttr]>;
 
 /// Function is required to make Forward Progress.
 def MustProgress : EnumAttr<"mustprogress", [FnAttr]>;
@@ -349,3 +356,6 @@ def : MergeRule<"adjustCallerStackProbeSize">;
 def : MergeRule<"adjustMinLegalVectorWidth">;
 def : MergeRule<"adjustNullPointerValidAttr">;
 def : MergeRule<"setAND<MustProgressAttr>">;
+
+// Target dependent attributes
+include "llvm/IR/AttributesAMDGPU.td"

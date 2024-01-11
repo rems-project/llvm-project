@@ -540,10 +540,6 @@ unsigned AArch64ELFObjectWriter::getRelocType(MCContext &Ctx,
       return ELF::R_AARCH64_NONE;
     case AArch64::fixup_morello_tlsdesc_call:
       return ELF::R_MORELLO_TLSDESC_CALL;
-    case AArch64::fixup_morello_desc_call:
-      return ELF::R_MORELLO_DESC_CALL;
-    case AArch64::fixup_morello_desc_tcall:
-      return ELF::R_MORELLO_DESC_TCALL;
     default:
       Ctx.reportError(Fixup.getLoc(), "Unknown ELF relocation type");
       return ELF::R_AARCH64_NONE;

@@ -45,6 +45,6 @@ body:             |
     %2:_(s16) = G_ZEXT %0(s8), debug-location !8
     %3:_(s64) = G_SEXT %2(s16), debug-location !9
     $x0 = COPY %3(s64)
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 
 ...

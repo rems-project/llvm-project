@@ -7,8 +7,8 @@ target triple = "aarch64-none-unknown-elf"
 
 ; CHECK-LABEL: foo
 ; CHECK: adrp {{.*}}, :got:var
-; CHECK-NEXT: ldr c0, [c0, :got_lo12:var]
 ; CHECK-NEXT: movi v0.2d, #0000000000000000
+; CHECK-NEXT: ldr c0, [c0, :got_lo12:var]
 ; CHECK-NEXT: stp q0, q0, [c0]
 ; CHECK-NEXT: brk #0x1
 define dso_local void @foo() local_unnamed_addr addrspace(200) {

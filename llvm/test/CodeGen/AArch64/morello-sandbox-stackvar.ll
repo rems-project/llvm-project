@@ -1,7 +1,7 @@
 ; RUN: llc -mtriple=arm64 -mattr=+c64,+morello,+use-16-cap-regs -target-abi purecap \
 ; RUN:     -cheri-stack-bounds-analysis=none -o - %s | FileCheck %s
 
-target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128-pf200:128:128-A200-P200-G200"
+target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128-pf200:128:128:128:64-A200-P200-G200"
 
 declare void @foo() addrspace(200)
 declare i32 @bar(i64 addrspace(200)*, i32 addrspace(200)*, i16 addrspace(200)*, i8 addrspace(200)*, double addrspace(200)*, float addrspace(200)*) addrspace(200)
@@ -41,19 +41,19 @@ entry:
 ; CHECK-NEXT: stp c25, c24, [csp, #112]
 ; CHECK-NEXT: str x19, [csp, #144]
 
-; CHECK:	bl	foo
-; CHECK-NEXT:	add	c0, csp, #152
-; CHECK-NEXT:	add	c1, csp, #28
-; CHECK-NEXT:	add	c2, csp, #24
-; CHECK-NEXT:	add	c3, csp, #20
-; CHECK-NEXT:	add	c4, csp, #8
-; CHECK-NEXT:	add	c5, csp, #4
-; CHECK-NEXT:	scbnds	c24, c0, #8
-; CHECK-NEXT:	scbnds	c25, c1, #4
-; CHECK-NEXT:	scbnds	c26, c2, #2
-; CHECK-NEXT:	scbnds	c27, c3, #1
-; CHECK-NEXT:	scbnds	c28, c4, #8
-; CHECK-NEXT:	scbnds	c29, c5, #4
+; CHECK:        bl      foo
+; CHECK-NEXT:   add     c0, csp, #152
+; CHECK-NEXT:   add     c1, csp, #28
+; CHECK-NEXT:   scbnds  c24, c0, #8
+; CHECK-NEXT:   add     c0, csp, #24
+; CHECK-NEXT:   scbnds  c26, c0, #2
+; CHECK-NEXT:   add     c0, csp, #20
+; CHECK-NEXT:   scbnds  c27, c0, #1
+; CHECK-NEXT:   add     c0, csp, #8
+; CHECK-NEXT:   scbnds  c28, c0, #8
+; CHECK-NEXT:   add     c0, csp, #4
+; CHECK-NEXT:   scbnds  c25, c1, #4
+; CHECK-NEXT:   scbnds  c29, c0, #4
 
 ; CHECK-DAG:	mov	c0, c24
 ; CHECK-DAG:	mov	c1, c25
@@ -69,7 +69,7 @@ entry:
 ; CHECK-DAG:	str	wzr, [c29]
 
 ; CHECK:   	bl	bar
-; CHECK-DAG:	ldr	x8, [c24]
+; CHECK-DAG:	ldr	x0, [c24]
 ; CHECK-DAG:	ldr	w1, [c25]
 ; CHECK-DAG:	ldr	d0, [c28]
 ; CHECK-DAG:	ldr	s1, [c29]
@@ -77,12 +77,12 @@ entry:
 ; CHECK-DAG:	ldrh	w2, [c26]
 
 ; CHECK:	bl	baz
-; CHECK-NEXT:	add	w0,
 
-; CHECK:      ldr x19, [csp, #144]
-; CHECK-NEXT: ldp c25, c24, [csp, #112]
+; CHECK:      ldp c25, c24, [csp, #112]
 ; CHECK-NEXT: ldp c27, c26, [csp, #80]
 ; CHECK-NEXT: ldp c30, c28, [csp, #48]
 ; CHECK-NEXT: ldr c29, [csp, #32]
+; CHECK-NEXT: add w0,
+; CHECK-NEXT: ldr x19, [csp, #144]
 ; CHECK-NEXT: add csp, csp, #160
 }

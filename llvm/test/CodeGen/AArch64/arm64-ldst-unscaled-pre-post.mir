@@ -9,7 +9,7 @@ body: |
 
     $s0 = LDURSi $x0, 0
     $x0 = SUBXri $x0, 4, 0
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...
 # CHECK-LABEL: name: test_LDURDi_post
 # CHECK: LDRDpost $x0, -4
@@ -20,7 +20,7 @@ body: |
 
     $d0 = LDURDi $x0, 0
     $x0 = SUBXri $x0, 4, 0
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...
 # CHECK-LABEL: name: test_LDURQi_post
 # CHECK: LDRQpost $x0, -4
@@ -31,7 +31,7 @@ body: |
 
     $q0 = LDURQi  $x0, 0
     $x0 = SUBXri $x0, 4, 0
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...
 # CHECK-LABEL: name: test_LDURWi_post
 # CHECK: LDRWpost $x0, -4
@@ -42,7 +42,7 @@ body: |
 
     $w1 = LDURWi $x0, 0
     $x0 = SUBXri $x0, 4, 0
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...
 # CHECK-LABEL: name: test_LDURXi_post
 # CHECK: $x1 = LDRXpost $x0, -4
@@ -53,7 +53,7 @@ body: |
 
     $x1 = LDURXi $x0, 0
     $x0 = SUBXri $x0, 4, 0
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...
 # CHECK-LABEL: name: test_STURSi_post
 # CHECK: STRSpost $s0, $x0, -4
@@ -65,7 +65,7 @@ body: |
     $s0 = FMOVS0
     STURSi $s0, $x0, 0
     $x0 = SUBXri $x0, 4, 0
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...
 # CHECK-LABEL: name: test_STURDi_post
 # CHECK: STRDpost $d0, $x0, -4
@@ -77,7 +77,7 @@ body: |
     $d0 = FMOVD0
     STURDi $d0, $x0, 0
     $x0 = SUBXri $x0, 4, 0
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...
 # CHECK-LABEL: name: test_STURQi_post
 # CHECK: STRQpost $q0, $x0, -4
@@ -89,7 +89,7 @@ body: |
     $q0 = MOVIv4i32 0, 0
     STURQi $q0, $x0, 0
     $x0 = SUBXri $x0, 4, 0
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...
 # CHECK-LABEL: name: test_STURWi_post
 # CHECK: STRWpost $wzr, $x0, -4
@@ -100,7 +100,7 @@ body: |
 
     STURWi $wzr, $x0, 0
     $x0 = SUBXri $x0, 4, 0
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...
 # CHECK-LABEL: name: test_STURXi_post
 # CHECK: STRXpost $xzr, $x0, -4
@@ -111,5 +111,5 @@ body: |
 
     STURXi $xzr, $x0, 0
     $x0 = SUBXri $x0, 4, 0
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...

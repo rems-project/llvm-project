@@ -122,6 +122,6 @@ body:             |
     STR_PXI killed renamable $p1, %stack.5, 0, debug-location !DILocation(line: 3, column: 1, scope: !5)
     DBG_VALUE %stack.5, $noreg, !15, !DIExpression(DW_OP_deref), debug-location !DILocation(line: 3, column: 1, scope: !5)
 
-    RET_ReallyLR 0, implicit $z0, implicit $z1, debug-location !DILocation(line: 7, column: 1, scope: !5)
+    RET_ReallyLR implicit $z0, implicit $z1, debug-location !DILocation(line: 7, column: 1, scope: !5)
 
 ...

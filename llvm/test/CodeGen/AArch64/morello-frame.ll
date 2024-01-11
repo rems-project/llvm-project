@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=arm64 -mattr=+morello,+legacy-morello-vararg -o - %s | FileCheck %s
+; RUN: llc -mtriple=arm64 -mattr=+morello -o - %s | FileCheck %s
 
 define dso_local void @func(i8 addrspace(200)* nocapture readnone %bb, i8 addrspace(200)* %cc) local_unnamed_addr addrspace(200) #0 {
 entry:
@@ -54,31 +54,3 @@ declare void @llvm.lifetime.start(i64, i8* nocapture)
 declare i32 addrspace(200)* @foo(i32*)
 declare i32 @bar(i8*, i32)
 declare void @llvm.lifetime.end(i64, i8* nocapture)
-
-%struct.__va_list = type { i8*, i8*, i8*, i32, i32 }
-
-; CHECK-LABEL: frameWithBigStackAndNoExtraCSSpill
-define i32 @frameWithBigStackAndNoExtraCSSpill(i8* %fmt, ...) {
-entry:
-; CHECK:      sub sp, sp, #384
-; CHECK-NEXT: stp x29, x30, [sp, #368]
-; CHECK:      ldp x29, x30, [sp, #368]
-; CHECK-NEXT: add sp, sp, #384
-; CHECK-NEXT: ret
-  %ap = alloca %struct.__va_list, align 8
-  %tmp = alloca %struct.__va_list, align 8
-  %0 = bitcast %struct.__va_list* %ap to i8*
-  call void @llvm.lifetime.start(i64 32, i8* %0)
-  call void @llvm.va_start(i8* %0)
-  %1 = bitcast %struct.__va_list* %tmp to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %1, i8* %0, i64 32, i32 8, i1 false)
-  %call = call i32 @varArgFunc(i8* %fmt, %struct.__va_list* %tmp)
-  call void @llvm.va_end(i8* %0)
-  call void @llvm.lifetime.end(i64 32, i8* %0)
-  ret i32 %call
-}
-
-declare void @llvm.va_start(i8*)
-declare void @llvm.va_end(i8*)
-declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture readonly, i64, i32, i1)
-declare i32 @varArgFunc(i8*, %struct.__va_list*)

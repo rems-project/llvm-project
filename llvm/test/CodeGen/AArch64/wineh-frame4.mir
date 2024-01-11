@@ -13,7 +13,7 @@
 # CHECK-NEXT:  early-clobber $sp, $d8 = frame-destroy LDRDpost $sp, 16 :: (load (s64) from %stack.1)
 # CHECK-NEXT:  frame-destroy SEH_SaveFReg_X 8, -16
 # CHECK-NEXT:  frame-destroy SEH_EpilogEnd
-# CHECK-NEXT:  RET_ReallyLR 0, implicit $x0
+# CHECK-NEXT:  RET_ReallyLR implicit $x0
 ...
 ---
 name:            test
@@ -55,5 +55,5 @@ body:             |
     $d8 = FADDDrr $d0, killed $d1
     $d10 = FADDDrr killed $d8, $d0
     $x0 = COPY killed $d10
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...

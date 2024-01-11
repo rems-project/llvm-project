@@ -13,7 +13,7 @@
 ; CHECK-NEXT: DW_AT_frame_base [DW_FORM_exprloc] (DW_OP_regx CSP)
 ; CHECK-NOT: DW_TAG_subprogram
 
-target datalayout = "e-m:e-pf200:128:128-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200"
+target datalayout = "e-m:e-pf200:128:128:128:64-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200"
 target triple = "aarch64-none--elf"
 
 define void @foo() !dbg !6 {

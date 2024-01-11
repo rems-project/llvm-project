@@ -29,5 +29,5 @@ body:             |
     %1:gpr32 = MOVi32imm 1
     %2:gpr32 = SWPW killed %1, %0 :: (volatile load store monotonic (s32) on %ir.addr)
     $w0 = COPY %2
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 ...

@@ -17,17 +17,15 @@
 
 namespace llvm {
 
-class SystemZTargetMachine;
-
 class SystemZSelectionDAGInfo : public SelectionDAGTargetInfo {
 public:
   explicit SystemZSelectionDAGInfo() = default;
 
   SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG, const SDLoc &DL,
                                   SDValue Chain, SDValue Dst, SDValue Src,
-                                  SDValue Size, Align Alignment, bool IsVolatile,
-                                  bool AlwaysInline,
-                                  bool MustPreserveCheriCapabilities,
+                                  SDValue Size, Align Alignment,
+                                  bool IsVolatile, bool AlwaysInline,
+                                  PreserveCheriTags PreserveTags,
                                   MachinePointerInfo DstPtrInfo,
                                   MachinePointerInfo SrcPtrInfo) const override;
 

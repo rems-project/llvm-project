@@ -269,12 +269,7 @@ public:
     return SelectCAddrModeXRO(N, Width / 8, Base, Offset, SignExtend, DoShift);
   }
 
-  template<int Width>
   bool SelectDupZeroOrUndef(SDValue N) {
-    if (N.getValueType().isScalableVector() &&
-        N.getValueType().getSizeInBits() != TypeSize::Scalable(Width))
-      return false;
-
     switch(N->getOpcode()) {
     case ISD::UNDEF:
       return true;
@@ -282,7 +277,7 @@ public:
     case ISD::SPLAT_VECTOR: {
       auto Opnd0 = N->getOperand(0);
       if (auto CN = dyn_cast<ConstantSDNode>(Opnd0))
-        if (CN->isNullValue())
+        if (CN->isZero())
           return true;
       if (auto CN = dyn_cast<ConstantFPSDNode>(Opnd0))
         if (CN->isZero())
@@ -296,18 +291,13 @@ public:
     return false;
   }
 
-  template<int Width>
   bool SelectDupZero(SDValue N) {
-    if (N.getValueType().isScalableVector() &&
-        N.getValueType().getSizeInBits() != TypeSize::Scalable(Width))
-      return false;
-
     switch(N->getOpcode()) {
     case AArch64ISD::DUP:
     case ISD::SPLAT_VECTOR: {
       auto Opnd0 = N->getOperand(0);
       if (auto CN = dyn_cast<ConstantSDNode>(Opnd0))
-        if (CN->isNullValue())
+        if (CN->isZero())
           return true;
       if (auto CN = dyn_cast<ConstantFPSDNode>(Opnd0))
         if (CN->isZero())
@@ -406,7 +396,8 @@ public:
   void SelectPostLoadLane(SDNode *N, unsigned NumVecs);
   void SelectPredicatedLoad(SDNode *N, unsigned NumVecs, const unsigned Opc);
   void SelectPredicatedLoad(SDNode *N, unsigned NumVecs, unsigned Scale,
-                            unsigned Opc_rr, unsigned Opc_ri);
+                            unsigned Opc_rr, unsigned Opc_ri,
+                            bool IsIntr = false);
 
   bool SelectAddrModeFrameIndexSVE(SDValue N, SDValue &Base, SDValue &OffImm);
   /// SVE Reg+Imm addressing mode.
@@ -489,7 +480,7 @@ private:
 
   bool SelectCMP_SWAP(SDNode *N);
 
-  bool SelectCapabilityBranch(SDNode *N, bool Clear, bool Tail);
+  bool SelectCapabilityBranch(SDNode *N, bool Clear, bool Tail, bool DescCall);
 
   bool SelectSVE8BitLslImm(SDValue N, SDValue &Imm, SDValue &Shift);
 
@@ -2522,7 +2513,7 @@ AArch64DAGToDAGISel::findAddrModeSVELoadStore(SDNode *N, unsigned Opc_rr,
 
 void AArch64DAGToDAGISel::SelectPredicatedLoad(SDNode *N, unsigned NumVecs,
                                                unsigned Scale, unsigned Opc_ri,
-                                               unsigned Opc_rr) {
+                                               unsigned Opc_rr, bool IsIntr) {
   assert(Scale < 4 && "Invalid scaling value.");
   SDLoc DL(N);
   EVT VT = N->getValueType(0);
@@ -2532,11 +2523,11 @@ void AArch64DAGToDAGISel::SelectPredicatedLoad(SDNode *N, unsigned NumVecs,
   SDValue Base, Offset;
   unsigned Opc;
   std::tie(Opc, Base, Offset) = findAddrModeSVELoadStore(
-      N, Opc_rr, Opc_ri, N->getOperand(2),
+      N, Opc_rr, Opc_ri, N->getOperand(IsIntr ? 3 : 2),
       CurDAG->getTargetConstant(0, DL, MVT::i64), Scale);
 
-  SDValue Ops[] = {N->getOperand(1), // Predicate
-                   Base,             // Memory operand
+  SDValue Ops[] = {N->getOperand(IsIntr ? 2 : 1), // Predicate
+                   Base,                          // Memory operand
                    Offset, Chain};
 
   const EVT ResTys[] = {MVT::Untyped, MVT::Other};
@@ -3211,7 +3202,7 @@ static bool isBitfieldDstMask(uint64_t DstMask, const APInt &BitsToBeInserted,
   APInt SignificantBitsToBeInserted = BitsToBeInserted.zextOrTrunc(BitWidth);
 
   return (SignificantDstMask & SignificantBitsToBeInserted) == 0 &&
-         (SignificantDstMask | SignificantBitsToBeInserted).isAllOnesValue();
+         (SignificantDstMask | SignificantBitsToBeInserted).isAllOnes();
 }
 
 // Look for bits that will be useful for later uses.
@@ -4056,8 +4047,8 @@ static int getIntOperandFromRegisterString(StringRef RegString) {
 // form described in getIntOperandsFromRegsterString) or is a named register
 // known by the MRS SysReg mapper.
 bool AArch64DAGToDAGISel::tryReadRegister(SDNode *N) {
-  const MDNodeSDNode *MD = dyn_cast<MDNodeSDNode>(N->getOperand(1));
-  const MDString *RegString = dyn_cast<MDString>(MD->getMD()->getOperand(0));
+  const auto *MD = cast<MDNodeSDNode>(N->getOperand(1));
+  const auto *RegString = cast<MDString>(MD->getMD()->getOperand(0));
   SDLoc DL(N);
 
   int Reg = getIntOperandFromRegisterString(RegString->getString());
@@ -4102,8 +4093,8 @@ bool AArch64DAGToDAGISel::tryReadRegister(SDNode *N) {
 // form described in getIntOperandsFromRegsterString) or is a named register
 // known by the MSR SysReg mapper.
 bool AArch64DAGToDAGISel::tryWriteRegister(SDNode *N) {
-  const MDNodeSDNode *MD = dyn_cast<MDNodeSDNode>(N->getOperand(1));
-  const MDString *RegString = dyn_cast<MDString>(MD->getMD()->getOperand(0));
+  const auto *MD = cast<MDNodeSDNode>(N->getOperand(1));
+  const auto *RegString = cast<MDString>(MD->getMD()->getOperand(0));
   SDLoc DL(N);
 
   int Reg = getIntOperandFromRegisterString(RegString->getString());
@@ -4213,20 +4204,30 @@ bool AArch64DAGToDAGISel::SelectCMP_SWAP(SDNode *N) {
 }
 
 bool AArch64DAGToDAGISel::
-SelectCapabilityBranch(SDNode *N, bool Clear, bool Tail) {
+SelectCapabilityBranch(SDNode *N, bool Clear, bool Tail, bool DescCall) {
   SDLoc dl(N);
   SDValue CalleeNode = N->getOperand(1);
+  bool IsDescABI =
+      (MCTargetOptions::cheriCapabilityTableABI() ==
+       CheriCapabilityTableABI::FunctionDescriptor);
 
   unsigned Opcode =
       Clear ? AArch64::CBranchLinkClear
             : (Subtarget->hasPurecapBenchmarkABI() ? AArch64::FakeCapBranchLink
                                                    : AArch64::CapBranchLink);
+  if (IsDescABI)
+    Opcode = Clear ? AArch64::CFnDescBranchLinkClear
+                   : AArch64::CFnDescBranchLink;
+
   if (CalleeNode.getOpcode() == ISD::TargetGlobalAddress ||
       CalleeNode.getOpcode() == ISD::TargetExternalSymbol)
-    Opcode = Clear ? AArch64::PBLClear : AArch64::BL;
+    Opcode = Clear ? AArch64::PBLClear : (DescCall ? AArch64::DescBL
+                                                   : AArch64::BL);
 
   if (Tail) {
-    Opcode = Clear ? AArch64::ClearCTCRETURNr : AArch64::CTCRETURNr;
+    Opcode = Clear ?
+        (IsDescABI ? AArch64::ClearCTCRETURNDescr : AArch64::ClearCTCRETURNr) :
+        (IsDescABI ? AArch64::CTCRETURNDescr : AArch64::CTCRETURNr);
     if (CalleeNode.getOpcode() == ISD::TargetGlobalAddress ||
         CalleeNode.getOpcode() == ISD::TargetExternalSymbol)
       Opcode = Clear ? AArch64::ClearTCRETURNdi : AArch64::TCRETURNdi;
@@ -4302,7 +4303,6 @@ bool AArch64DAGToDAGISel::SelectSVEAddSubImm(SDValue N, MVT VT, SDValue &Imm, SD
         Imm = CurDAG->getTargetConstant(ImmVal, DL, MVT::i32);
         return true;
       } else if ((ImmVal & 0xFF) == 0) {
-        assert((ImmVal >= -32768) && (ImmVal <= 32512));
         Shift = CurDAG->getTargetConstant(8, DL, MVT::i32);
         Imm = CurDAG->getTargetConstant((ImmVal >> 8) & 0xFF, DL, MVT::i32);
         return true;
@@ -4685,7 +4685,7 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
     // Materialize zero constants as copies from WZR/XZR.  This allows
     // the coalescer to propagate these into other instructions.
     ConstantSDNode *ConstNode = cast<ConstantSDNode>(Node);
-    if (ConstNode->isNullValue()) {
+    if (ConstNode->isZero()) {
       if (VT == MVT::i32) {
         SDValue New = CurDAG->getCopyFromReg(
             CurDAG->getEntryNode(), SDLoc(Node), AArch64::WZR, MVT::i32);
@@ -4929,6 +4929,69 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
     case Intrinsic::aarch64_ld64b:
       SelectLoad(Node, 8/*, AArch64::LD64B, AArch64::x8sub_0*/);
       return;
+    case Intrinsic::aarch64_sve_ld2_sret: {
+      if (VT == MVT::nxv16i8) {
+        SelectPredicatedLoad(Node, 2, 0, AArch64::LD2B_IMM, AArch64::LD2B,
+                             true);
+        return;
+      } else if (VT == MVT::nxv8i16 || VT == MVT::nxv8f16 ||
+                 (VT == MVT::nxv8bf16 && Subtarget->hasBF16())) {
+        SelectPredicatedLoad(Node, 2, 1, AArch64::LD2H_IMM, AArch64::LD2H,
+                             true);
+        return;
+      } else if (VT == MVT::nxv4i32 || VT == MVT::nxv4f32) {
+        SelectPredicatedLoad(Node, 2, 2, AArch64::LD2W_IMM, AArch64::LD2W,
+                             true);
+        return;
+      } else if (VT == MVT::nxv2i64 || VT == MVT::nxv2f64) {
+        SelectPredicatedLoad(Node, 2, 3, AArch64::LD2D_IMM, AArch64::LD2D,
+                             true);
+        return;
+      }
+      break;
+    }
+    case Intrinsic::aarch64_sve_ld3_sret: {
+      if (VT == MVT::nxv16i8) {
+        SelectPredicatedLoad(Node, 3, 0, AArch64::LD3B_IMM, AArch64::LD3B,
+                             true);
+        return;
+      } else if (VT == MVT::nxv8i16 || VT == MVT::nxv8f16 ||
+                 (VT == MVT::nxv8bf16 && Subtarget->hasBF16())) {
+        SelectPredicatedLoad(Node, 3, 1, AArch64::LD3H_IMM, AArch64::LD3H,
+                             true);
+        return;
+      } else if (VT == MVT::nxv4i32 || VT == MVT::nxv4f32) {
+        SelectPredicatedLoad(Node, 3, 2, AArch64::LD3W_IMM, AArch64::LD3W,
+                             true);
+        return;
+      } else if (VT == MVT::nxv2i64 || VT == MVT::nxv2f64) {
+        SelectPredicatedLoad(Node, 3, 3, AArch64::LD3D_IMM, AArch64::LD3D,
+                             true);
+        return;
+      }
+      break;
+    }
+    case Intrinsic::aarch64_sve_ld4_sret: {
+      if (VT == MVT::nxv16i8) {
+        SelectPredicatedLoad(Node, 4, 0, AArch64::LD4B_IMM, AArch64::LD4B,
+                             true);
+        return;
+      } else if (VT == MVT::nxv8i16 || VT == MVT::nxv8f16 ||
+                 (VT == MVT::nxv8bf16 && Subtarget->hasBF16())) {
+        SelectPredicatedLoad(Node, 4, 1, AArch64::LD4H_IMM, AArch64::LD4H,
+                             true);
+        return;
+      } else if (VT == MVT::nxv4i32 || VT == MVT::nxv4f32) {
+        SelectPredicatedLoad(Node, 4, 2, AArch64::LD4W_IMM, AArch64::LD4W,
+                             true);
+        return;
+      } else if (VT == MVT::nxv2i64 || VT == MVT::nxv2f64) {
+        SelectPredicatedLoad(Node, 4, 3, AArch64::LD4D_IMM, AArch64::LD4D,
+                             true);
+        return;
+      }
+      break;
+    }
     }
   } break;
   case ISD::INTRINSIC_WO_CHAIN: {
@@ -5161,13 +5224,15 @@ void AArch64DAGToDAGISel::Select(SDNode *Node) {
   case AArch64ISD::CTC_RETURN:
   case AArch64ISD::ClearCTC_RETURN: {
     bool Clear = (Node->getOpcode() == AArch64ISD::ClearCTC_RETURN);
-    SelectCapabilityBranch(Node, Clear, /*Tail=*/true);
+    SelectCapabilityBranch(Node, Clear, /*Tail=*/true, /*DescCall=*/false);
     return;
   }
   case AArch64ISD::CCALL:
-  case AArch64ISD::ClearCCALL: {
+  case AArch64ISD::ClearCCALL:
+  case AArch64ISD::DescCALL: {
     bool Clear = (Node->getOpcode() == AArch64ISD::ClearCCALL);
-    SelectCapabilityBranch(Node, Clear, /*Tail=*/false);
+    bool DescCall = (Node->getOpcode() == AArch64ISD::DescCALL);
+    SelectCapabilityBranch(Node, Clear, /*Tail=*/false, DescCall);
     return;
   }
   case AArch64ISD::SVE_LD2_MERGE_ZERO: {
@@ -5314,6 +5379,14 @@ bool AArch64DAGToDAGISel::SelectAddrModeIndexedSVE(SDNode *Root, SDValue N,
                                                    SDValue &Base,
                                                    SDValue &OffImm) {
   const EVT MemVT = getMemVTFromNode(*(CurDAG->getContext()), Root);
+  const DataLayout &DL = CurDAG->getDataLayout();
+
+  if (N.getOpcode() == ISD::FrameIndex) {
+    int FI = cast<FrameIndexSDNode>(N)->getIndex();
+    Base = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy(DL));
+    OffImm = CurDAG->getTargetConstant(0, SDLoc(N), MVT::i64);
+    return true;
+  }
 
   if (MemVT == EVT())
     return false;
@@ -5337,6 +5410,11 @@ bool AArch64DAGToDAGISel::SelectAddrModeIndexedSVE(SDNode *Root, SDValue N,
     return false;
 
   Base = N.getOperand(0);
+  if (Base.getOpcode() == ISD::FrameIndex) {
+    int FI = cast<FrameIndexSDNode>(Base)->getIndex();
+    Base = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy(DL));
+  }
+
   OffImm = CurDAG->getTargetConstant(Offset, SDLoc(N), MVT::i64);
   return true;
 }
@@ -5398,5 +5476,5 @@ bool AArch64DAGToDAGISel::SelectAllActivePredicate(SDValue N) {
   const AArch64TargetLowering *TLI =
       static_cast<const AArch64TargetLowering *>(getTargetLowering());
 
-  return TLI->isAllActivePredicate(N);
+  return TLI->isAllActivePredicate(*CurDAG, N);
 }

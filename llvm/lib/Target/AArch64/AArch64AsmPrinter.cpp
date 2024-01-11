@@ -51,9 +51,9 @@
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/Instrumentation/HWAddressSanitizer.h"
@@ -74,6 +74,7 @@ class AArch64AsmPrinter : public AsmPrinter {
   StackMaps SM;
   FaultMaps FM;
   const AArch64Subtarget *STI;
+  bool ShouldEmitWeakSwiftAsyncExtendedFramePointerFlags = false;
 
 public:
   AArch64AsmPrinter(TargetMachine &TM, std::unique_ptr<MCStreamer> Streamer)
@@ -94,6 +95,8 @@ public:
   void emitFunctionEntryLabel() override;
 
   void LowerJumpTableDest(MCStreamer &OutStreamer, const MachineInstr &MI);
+
+  void LowerMOPS(MCStreamer &OutStreamer, const MachineInstr &MI);
 
   void LowerSTACKMAP(MCStreamer &OutStreamer, StackMaps &SM,
                      const MachineInstr &MI);
@@ -193,6 +196,8 @@ private:
   MCSymbol *GetCPISymbol(unsigned CPID) const override;
   void emitEndOfAsmFile(Module &M) override;
 
+  void RestoreBaseReg();
+
   AArch64FunctionInfo *AArch64FI = nullptr;
 
   /// Emit the LOHs contained in AArch64FI.
@@ -204,6 +209,10 @@ private:
   using MInstToMCSymbol = std::map<const MachineInstr *, MCSymbol *>;
 
   MInstToMCSymbol LOHInstToLabel;
+
+  bool shouldEmitWeakSwiftAsyncExtendedFramePointerFlags() const override {
+    return ShouldEmitWeakSwiftAsyncExtendedFramePointerFlags;
+  }
 };
 
 } // end anonymous namespace
@@ -311,7 +320,7 @@ void AArch64AsmPrinter::emitSled(const MachineInstr &MI, SledKind Kind) {
   //   ;DATA: higher 32 bits of the address of the trampoline
   //   LDP X0, X30, [SP], #16 ; pop X0 and the link register from the stack
   //
-  OutStreamer->emitCodeAlignment(4);
+  OutStreamer->emitCodeAlignment(4, &getSubtargetInfo());
   auto CurSled = OutContext.createTempSymbol("xray_sled_", true);
   OutStreamer->emitLabel(CurSled);
   auto Target = OutContext.createTempSymbol();
@@ -671,6 +680,9 @@ bool AArch64AsmPrinter::printAsmMRegister(const MachineOperand &MO, char Mode,
   case 'x':
     Reg = getXRegFromWReg(Reg);
     break;
+  case 't':
+    Reg = getXRegFromXRegTuple(Reg);
+    break;
   }
 
   O << AArch64InstPrinter::getRegisterName(Reg);
@@ -772,6 +784,10 @@ bool AArch64AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
         AArch64::GPR64allRegClass.contains(Reg))
       return printAsmMRegister(MO, 'x', O);
 
+    // If this is an x register tuple, print an x register.
+    if (AArch64::GPR64x8ClassRegClass.contains(Reg))
+      return printAsmMRegister(MO, 't', O);
+
     unsigned AltName = AArch64::NoRegAltName;
     const TargetRegisterClass *RegClass;
     if (AArch64::ZPRRegClass.contains(Reg)) {
@@ -834,18 +850,10 @@ void AArch64AsmPrinter::emitJumpTableInfo() {
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   if (JT.empty()) return;
 
-  const Function &F = MF->getFunction();
   const TargetLoweringObjectFile &TLOF = getObjFileLowering();
-  bool JTInDiffSection =
-      !STI->isTargetCOFF() ||
-      !TLOF.shouldPutJumpTableInFunctionSection(
-          MJTI->getEntryKind() == MachineJumpTableInfo::EK_LabelDifference32,
-          F);
-  if (JTInDiffSection) {
-      // Drop it in the readonly section.
-      MCSection *ReadOnlySec = TLOF.getSectionForJumpTable(F, TM);
-      OutStreamer->SwitchSection(ReadOnlySec);
-  }
+  MCSection *ReadOnlySec = TLOF.getSectionForJumpTable(MF->getFunction(), TM);
+  OutStreamer->SwitchSection(ReadOnlySec);
+
   auto AFI = MF->getInfo<AArch64FunctionInfo>();
   for (unsigned JTI = 0, e = JT.size(); JTI != e; ++JTI) {
     const std::vector<MachineBasicBlock*> &JTBBs = JT[JTI].MBBs;
@@ -972,6 +980,43 @@ void AArch64AsmPrinter::LowerJumpTableDest(llvm::MCStreamer &OutStreamer,
                                   .addReg(DestReg)
                                   .addReg(ScratchReg)
                                   .addImm(ShiftImm));
+}
+
+void AArch64AsmPrinter::LowerMOPS(llvm::MCStreamer &OutStreamer,
+                                  const llvm::MachineInstr &MI) {
+  unsigned Opcode = MI.getOpcode();
+  assert(STI->hasMOPS());
+  assert(STI->hasMTE() || Opcode != AArch64::MOPSMemorySetTaggingPseudo);
+
+  const auto Ops = [Opcode]() -> std::array<unsigned, 3> {
+    if (Opcode == AArch64::MOPSMemoryCopyPseudo)
+      return {AArch64::CPYFP, AArch64::CPYFM, AArch64::CPYFE};
+    if (Opcode == AArch64::MOPSMemoryMovePseudo)
+      return {AArch64::CPYP, AArch64::CPYM, AArch64::CPYE};
+    if (Opcode == AArch64::MOPSMemorySetPseudo)
+      return {AArch64::SETP, AArch64::SETM, AArch64::SETE};
+    if (Opcode == AArch64::MOPSMemorySetTaggingPseudo)
+      return {AArch64::SETGP, AArch64::SETGM, AArch64::MOPSSETGE};
+    llvm_unreachable("Unhandled memory operation pseudo");
+  }();
+  const bool IsSet = Opcode == AArch64::MOPSMemorySetPseudo ||
+                     Opcode == AArch64::MOPSMemorySetTaggingPseudo;
+
+  for (auto Op : Ops) {
+    int i = 0;
+    auto MCIB = MCInstBuilder(Op);
+    // Destination registers
+    MCIB.addReg(MI.getOperand(i++).getReg());
+    MCIB.addReg(MI.getOperand(i++).getReg());
+    if (!IsSet)
+      MCIB.addReg(MI.getOperand(i++).getReg());
+    // Input registers
+    MCIB.addReg(MI.getOperand(i++).getReg());
+    MCIB.addReg(MI.getOperand(i++).getReg());
+    MCIB.addReg(MI.getOperand(i++).getReg());
+
+    EmitToStreamer(OutStreamer, MCIB);
+  }
 }
 
 void AArch64AsmPrinter::LowerSTACKMAP(MCStreamer &OutStreamer, StackMaps &SM,
@@ -1126,6 +1171,47 @@ void AArch64AsmPrinter::LowerFAULTING_OP(const MachineInstr &FaultingMI) {
   OutStreamer->emitInstruction(MI, getSubtargetInfo());
 }
 
+// For the descriptor ABI this restores c28 after a call or when reaching a
+// landing pad.
+void AArch64AsmPrinter::RestoreBaseReg() {
+  if (AArch64FI->getBaseReg() != AArch64::NoRegister) {
+     // If the base register for this function was saved to a CSR restore from
+     // that.
+     MCInst Copy;
+     Copy.setOpcode(AArch64::CapCopy);
+     Copy.addOperand(MCOperand::createReg(AArch64::C28));
+     Copy.addOperand(MCOperand::createReg(AArch64FI->getBaseReg()));
+     EmitToStreamer(*OutStreamer, Copy);
+     return;
+   }
+   // If the base register was spilled to a stack slot load from the stack slot.
+   // Note that the stack slot should always be reachable. The offset is always
+   // the same in the function so we could in theory cache the immediate value.
+   assert(AArch64FI->hasBaseRegisterSpill() &&
+          "Expected spill slot for c28");
+   int FI = AArch64FI->getBaseRegisterFI();
+   const AArch64FrameLowering *TFI = STI->getFrameLowering();
+   Register FrameReg;
+   StackOffset Offset = TFI->resolveFrameIndexReference(
+       *MF, FI, FrameReg, /*PreferFP=*/false, /*ForSimm=*/true);
+
+   int Imm = Offset.getFixed();
+   assert(((Imm < 0 && Imm >= -256) ||
+           (Imm >= 0 && Imm % 16 == 0 && Imm < 65536)) &&
+          "Unrepresentable immediate");
+   unsigned Opcode = Imm < 0 ? AArch64::PCapLoadUnscaledImm
+                             : AArch64::PCapLoadImmPre;
+   int Scale = Imm < 0 ? 1 : 16;
+   Imm = Imm / Scale;
+
+   MCInst Load;
+   Load.setOpcode(Opcode);
+   Load.addOperand(MCOperand::createReg(AArch64::C28));
+   Load.addOperand(MCOperand::createReg(FrameReg));
+   Load.addOperand(MCOperand::createImm(Imm));
+   EmitToStreamer(*OutStreamer, Load);
+}
+
 void AArch64AsmPrinter::emitFMov0(const MachineInstr &MI) {
   Register DestReg = MI.getOperand(0).getReg();
   if (STI->hasZeroCycleZeroingFP() && !STI->hasZeroCycleZeroingFPWorkaround()) {
@@ -1174,6 +1260,15 @@ void AArch64AsmPrinter::emitInstruction(const MachineInstr *MI) {
   // Do any auto-generated pseudo lowerings.
   if (emitPseudoExpansionLowering(*OutStreamer, MI))
     return;
+
+  if (MI->getOpcode() == AArch64::ADRP) {
+    for (auto &Opd : MI->operands()) {
+      if (Opd.isSymbol() && StringRef(Opd.getSymbolName()) ==
+                                "swift_async_extendedFramePointerFlags") {
+        ShouldEmitWeakSwiftAsyncExtendedFramePointerFlags = true;
+      }
+    }
+  }
 
   if (AArch64FI->getLOHRelated().count(MI)) {
     // Generate a label for LOH related instruction
@@ -1287,7 +1382,8 @@ void AArch64AsmPrinter::emitInstruction(const MachineInstr *MI) {
     EmitToStreamer(*OutStreamer, TmpInst);
     return;
   }
-  case AArch64::CTCRETURNr: {
+  case AArch64::CTCRETURNr:
+  case AArch64::CTCRETURNDescr: {
     MCInst TmpInst;
     if (STI->hasPurecapBenchmarkABI()) {
       TmpInst.setOpcode(AArch64::BR);
@@ -1300,6 +1396,37 @@ void AArch64AsmPrinter::emitInstruction(const MachineInstr *MI) {
     TmpInst.setOpcode(AArch64::CapBranch);
     TmpInst.addOperand(MCOperand::createReg(MI->getOperand(0).getReg()));
     EmitToStreamer(*OutStreamer, TmpInst);
+    return;
+  }
+  case AArch64::BaseRegSetup: {
+    MCInst Copy;
+    Copy.setOpcode(AArch64::CapCopy);
+    Copy.addOperand(MCOperand::createReg(MI->getOperand(0).getReg()));
+    Copy.addOperand(MCOperand::createReg(AArch64::C28));
+    EmitToStreamer(*OutStreamer, Copy);
+    return;
+  }
+  case AArch64::BaseRegRestore: {
+    RestoreBaseReg();
+    return;
+  }
+  case AArch64::CFnDescBranchLink:
+  case AArch64::DescBL: {
+    if (MI->getOpcode() == AArch64::DescBL) {
+      MCOperand Dest;
+      MCInstLowering.lowerOperand(MI->getOperand(0), Dest);
+      MCInst TmpInst;
+      TmpInst.setOpcode(AArch64::BL);
+      TmpInst.addOperand(Dest);
+      EmitToStreamer(*OutStreamer, TmpInst);
+    } else {
+      MCInst TmpInst;
+      TmpInst.setOpcode(AArch64::CapLoadPairBranchLink);
+      TmpInst.addOperand(MCOperand::createReg(AArch64::CFP));
+      TmpInst.addOperand(MCOperand::createReg(MI->getOperand(0).getReg()));
+      EmitToStreamer(*OutStreamer, TmpInst);
+    }
+    RestoreBaseReg();
     return;
   }
   case AArch64::TCRETURNdi: {
@@ -1502,6 +1629,13 @@ void AArch64AsmPrinter::emitInstruction(const MachineInstr *MI) {
   case AArch64::FMOVS0:
   case AArch64::FMOVD0:
     emitFMov0(*MI);
+    return;
+
+  case AArch64::MOPSMemoryCopyPseudo:
+  case AArch64::MOPSMemoryMovePseudo:
+  case AArch64::MOPSMemorySetPseudo:
+  case AArch64::MOPSMemorySetTaggingPseudo:
+    LowerMOPS(*OutStreamer, *MI);
     return;
 
   case TargetOpcode::STACKMAP:

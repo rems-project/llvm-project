@@ -733,7 +733,7 @@ TEST_F(ScalarEvolutionExpanderTest, SCEVExpandFatPointer) {
   Module NIM("fatptr", Context);
   std::string DataLayout = M.getDataLayoutStr();
   DataLayout =
-      "e-m:e-pf200:128:128-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200";
+      "e-m:e-pf200:128:128:128:64-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128-A200";
   NIM.setDataLayout(DataLayout);
 
   Type *T_int1 = Type::getInt1Ty(Context);
@@ -767,7 +767,8 @@ TEST_F(ScalarEvolutionExpanderTest, SCEVExpandFatPointer) {
   Phi->addIncoming(Add, L);
 
   Builder.SetInsertPoint(Post);
-  Value *GepBase = Builder.CreateGEP(Arg0, ConstantInt::get(T_int64, 1));
+  Value *GepBase = Builder.CreateGEP(T_int64, Arg0,
+                                     ConstantInt::get(T_int64, 1));
   Instruction *Ret = Builder.CreateRetVoid();
 
   ScalarEvolution SE = buildSE(*F);

@@ -446,7 +446,7 @@ class MorelloCapabilityOperationTestCase(CapabilityOperationTestBase):
         cap_arr_type = cap_ptr_type.GetArrayType(3)
         cap_arr_value = target.CreateValueFromAddress("cap_arr", address,
                                                       cap_arr_type)
-        self.assertEqual(cap_arr_value.GetTypeName(), "int * __capability [3]")
+        self.assertEqual(cap_arr_value.GetTypeName(), "int * __capability[3]")
         self.assertEqual(cap_arr_value.GetChildAtIndex(0).GetValue(),
                          "{tag = 1, address = 0x0000000080000010, attributes = {[Global Executive MutableLoad BranchSealedPair Unseal Seal StoreLocalCap StoreCap LoadCap Store Load], range = [0x80000020-0x80004000)}}")
 

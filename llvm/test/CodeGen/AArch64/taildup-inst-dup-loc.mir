@@ -53,7 +53,7 @@ body:             |
   ; CHECK:   BL @pluto, csr_aarch64_aapcs, implicit-def $lr, implicit $sp, implicit $d0, implicit-def $d0
   ; CHECK:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
   ; CHECK:   $w0 = COPY [[MOVi32imm]]
-  ; CHECK:   RET_ReallyLR 0, implicit $w0
+  ; CHECK:   RET_ReallyLR implicit $w0
 
   bb.1:
     successors: %bb.2(0x40000000), %bb.3(0x40000000)
@@ -120,6 +120,6 @@ body:             |
     BL @pluto, csr_aarch64_aapcs, implicit-def $lr, implicit $sp, implicit $d0, implicit-def $d0
     ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     $w0 = COPY %13
-    RET_ReallyLR 0, implicit $w0
+    RET_ReallyLR implicit $w0
 
 ...

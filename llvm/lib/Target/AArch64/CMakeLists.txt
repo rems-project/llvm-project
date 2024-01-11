@@ -66,11 +66,13 @@ add_llvm_target(AArch64CodeGen
   AArch64LowerHomogeneousPrologEpilog.cpp
   AArch64MachineFunctionInfo.cpp
   AArch64MacroFusion.cpp
+  AArch64MIPeepholeOpt.cpp
   AArch64MCInstLower.cpp
   AArch64SandboxGlobalsOpt.cpp
   AArch64GlobalsAddressing.cpp
   AArch64SandboxMemOpLowering.cpp
   MorelloRangeChecker.cpp
+  AArch64DescSetup.cpp
   AArch64PromoteConstant.cpp
   AArch64PBQPRegAlloc.cpp
   AArch64RegisterInfo.cpp

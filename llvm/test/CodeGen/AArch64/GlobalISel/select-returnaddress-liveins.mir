@@ -24,7 +24,7 @@ body:             |
   ; CHECK:   XPACLRI implicit-def $lr, implicit $lr
   ; CHECK:   [[COPY1:%[0-9]+]]:gpr64 = COPY $lr
   ; CHECK:   $x0 = COPY [[COPY1]]
-  ; CHECK:   RET_ReallyLR 0, implicit $x0
+  ; CHECK:   RET_ReallyLR implicit $x0
   ; LR should be added as a livein to the entry block.
 
   bb.0:
@@ -34,7 +34,7 @@ body:             |
   bb.1:
     %4:gpr(p0) = G_INTRINSIC intrinsic(@llvm.returnaddress), 0
     $x0 = COPY %4
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...
 ---
 name:            already_live_in
@@ -53,7 +53,7 @@ body:             |
   ; CHECK:   XPACLRI implicit-def $lr, implicit $lr
   ; CHECK:   [[COPY1:%[0-9]+]]:gpr64 = COPY $lr
   ; CHECK:   $x0 = COPY [[COPY1]]
-  ; CHECK:   RET_ReallyLR 0, implicit $x0
+  ; CHECK:   RET_ReallyLR implicit $x0
   ; We should not have LR listed as a livein twice.
 
   bb.0:
@@ -62,7 +62,7 @@ body:             |
   bb.1:
     %4:gpr(p0) = G_INTRINSIC intrinsic(@llvm.returnaddress), 0
     $x0 = COPY %4
-    RET_ReallyLR 0, implicit $x0
+    RET_ReallyLR implicit $x0
 ...
 
 # Check copies are inserted in the right places when selecting
@@ -87,7 +87,7 @@ body:             |
   ; CHECK:   $lr = COPY [[COPY]]
   ; CHECK:   XPACLRI implicit-def $lr, implicit $lr
   ; CHECK:   [[COPY2:%[0-9]+]]:gpr64 = COPY $lr
-  ; CHECK:   RET_ReallyLR 0, implicit [[COPY2]]
+  ; CHECK:   RET_ReallyLR implicit [[COPY2]]
   bb.0:
     liveins: $w0, $x0, $lr
     %0:gpr(p0) = G_INTRINSIC intrinsic(@llvm.returnaddress), 0
@@ -95,5 +95,5 @@ body:             |
   bb.1:
     $x0 = COPY %0
     %1:gpr(p0) = G_INTRINSIC intrinsic(@llvm.returnaddress), 0
-    RET_ReallyLR 0, implicit %1
+    RET_ReallyLR implicit %1
 ...

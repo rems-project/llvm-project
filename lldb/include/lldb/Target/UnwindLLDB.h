@@ -227,8 +227,7 @@ private:
     RegisterContextLLDBSP
         reg_ctx_lldb_sp; // These are all RegisterContextUnwind's
 
-    Cursor()
-        : cfa(), sctx(), reg_ctx_lldb_sp() {}
+    Cursor() : cfa() {}
 
   private:
     Cursor(const Cursor &) = delete;

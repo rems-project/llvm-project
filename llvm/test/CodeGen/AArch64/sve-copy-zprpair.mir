@@ -21,7 +21,7 @@ body:             |
     ; CHECK: RET_ReallyLR
     $z1_z2 = COPY $z0_z1
     $z0_z1 = COPY $z1_z2
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -46,7 +46,7 @@ body:             |
     ; CHECK: RET_ReallyLR
     $z1_z2_z3 = COPY $z0_z1_z2
     $z0_z1_z2 = COPY $z1_z2_z3
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...
 ---
@@ -73,6 +73,6 @@ body:             |
     ; CHECK: RET_ReallyLR
     $z1_z2_z3_z4 = COPY $z0_z1_z2_z3
     $z0_z1_z2_z3 = COPY $z1_z2_z3_z4
-    RET_ReallyLR 0
+    RET_ReallyLR
 
 ...

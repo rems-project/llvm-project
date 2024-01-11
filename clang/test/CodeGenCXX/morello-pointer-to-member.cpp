@@ -46,7 +46,7 @@ AMemberFuncPtr global_virt_func_ptr = &A::bar_virtual;
 // CHECK-NEXT:    [[VIRTUAL_FUNC_PTR:%.*]] = alloca { i8 addrspace(200)*, i64 }, align 16, addrspace(200)
 // CHECK-NEXT:    [[VIRTUAL_FUNC_PTR_2:%.*]] = alloca { i8 addrspace(200)*, i64 }, align 16, addrspace(200)
 // CHECK-NEXT:    store i32 0, i32 addrspace(200)* [[RETVAL]], align 4
-// CHECK-NEXT:    call void @_ZN1AC2Ev([[CLASS_A]] addrspace(200)* nonnull align 16 dereferenceable(24) [[A]]) #[[ATTR8:[0-9]+]]
+// CHECK-NEXT:    call void @_ZN1AC2Ev([[CLASS_A]] addrspace(200)* noundef nonnull align 16 dereferenceable(24) [[A]]) #[[ATTR8:[0-9]+]]
 // CHECK-NEXT:    store i64 -1, i64 addrspace(200)* [[NULL_DATA_PTR]], align 8
 // CHECK-NEXT:    store i64 16, i64 addrspace(200)* [[DATA_PTR]], align 8
 // CHECK-NEXT:    store i64 20, i64 addrspace(200)* [[DATA_PTR_2]], align 8
@@ -286,7 +286,7 @@ bool func_ptr_not_equal(AMemberFuncPtr ptr1, AMemberFuncPtr ptr2) {
 // CHECK-NEXT:    [[MEMPTR_ISVIRTUAL:%.*]] = icmp ne i64 [[TMP4]], 0
 // CHECK-NEXT:    br i1 [[MEMPTR_ISVIRTUAL]], label [[MEMPTR_VIRTUAL:%.*]], label [[MEMPTR_NONVIRTUAL:%.*]]
 // CHECK:       memptr.virtual:
-// CHECK-NEXT:    [[TMP5:%.*]] = bitcast i8 addrspace(200)* [[TMP3]] to i8 addrspace(200)* addrspace(200)*
+// CHECK-NEXT:    [[TMP5:%.*]] = bitcast [[CLASS_A]] addrspace(200)* [[THIS_ADJUSTED]] to i8 addrspace(200)* addrspace(200)*
 // CHECK-NEXT:    [[VTABLE:%.*]] = load i8 addrspace(200)*, i8 addrspace(200)* addrspace(200)* [[TMP5]], align 16
 // CHECK-NEXT:    [[MEMPTR_VTABLE_OFFSET:%.*]] = ptrtoint i8 addrspace(200)* [[MEMPTR_PTR]] to i64
 // CHECK-NEXT:    [[TMP6:%.*]] = getelementptr i8, i8 addrspace(200)* [[VTABLE]], i64 [[MEMPTR_VTABLE_OFFSET]], !nosanitize !8
@@ -298,7 +298,7 @@ bool func_ptr_not_equal(AMemberFuncPtr ptr1, AMemberFuncPtr ptr2) {
 // CHECK-NEXT:    br label [[MEMPTR_END]]
 // CHECK:       memptr.end:
 // CHECK-NEXT:    [[TMP8:%.*]] = phi i32 ([[CLASS_A]] addrspace(200)*) addrspace(200)* [ [[MEMPTR_VIRTUALFN]], [[MEMPTR_VIRTUAL]] ], [ [[MEMPTR_NONVIRTUALFN]], [[MEMPTR_NONVIRTUAL]] ]
-// CHECK-NEXT:    [[CALL:%.*]] = call i32 [[TMP8]]([[CLASS_A]] addrspace(200)* nonnull align 16 dereferenceable(24) [[THIS_ADJUSTED]])
+// CHECK-NEXT:    [[CALL:%.*]] = call noundef i32 [[TMP8]]([[CLASS_A]] addrspace(200)* noundef nonnull align 16 dereferenceable(24) [[THIS_ADJUSTED]])
 // CHECK-NEXT:    ret i32 [[CALL]]
 //
 int func_ptr_dereference(A* a, AMemberFuncPtr ptr) {
@@ -350,13 +350,13 @@ namespace PR7556 {
 // CHECK-NEXT:    [[AGG_TMP_ENSURED:%.*]] = alloca %"struct.PR7556::A", align 1, addrspace(200)
 // CHECK-NEXT:    [[AGG_TMP_ENSURED1:%.*]] = alloca %"struct.PR7556::B", align 4, addrspace(200)
 // CHECK-NEXT:    [[AGG_TMP_ENSURED2:%.*]] = alloca %"struct.PR7556::C", align 8, addrspace(200)
-// CHECK-NEXT:    call void @_ZN6PR75561AD1Ev(%"struct.PR7556::A" addrspace(200)* nonnull align 1 dereferenceable(1) [[AGG_TMP_ENSURED]]) #[[ATTR8]]
+// CHECK-NEXT:    call void @_ZN6PR75561AD1Ev(%"struct.PR7556::A" addrspace(200)* noundef nonnull align 1 dereferenceable(1) [[AGG_TMP_ENSURED]]) #[[ATTR8]]
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast %"struct.PR7556::B" addrspace(200)* [[AGG_TMP_ENSURED1]] to i8 addrspace(200)*
 // CHECK-NEXT:    call void @llvm.memset.p200i8.i64(i8 addrspace(200)* align 4 [[TMP0]], i8 0, i64 4, i1 false)
-// CHECK-NEXT:    call void @_ZN6PR75561BD1Ev(%"struct.PR7556::B" addrspace(200)* nonnull align 4 dereferenceable(4) [[AGG_TMP_ENSURED1]]) #[[ATTR8]]
+// CHECK-NEXT:    call void @_ZN6PR75561BD1Ev(%"struct.PR7556::B" addrspace(200)* noundef nonnull align 4 dereferenceable(4) [[AGG_TMP_ENSURED1]]) #[[ATTR8]]
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast %"struct.PR7556::C" addrspace(200)* [[AGG_TMP_ENSURED2]] to i8 addrspace(200)*
 // CHECK-NEXT:    call void @llvm.memcpy.p200i8.p200i8.i64(i8 addrspace(200)* align 8 [[TMP1]], i8 addrspace(200)* align 8 bitcast (%"struct.PR7556::C" addrspace(200)* @[[GLOB0:[0-9]+]] to i8 addrspace(200)*), i64 8, i1 false)
-// CHECK-NEXT:    call void @_ZN6PR75561CD1Ev(%"struct.PR7556::C" addrspace(200)* nonnull align 8 dereferenceable(8) [[AGG_TMP_ENSURED2]]) #[[ATTR8]]
+// CHECK-NEXT:    call void @_ZN6PR75561CD1Ev(%"struct.PR7556::C" addrspace(200)* noundef nonnull align 8 dereferenceable(8) [[AGG_TMP_ENSURED2]]) #[[ATTR8]]
 // CHECK-NEXT:    ret void
 //
   void foo() {

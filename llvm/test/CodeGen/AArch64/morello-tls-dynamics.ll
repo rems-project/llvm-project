@@ -13,7 +13,7 @@
 ; RUN: llc -mtriple=arm64-none-linux-gnu -mattr=+c64 -target-abi purecap -filetype=obj \
 ; RUN:        -morello-tls-gd-only=true < %s | llvm-objdump -d - | FileCheck --check-prefix=CHECK-ASM %s
 
-target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128-pf200:128:128-A200-P200-G200"
+target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128-pf200:128:128:128:64-A200-P200-G200"
 
 @general_dynamic_var = external thread_local addrspace(200) global i32
 

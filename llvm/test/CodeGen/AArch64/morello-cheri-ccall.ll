@@ -6,12 +6,12 @@
 ; CHECK-LABEL: test_i64
 define chericcallcc void @test_i64(i8 addrspace(200)* %a1, i8 addrspace(200)* %a2, i64 %foo, i8 addrspace(200)* %a3, i64 %bar) {
 ; CHECK: mov	x[[TMP:[0-9]+]], x11
+; CHECK: mov	 x11, x1
+; CHECK: mov	 x1, x[[TMP]]
 ; CHECK: mov	c2, c10
 ; CHECK: mov	c10, c9
 ; CHECK: mov	c9, c0
-; CHECK: mov	 x11, x1
 ; CHECK: mov	c0, c2
-; CHECK: mov	 x1, x[[TMP]]
 ; CHECK-DAG: mov x2, xzr
 ; CHECK-DAG: mov x3, xzr
 ; CHECK-DAG: mov x4, xzr
@@ -35,9 +35,11 @@ define chericcallcc void @test_i64(i8 addrspace(200)* %a1, i8 addrspace(200)* %a
 define void @test_sret_fat(i8 addrspace(200) *%sr, i8 addrspace(200)* %a1, i64 %foo, i8 addrspace(200)* %a2, i8 addrspace(200)* %a3, i64 %bar) {
 ; CHECK-NOT: mov x8, xzr
 ; CHECK: mov c8, c0
+; CHECK: mov x11, x5
+; CHECK: mov c0, c1
+; CHECK: mov x1, x2
 ; CHECK: mov c9, c4
 ; CHECK: mov c10, c3
-; CHECK: mov x11, x5
 ; CHECK-DAG: mov x2, xzr
 ; CHECK-DAG: mov x3, xzr
 ; CHECK-DAG: mov x4, xzr
@@ -85,12 +87,12 @@ define chericcallcc void @test_sret_i64(i8 *%sr, i8 addrspace(200)* %a1, i64 %fo
 ; CHECK-LABEL: test_i32
 define chericcallcc void @test_i32(i8 addrspace(200)* %a1, i8 addrspace(200)* %a2, i32 %foo, i8 addrspace(200)* %a3, i32 %bar) {
 ; CHECK: mov	w8, w11
+; CHECK: mov	w11, w1
+; CHECK: mov	w1, w8
 ; CHECK: mov	c2, c10
 ; CHECK: mov	c10, c9
 ; CHECK: mov	c9, c0
-; CHECK: mov	w11, w1
 ; CHECK: mov	c0, c2
-; CHECK: mov	w1, w8
 ; CHECK-DAG: mov x2, xzr
 ; CHECK-DAG: mov x3, xzr
 ; CHECK-DAG: mov x4, xzr

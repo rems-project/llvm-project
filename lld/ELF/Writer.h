@@ -23,7 +23,7 @@ class InputSectionBase;
 void copySectionsIntoPartitions();
 template <class ELFT> void createSyntheticSections();
 void combineEhSections();
-template <class ELFT> void combineCapRelocsSections();
+void combineCapRelocsSections();
 template <class ELFT> void writeResult();
 
 // This describes a program header entry.
@@ -52,7 +52,7 @@ struct PhdrEntry {
 };
 
 void addReservedSymbols();
-llvm::StringRef getOutputSectionName(const InputSectionBase *s);
+bool isMorelloDescSection(const OutputSection *sec);
 
 template <class ELFT> uint32_t calcMipsEFlags();
 

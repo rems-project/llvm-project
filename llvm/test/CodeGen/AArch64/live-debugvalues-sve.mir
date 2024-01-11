@@ -172,6 +172,6 @@ body:             |
     liveins: $z1, $z2
 
     $z0 = COPY killed renamable $z2, debug-location !38
-    RET_ReallyLR 0, implicit $z0, implicit $z1, debug-location !38
+    RET_ReallyLR implicit $z0, implicit $z1, debug-location !38
 
 ...
