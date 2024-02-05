@@ -154,7 +154,7 @@ void alloc(void** p) {
 }
 
 void test_assign(struct T *pT) {
-  intptr_t *cp; // expected-note{{Capabilities stored}}
+  intptr_t *cp; // expected-note{{'__intcap * __capability' is supposed to hold capabilities}}
   alloc((void**)&cp);
 
   pT->p = (void*)"string"; // no warning
