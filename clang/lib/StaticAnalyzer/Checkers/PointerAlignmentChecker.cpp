@@ -456,7 +456,7 @@ void PointerAlignmentChecker::checkBind(SVal L, SVal V, const Stmt *S,
         const SVal &SrcDeref = C.getState()->getSVal(SrcMR, SrcValTy);
         SymbolRef DerefSym = SrcDeref.getAsSymbol();
         // Emit if SrcDeref is undef/unknown or represents initial value of this region
-        if (!DerefSym || DerefSym->getOriginRegion()->StripCasts() != SrcTR)
+        if (!DerefSym || !DerefSym->getOriginRegion() || DerefSym->getOriginRegion()->StripCasts() != SrcTR)
           return;
       }
     }
