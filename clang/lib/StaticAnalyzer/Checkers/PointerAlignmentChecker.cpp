@@ -522,11 +522,12 @@ void PointerAlignmentChecker::checkBind(SVal L, SVal V, const Stmt *S,
   if (CapDstDecl) {
     SmallString<350> Note;
     llvm::raw_svector_ostream OS2(Note);
+    OS2 << "Memory pointed by";
     if (DstIsPtr2CapStorage) {
       const QualType &AllocType = CapDstDecl->getType().getCanonicalType();
-      OS2 << "'" << AllocType.getAsString() << "'" << " is supposed to hold capabilities";
+      OS2 << " '" << AllocType.getAsString() << "'" << " value is supposed to hold capabilities";
     } else
-      OS2 << "May be used to hold capabilities";
+      OS2 << " this value may be used to hold capabilities";
     emitAlignmentWarning(C, V, *GenPtrEscapeAlignBug, ErrorMessage, CapStorageReg, CapDstDecl, Note);
   } else
     emitAlignmentWarning(C, V, *GenPtrEscapeAlignBug, ErrorMessage, CapStorageReg);
