@@ -154,6 +154,7 @@ void gen_storage(struct T *pT, void *p, size_t n) {
 
 // ----
 char extra[100]; // expected-note{{Original allocation of type 'char [100]' has an alignment requirement 1 byte}}
+void *gP;
 
 void alloc(void** p) {
   *p = extra;
@@ -163,6 +164,7 @@ void alloc(void** p) {
 void test_assign(struct T *pT) {
   intptr_t *cp; // expected-note{{'__intcap * __capability' is supposed to hold capabilities}}
   alloc((void**)&cp);
+  gP = cp; // no duplicate warning
 
   pT->pVoid = (void*)"string"; // no warning
 }

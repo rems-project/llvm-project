@@ -375,6 +375,11 @@ const DeclRegion *getOriginalAllocation(const MemRegion *MR) {
   return nullptr;
 }
 
+bool hasCapStorageType(const Expr *E, ASTContext &ASTCtx) {
+  const QualType &Ty = E->IgnoreCasts()->getType();
+  return Ty->isPointerType() && hasCapability(Ty->getPointeeType(), ASTCtx);
+}
+
 } // namespace
 
 void PointerAlignmentChecker::checkPreStmt(const CastExpr *CE,
@@ -386,6 +391,11 @@ void PointerAlignmentChecker::checkPreStmt(const CastExpr *CE,
     return;
 
   ASTContext &ASTCtx = C.getASTContext();
+
+  if (hasCapStorageType(CE->getSubExpr(), ASTCtx)) {
+    /* Src value must have been already checked for capability alignment by this time */
+    return;
+  }
 
   /* Calculate required alignment */
   const Optional<unsigned int> &DstReqAlign =
@@ -433,8 +443,7 @@ void PointerAlignmentChecker::checkBind(SVal L, SVal V, const Stmt *S,
   if (!DstTy->isCHERICapabilityType(ASTCtx, true))
     return;
 
-  const QualType &SrcTy = BO->getRHS()->getType();
-  if (SrcTy->isPointerType() && hasCapability(DstTy->getPointeeType(), ASTCtx)) {
+  if (hasCapStorageType(BO->getRHS(), ASTCtx)) {
     /* Src value must have been already checked for capability alignment by this time */
     return;
   }
