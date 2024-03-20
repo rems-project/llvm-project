@@ -1,6 +1,8 @@
-// RUN: %cheri_purecap_cc1 -analyze -analyzer-checker=core,cheri.CapabilityCopy -verify %s
+// RUN: %cheri_purecap_cc1 -analyze -analyzer-checker=core,cheri.CapabilityCopy \
+// RUN:                    -analyzer-config cheri.CapabilityCopy:ReportForCharPtr=true -verify %s
 // RUN: %clang_cc1 -triple aarch64-none-elf -target-feature +morello -target-feature +c64 -target-abi purecap \
-// RUN:            -analyze -analyzer-checker=core,cheri.CapabilityCopy -verify %s
+// RUN:            -analyze -analyzer-checker=core,cheri.CapabilityCopy \
+// RUN:            -analyzer-config cheri.CapabilityCopy:ReportForCharPtr=true -verify %s
 
 typedef __intcap_t intptr_t;
 typedef __uintcap_t uintptr_t;
