@@ -1,0 +1,45 @@
+// RUN: %clang_cc1 -triple aarch64-none-elf -target-feature +morello -target-feature +c64 -target-abi purecap \
+// RUN: -analyze -analyzer-checker=core,unix,alpha.cheri.Allocation \
+// RUN:     -analyzer-config cheri.ProvenanceSource:ShowFixIts=true -analyzer-store=region  \
+// RUN:     -verify %s
+
+typedef __typeof__(sizeof(int)) size_t;
+extern void * malloc(size_t);
+
+
+struct S1 {
+  int *a[3];
+  int *d[1];
+};
+
+struct S2 {
+  int x[3];
+  int *px;
+};
+
+struct S2 * test_1(int n1, int n2) {
+  struct S1 *p1 = malloc(sizeof(struct S1)*n1 + sizeof(struct S2)*n2);
+  struct S2 *p2 = (struct S2 *)(p1+n1); // expected-warning{{Allocation partition}}
+  return p2;
+}
+
+double buf[100] __attribute__((aligned(_Alignof(void*))));
+struct S2 * test_2(int n1) {
+  struct S1 *p1 = (struct S1 *)buf; // ?
+  struct S2 *p2 = (struct S2 *)(p1+n1); // expected-warning{{Allocation partition}}
+  return p2;
+}
+
+int * test_3(int n1, int n2) {
+  void *p1 = malloc(sizeof(struct S1)*n1 + sizeof(struct S2)*n2);
+  struct S2 *p2 = (struct S2 *)(p1+n1);
+  int *p3 = (int*)(p2 + n2); // expected-warning{{Allocation partition}}
+  return p3;
+}
+
+void array(int i, int j) {
+  int a[100][200];
+  int (*p1)[200] = &a[i];
+  int *p2 = p1[j]; // no warn
+  *p2 = 42;
+}
