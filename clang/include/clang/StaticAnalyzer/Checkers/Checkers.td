@@ -233,6 +233,10 @@ def NonnullGlobalConstantsChecker: Checker<"NonnilStringConstants">,
   Documentation<NotDocumented>,
   Hidden;
 
+def ConstInitChecker: Checker<"ConstInit">,
+  HelpText<"Constant initialization">,
+  Documentation<NotDocumented>;
+
 } // end "core"
 
 let ParentPackage = CoreAlpha in {
