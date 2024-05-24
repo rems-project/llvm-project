@@ -1759,6 +1759,13 @@ let ParentPackage = CHERIAlpha in {
 
 def AllocationChecker : Checker<"Allocation">,
   HelpText<"TODO: help">,
+      CheckerOptions<[
+        CmdLineOption<Boolean,
+                      "ReportForUnknownAllocations",
+                      "Report for unknown allocations",
+                      "true",
+                      InAlpha>
+      ]>,
   Documentation<NotDocumented>;
 
 
