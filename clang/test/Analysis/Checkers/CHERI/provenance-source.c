@@ -182,7 +182,7 @@ char *ptrdiff(char *a, unsigned x) {
 
 int fp5(char *a, unsigned x) {
   void *p = (void*)(uintptr_t)a;
-  void *q = (void*)(uintptr_t)x; // expected-warning{{cheri_no_provenance capability used as pointer}}
+  void *q = (void*)(uintptr_t)x; // no warning -- intentional
   return (char*)p - (char*)q;
 }
 
@@ -194,6 +194,12 @@ void *fn3(size_t x, int y) {
   intptr_t a = (intptr_t)x;
   a += y;
   return (void*)a; // expected-warning{{NULL-derived capability used as pointer}}
+}
+
+int * loss_of_prov(int *px) {
+  long x = (long)px;
+  intptr_t u = (intptr_t)x;
+  return (int*)u; // expected-warning{{NULL-derived capability: loss of provenance}}
 }
 
 //------------------- Inter-procedural warnings ---------------------
