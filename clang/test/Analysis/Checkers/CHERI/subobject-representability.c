@@ -30,3 +30,12 @@ struct R2 {
   char a[0x20000]; // expected-warning{{Field 'a' of type 'char[131072]' (size 131072) requires 64 byte alignment for precise bounds; field offset is 113 (aligned to 1); Current bounds: 64-131200}}
   char y[32]; // expected-note{{15/32}}
 };
+
+struct R3 {
+  struct {
+    struct { // expected-warning{{Field 'fbad' of type 'struct (unnamed)' (size 16385) requires 7 bytes of tail-padding for precise bounds; next field offset is 16385 (0 bytes padding); Current bounds: 0-16392}}
+      char a[0x4001];
+    } fbad;
+    char b[0x100]; // expected-note{{7/256 bytes exposed}}
+  } s;
+};

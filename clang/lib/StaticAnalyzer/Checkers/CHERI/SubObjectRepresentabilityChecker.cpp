@@ -33,8 +33,10 @@ using namespace ento;
 namespace {
 class SubObjectRepresentabilityChecker
     : public Checker<check::ASTDecl<RecordDecl>, check::ASTCodeBody> {
-  BugType BT_1{this, "Field with imprecise subobject bounds",
+  BugType BT_1A{this, "Field with imprecise subobject bounds",
                "CHERI portability"};
+  BugType BT_1S{this, "Field with unrepresentable length",
+             "CHERI portability"};
   BugType BT_2{this, "Address taken of a field with imprecise subobject bounds",
                "CHERI portability"};
 
@@ -59,7 +61,7 @@ reportExposedFields(const FieldDecl *D, ASTContext &ASTCtx, BugReporter &BR,
          ASTCtx.getFieldOffset(*FI) / 8 +
                  ASTCtx.getTypeSize(FI->getType()) / 8 <=
              Base)
-    FI++;
+    ++FI;
 
   bool Before = true;
   while (FI != Parent->field_end() &&
@@ -70,10 +72,10 @@ reportExposedFields(const FieldDecl *D, ASTContext &ASTCtx, BugReporter &BR,
 
       uint64_t CurFieldOffset = ASTCtx.getFieldOffset(*FI) / 8;
       uint64_t CurFieldSize = ASTCtx.getTypeSize(FI->getType()) / 8;
-      uint64_t BytesExposed =
+      uint64_t BytesExposed = std::min(CurFieldSize,
           Before
-              ? std::min(CurFieldSize, CurFieldOffset + CurFieldSize - Base)
-              : std::min(CurFieldSize, Top - CurFieldOffset);
+              ? CurFieldOffset + CurFieldSize - Base
+              : Top - CurFieldOffset);
       OS2 << BytesExposed << "/" << CurFieldSize << " bytes exposed";
       if (cheri::hasCapability(FI->getType(), ASTCtx))
         OS2 << " (may expose capability!)";
@@ -83,7 +85,7 @@ reportExposedFields(const FieldDecl *D, ASTContext &ASTCtx, BugReporter &BR,
       Report->addNote(OS2.str(), LN);
     } else
       Before = false;
-    FI++;
+    ++FI;
   }
   return Report;
 }
@@ -105,23 +107,35 @@ uint64_t getRepresentableAlignment(uint64_t Size) {
   return ~Handler::representable_mask(Size) + 1;
 }
 
+template<typename Handler>
+uint64_t getRepresentableLength(uint64_t Size) {
+  return Handler::representable_length(Size);
+}
+
 template <typename Handler>
 std::unique_ptr<BugReport> checkFieldImpl(const FieldDecl *D,
                                           BugReporter &BR,
-                                          const BugType &BT) {
+                                          const BugType &BT_A,
+                                          const BugType &BT_S,
+                                          const FieldDecl *Next) {
   QualType T = D->getType();
 
   ASTContext &ASTCtx = BR.getContext();
+  uint64_t Size = ASTCtx.getTypeSize(T) / 8;
+
+  SmallString<1024> Err;
+  llvm::raw_svector_ostream OS(Err);
+
+  bool UnrepresentableAlignment = false;
   uint64_t Offset = ASTCtx.getFieldOffset(D) / 8;
   if (Offset > 0) {
-    uint64_t Size = ASTCtx.getTypeSize(T) / 8;
     uint64_t ReqAlign = getRepresentableAlignment<Handler>(Size);
     uint64_t CurAlign = 1 << llvm::countTrailingZeros(Offset);
     if (CurAlign < ReqAlign) {
       /* Emit warning */
-      SmallString<1024> Err;
-      llvm::raw_svector_ostream OS(Err);
-      const PrintingPolicy &PP = ASTCtx.getPrintingPolicy();
+      UnrepresentableAlignment = true;
+      PrintingPolicy PP(ASTCtx.getLangOpts());
+      PP.AnonymousTagLocations = false;
       OS << "Field '";
       D->getNameForDiagnostic(OS, PP, false);
       OS << "' of type '" << T.getAsString(PP) << "'";
@@ -129,38 +143,84 @@ std::unique_ptr<BugReport> checkFieldImpl(const FieldDecl *D,
       OS << " requires " << ReqAlign << " byte alignment for precise bounds;";
       OS << " field offset is " << Offset;
       OS << " (aligned to " << CurAlign << ");";
-
-      const RecordDecl *Parent = D->getParent();
-      uint64_t ParentSize = ASTCtx.getTypeSize(Parent->getTypeForDecl()) / 8;
-      typename Handler::cap_t MockCap =
-          getBoundedCap<Handler>(ParentSize, Offset, Size);
-      uint64_t Base = MockCap.base();
-      uint64_t Top = MockCap.top();
-      OS << " Current bounds: " << Base << "-" << Top;
-
-      // Note that this will fire for every translation unit that uses this
-      // class.  This is suboptimal, but at least scan-build will merge
-      // duplicate HTML reports.
-      PathDiagnosticLocation L =
-          PathDiagnosticLocation::createBegin(D, BR.getSourceManager());
-      auto Report = std::make_unique<BasicBugReport>(BT, OS.str(), L);
-      Report->setDeclWithIssue(D);
-      Report->addRange(D->getSourceRange());
-
-      Report = reportExposedFields(D, ASTCtx, BR, Base, Top, std::move(Report));
-
-      return Report;
     }
+  }
+
+  bool UnrepresentableLength = false;
+  if (!UnrepresentableAlignment && Next) {
+    uint64_t ReqSize = getRepresentableLength<Handler>(Size);
+    uint64_t NextOffset = ASTCtx.getFieldOffset(Next) / 8;
+    uint64_t Diff = NextOffset - Offset;
+
+    if (Diff < ReqSize) {
+      /* Emit warning */
+      UnrepresentableLength = true;
+      PrintingPolicy PP(ASTCtx.getLangOpts());
+      PP.AnonymousTagLocations = false;
+      OS << "Field '";
+      D->getNameForDiagnostic(OS, PP, false);
+      OS << "' of type '" << T.getAsString(PP) << "'";
+      OS << " (size " << Size << ")";
+      OS << " requires " << ReqSize - Size
+         << " bytes of tail-padding for precise bounds;";
+      OS << " next field offset is " << NextOffset;
+      OS << " (" << Diff - Size;
+      OS << " bytes padding);";
+    }
+  }
+
+  if (UnrepresentableAlignment || UnrepresentableLength) {
+    const RecordDecl *Parent = D->getParent();
+    uint64_t ParentSize = ASTCtx.getTypeSize(Parent->getTypeForDecl()) / 8;
+    typename Handler::cap_t MockCap =
+        getBoundedCap<Handler>(ParentSize, Offset, Size);
+    uint64_t Base = MockCap.base();
+    uint64_t Top = MockCap.top();
+    OS << " Current bounds: " << Base << "-" << Top;
+
+    // Note that this will fire for every translation unit that uses this
+    // class.  This is suboptimal, but at least scan-build will merge
+    // duplicate HTML reports.
+    PathDiagnosticLocation L =
+        PathDiagnosticLocation::createBegin(D, BR.getSourceManager());
+    auto Report = std::make_unique<BasicBugReport>(
+      UnrepresentableAlignment ? BT_A : BT_S, OS.str(), L);
+    Report->setDeclWithIssue(D);
+    Report->addRange(D->getSourceRange());
+
+    Report = reportExposedFields(D, ASTCtx, BR, Base, Top, std::move(Report));
+    return Report;
   }
 
   return nullptr;
 }
 
+const FieldDecl *getNextFieldDecl(const FieldDecl *D) {
+  const RecordDecl *Parent = D->getParent();
+  if (Parent == nullptr)
+    return nullptr;
+  auto FI = Parent->field_begin();
+  while (FI != Parent->field_end() && *FI != D)
+    ++FI;
+
+  // Get next
+  if (FI != Parent->field_end())
+    ++FI;
+  if (FI != Parent->field_end())
+    return *FI;
+  return nullptr;
+}
+
 std::unique_ptr<BugReport> checkField(const FieldDecl *D,
                                       BugReporter &BR,
-                                      const BugType &BT) {
+                                      const BugType &BT_A,
+                                      const BugType &BT_S) {
+  if (D->isBitField())
+    return nullptr;
+  const FieldDecl *Next = getNextFieldDecl(D);
+
   // TODO: other targets
-  return checkFieldImpl<CompressedCap128m>(D, BR, BT);
+  return checkFieldImpl<CompressedCap128m>(D, BR, BT_A, BT_S, Next);
 }
 
 bool supportedTarget(const ASTContext &C) {
@@ -184,6 +244,9 @@ void SubObjectRepresentabilityChecker::checkASTDecl(const RecordDecl *R,
   if (!R->getLocation().isValid())
     return;
 
+  if (R->isUnion())
+    return;
+
   /*
   SrcMgr::CharacteristicKind Kind =
       BR.getSourceManager().getFileCharacteristic(Location);
@@ -192,8 +255,8 @@ void SubObjectRepresentabilityChecker::checkASTDecl(const RecordDecl *R,
     return;
   */
 
-  for (FieldDecl *D : R->fields()) {
-    auto Report = checkField(D, BR, BT_1);
+  for (auto *D: R->fields()) {
+    auto Report = checkField(D, BR, BT_1A, BT_1S);
     if (Report)
       BR.emitReport(std::move(Report));
   }
@@ -211,9 +274,9 @@ void SubObjectRepresentabilityChecker::checkASTCodeBody(const Decl *D,
       castExpr(hasCastKind(CK_ArrayToPointerDecay), has(Member)).bind("decay");
   auto Addr = unaryOperator(hasOperatorName("&"), has(Member)).bind("addr");
 
-  auto PointerSizeCheck = traverse(TK_AsIs, stmt(anyOf(Decay, Addr)));
+  auto FieldPtrUsage = traverse(TK_AsIs, stmt(anyOf(Decay, Addr)));
 
-  auto Matcher = decl(forEachDescendant(PointerSizeCheck));
+  auto Matcher = decl(forEachDescendant(FieldPtrUsage));
 
   auto Matches = match(Matcher, *D, BR.getContext());
   for (const auto &Match : Matches) {
@@ -221,7 +284,10 @@ void SubObjectRepresentabilityChecker::checkASTCodeBody(const Decl *D,
       if (const MemberExpr *ME = Match.getNodeAs<MemberExpr>("member")) {
         ValueDecl *VD = ME->getMemberDecl();
         if (FieldDecl *FD = dyn_cast<FieldDecl>(VD)) {
-          auto Report = checkField(FD, BR, BT_2);
+          const RecordDecl *R = FD->getParent();
+          if (!R || R->isUnion())
+            continue;
+          auto Report = checkField(FD, BR, BT_2, BT_2);
           if (Report) {
             PathDiagnosticLocation LN = PathDiagnosticLocation::createBegin(
                 CE, BR.getSourceManager(), mgr.getAnalysisDeclContext(D));
@@ -235,7 +301,10 @@ void SubObjectRepresentabilityChecker::checkASTCodeBody(const Decl *D,
       if (const MemberExpr *ME = Match.getNodeAs<MemberExpr>("member")) {
         ValueDecl *VD = ME->getMemberDecl();
         if (FieldDecl *FD = dyn_cast<FieldDecl>(VD)) {
-          auto Report = checkField(FD, BR, BT_2);
+          const RecordDecl *R = FD->getParent();
+          if (!R || R->isUnion())
+            continue;
+          auto Report = checkField(FD, BR, BT_2, BT_2);
           if (Report) {
             PathDiagnosticLocation LN = PathDiagnosticLocation::createBegin(
                 UO, BR.getSourceManager(), mgr.getAnalysisDeclContext(D));
