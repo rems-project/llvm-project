@@ -4,7 +4,7 @@ This is the fork of [The CHERI LLVM Compiler Infrastructure](https://git.morello
 
 **CHERI CSA provides custom static analyses that detect portability issues and support transitioning C/C++ code to CHERI hardware.**
 
-:bookmark: Irina Dudina and Ian Stark. 2024. _Static Analysis for Transitioning to CHERI C/C++._ In Proceedings of the 13th ACM SIGPLAN International Workshop on the State Of the Art in Program Analysis (SOAP 2024). Association for Computing Machinery, New York, NY, USA, 52–59. https://doi.org/10.1145/3652588.3663323
+:bookmark: Irina Dudina and Ian Stark. 2005. _Static analysis to make the most of CHERI C/C++ for existing code: improving memory safety at scale._ International Journal on Software Tools for Technology Transfer (2025). [[doi]](https://doi.org/10.1007/s10009-025-00781-6)
 
 #### :pencil: See Wiki for:
 - List of detected issues [:link:](https://github.com/rems-project/llvm-project/wiki/List-of-detected-issues)
